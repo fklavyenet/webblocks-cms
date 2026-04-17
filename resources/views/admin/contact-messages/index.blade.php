@@ -9,6 +9,18 @@
 
     @include('admin.partials.flash')
 
+    @push('styles')
+        <style>
+            .wb-contact-message-source {
+                min-width: 14rem;
+            }
+
+            .wb-contact-message-cell {
+                line-height: 1.3;
+            }
+        </style>
+    @endpush
+
     @if ($messages->isEmpty())
         <div class="wb-card">
             <div class="wb-card-body">
@@ -38,12 +50,21 @@
                         <tbody>
                             @foreach ($messages as $message)
                                 <tr>
-                                    <td>{{ $message->name }}</td>
-                                    <td><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td>
-                                    <td>{{ $message->subject ?: '-' }}</td>
+                                    <td class="wb-contact-message-cell">
+                                        <strong>{{ $message->name }}</strong>
+                                    </td>
+                                    <td class="wb-contact-message-cell"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td>
+                                    <td class="wb-contact-message-cell">
+                                        @if ($message->subject)
+                                            {{ $message->subject }}
+                                        @else
+                                            <span class="wb-text-sm wb-text-muted">&mdash;</span>
+                                        @endif
+                                    </td>
                                     <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <span>{{ $message->page?->title ?? '-' }}</span>
+                                        <div class="wb-stack wb-gap-1 wb-contact-message-source">
+                                            <strong>{{ $message->sourceLabel() }}</strong>
+                                            <span class="wb-text-sm wb-text-muted"><code>{{ $message->sourcePath() }}</code></span>
                                             @if ($message->source_url)
                                                 <a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-text-sm wb-link">Open source</a>
                                             @endif
@@ -58,27 +79,45 @@
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-cluster wb-cluster-2 wb-row-end">
-                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="Open message" aria-label="Open message">
+                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="View message detail" aria-label="View message detail">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
 
                                             <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
                                                 @csrf
                                                 @method('PATCH')
-                                                <input type="hidden" name="status" value="read">
-                                                <button type="submit" class="wb-action-btn wb-action-btn-edit" title="Mark as read" aria-label="Mark as read">
-                                                    <i class="wb-icon wb-icon-mail-opened" aria-hidden="true"></i>
+                                                <input type="hidden" name="status" value="{{ $message->status === 'new' ? 'read' : 'new' }}">
+                                                <button type="submit" class="wb-action-btn wb-action-btn-edit" title="{{ $message->status === 'new' ? 'Mark as read' : 'Mark as new' }}" aria-label="{{ $message->status === 'new' ? 'Mark as read' : 'Mark as new' }}">
+                                                    <i class="wb-icon {{ $message->status === 'new' ? 'wb-icon-mail-opened' : 'wb-icon-mail' }}" aria-hidden="true"></i>
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="archived">
-                                                <button type="submit" class="wb-action-btn" title="Archive message" aria-label="Archive message">
-                                                    <i class="wb-icon wb-icon-archive" aria-hidden="true"></i>
+                                            <div class="wb-dropdown wb-dropdown-end">
+                                                <button class="wb-action-btn" type="button" data-wb-toggle="dropdown" data-wb-target="#contact-message-actions-{{ $message->id }}" aria-expanded="false" title="More message actions" aria-label="More message actions">
+                                                    <i class="wb-icon wb-icon-dots" aria-hidden="true"></i>
                                                 </button>
-                                            </form>
+
+                                                <div class="wb-dropdown-menu" id="contact-message-actions-{{ $message->id }}">
+                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="archived">
+                                                        <button type="submit" class="wb-dropdown-item">Archive</button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="spam">
+                                                        <button type="submit" class="wb-dropdown-item">Mark spam</button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="replied">
+                                                        <button type="submit" class="wb-dropdown-item">Mark replied</button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>

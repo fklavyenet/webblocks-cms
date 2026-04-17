@@ -191,6 +191,63 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
+    public function admin_messages_list_shows_contact_page_source_path(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+
+        ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => null,
+            'message' => 'List source check.',
+            'status' => 'new',
+            'source_url' => route('pages.show', $page->slug),
+            'notification_enabled' => true,
+            'notification_recipient' => 'team@example.com',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.index'));
+
+        $response->assertOk();
+        $response->assertSee('Contact');
+        $response->assertSee('/p/contact');
+        $response->assertSee('Open source');
+        $response->assertSee('&mdash;', false);
+    }
+
+    #[Test]
+    public function admin_message_detail_shows_editorial_source_context(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Context check',
+            'message' => 'Detail source check.',
+            'status' => 'new',
+            'source_url' => route('pages.show', $page->slug),
+            'notification_enabled' => true,
+            'notification_recipient' => 'team@example.com',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
+
+        $response->assertOk();
+        $response->assertSee('Path:');
+        $response->assertSee('/p/contact');
+        $response->assertSee('Block ID:');
+        $response->assertSee('Slot:');
+        $response->assertSee('Notification');
+        $response->assertSee('Recipient:');
+    }
+
+    #[Test]
     public function contact_form_block_renders_on_a_public_page(): void
     {
         [$page] = $this->createContactFormPage();

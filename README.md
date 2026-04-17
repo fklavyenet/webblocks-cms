@@ -56,6 +56,9 @@ Project metadata is normalized to the CMS brand:
 - Notification recipients resolve from block-level `recipient_email`, then `CONTACT_RECIPIENT_EMAIL`.
 - Message statuses are `new`, `read`, `replied`, `archived`, and `spam`.
 - Anti-spam protection uses a honeypot field, a minimum submit-time check, and Laravel rate limiting on the submission route.
+- In local DDEV development, Mailpit is available at the DDEV mail URL and is the preferred way to verify contact notifications.
+- Set `CONTACT_RECIPIENT_EMAIL` to a local inbox target, submit `/p/contact`, then confirm both the saved `contact_messages` row and the notification state in the admin detail view.
+- If mail delivery fails locally, the message record remains saved and the detail view shows the notification recipient, status, and captured error text.
 
 ## License
 

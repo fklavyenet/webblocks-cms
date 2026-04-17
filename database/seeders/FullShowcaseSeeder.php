@@ -665,17 +665,15 @@ class FullShowcaseSeeder extends Seeder
                     'main' => [
                         ['type' => 'page-title'],
                         [
-                            'type' => 'form',
-                            'title' => 'Book a working session',
-                            'content' => 'This form is illustrative and demonstrates system and field-style blocks in one believable place.',
-                            'children' => [
-                                ['type' => 'input', 'title' => 'Name', 'subtitle' => 'Your full name'],
-                                ['type' => 'input', 'title' => 'Work email', 'subtitle' => 'name@company.com'],
-                                ['type' => 'select', 'title' => 'Team size', 'settings' => ['options' => ['1 to 5 editors', '6 to 20 editors', '21+ editors']]],
-                                ['type' => 'checkbox-group', 'title' => 'Topics to cover', 'settings' => ['options' => ['Demo review', 'Migration planning', 'Governance design']]],
-                                ['type' => 'radio-group', 'title' => 'Urgency', 'settings' => ['options' => ['This month', 'This quarter', 'Exploring options']]],
-                                ['type' => 'textarea', 'title' => 'Project context', 'subtitle' => 'Tell us what needs to change'],
-                                ['type' => 'submit', 'title' => 'Request working session'],
+                            'type' => 'contact_form',
+                            'title' => 'Contact us',
+                            'content' => 'Tell us what you are planning and we will route your message to the right editorial or implementation contact.',
+                            'settings' => [
+                                'submit_label' => 'Send message',
+                                'success_message' => 'Thanks for your message. We will get back to you soon.',
+                                'recipient_email' => null,
+                                'send_email_notification' => true,
+                                'store_submissions' => true,
                             ],
                         ],
                         [

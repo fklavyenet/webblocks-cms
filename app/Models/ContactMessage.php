@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class ContactMessage extends Model
 {
@@ -104,5 +105,20 @@ class ContactMessage extends Model
         }
 
         return $this->source_url ?: '-';
+    }
+
+    public function sourcePath(): string
+    {
+        if (! $this->source_url) {
+            return '-';
+        }
+
+        $path = parse_url($this->source_url, PHP_URL_PATH);
+
+        if (! is_string($path) || trim($path) === '') {
+            return Str::limit($this->source_url, 48);
+        }
+
+        return $path;
     }
 }

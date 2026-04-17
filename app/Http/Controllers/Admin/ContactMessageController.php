@@ -15,7 +15,7 @@ class ContactMessageController extends Controller
     {
         return view('admin.contact-messages.index', [
             'messages' => ContactMessage::query()
-                ->with(['page', 'block'])
+                ->with(['page', 'block.slotType', 'block.blockType'])
                 ->latest()
                 ->paginate(20)
                 ->withQueryString(),
@@ -24,7 +24,7 @@ class ContactMessageController extends Controller
 
     public function show(ContactMessage $contactMessage): View
     {
-        $contactMessage->load(['page', 'block.blockType']);
+        $contactMessage->load(['page', 'block.blockType', 'block.slotType']);
 
         if ($contactMessage->status === 'new') {
             $contactMessage->update(['status' => 'read']);
