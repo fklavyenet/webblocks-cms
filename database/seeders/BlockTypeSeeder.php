@@ -1,0 +1,79 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\BlockType;
+use Illuminate\Database\Seeder;
+
+class BlockTypeSeeder extends Seeder
+{
+    public function run(): void
+    {
+        collect([
+            ['name' => 'Heading', 'slug' => 'heading', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 1, 'status' => 'published'],
+            ['name' => 'Text', 'slug' => 'text', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 2, 'status' => 'published'],
+            ['name' => 'Rich Text', 'slug' => 'rich-text', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 3, 'status' => 'published'],
+            ['name' => 'Quote', 'slug' => 'quote', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 4, 'status' => 'published'],
+            ['name' => 'Callout', 'slug' => 'callout', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 5, 'status' => 'published'],
+            ['name' => 'Code', 'slug' => 'code', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 6, 'status' => 'published'],
+            ['name' => 'List', 'slug' => 'list', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 7, 'status' => 'published'],
+            ['name' => 'Table', 'slug' => 'table', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 8, 'status' => 'published'],
+            ['name' => 'Accordion', 'slug' => 'accordion', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 9, 'status' => 'published'],
+            ['name' => 'Tabs', 'slug' => 'tabs', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 10, 'status' => 'published'],
+            ['name' => 'FAQ', 'slug' => 'faq', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 11, 'status' => 'published'],
+            ['name' => 'Image', 'slug' => 'image', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => false, 'sort_order' => 12, 'status' => 'published'],
+            ['name' => 'Gallery', 'slug' => 'gallery', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => true, 'sort_order' => 13, 'status' => 'published'],
+            ['name' => 'Slider', 'slug' => 'slider', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => true, 'sort_order' => 14, 'status' => 'published'],
+            ['name' => 'Video', 'slug' => 'video', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => false, 'sort_order' => 15, 'status' => 'published'],
+            ['name' => 'Audio', 'slug' => 'audio', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => false, 'sort_order' => 16, 'status' => 'published'],
+            ['name' => 'File', 'slug' => 'file', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => false, 'sort_order' => 17, 'status' => 'published'],
+            ['name' => 'Map', 'slug' => 'map', 'category' => 'media', 'source_type' => 'embed', 'is_system' => false, 'is_container' => false, 'sort_order' => 18, 'status' => 'published'],
+            ['name' => 'Menu', 'slug' => 'menu', 'category' => 'navigation', 'description' => 'Legacy navigation block kept only for migrated data.', 'source_type' => 'navigation', 'is_system' => true, 'is_container' => false, 'sort_order' => 19, 'status' => 'draft'],
+            ['name' => 'Breadcrumb', 'slug' => 'breadcrumb', 'category' => 'navigation', 'source_type' => 'navigation', 'is_system' => true, 'is_container' => false, 'sort_order' => 20, 'status' => 'published'],
+            ['name' => 'Pagination', 'slug' => 'pagination', 'category' => 'navigation', 'source_type' => 'navigation', 'is_system' => true, 'is_container' => false, 'sort_order' => 21, 'status' => 'published'],
+            ['name' => 'TOC', 'slug' => 'toc', 'category' => 'navigation', 'source_type' => 'navigation', 'is_system' => false, 'is_container' => false, 'sort_order' => 22, 'status' => 'published'],
+            ['name' => 'Form', 'slug' => 'form', 'category' => 'form', 'source_type' => 'form', 'is_system' => false, 'is_container' => true, 'sort_order' => 23, 'status' => 'published'],
+            ['name' => 'Button', 'slug' => 'button', 'category' => 'form', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 24, 'status' => 'published'],
+            ['name' => 'Input', 'slug' => 'input', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 24, 'status' => 'published'],
+            ['name' => 'Textarea', 'slug' => 'textarea', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 25, 'status' => 'published'],
+            ['name' => 'Select', 'slug' => 'select', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 26, 'status' => 'published'],
+            ['name' => 'Checkbox Group', 'slug' => 'checkbox-group', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 27, 'status' => 'published'],
+            ['name' => 'Radio Group', 'slug' => 'radio-group', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 28, 'status' => 'published'],
+            ['name' => 'Submit', 'slug' => 'submit', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 29, 'status' => 'published'],
+            ['name' => 'Search', 'slug' => 'search', 'category' => 'form', 'source_type' => 'form', 'is_system' => false, 'is_container' => false, 'sort_order' => 30, 'status' => 'published'],
+            ['name' => 'Product Card', 'slug' => 'product-card', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => false, 'is_container' => false, 'sort_order' => 31, 'status' => 'published'],
+            ['name' => 'Product Grid', 'slug' => 'product-grid', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => false, 'is_container' => true, 'sort_order' => 32, 'status' => 'published'],
+            ['name' => 'Pricing', 'slug' => 'pricing', 'category' => 'commerce', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 33, 'status' => 'published'],
+            ['name' => 'Cart Summary', 'slug' => 'cart-summary', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => true, 'is_container' => false, 'sort_order' => 34, 'status' => 'published'],
+            ['name' => 'Checkout Summary', 'slug' => 'checkout-summary', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => true, 'is_container' => false, 'sort_order' => 35, 'status' => 'published'],
+            ['name' => 'Social Links', 'slug' => 'social-links', 'category' => 'social', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 36, 'status' => 'published'],
+            ['name' => 'Share Buttons', 'slug' => 'share-buttons', 'category' => 'social', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 37, 'status' => 'published'],
+            ['name' => 'Testimonial', 'slug' => 'testimonial', 'category' => 'social', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 38, 'status' => 'published'],
+            ['name' => 'Comments', 'slug' => 'comments', 'category' => 'social', 'source_type' => 'data', 'is_system' => false, 'is_container' => true, 'sort_order' => 39, 'status' => 'published'],
+            ['name' => 'Stats', 'slug' => 'stats', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 40, 'status' => 'published'],
+            ['name' => 'Metric Card', 'slug' => 'metric-card', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 41, 'status' => 'published'],
+            ['name' => 'Logo Cloud', 'slug' => 'logo-cloud', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 42, 'status' => 'published'],
+            ['name' => 'Timeline', 'slug' => 'timeline', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 43, 'status' => 'published'],
+            ['name' => 'Feature Grid', 'slug' => 'feature-grid', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 44, 'status' => 'published'],
+            ['name' => 'Comparison', 'slug' => 'comparison', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 45, 'status' => 'published'],
+            ['name' => 'Team', 'slug' => 'team', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 46, 'status' => 'published'],
+            ['name' => 'FAQ List', 'slug' => 'faq-list', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 47, 'status' => 'published'],
+            ['name' => 'HTML', 'slug' => 'html', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 48, 'status' => 'published'],
+            ['name' => 'Section', 'slug' => 'section', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 48, 'status' => 'published'],
+            ['name' => 'Container', 'slug' => 'container', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 49, 'status' => 'published'],
+            ['name' => 'Columns', 'slug' => 'columns', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 50, 'status' => 'published'],
+            ['name' => 'Column Item', 'slug' => 'column_item', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 50, 'status' => 'published'],
+            ['name' => 'Split', 'slug' => 'split', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 51, 'status' => 'published'],
+            ['name' => 'Stack', 'slug' => 'stack', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 52, 'status' => 'published'],
+            ['name' => 'Grid', 'slug' => 'grid', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 53, 'status' => 'published'],
+            ['name' => 'Card Group', 'slug' => 'card-group', 'category' => 'layout helper', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 54, 'status' => 'published'],
+            ['name' => 'Page Title', 'slug' => 'page-title', 'category' => 'system', 'source_type' => 'system', 'is_system' => true, 'is_container' => false, 'sort_order' => 55, 'status' => 'published'],
+            ['name' => 'Page Content', 'slug' => 'page-content', 'category' => 'system', 'source_type' => 'system', 'is_system' => true, 'is_container' => false, 'sort_order' => 56, 'status' => 'published'],
+            ['name' => 'Page Meta', 'slug' => 'page-meta', 'category' => 'system', 'source_type' => 'system', 'is_system' => true, 'is_container' => false, 'sort_order' => 57, 'status' => 'published'],
+            ['name' => 'Navigation Auto', 'slug' => 'navigation-auto', 'category' => 'system', 'description' => 'Renders navigation items assigned to a system location such as header or footer.', 'source_type' => 'navigation', 'is_system' => true, 'is_container' => false, 'sort_order' => 58, 'status' => 'published'],
+            ['name' => 'Related Content', 'slug' => 'related-content', 'category' => 'system', 'source_type' => 'data', 'is_system' => true, 'is_container' => false, 'sort_order' => 59, 'status' => 'published'],
+            ['name' => 'Auth Form', 'slug' => 'auth-form', 'category' => 'system', 'source_type' => 'system', 'is_system' => true, 'is_container' => false, 'sort_order' => 60, 'status' => 'published'],
+            ['name' => 'Cookie Notice', 'slug' => 'cookie-notice', 'category' => 'system', 'source_type' => 'system', 'is_system' => true, 'is_container' => false, 'sort_order' => 61, 'status' => 'published'],
+        ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));
+    }
+}

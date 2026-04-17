@@ -1,0 +1,336 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Asset;
+use App\Models\Block;
+use App\Models\BlockType;
+use App\Models\NavigationItem;
+use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\SlotType;
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
+
+class StarterContentSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $homePage = Page::query()->updateOrCreate(
+            ['slug' => 'home'],
+            [
+                'title' => 'Home',
+                'page_type' => 'default',
+                'status' => 'published',
+            ],
+        );
+
+        $aboutPage = Page::query()->updateOrCreate(
+            ['slug' => 'about'],
+            [
+                'title' => 'About',
+                'page_type' => 'default',
+                'status' => 'published',
+            ],
+        );
+
+        $contactPage = Page::query()->updateOrCreate(
+            ['slug' => 'contact'],
+            [
+                'title' => 'Contact',
+                'page_type' => 'default',
+                'status' => 'published',
+            ],
+        );
+
+        $slotTypes = SlotType::query()
+            ->whereIn('slug', ['header', 'main', 'footer'])
+            ->get()
+            ->keyBy('slug');
+
+        $pageSlots = collect(['header', 'main', 'footer'])
+            ->mapWithKeys(function (string $slug, int $index) use ($homePage, $slotTypes) {
+                $slotType = $slotTypes->get($slug);
+
+                if (! $slotType) {
+                    return [];
+                }
+
+                $pageSlot = PageSlot::query()->updateOrCreate(
+                    ['page_id' => $homePage->id, 'slot_type_id' => $slotType->id],
+                    ['sort_order' => $index],
+                );
+
+                return [$slug => $pageSlot];
+            });
+
+        $blockTypes = BlockType::query()
+            ->whereIn('slug', ['navigation-auto', 'heading', 'section', 'columns', 'column_item', 'rich-text', 'image', 'button'])
+            ->get()
+            ->keyBy('slug');
+
+        $heroImage = Asset::query()->where('kind', Asset::KIND_IMAGE)->orderBy('id')->first();
+        $seedUser = User::query()->where('email', 'test@example.com')->first();
+
+        $this->seedNavigation($homePage, $aboutPage, $contactPage);
+
+        $headerSlotTypeId = $pageSlots->get('header')?->slot_type_id;
+        $mainSlotTypeId = $pageSlots->get('main')?->slot_type_id;
+        $footerSlotTypeId = $pageSlots->get('footer')?->slot_type_id;
+
+        if ($headerSlotTypeId) {
+            $this->upsertBlock($homePage, $blockTypes->get('heading'), $headerSlotTypeId, [
+                'sort_order' => 0,
+                'title' => 'WebBlocks CMS',
+                'subtitle' => null,
+                'content' => null,
+                'url' => null,
+                'asset_id' => null,
+                'variant' => 'h2',
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            $this->upsertBlock($homePage, $blockTypes->get('navigation-auto'), $headerSlotTypeId, [
+                'sort_order' => 1,
+                'title' => null,
+                'subtitle' => null,
+                'content' => null,
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => json_encode(['menu_key' => 'primary'], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+        }
+
+        $heroSection = null;
+
+        if ($mainSlotTypeId) {
+            $heroSection = $this->upsertBlock($homePage, $blockTypes->get('section'), $mainSlotTypeId, [
+                'sort_order' => 0,
+                'title' => 'Build faster with WebBlocks CMS',
+                'subtitle' => null,
+                'content' => 'A modern block-based CMS for structured pages, reusable content, and flexible layouts.',
+                'url' => null,
+                'asset_id' => null,
+                'variant' => 'accent',
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            if ($heroSection) {
+                $this->upsertBlock($homePage, $blockTypes->get('button'), $mainSlotTypeId, [
+                    'parent_id' => $heroSection->id,
+                    'sort_order' => 0,
+                    'title' => 'Get Started',
+                    'subtitle' => '_self',
+                    'content' => null,
+                    'url' => route('login', [], false),
+                    'asset_id' => null,
+                    'variant' => 'primary',
+                    'meta' => null,
+                    'settings' => null,
+                    'status' => 'published',
+                    'is_system' => false,
+                ]);
+            }
+
+            $columnsBlock = $this->upsertBlock($homePage, $blockTypes->get('columns'), $mainSlotTypeId, [
+                'sort_order' => 1,
+                'title' => 'Starter features',
+                'subtitle' => 'Three examples of how slots and blocks can shape a page.',
+                'content' => 'Edit, reorder, or replace any of these blocks from the admin builder.',
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            if ($columnsBlock) {
+                $features = [
+                    ['title' => 'Fast setup', 'content' => 'Start with meaningful defaults instead of an empty canvas.'],
+                    ['title' => 'Flexible content', 'content' => 'Build pages from reusable slots and blocks.'],
+                    ['title' => 'Editor friendly', 'content' => 'Update structure and content without touching templates.'],
+                ];
+
+                foreach ($features as $index => $feature) {
+                    $this->upsertBlock($homePage, $blockTypes->get('text'), $mainSlotTypeId, [
+                        'parent_id' => $columnsBlock->id,
+                        'sort_order' => $index,
+                        'title' => $feature['title'],
+                        'subtitle' => null,
+                        'content' => $feature['content'],
+                        'url' => null,
+                        'asset_id' => null,
+                        'variant' => null,
+                        'meta' => null,
+                        'settings' => null,
+                        'status' => 'published',
+                        'is_system' => false,
+                    ], $blockTypes->get('column_item'));
+                }
+            }
+
+            $this->upsertBlock($homePage, $blockTypes->get('rich-text'), $mainSlotTypeId, [
+                'sort_order' => 2,
+                'title' => null,
+                'subtitle' => null,
+                'content' => "Why this starter exists\n\nThis page demonstrates how pages, slots, and blocks work together in WebBlocks CMS. You can edit every part of it from the admin builder and reshape the structure as your project evolves.",
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $this->upsertBlock($homePage, $blockTypes->get('image'), $mainSlotTypeId, [
+                'sort_order' => 3,
+                'title' => 'Starter media preview',
+                'subtitle' => 'Replace this media block with your own visuals from the library.',
+                'content' => null,
+                'url' => null,
+                'asset_id' => $heroImage?->id,
+                'variant' => null,
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $ctaSection = $this->upsertBlock($homePage, $blockTypes->get('section'), $mainSlotTypeId, [
+                'sort_order' => 4,
+                'title' => 'Start building your site',
+                'subtitle' => null,
+                'content' => 'Replace these starter blocks, add your own content, and shape the page as you need.',
+                'url' => null,
+                'asset_id' => null,
+                'variant' => 'muted',
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            if ($ctaSection) {
+                $this->upsertBlock($homePage, $blockTypes->get('button'), $mainSlotTypeId, [
+                    'parent_id' => $ctaSection->id,
+                    'sort_order' => 0,
+                    'title' => 'Create content',
+                    'subtitle' => '_self',
+                    'content' => null,
+                    'url' => route('login', [], false),
+                    'asset_id' => null,
+                    'variant' => 'secondary',
+                    'meta' => null,
+                    'settings' => null,
+                    'status' => 'published',
+                    'is_system' => false,
+                ]);
+            }
+        }
+
+        if ($footerSlotTypeId) {
+            $this->upsertBlock($homePage, $blockTypes->get('navigation-auto'), $footerSlotTypeId, [
+                'sort_order' => 0,
+                'title' => null,
+                'subtitle' => null,
+                'content' => null,
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => json_encode(['menu_key' => 'footer'], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            $this->upsertBlock($homePage, $blockTypes->get('rich-text'), $footerSlotTypeId, [
+                'sort_order' => 1,
+                'title' => null,
+                'subtitle' => null,
+                'content' => 'WebBlocks CMS - A modern block-based CMS.',
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+        }
+
+        if ($seedUser) {
+            Asset::query()->whereNull('uploaded_by')->update(['uploaded_by' => $seedUser->id]);
+        }
+    }
+
+    private function seedNavigation(Page $homePage, Page $aboutPage, Page $contactPage): void
+    {
+        $primaryItems = [
+            ['menu_key' => 'primary', 'title' => 'Home', 'link_type' => 'page', 'page_id' => $homePage->id, 'position' => 1, 'visibility' => 'visible'],
+            ['menu_key' => 'primary', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 2, 'visibility' => 'visible'],
+            ['menu_key' => 'primary', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 3, 'visibility' => 'visible'],
+        ];
+
+        foreach ($primaryItems as $item) {
+            NavigationItem::query()->updateOrCreate(
+                ['menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
+                $item + ['url' => null, 'target' => null],
+            );
+        }
+
+        $footerItems = [
+            ['menu_key' => 'footer', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 1, 'visibility' => 'visible'],
+            ['menu_key' => 'footer', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 2, 'visibility' => 'visible'],
+        ];
+
+        foreach ($footerItems as $item) {
+            NavigationItem::query()->updateOrCreate(
+                ['menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
+                $item + ['url' => null, 'target' => null],
+            );
+        }
+    }
+
+    private function upsertBlock(Page $page, ?BlockType $blockType, int $slotTypeId, array $attributes, ?BlockType $fallbackBlockType = null): ?Block
+    {
+        $resolvedBlockType = $blockType ?? $fallbackBlockType;
+
+        if (! $resolvedBlockType) {
+            return null;
+        }
+
+        $identity = [
+            'page_id' => $page->id,
+            'slot_type_id' => $slotTypeId,
+            'parent_id' => Arr::get($attributes, 'parent_id'),
+            'sort_order' => $attributes['sort_order'] ?? 0,
+        ];
+
+        $payload = array_merge($attributes, [
+            'page_id' => $page->id,
+            'block_type_id' => $resolvedBlockType->id,
+            'type' => $resolvedBlockType->slug,
+            'source_type' => $resolvedBlockType->source_type ?? 'static',
+            'slot_type_id' => $slotTypeId,
+            'slot' => SlotType::query()->whereKey($slotTypeId)->value('slug') ?? 'main',
+            'status' => $attributes['status'] ?? 'published',
+            'is_system' => $attributes['is_system'] ?? $resolvedBlockType->is_system,
+        ]);
+
+        return Block::query()->updateOrCreate($identity, $payload);
+    }
+}

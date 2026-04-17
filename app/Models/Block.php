@@ -1,0 +1,305 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
+
+class Block extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'page_id',
+        'parent_id',
+        'type',
+        'block_type_id',
+        'source_type',
+        'slot',
+        'slot_type_id',
+        'sort_order',
+        'title',
+        'subtitle',
+        'content',
+        'url',
+        'asset_id',
+        'variant',
+        'meta',
+        'settings',
+        'status',
+        'is_system',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_system' => 'boolean',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $block): void {
+            if ($block->block_type_id) {
+                $resolvedBlockType = BlockType::query()->find($block->block_type_id);
+
+                $block->type = $resolvedBlockType?->slug ?? $block->type;
+                $block->source_type = $resolvedBlockType?->source_type ?? $block->source_type ?? 'static';
+            }
+
+            if ($block->slot_type_id) {
+                $block->slot = SlotType::query()
+                    ->whereKey($block->slot_type_id)
+                    ->value('slug') ?? $block->slot;
+            }
+        });
+    }
+
+    public function page(): BelongsTo
+    {
+        return $this->belongsTo(Page::class);
+    }
+
+    public function blockType(): BelongsTo
+    {
+        return $this->belongsTo(BlockType::class);
+    }
+
+    public function slotType(): BelongsTo
+    {
+        return $this->belongsTo(SlotType::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order');
+    }
+
+    public function publishedChildren(): HasMany
+    {
+        return $this->children()->where('status', 'published');
+    }
+
+    public function blockAssets(): HasMany
+    {
+        return $this->hasMany(BlockAsset::class)->orderBy('position');
+    }
+
+    public function typeSlug(): ?string
+    {
+        return $this->blockType?->slug ?? $this->type;
+    }
+
+    public function typeName(): string
+    {
+        return $this->blockType?->name ?? str($this->typeSlug() ?: 'block')->replace('-', ' ')->title()->toString();
+    }
+
+    public function slotName(): string
+    {
+        return $this->slotType?->name ?? str($this->slot ?: 'slot')->replace('-', ' ')->title()->toString();
+    }
+
+    public function editorLabel(): string
+    {
+        return $this->title ?: $this->typeName();
+    }
+
+    public function editorSummary(): ?string
+    {
+        if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
+            return 'Location: '.str($this->navigationLocation())->headline();
+        }
+
+        if ($this->typeSlug() === 'columns') {
+            $childCount = $this->children->count();
+
+            if ($childCount > 0) {
+                return $childCount.' column item'.($childCount === 1 ? '' : 's');
+            }
+        }
+
+        $summary = collect([
+            $this->subtitle,
+            filled($this->content) ? str(strip_tags((string) $this->content))->squish()->limit(88)->toString() : null,
+            $this->url,
+            $this->variant,
+        ])->first(fn ($value) => filled($value));
+
+        return $summary ? (string) $summary : null;
+    }
+
+    public function slotPreviewLabel(): string
+    {
+        $label = $this->typeName();
+
+        if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
+            return $label.' ('.str($this->navigationLocation())->headline().')';
+        }
+
+        $childCount = $this->children->count();
+
+        if ($childCount > 0) {
+            return $label.' ('.$childCount.' '.Str::plural('item', $childCount).')';
+        }
+
+        return $label;
+    }
+
+    public function isColumnContainer(): bool
+    {
+        return $this->typeSlug() === 'columns';
+    }
+
+    public function isColumnItem(): bool
+    {
+        return $this->typeSlug() === 'column_item';
+    }
+
+    public function adminFormView(): string
+    {
+        $view = 'admin.blocks.types.'.$this->typeSlug();
+
+        return View::exists($view) ? $view : 'admin.blocks.types.fallback';
+    }
+
+    public function publicRenderView(): string
+    {
+        $view = 'pages.partials.blocks.'.$this->typeSlug();
+
+        return View::exists($view) ? $view : 'pages.partials.blocks.fallback';
+    }
+
+    public function adminFormSupported(): bool
+    {
+        return self::supportsAdminForm($this->typeSlug());
+    }
+
+    public function publicRenderSupported(): bool
+    {
+        return self::supportsPublicRender($this->typeSlug());
+    }
+
+    public function settingsText(): ?string
+    {
+        if (is_array($this->decodedSettings())) {
+            return json_encode($this->decodedSettings(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        }
+
+        return $this->settings;
+    }
+
+    public function setting(string $key, mixed $default = null): mixed
+    {
+        return data_get($this->decodedSettings(), $key, $default);
+    }
+
+    public function navigationMenuKey(): string
+    {
+        $configured = (string) ($this->setting('menu_key') ?? $this->setting('location') ?? '');
+
+        if (in_array($configured, NavigationItem::menuKeys(), true)) {
+            return $configured;
+        }
+
+        return ($this->subtitle === 'footer' || $this->slot === 'footer')
+            ? NavigationItem::MENU_FOOTER
+            : NavigationItem::MENU_PRIMARY;
+    }
+
+    public function navigationLocation(): string
+    {
+        return $this->navigationMenuKey();
+    }
+
+    public function galleryAssetIds(): array
+    {
+        return $this->blockAssets
+            ->where('role', 'gallery_item')
+            ->sortBy('position')
+            ->pluck('asset_id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    private function decodedSettings(): array
+    {
+        if (is_array($this->settings)) {
+            return $this->settings;
+        }
+
+        if (! is_string($this->settings) || trim($this->settings) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($this->settings, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    public function galleryAssets(): Collection
+    {
+        $assetIds = $this->galleryAssetIds();
+
+        if ($assetIds === []) {
+            return collect();
+        }
+
+        return Asset::query()
+            ->whereIn('id', $assetIds)
+            ->get()
+            ->sortBy(fn (Asset $asset) => array_search($asset->id, $assetIds, true))
+            ->values();
+    }
+
+    public function attachmentAsset(): ?Asset
+    {
+        $structured = $this->blockAssets
+            ->where('role', 'attachment')
+            ->sortBy('position')
+            ->first()?->asset;
+
+        return $structured ?: $this->asset;
+    }
+
+    public function downloadAsset(): ?Asset
+    {
+        if ($this->typeSlug() === 'download') {
+            return $this->asset;
+        }
+
+        return null;
+    }
+
+    public static function supportsAdminForm(?string $slug): bool
+    {
+        return $slug !== null && (
+            View::exists('admin.blocks.types.'.$slug)
+            || View::exists('admin.blocks.types.fallback')
+        );
+    }
+
+    public static function supportsPublicRender(?string $slug): bool
+    {
+        return $slug !== null && (
+            View::exists('pages.partials.blocks.'.$slug)
+            || View::exists('pages.partials.blocks.fallback')
+        );
+    }
+}
