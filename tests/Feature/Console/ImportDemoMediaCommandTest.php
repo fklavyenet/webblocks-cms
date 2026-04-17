@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\DemoAssetReference;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
@@ -36,7 +37,11 @@ class ImportDemoMediaCommandTest extends TestCase
 
         Artisan::call('demo:import-media');
 
-        $asset = Asset::query()->where('demo_source_key', 'home-hero-01')->first();
+        $reference = DemoAssetReference::query()->where('source_key', 'home-hero-01')->first();
+
+        $this->assertNotNull($reference);
+
+        $asset = $reference->asset;
 
         $this->assertNotNull($asset);
         $this->assertSame('Modern workspace desk', $asset->title);
@@ -68,7 +73,7 @@ class ImportDemoMediaCommandTest extends TestCase
         Artisan::call('demo:import-media');
         Artisan::call('demo:import-media');
 
-        $this->assertSame(1, Asset::query()->where('demo_source_key', 'home-hero-01')->count());
+        $this->assertSame(1, DemoAssetReference::query()->where('source_key', 'home-hero-01')->count());
 
         Http::assertSentCount(1);
     }
@@ -88,7 +93,7 @@ class ImportDemoMediaCommandTest extends TestCase
         $exitCode = Artisan::call('demo:import-media');
 
         $this->assertSame(1, $exitCode);
-        $this->assertDatabaseMissing('assets', ['demo_source_key' => 'home-hero-01']);
+        $this->assertDatabaseMissing('demo_asset_references', ['source_key' => 'home-hero-01']);
         $this->assertFalse(Storage::disk('public')->exists('assets/demo-content/home/home-hero-01.jpg'));
     }
 

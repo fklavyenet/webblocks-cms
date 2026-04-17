@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
+use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\StarterContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -1249,7 +1250,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function starter_content_seed_creates_real_columns_children_without_duplicates(): void
     {
-        $this->seed(BlockTypeSeeder::class);
+        $this->seed(CoreCatalogSeeder::class);
         $this->seed(StarterContentSeeder::class);
         $this->seed(StarterContentSeeder::class);
 

@@ -65,8 +65,17 @@ class StarterContentSeeder extends Seeder
                 return [$slug => $pageSlot];
             });
 
+        $contactSlotType = $slotTypes->get('main');
+
+        if ($contactSlotType) {
+            PageSlot::query()->updateOrCreate(
+                ['page_id' => $contactPage->id, 'slot_type_id' => $contactSlotType->id],
+                ['sort_order' => 0],
+            );
+        }
+
         $blockTypes = BlockType::query()
-            ->whereIn('slug', ['navigation-auto', 'heading', 'section', 'columns', 'column_item', 'rich-text', 'image', 'button'])
+            ->whereIn('slug', ['navigation-auto', 'heading', 'section', 'columns', 'column_item', 'rich-text', 'image', 'button', 'page-title', 'contact_form'])
             ->get()
             ->keyBy('slug');
 
@@ -270,6 +279,47 @@ class StarterContentSeeder extends Seeder
                 'status' => 'published',
                 'is_system' => false,
             ]);
+        }
+
+        if ($contactSlotType) {
+            $this->upsertBlock($contactPage, $blockTypes->get('page-title'), $contactSlotType->id, [
+                'sort_order' => 0,
+                'title' => null,
+                'subtitle' => null,
+                'content' => null,
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => true,
+            ]);
+
+            $this->upsertBlock($contactPage, $blockTypes->get('contact_form'), $contactSlotType->id, [
+                'sort_order' => 1,
+                'title' => 'Contact us',
+                'subtitle' => null,
+                'content' => 'Tell us what you are planning and we will route your message to the right editorial or implementation contact.',
+                'url' => null,
+                'asset_id' => null,
+                'variant' => null,
+                'meta' => null,
+                'settings' => json_encode([
+                    'submit_label' => 'Send message',
+                    'success_message' => 'Thanks for your message. We will get back to you soon.',
+                    'recipient_email' => null,
+                    'send_email_notification' => true,
+                    'store_submissions' => true,
+                ], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            Block::query()
+                ->where('page_id', $contactPage->id)
+                ->whereIn('type', ['form', 'input', 'select', 'checkbox-group', 'radio-group', 'textarea', 'submit'])
+                ->delete();
         }
 
         if ($seedUser) {

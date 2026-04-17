@@ -7,6 +7,7 @@ use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
+use App\Models\DemoAssetReference;
 use App\Models\Page;
 use App\Models\SlotType;
 use App\Models\User;
@@ -23,7 +24,7 @@ class ImportDemoMedia extends Command
 {
     protected $signature = 'demo:import-media';
 
-    protected $description = 'Import curated demo media into the media library';
+    protected $description = 'Import curated starter/showcase media into the media library';
 
     public function handle(): int
     {
@@ -49,7 +50,7 @@ class ImportDemoMedia extends Command
                 continue;
             }
 
-            if (Asset::query()->where('demo_source_key', $key)->exists()) {
+            if (DemoAssetReference::query()->where('source_key', $key)->exists()) {
                 $skipped++;
                 $this->line("Skipped {$key}");
 
@@ -67,10 +68,11 @@ class ImportDemoMedia extends Command
         }
 
         $bindings = $this->bindDemoContent(
-            Asset::query()
-                ->whereIn('demo_source_key', $items->pluck('key')->all())
+            DemoAssetReference::query()
+                ->with('asset')
+                ->whereIn('source_key', $items->pluck('key')->all())
                 ->get()
-                ->keyBy('demo_source_key')
+                ->mapWithKeys(fn (DemoAssetReference $reference) => [$reference->source_key => $reference->asset])
         );
 
         $this->newLine();
@@ -112,7 +114,7 @@ class ImportDemoMedia extends Command
             $folder = $this->ensureFolder((string) ($item['folder'] ?? 'Demo Content'));
             $dimensions = $this->imageDimensions($contents, $kind);
 
-            return Asset::query()->create([
+            $asset = Asset::query()->create([
                 'folder_id' => $folder?->id,
                 'disk' => 'public',
                 'path' => $path,
@@ -127,11 +129,17 @@ class ImportDemoMedia extends Command
                 'alt_text' => $item['alt'] ?? null,
                 'caption' => $item['alt'] ?? null,
                 'description' => 'Curated demo media imported from an approved source.',
-                'demo_source_key' => $item['key'],
                 'width' => $dimensions['width'],
                 'height' => $dimensions['height'],
                 'uploaded_by' => $this->uploaderId(),
             ]);
+
+            DemoAssetReference::query()->updateOrCreate(
+                ['source_key' => (string) $item['key']],
+                ['asset_id' => $asset->id],
+            );
+
+            return $asset;
         } catch (Throwable $throwable) {
             Storage::disk('public')->delete($path);
 

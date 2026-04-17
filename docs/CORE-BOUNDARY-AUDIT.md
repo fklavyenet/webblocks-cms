@@ -524,3 +524,13 @@ At minimum, before building an updater:
 - neutralize shared core views so they no longer ship demo-facing public copy
 
 Once those boundaries are explicit, an updater can target core code and core schema with much lower risk to site content and showcase content.
+
+## Status Note
+
+Boundary Cleanup Phase 1 has started to address the highest-risk issues identified in this audit:
+
+- default seeding now targets core catalogs only
+- starter/showcase installs are explicit
+- contact-page demo upgrades are no longer performed inside core migrations
+- demo asset tracking is being isolated from the core `assets` schema
+- shared public fallback/demo copy is being neutralized

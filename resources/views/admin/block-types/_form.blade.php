@@ -43,19 +43,18 @@
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="is_system">System</label>
-            <select id="is_system" name="is_system" class="wb-select">
-                <option value="0" @selected(! old('is_system', $blockType->is_system))>user</option>
-                <option value="1" @selected((bool) old('is_system', $blockType->is_system))>system</option>
-            </select>
-        </div>
-
-        <div class="wb-stack wb-gap-1">
             <label for="is_container">Container</label>
             <select id="is_container" name="is_container" class="wb-select">
                 <option value="0" @selected(! old('is_container', $blockType->is_container))>no</option>
                 <option value="1" @selected((bool) old('is_container', $blockType->is_container))>yes</option>
             </select>
+        </div>
+    </div>
+
+    <div class="wb-alert wb-alert-info">
+        <div>
+            <div class="wb-alert-title">Custom block type</div>
+            <div>Core block types are product-owned catalog records. Use this form only for install-specific block types.</div>
         </div>
     </div>
 

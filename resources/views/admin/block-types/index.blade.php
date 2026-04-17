@@ -3,9 +3,9 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Block Types',
-        'description' => 'Review the block type catalog and its active admin/render support.',
+        'description' => 'Review the CMS block catalog. System block types are product-owned; non-system entries are install-specific extensions.',
         'count' => $blockTypes->total(),
-        'actions' => '<a href="'.route('admin.block-types.create').'" class="wb-btn wb-btn-primary">New Block Type</a>',
+        'actions' => '<a href="'.route('admin.block-types.create').'" class="wb-btn wb-btn-primary">New Custom Block Type</a>',
     ])
 
     @include('admin.partials.flash')
@@ -48,16 +48,20 @@
                                     </td>
                                     <td class="wb-nowrap">
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.block-types.edit', $blockType) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type">
-                                                <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
-                                            </a>
-                                            <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block type" aria-label="Delete block type">
-                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                </button>
-                                            </form>
+                                            @if (! $blockType->is_system)
+                                                <a href="{{ route('admin.block-types.edit', $blockType) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type">
+                                                    <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                                </a>
+                                                <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block type" aria-label="Delete block type">
+                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="wb-text-sm wb-text-muted">Core catalog</span>
+                                            @endif
                                         </div>
                                     </td>
                             </tr>

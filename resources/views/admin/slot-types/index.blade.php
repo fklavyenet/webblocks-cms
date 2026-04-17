@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Slot Types',
-        'description' => 'The CMS uses four fixed slot types for page structure and block placement.',
+        'description' => 'Slot types are product-owned core catalog records for page structure and block placement.',
         'count' => $slotTypes->total(),
     ])
 
@@ -44,7 +44,7 @@
         </div>
 
         <div class="wb-card-footer wb-text-sm wb-text-muted">
-            Header, Main, Sidebar, and Footer are fixed system slots. Pages choose which of these to use and in what order.
+            Header, Main, Sidebar, and Footer are fixed system slots managed by the CMS core. Pages choose which of these to use and in what order.
         </div>
 
         @include('admin.partials.pagination', ['paginator' => $slotTypes])

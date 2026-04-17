@@ -1,24 +1,17 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('assets', function (Blueprint $table) {
-            $table->string('demo_source_key')->nullable()->after('description');
-            $table->unique('demo_source_key');
-        });
+        // Demo asset source tracking now lives in a dedicated demo-only table.
+        // Keep this migration as a no-op for fresh installs so core assets remain neutral.
     }
 
     public function down(): void
     {
-        Schema::table('assets', function (Blueprint $table) {
-            $table->dropUnique(['demo_source_key']);
-            $table->dropColumn('demo_source_key');
-        });
+        // No-op. Existing installs are migrated forward by the dedicated demo asset reference migration.
     }
 };

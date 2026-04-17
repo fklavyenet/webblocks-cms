@@ -37,7 +37,6 @@ class Asset extends Model
         'alt_text',
         'caption',
         'description',
-        'demo_source_key',
         'width',
         'height',
         'duration',

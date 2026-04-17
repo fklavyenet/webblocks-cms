@@ -7,6 +7,7 @@ use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
+use App\Models\DemoAssetReference;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -153,7 +154,10 @@ class FullShowcaseSeeder extends Seeder
                 continue;
             }
 
-            $asset = Asset::query()->where('demo_source_key', $item['key'])->first();
+            $asset = DemoAssetReference::query()
+                ->where('source_key', $item['key'])
+                ->with('asset')
+                ->first()?->asset;
 
             if ($asset) {
                 $this->assets->put($item['key'], $asset);

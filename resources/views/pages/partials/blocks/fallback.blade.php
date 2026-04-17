@@ -474,8 +474,8 @@
     @case('auth-form')
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-2">
-                <strong>{{ $block->title ?: 'Sign in to the demo' }}</strong>
-                <p>{{ $block->content ?: 'Use the existing Breeze authentication screens to inspect system page patterns.' }}</p>
+                <strong>{{ $block->title ?: 'Sign in' }}</strong>
+                <p>{{ $block->content ?: 'Use the existing authentication screens to continue.' }}</p>
                 <div class="wb-cluster wb-cluster-2">
                     <a href="{{ route('login') }}" class="wb-btn wb-btn-primary">Sign In</a>
                     <a href="{{ route('register') }}" class="wb-btn wb-btn-secondary">Create Account</a>
@@ -488,7 +488,7 @@
         <div class="wb-alert wb-alert-info">
             <div>
                 <div class="wb-alert-title">{{ $block->title ?: 'Cookie notice' }}</div>
-                <div>{{ $block->content ?: 'This demo uses essential cookies only for session handling and admin sign-in.' }}</div>
+                <div>{{ $block->content ?: 'This site uses essential cookies for core functionality such as session handling and sign-in.' }}</div>
             </div>
         </div>
         @break

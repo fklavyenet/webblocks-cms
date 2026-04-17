@@ -38,7 +38,7 @@
             <div class="wb-stack wb-gap-2">
                 <strong>Legal</strong>
                 <ul class="wb-stack wb-gap-1">{!! $renderFooterList($legalItems) !!}</ul>
-                <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}. Demo installation for WebBlocks CMS.</div>
+                <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
             </div>
         </div>
     </div>
