@@ -8,6 +8,7 @@ use App\Support\System\SystemUpdater;
 use App\Support\System\UpdateChecker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class SystemUpdateController extends Controller
@@ -21,7 +22,7 @@ class SystemUpdateController extends Controller
     {
         return view('admin.system.updates', [
             'updateStatus' => $this->updateChecker->status(),
-            'latestRun' => SystemUpdateRun::query()->latest()->first(),
+            'latestRun' => $this->latestRun(),
             'isMaintenanceMode' => app()->isDownForMaintenance(),
         ]);
     }
@@ -45,7 +46,16 @@ class SystemUpdateController extends Controller
             return redirect()
                 ->route('admin.system.updates.index')
                 ->withErrors(['system_update' => $throwable->getMessage()])
-                ->with('update_error_output', SystemUpdateRun::query()->latest()->value('output'));
+                ->with('update_error_output', $this->latestRun()?->output);
         }
+    }
+
+    private function latestRun(): ?SystemUpdateRun
+    {
+        if (! Schema::hasTable('system_update_runs')) {
+            return null;
+        }
+
+        return SystemUpdateRun::query()->latest()->first();
     }
 }

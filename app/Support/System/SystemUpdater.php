@@ -5,6 +5,7 @@ namespace App\Support\System;
 use App\Models\SystemUpdateRun;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class SystemUpdater
@@ -53,7 +54,7 @@ class SystemUpdater
             $this->runCommand('up', [], $log);
             $maintenanceEnabled = false;
 
-            $run = SystemUpdateRun::query()->create([
+            $run = $this->createUpdateRun([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
                 'status' => SystemUpdateRun::STATUS_SUCCESS,
@@ -75,7 +76,7 @@ class SystemUpdater
                 }
             }
 
-            SystemUpdateRun::query()->create([
+            $this->createUpdateRun([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
                 'status' => SystemUpdateRun::STATUS_FAILED,
@@ -111,5 +112,14 @@ class SystemUpdater
             })
             ->filter()
             ->implode(' ');
+    }
+
+    private function createUpdateRun(array $attributes): ?SystemUpdateRun
+    {
+        if (! Schema::hasTable('system_update_runs')) {
+            return null;
+        }
+
+        return SystemUpdateRun::query()->create($attributes);
     }
 }

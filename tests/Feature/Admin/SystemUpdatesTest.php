@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\SystemUpdater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -49,6 +50,23 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('Up to date');
         $response->assertSee('Up to date');
         $response->assertSee('Up to date</button>', false);
+    }
+
+    #[Test]
+    public function updates_page_still_loads_when_update_log_table_is_missing(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.latest_version', '0.1.1');
+
+        Schema::drop('system_update_runs');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('System Updates');
+        $response->assertDontSee('Latest Update Run');
     }
 
     #[Test]
