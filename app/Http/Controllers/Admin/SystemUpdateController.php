@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemUpdateRun;
+use App\Support\System\SystemUpdateInspector;
 use App\Support\System\SystemUpdater;
-use App\Support\System\UpdateChecker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -14,17 +14,27 @@ use Illuminate\View\View;
 class SystemUpdateController extends Controller
 {
     public function __construct(
-        private readonly UpdateChecker $updateChecker,
+        private readonly SystemUpdateInspector $systemUpdateInspector,
         private readonly SystemUpdater $systemUpdater,
     ) {}
 
     public function index(): View
     {
+        $checkedAt = session('system_updates_checked_at');
+
         return view('admin.system.updates', [
-            'updateStatus' => $this->updateChecker->status(),
+            'report' => $this->systemUpdateInspector->report(),
             'latestRun' => $this->latestRun(),
-            'isMaintenanceMode' => app()->isDownForMaintenance(),
+            'checkedAt' => is_string($checkedAt) ? now()->parse($checkedAt) : now(),
         ]);
+    }
+
+    public function check(): RedirectResponse
+    {
+        return redirect()
+            ->route('admin.system.updates.index')
+            ->with('status', 'Update status refreshed.')
+            ->with('system_updates_checked_at', now()->toIso8601String());
     }
 
     public function run(Request $request): RedirectResponse
@@ -36,11 +46,11 @@ class SystemUpdateController extends Controller
         ]);
 
         try {
-            $result = $this->systemUpdater->run();
+            $result = $this->systemUpdater->run($request->user()?->id);
 
             return redirect()
                 ->route('admin.system.updates.index')
-                ->with('status', 'Update completed successfully.')
+                ->with('status', $result['summary'] ?? 'Update completed successfully.')
                 ->with('update_output', $result['output']);
         } catch (\Throwable $throwable) {
             return redirect()
@@ -56,6 +66,6 @@ class SystemUpdateController extends Controller
             return null;
         }
 
-        return SystemUpdateRun::query()->latest()->first();
+        return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
     }
 }

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\SystemSetting;
 use App\Models\SystemUpdateRun;
 use App\Models\User;
 use App\Support\System\InstalledVersionStore;
+use App\Support\System\SystemUpdateInspector;
 use App\Support\System\SystemUpdater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -31,9 +33,12 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('System Updates');
         $response->assertSee('0.1.0');
         $response->assertSee('0.1.1');
-        $response->assertSee('Update available');
+        $response->assertSee('Ready to update');
         $response->assertSee('Added update center.');
         $response->assertSee('Update now');
+        $response->assertSee('Diagnostics');
+        $response->assertSee('Database connection');
+        $response->assertSee('Version persistence');
     }
 
     #[Test]
@@ -47,9 +52,9 @@ class SystemUpdatesTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
         $response->assertOk();
-        $response->assertSee('Up to date');
-        $response->assertSee('Up to date');
-        $response->assertSee('Up to date</button>', false);
+        $response->assertSee('Already up to date');
+        $response->assertSee('This install already matches the latest configured CMS version.');
+        $response->assertDontSee('Update now');
     }
 
     #[Test]
@@ -67,6 +72,73 @@ class SystemUpdatesTest extends TestCase
         $response->assertOk();
         $response->assertSee('System Updates');
         $response->assertDontSee('Latest Update Run');
+    }
+
+    #[Test]
+    public function check_again_action_refreshes_status_page(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.check'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+
+        $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
+        $followUp->assertSee('Update status refreshed.');
+        $followUp->assertSee('Last checked at');
+    }
+
+    #[Test]
+    public function update_is_blocked_when_version_persistence_diagnostic_fails(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.latest_version', '0.1.1');
+
+        Schema::drop('system_settings');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.run'), [
+            'confirm_backup' => '1',
+        ]);
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+
+        $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
+        $followUp->assertSee('Update Failed');
+        $followUp->assertSee('Resolve the blocked diagnostics before running the update.');
+    }
+
+    #[Test]
+    public function updates_page_can_show_maintenance_mode_blocked_state(): void
+    {
+        $user = User::factory()->create();
+
+        $mock = Mockery::mock(SystemUpdateInspector::class);
+        $mock->shouldReceive('report')->andReturn([
+            'checked_at' => now(),
+            'version' => [
+                'up_to_date' => false,
+                'current_version' => '0.1.0',
+                'latest_version' => '0.1.1',
+                'release_notes' => [],
+            ],
+            'diagnostics' => [],
+            'eligibility' => [
+                'state' => 'maintenance_mode',
+                'label' => 'Maintenance mode active',
+                'message' => 'Bring the application back up before starting a new update run.',
+                'can_update' => false,
+                'badge_class' => 'wb-status-danger',
+            ],
+        ]);
+
+        $this->app->instance(SystemUpdateInspector::class, $mock);
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('Maintenance mode active');
     }
 
     #[Test]
@@ -95,10 +167,18 @@ class SystemUpdatesTest extends TestCase
             'run' => SystemUpdateRun::query()->create([
                 'from_version' => '0.1.0',
                 'to_version' => '0.1.1',
-                'status' => 'success',
-                'output' => 'Updated APP_VERSION to 0.1.1.',
+                'status' => 'success_with_warnings',
+                'summary' => 'Update completed with warnings.',
+                'output' => 'Persisted installed version 0.1.1 in system settings.',
+                'warning_count' => 1,
+                'started_at' => now()->subSecond(),
+                'finished_at' => now(),
+                'duration_ms' => 200,
+                'triggered_by_user_id' => $user->id,
             ]),
-            'output' => ['Updated APP_VERSION to 0.1.1.'],
+            'output' => ['Persisted installed version 0.1.1 in system settings.'],
+            'warnings' => ['cache:clear warning: Cache store failed.'],
+            'summary' => 'Update completed with warnings.',
         ]);
 
         $this->app->instance(SystemUpdater::class, $mock);
@@ -110,8 +190,9 @@ class SystemUpdatesTest extends TestCase
         $response->assertRedirect(route('admin.system.updates.index'));
 
         $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
-        $followUp->assertSee('Update completed successfully.');
-        $followUp->assertSee('Updated APP_VERSION to 0.1.1.');
+        $followUp->assertSee('Update completed with warnings.');
+        $followUp->assertSee('Persisted installed version 0.1.1 in system settings.');
+        $followUp->assertSee('Warnings: 1');
     }
 
     #[Test]
@@ -148,22 +229,20 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function installed_version_store_updates_existing_env_line(): void
     {
-        $envPath = base_path('.env');
-        $originalContents = file_exists($envPath) ? file_get_contents($envPath) : false;
+        config()->set('app.version', '0.1.0');
 
-        try {
-            file_put_contents($envPath, "APP_NAME=WebBlocks CMS\nAPP_VERSION=0.1.0\n");
+        app(InstalledVersionStore::class)->persist('0.1.1');
 
-            app(InstalledVersionStore::class)->update('0.1.1');
+        $this->assertSame('0.1.1', SystemSetting::query()->where('key', InstalledVersionStore::VERSION_KEY)->value('value'));
+        $this->assertSame('0.1.1', app(InstalledVersionStore::class)->currentVersion());
+    }
 
-            $this->assertStringContainsString('APP_VERSION=0.1.1', (string) file_get_contents($envPath));
-        } finally {
-            if ($originalContents === false) {
-                @unlink($envPath);
-            } else {
-                file_put_contents($envPath, $originalContents);
-            }
-        }
+    #[Test]
+    public function installed_version_store_falls_back_to_config_when_no_persisted_value_exists(): void
+    {
+        config()->set('app.version', '0.1.0');
+
+        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
     }
 
     protected function tearDown(): void

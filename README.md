@@ -146,6 +146,17 @@ Project metadata is normalized to the CMS brand:
 - Demo-only source tracking is isolated from the core `assets` schema.
 - Starter/showcase media refresh logic is intentionally separate from core migrations.
 
+## System Updates
+
+- Installed CMS version now persists in the database through `system_settings` instead of writing back to `.env`.
+- The System Updates screen runs preflight diagnostics for:
+  - database connectivity
+  - version persistence readiness
+  - maintenance mode state
+  - cache clear readiness
+- Backups are still manual and external in V1.1. WebBlocks CMS does not create a backup during an update run.
+- The update center shows explicit eligibility before running and stores structured update run details in `system_update_runs`.
+
 ## License
 
 WebBlocks CMS is open-sourced software licensed under the MIT license.

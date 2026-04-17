@@ -4,9 +4,11 @@ namespace App\Support\System;
 
 class UpdateChecker
 {
+    public function __construct(private readonly InstalledVersionStore $installedVersionStore) {}
+
     public function status(): array
     {
-        $currentVersion = (string) config('app.version', '0.1.0');
+        $currentVersion = $this->installedVersionStore->currentVersion();
         $latestVersion = (string) config('cms.latest_version', $currentVersion);
 
         return [

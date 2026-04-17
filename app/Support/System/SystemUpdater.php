@@ -4,32 +4,29 @@ namespace App\Support\System;
 
 use App\Models\SystemUpdateRun;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class SystemUpdater
 {
     public function __construct(
-        private readonly UpdateChecker $updateChecker,
+        private readonly SystemUpdateInspector $systemUpdateInspector,
         private readonly InstalledVersionStore $installedVersionStore,
     ) {}
 
-    public function run(): array
+    public function run(?int $triggeredByUserId = null): array
     {
-        $status = $this->updateChecker->status();
+        $report = $this->systemUpdateInspector->report();
+        $status = $report['version'];
+        $eligibility = $report['eligibility'];
         $fromVersion = $status['current_version'];
         $toVersion = $status['latest_version'];
+        $startedAt = now();
+        $warnings = [];
 
-        if ($status['up_to_date']) {
-            throw new \RuntimeException('WebBlocks CMS is already up to date.');
+        if (! $eligibility['can_update']) {
+            throw new \RuntimeException($eligibility['message']);
         }
-
-        if (app()->isDownForMaintenance()) {
-            throw new \RuntimeException('The application is already in maintenance mode.');
-        }
-
-        DB::connection()->getPdo();
 
         $log = [];
         $maintenanceEnabled = false;
@@ -45,25 +42,43 @@ class SystemUpdater
             try {
                 $this->runCommand('cache:clear', [], $log);
             } catch (Throwable $throwable) {
-                $log[] = 'cache:clear warning: '.$throwable->getMessage();
+                $warning = 'cache:clear warning: '.$throwable->getMessage();
+                $warnings[] = $warning;
+                $log[] = $warning;
             }
-
-            $this->installedVersionStore->update($toVersion);
-            $log[] = 'Updated APP_VERSION to '.$toVersion.'.';
 
             $this->runCommand('up', [], $log);
             $maintenanceEnabled = false;
 
+            $this->installedVersionStore->persist($toVersion);
+            $log[] = 'Persisted installed version '.$toVersion.' in system settings.';
+
+            $finishedAt = now();
+            $statusName = $warnings === []
+                ? SystemUpdateRun::STATUS_SUCCESS
+                : SystemUpdateRun::STATUS_SUCCESS_WITH_WARNINGS;
+            $summary = $warnings === []
+                ? 'Update completed successfully.'
+                : 'Update completed with warnings.';
+
             $run = $this->createUpdateRun([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
-                'status' => SystemUpdateRun::STATUS_SUCCESS,
+                'status' => $statusName,
+                'summary' => $summary,
                 'output' => implode(PHP_EOL.PHP_EOL, $log),
+                'warning_count' => count($warnings),
+                'started_at' => $startedAt,
+                'finished_at' => $finishedAt,
+                'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
+                'triggered_by_user_id' => $triggeredByUserId,
             ]);
 
             return [
                 'run' => $run,
                 'output' => $log,
+                'warnings' => $warnings,
+                'summary' => $summary,
             ];
         } catch (Throwable $throwable) {
             $log[] = 'Update failed: '.$throwable->getMessage();
@@ -76,11 +91,19 @@ class SystemUpdater
                 }
             }
 
+            $finishedAt = now();
+
             $this->createUpdateRun([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
                 'status' => SystemUpdateRun::STATUS_FAILED,
+                'summary' => $throwable->getMessage(),
                 'output' => implode(PHP_EOL.PHP_EOL, $log),
+                'warning_count' => count($warnings),
+                'started_at' => $startedAt,
+                'finished_at' => $finishedAt,
+                'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
+                'triggered_by_user_id' => $triggeredByUserId,
             ]);
 
             throw new \RuntimeException($throwable->getMessage(), previous: $throwable);
@@ -120,6 +143,10 @@ class SystemUpdater
             return null;
         }
 
-        return SystemUpdateRun::query()->create($attributes);
+        try {
+            return SystemUpdateRun::query()->create($attributes);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

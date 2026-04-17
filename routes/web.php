@@ -43,6 +43,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('navigation', NavigationItemController::class)->except(['show']);
     Route::resource('block-types', BlockTypeController::class)->except(['show']);
     Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
+    Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
     Route::post('system/updates/run', [SystemUpdateController::class, 'run'])->name('system.updates.run');
     Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
