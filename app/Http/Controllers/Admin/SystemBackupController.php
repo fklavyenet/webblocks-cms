@@ -7,6 +7,8 @@ use App\Models\SystemBackup;
 use App\Support\System\SystemBackupManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -17,10 +19,18 @@ class SystemBackupController extends Controller
 
     public function index(): View
     {
+        $tableExists = Schema::hasTable('system_backups');
+
         return view('admin.system.backups.index', [
-            'backups' => SystemBackup::query()->with('triggeredBy')->latest()->paginate(20),
+            'backups' => $tableExists
+                ? SystemBackup::query()->with('triggeredBy')->latest()->paginate(20)
+                : new LengthAwarePaginator([], 0, 20, 1, [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]),
             'latestBackup' => $this->systemBackupManager->latest(),
             'freshness' => $this->systemBackupManager->freshnessSummary(),
+            'backupTableExists' => $tableExists,
         ]);
     }
 

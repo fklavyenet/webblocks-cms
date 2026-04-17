@@ -11,6 +11,15 @@
     @include('admin.partials.flash')
 
     <div class="wb-stack wb-stack-4">
+        @if (! $backupTableExists)
+            <div class="wb-alert wb-alert-warning">
+                <div>
+                    <div class="wb-alert-title">Backup storage is not ready yet</div>
+                    <div>The `system_backups` table is missing in this environment. Run the latest migrations before using Backup Manager V1.</div>
+                </div>
+            </div>
+        @endif
+
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -71,7 +80,7 @@
 
                     <form method="POST" action="{{ route('admin.system.backups.store') }}">
                         @csrf
-                        <button type="submit" class="wb-btn wb-btn-primary">Create backup</button>
+                        <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
                     </form>
                 </div>
             </div>

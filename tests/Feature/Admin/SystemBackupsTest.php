@@ -8,6 +8,7 @@ use App\Models\SystemBackup;
 use App\Models\User;
 use App\Support\System\DatabaseDumpWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,21 @@ class SystemBackupsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Backups');
         $response->assertSee('Create backup');
+    }
+
+    #[Test]
+    public function backups_page_still_loads_when_backup_table_is_missing(): void
+    {
+        Schema::drop('system_backups');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+        $response->assertSee('Backups');
+        $response->assertSee('Backup storage is not ready yet');
+        $response->assertSee('system_backups');
     }
 
     #[Test]
