@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\SystemBackup;
 use App\Models\SystemSetting;
 use App\Models\SystemUpdateRun;
 use App\Models\User;
@@ -170,6 +171,51 @@ class SystemUpdatesTest extends TestCase
         $response = $this->actingAs($user)->post(route('admin.system.updates.run'), []);
 
         $response->assertSessionHasErrors('confirm_backup');
+    }
+
+    #[Test]
+    public function updates_page_warns_when_recent_backup_is_missing(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
+        config()->set('cms.latest_version', '0.1.1');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('Recent Backup');
+        $response->assertSee('No recent successful backup');
+    }
+
+    #[Test]
+    public function updates_page_shows_positive_recent_backup_state(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
+        config()->set('cms.latest_version', '0.1.1');
+
+        $user = User::factory()->create();
+
+        SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/17/demo.zip',
+            'archive_filename' => 'demo.zip',
+            'started_at' => now()->subMinutes(5),
+            'finished_at' => now()->subMinutes(4),
+            'summary' => 'Backup completed.',
+            'triggered_by_user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('Recent backup found');
     }
 
     #[Test]

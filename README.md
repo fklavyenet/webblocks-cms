@@ -159,10 +159,29 @@ Project metadata is normalized to the CMS brand:
   - version persistence readiness
   - maintenance mode state
   - cache clear readiness
+- The System Updates screen is backup-aware and highlights whether a successful backup completed within the last 24 hours.
 - Remote manifest checks are cached for a short period and `Check again` refreshes the cache.
 - If the remote manifest fails or the channel does not match, the update center falls back to local config data and shows a warning.
-- Backups are still manual and external in V1.1. WebBlocks CMS does not create a backup during an update run.
+- Update runs still do not create a backup automatically. Use the Backups screen first when you want a current snapshot before maintenance.
 - The update center shows explicit eligibility before running and stores structured update run details in `system_update_runs`.
+
+## Backup Manager V1
+
+- Admin path: `/admin/system/backups`
+- Backup records persist in `system_backups` with running, completed, or failed state plus summary, output log, and triggering user.
+- Backup archives are stored locally under `storage/app/backups/<Y>/<m>/<d>/webblocks-cms-backup-YYYY-MM-DD-HHMMSS.zip`.
+- Each archive includes:
+  - `database/database.sql`
+  - `uploads/public/...` from the CMS-managed `storage/app/public` area
+  - `manifest.json` with app/version/driver/archive metadata
+- Database dump behavior:
+  - SQLite: PHP-generated SQL export from the active connection, including schema and row inserts
+  - MySQL/MariaDB: `mysqldump` or `mariadb-dump` when available; the backup fails clearly if the command is unavailable
+- Not supported yet:
+  - restore UI or one-click restore
+  - scheduled backups
+  - cloud or remote storage sync
+  - incremental/differential or encrypted backup flows
 
 ## License
 

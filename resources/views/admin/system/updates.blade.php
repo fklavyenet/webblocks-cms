@@ -5,6 +5,7 @@
         $updateStatus = $report['version'];
         $eligibility = $report['eligibility'];
         $diagnostics = $report['diagnostics'];
+        $latestSuccessfulBackup = $backupFreshness['latest_successful'];
     @endphp
 
     @include('admin.partials.page-header', [
@@ -112,22 +113,32 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>Backup Warning</strong>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                <strong>Recent Backup</strong>
+                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Open Backups</a>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-alert wb-alert-warning">
-                    <div>
-                        <div class="wb-alert-title">Manual backups only</div>
-                        <div>WebBlocks CMS does not create a backup for you during this update. Create your own database and file backup before continuing.</div>
+                @if ($backupFreshness['has_recent_successful_backup'])
+                    <div class="wb-alert wb-alert-success">
+                        <div>
+                            <div class="wb-alert-title">Recent backup found</div>
+                            <div>The latest successful backup finished at {{ $latestSuccessfulBackup?->finished_at?->format('Y-m-d H:i:s') }}. This counts as recent for {{ $backupFreshness['hours'] }} hours.</div>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="wb-alert wb-alert-warning">
+                        <div>
+                            <div class="wb-alert-title">No recent successful backup</div>
+                            <div>Updates do not create a backup automatically. Create one from the Backups screen before proceeding if you want a current database and uploads snapshot.</div>
+                        </div>
+                    </div>
+                @endif
 
                 <ul class="wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-                    <li>Back up your database.</li>
-                    <li>Back up uploaded files and custom assets.</li>
-                    <li>Review local customizations before updating.</li>
+                    <li>Backup Manager V1 stores a local zip archive in app-managed storage.</li>
+                    <li>Each archive includes a database dump, `storage/app/public`, and a manifest.</li>
+                    <li>Restore tooling is not included yet, so verify the archive before risky maintenance.</li>
                 </ul>
             </div>
         </div>
@@ -145,7 +156,7 @@
 
                     <label class="wb-checkbox">
                         <input type="checkbox" name="confirm_backup" value="1" @checked(old('confirm_backup'))>
-                        <span>I understand that WebBlocks CMS will not create a backup during this update, and I have created one or accept the risk.</span>
+                        <span>I understand that WebBlocks CMS will not create a backup automatically during this update, and I have reviewed backup status or accept the risk.</span>
                     </label>
 
                     <div class="wb-cluster wb-cluster-between wb-cluster-2">

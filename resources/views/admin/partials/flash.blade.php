@@ -23,6 +23,15 @@
     </div>
 @endif
 
+@if ($errors->has('system_backup'))
+    <div class="wb-alert wb-alert-danger">
+        <div>
+            <div class="wb-alert-title">Backup Failed</div>
+            <div>{{ $errors->first('system_backup') }}</div>
+        </div>
+    </div>
+@endif
+
 @if ($errors->any())
     <div class="wb-alert wb-alert-danger">
         <div>
