@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Admin\BlockTypeController;
+use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NavigationItemController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\SlotTypeController;
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -39,10 +41,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::patch('navigation/{navigation}/visibility', [NavigationItemController::class, 'toggleVisibility'])->name('navigation.visibility');
     Route::resource('navigation', NavigationItemController::class)->except(['show']);
     Route::resource('block-types', BlockTypeController::class)->except(['show']);
+    Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
+    Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     Route::post('/blocks/{block}/move-up', [BlockController::class, 'moveUp'])->name('blocks.move-up');
     Route::post('/blocks/{block}/move-down', [BlockController::class, 'moveDown'])->name('blocks.move-down');
     Route::resource('blocks', BlockController::class)->except(['show']);
 });
+
+Route::post('/contact-messages', [ContactMessageController::class, 'store'])
+    ->middleware('throttle:contact-form-submissions')
+    ->name('contact-messages.store');
 
 Route::get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
 

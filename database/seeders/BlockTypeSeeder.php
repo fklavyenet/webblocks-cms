@@ -41,6 +41,7 @@ class BlockTypeSeeder extends Seeder
             ['name' => 'Radio Group', 'slug' => 'radio-group', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 28, 'status' => 'published'],
             ['name' => 'Submit', 'slug' => 'submit', 'category' => 'form', 'source_type' => 'form', 'is_system' => true, 'is_container' => false, 'sort_order' => 29, 'status' => 'published'],
             ['name' => 'Search', 'slug' => 'search', 'category' => 'form', 'source_type' => 'form', 'is_system' => false, 'is_container' => false, 'sort_order' => 30, 'status' => 'published'],
+            ['name' => 'Contact Form', 'slug' => 'contact_form', 'category' => 'form', 'description' => 'Collect public contact messages and notify the editorial team after saving the record.', 'source_type' => 'form', 'is_system' => false, 'is_container' => false, 'sort_order' => 31, 'status' => 'published'],
             ['name' => 'Product Card', 'slug' => 'product-card', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => false, 'is_container' => false, 'sort_order' => 31, 'status' => 'published'],
             ['name' => 'Product Grid', 'slug' => 'product-grid', 'category' => 'commerce', 'source_type' => 'data', 'is_system' => false, 'is_container' => true, 'sort_order' => 32, 'status' => 'published'],
             ['name' => 'Pricing', 'slug' => 'pricing', 'category' => 'commerce', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 33, 'status' => 'published'],

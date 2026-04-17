@@ -1,0 +1,76 @@
+@extends('layouts.admin', ['title' => 'Contact Message', 'heading' => 'Contact Message'])
+
+@section('content')
+    @include('admin.partials.page-header', [
+        'title' => $message->subject ?: 'Contact Message',
+        'description' => 'Inspect the saved submission record and manage its editorial status.',
+        'actions' => '<a href="'.route('admin.contact-messages.index').'" class="wb-btn wb-btn-secondary">Back to Inbox</a>',
+    ])
+
+    @include('admin.partials.flash')
+
+    <div class="wb-cluster wb-cluster-2">
+        @foreach ($statuses as $status)
+            <form method="POST" action="{{ route('admin.contact-messages.status', $message) }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="status" value="{{ $status }}">
+                <button type="submit" class="wb-btn {{ $message->status === $status ? 'wb-btn-primary' : 'wb-btn-secondary' }}">Mark {{ $status }}</button>
+            </form>
+        @endforeach
+
+        <form method="POST" action="{{ route('admin.contact-messages.destroy', $message) }}" onsubmit="return confirm('Delete this message?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="wb-btn wb-btn-danger">Delete</button>
+        </form>
+    </div>
+
+    <div class="wb-grid wb-grid-2">
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>Sender</strong></div>
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <div><strong>Name:</strong> {{ $message->name }}</div>
+                <div><strong>Email:</strong> <a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></div>
+                <div><strong>Subject:</strong> {{ $message->subject ?? '-' }}</div>
+                <div><strong>Status:</strong> <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></div>
+                <div><strong>Received:</strong> {{ $message->created_at?->format('Y-m-d H:i:s') }}</div>
+            </div>
+        </div>
+
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>Source</strong></div>
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <div><strong>Page:</strong> {{ $message->page?->title ?? '-' }}</div>
+                <div><strong>Source URL:</strong> @if ($message->source_url)<a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $message->source_url }}</a>@else - @endif</div>
+                <div><strong>Block:</strong> {{ $message->block?->typeName() ?? '-' }}@if($message->block_id) <span class="wb-text-sm wb-text-muted">#{{ $message->block_id }}</span>@endif</div>
+                <div><strong>Referer:</strong> {{ $message->referer ?? '-' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wb-card">
+        <div class="wb-card-header"><strong>Message</strong></div>
+        <div class="wb-card-body" style="white-space: pre-line;">{{ $message->message }}</div>
+    </div>
+
+    <div class="wb-grid wb-grid-2">
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>Notification</strong></div>
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <div><strong>Notification:</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
+                <div><strong>Recipient:</strong> {{ $message->notification_recipient ?? '-' }}</div>
+                <div><strong>Sent At:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                <div><strong>Error:</strong> {{ $message->notification_error ?? '-' }}</div>
+            </div>
+        </div>
+
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>Request Metadata</strong></div>
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <div><strong>IP Address:</strong> {{ $message->ip_address ?? '-' }}</div>
+                <div><strong>User Agent:</strong> {{ $message->user_agent ?? '-' }}</div>
+            </div>
+        </div>
+    </div>
+@endsection

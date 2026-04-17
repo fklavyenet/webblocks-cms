@@ -1,0 +1,209 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Mail\ContactMessageNotification;
+use App\Models\Block;
+use App\Models\BlockType;
+use App\Models\ContactMessage;
+use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\SlotType;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+
+class ContactFormModuleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function slotType(): SlotType
+    {
+        return SlotType::query()->updateOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        );
+    }
+
+    private function contactBlockType(): BlockType
+    {
+        return BlockType::query()->updateOrCreate(
+            ['slug' => 'contact_form'],
+            [
+                'name' => 'Contact Form',
+                'category' => 'form',
+                'source_type' => 'form',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 31,
+                'status' => 'published',
+            ],
+        );
+    }
+
+    private function createContactFormPage(): array
+    {
+        $slotType = $this->slotType();
+        $blockType = $this->contactBlockType();
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'form',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Contact us',
+            'content' => 'Send a message to the editorial team.',
+            'settings' => json_encode([
+                'submit_label' => 'Send message',
+                'success_message' => 'Thanks for your message. We will get back to you soon.',
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        return [$page, $block];
+    }
+
+    private function submissionPayload(Block $block, ?array $overrides = []): array
+    {
+        return array_merge([
+            'block_id' => $block->id,
+            'page_id' => $block->page_id,
+            'source_url' => route('pages.show', $block->page?->slug ?? 'contact'),
+            'submitted_at' => now()->subSeconds(5)->timestamp,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Partnership request',
+            'message' => 'We would like to discuss a new project.',
+            'website' => '',
+        ], $overrides ?? []);
+    }
+
+    #[Test]
+    public function contact_form_submission_stores_message_in_database(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+
+        $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
+
+        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $this->assertDatabaseHas('contact_messages', [
+            'block_id' => $block->id,
+            'page_id' => $block->page_id,
+            'email' => 'taylor@example.com',
+            'status' => 'new',
+        ]);
+    }
+
+    #[Test]
+    public function mail_notification_is_attempted_after_persistence(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block));
+
+        Mail::assertSent(ContactMessageNotification::class, function (ContactMessageNotification $mail) use ($block): bool {
+            return $mail->contactMessage->block_id === $block->id;
+        });
+    }
+
+    #[Test]
+    public function submission_is_stored_even_when_mail_fails(): void
+    {
+        [, $block] = $this->createContactFormPage();
+
+        Mail::shouldReceive('to')->once()->with('team@example.com')->andReturnSelf();
+        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('SMTP unavailable'));
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->first();
+
+        $this->assertNotNull($message);
+        $this->assertSame('SMTP unavailable', $message->notification_error);
+        $this->assertSame('new', $message->status);
+    }
+
+    #[Test]
+    public function honeypot_submission_is_treated_as_success_without_persisting(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+
+        $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+            'website' => 'https://spam.example.com',
+        ]));
+
+        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $this->assertDatabaseCount('contact_messages', 0);
+        Mail::assertNothingSent();
+    }
+
+    #[Test]
+    public function admin_messages_list_requires_authentication(): void
+    {
+        $this->get(route('admin.contact-messages.index'))
+            ->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function admin_can_update_message_status(): void
+    {
+        $user = User::factory()->create();
+        [, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $block->page_id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Status change',
+            'message' => 'Please update this status.',
+            'status' => 'new',
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('admin.contact-messages.status', $message), ['status' => 'replied'])
+            ->assertRedirect();
+
+        $this->assertSame('replied', $message->fresh()->status);
+    }
+
+    #[Test]
+    public function contact_form_block_renders_on_a_public_page(): void
+    {
+        [$page] = $this->createContactFormPage();
+
+        $response = $this->get(route('pages.show', $page->slug));
+
+        $response->assertOk();
+        $response->assertSee('Contact us');
+        $response->assertSee('Send a message to the editorial team.');
+        $response->assertSee('Name');
+        $response->assertSee('Email');
+        $response->assertSee('Subject');
+        $response->assertSee('Message');
+        $response->assertSee(route('contact-messages.store'), false);
+    }
+}

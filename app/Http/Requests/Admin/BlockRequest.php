@@ -25,6 +25,7 @@ class BlockRequest extends FormRequest
         $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
         $isColumnItem = $selectedBlockType?->slug === 'column_item';
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
+        $isContactForm = $selectedBlockType?->slug === 'contact_form';
 
         return [
             'page_id' => ['required', 'integer', 'exists:pages,id'],
@@ -58,6 +59,13 @@ class BlockRequest extends FormRequest
             'variant' => ['nullable', 'string', 'max:255'],
             'meta' => ['nullable', 'string'],
             'settings' => ['nullable', 'string'],
+            'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
+            'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
+            'submit_label' => [$isContactForm ? 'required' : 'nullable', 'string', 'max:255'],
+            'success_message' => [$isContactForm ? 'required' : 'nullable', 'string', 'max:1000'],
+            'recipient_email' => [$isContactForm ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
+            'send_email_notification' => [$isContactForm ? 'required' : 'nullable', 'boolean'],
+            'store_submissions' => [$isContactForm ? 'required' : 'nullable', 'boolean'],
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
@@ -197,6 +205,23 @@ class BlockRequest extends FormRequest
                     'menu_key' => $data['navigation_menu_key'] ?? NavigationItem::MENU_PRIMARY,
                 ], JSON_UNESCAPED_SLASHES);
             }
+
+            if ($blockType?->slug === 'contact_form') {
+                $data['title'] = trim((string) ($data['heading'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = trim((string) ($data['intro_text'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['asset_id'] = null;
+                $data['settings'] = json_encode([
+                    'submit_label' => trim((string) ($data['submit_label'] ?? 'Send message')) ?: 'Send message',
+                    'success_message' => trim((string) ($data['success_message'] ?? config('contact.success_message'))) ?: config('contact.success_message'),
+                    'recipient_email' => trim((string) ($data['recipient_email'] ?? '')) ?: null,
+                    'send_email_notification' => (bool) ($data['send_email_notification'] ?? true),
+                    'store_submissions' => (bool) ($data['store_submissions'] ?? true),
+                ], JSON_UNESCAPED_SLASHES);
+            }
         }
 
         if (! empty($data['slot_type_id'])) {
@@ -204,6 +229,7 @@ class BlockRequest extends FormRequest
             $data['slot'] = $slotType?->slug;
         }
 
+        unset($data['heading'], $data['intro_text'], $data['submit_label'], $data['success_message'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
         unset($data['navigation_menu_key']);
 
         return $data;

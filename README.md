@@ -49,6 +49,14 @@ Project metadata is normalized to the CMS brand:
 - Drag and drop reordering auto-saves immediately after drop.
 - Cycle protection and a maximum depth of 3 levels are enforced.
 
+## Contact Form Block
+
+- `contact_form` is a reusable block type, not a special page feature.
+- Public submissions are always stored in `contact_messages` before email delivery is attempted.
+- Notification recipients resolve from block-level `recipient_email`, then `CONTACT_RECIPIENT_EMAIL`.
+- Message statuses are `new`, `read`, `replied`, `archived`, and `spam`.
+- Anti-spam protection uses a honeypot field, a minimum submit-time check, and Laravel rate limiting on the submission route.
+
 ## License
 
 WebBlocks CMS is open-sourced software licensed under the MIT license.
