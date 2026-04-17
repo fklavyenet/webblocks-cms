@@ -119,6 +119,7 @@
     <body>
         @php
             $user = auth()->user();
+            $updateStatus = app(\App\Support\System\UpdateChecker::class)->status();
             $userInitials = collect(preg_split('/\s+/', trim($user?->name ?? 'User')))
                 ->filter()
                 ->take(2)
@@ -134,6 +135,9 @@
                     ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-folder'],
                     ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*', 'icon' => 'wb-icon-folder'],
                     ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*', 'icon' => 'wb-icon-layers'],
+                ],
+                [
+                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh-dot', 'update_available' => ! $updateStatus['up_to_date']],
                 ],
             ];
         @endphp
@@ -159,7 +163,13 @@
                                     @if (request()->routeIs($item['active'])) aria-current="page" @endif
                                 >
                                     <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
-                                    {{ $item['label'] }}
+                                    <span class="wb-cluster wb-cluster-between wb-cluster-2" style="width: 100%;">
+                                        <span>{{ $item['label'] }}</span>
+
+                                        @if (($item['update_available'] ?? false) === true)
+                                            <span class="wb-status-pill wb-status-pending">1 update</span>
+                                        @endif
+                                    </span>
                                 </a>
                             @endforeach
                         </div>

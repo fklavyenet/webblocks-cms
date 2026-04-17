@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NavigationItemController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\SlotTypeController;
+use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
@@ -41,6 +42,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::patch('navigation/{navigation}/visibility', [NavigationItemController::class, 'toggleVisibility'])->name('navigation.visibility');
     Route::resource('navigation', NavigationItemController::class)->except(['show']);
     Route::resource('block-types', BlockTypeController::class)->except(['show']);
+    Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
+    Route::post('system/updates/run', [SystemUpdateController::class, 'run'])->name('system.updates.run');
     Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
