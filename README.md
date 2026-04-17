@@ -165,6 +165,12 @@ Project metadata is normalized to the CMS brand:
 - Update runs still do not create a backup automatically. Use the Backups screen first when you want a current snapshot before maintenance.
 - The update center shows explicit eligibility before running and stores structured update run details in `system_update_runs`.
 
+## Admin Dashboard Path
+
+- The canonical admin dashboard URL is now `/admin`.
+- `/admin/dashboard` remains available as a backward-compatible redirect to `/admin`.
+- Auth redirects and admin entry points now resolve to the canonical `/admin` path.
+
 ## Backup Manager V1
 
 - Admin path: `/admin/system/backups`

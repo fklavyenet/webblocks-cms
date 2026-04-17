@@ -20,14 +20,15 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware('auth')->group(function () {
-    Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
+    Route::redirect('/dashboard', '/admin')->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::patch('/pages/{page}/status', [PageController::class, 'updateStatus'])->name('pages.status');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::resource('pages', PageController::class)->except([]);
