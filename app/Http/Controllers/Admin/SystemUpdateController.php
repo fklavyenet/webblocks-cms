@@ -20,21 +20,26 @@ class SystemUpdateController extends Controller
 
     public function index(): View
     {
+        $report = $this->systemUpdateInspector->report();
         $checkedAt = session('system_updates_checked_at');
 
         return view('admin.system.updates', [
-            'report' => $this->systemUpdateInspector->report(),
+            'report' => $report,
             'latestRun' => $this->latestRun(),
-            'checkedAt' => is_string($checkedAt) ? now()->parse($checkedAt) : now(),
+            'checkedAt' => is_string($checkedAt)
+                ? now()->parse($checkedAt)
+                : ($report['checked_at'] ?? now()),
         ]);
     }
 
     public function check(): RedirectResponse
     {
+        $report = $this->systemUpdateInspector->refreshReport();
+
         return redirect()
             ->route('admin.system.updates.index')
             ->with('status', 'Update status refreshed.')
-            ->with('system_updates_checked_at', now()->toIso8601String());
+            ->with('system_updates_checked_at', ($report['checked_at'] ?? now())->toIso8601String());
     }
 
     public function run(Request $request): RedirectResponse

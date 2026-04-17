@@ -6,9 +6,13 @@ use App\Models\SystemSetting;
 use App\Models\SystemUpdateRun;
 use App\Models\User;
 use App\Support\System\InstalledVersionStore;
+use App\Support\System\RemoteManifestUpdateSource;
 use App\Support\System\SystemUpdateInspector;
 use App\Support\System\SystemUpdater;
+use App\Support\System\UpdateChecker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,6 +26,7 @@ class SystemUpdatesTest extends TestCase
     public function updates_page_shows_update_available_state(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
         config()->set('cms.release_notes.0.1.1', ['Added update center.']);
 
@@ -35,6 +40,8 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('0.1.1');
         $response->assertSee('Ready to update');
         $response->assertSee('Added update center.');
+        $response->assertSee('Local');
+        $response->assertSee('stable');
         $response->assertSee('Update now');
         $response->assertSee('Diagnostics');
         $response->assertSee('Database connection');
@@ -45,6 +52,7 @@ class SystemUpdatesTest extends TestCase
     public function updates_page_shows_up_to_date_state(): void
     {
         config()->set('app.version', '0.1.1');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         $user = User::factory()->create();
@@ -61,6 +69,7 @@ class SystemUpdatesTest extends TestCase
     public function updates_page_still_loads_when_update_log_table_is_missing(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         Schema::drop('system_update_runs');
@@ -77,6 +86,8 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function check_again_action_refreshes_status_page(): void
     {
+        config()->set('cms.update.source', 'local');
+
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.check'));
@@ -92,6 +103,7 @@ class SystemUpdatesTest extends TestCase
     public function update_is_blocked_when_version_persistence_diagnostic_fails(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         Schema::drop('system_settings');
@@ -122,6 +134,11 @@ class SystemUpdatesTest extends TestCase
                 'current_version' => '0.1.0',
                 'latest_version' => '0.1.1',
                 'release_notes' => [],
+                'channel' => 'stable',
+                'published_at' => null,
+                'source' => 'local',
+                'fallback_warning' => null,
+                'last_checked_at' => now(),
             ],
             'diagnostics' => [],
             'eligibility' => [
@@ -145,6 +162,7 @@ class SystemUpdatesTest extends TestCase
     public function backup_confirmation_is_required_before_running_update(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         $user = User::factory()->create();
@@ -158,6 +176,7 @@ class SystemUpdatesTest extends TestCase
     public function update_run_success_path_records_run_and_shows_success_message(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         $user = User::factory()->create();
@@ -199,6 +218,7 @@ class SystemUpdatesTest extends TestCase
     public function update_run_failure_path_shows_error_and_leaves_app_accessible(): void
     {
         config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'local');
         config()->set('cms.latest_version', '0.1.1');
 
         $user = User::factory()->create();
@@ -243,6 +263,101 @@ class SystemUpdatesTest extends TestCase
         config()->set('app.version', '0.1.0');
 
         $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+    }
+
+    #[Test]
+    public function remote_manifest_success_is_used_when_remote_source_is_enabled(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'remote');
+        config()->set('cms.update.manifest_url', 'https://updates.example.test/webblocks-cms/manifest.json');
+        config()->set('cms.update.channel', 'stable');
+
+        Http::fake([
+            'https://updates.example.test/webblocks-cms/manifest.json' => Http::response([
+                'version' => '0.1.2',
+                'channel' => 'stable',
+                'release_notes' => ['Added System Updates V2.'],
+                'published_at' => '2026-04-18T12:00:00Z',
+            ]),
+        ]);
+
+        $status = app(UpdateChecker::class)->status();
+
+        $this->assertSame('0.1.2', $status['latest_version']);
+        $this->assertSame('remote', $status['source']);
+        $this->assertSame('stable', $status['channel']);
+        $this->assertSame(['Added System Updates V2.'], $status['release_notes']);
+        $this->assertNull($status['fallback_warning']);
+    }
+
+    #[Test]
+    public function remote_manifest_failure_falls_back_to_local_source(): void
+    {
+        config()->set('app.version', '0.1.0');
+        config()->set('cms.update.source', 'remote');
+        config()->set('cms.update.manifest_url', 'https://updates.example.test/webblocks-cms/manifest.json');
+        config()->set('cms.latest_version', '0.1.1');
+        config()->set('cms.release_notes.0.1.1', ['Local fallback notes.']);
+
+        Http::fake([
+            'https://updates.example.test/webblocks-cms/manifest.json' => Http::response([], 500),
+        ]);
+
+        $status = app(UpdateChecker::class)->status(true);
+
+        $this->assertSame('0.1.1', $status['latest_version']);
+        $this->assertSame('local', $status['source']);
+        $this->assertSame(['Local fallback notes.'], $status['release_notes']);
+        $this->assertSame('Could not reach update server. Using local update data.', $status['fallback_warning']);
+    }
+
+    #[Test]
+    public function remote_manifest_response_is_cached(): void
+    {
+        config()->set('cms.update.source', 'remote');
+        config()->set('cms.update.manifest_url', 'https://updates.example.test/webblocks-cms/manifest.json');
+
+        Http::fake([
+            'https://updates.example.test/webblocks-cms/manifest.json' => Http::response([
+                'version' => '0.1.2',
+                'channel' => 'stable',
+                'release_notes' => ['Cached notes.'],
+                'published_at' => '2026-04-18T12:00:00Z',
+            ]),
+        ]);
+
+        Cache::forget(RemoteManifestUpdateSource::CACHE_KEY);
+
+        $checker = app(UpdateChecker::class);
+
+        $checker->status(true);
+        $checker->status();
+
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
+    public function channel_mismatch_uses_local_fallback(): void
+    {
+        config()->set('cms.update.source', 'remote');
+        config()->set('cms.update.manifest_url', 'https://updates.example.test/webblocks-cms/manifest.json');
+        config()->set('cms.update.channel', 'stable');
+        config()->set('cms.latest_version', '0.1.1');
+
+        Http::fake([
+            'https://updates.example.test/webblocks-cms/manifest.json' => Http::response([
+                'version' => '0.2.0-beta1',
+                'channel' => 'beta',
+                'release_notes' => ['Beta note.'],
+                'published_at' => '2026-04-18T12:00:00Z',
+            ]),
+        ]);
+
+        $status = app(UpdateChecker::class)->status(true);
+
+        $this->assertSame('local', $status['source']);
+        $this->assertStringContainsString('does not match configured channel stable', (string) $status['fallback_warning']);
     }
 
     protected function tearDown(): void

@@ -15,7 +15,16 @@ class SystemUpdateInspector
 
     public function report(): array
     {
-        $version = $this->updateChecker->status();
+        return $this->reportFromStatus($this->updateChecker->status());
+    }
+
+    public function refreshReport(): array
+    {
+        return $this->reportFromStatus($this->updateChecker->refresh());
+    }
+
+    private function reportFromStatus(array $version): array
+    {
 
         $diagnostics = [
             $this->databaseDiagnostic(),
@@ -25,7 +34,7 @@ class SystemUpdateInspector
         ];
 
         return [
-            'checked_at' => now(),
+            'checked_at' => $version['last_checked_at'] ?? now(),
             'version' => $version,
             'diagnostics' => $diagnostics,
             'eligibility' => $this->eligibility($version, $diagnostics),

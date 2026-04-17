@@ -25,6 +25,15 @@
                 <div class="wb-card-body wb-stack wb-gap-2">
                     <span class="wb-status-pill {{ $eligibility['badge_class'] }}">{{ $eligibility['label'] }}</span>
                     <div class="wb-text-sm wb-text-muted">{{ $eligibility['message'] }}</div>
+
+                    @if ($updateStatus['fallback_warning'])
+                        <div class="wb-alert wb-alert-warning">
+                            <div>
+                                <div class="wb-alert-title">Remote check warning</div>
+                                <div>{{ $updateStatus['fallback_warning'] }}</div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -44,7 +53,21 @@
                             <div class="wb-text-sm wb-text-muted">Available version</div>
                             <strong>{{ $updateStatus['latest_version'] }}</strong>
                         </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Source</div>
+                            <strong>{{ ucfirst($updateStatus['source']) }}</strong>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Channel</div>
+                            <strong>{{ $updateStatus['channel'] }}</strong>
+                        </div>
                     </div>
+
+                    @if ($updateStatus['published_at'])
+                        <div class="wb-text-sm wb-text-muted">Published at {{ \Carbon\Carbon::parse($updateStatus['published_at'])->format('Y-m-d H:i:s') }}</div>
+                    @endif
                 </div>
             </div>
         </div>
