@@ -182,7 +182,9 @@ Project metadata is normalized to the CMS brand:
   - `manifest.json` with app/version/driver/archive metadata
 - Database dump behavior:
   - SQLite: PHP-generated SQL export from the active connection, including schema and row inserts
-  - MySQL/MariaDB: `mysqldump` or `mariadb-dump` when available; the backup fails clearly if the command is unavailable
+  - MySQL/MariaDB: environment-aware execution with `CMS_BACKUP_EXECUTION=auto|direct|ddev`
+  - `auto` uses `ddev exec` in local DDEV projects and keeps the existing direct `mysqldump` / `mariadb-dump` flow elsewhere
+  - Override example: `CMS_BACKUP_EXECUTION=direct` to force host execution or `CMS_BACKUP_EXECUTION=ddev` to always run inside DDEV
 - Not supported yet:
   - restore UI or one-click restore
   - scheduled backups

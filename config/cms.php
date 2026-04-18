@@ -20,4 +20,9 @@ return [
         'timeout_seconds' => env('CMS_UPDATE_TIMEOUT_SECONDS', 5),
         'cache_minutes' => env('CMS_UPDATE_CACHE_MINUTES', 10),
     ],
+
+    'backup' => [
+        'execution' => env('CMS_BACKUP_EXECUTION', 'auto'),
+        'dump_timeout_seconds' => env('CMS_BACKUP_DUMP_TIMEOUT_SECONDS', 120),
+    ],
 ];

@@ -5,6 +5,7 @@ namespace App\Support\System;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -94,23 +95,64 @@ class DatabaseDumpWriter
 
     private function dumpMysqlFamily(Connection $connection, string $destinationPath, array &$output): array
     {
-        $finder = new ExecutableFinder;
-        $binary = $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
-
-        if ($binary === null) {
-            throw new RuntimeException('Database backup requires mysqldump or mariadb-dump for the current MySQL/MariaDB environment, but neither command is available.');
-        }
-
         $config = $connection->getConfig();
+        $strategy = $this->resolveMysqlDumpStrategy();
+        match ($strategy) {
+            'ddev' => $this->runDdevMysqlDump($connection->getDriverName(), $destinationPath, $config),
+            default => $this->runDirectMysqlDump($destinationPath, $config),
+        };
+
+        $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
+        $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
+
+        return [
+            'driver' => $connection->getDriverName(),
+            'strategy' => $strategy,
+            'connection' => $connection->getName(),
+        ];
+    }
+
+    public function resolveMysqlDumpStrategy(): string
+    {
+        $configuredStrategy = Str::lower((string) config('cms.backup.execution', 'auto'));
+
+        return match ($configuredStrategy) {
+            'direct' => 'direct',
+            'ddev' => 'ddev',
+            'auto', '' => $this->shouldUseDdevStrategy() ? 'ddev' : 'direct',
+            default => throw new RuntimeException('Invalid cms.backup.execution value ['.$configuredStrategy.']. Supported values: auto, direct, ddev.'),
+        };
+    }
+
+    private function runDirectMysqlDump(string $destinationPath, array $config): void
+    {
+        $defaultsFile = $this->createMysqlDefaultsFile($destinationPath, $config);
+
+        try {
+            $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
+            $process = new Process($command);
+            $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
+            }
+        } finally {
+            File::delete($defaultsFile);
+        }
+    }
+
+    private function buildDirectMysqlDumpCommand(string $destinationPath, string $defaultsFile, array $config): array
+    {
         $command = [
-            $binary,
+            $this->findMysqlDumpBinary(),
+            '--defaults-extra-file='.$defaultsFile,
             '--single-transaction',
             '--quick',
             '--skip-comments',
             '--skip-dump-date',
             '--no-tablespaces',
             '--result-file='.$destinationPath,
-            '--user='.$config['username'],
             (string) $config['database'],
         ];
 
@@ -121,26 +163,157 @@ class DatabaseDumpWriter
             $command[] = '--port='.(string) $config['port'];
         }
 
-        $process = new Process($command, null, array_filter([
-            'MYSQL_PWD' => $config['password'] ?? null,
-        ], fn ($value) => $value !== null));
+        return $command;
+    }
 
-        $process->setTimeout(120);
-        $process->run();
+    private function runDdevMysqlDump(string $driver, string $destinationPath, array $config): void
+    {
+        $command = $this->buildDdevMysqlDumpCommand($driver, $config);
+        $process = new Process($command);
+        $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
 
-        $output[] = 'Using '.basename($binary).' for database dump.';
+        $directory = dirname($destinationPath);
+        File::ensureDirectoryExists($directory);
+
+        $handle = fopen($destinationPath, 'wb');
+
+        if ($handle === false) {
+            throw new RuntimeException('Database dump destination could not be opened for writing.');
+        }
+
+        try {
+            $process->run(function (string $type, string $buffer) use ($handle): void {
+                if ($type !== Process::OUT) {
+                    return;
+                }
+
+                fwrite($handle, $buffer);
+            });
+        } finally {
+            fclose($handle);
+        }
 
         if (! $process->isSuccessful()) {
+            File::delete($destinationPath);
+
             throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
         }
 
-        $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
+        if (! is_file($destinationPath) || filesize($destinationPath) === 0) {
+            File::delete($destinationPath);
 
-        return [
-            'driver' => $connection->getDriverName(),
-            'strategy' => basename($binary),
-            'connection' => $connection->getName(),
+            throw new RuntimeException('Database dump command completed without writing an SQL file.');
+        }
+    }
+
+    private function buildDdevMysqlDumpCommand(string $driver, array $config): array
+    {
+        $command = [
+            $this->findDdevBinary(),
+            'exec',
+            '--raw',
+            '--',
+            $driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump',
+            '--single-transaction',
+            '--quick',
+            '--skip-comments',
+            '--skip-dump-date',
+            '--no-tablespaces',
+            (string) $config['database'],
         ];
+
+        if (! empty($config['unix_socket'])) {
+            $command[] = '--socket='.$config['unix_socket'];
+        } else {
+            $command[] = '--host='.(string) $config['host'];
+            $command[] = '--port='.(string) $config['port'];
+        }
+
+        return $command;
+    }
+
+    private function createMysqlDefaultsFile(string $destinationPath, array $config): string
+    {
+        $defaultsFile = $destinationPath.'.cnf';
+        $lines = [
+            '[client]',
+            'user='.(string) ($config['username'] ?? ''),
+        ];
+
+        if (($config['password'] ?? null) !== null && $config['password'] !== '') {
+            $lines[] = 'password='.(string) $config['password'];
+        }
+
+        File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
+        @chmod($defaultsFile, 0600);
+
+        return $defaultsFile;
+    }
+
+    private function findMysqlDumpBinary(): string
+    {
+        $finder = new ExecutableFinder;
+        $binary = $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
+
+        if ($binary === null) {
+            throw new RuntimeException('Database backup requires mysqldump or mariadb-dump for the current MySQL/MariaDB environment, but neither command is available.');
+        }
+
+        return $binary;
+    }
+
+    private function findDdevBinary(): string
+    {
+        $binary = (new ExecutableFinder)->find('ddev');
+
+        if ($binary === null) {
+            throw new RuntimeException('Database backup requires the ddev command for ddev execution mode, but it is not available.');
+        }
+
+        return $binary;
+    }
+
+    private function shouldUseDdevStrategy(): bool
+    {
+        if (Str::lower((string) config('app.env')) !== 'local') {
+            return false;
+        }
+
+        if (! $this->isDdevProject()) {
+            return false;
+        }
+
+        if ($this->isRunningInsideDdev()) {
+            return false;
+        }
+
+        return $this->isDdevUrl((string) config('app.url')) || $this->isDdevProject();
+    }
+
+    private function isDdevProject(): bool
+    {
+        return File::isDirectory(base_path('.ddev'));
+    }
+
+    private function isRunningInsideDdev(): bool
+    {
+        return ! empty($_SERVER['IS_DDEV_PROJECT'] ?? $_ENV['IS_DDEV_PROJECT'] ?? getenv('IS_DDEV_PROJECT'));
+    }
+
+    private function isDdevUrl(string $url): bool
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+
+        return is_string($host) && str_ends_with(Str::lower($host), '.ddev.site');
+    }
+
+    private function describeMysqlDumpCommand(string $strategy, string $driver): string
+    {
+        if ($strategy === 'ddev') {
+            return 'ddev exec '.($driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump');
+        }
+
+        return basename($this->findMysqlDumpBinary());
     }
 
     private function quoteIdentifier(string $value): string
