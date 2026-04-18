@@ -116,10 +116,9 @@
             }
         </style>
     </head>
-    <body>
+        <body>
         @php
             $user = auth()->user();
-            $updateStatus = app(\App\Support\System\UpdateChecker::class)->status();
             $userInitials = collect(preg_split('/\s+/', trim($user?->name ?? 'User')))
                 ->filter()
                 ->take(2)
@@ -138,7 +137,7 @@
                 ],
                 [
                     ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*', 'icon' => 'wb-icon-database'],
-                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh-dot', 'update_available' => ! $updateStatus['up_to_date']],
+                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh-dot'],
                 ],
             ];
         @endphp

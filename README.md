@@ -148,22 +148,40 @@ Project metadata is normalized to the CMS brand:
 
 ## System Updates
 
-- Installed CMS version now persists in the database through `system_settings` instead of writing back to `.env`.
-- Update discovery now supports a remote manifest provider with local fallback.
-- Configure update discovery with:
-  - `CMS_UPDATE_SOURCE=remote|local`
-  - `CMS_UPDATE_MANIFEST_URL`
-  - `CMS_UPDATE_CHANNEL=stable|beta`
-- The System Updates screen runs preflight diagnostics for:
-  - database connectivity
-  - version persistence readiness
-  - maintenance mode state
-  - cache clear readiness
-- The System Updates screen is backup-aware and highlights whether a successful backup completed within the last 24 hours.
-- Remote manifest checks are cached for a short period and `Check again` refreshes the cache.
-- If the remote manifest fails or the channel does not match, the update center falls back to local config data and shows a warning.
-- Update runs still do not create a backup automatically. Use the Backups screen first when you want a current snapshot before maintenance.
-- The update center shows explicit eligibility before running and stores structured update run details in `system_update_runs`.
+- Installed CMS version persists in `system_settings` under `system.installed_version`.
+- Update discovery is now provider-style and uses an external JSON update server.
+- The same Laravel codebase can act as:
+  - an update server at `/api/updates/...`
+  - a CMS client consuming any configured update server URL
+- Release metadata is stored in the database table `system_releases`.
+- Configure the update server/client with:
+  - `WEBBLOCKS_UPDATES_ENABLED`
+  - `WEBBLOCKS_UPDATE_SERVER_ENABLED`
+  - `WEBBLOCKS_UPDATE_SERVER_BASE_URL`
+  - `WEBBLOCKS_UPDATE_SERVER_DEFAULT_CHANNEL`
+  - `WEBBLOCKS_UPDATE_CLIENT_ENABLED`
+  - `WEBBLOCKS_UPDATE_CLIENT_SERVER_URL`
+  - `WEBBLOCKS_UPDATE_CLIENT_CHANNEL`
+  - `WEBBLOCKS_UPDATE_CLIENT_PRODUCT`
+  - `WEBBLOCKS_UPDATE_CLIENT_TIMEOUT_SECONDS`
+- Public V1 update server endpoints:
+  - `GET /api/updates`
+  - `GET /api/updates/{product}/latest`
+  - `GET /api/updates/{product}/releases`
+  - `GET /api/updates/{product}/releases/{version}`
+- The admin System Updates screen is now check-only in V1 and can show:
+  - update available
+  - already up to date
+  - incompatible update available
+  - no releases found
+  - update server unavailable
+  - invalid or unsupported response
+- V1 does not perform package download/install automation. The page only checks the server, shows release metadata, and links to the package download when present.
+- Publish release records with artisan:
+  - `php artisan system-release:publish ...`
+  - `php artisan system-release:list`
+
+See `docs/update-server.md` for the full architecture, API contract, and release publishing workflow.
 
 ## Admin Dashboard Path
 

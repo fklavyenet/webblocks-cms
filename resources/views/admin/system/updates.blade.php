@@ -3,15 +3,21 @@
 @section('content')
     @php
         $updateStatus = $report['version'];
-        $eligibility = $report['eligibility'];
         $diagnostics = $report['diagnostics'];
-        $latestSuccessfulBackup = $backupFreshness['latest_successful'];
+        $environment = $report['environment'];
+        $release = $updateStatus['release'] ?? null;
+        $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
+        $compatibilityBadgeClass = match ($compatibilityStatus) {
+            'compatible' => 'wb-status-active',
+            'incompatible' => 'wb-status-danger',
+            default => 'wb-status-pending',
+        };
     @endphp
 
     @include('admin.partials.page-header', [
         'title' => 'System Updates',
-        'description' => 'Review the installed version, available update, and safe update steps before applying a system update.',
-        'actions' => '<div class="wb-stack wb-gap-1 wb-text-right"><div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check again</a></div>',
+        'description' => 'Check the configured update server, review release metadata, and confirm compatibility before downloading a package.',
+        'actions' => '<div class="wb-stack wb-gap-1 wb-text-right"><div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check for updates</a></div>',
     ])
 
     @include('admin.partials.flash')
@@ -24,14 +30,14 @@
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <span class="wb-status-pill {{ $eligibility['badge_class'] }}">{{ $eligibility['label'] }}</span>
-                    <div class="wb-text-sm wb-text-muted">{{ $eligibility['message'] }}</div>
+                    <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
+                    <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
 
-                    @if ($updateStatus['fallback_warning'])
+                    @if ($updateStatus['error_message'])
                         <div class="wb-alert wb-alert-warning">
                             <div>
-                                <div class="wb-alert-title">Remote check warning</div>
-                                <div>{{ $updateStatus['fallback_warning'] }}</div>
+                                <div class="wb-alert-title">Server detail</div>
+                                <div>{{ $updateStatus['error_message'] }}</div>
                             </div>
                         </div>
                     @endif
@@ -47,17 +53,17 @@
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
                             <div class="wb-text-sm wb-text-muted">Installed version</div>
-                            <strong>{{ $updateStatus['current_version'] }}</strong>
+                            <strong>{{ $updateStatus['installed_version'] }}</strong>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">Available version</div>
-                            <strong>{{ $updateStatus['latest_version'] }}</strong>
+                            <div class="wb-text-sm wb-text-muted">Latest version</div>
+                            <strong>{{ $updateStatus['latest_version'] ?? 'N/A' }}</strong>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">Source</div>
-                            <strong>{{ ucfirst($updateStatus['source']) }}</strong>
+                            <div class="wb-text-sm wb-text-muted">Product</div>
+                            <strong>{{ $updateStatus['product'] }}</strong>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
@@ -66,9 +72,8 @@
                         </div>
                     </div>
 
-                    @if ($updateStatus['published_at'])
-                        <div class="wb-text-sm wb-text-muted">Published at {{ \Carbon\Carbon::parse($updateStatus['published_at'])->format('Y-m-d H:i:s') }}</div>
-                    @endif
+                    <div class="wb-text-sm wb-text-muted">Update server {{ $updateStatus['server_url'] ?: 'not configured' }}</div>
+                    <div class="wb-text-sm wb-text-muted">API version {{ $updateStatus['api_version'] ?? 'N/A' }}</div>
                 </div>
             </div>
         </div>
@@ -94,18 +99,23 @@
 
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header">
-                <strong>Release Notes</strong>
+                <strong>Compatibility</strong>
             </div>
 
             <div class="wb-card-body">
-                @if ($updateStatus['release_notes'] === [])
+                <div class="wb-cluster wb-cluster-between wb-cluster-2" style="margin-bottom: 1rem;">
+                    <div class="wb-text-sm wb-text-muted">Compatibility status</div>
+                    <span class="wb-status-pill {{ $compatibilityBadgeClass }}">{{ $compatibilityStatus }}</span>
+                </div>
+
+                @if (($updateStatus['compatibility']['reasons'] ?? []) === [])
                     <div class="wb-empty wb-empty-sm">
-                        <div class="wb-empty-title">No release notes available</div>
+                        <div class="wb-empty-title">No compatibility issues reported</div>
                     </div>
                 @else
                     <ul class="wb-stack wb-gap-1">
-                        @foreach ($updateStatus['release_notes'] as $note)
-                            <li>{{ $note }}</li>
+                        @foreach ($updateStatus['compatibility']['reasons'] as $reason)
+                            <li>{{ $reason }}</li>
                         @endforeach
                     </ul>
                 @endif
@@ -113,119 +123,113 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                <strong>Recent Backup</strong>
-                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Open Backups</a>
+            <div class="wb-card-header">
+                <strong>Release Metadata</strong>
             </div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
-                @if ($backupFreshness['has_recent_successful_backup'])
-                    <div class="wb-alert wb-alert-success">
-                        <div>
-                            <div class="wb-alert-title">Recent backup found</div>
-                            <div>The latest successful backup finished at {{ $latestSuccessfulBackup?->finished_at?->format('Y-m-d H:i:s') }}. This counts as recent for {{ $backupFreshness['hours'] }} hours.</div>
-                        </div>
+                @if (! $release)
+                    <div class="wb-empty wb-empty-sm">
+                        <div class="wb-empty-title">No release metadata available</div>
                     </div>
                 @else
-                    <div class="wb-alert wb-alert-warning">
-                        <div>
-                            <div class="wb-alert-title">No recent successful backup</div>
-                            <div>Updates do not create a backup automatically. Create one from the Backups screen before proceeding if you want a current database and uploads snapshot.</div>
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Release name</div>
+                            <strong>{{ $release['name'] ?: 'Unnamed release' }}</strong>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Published at</div>
+                            <strong>{{ $release['published_at'] ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s') : 'N/A' }}</strong>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Critical</div>
+                            <strong>{{ $release['is_critical'] ? 'Yes' : 'No' }}</strong>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Security</div>
+                            <strong>{{ $release['is_security'] ? 'Yes' : 'No' }}</strong>
                         </div>
                     </div>
-                @endif
 
-                <ul class="wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-                    <li>Backup Manager V1 stores a local zip archive in app-managed storage.</li>
-                    <li>Each archive includes a database dump, `storage/app/public`, and a manifest.</li>
-                    <li>Restore tooling is not included yet, so verify the archive before risky maintenance.</li>
-                </ul>
-            </div>
-        </div>
+                    @if ($release['description'])
+                        <div class="wb-text-sm wb-text-muted">{{ $release['description'] }}</div>
+                    @endif
 
-        <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>Actions</strong>
-            </div>
+                    @if ($release['changelog'])
+                        <pre class="wb-code-block">{{ $release['changelog'] }}</pre>
+                    @endif
 
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-text-sm wb-text-muted">The update will run migrations and clear framework caches in maintenance mode.</div>
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Minimum PHP</div>
+                            <strong>{{ $release['requirements']['min_php_version'] ?: 'N/A' }}</strong>
+                        </div>
 
-                <form method="POST" action="{{ route('admin.system.updates.run') }}" class="wb-stack wb-gap-3">
-                    @csrf
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Minimum Laravel</div>
+                            <strong>{{ $release['requirements']['min_laravel_version'] ?: 'N/A' }}</strong>
+                        </div>
 
-                    <label class="wb-checkbox">
-                        <input type="checkbox" name="confirm_backup" value="1" @checked(old('confirm_backup'))>
-                        <span>I understand that WebBlocks CMS will not create a backup automatically during this update, and I have reviewed backup status or accept the risk.</span>
-                    </label>
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Supported from version</div>
+                            <strong>{{ $release['requirements']['supported_from_version'] ?: 'N/A' }}</strong>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <div class="wb-text-sm wb-text-muted">Supported until version</div>
+                            <strong>{{ $release['requirements']['supported_until_version'] ?: 'N/A' }}</strong>
+                        </div>
+                    </div>
+
+                    @if ($release['checksum_sha256'])
+                        <div class="wb-text-sm wb-text-muted">SHA-256 {{ $release['checksum_sha256'] }}</div>
+                    @endif
 
                     <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                        <div class="wb-text-sm wb-text-muted">Run this only when the diagnostics above match your deployment state.</div>
+                        <div class="wb-text-sm wb-text-muted">V1 provides check-only behavior. Download and installation remain manual.</div>
 
-                        @if (! $eligibility['can_update'])
-                            <button type="button" class="wb-btn wb-btn-secondary" disabled>{{ $eligibility['label'] }}</button>
-                        @elseif ($updateStatus['up_to_date'])
-                            <button type="button" class="wb-btn wb-btn-secondary" disabled>Up to date</button>
+                        @if ($release['download_url'])
+                            <a href="{{ $release['download_url'] }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener">Download package</a>
                         @else
-                            <button type="submit" class="wb-btn wb-btn-primary">Update now</button>
+                            <button type="button" class="wb-btn wb-btn-secondary" disabled>Download unavailable</button>
                         @endif
                     </div>
-                </form>
+                @endif
             </div>
         </div>
 
-        @if (session('update_output'))
-            <div class="wb-card">
-                <div class="wb-card-header">
-                    <strong>Update Output</strong>
-                </div>
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-header">
+                <strong>Client Environment</strong>
+            </div>
 
-                <div class="wb-card-body">
-                    <pre class="wb-code-block">{{ implode(PHP_EOL.PHP_EOL, session('update_output')) }}</pre>
+            <div class="wb-card-body">
+                <div class="wb-grid wb-grid-2">
+                    <div class="wb-stack wb-gap-1">
+                        <div class="wb-text-sm wb-text-muted">Site URL</div>
+                        <strong>{{ $environment['site_url'] }}</strong>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <div class="wb-text-sm wb-text-muted">Configured server</div>
+                        <strong>{{ $environment['server_url'] ?: 'N/A' }}</strong>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <div class="wb-text-sm wb-text-muted">PHP version</div>
+                        <strong>{{ $environment['php_version'] }}</strong>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <div class="wb-text-sm wb-text-muted">Laravel version</div>
+                        <strong>{{ $environment['laravel_version'] }}</strong>
+                    </div>
                 </div>
             </div>
-        @endif
-
-        @if (session('update_error_output'))
-            <div class="wb-card wb-card-danger">
-                <div class="wb-card-header">
-                    <strong>Last Error Output</strong>
-                </div>
-
-                <div class="wb-card-body">
-                    <pre class="wb-code-block">{{ session('update_error_output') }}</pre>
-                </div>
-            </div>
-        @endif
-
-        @if ($latestRun)
-            <div class="wb-card">
-                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <strong>Latest Update Run</strong>
-                    <span class="wb-status-pill {{ in_array($latestRun->status, ['success', 'success_with_warnings'], true) ? ($latestRun->status === 'success' ? 'wb-status-active' : 'wb-status-pending') : 'wb-status-danger' }}">{{ str_replace('_', ' ', $latestRun->status) }}</span>
-                </div>
-
-                <div class="wb-card-body wb-stack wb-gap-2">
-                    <div class="wb-text-sm wb-text-muted">{{ $latestRun->from_version }} to {{ $latestRun->to_version }}</div>
-                    <div class="wb-text-sm wb-text-muted">Started {{ $latestRun->started_at?->format('Y-m-d H:i:s') ?: $latestRun->created_at?->format('Y-m-d H:i:s') }} | Finished {{ $latestRun->finished_at?->format('Y-m-d H:i:s') ?: '-' }} | Duration {{ $latestRun->duration_ms ? number_format($latestRun->duration_ms) .' ms' : '-' }}</div>
-
-                    @if ($latestRun->triggeredBy)
-                        <div class="wb-text-sm wb-text-muted">Triggered by {{ $latestRun->triggeredBy->name }}</div>
-                    @endif
-
-                    @if ($latestRun->summary)
-                        <div><strong>{{ $latestRun->summary }}</strong></div>
-                    @endif
-
-                    @if ($latestRun->warning_count > 0)
-                        <div class="wb-text-sm wb-text-muted">Warnings: {{ $latestRun->warning_count }}</div>
-                    @endif
-
-                    @if ($latestRun->output)
-                        <pre class="wb-code-block">{{ $latestRun->output }}</pre>
-                    @endif
-                </div>
-            </div>
-        @endif
+        </div>
     </div>
 @endsection

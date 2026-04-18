@@ -14,7 +14,7 @@ class InstalledVersionStore
     public function currentVersion(): string
     {
         if (! Schema::hasTable('system_settings')) {
-            return (string) config('app.version', '0.1.0');
+            return (string) config('webblocks-updates.client.current_version', config('app.version', '0.1.0'));
         }
 
         $storedVersion = SystemSetting::query()
@@ -23,7 +23,7 @@ class InstalledVersionStore
 
         return is_string($storedVersion) && $storedVersion !== ''
             ? $storedVersion
-            : (string) config('app.version', '0.1.0');
+            : (string) config('webblocks-updates.client.current_version', config('app.version', '0.1.0'));
     }
 
     public function persist(string $version): void
