@@ -19,7 +19,7 @@ return [
     ],
     'client' => [
         'enabled' => env('WEBBLOCKS_UPDATE_CLIENT_ENABLED', true),
-        'server_url' => env('WEBBLOCKS_UPDATE_CLIENT_SERVER_URL', 'https://updates.webblocksui.com'),
+        'server_url' => env('WEBBLOCKS_UPDATES_CLIENT_SERVER_URL', 'https://updates.webblocksui.com'),
         'channel' => env('WEBBLOCKS_UPDATE_CLIENT_CHANNEL', 'stable'),
         'product' => env('WEBBLOCKS_UPDATE_CLIENT_PRODUCT', 'webblocks-cms'),
         'current_version' => env('WEBBLOCKS_UPDATE_CLIENT_CURRENT_VERSION', env('APP_VERSION', '0.1.2')),

@@ -50,7 +50,7 @@ Environment variables:
 - `WEBBLOCKS_UPDATE_SERVER_BASE_URL`
 - `WEBBLOCKS_UPDATE_SERVER_DEFAULT_CHANNEL`
 - `WEBBLOCKS_UPDATE_CLIENT_ENABLED`
-- `WEBBLOCKS_UPDATE_CLIENT_SERVER_URL`
+- `WEBBLOCKS_UPDATES_CLIENT_SERVER_URL`
 - `WEBBLOCKS_UPDATE_CLIENT_CHANNEL`
 - `WEBBLOCKS_UPDATE_CLIENT_PRODUCT`
 - `WEBBLOCKS_UPDATE_CLIENT_CURRENT_VERSION`
@@ -214,6 +214,16 @@ Flow:
 4. Parse and validate the response envelope and required keys.
 5. Normalize result into `UpdateCheckResult`.
 6. Return an explicit state to the admin system page.
+
+Canonical CMS client update server URL env key:
+
+- `WEBBLOCKS_UPDATES_CLIENT_SERVER_URL`
+
+Example:
+
+```env
+WEBBLOCKS_UPDATES_CLIENT_SERVER_URL=https://updates.webblocksui.com
+```
 
 Handled states:
 
