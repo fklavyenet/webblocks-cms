@@ -167,8 +167,6 @@ Project metadata is normalized to the CMS brand:
   - invalid or unsupported response
 - V1 does not perform package download/install automation. The page only checks the server, shows release metadata, and links to the package download when present.
 
-See `docs/update-server.md` for the CMS client update flow and architecture notes.
-
 ## Automated Releases
 
 - Git tags matching `v*` trigger `.github/workflows/publish-release.yml`.

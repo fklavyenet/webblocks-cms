@@ -21,6 +21,7 @@
 /auth.json
 /node_modules
 /dist/
+/docs/
 /public/build
 /public/hot
 /public/storage
