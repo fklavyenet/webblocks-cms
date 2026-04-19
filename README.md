@@ -149,26 +149,15 @@ Project metadata is normalized to the CMS brand:
 ## System Updates
 
 - Installed CMS version persists in `system_settings` under `system.installed_version`.
-- Update discovery is now provider-style and uses an external JSON update server.
-- The same Laravel codebase can act as:
-  - an update server at `/api/updates/...`
-  - a CMS client consuming any configured update server URL
-- Release metadata is stored in the database table `system_releases`.
-- Configure the update server/client with:
+- WebBlocks CMS is an update client/consumer and checks a central update service.
+- Release publishing and update server responsibilities live in the separate WebBlocks Publisher / `updates.webblocksui.com` project.
+- Configure the CMS update client with:
   - `WEBBLOCKS_UPDATES_ENABLED`
-  - `WEBBLOCKS_UPDATE_SERVER_ENABLED`
-  - `WEBBLOCKS_UPDATE_SERVER_BASE_URL`
-  - `WEBBLOCKS_UPDATE_SERVER_DEFAULT_CHANNEL`
   - `WEBBLOCKS_UPDATE_CLIENT_ENABLED`
   - `WEBBLOCKS_UPDATES_CLIENT_SERVER_URL`
   - `WEBBLOCKS_UPDATE_CLIENT_CHANNEL`
   - `WEBBLOCKS_UPDATE_CLIENT_PRODUCT`
   - `WEBBLOCKS_UPDATE_CLIENT_TIMEOUT_SECONDS`
-- Public V1 update server endpoints:
-  - `GET /api/updates`
-  - `GET /api/updates/{product}/latest`
-  - `GET /api/updates/{product}/releases`
-  - `GET /api/updates/{product}/releases/{version}`
 - The admin System Updates screen is now check-only in V1 and can show:
   - update available
   - already up to date
@@ -177,30 +166,8 @@ Project metadata is normalized to the CMS brand:
   - update server unavailable
   - invalid or unsupported response
 - V1 does not perform package download/install automation. The page only checks the server, shows release metadata, and links to the package download when present.
-- Publish release records with artisan:
-  - `php artisan system-release:publish ...`
-  - `php artisan system-release:list`
-- Build distributable CMS packages with:
-  - `php artisan cms:release 0.1.1`
-  - `php artisan cms:release 0.1.1 --dry-run`
-  - `php artisan cms:release 0.1.1 --publish --local-publish`
-- Use the first argument or `--release-version=` for release version selection. `php artisan --version` is reserved by the framework.
-- Release packaging excludes git metadata, env files, vendor, node modules, runtime cache/log files, and generated release artifacts.
-- Each build writes a zip package and adjacent JSON metadata containing checksum, size, version, channel, notes, and source git metadata when available.
-- Real remote publish support uses a token-protected update server endpoint at `POST /api/updates/publish`.
-- CMS can also publish release metadata directly to the central Updates Server via:
-  - `php artisan updates:publish 0.2.1 --notes="..." --tag=v0.2.1`
-  - `php artisan updates:publish 0.2.1 --channel=stable --source-url=https://github.com/...`
-- Publish config env keys:
-  - `WEBBLOCKS_UPDATES_PUBLISH_ENABLED`
-  - `WEBBLOCKS_UPDATES_PUBLISH_SERVER_URL`
-  - `WEBBLOCKS_UPDATES_PUBLISH_TOKEN`
-  - `WEBBLOCKS_UPDATES_PUBLISH_PRODUCT`
-  - `WEBBLOCKS_UPDATES_PUBLISH_CHANNEL`
-  - `WEBBLOCKS_UPDATES_PUBLISH_TIMEOUT`
-- Admin users can publish release metadata from `/admin/system/updates` with version, channel, notes, source URL, and tag.
 
-See `docs/update-server.md` for the full architecture, API contract, and release publishing workflow.
+See `docs/update-server.md` for the CMS client update flow and architecture notes.
 
 ## Admin Dashboard Path
 

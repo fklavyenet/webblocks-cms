@@ -1,13 +1,10 @@
-# Update Server Architecture
+# Update Client Architecture
 
 ## Overview
 
-WebBlocks CMS now uses a provider-style update system with two layers inside the same Laravel codebase:
+WebBlocks CMS uses a provider-style update client that consumes the external update service at `https://updates.webblocksui.com`.
 
-- Update Server layer: public read-only JSON endpoints at `/api/updates/...`
-- CMS Client layer: admin/system update check flow that consumes a configured external update server
-
-The same repository can be deployed as the public update service at `https://updates.webblocksui.com` or as a CMS instance that checks that service.
+This repository is the CMS client only. The update server and publisher responsibilities live in the separate central WebBlocks updates infrastructure.
 
 ## Config
 
@@ -19,13 +16,6 @@ Top-level keys:
 - `api_version`
 - `products`
 - `channels`
-
-Server keys:
-
-- `server.enabled`
-- `server.service_name`
-- `server.base_url`
-- `server.default_channel`
 
 Client keys:
 
@@ -45,10 +35,6 @@ Environment variables:
 
 - `APP_VERSION`
 - `WEBBLOCKS_UPDATES_ENABLED`
-- `WEBBLOCKS_UPDATE_SERVER_ENABLED`
-- `WEBBLOCKS_UPDATE_SERVER_NAME`
-- `WEBBLOCKS_UPDATE_SERVER_BASE_URL`
-- `WEBBLOCKS_UPDATE_SERVER_DEFAULT_CHANNEL`
 - `WEBBLOCKS_UPDATE_CLIENT_ENABLED`
 - `WEBBLOCKS_UPDATES_CLIENT_SERVER_URL`
 - `WEBBLOCKS_UPDATE_CLIENT_CHANNEL`
@@ -67,52 +53,6 @@ Environment variables:
 - CMS runtime installed version is read from `system_settings.key = system.installed_version` when present.
 - Client config can fall back to `WEBBLOCKS_UPDATE_CLIENT_CURRENT_VERSION` or `APP_VERSION`.
 
-## Release Model
-
-Database table: `system_releases`
-
-Fields:
-
-- `id`
-- `product`
-- `channel`
-- `version`
-- `version_normalized`
-- `release_name`
-- `description`
-- `changelog`
-- `download_url`
-- `checksum_sha256`
-- `is_critical`
-- `is_security`
-- `published_at`
-- `supported_from_version`
-- `supported_until_version`
-- `min_php_version`
-- `min_laravel_version`
-- `metadata`
-- timestamps
-
-Indexes:
-
-- unique: `(product, channel, version)`
-- index: `(product, channel, published_at)`
-- index: `(product, channel, version_normalized)`
-
-Published selection rules:
-
-- only rows with `published_at` set
-- only rows where `published_at <= now()`
-- latest release means highest semantic version in the requested product/channel
-
-## API Endpoints
-
-Base prefix: `/api/updates`
-
-### `GET /api/updates`
-
-Returns service information, supported API versions, product catalog summary, and endpoint templates.
-
 ### `GET /api/updates/{product}/latest`
 
 Query parameters:
@@ -123,84 +63,6 @@ Query parameters:
 - `laravel_version`
 
 Returns the latest published release for the selected product/channel, plus update availability and compatibility evaluation.
-
-### `GET /api/updates/{product}/releases/{version}`
-
-Returns a single published release document.
-
-### `GET /api/updates/{product}/releases`
-
-Query parameters:
-
-- `channel`
-- `limit`
-
-Returns capped/paginated release history.
-
-## JSON Contract
-
-Success envelope:
-
-```json
-{
-  "api_version": "1",
-  "status": "ok",
-  "data": {},
-  "meta": {
-    "generated_at": "2026-04-19T12:00:00Z"
-  }
-}
-```
-
-Error envelope:
-
-```json
-{
-  "api_version": "1",
-  "status": "error",
-  "error": {
-    "code": "release_not_found",
-    "message": "No published release was found for the requested product and channel."
-  },
-  "meta": {
-    "generated_at": "2026-04-19T12:00:00Z"
-  }
-}
-```
-
-Latest release response includes:
-
-- `data.product`
-- `data.channel`
-- `data.installed_version`
-- `data.latest_version`
-- `data.update_available`
-- `data.compatibility.status`
-- `data.compatibility.reasons`
-- `data.release.version`
-- `data.release.name`
-- `data.release.description`
-- `data.release.changelog`
-- `data.release.download_url`
-- `data.release.checksum_sha256`
-- `data.release.published_at`
-- `data.release.is_critical`
-- `data.release.is_security`
-- `data.release.requirements.min_php_version`
-- `data.release.requirements.min_laravel_version`
-- `data.release.requirements.supported_from_version`
-- `data.release.requirements.supported_until_version`
-
-## Validation
-
-Update API requests validate:
-
-- product slug
-- semantic version strings
-- allowed channels
-- release history limit bounds
-
-Validation errors use the same update API error envelope with code `validation_failed`.
 
 ## CMS Client Flow
 
@@ -255,174 +117,32 @@ The page now shows:
 
 V1 copy is explicit: update checking only, no fake automation.
 
-## Release Publishing
+## Publisher Boundary
 
-The repository also includes a reusable release packaging workflow for CMS builds.
+WebBlocks CMS is only the consumer/client product.
 
-WebBlocks CMS now also acts as a release publisher for the central Updates Server.
+It can:
 
-CMS-side publish config keys in `config/webblocks-updates.php`:
+- display the installed version
+- query the central Updates Server for the latest release
+- show update availability and compatibility
+- link to a downloadable package URL returned by the server
 
-- `publish.enabled`
-- `publish.server_url`
-- `publish.token`
-- `publish.product`
-- `publish.channel`
-- `publish.timeout`
+It does not:
 
-Environment variables:
+- publish releases
+- build release packages
+- upload packages
+- manage update server release records
 
-- `WEBBLOCKS_UPDATES_PUBLISH_ENABLED`
-- `WEBBLOCKS_UPDATES_PUBLISH_SERVER_URL`
-- `WEBBLOCKS_UPDATES_PUBLISH_TOKEN`
-- `WEBBLOCKS_UPDATES_PUBLISH_PRODUCT`
-- `WEBBLOCKS_UPDATES_PUBLISH_CHANNEL`
-- `WEBBLOCKS_UPDATES_PUBLISH_TIMEOUT`
-
-CMS-side publish command:
-
-```bash
-php artisan updates:publish 0.2.1 --notes="Initial live publish test" --tag=v0.2.1
-```
-
-Dry run:
-
-```bash
-php artisan updates:publish 0.2.1 --dry-run
-```
-
-The command builds a JSON payload with:
-
-- `product`
-- `version`
-- `channel`
-- `released_at`
-- `notes`
-- `source`
-- `meta`
-
-`source` currently uses:
-
-- `type=github`
-- `url`
-- `reference`
-
-`meta` currently includes:
-
-- app name
-- app version
-- commit
-- tag
-- PHP version
-- Laravel version
-
-Every publish attempt is logged in `system_release_publishes` with success or failure details.
-
-The admin System Updates screen includes a compact “Publish to Updates Server” form that posts to:
-
-- `POST /admin/system/updates/publish`
-
-Release config lives in `config/webblocks-release.php`.
-
-Key release env vars:
-
-- `WEBBLOCKS_RELEASE_PRODUCT`
-- `WEBBLOCKS_RELEASE_PACKAGE_PREFIX`
-- `WEBBLOCKS_RELEASE_DEFAULT_CHANNEL`
-- `WEBBLOCKS_RELEASE_OUTPUT_DIRECTORY`
-- `WEBBLOCKS_RELEASE_DOWNLOADS_DIRECTORY`
-- `WEBBLOCKS_RELEASE_DOWNLOADS_URL_PREFIX`
-- `WEBBLOCKS_RELEASE_EXCLUDE_VENDOR`
-- `WEBBLOCKS_RELEASE_EXCLUDE_GIT_METADATA`
-- `WEBBLOCKS_RELEASE_PUBLISH_SERVER_URL`
-- `WEBBLOCKS_RELEASE_PUBLISH_TOKEN`
-
-Release command:
-
-```bash
-php artisan cms:release 0.1.1
-```
-
-Build and publish to an update server with the token-protected publish endpoint:
-
-```bash
-php artisan cms:release 0.1.1 --channel=stable --notes-file=docs/release-notes.md --publish
-```
-
-Dry run:
-
-```bash
-php artisan cms:release 0.1.1 --dry-run
-```
-
-Local publish fallback for same-project update server installs:
-
-```bash
-php artisan cms:release 0.1.1 --publish --local-publish
-```
-
-`php artisan` reserves the global `--version` flag for the framework itself, so the release command accepts the version as the first argument or via `--release-version=`.
-
-What the builder excludes by default:
-
-- `.git/`
-- `.github/`
-- `.ddev/`
-- `.env*`
-- `node_modules/`
-- `vendor/`
-- storage logs/framework runtime artifacts
-- local media/runtime release artifacts
-- OS junk files like `.DS_Store`
-
-Artifacts are written as:
-
-- `webblocks-cms-<version>.zip`
-- `webblocks-cms-<version>.json`
-
-The JSON metadata includes version, channel, checksum, size, notes, build time, and source git commit/tag data when available.
-
-The publish endpoint is:
-
-- `POST /api/updates/publish`
-
-It expects:
-
-- bearer token auth via `WEBBLOCKS_RELEASE_PUBLISH_TOKEN`
-- multipart `package` upload
-- release metadata fields such as product, version, channel, checksum, and notes
-
-Create or update a release:
-
-```bash
-php artisan system-release:publish 0.2.0 https://updates.webblocksui.com/downloads/webblocks-cms-0.2.0.zip \
-  --product=webblocks-cms \
-  --channel=stable \
-  --name="WebBlocks CMS 0.2.0" \
-  --description="Stability and admin improvements." \
-  --changelog="Compact changelog text here." \
-  --checksum=abcdef123456 \
-  --published-at="2026-04-19T10:00:00Z" \
-  --min-php-version=8.3.0 \
-  --min-laravel-version=13.0.0 \
-  --supported-from-version=0.1.0
-```
-
-List releases:
-
-```bash
-php artisan system-release:list
-```
+Those responsibilities belong to the separate WebBlocks Publisher / `updates.webblocksui.com` stack.
 
 ## Tests
 
-Added coverage for:
+Client-side coverage includes:
 
-- update server API endpoints
-- semantic version comparison and compatibility logic
-- CMS client success and failure handling
+- update client success and failure handling
 - admin system updates page rendering
-- release publish/list artisan commands
 
 ## V1 Limitations
 
