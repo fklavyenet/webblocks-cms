@@ -259,6 +259,69 @@ V1 copy is explicit: update checking only, no fake automation.
 
 The repository also includes a reusable release packaging workflow for CMS builds.
 
+WebBlocks CMS now also acts as a release publisher for the central Updates Server.
+
+CMS-side publish config keys in `config/webblocks-updates.php`:
+
+- `publish.enabled`
+- `publish.server_url`
+- `publish.token`
+- `publish.product`
+- `publish.channel`
+- `publish.timeout`
+
+Environment variables:
+
+- `WEBBLOCKS_UPDATES_PUBLISH_ENABLED`
+- `WEBBLOCKS_UPDATES_PUBLISH_SERVER_URL`
+- `WEBBLOCKS_UPDATES_PUBLISH_TOKEN`
+- `WEBBLOCKS_UPDATES_PUBLISH_PRODUCT`
+- `WEBBLOCKS_UPDATES_PUBLISH_CHANNEL`
+- `WEBBLOCKS_UPDATES_PUBLISH_TIMEOUT`
+
+CMS-side publish command:
+
+```bash
+php artisan updates:publish 0.2.1 --notes="Initial live publish test" --tag=v0.2.1
+```
+
+Dry run:
+
+```bash
+php artisan updates:publish 0.2.1 --dry-run
+```
+
+The command builds a JSON payload with:
+
+- `product`
+- `version`
+- `channel`
+- `released_at`
+- `notes`
+- `source`
+- `meta`
+
+`source` currently uses:
+
+- `type=github`
+- `url`
+- `reference`
+
+`meta` currently includes:
+
+- app name
+- app version
+- commit
+- tag
+- PHP version
+- Laravel version
+
+Every publish attempt is logged in `system_release_publishes` with success or failure details.
+
+The admin System Updates screen includes a compact “Publish to Updates Server” form that posts to:
+
+- `POST /admin/system/updates/publish`
+
 Release config lives in `config/webblocks-release.php`.
 
 Key release env vars:

@@ -188,6 +188,17 @@ Project metadata is normalized to the CMS brand:
 - Release packaging excludes git metadata, env files, vendor, node modules, runtime cache/log files, and generated release artifacts.
 - Each build writes a zip package and adjacent JSON metadata containing checksum, size, version, channel, notes, and source git metadata when available.
 - Real remote publish support uses a token-protected update server endpoint at `POST /api/updates/publish`.
+- CMS can also publish release metadata directly to the central Updates Server via:
+  - `php artisan updates:publish 0.2.1 --notes="..." --tag=v0.2.1`
+  - `php artisan updates:publish 0.2.1 --channel=stable --source-url=https://github.com/...`
+- Publish config env keys:
+  - `WEBBLOCKS_UPDATES_PUBLISH_ENABLED`
+  - `WEBBLOCKS_UPDATES_PUBLISH_SERVER_URL`
+  - `WEBBLOCKS_UPDATES_PUBLISH_TOKEN`
+  - `WEBBLOCKS_UPDATES_PUBLISH_PRODUCT`
+  - `WEBBLOCKS_UPDATES_PUBLISH_CHANNEL`
+  - `WEBBLOCKS_UPDATES_PUBLISH_TIMEOUT`
+- Admin users can publish release metadata from `/admin/system/updates` with version, channel, notes, source URL, and tag.
 
 See `docs/update-server.md` for the full architecture, API contract, and release publishing workflow.
 

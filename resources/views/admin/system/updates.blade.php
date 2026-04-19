@@ -6,6 +6,7 @@
         $diagnostics = $report['diagnostics'];
         $environment = $report['environment'];
         $release = $updateStatus['release'] ?? null;
+        $publishResult = session('publish_result');
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $compatibilityBadgeClass = match ($compatibilityStatus) {
             'compatible' => 'wb-status-active',
@@ -229,6 +230,73 @@
                         <strong>{{ $environment['laravel_version'] }}</strong>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="wb-card">
+            <div class="wb-card-header">
+                <strong>Publish to Updates Server</strong>
+            </div>
+
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-text-sm wb-text-muted">Publish release metadata from this CMS install to the central Updates Server API.</div>
+
+                @if ($errors->has('release_publish'))
+                    <div class="wb-alert wb-alert-danger">
+                        <div>
+                            <div class="wb-alert-title">Publish failed</div>
+                            <div>{{ $errors->first('release_publish') }}</div>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($publishResult)
+                    <div class="wb-alert wb-alert-success">
+                        <div>
+                            <div class="wb-alert-title">Publish response</div>
+                            <div class="wb-text-sm wb-text-muted">Endpoint {{ $publishResult['endpoint'] ?? 'N/A' }}</div>
+                            @if (! empty($publishResult['download_url']))
+                                <div><a href="{{ $publishResult['download_url'] }}" target="_blank" rel="noopener">{{ $publishResult['download_url'] }}</a></div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('admin.system.updates.publish') }}" class="wb-stack wb-gap-3">
+                    @csrf
+
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-stack wb-gap-1">
+                            <label for="publish-version" class="wb-text-sm wb-text-muted">Version</label>
+                            <input id="publish-version" type="text" name="version" value="{{ old('version', $publishDefaults['version']) }}" class="wb-input">
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <label for="publish-channel" class="wb-text-sm wb-text-muted">Channel</label>
+                            <input id="publish-channel" type="text" name="channel" value="{{ old('channel', $publishDefaults['channel']) }}" class="wb-input">
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <label for="publish-source-url" class="wb-text-sm wb-text-muted">Source URL</label>
+                            <input id="publish-source-url" type="url" name="source_url" value="{{ old('source_url') }}" class="wb-input">
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <label for="publish-tag" class="wb-text-sm wb-text-muted">Tag</label>
+                            <input id="publish-tag" type="text" name="tag" value="{{ old('tag') }}" class="wb-input">
+                        </div>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="publish-notes" class="wb-text-sm wb-text-muted">Notes</label>
+                        <textarea id="publish-notes" name="notes" rows="6" class="wb-input">{{ old('notes') }}</textarea>
+                    </div>
+
+                    <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                        <div class="wb-text-sm wb-text-muted">The package release flow remains separate. This action publishes release metadata to the Updates Server API.</div>
+                        <button type="submit" class="wb-btn wb-btn-primary">Publish to Updates Server</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

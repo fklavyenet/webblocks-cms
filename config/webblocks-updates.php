@@ -30,4 +30,12 @@ return [
         'retry_times' => env('WEBBLOCKS_UPDATE_CLIENT_RETRY_TIMES', 0),
         'retry_sleep_milliseconds' => env('WEBBLOCKS_UPDATE_CLIENT_RETRY_SLEEP_MS', 150),
     ],
+    'publish' => [
+        'enabled' => env('WEBBLOCKS_UPDATES_PUBLISH_ENABLED', true),
+        'server_url' => env('WEBBLOCKS_UPDATES_PUBLISH_SERVER_URL', 'https://updates.webblocksui.com'),
+        'token' => env('WEBBLOCKS_UPDATES_PUBLISH_TOKEN'),
+        'product' => env('WEBBLOCKS_UPDATES_PUBLISH_PRODUCT', 'webblocks-cms'),
+        'channel' => env('WEBBLOCKS_UPDATES_PUBLISH_CHANNEL', 'stable'),
+        'timeout' => env('WEBBLOCKS_UPDATES_PUBLISH_TIMEOUT', 30),
+    ],
 ];
