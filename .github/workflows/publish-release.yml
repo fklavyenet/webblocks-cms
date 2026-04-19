@@ -1,0 +1,159 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    env:
+      PRODUCT_KEY: webblocks-cms
+      DEFAULT_CHANNEL: stable
+      SOURCE_TYPE: github
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate publish token
+        env:
+          WEBBLOCKS_PUBLISH_TOKEN: ${{ secrets.WEBBLOCKS_PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$WEBBLOCKS_PUBLISH_TOKEN" ]; then
+            printf 'WEBBLOCKS_PUBLISH_TOKEN is required.\n' >&2
+            exit 1
+          fi
+
+      - name: Resolve publisher URL
+        id: publish-url
+        env:
+          WEBBLOCKS_PUBLISH_URL: ${{ secrets.WEBBLOCKS_PUBLISH_URL }}
+        run: |
+          publish_url="$WEBBLOCKS_PUBLISH_URL"
+
+          if [ -z "$publish_url" ]; then
+            publish_url='https://updates.webblocksui.com/api/updates/publish'
+          fi
+
+          printf 'value=%s\n' "$publish_url" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve release metadata
+        id: release
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          version="${TAG_NAME#v}"
+
+          if [ "$version" = "$TAG_NAME" ] || [ -z "$version" ]; then
+            printf 'Tag %s does not start with v.\n' "$TAG_NAME" >&2
+            exit 1
+          fi
+
+          release_url="https://github.com/${REPOSITORY}/releases/download/${TAG_NAME}/webblocks-cms-${version}.zip"
+          release_time="$(git for-each-ref --format='%(creatordate:iso8601-strict)' "refs/tags/${TAG_NAME}")"
+
+          if [ -z "$release_time" ]; then
+            printf 'Failed to resolve release time for tag %s.\n' "$TAG_NAME" >&2
+            exit 1
+          fi
+
+          printf 'tag=%s\n' "$TAG_NAME" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          printf 'release_url=%s\n' "$release_url" >> "$GITHUB_OUTPUT"
+          printf 'released_at=%s\n' "$release_time" >> "$GITHUB_OUTPUT"
+
+      - name: Generate release notes
+        run: scripts/release-notes.sh "${{ steps.release.outputs.tag }}" release-notes.md
+
+      - name: Build release archive
+        run: scripts/build-release.sh "${{ steps.release.outputs.version }}" dist
+
+      - name: Capture archive checksum
+        id: checksum
+        run: |
+          archive_path="dist/webblocks-cms-${{ steps.release.outputs.version }}.zip"
+          checksum="$(cut -d' ' -f1 "${archive_path}.sha256")"
+
+          if [ -z "$checksum" ]; then
+            printf 'Failed to read archive checksum.\n' >&2
+            exit 1
+          fi
+
+          printf 'value=%s\n' "$checksum" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.release.outputs.tag }}" \
+            "dist/webblocks-cms-${{ steps.release.outputs.version }}.zip" \
+            "dist/webblocks-cms-${{ steps.release.outputs.version }}.zip.sha256" \
+            --title "${{ steps.release.outputs.tag }}" \
+            --notes-file release-notes.md
+
+      - name: Publish release metadata
+        env:
+          WEBBLOCKS_PUBLISH_TOKEN: ${{ secrets.WEBBLOCKS_PUBLISH_TOKEN }}
+          PUBLISH_URL: ${{ steps.publish-url.outputs.value }}
+          TAG_NAME: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_URL: ${{ steps.release.outputs.release_url }}
+          RELEASED_AT: ${{ steps.release.outputs.released_at }}
+          CHECKSUM: ${{ steps.checksum.outputs.value }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          payload_file="$(mktemp)"
+
+          jq -n \
+            --arg product "$PRODUCT_KEY" \
+            --arg version "$VERSION" \
+            --arg channel "$DEFAULT_CHANNEL" \
+            --arg released_at "$RELEASED_AT" \
+            --rawfile notes release-notes.md \
+            --arg source_type "$SOURCE_TYPE" \
+            --arg release_url "$RELEASE_URL" \
+            --arg tag "$TAG_NAME" \
+            --arg commit "$COMMIT_SHA" \
+            --arg checksum "$CHECKSUM" \
+            ' {
+              product: $product,
+              version: $version,
+              channel: $channel,
+              released_at: $released_at,
+              notes: $notes,
+              source: {
+                type: $source_type,
+                url: $release_url,
+                reference: $tag
+              },
+              meta: {
+                app_name: "WebBlocks CMS",
+                app_version: $version,
+                commit: $commit,
+                tag: $tag,
+                php_version: "^8.3",
+                laravel_version: "^13.0",
+                artifact_name: ("webblocks-cms-" + $version + ".zip"),
+                artifact_url: $release_url,
+                checksum: $checksum,
+                checksum_algorithm: "sha256"
+              }
+            }' > "$payload_file"
+
+          curl --fail --silent --show-error \
+            --request POST \
+            --url "$PUBLISH_URL" \
+            --header "Accept: application/json" \
+            --header "Authorization: Bearer ${WEBBLOCKS_PUBLISH_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data @"$payload_file"
+
+          rm -f "$payload_file"

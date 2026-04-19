@@ -169,6 +169,37 @@ Project metadata is normalized to the CMS brand:
 
 See `docs/update-server.md` for the CMS client update flow and architecture notes.
 
+## Automated Releases
+
+- Git tags matching `v*` trigger `.github/workflows/publish-release.yml`.
+- The workflow strips the leading `v` to derive the release version, builds `webblocks-cms-<version>.zip`, creates a GitHub Release, and publishes release metadata to WebBlocks Publisher.
+- Release notes come from the annotated tag message when present. If the tag has no message, the workflow uses the matching `CHANGELOG.md` section when available and otherwise falls back to a short default note.
+- The release archive is a source package and excludes local/runtime content such as `.git`, `.github`, `.ddev`, `node_modules`, `vendor`, `.env*`, logs, caches, and generated storage artifacts.
+- Publisher payload fields are based on the last known CMS-side publisher contract and currently include:
+  - `product`
+  - `version`
+  - `channel`
+  - `released_at`
+  - `notes`
+  - `source.type`
+  - `source.url`
+  - `source.reference`
+  - `meta.app_name`
+  - `meta.app_version`
+  - `meta.commit`
+  - `meta.tag`
+  - `meta.php_version`
+  - `meta.laravel_version`
+  - `meta.artifact_name`
+  - `meta.artifact_url`
+  - `meta.checksum`
+  - `meta.checksum_algorithm`
+- Required GitHub Actions secret:
+  - `WEBBLOCKS_PUBLISH_TOKEN`: bearer token used for `POST https://updates.webblocksui.com/api/updates/publish`
+- Optional GitHub Actions secret:
+  - `WEBBLOCKS_PUBLISH_URL`: override publish endpoint, defaults to `https://updates.webblocksui.com/api/updates/publish`
+- The workflow is designed to fail clearly when the release already exists, the tag is invalid, the token is missing, the archive cannot be built, or the publisher rejects the request.
+
 ## Admin Dashboard Path
 
 - The canonical admin dashboard URL is now `/admin`.
