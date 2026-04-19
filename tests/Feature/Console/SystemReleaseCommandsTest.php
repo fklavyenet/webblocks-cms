@@ -4,6 +4,7 @@ namespace Tests\Feature\Console;
 
 use App\Models\SystemRelease;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -36,5 +37,32 @@ class SystemReleaseCommandsTest extends TestCase
         $this->artisan('system-release:list')
             ->expectsOutputToContain('0.2.0')
             ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function cms_release_dry_run_prints_release_plan(): void
+    {
+        $this->artisan('cms:release', [
+            'version' => '0.0.0-test',
+            '--dry-run' => true,
+        ])
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function cms_release_build_creates_artifacts(): void
+    {
+        $output = 'storage/app/test-release-command';
+        $absoluteOutput = base_path($output);
+        File::deleteDirectory($absoluteOutput);
+
+        $this->artisan('cms:release', [
+            'version' => '0.0.2-test',
+            '--output' => $output,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->assertFileExists($absoluteOutput.'/webblocks-cms-0.0.2-test.zip');
+        $this->assertFileExists($absoluteOutput.'/webblocks-cms-0.0.2-test.json');
     }
 }

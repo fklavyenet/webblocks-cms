@@ -180,6 +180,14 @@ Project metadata is normalized to the CMS brand:
 - Publish release records with artisan:
   - `php artisan system-release:publish ...`
   - `php artisan system-release:list`
+- Build distributable CMS packages with:
+  - `php artisan cms:release 0.1.1`
+  - `php artisan cms:release 0.1.1 --dry-run`
+  - `php artisan cms:release 0.1.1 --publish --local-publish`
+- Use the first argument or `--release-version=` for release version selection. `php artisan --version` is reserved by the framework.
+- Release packaging excludes git metadata, env files, vendor, node modules, runtime cache/log files, and generated release artifacts.
+- Each build writes a zip package and adjacent JSON metadata containing checksum, size, version, channel, notes, and source git metadata when available.
+- Real remote publish support uses a token-protected update server endpoint at `POST /api/updates/publish`.
 
 See `docs/update-server.md` for the full architecture, API contract, and release publishing workflow.
 

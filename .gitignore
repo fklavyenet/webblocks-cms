@@ -44,6 +44,8 @@ Thumbs.db
 # Local runtime media
 /storage/app/public/assets/*
 /storage/app/public/media/*
+/storage/app/public/releases/*
+/storage/app/releases/*
 
 # Keep public repo files
 !README.md

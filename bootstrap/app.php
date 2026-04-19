@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\CmsReleaseCommand;
 use App\Console\Commands\ImportDemoMedia;
 use App\Console\Commands\ListSystemReleases;
 use App\Console\Commands\PublishSystemRelease;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         ImportDemoMedia::class,
+        CmsReleaseCommand::class,
         PublishSystemRelease::class,
         ListSystemReleases::class,
     ])

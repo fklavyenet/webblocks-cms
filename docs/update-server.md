@@ -257,6 +257,78 @@ V1 copy is explicit: update checking only, no fake automation.
 
 ## Release Publishing
 
+The repository also includes a reusable release packaging workflow for CMS builds.
+
+Release config lives in `config/webblocks-release.php`.
+
+Key release env vars:
+
+- `WEBBLOCKS_RELEASE_PRODUCT`
+- `WEBBLOCKS_RELEASE_PACKAGE_PREFIX`
+- `WEBBLOCKS_RELEASE_DEFAULT_CHANNEL`
+- `WEBBLOCKS_RELEASE_OUTPUT_DIRECTORY`
+- `WEBBLOCKS_RELEASE_DOWNLOADS_DIRECTORY`
+- `WEBBLOCKS_RELEASE_DOWNLOADS_URL_PREFIX`
+- `WEBBLOCKS_RELEASE_EXCLUDE_VENDOR`
+- `WEBBLOCKS_RELEASE_EXCLUDE_GIT_METADATA`
+- `WEBBLOCKS_RELEASE_PUBLISH_SERVER_URL`
+- `WEBBLOCKS_RELEASE_PUBLISH_TOKEN`
+
+Release command:
+
+```bash
+php artisan cms:release 0.1.1
+```
+
+Build and publish to an update server with the token-protected publish endpoint:
+
+```bash
+php artisan cms:release 0.1.1 --channel=stable --notes-file=docs/release-notes.md --publish
+```
+
+Dry run:
+
+```bash
+php artisan cms:release 0.1.1 --dry-run
+```
+
+Local publish fallback for same-project update server installs:
+
+```bash
+php artisan cms:release 0.1.1 --publish --local-publish
+```
+
+`php artisan` reserves the global `--version` flag for the framework itself, so the release command accepts the version as the first argument or via `--release-version=`.
+
+What the builder excludes by default:
+
+- `.git/`
+- `.github/`
+- `.ddev/`
+- `.env*`
+- `node_modules/`
+- `vendor/`
+- storage logs/framework runtime artifacts
+- local media/runtime release artifacts
+- OS junk files like `.DS_Store`
+
+Artifacts are written as:
+
+- `webblocks-cms-<version>.zip`
+- `webblocks-cms-<version>.json`
+
+The JSON metadata includes version, channel, checksum, size, notes, build time, and source git commit/tag data when available.
+
+The publish endpoint is:
+
+- `POST /api/updates/publish`
+
+It expects:
+
+- bearer token auth via `WEBBLOCKS_RELEASE_PUBLISH_TOKEN`
+- multipart `package` upload
+- release metadata fields such as product, version, channel, checksum, and notes
+
 Create or update a release:
 
 ```bash

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\Updates\LatestReleaseController;
+use App\Http\Controllers\Api\Updates\PublishReleaseController;
 use App\Http\Controllers\Api\Updates\ReleaseController;
 use App\Http\Controllers\Api\Updates\UpdateServiceController;
+use App\Http\Middleware\EnsureReleasePublishAuthorized;
 use App\Http\Middleware\EnsureUpdateServerEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -21,4 +23,11 @@ Route::middleware(EnsureUpdateServerEnabled::class)
             ->where('product', '[A-Za-z0-9\-]+')
             ->where('version', '[0-9A-Za-z\.\-\+]+')
             ->name('releases.show');
+    });
+
+Route::middleware([EnsureUpdateServerEnabled::class, EnsureReleasePublishAuthorized::class])
+    ->prefix('updates')
+    ->name('api.updates.')
+    ->group(function (): void {
+        Route::post('publish', PublishReleaseController::class)->name('publish');
     });
