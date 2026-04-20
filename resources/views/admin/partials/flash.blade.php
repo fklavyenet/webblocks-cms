@@ -32,6 +32,15 @@
     </div>
 @endif
 
+@if ($errors->has('system_restore'))
+    <div class="wb-alert wb-alert-danger">
+        <div>
+            <div class="wb-alert-title">Restore Failed</div>
+            <div>{{ $errors->first('system_restore') }}</div>
+        </div>
+    </div>
+@endif
+
 @if ($errors->any())
     <div class="wb-alert wb-alert-danger">
         <div>

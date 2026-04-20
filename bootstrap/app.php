@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\ImportDemoMedia;
+use App\Console\Commands\SystemBackupRestoreCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         ImportDemoMedia::class,
+        SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         //

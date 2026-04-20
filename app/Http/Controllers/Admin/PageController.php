@@ -15,19 +15,50 @@ use App\Models\SlotType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->string('search'));
+        $status = $request->string('status')->toString();
+        $sort = $request->string('sort')->toString();
+        $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
+        $allowedStatuses = ['draft', 'published'];
+        $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
+
+        if (! in_array($status, $allowedStatuses, true)) {
+            $status = '';
+        }
+
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'created_at';
+        }
+
         return view('admin.pages.index', [
             'pages' => Page::query()
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
-                ->latest()
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($inner) use ($search) {
+                        $inner->where('title', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%")
+                            ->orWhere('page_type', 'like', "%{$search}%");
+                    });
+                })
+                ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->orderBy($sort, $direction)
+                ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
                 ->withQueryString(),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'sort' => $sort,
+                'direction' => $direction,
+            ],
         ]);
     }
 

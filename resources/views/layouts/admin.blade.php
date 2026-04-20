@@ -130,14 +130,14 @@
                     ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
                     ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
                     ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
-                    ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu-2'],
-                    ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-folder'],
-                    ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*', 'icon' => 'wb-icon-folder'],
+                    ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
+                    ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
+                    ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*', 'icon' => 'wb-icon-sidebar'],
                     ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*', 'icon' => 'wb-icon-layers'],
                 ],
                 [
                     ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*', 'icon' => 'wb-icon-database'],
-                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh-dot'],
+                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh'],
                 ],
             ];
         @endphp

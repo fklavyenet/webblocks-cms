@@ -226,6 +226,7 @@ Project metadata is normalized to the CMS brand:
 
 - Admin path: `/admin/system/backups`
 - Backup records persist in `system_backups` with running, completed, or failed state plus summary, output log, and triggering user.
+- Restore run records persist separately in `system_backup_restores`, including source archive, restored parts, safety backup reference, output log, and failure details.
 - Backup archives are stored locally under `storage/app/backups/<Y>/<m>/<d>/webblocks-cms-backup-YYYY-MM-DD-HHMMSS.zip`.
 - Each archive includes:
   - `database/database.sql`
@@ -236,11 +237,26 @@ Project metadata is normalized to the CMS brand:
   - MySQL/MariaDB: environment-aware execution with `CMS_BACKUP_EXECUTION=auto|direct|ddev`
   - `auto` uses `ddev exec` in local DDEV projects and keeps the existing direct `mysqldump` / `mariadb-dump` flow elsewhere
   - Override example: `CMS_BACKUP_EXECUTION=direct` to force host execution or `CMS_BACKUP_EXECUTION=ddev` to always run inside DDEV
-- Not supported yet:
-  - restore UI or one-click restore
-  - scheduled backups
-  - cloud or remote storage sync
-  - incremental/differential or encrypted backup flows
+- Restore behavior:
+  - `php artisan system:backup:restore {backup}` restores a backup by record ID or by relative archive path on the `backups` disk
+  - the command requires confirmation unless `--force` is passed
+  - the admin backup details screen includes an explicit restore action for completed backups only
+  - restore validates `manifest.json` and `database/database.sql` before doing anything destructive
+  - if the manifest says uploads are included, `uploads/public/...` must also exist in the archive
+  - restore creates a fresh pre-restore safety backup of the current environment before importing the selected archive
+  - if the safety backup fails, restore aborts
+  - restore replaces the current database with `database/database.sql`
+  - restore replaces `storage/app/public` with `uploads/public` from the archive when present
+  - restore reruns `php artisan storage:link` and `php artisan optimize:clear` after the archive is applied
+  - restore never deletes the source backup archive
+- Local DDEV notes:
+  - MySQL/MariaDB restore uses the same `CMS_BACKUP_EXECUTION=auto|direct|ddev` strategy family as backup creation
+  - in local DDEV projects, `auto` prefers `ddev exec mysql` or `ddev exec mariadb` when appropriate
+- Known limitations:
+  - restore is intentionally explicit and not scheduled or automatic
+  - restore currently targets the active configured database connection plus `storage/app/public`
+  - cloud or remote backup storage sync is still not included
+  - incremental/differential and encrypted backup flows are still not included
 
 ## License
 

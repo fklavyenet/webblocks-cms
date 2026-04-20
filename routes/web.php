@@ -46,8 +46,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('block-types', BlockTypeController::class)->except(['show']);
     Route::get('system/backups', [SystemBackupController::class, 'index'])->name('system.backups.index');
     Route::post('system/backups', [SystemBackupController::class, 'store'])->name('system.backups.store');
+    Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
     Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
     Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
+    Route::post('system/backups/{backup}/restore', [SystemBackupController::class, 'restore'])->name('system.backups.restore');
     Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
     Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
     Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');

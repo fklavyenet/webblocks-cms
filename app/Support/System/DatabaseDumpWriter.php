@@ -5,13 +5,16 @@ namespace App\Support\System;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 class DatabaseDumpWriter
 {
+    public function __construct(
+        private readonly DatabaseExecutionStrategyResolver $strategyResolver,
+    ) {}
+
     public function dumpTo(string $destinationPath, array &$output = []): array
     {
         File::ensureDirectoryExists(dirname($destinationPath));
@@ -114,14 +117,7 @@ class DatabaseDumpWriter
 
     public function resolveMysqlDumpStrategy(): string
     {
-        $configuredStrategy = Str::lower((string) config('cms.backup.execution', 'auto'));
-
-        return match ($configuredStrategy) {
-            'direct' => 'direct',
-            'ddev' => 'ddev',
-            'auto', '' => $this->shouldUseDdevStrategy() ? 'ddev' : 'direct',
-            default => throw new RuntimeException('Invalid cms.backup.execution value ['.$configuredStrategy.']. Supported values: auto, direct, ddev.'),
-        };
+        return $this->strategyResolver->resolveMysqlStrategy();
     }
 
     private function runDirectMysqlDump(string $destinationPath, array $config): void
@@ -271,40 +267,6 @@ class DatabaseDumpWriter
         }
 
         return $binary;
-    }
-
-    private function shouldUseDdevStrategy(): bool
-    {
-        if (Str::lower((string) config('app.env')) !== 'local') {
-            return false;
-        }
-
-        if (! $this->isDdevProject()) {
-            return false;
-        }
-
-        if ($this->isRunningInsideDdev()) {
-            return false;
-        }
-
-        return $this->isDdevUrl((string) config('app.url')) || $this->isDdevProject();
-    }
-
-    private function isDdevProject(): bool
-    {
-        return File::isDirectory(base_path('.ddev'));
-    }
-
-    private function isRunningInsideDdev(): bool
-    {
-        return ! empty($_SERVER['IS_DDEV_PROJECT'] ?? $_ENV['IS_DDEV_PROJECT'] ?? getenv('IS_DDEV_PROJECT'));
-    }
-
-    private function isDdevUrl(string $url): bool
-    {
-        $host = parse_url($url, PHP_URL_HOST);
-
-        return is_string($host) && str_ends_with(Str::lower($host), '.ddev.site');
     }
 
     private function describeMysqlDumpCommand(string $strategy, string $driver): string

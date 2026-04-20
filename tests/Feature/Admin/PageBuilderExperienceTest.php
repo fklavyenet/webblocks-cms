@@ -222,6 +222,54 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function pages_list_supports_filtering_and_sorting(): void
+    {
+        $user = User::factory()->create();
+
+        $about = Page::create([
+            'title' => 'About Us',
+            'slug' => 'about-us',
+            'status' => 'published',
+        ]);
+        $contact = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'draft',
+        ]);
+        $services = Page::create([
+            'title' => 'Services',
+            'slug' => 'services',
+            'status' => 'published',
+        ]);
+
+        $filtered = $this->actingAs($user)->get(route('admin.pages.index', [
+            'search' => 'about',
+            'status' => 'published',
+            'sort' => 'title',
+            'direction' => 'asc',
+        ]));
+
+        $filtered->assertOk();
+        $filtered->assertSee('About Us');
+        $filtered->assertSee(route('admin.pages.edit', $about), false);
+        $filtered->assertDontSee(route('admin.pages.edit', $contact), false);
+        $filtered->assertDontSee(route('admin.pages.edit', $services), false);
+        $filtered->assertSee('Search');
+        $filtered->assertSee('Sort by');
+
+        $sorted = $this->actingAs($user)->get(route('admin.pages.index', [
+            'sort' => 'title',
+            'direction' => 'asc',
+        ]));
+
+        $sorted->assertOk();
+        $sorted->assertSeeInOrder(['About Us', 'Contact', 'Services']);
+        $sorted->assertSee('Clear');
+
+        unset($about, $contact, $services);
+    }
+
+    #[Test]
     public function navigation_auto_block_renders_navigation_items_from_the_selected_location(): void
     {
         $header = $this->slotType('header', 'Header', 1);

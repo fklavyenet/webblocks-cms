@@ -10,12 +10,60 @@
 
     @include('admin.partials.flash')
 
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            <form method="GET" action="{{ route('admin.pages.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
+                <div class="wb-cluster wb-cluster-2">
+                    <div class="wb-stack wb-gap-1">
+                    <label for="pages_search">Search</label>
+                    <input id="pages_search" name="search" type="text" class="wb-input" value="{{ $filters['search'] }}" placeholder="Search by title, slug, or page type">
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="pages_status">Status</label>
+                        <select id="pages_status" name="status" class="wb-select">
+                            <option value="">All statuses</option>
+                            <option value="draft" @selected($filters['status'] === 'draft')>Draft</option>
+                            <option value="published" @selected($filters['status'] === 'published')>Published</option>
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="pages_sort">Sort by</label>
+                        <select id="pages_sort" name="sort" class="wb-select">
+                            <option value="created_at" @selected($filters['sort'] === 'created_at')>Created at</option>
+                            <option value="updated_at" @selected($filters['sort'] === 'updated_at')>Updated at</option>
+                            <option value="title" @selected($filters['sort'] === 'title')>Title</option>
+                            <option value="slug" @selected($filters['sort'] === 'slug')>Slug</option>
+                            <option value="status" @selected($filters['sort'] === 'status')>Status</option>
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="pages_direction">Direction</label>
+                        <select id="pages_direction" name="direction" class="wb-select">
+                            <option value="desc" @selected($filters['direction'] === 'desc')>Descending</option>
+                            <option value="asc" @selected($filters['direction'] === 'asc')>Ascending</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="wb-cluster wb-cluster-2" style="align-self: end;">
+                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
+                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
+                        <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+
     @if ($pages->isEmpty())
         <div class="wb-card">
             <div class="wb-card-body">
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No pages yet</div>
-                    <div class="wb-empty-text">Create your first page to start the CMS content flow.</div>
+                    <div class="wb-empty-title">No pages found</div>
+                    <div class="wb-empty-text">Adjust the filters or create your first page to start the CMS content flow.</div>
                     <div class="wb-empty-action">
                         <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">Create Page</a>
                     </div>
@@ -69,10 +117,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="wb-cluster wb-cluster-2 wb-row-end">
+                                        <div class="wb-action-group">
                                             <button
                                                 type="button"
-                                                class="wb-btn wb-btn-secondary"
+                                                class="wb-action-btn"
                                                 data-wb-toggle="drawer"
                                                 data-wb-target="#pageDetailsDrawer-{{ $page->id }}"
                                                 aria-controls="pageDetailsDrawer-{{ $page->id }}"
@@ -82,14 +130,12 @@
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
                                             </button>
 
-                                            <div class="wb-action-group">
-                                                <a href="{{ route('admin.pages.edit', $page) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                                <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" onsubmit="return confirm('Delete this page?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete page" aria-label="Delete page"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                                </form>
-                                            </div>
+                                            <a href="{{ route('admin.pages.edit', $page) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" onsubmit="return confirm('Delete this page?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete page" aria-label="Delete page"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

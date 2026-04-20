@@ -1,6 +1,8 @@
 @extends('layouts.admin', ['title' => 'Backup Details', 'heading' => 'Backup Details'])
 
 @section('content')
+    @php($canRestore = $backup->isSuccessful() && filled($backup->archive_path))
+
     @include('admin.partials.page-header', [
         'title' => $backup->archive_filename ?? 'Backup #'.$backup->id,
         'description' => 'Review backup results, operational logs, and archive metadata for this run.',
@@ -49,6 +51,90 @@
             </div>
         </div>
 
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-header"><strong>Danger Zone</strong></div>
+
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-alert wb-alert-danger">
+                    <div>
+                        <div class="wb-alert-title">Restore backup</div>
+                        <div>Restoring a backup will overwrite your current database and files. WebBlocks CMS will create a fresh safety backup first and will not delete the source backup archive.</div>
+                    </div>
+                </div>
+
+                <div class="wb-text-sm wb-text-muted">Selected backup: <strong>{{ $backup->archive_filename ?? 'Backup #'.$backup->id }}</strong> at <code>{{ $backup->archive_path ?? 'archive unavailable' }}</code></div>
+
+                @if ($canRestore)
+                    <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm('Restore this backup? This will replace the current database and uploads.');" data-wb-restore-form>
+                        @csrf
+
+                        <label class="wb-checkbox" for="acknowledge_restore_risk">
+                            <input id="acknowledge_restore_risk" type="checkbox" name="acknowledge_restore_risk" value="1" required {{ old('acknowledge_restore_risk') ? 'checked' : '' }} data-wb-restore-ack>
+                            <span>I understand this will overwrite current data.</span>
+                        </label>
+
+                        <div class="wb-text-sm wb-text-muted">This restore imports <code>database/database.sql</code>, restores <code>uploads/public/...</code> when present, reruns <code>storage:link</code>, and clears framework caches after the restore.</div>
+
+                        <div>
+                            <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>Restore backup</button>
+                        </div>
+                    </form>
+                @else
+                    <div class="wb-alert wb-alert-warning">
+                        <div>
+                            <div class="wb-alert-title">Restore is unavailable for this backup</div>
+                            <div>Only completed backups with a stored archive can be restored from the admin panel.</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="button" class="wb-btn wb-btn-danger" disabled>Restore backup</button>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        @if ($restoreRuns->isNotEmpty())
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Restore History</strong></div>
+
+                <div class="wb-card-body">
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-striped wb-table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Started at</th>
+                                    <th>Status</th>
+                                    <th>Parts</th>
+                                    <th>Safety backup</th>
+                                    <th>Triggered by</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($restoreRuns as $restoreRun)
+                                    <tr>
+                                        <td>{{ $restoreRun->started_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
+                                        <td><span class="wb-status-pill {{ $restoreRun->statusBadgeClass() }}">{{ $restoreRun->statusLabel() }}</span></td>
+                                        <td>{{ $restoreRun->restoredPartsLabel() ?: '-' }}</td>
+                                        <td>
+                                            @if ($restoreRun->safetyBackup)
+                                                <a href="{{ route('admin.system.backups.show', $restoreRun->safetyBackup) }}">#{{ $restoreRun->safetyBackup->id }}</a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>{{ $restoreRun->triggeredBy?->name ?? '-' }}</td>
+                                        <td>{{ $restoreRun->durationLabel() }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="wb-card">
             <div class="wb-card-header"><strong>Operational Log</strong></div>
 
@@ -64,3 +150,23 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.querySelectorAll('[data-wb-restore-form]').forEach(function (form) {
+            var acknowledgement = form.querySelector('[data-wb-restore-ack]');
+            var submitButton = form.querySelector('[data-wb-restore-submit]');
+
+            if (!acknowledgement || !submitButton) {
+                return;
+            }
+
+            var syncRestoreSubmitState = function () {
+                submitButton.disabled = !acknowledgement.checked;
+            };
+
+            syncRestoreSubmitState();
+            acknowledgement.addEventListener('change', syncRestoreSubmitState);
+        });
+    </script>
+@endpush

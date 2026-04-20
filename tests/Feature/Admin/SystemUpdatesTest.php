@@ -57,7 +57,7 @@ class SystemUpdatesTest extends TestCase
         $user = User::factory()->create();
 
         config()->set('webblocks-updates.enabled', false);
-        config()->set('app.version', '0.1.6');
+        config()->set('app.version', '0.1.7');
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
