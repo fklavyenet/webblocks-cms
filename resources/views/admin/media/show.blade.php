@@ -1,10 +1,17 @@
 @extends('layouts.admin', ['title' => 'Asset Detail', 'heading' => 'Asset Detail'])
 
+@php
+    $showPreviewBackLink = request()->boolean('back_to_preview');
+@endphp
+
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $asset->title ?: $asset->filename,
         'description' => 'Review metadata, edit asset fields, and manage shared media records safely.',
-        'actions' => '<a href="'.route('admin.media.edit', $asset).'" class="wb-btn wb-btn-primary">Edit Asset</a>',
+        'actions' => ($showPreviewBackLink
+            ? '<a href="'.route('admin.media.index', ['preview' => $asset->id]).'" class="wb-btn wb-btn-secondary">Back to Preview</a> '
+            : '')
+            .'<a href="'.route('admin.media.edit', array_filter(['asset' => $asset, 'back_to_preview' => $showPreviewBackLink ? 1 : null])).'" class="wb-btn wb-btn-primary">Edit Asset</a>',
     ])
 
     @include('admin.partials.flash')

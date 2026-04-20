@@ -102,7 +102,10 @@ class MediaController extends Controller
         $asset->update($request->validated());
 
         return redirect()
-            ->route('admin.media.show', $asset)
+            ->route('admin.media.show', array_filter([
+                'asset' => $asset,
+                'back_to_preview' => $request->boolean('back_to_preview') ? 1 : null,
+            ]))
             ->with('status', 'Asset updated successfully.');
     }
 

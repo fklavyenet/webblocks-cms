@@ -324,7 +324,7 @@
 
 @push('overlays')
     @if ($previewAsset)
-        <div class="wb-overlay-layer wb-overlay-layer--dialog">
+        <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-media-preview-overlay data-wb-close-url="{{ route('admin.media.index', $previewBaseQuery) }}">
             <div class="wb-overlay-backdrop"></div>
             <div class="wb-modal wb-modal-xl is-open" id="media-preview-modal" role="dialog" aria-modal="true" aria-labelledby="media-preview-title">
                 <div class="wb-modal-dialog">
@@ -355,7 +355,7 @@
                                 @if ($previewAsset->url())
                                     <button type="button" class="wb-action-btn" data-wb-copy-url="{{ $previewAsset->url() }}" title="Copy asset URL" aria-label="Copy asset URL"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></button>
                                 @endif
-                                <a href="{{ route('admin.media.show', $previewAsset) }}" class="wb-action-btn wb-action-btn-view" title="Open details" aria-label="Open details"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                <a href="{{ route('admin.media.show', array_merge(['asset' => $previewAsset], ['back_to_preview' => 1])) }}" class="wb-action-btn wb-action-btn-view" title="Open details" aria-label="Open details"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>
@@ -542,6 +542,7 @@
     <script>
         (function () {
             var feedback = document.querySelector('[data-wb-copy-feedback]');
+            var previewOverlay = document.querySelector('[data-wb-media-preview-overlay]');
 
             document.querySelectorAll('[data-wb-copy-url]').forEach(function (button) {
                 button.addEventListener('click', async function () {
@@ -577,6 +578,20 @@
                     }
                 });
             });
+
+            if (previewOverlay) {
+                previewOverlay.addEventListener('click', function (event) {
+                    if (event.target !== previewOverlay && !event.target.classList.contains('wb-overlay-backdrop')) {
+                        return;
+                    }
+
+                    var closeUrl = previewOverlay.getAttribute('data-wb-close-url');
+
+                    if (closeUrl) {
+                        window.location.href = closeUrl;
+                    }
+                });
+            }
         })();
     </script>
 @endpush

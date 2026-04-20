@@ -225,6 +225,67 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
+    public function asset_detail_can_link_back_to_preview_modal(): void
+    {
+        $user = User::factory()->create();
+
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/back-to-preview.jpg',
+            'filename' => 'back-to-preview.jpg',
+            'original_name' => 'back-to-preview.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Back to preview asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Back to Preview');
+        $response->assertSee(route('admin.media.index', ['preview' => $asset->id]), false);
+    }
+
+    #[Test]
+    public function asset_edit_preserves_back_to_preview_context(): void
+    {
+        $user = User::factory()->create();
+
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/edit-context.jpg',
+            'filename' => 'edit-context.jpg',
+            'original_name' => 'edit-context.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Edit context asset',
+        ]);
+
+        $editResponse = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'back_to_preview' => 1]));
+
+        $editResponse->assertOk();
+        $editResponse->assertSee(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]), false);
+        $editResponse->assertSee('name="back_to_preview" value="1"', false);
+
+        $updateResponse = $this->actingAs($user)->put(route('admin.media.update', $asset), [
+            'title' => 'Updated title',
+            'alt_text' => 'Alt text',
+            'caption' => 'Caption',
+            'description' => 'Description',
+            'folder_id' => null,
+            'back_to_preview' => 1,
+        ]);
+
+        $updateResponse->assertRedirect(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
+    }
+
+    #[Test]
     public function media_index_can_open_upload_and_folder_modals_and_persist_new_records(): void
     {
         Storage::fake('public');
