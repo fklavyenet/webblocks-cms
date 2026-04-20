@@ -33,7 +33,7 @@ class SystemUpdatesTest extends TestCase
     {
         $user = User::factory()->create();
         app(InstalledVersionStore::class)->persist('0.1.4');
-        $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.');
+        $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, '0.1.4');
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
@@ -42,10 +42,10 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('Already up to date');
         $response->assertSee('Installed version');
         $response->assertSee('0.1.4');
-        $response->assertSee('Latest version');
-        $response->assertSee('0.2.0');
+        $response->assertDontSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
         $response->assertSee('Update Summary');
         $response->assertSee('Actions');
+        $response->assertSee('Check again');
         $response->assertDontSee('Recent Backup');
         $response->assertSee('Technical details');
         $response->assertSee('WebBlocks CMS v0.1.4');
@@ -83,6 +83,7 @@ class SystemUpdatesTest extends TestCase
         $followUp->assertSee('Update now');
         $followUp->assertDontSee('Download package');
         $followUp->assertSee('Check again');
+        $followUp->assertSee('Latest version');
     }
 
     #[Test]
