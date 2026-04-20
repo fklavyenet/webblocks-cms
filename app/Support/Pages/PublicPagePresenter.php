@@ -131,6 +131,10 @@ class PublicPagePresenter
 
     private function resolveMetaDescription(Page $page, Collection $blocks): ?string
     {
+        if (filled($page->meta_description ?? null)) {
+            return (string) $page->meta_description;
+        }
+
         $summary = $blocks
             ->map(fn (Block $block) => $block->content ?: $block->subtitle)
             ->filter()
