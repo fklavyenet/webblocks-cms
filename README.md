@@ -165,7 +165,7 @@ Project metadata is normalized to the CMS brand:
   - no releases found
   - update server unavailable
   - invalid or unsupported response
-- V1 does not perform package download/install automation. The page only checks the server, shows release metadata, and links to the package download when present.
+- The CMS update screen now performs in-app automatic updates. It downloads the published release package into a temporary workspace, verifies the checksum when available, applies the package with protected-path exclusions, runs maintenance and migration commands, records the update run log, and only then persists the installed version.
 
 ## Automated Releases
 

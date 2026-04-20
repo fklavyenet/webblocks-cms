@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RunSystemUpdateRequest;
 use App\Models\SystemUpdateRun;
 use App\Support\System\SystemUpdateInspector;
+use App\Support\System\Updates\SystemUpdater;
+use App\Support\System\Updates\UpdateException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -13,6 +16,7 @@ class SystemUpdateController extends Controller
 {
     public function __construct(
         private readonly SystemUpdateInspector $systemUpdateInspector,
+        private readonly SystemUpdater $systemUpdater,
     ) {}
 
     public function index(): View
@@ -37,6 +41,23 @@ class SystemUpdateController extends Controller
             ->route('admin.system.updates.index')
             ->with('status', $this->statusMessage($report))
             ->with('system_updates_checked_at', ($report['checked_at'] ?? now())->toIso8601String());
+    }
+
+    public function store(RunSystemUpdateRequest $request): RedirectResponse
+    {
+        try {
+            $result = $this->systemUpdater->run($request->user());
+
+            return redirect()
+                ->route('admin.system.updates.index')
+                ->with('status', $result->summary)
+                ->with('system_updates_checked_at', $result->finishedAt->toIso8601String());
+        } catch (UpdateException $exception) {
+            return redirect()
+                ->route('admin.system.updates.index')
+                ->withErrors(['system_update' => $exception->userMessage()])
+                ->withInput();
+        }
     }
 
     private function latestUpdateRun(): ?SystemUpdateRun

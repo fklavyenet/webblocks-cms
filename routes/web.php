@@ -50,6 +50,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
     Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
     Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
+    Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
     Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');

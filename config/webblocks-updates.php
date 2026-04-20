@@ -16,4 +16,23 @@ return [
         'retry_times' => env('WEBBLOCKS_UPDATE_CLIENT_RETRY_TIMES', 0),
         'retry_sleep_milliseconds' => env('WEBBLOCKS_UPDATE_CLIENT_RETRY_SLEEP_MS', 150),
     ],
+    'installer' => [
+        'target_path' => env('WEBBLOCKS_UPDATE_TARGET_PATH', base_path()),
+        'workspace_root' => env('WEBBLOCKS_UPDATE_WORKSPACE_ROOT', 'app/system-updates'),
+        'download_timeout_seconds' => env('WEBBLOCKS_UPDATE_DOWNLOAD_TIMEOUT_SECONDS', 120),
+        'command_timeout_seconds' => env('WEBBLOCKS_UPDATE_COMMAND_TIMEOUT_SECONDS', 600),
+        'lock_name' => env('WEBBLOCKS_UPDATE_LOCK_NAME', 'system-updates:run'),
+        'lock_ttl_seconds' => env('WEBBLOCKS_UPDATE_LOCK_TTL_SECONDS', 900),
+        'excluded_paths' => [
+            '.git',
+            '.github',
+            '.ddev',
+            'storage',
+            'bootstrap/cache',
+            'node_modules',
+            'vendor',
+            'public/storage',
+            'public/build',
+        ],
+    ],
 ];

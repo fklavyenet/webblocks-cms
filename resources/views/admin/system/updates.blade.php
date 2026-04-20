@@ -8,6 +8,7 @@
         $release = $updateStatus['release'] ?? null;
         $installedVersion = $report['installed_version'] ?? $updateStatus['installed_version'];
         $latestUpdateRun = $latestUpdateRun ?? null;
+        $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $compatibilityBadgeClass = match ($compatibilityStatus) {
             'compatible' => 'wb-status-active',
@@ -30,7 +31,7 @@
 
     @include('admin.partials.page-header', [
         'title' => 'System Updates',
-        'description' => 'Review the installed version, check the latest published release, and download the package when an update is available.',
+        'description' => 'Review the installed version, check the latest published release, and run in-app automatic updates when a compatible release is available.',
         'actions' => '<div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div>',
     ])
 
@@ -93,7 +94,7 @@
                             </div>
 
                             @if ($hasMoreReleaseNotes)
-                                <div class="wb-text-sm wb-text-muted">Additional release notes are available in the package release details.</div>
+                                <div class="wb-text-sm wb-text-muted">Additional release notes are available in the published release details.</div>
                             @endif
                         @endif
                     </div>
@@ -108,13 +109,31 @@
                 <div class="wb-card-body wb-stack wb-gap-3">
                     <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">Check again</a>
 
-                    @if ($release['download_url'] ?? null)
-                        <a href="{{ $release['download_url'] }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener">Download package</a>
-                    @else
-                        <button type="button" class="wb-btn wb-btn-secondary" disabled>Download unavailable</button>
-                    @endif
+                    <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-2" data-wb-update-form>
+                        @csrf
 
-                    <div class="wb-text-sm wb-text-muted">Download the latest package when you are ready to update this install manually.</div>
+                        <label class="wb-checkbox">
+                            <input type="checkbox" name="acknowledge_backup_risk" value="1" @checked(old('acknowledge_backup_risk'))>
+                            <span>Automatic backup is not created before update in this version.</span>
+                        </label>
+
+                        <button
+                            type="submit"
+                            class="wb-btn wb-btn-primary"
+                            data-wb-update-submit
+                            data-default-label="Update now"
+                            data-busy-label="Updating..."
+                            @disabled(! $autoUpdate['allowed'])
+                        >
+                            {{ $autoUpdate['busy'] ? 'Updating...' : 'Update now' }}
+                        </button>
+                    </form>
+
+                    @if ($autoUpdate['allowed'])
+                        <div class="wb-text-sm wb-text-muted">The system will download, verify, install, migrate, clear runtime caches, and bring the site back online automatically.</div>
+                    @else
+                        <div class="wb-text-sm wb-text-muted">{{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}</div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -234,3 +253,24 @@
         </details>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('submit', function (event) {
+            var form = event.target.closest('[data-wb-update-form]');
+
+            if (!form) {
+                return;
+            }
+
+            var button = form.querySelector('[data-wb-update-submit]');
+
+            if (!button || button.disabled) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = button.getAttribute('data-busy-label') || 'Updating...';
+        });
+    </script>
+@endpush
