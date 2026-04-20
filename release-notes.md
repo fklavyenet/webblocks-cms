@@ -1,24 +1,26 @@
 ### Improvements
 
-* Added first-party backup restore workflows to WebBlocks CMS
+* Added site-specific public asset hooks for single-site installs
 
-  * Introduced explicit backup restore orchestration for database and uploads recovery
-  * Added archive validation, pre-restore safety backups, restore logging, and post-restore maintenance steps
-  * Added `php artisan system:backup:restore` for practical local recovery workflows
-  * Added guarded admin restore actions on backup detail pages
+  * Public pages now optionally load `public/site/css/site.css`
+  * Public pages now optionally load `public/site/js/site.js`
+  * Added starter site asset files as the canonical place for install-specific public branding and behavior
 
-* Improved backup administration UX
+* Improved media library UX on the admin index screen
 
-  * Added safe cleanup actions for failed and stale running backup records
-  * Switched backup list row actions to compact icon actions
-  * Fixed admin menu icons to use valid WebBlocks UI icons
+  * Added list/grid view toggle with query-string persistence
+  * Improved preview thumbnails, metadata density, compact actions, copy URL, and usage details
+  * Added preview modal quality-of-life fixes, including backdrop close and preview-context return flow
+  * Added unused/used filtering and clearer folder chip behavior
 
-* Added filtering and sorting to the Pages list
+* Improved editorial list density in Pages and Contact Messages
 
-  * Added search, status filter, sort field, and direction controls
-  * Tightened the Pages list layout so filters and row actions stay compact
+  * Pages list is more compact and no longer wastes space on less useful columns
+  * Contact Messages list now supports compact filters and cleaner action presentation
+  * Fixed admin overlay drawer rendering so hidden drawers do not leave a visual shadow on list screens
 
 ### Notes
 
-* Existing backup creation behavior remains unchanged
-* Published releases from this tag are ready to be consumed by the in-app CMS updater
+* WebBlocks CMS still follows a single-site-per-install convention
+* Site-specific public branding should go into `public/site/...`, while shared CMS/core public templates remain generic
+* Published releases from this tag are intended to be consumed by the in-app CMS updater

@@ -79,8 +79,6 @@
                             <tr>
                                 <th>View</th>
                                 <th>Title</th>
-                                <th>Slug</th>
-                                <th>Slots</th>
                                 <th>Blocks</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -108,8 +106,6 @@
                                         @endif
                                     </td>
                                     <td>{{ $page->title }}</td>
-                                    <td><code>{{ $page->slug }}</code></td>
-                                    <td>{{ $page->slots->pluck('slotType.name')->filter()->implode(', ') ?: '-' }}</td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
@@ -148,11 +144,14 @@
             @include('admin.partials.pagination', ['paginator' => $pages])
         </div>
 
-        @foreach ($pages as $page)
-            @include('admin.pages.partials.details-drawer', [
-                'page' => $page,
-                'drawerId' => 'pageDetailsDrawer-'.$page->id,
-            ])
-        @endforeach
     @endif
 @endsection
+
+@push('overlays')
+    @foreach ($pages as $page)
+        @include('admin.pages.partials.details-drawer', [
+            'page' => $page,
+            'drawerId' => 'pageDetailsDrawer-'.$page->id,
+        ])
+    @endforeach
+@endpush

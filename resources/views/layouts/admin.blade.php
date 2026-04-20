@@ -14,6 +14,14 @@
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
         @stack('styles')
         <style>
+            #wb-overlay-root .wb-drawer {
+                display: none;
+            }
+
+            #wb-overlay-root .wb-drawer.is-open {
+                display: flex;
+            }
+
             .wb-sidebar-footer {
                 text-align: center;
             }

@@ -218,6 +218,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Main');
         $response->assertSee(route('admin.pages.edit', $page), false);
+        $response->assertDontSee('<th>Slug</th>', false);
+        $response->assertDontSee('<th>Slots</th>', false);
         $response->assertDontSee(route('admin.blocks.index', ['page_id' => $page->id]), false);
     }
 

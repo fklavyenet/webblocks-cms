@@ -191,7 +191,7 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
-    public function admin_messages_list_shows_contact_page_source_path(): void
+    public function admin_messages_list_still_shows_message_rows_after_compacting_the_list(): void
     {
         $user = User::factory()->create();
         [$page, $block] = $this->createContactFormPage();
@@ -213,9 +213,54 @@ class ContactFormModuleTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Contact');
-        $response->assertSee('/p/contact');
-        $response->assertSee('Open source');
+        $response->assertSee('Taylor Editor');
         $response->assertSee('&mdash;', false);
+        $response->assertDontSee('<th>Source</th>', false);
+    }
+
+    #[Test]
+    public function admin_messages_list_supports_filters_and_compact_actions(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+
+        $matching = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Launch checklist',
+            'message' => 'Please confirm the launch checklist.',
+            'status' => 'new',
+            'notification_enabled' => true,
+            'notification_sent_at' => now(),
+        ]);
+
+        $filteredOut = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Jordan Writer',
+            'email' => 'jordan@example.com',
+            'subject' => 'Archive me',
+            'message' => 'Old note.',
+            'status' => 'archived',
+            'notification_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.index', [
+            'search' => 'launch',
+            'status' => 'new',
+            'notification' => 'sent',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.contact-messages.show', $matching), false);
+        $response->assertDontSee(route('admin.contact-messages.show', $filteredOut), false);
+        $response->assertSee('Search');
+        $response->assertSee('Notification');
+        $response->assertSee('wb-action-group', false);
+        $response->assertSee('wb-icon-menu', false);
+        $response->assertDontSee('<th>Source</th>', false);
     }
 
     #[Test]
