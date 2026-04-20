@@ -327,7 +327,7 @@
         <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-media-preview-overlay data-wb-close-url="{{ route('admin.media.index', $previewBaseQuery) }}">
             <div class="wb-overlay-backdrop"></div>
             <div class="wb-modal wb-modal-xl is-open" id="media-preview-modal" role="dialog" aria-modal="true" aria-labelledby="media-preview-title">
-                <div class="wb-modal-dialog">
+                <div class="wb-modal-dialog" data-wb-media-preview-panel>
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
                             <h2 class="wb-modal-title" id="media-preview-title">{{ $previewAsset->displayTitle() }}</h2>
@@ -580,16 +580,26 @@
             });
 
             if (previewOverlay) {
+                var previewPanel = previewOverlay.querySelector('[data-wb-media-preview-panel]');
+
+                if (previewPanel) {
+                    previewPanel.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                    });
+                }
+
                 previewOverlay.addEventListener('click', function (event) {
-                    if (event.target !== previewOverlay && !event.target.classList.contains('wb-overlay-backdrop')) {
+                    var closeUrl = previewOverlay.getAttribute('data-wb-close-url');
+
+                    if (!closeUrl) {
                         return;
                     }
 
-                    var closeUrl = previewOverlay.getAttribute('data-wb-close-url');
-
-                    if (closeUrl) {
-                        window.location.href = closeUrl;
+                    if (previewPanel && previewPanel.contains(event.target)) {
+                        return;
                     }
+
+                    window.location.href = closeUrl;
                 });
             }
         })();
