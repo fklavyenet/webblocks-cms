@@ -5,7 +5,7 @@
     $items = collect($settings['items'] ?? []);
 @endphp
 
-<section class="wb-card wb-card-muted">
+<section class="wb-card wb-card-muted wb-public-contact-card">
     <div class="wb-card-body wb-stack wb-gap-3">
         @if ($block->title)
             <div class="wb-stack wb-gap-1">
@@ -17,7 +17,7 @@
         @endif
 
         @foreach ($items as $item)
-            <div class="wb-stack wb-gap-1">
+            <div class="wb-stack wb-gap-1 wb-public-contact-meta">
                 <strong>{{ $item['label'] ?? '' }}</strong>
 
                 @if (! empty($item['url']))

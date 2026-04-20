@@ -80,7 +80,7 @@
         <div class="wb-public-header-bar">
             <a href="{{ route('pages.show', 'home') }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
                 @if ($brandImage)
-                    <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" style="max-height: 2.5rem; width: auto;">
+                    <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" style="max-height: 2rem; width: auto;">
                 @endif
                 <span>
                     <span class="wb-public-header-brand">{{ $brandLabel }}</span>
@@ -122,4 +122,19 @@
             @endif
         </div>
     </div>
+
+    <section class="wb-public-banner" aria-label="Site introduction">
+        <div class="wb-container wb-container-lg">
+            <div class="wb-public-banner-inner">
+                <div class="wb-public-banner-copy">
+                    <h1 class="wb-public-banner-title">{{ $brandLabel }}</h1>
+                    @if ($brandContext)
+                        <p class="wb-public-banner-text">{{ $brandContext }}</p>
+                    @endif
+                </div>
+
+                <span class="wb-public-banner-accent" aria-hidden="true"></span>
+            </div>
+        </div>
+    </section>
 </header>

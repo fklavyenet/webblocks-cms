@@ -9,7 +9,7 @@
         : \App\Models\Asset::query()->whereIn('id', $assetIds)->get()->keyBy('id');
 @endphp
 
-<section class="wb-stack wb-gap-4">
+<section class="wb-stack wb-gap-4 wb-public-card-grid">
     @if ($block->title)
         <div class="wb-stack wb-gap-1">
             <h2>{{ $block->title }}</h2>

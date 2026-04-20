@@ -24,7 +24,7 @@
     @endif
 
     @foreach ($items as $item)
-        <article class="wb-card wb-card-muted">
+        <article class="wb-card wb-card-muted wb-public-showcase-item">
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-stack wb-gap-1">
                     <h3>{{ $item['title'] ?? 'Project' }}</h3>
