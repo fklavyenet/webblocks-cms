@@ -63,7 +63,7 @@ class BlockController extends Controller
         $block->parent_id = $request->integer('parent_id') ?: null;
         $block->block_type_id = $request->integer('block_type_id') ?: null;
         $block->slot_type_id = $request->integer('slot_type_id') ?: null;
-        $pages = Page::query()->with('blocks')->orderBy('title')->get();
+        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
@@ -135,7 +135,7 @@ class BlockController extends Controller
             }
         }
 
-        $pages = Page::query()->with('blocks')->orderBy('title')->get();
+        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();

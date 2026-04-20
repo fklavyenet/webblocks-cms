@@ -78,7 +78,7 @@
 <header class="wb-section wb-public-header" data-wb-public-header>
     <div class="wb-container wb-container-lg">
         <div class="wb-public-header-bar">
-            <a href="{{ route('pages.show', 'home') }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
+            <a href="{{ $homePath }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
                 @if ($brandImage)
                     <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" style="max-height: 2.5rem; width: auto;">
                 @endif

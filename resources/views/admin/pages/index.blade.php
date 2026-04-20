@@ -29,6 +29,16 @@
                     </div>
 
                     <div class="wb-stack wb-gap-1">
+                        <label for="pages_site">Site</label>
+                        <select id="pages_site" name="site_id" class="wb-select">
+                            <option value="">All sites</option>
+                            @foreach ($sites as $site)
+                                <option value="{{ $site->id }}" @selected((string) $filters['site_id'] === (string) $site->id)>{{ $site->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
                         <label for="pages_sort">Sort by</label>
                         <select id="pages_sort" name="sort" class="wb-select">
                             <option value="created_at" @selected($filters['sort'] === 'created_at')>Created at</option>
@@ -50,7 +60,7 @@
 
                 <div class="wb-cluster wb-cluster-2" style="align-self: end;">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
+                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['site_id'] !== 0 || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
                         <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
                     @endif
                 </div>
@@ -79,6 +89,8 @@
                             <tr>
                                 <th>View</th>
                                 <th>Title</th>
+                                <th>Site</th>
+                                <th>Locale</th>
                                 <th>Blocks</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -106,6 +118,8 @@
                                         @endif
                                     </td>
                                     <td>{{ $page->title }}</td>
+                                    <td>{{ $page->site?->name }}</td>
+                                    <td>en</td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">

@@ -9,8 +9,11 @@ use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +27,7 @@ class PageController extends Controller
     {
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
+        $siteId = $request->integer('site_id');
         $sort = $request->string('sort')->toString();
         $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
         $allowedStatuses = ['draft', 'published'];
@@ -39,6 +43,7 @@ class PageController extends Controller
 
         return view('admin.pages.index', [
             'pages' => Page::query()
+                ->with(['site', 'translations'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
                 ->when($search !== '', function ($query) use ($search) {
@@ -49,13 +54,16 @@ class PageController extends Controller
                     });
                 })
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->when($siteId > 0, fn ($query) => $query->where('site_id', $siteId))
                 ->orderBy($sort, $direction)
                 ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
                 ->withQueryString(),
+            'sites' => Site::query()->orderByDesc('is_primary')->orderBy('name')->get(),
             'filters' => [
                 'search' => $search,
                 'status' => $status,
+                'site_id' => $siteId,
                 'sort' => $sort,
                 'direction' => $direction,
             ],
@@ -71,6 +79,7 @@ class PageController extends Controller
     {
         return view('admin.pages.create', [
             'page' => new Page,
+            'sites' => Site::query()->orderByDesc('is_primary')->orderBy('name')->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
         ]);
     }
@@ -81,9 +90,11 @@ class PageController extends Controller
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
             $blocks = $data['blocks'] ?? [];
-            unset($data['slots'], $data['blocks']);
+            $translation = $data['translation'];
+            unset($data['slots'], $data['blocks'], $data['translation']);
 
             $page = Page::create($data);
+            $this->syncDefaultTranslation($page, $translation);
             $this->syncSlots($page, $slots);
 
             if ($blocks === []) {
@@ -107,6 +118,8 @@ class PageController extends Controller
     public function edit(Page $page): View
     {
         $page->loadMissing([
+            'site',
+            'translations.locale',
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->with('children')
@@ -122,6 +135,7 @@ class PageController extends Controller
 
         return view('admin.pages.edit', [
             'page' => $page,
+            'sites' => Site::query()->orderByDesc('is_primary')->orderBy('name')->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
         ]);
@@ -132,9 +146,11 @@ class PageController extends Controller
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
-            unset($data['slots'], $data['blocks']);
+            $translation = $data['translation'];
+            unset($data['slots'], $data['blocks'], $data['translation']);
 
             $page->update($data);
+            $this->syncDefaultTranslation($page, $translation);
             $this->syncSlots($page, $slots);
         });
 
@@ -255,6 +271,34 @@ class PageController extends Controller
         $page->blocks()
             ->whereNotIn('id', $keptBlockIds)
             ->delete();
+    }
+
+    private function syncDefaultTranslation(Page $page, array $translation): void
+    {
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+
+        if (! $defaultLocaleId) {
+            return;
+        }
+
+        $page->translations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'site_id' => $page->site_id,
+                'name' => $translation['name'],
+                'slug' => $translation['slug'],
+                'path' => PageTranslation::pathFromSlug($translation['slug']),
+            ],
+        );
+
+        $page->forceFill([
+            'title' => $translation['name'],
+            'slug' => $translation['slug'],
+        ])->saveQuietly();
+
+        $page->unsetRelation('translations');
+        $page->load('translations');
+        $page->setRelation('currentTranslation', $page->defaultTranslation());
     }
 
     private function syncBlockAssets(Block $block, array $blockAssets): void

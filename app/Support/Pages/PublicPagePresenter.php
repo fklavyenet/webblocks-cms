@@ -11,7 +11,10 @@ use Illuminate\Support\Collection;
 
 class PublicPagePresenter
 {
-    public function __construct(private readonly NavigationTree $navigationTree) {}
+    public function __construct(
+        private readonly NavigationTree $navigationTree,
+        private readonly PageRouteResolver $pageRouteResolver,
+    ) {}
 
     public function present(Page $page): array
     {
@@ -35,6 +38,7 @@ class PublicPagePresenter
             'sidebarSlot' => $slots->firstWhere('slug', 'sidebar'),
             'footerSlot' => $slots->firstWhere('slug', 'footer'),
             'metaDescription' => $this->resolveMetaDescription($page, $topLevelBlocks),
+            'homePath' => $this->pageRouteResolver->homePath(),
         ];
     }
 

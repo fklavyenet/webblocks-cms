@@ -5,9 +5,12 @@ namespace Database\Seeders;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -17,8 +20,11 @@ class StarterContentSeeder extends Seeder
 {
     public function run(): void
     {
+        $defaultSite = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
         $homePage = Page::query()->updateOrCreate(
-            ['slug' => 'home'],
+            ['site_id' => $defaultSite->id, 'slug' => 'home'],
             [
                 'title' => 'Home',
                 'page_type' => 'default',
@@ -27,7 +33,7 @@ class StarterContentSeeder extends Seeder
         );
 
         $aboutPage = Page::query()->updateOrCreate(
-            ['slug' => 'about'],
+            ['site_id' => $defaultSite->id, 'slug' => 'about'],
             [
                 'title' => 'About',
                 'page_type' => 'default',
@@ -36,13 +42,25 @@ class StarterContentSeeder extends Seeder
         );
 
         $contactPage = Page::query()->updateOrCreate(
-            ['slug' => 'contact'],
+            ['site_id' => $defaultSite->id, 'slug' => 'contact'],
             [
                 'title' => 'Contact',
                 'page_type' => 'default',
                 'status' => 'published',
             ],
         );
+
+        foreach ([$homePage, $aboutPage, $contactPage] as $page) {
+            PageTranslation::query()->updateOrCreate(
+                ['page_id' => $page->id, 'locale_id' => $defaultLocale->id],
+                [
+                    'site_id' => $page->site_id,
+                    'name' => $page->title,
+                    'slug' => $page->slug,
+                    'path' => PageTranslation::pathFromSlug($page->slug),
+                ],
+            );
+        }
 
         $slotTypes = SlotType::query()
             ->whereIn('slug', ['header', 'main', 'footer'])

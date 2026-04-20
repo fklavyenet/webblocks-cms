@@ -44,6 +44,13 @@
 
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Site</span>
+                        <span class="wb-list-item-sub">{{ $page->site?->name }}</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Public URL</span>
                         <span class="wb-list-item-sub">{{ $page->publicUrl() }}</span>
                     </div>
@@ -53,6 +60,13 @@
                     <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Slug</span>
                         <span class="wb-list-item-sub">{{ $page->slug }}</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Locale</span>
+                        <span class="wb-list-item-sub">en</span>
                     </div>
                 </div>
 

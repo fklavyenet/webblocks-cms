@@ -145,6 +145,17 @@ First-pass rule:
 - These files are optional. Public pages continue to work when they do not exist.
 - The shared CMS/core public layout stays generic; site-specific customizations should go into these `public/site` files instead of core public templates.
 
+## Multisite And Locale Foundation
+
+- Phase 1 adds a DB-first foundation for future multisite and multilingual support.
+- `sites` stores install sites and seeds one primary `default` site for existing installs.
+- `locales` stores enabled locales and seeds `en` as the default enabled locale.
+- `site_locales` is the explicit relational pivot that enables locales per site.
+- `pages` remains the canonical page entity and is now scoped to a `site_id`.
+- `page_translations` stores locale-specific page routing fields such as `name`, `slug`, and canonical `path`.
+- Existing installs are backfilled so legacy pages stay live under the primary site and default English locale.
+- Public routing keeps default English prefixless and uses a locale prefix for non-default locales such as `/tr/p/about`.
+
 ## Application Identity
 
 Project metadata is normalized to the CMS brand:

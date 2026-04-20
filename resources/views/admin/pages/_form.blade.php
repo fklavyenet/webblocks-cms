@@ -2,6 +2,14 @@
 	<div class="wb-grid wb-grid-2">
 		<div class="wb-stack-4 wb-gap-1">
 			<div class="wb-stack-2 wb-field">
+				<label for="site_id">Site</label>
+				<select id="site_id" name="site_id" class="wb-select" required>
+					@foreach ($sites as $site)
+						<option value="{{ $site->id }}" @selected((string) old('site_id', $page->site_id ?: $sites->first()?->id) === (string) $site->id)>{{ $site->name }}</option>
+					@endforeach
+				</select>
+			</div>
+			<div class="wb-stack-2 wb-field">
 				<label for="title">Title</label>
 				<input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $page->title) }}" required>
 			</div>
@@ -11,6 +19,10 @@
 			</div>
 		</div>
 		<div class="wb-stack wb-gap-2">
+			<div class="wb-stack-2 wb-field">
+				<label>Locale</label>
+				<input class="wb-input" type="text" value="English (default)" disabled>
+			</div>
 			<label>Status</label>
 			<div class="wb-split">
 				<div class="wb-cluster">

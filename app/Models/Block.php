@@ -62,7 +62,7 @@ class Block extends Model
 
     public function page(): BelongsTo
     {
-        return $this->belongsTo(Page::class);
+        return $this->belongsTo(Page::class)->with('translations');
     }
 
     public function blockType(): BelongsTo
