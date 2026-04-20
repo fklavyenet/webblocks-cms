@@ -8,8 +8,6 @@
         $release = $updateStatus['release'] ?? null;
         $installedVersion = $report['installed_version'] ?? $updateStatus['installed_version'];
         $latestUpdateRun = $latestUpdateRun ?? null;
-        $latestSuccessfulBackup = $backupFreshness['latest_successful'] ?? null;
-        $hasRecentBackup = $backupFreshness['has_recent_successful_backup'] ?? false;
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $compatibilityBadgeClass = match ($compatibilityStatus) {
             'compatible' => 'wb-status-active',
@@ -26,6 +24,8 @@
             ->map(fn ($line) => trim($line))
             ->filter()
             ->values();
+        $releasePreview = $releaseNotes->take(3);
+        $hasMoreReleaseNotes = $releaseNotes->count() > $releasePreview->count();
     @endphp
 
     @include('admin.partials.page-header', [
@@ -40,10 +40,10 @@
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header">
-                    <strong>Current Status</strong>
+                    <strong>Update Summary</strong>
                 </div>
 
-                <div class="wb-card-body wb-stack wb-gap-2">
+                <div class="wb-card-body wb-stack wb-gap-3">
                     <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
                     <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
 
@@ -55,15 +55,7 @@
                             </div>
                         </div>
                     @endif
-                </div>
-            </div>
 
-            <div class="wb-card wb-card-muted">
-                <div class="wb-card-header">
-                    <strong>Versions</strong>
-                </div>
-
-                <div class="wb-card-body">
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
                             <div class="wb-text-sm wb-text-muted">Installed version</div>
@@ -85,74 +77,44 @@
                             <strong>{{ ($release['published_at'] ?? null) ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s') : 'N/A' }}</strong>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="wb-card">
-            <div class="wb-card-header">
-                <strong>Release Notes</strong>
-            </div>
-
-            <div class="wb-card-body">
-                @if ($releaseNotes->isEmpty())
-                    <div class="wb-empty wb-empty-sm">
-                        <div class="wb-empty-title">No release notes available</div>
-                    </div>
-                @else
                     <div class="wb-stack wb-gap-2">
-                        @foreach ($releaseNotes as $note)
-                            <div class="wb-text-sm wb-text-muted">{{ $note }}</div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        </div>
+                        <div class="wb-text-sm wb-text-muted">Release notes</div>
 
-        <div class="wb-grid wb-grid-2">
-            <div class="wb-card">
-                <div class="wb-card-header">
-                    <strong>Actions</strong>
-                </div>
-
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    <div class="wb-text-sm wb-text-muted">Use this page to check the latest release and download the package when you are ready to update this install manually.</div>
-
-                    <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                        <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">Check again</a>
-
-                        @if ($release['download_url'] ?? null)
-                            <a href="{{ $release['download_url'] }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener">Download package</a>
+                        @if ($releasePreview->isEmpty())
+                            <div class="wb-empty wb-empty-sm">
+                                <div class="wb-empty-title">No release notes available</div>
+                            </div>
                         @else
-                            <button type="button" class="wb-btn wb-btn-secondary" disabled>Download unavailable</button>
+                            <div class="wb-stack wb-gap-2">
+                                @foreach ($releasePreview as $note)
+                                    <div class="wb-text-sm wb-text-muted">{{ $note }}</div>
+                                @endforeach
+                            </div>
+
+                            @if ($hasMoreReleaseNotes)
+                                <div class="wb-text-sm wb-text-muted">Additional release notes are available in the package release details.</div>
+                            @endif
                         @endif
                     </div>
                 </div>
             </div>
 
-            <div class="wb-card">
-                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <strong>Recent Backup</strong>
-                    <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Open Backups</a>
+            <div class="wb-card wb-card-muted">
+                <div class="wb-card-header">
+                    <strong>Actions</strong>
                 </div>
 
-                <div class="wb-card-body">
-                    @if ($hasRecentBackup)
-                        <div class="wb-alert wb-alert-success">
-                            <div>
-                                <div class="wb-alert-title">Recent backup found</div>
-                                <div>The latest successful backup finished at {{ $latestSuccessfulBackup?->finished_at?->format('Y-m-d H:i:s') }}.</div>
-                            </div>
-                        </div>
+                <div class="wb-card-body wb-stack wb-gap-3">
+                    <a href="{{ route('admin.system.updates.check') }}" class="wb-btn wb-btn-secondary">Check again</a>
+
+                    @if ($release['download_url'] ?? null)
+                        <a href="{{ $release['download_url'] }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener">Download package</a>
                     @else
-                        <div class="wb-alert wb-alert-warning">
-                            <div>
-                                <div class="wb-alert-title">No recent successful backup</div>
-                                <div>Create a fresh backup before applying package changes or maintenance work.</div>
-                            </div>
-                        </div>
+                        <button type="button" class="wb-btn wb-btn-secondary" disabled>Download unavailable</button>
                     @endif
-                    <div class="wb-text-sm wb-text-muted">Backups remain manual in V1 and are stored locally in app-managed storage.</div>
+
+                    <div class="wb-text-sm wb-text-muted">Download the latest package when you are ready to update this install manually.</div>
                 </div>
             </div>
         </div>

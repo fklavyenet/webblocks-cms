@@ -32,9 +32,9 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('0.1.4');
         $response->assertSee('Latest version');
         $response->assertSee('0.2.0');
-        $response->assertSee('Release Notes');
+        $response->assertSee('Update Summary');
         $response->assertSee('Actions');
-        $response->assertSee('Recent Backup');
+        $response->assertDontSee('Recent Backup');
         $response->assertSee('Technical details');
         $response->assertSee('WebBlocks CMS v0.1.4');
     }

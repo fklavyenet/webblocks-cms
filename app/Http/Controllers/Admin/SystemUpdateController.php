@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemUpdateRun;
-use App\Support\System\SystemBackupManager;
 use App\Support\System\SystemUpdateInspector;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +13,6 @@ class SystemUpdateController extends Controller
 {
     public function __construct(
         private readonly SystemUpdateInspector $systemUpdateInspector,
-        private readonly SystemBackupManager $systemBackupManager,
     ) {}
 
     public function index(): View
@@ -24,7 +22,6 @@ class SystemUpdateController extends Controller
 
         return view('admin.system.updates', [
             'report' => $report,
-            'backupFreshness' => $this->systemBackupManager->freshnessSummary(),
             'latestUpdateRun' => $this->latestUpdateRun(),
             'checkedAt' => is_string($checkedAt)
                 ? now()->parse($checkedAt)
