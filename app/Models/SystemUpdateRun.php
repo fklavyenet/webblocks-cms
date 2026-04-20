@@ -38,4 +38,31 @@ class SystemUpdateRun extends Model
     {
         return $this->belongsTo(User::class, 'triggered_by_user_id');
     }
+
+    public function statusLabel(): string
+    {
+        return str_replace('_', ' ', $this->status);
+    }
+
+    public function statusBadgeClass(): string
+    {
+        return match ($this->status) {
+            self::STATUS_SUCCESS => 'wb-status-active',
+            self::STATUS_SUCCESS_WITH_WARNINGS => 'wb-status-pending',
+            default => 'wb-status-danger',
+        };
+    }
+
+    public function durationLabel(): string
+    {
+        if ($this->duration_ms === null) {
+            return '-';
+        }
+
+        if ($this->duration_ms < 1000) {
+            return number_format($this->duration_ms).' ms';
+        }
+
+        return number_format($this->duration_ms / 1000, 1).' s';
+    }
 }

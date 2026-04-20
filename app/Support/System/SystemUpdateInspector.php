@@ -26,6 +26,9 @@ class SystemUpdateInspector
 
     private function reportFromStatus(array $version): array
     {
+        $installedVersion = $this->installedVersionStore->currentVersion();
+        $version['installed_version'] = $installedVersion;
+
         $diagnostics = [
             $this->databaseDiagnostic(),
             $this->installedVersionStore->diagnostic(),
@@ -34,6 +37,7 @@ class SystemUpdateInspector
 
         return [
             'checked_at' => $version['checked_at'] ?? now(),
+            'installed_version' => $installedVersion,
             'version' => $version,
             'diagnostics' => $diagnostics,
             'environment' => [

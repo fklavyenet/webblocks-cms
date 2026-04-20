@@ -181,7 +181,7 @@
                 </nav>
 
                 <div class="wb-sidebar-footer">
-                    <div class="wb-text-sm wb-text-muted">{{ config('app.name') }} v{{ config('app.version') }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ config('app.name') }} v{{ $installedVersionDisplay ?? config('app.version') }}</div>
                 </div>
             </aside>
 

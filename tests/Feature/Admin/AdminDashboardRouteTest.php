@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -21,11 +22,13 @@ class AdminDashboardRouteTest extends TestCase
     public function admin_root_opens_dashboard_for_authenticated_users(): void
     {
         $user = User::factory()->create();
+        app(InstalledVersionStore::class)->persist('0.1.4');
 
         $response = $this->actingAs($user)->get('/admin');
 
         $response->assertOk();
         $response->assertSee('Dashboard');
+        $response->assertSee('WebBlocks CMS v0.1.4');
     }
 
     #[Test]

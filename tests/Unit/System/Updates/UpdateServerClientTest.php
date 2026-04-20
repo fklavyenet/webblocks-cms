@@ -18,35 +18,20 @@ class UpdateServerClientTest extends TestCase
     public function successful_update_available_case_is_parsed(): void
     {
         Http::fake([
-            'https://updates.example.test/api/updates/webblocks-cms/latest*' => Http::response([
-                'api_version' => '1',
+            'https://updates.example.test/api/updates/latest*' => Http::response([
                 'status' => 'ok',
                 'data' => [
                     'product' => 'webblocks-cms',
                     'channel' => 'stable',
-                    'installed_version' => '0.1.0',
-                    'latest_version' => '0.2.0',
-                    'update_available' => true,
-                    'compatibility' => ['status' => 'compatible', 'reasons' => []],
-                    'release' => [
-                        'version' => '0.2.0',
-                        'name' => 'WebBlocks CMS 0.2.0',
-                        'description' => 'Stability and admin improvements.',
-                        'changelog' => 'Compact changelog text here.',
-                        'download_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
-                        'checksum_sha256' => 'abcdef123456',
-                        'published_at' => '2026-04-19T10:00:00Z',
-                        'is_critical' => false,
-                        'is_security' => false,
-                        'requirements' => [
-                            'min_php_version' => '8.3.0',
-                            'min_laravel_version' => '13.0.0',
-                            'supported_from_version' => '0.1.0',
-                            'supported_until_version' => null,
-                        ],
-                    ],
+                    'version' => '0.2.0',
+                    'published_at' => '2026-04-19T10:00:00Z',
+                    'release_notes' => 'Stability and admin improvements.',
+                    'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+                    'checksum_sha256' => str_repeat('a', 64),
+                    'source_type' => 'github',
+                    'source_reference' => 'v0.2.0',
+                    'minimum_client_version' => '0.1.0',
                 ],
-                'meta' => ['generated_at' => now()->toIso8601String()],
             ]),
         ]);
 
@@ -57,6 +42,7 @@ class UpdateServerClientTest extends TestCase
         $this->assertSame('update_available', $result->state);
         $this->assertTrue($result->updateAvailable);
         $this->assertSame('0.2.0', $result->latestVersion);
+        $this->assertSame('https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $result->release['download_url']);
     }
 
     #[Test]
@@ -64,32 +50,15 @@ class UpdateServerClientTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'api_version' => '1',
                 'status' => 'ok',
                 'data' => [
                     'product' => 'webblocks-cms',
                     'channel' => 'stable',
-                    'installed_version' => '0.2.0',
-                    'latest_version' => '0.2.0',
-                    'update_available' => false,
-                    'compatibility' => ['status' => 'compatible', 'reasons' => []],
-                    'release' => [
-                        'version' => '0.2.0',
-                        'name' => 'WebBlocks CMS 0.2.0',
-                        'description' => null,
-                        'changelog' => null,
-                        'download_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
-                        'checksum_sha256' => null,
-                        'published_at' => '2026-04-19T10:00:00Z',
-                        'is_critical' => false,
-                        'is_security' => false,
-                        'requirements' => [
-                            'min_php_version' => null,
-                            'min_laravel_version' => null,
-                            'supported_from_version' => null,
-                            'supported_until_version' => null,
-                        ],
-                    ],
+                    'version' => '0.2.0',
+                    'published_at' => '2026-04-19T10:00:00Z',
+                    'release_notes' => null,
+                    'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+                    'checksum_sha256' => null,
                 ],
             ]),
         ]);
@@ -133,32 +102,14 @@ class UpdateServerClientTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'api_version' => '1',
                 'status' => 'ok',
                 'data' => [
                     'product' => 'webblocks-cms',
                     'channel' => 'stable',
-                    'installed_version' => '0.1.0',
-                    'latest_version' => '0.2.0',
-                    'update_available' => true,
-                    'compatibility' => ['status' => 'incompatible', 'reasons' => ['PHP version does not meet the minimum requirement.']],
-                    'release' => [
-                        'version' => '0.2.0',
-                        'name' => 'WebBlocks CMS 0.2.0',
-                        'description' => null,
-                        'changelog' => null,
-                        'download_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
-                        'checksum_sha256' => null,
-                        'published_at' => '2026-04-19T10:00:00Z',
-                        'is_critical' => false,
-                        'is_security' => false,
-                        'requirements' => [
-                            'min_php_version' => '9.0.0',
-                            'min_laravel_version' => null,
-                            'supported_from_version' => '0.1.0',
-                            'supported_until_version' => null,
-                        ],
-                    ],
+                    'version' => '0.2.0',
+                    'published_at' => '2026-04-19T10:00:00Z',
+                    'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+                    'minimum_client_version' => '0.2.0',
                 ],
             ]),
         ]);

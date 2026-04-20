@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Support\System\InstalledVersionStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Public navigation now renders explicitly through Navigation Auto blocks.
+
+        View::composer('layouts.admin', function ($view): void {
+            $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->currentVersion());
+        });
 
         RateLimiter::for('contact-form-submissions', function (Request $request) {
             return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))

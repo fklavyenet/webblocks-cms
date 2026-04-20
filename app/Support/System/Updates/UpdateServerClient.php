@@ -81,7 +81,8 @@ class UpdateServerClient
         }
 
         try {
-            $response = $request->get($serverUrl.'/api/updates/'.$product.'/latest', [
+            $response = $request->get($serverUrl.'/api/updates/latest', [
+                'product' => $product,
                 'channel' => $channel,
                 'installed_version' => $installedVersion,
                 'php_version' => PHP_VERSION,
@@ -181,51 +182,28 @@ class UpdateServerClient
 
     private function fromSuccessfulPayload(array $payload, string $serverUrl, string $product, string $channel, string $installedVersion): UpdateCheckResult
     {
-        $apiVersion = Arr::get($payload, 'api_version');
-
-        if ((string) $apiVersion !== (string) config('webblocks-updates.api_version', '1')) {
-            return $this->result(
-                state: 'unsupported_api_version',
-                label: 'Unsupported update API',
-                message: 'The update server responded with an unsupported API version.',
-                badgeClass: 'wb-status-danger',
-                serverReachable: true,
-                apiVersion: is_string($apiVersion) ? $apiVersion : null,
-                serverUrl: $serverUrl,
-                product: $product,
-                channel: $channel,
-                installedVersion: $installedVersion,
-                latestVersion: null,
-                updateAvailable: false,
-                compatibility: ['status' => 'unknown', 'reasons' => []],
-                release: null,
-                errorCode: 'unsupported_api_version',
-                errorMessage: 'The update server responded with an unsupported API version.',
-            );
-        }
-
         $data = Arr::get($payload, 'data');
 
         if (! is_array($data)) {
             return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
         }
 
-        $latestVersion = Arr::get($data, 'latest_version');
-        $updateAvailable = Arr::get($data, 'update_available');
-        $compatibilityStatus = Arr::get($data, 'compatibility.status');
-        $compatibilityReasons = Arr::get($data, 'compatibility.reasons');
-        $release = Arr::get($data, 'release');
+        $latestVersion = Arr::get($data, 'version');
 
-        if (! is_string($latestVersion) || ! is_bool($updateAvailable) || ! is_string($compatibilityStatus) || ! is_array($compatibilityReasons) || ! is_array($release)) {
+        if (! is_string($latestVersion) || $latestVersion === '') {
             return $this->invalidShape($serverUrl, $product, $channel, $installedVersion);
         }
+
+        $normalizedRelease = $this->normalizeReleasePayload($data);
+        $compatibility = $this->determineCompatibility($installedVersion, $normalizedRelease);
+        $updateAvailable = version_compare($latestVersion, $installedVersion, '>');
 
         $state = 'up_to_date';
         $label = 'Already up to date';
         $message = 'This install already matches the latest published release for the selected channel.';
         $badgeClass = 'wb-status-active';
 
-        if ($updateAvailable && $compatibilityStatus === 'incompatible') {
+        if ($updateAvailable && $compatibility['status'] === 'incompatible') {
             $state = 'incompatible';
             $label = 'Incompatible update available';
             $message = 'A newer release exists, but this install does not meet its compatibility requirements.';
@@ -243,21 +221,66 @@ class UpdateServerClient
             message: $message,
             badgeClass: $badgeClass,
             serverReachable: true,
-            apiVersion: (string) $apiVersion,
+            apiVersion: config('webblocks-updates.api_version', '1'),
             serverUrl: $serverUrl,
             product: (string) Arr::get($data, 'product', $product),
             channel: (string) Arr::get($data, 'channel', $channel),
-            installedVersion: (string) Arr::get($data, 'installed_version', $installedVersion),
+            installedVersion: $installedVersion,
             latestVersion: $latestVersion,
             updateAvailable: $updateAvailable,
-            compatibility: [
-                'status' => $compatibilityStatus,
-                'reasons' => array_values(array_filter($compatibilityReasons, 'is_string')),
-            ],
-            release: $release,
+            compatibility: $compatibility,
+            release: $normalizedRelease,
             errorCode: null,
             errorMessage: null,
         );
+    }
+
+    private function normalizeReleasePayload(array $release): array
+    {
+        $version = (string) Arr::get($release, 'version', '');
+        $releaseNotes = Arr::get($release, 'release_notes');
+        $changelog = Arr::get($release, 'changelog');
+        $minimumClientVersion = Arr::get($release, 'minimum_client_version');
+
+        return [
+            'version' => $version,
+            'name' => $version !== '' ? 'WebBlocks CMS '.$version : null,
+            'description' => is_string($releaseNotes) && $releaseNotes !== '' ? $releaseNotes : null,
+            'changelog' => is_string($changelog) && $changelog !== ''
+                ? $changelog
+                : (is_string($releaseNotes) && $releaseNotes !== '' ? $releaseNotes : null),
+            'download_url' => Arr::get($release, 'artifact_url') ?: Arr::get($release, 'download.url'),
+            'checksum_sha256' => Arr::get($release, 'checksum_sha256') ?: Arr::get($release, 'checksum'),
+            'published_at' => Arr::get($release, 'published_at'),
+            'is_critical' => (bool) Arr::get($release, 'required', false),
+            'is_security' => false,
+            'requirements' => [
+                'min_php_version' => null,
+                'min_laravel_version' => null,
+                'supported_from_version' => is_string($minimumClientVersion) && $minimumClientVersion !== '' ? $minimumClientVersion : null,
+                'supported_until_version' => null,
+            ],
+            'source_type' => Arr::get($release, 'source_type'),
+            'source_reference' => Arr::get($release, 'source_reference'),
+            'release_date' => Arr::get($release, 'release_date'),
+        ];
+    }
+
+    private function determineCompatibility(string $installedVersion, array $release): array
+    {
+        $minimumClientVersion = Arr::get($release, 'requirements.supported_from_version');
+        $reasons = [];
+        $status = 'compatible';
+
+        if (is_string($minimumClientVersion) && $minimumClientVersion !== '' && version_compare($installedVersion, $minimumClientVersion, '<')) {
+            $status = 'incompatible';
+            $reasons[] = 'Installed version '.$installedVersion.' is lower than the minimum supported client version '.$minimumClientVersion.'.';
+        }
+
+        return [
+            'status' => $status,
+            'reasons' => $reasons,
+        ];
     }
 
     private function invalidShape(string $serverUrl, string $product, string $channel, string $installedVersion): UpdateCheckResult

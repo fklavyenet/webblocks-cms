@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Support\System\InstalledVersionStore;
 use App\Support\System\Updates\UpdateCheckResult;
 use App\Support\System\Updates\UpdateServerClient;
 use Carbon\CarbonImmutable;
@@ -19,6 +20,7 @@ class SystemUpdatesTest extends TestCase
     public function system_updates_page_renders(): void
     {
         $user = User::factory()->create();
+        app(InstalledVersionStore::class)->persist('0.1.4');
         $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.');
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
@@ -26,6 +28,15 @@ class SystemUpdatesTest extends TestCase
         $response->assertOk();
         $response->assertSee('System Updates');
         $response->assertSee('Already up to date');
+        $response->assertSee('Installed version');
+        $response->assertSee('0.1.4');
+        $response->assertSee('Latest version');
+        $response->assertSee('0.2.0');
+        $response->assertSee('Release Notes');
+        $response->assertSee('Actions');
+        $response->assertSee('Recent Backup');
+        $response->assertSee('Technical details');
+        $response->assertSee('WebBlocks CMS v0.1.4');
     }
 
     #[Test]
@@ -37,10 +48,12 @@ class SystemUpdatesTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.system.updates.check'));
 
         $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHas('status', 'Update 0.2.0 is available.');
 
         $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
         $followUp->assertSee('Update available');
         $followUp->assertSee('Download package');
+        $followUp->assertSee('Check again');
     }
 
     #[Test]
@@ -54,6 +67,7 @@ class SystemUpdatesTest extends TestCase
         $response->assertOk();
         $response->assertSee('Update server unavailable');
         $response->assertSee('Server detail');
+        $response->assertSee('Technical details');
     }
 
     private function mockClientResult(
