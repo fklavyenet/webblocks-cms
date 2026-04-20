@@ -24,10 +24,10 @@ class InstalledVersionStore
     public function fallbackVersion(): string
     {
         if (! Schema::hasTable('system_settings')) {
-            return (string) config('app.version', 'dev');
+            return (string) config('webblocks-updates.current_version', config('app.version', 'dev'));
         }
 
-        return (string) config('app.version', 'dev');
+        return (string) config('webblocks-updates.current_version', config('app.version', 'dev'));
     }
 
     public function storedVersion(): ?string

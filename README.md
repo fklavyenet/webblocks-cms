@@ -169,13 +169,10 @@ Project metadata is normalized to the CMS brand:
 - Installed CMS version persists in `system_settings` under `system.installed_version`.
 - WebBlocks CMS is an update client/consumer and checks a central update service.
 - Release publishing and update server responsibilities live in the separate WebBlocks Publisher / `updates.webblocksui.com` project.
-- Configure the CMS update client with:
+- Configure system updates with:
   - `WEBBLOCKS_UPDATES_ENABLED`
-  - `WEBBLOCKS_UPDATE_CLIENT_ENABLED`
-  - `WEBBLOCKS_UPDATES_CLIENT_SERVER_URL`
-  - `WEBBLOCKS_UPDATE_CLIENT_CHANNEL`
-  - `WEBBLOCKS_UPDATE_CLIENT_PRODUCT`
-  - `WEBBLOCKS_UPDATE_CLIENT_TIMEOUT_SECONDS`
+  - `WEBBLOCKS_UPDATES_SERVER_URL`
+  - `WEBBLOCKS_UPDATES_CHANNEL`
 - The admin System Updates screen is now check-only in V1 and can show:
   - update available
   - already up to date

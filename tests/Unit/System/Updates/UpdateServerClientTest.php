@@ -35,7 +35,7 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -63,7 +63,7 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
         app(InstalledVersionStore::class)->persist('0.2.0');
 
         $result = app(UpdateServerClient::class)->check();
@@ -76,7 +76,7 @@ class UpdateServerClientTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('timeout'));
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -90,7 +90,7 @@ class UpdateServerClientTest extends TestCase
             '*' => Http::response('not json', 200, ['Content-Type' => 'application/json']),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -114,7 +114,7 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
