@@ -52,6 +52,22 @@ class SystemUpdatesTest extends TestCase
     }
 
     #[Test]
+    public function disabled_client_state_is_honest_when_no_installed_version_has_been_recorded_yet(): void
+    {
+        $user = User::factory()->create();
+
+        config()->set('webblocks-updates.enabled', false);
+        config()->set('app.version', '0.1.5');
+
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('Update checks disabled');
+        $response->assertSee('Not recorded yet');
+        $response->assertSee('The CMS update client is disabled in configuration.');
+    }
+
+    #[Test]
     public function check_flow_shows_correct_state_from_mocked_client_response(): void
     {
         $user = User::factory()->create();

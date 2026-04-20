@@ -15,29 +15,46 @@ This project provides:
 - consistent Blade views and layout patterns for the WebBlocks CMS experience
 - direct WebBlocks UI CDN integration
 
-## Getting Started
+## Installation
 
-Install dependencies and bootstrap the project:
+### Generic Laravel install
 
 ```bash
 composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
+php artisan db:seed
+php artisan storage:link
 php artisan serve
 ```
 
-## Installation Modes
+Notes:
 
-The repository now separates core CMS setup from optional starter/showcase installs.
+- `php artisan db:seed` installs the core CMS catalogs and records the current app version as the installed version for a fresh install.
+- `php artisan storage:link` is required if your site will serve files from `storage/app/public`.
+- Runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are now created automatically on first run.
 
-- Default seed path: `php artisan db:seed`
-- Result: core CMS catalogs only
-- Included catalogs: page types, layout types, slot types, and block types
+### Optional DDEV local install
 
-Optional install seeders:
+```bash
+ddev start
+ddev composer install
+cp .env.example .env
+ddev artisan key:generate
+ddev artisan migrate
+ddev artisan db:seed
+ddev artisan storage:link
+```
 
-- Core catalogs only:
+Then open:
+
+- public site: `https://<your-project>.ddev.site`
+- admin: `https://<your-project>.ddev.site/admin`
+
+### Seed choices
+
+- Core CMS only:
 
 ```bash
 php artisan db:seed
@@ -67,6 +84,7 @@ Recommended local demo setup:
 php artisan db:seed
 php artisan db:seed --class=Database\\Seeders\\DevelopmentUserSeeder
 php artisan db:seed --class=Database\\Seeders\\StarterInstallSeeder
+php artisan storage:link
 ```
 
 The full showcase site is no longer installed by the default seed path.
@@ -166,6 +184,7 @@ Project metadata is normalized to the CMS brand:
   - update server unavailable
   - invalid or unsupported response
 - The CMS update screen now performs in-app automatic updates. It downloads the published release package into a temporary workspace, verifies the checksum when available, applies the package with protected-path exclusions, runs maintenance and migration commands, records the update run log, and only then persists the installed version.
+- A fresh local install now records the current app version during `db:seed`, so the System Updates screen does not pretend an older published release is already installed.
 
 ## Automated Releases
 

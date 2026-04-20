@@ -13,8 +13,27 @@ class InstalledVersionStore
 
     public function currentVersion(): string
     {
+        return $this->storedVersion() ?? $this->fallbackVersion();
+    }
+
+    public function displayVersion(): string
+    {
+        return $this->storedVersion() ?? 'Not recorded yet';
+    }
+
+    public function fallbackVersion(): string
+    {
         if (! Schema::hasTable('system_settings')) {
-            return (string) config('webblocks-updates.client.current_version', config('app.version', '0.1.0'));
+            return (string) config('app.version', 'dev');
+        }
+
+        return (string) config('app.version', 'dev');
+    }
+
+    public function storedVersion(): ?string
+    {
+        if (! Schema::hasTable('system_settings')) {
+            return null;
         }
 
         $storedVersion = SystemSetting::query()
@@ -23,7 +42,7 @@ class InstalledVersionStore
 
         return is_string($storedVersion) && $storedVersion !== ''
             ? $storedVersion
-            : (string) config('webblocks-updates.client.current_version', config('app.version', '0.1.0'));
+            : null;
     }
 
     public function persist(string $version): void

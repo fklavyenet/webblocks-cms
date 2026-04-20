@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\System\InstalledVersionStore;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,5 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([CoreCatalogSeeder::class]);
+
+        app(InstalledVersionStore::class)->persist((string) config('app.version', 'dev'));
     }
 }

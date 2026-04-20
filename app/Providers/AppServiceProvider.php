@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // Public navigation now renders explicitly through Navigation Auto blocks.
 
         View::composer('layouts.admin', function ($view): void {
-            $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->currentVersion());
+            $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());
         });
 
         RateLimiter::for('contact-form-submissions', function (Request $request) {

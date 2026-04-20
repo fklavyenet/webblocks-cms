@@ -23,8 +23,14 @@ class InstalledVersionStoreTest extends TestCase
     #[Test]
     public function fallback_version_is_returned_when_no_persisted_version_exists(): void
     {
-        config()->set('webblocks-updates.client.current_version', '0.1.5');
+        config()->set('app.version', '0.1.5');
 
         $this->assertSame('0.1.5', app(InstalledVersionStore::class)->currentVersion());
+    }
+
+    #[Test]
+    public function display_version_is_neutral_when_no_persisted_version_exists(): void
+    {
+        $this->assertSame('Not recorded yet', app(InstalledVersionStore::class)->displayVersion());
     }
 }
