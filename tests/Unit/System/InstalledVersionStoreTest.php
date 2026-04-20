@@ -23,9 +23,9 @@ class InstalledVersionStoreTest extends TestCase
     #[Test]
     public function fallback_version_is_returned_when_no_persisted_version_exists(): void
     {
-        config()->set('app.version', '0.1.5');
+        config()->set('app.version', '0.1.6');
 
-        $this->assertSame('0.1.5', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame('0.1.6', app(InstalledVersionStore::class)->currentVersion());
     }
 
     #[Test]
