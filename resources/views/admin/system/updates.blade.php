@@ -29,10 +29,18 @@
             ->values();
         $releasePreview = $releaseNotes->take(3);
         $hasMoreReleaseNotes = $releaseNotes->count() > $releasePreview->count();
-        $headerActions = '<div class="wb-stack wb-gap-1">'
+        $headerActions = '<div class="wb-stack wb-gap-2">'
+            .'<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check again</a></div>'
             .'<div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div>'
-            .'<div><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check again</a></div>'
             .'</div>';
+        $diagnosticItems = collect($diagnostics)->prepend([
+            'label' => 'Compatibility',
+            'status' => $compatibilityStatus,
+            'message' => ($updateStatus['compatibility']['reasons'] ?? []) === []
+                ? 'No compatibility issues reported.'
+                : implode(' ', $updateStatus['compatibility']['reasons']),
+            'badge_class' => $compatibilityBadgeClass,
+        ]);
     @endphp
 
     @include('admin.partials.page-header', [
@@ -50,7 +58,7 @@
                     <strong>Update Summary</strong>
                 </div>
 
-                <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-card-body wb-stack wb-gap-2">
                     <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
                     @if (! (($updateStatus['state'] ?? null) === 'up_to_date'))
                         <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
@@ -90,10 +98,10 @@
                     </div>
 
                     @if ($releasePreview->isNotEmpty())
-                        <div class="wb-stack wb-gap-2">
+                        <div class="wb-stack wb-gap-1">
                             <div class="wb-text-sm wb-text-muted">Release notes</div>
 
-                            <div class="wb-stack wb-gap-2">
+                            <div class="wb-stack wb-gap-1">
                                 @foreach ($releasePreview as $note)
                                     <div class="wb-text-sm wb-text-muted">{{ $note }}</div>
                                 @endforeach
@@ -112,11 +120,11 @@
                     <strong>Actions</strong>
                 </div>
 
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-2" data-wb-update-form>
+                <div class="wb-card-body wb-stack wb-gap-2">
+                    <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-3" data-wb-update-form>
                         @csrf
 
-                        <div>
+                        <div class="wb-cluster wb-cluster-2">
                             <button
                                 type="submit"
                                 class="wb-btn wb-btn-primary"
@@ -133,13 +141,15 @@
                             <input type="checkbox" name="acknowledge_backup_risk" value="1" @checked(old('acknowledge_backup_risk'))>
                             <span>Automatic backup is not created before update in this version.</span>
                         </label>
-                    </form>
 
-                    @if ($autoUpdate['allowed'])
-                        <div class="wb-text-sm wb-text-muted">The system will download, verify, install, migrate, clear runtime caches, and bring the site back online automatically.</div>
-                    @else
-                        <div class="wb-text-sm wb-text-muted">{{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}</div>
-                    @endif
+                        <div class="wb-text-sm wb-text-muted">
+                            @if ($autoUpdate['allowed'])
+                                The system will download, verify, install, migrate, clear runtime caches, and bring the site back online automatically.
+                            @else
+                                {{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}
+                            @endif
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -177,35 +187,11 @@
         <details class="wb-card wb-card-muted">
             <summary class="wb-card-header"><strong>Technical details</strong></summary>
 
-            <div class="wb-card-body wb-stack wb-gap-4">
+            <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-grid wb-grid-2">
-                    <div class="wb-stack wb-gap-2">
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <div class="wb-stack wb-gap-1">
-                                <strong>Compatibility</strong>
-                                <div class="wb-text-sm wb-text-muted">
-                                    @if (($updateStatus['compatibility']['reasons'] ?? []) === [])
-                                        No compatibility issues reported.
-                                    @else
-                                        {{ $updateStatus['compatibility']['reasons'][0] }}
-                                    @endif
-                                </div>
-                            </div>
-
-                            <span class="wb-status-pill {{ $compatibilityBadgeClass }}">{{ $compatibilityStatus }}</span>
-                        </div>
-
-                        @if (count($updateStatus['compatibility']['reasons'] ?? []) > 1)
-                            <div class="wb-stack wb-gap-1">
-                                @foreach (array_slice($updateStatus['compatibility']['reasons'], 1) as $reason)
-                                    <div class="wb-text-sm wb-text-muted">{{ $reason }}</div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="wb-stack wb-gap-2">
-                        @foreach ($diagnostics as $diagnostic)
+                    @foreach ($diagnosticItems->chunk((int) ceil($diagnosticItems->count() / 2)) as $diagnosticColumn)
+                        <div class="wb-stack wb-gap-2">
+                            @foreach ($diagnosticColumn as $diagnostic)
                             <div class="wb-cluster wb-cluster-between wb-cluster-2">
                                 <div class="wb-stack wb-gap-1">
                                     <strong>{{ $diagnostic['label'] }}</strong>
@@ -214,8 +200,9 @@
 
                                 <span class="wb-status-pill {{ $diagnostic['badge_class'] }}">{{ $diagnostic['status'] }}</span>
                             </div>
-                        @endforeach
-                    </div>
+                            @endforeach
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="wb-grid wb-grid-2">
