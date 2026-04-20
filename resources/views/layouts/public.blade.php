@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    @php
+        $siteCssPath = public_path('site/css/site.css');
+        $siteJsPath = public_path('site/js/site.js');
+    @endphp
+
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,18 +17,21 @@
 
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.css">
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
-        <link rel="stylesheet" href="{{ asset('brand/fklavye-site.css') }}">
         <style>
             .wb-public-header {
                 position: sticky;
                 top: 0;
                 z-index: 40;
+                background: rgba(255, 255, 255, 0.94);
+                border-bottom: 1px solid rgba(15, 23, 42, 0.08);
                 backdrop-filter: blur(12px);
             }
 
             .wb-public-header-bar {
                 display: flex;
                 align-items: center;
+                min-height: 4.5rem;
+                gap: 1rem;
             }
 
             .wb-public-header-brand {
@@ -33,11 +41,14 @@
 
             .wb-public-header-context {
                 display: block;
+                opacity: 0.7;
+                font-size: 0.875rem;
             }
 
             .wb-public-header-identity {
                 display: inline-flex;
                 align-items: center;
+                gap: 0.75rem;
             }
 
             .wb-public-header-spacer {
@@ -56,6 +67,7 @@
             .wb-public-nav-list {
                 display: flex;
                 align-items: center;
+                gap: 1.25rem;
                 margin: 0;
                 padding: 0;
                 list-style: none;
@@ -70,7 +82,10 @@
                 display: inline-flex;
                 align-items: center;
                 gap: 0.35rem;
+                color: rgba(15, 23, 42, 0.78);
                 text-decoration: none;
+                font-weight: 500;
+                padding: 0.25rem 0;
                 border: 0;
                 background: transparent;
                 cursor: pointer;
@@ -79,10 +94,13 @@
             .wb-public-nav-link:hover,
             .wb-public-nav-link.is-active,
             .wb-public-nav-item.is-active > .wb-public-nav-link {
+                color: rgba(15, 23, 42, 1);
             }
 
             .wb-public-nav-link.is-active,
             .wb-public-nav-item.is-active > .wb-public-nav-link {
+                text-decoration: underline;
+                text-underline-offset: 0.35rem;
             }
 
             .wb-public-nav-link-trigger {
@@ -97,6 +115,10 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                width: 2.75rem;
+                height: 2.75rem;
+                border: 1px solid rgba(15, 23, 42, 0.12);
+                border-radius: 0.75rem;
                 background: transparent;
                 cursor: pointer;
             }
@@ -119,6 +141,7 @@
             }
 
             .wb-public-footer {
+                border-top: 1px solid rgba(15, 23, 42, 0.08);
                 margin-top: 3rem;
             }
 
@@ -178,6 +201,10 @@
                 }
             }
         </style>
+
+        @if (is_file($siteCssPath))
+            <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
+        @endif
     </head>
     <body class="wb-public-body">
         @yield('content')
@@ -207,6 +234,9 @@
         </div>
 
         <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
+        @if (is_file($siteJsPath))
+            <script src="{{ asset('site/js/site.js') }}?v={{ filemtime($siteJsPath) }}"></script>
+        @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('[data-wb-slider]').forEach(function (slider) {

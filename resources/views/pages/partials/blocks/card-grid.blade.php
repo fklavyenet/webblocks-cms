@@ -26,7 +26,7 @@
                 $assetUrl = $asset?->url();
             @endphp
 
-            <article class="wb-card wb-card-muted">
+            <article class="wb-card wb-card-muted wb-public-card-item">
                 <div class="wb-card-body wb-stack wb-gap-2">
                     @if ($assetUrl)
                         <img src="{{ $assetUrl }}" alt="{{ $asset?->alt_text ?: ($item['title'] ?? 'Card image') }}">
