@@ -54,6 +54,8 @@ Then open:
 
 ### Seed choices
 
+Use install seeders only on a fresh install. They are intentionally blocked once a site already contains pages, blocks, or navigation content.
+
 - Core CMS only:
 
 ```bash
