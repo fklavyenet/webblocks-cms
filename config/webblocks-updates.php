@@ -8,7 +8,7 @@ return [
         'server_url' => env('WEBBLOCKS_UPDATES_CLIENT_SERVER_URL', 'https://updates.webblocksui.com'),
         'channel' => env('WEBBLOCKS_UPDATE_CLIENT_CHANNEL', 'stable'),
         'product' => env('WEBBLOCKS_UPDATE_CLIENT_PRODUCT', 'webblocks-cms'),
-        'current_version' => env('WEBBLOCKS_UPDATE_CLIENT_CURRENT_VERSION', env('APP_VERSION', '0.1.2')),
+        'current_version' => env('WEBBLOCKS_UPDATE_CLIENT_CURRENT_VERSION', env('APP_VERSION', '0.1.5')),
         'site_url' => env('WEBBLOCKS_UPDATE_CLIENT_SITE_URL', env('APP_URL', 'http://localhost')),
         'instance_id' => env('WEBBLOCKS_UPDATE_CLIENT_INSTANCE_ID'),
         'timeout_seconds' => env('WEBBLOCKS_UPDATE_CLIENT_TIMEOUT_SECONDS', 5),
