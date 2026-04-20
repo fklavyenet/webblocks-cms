@@ -4,6 +4,7 @@ namespace App\Support\System\Updates;
 
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\Process;
+use Symfony\Component\Process\ExecutableFinder;
 
 class UpdateCommandRunner
 {
@@ -23,6 +24,54 @@ class UpdateCommandRunner
                 'Command failed: '.$this->formatCommand($command),
             );
         }
+    }
+
+    public function artisanCommand(array $arguments): array
+    {
+        return [
+            $this->phpBinary(),
+            'artisan',
+            ...$arguments,
+        ];
+    }
+
+    public function phpBinary(): string
+    {
+        $resolvedBinary = $this->resolveCliPhpBinary(PHP_BINARY);
+
+        if ($resolvedBinary !== null) {
+            return $resolvedBinary;
+        }
+
+        $fallbackBinary = (new ExecutableFinder)->find('php');
+
+        if (is_string($fallbackBinary) && $fallbackBinary !== '') {
+            return $fallbackBinary;
+        }
+
+        return 'php';
+    }
+
+    public function resolveCliPhpBinary(?string $binary): ?string
+    {
+        if (! is_string($binary)) {
+            return null;
+        }
+
+        $binary = trim($binary);
+
+        if ($binary === '') {
+            return null;
+        }
+
+        $normalizedBinary = str_replace('\\', '/', strtolower($binary));
+        $basename = basename($normalizedBinary);
+
+        if (str_contains($normalizedBinary, 'php-fpm') || str_starts_with($basename, 'php-fpm')) {
+            return null;
+        }
+
+        return $binary;
     }
 
     private function appendProcessOutput(ProcessResult $result, array &$output): void

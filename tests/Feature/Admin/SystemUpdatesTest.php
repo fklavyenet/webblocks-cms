@@ -118,6 +118,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
         $this->assertSame('0.1.0', $run->from_version);
         $this->assertSame('0.2.0', $run->to_version);
+        $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
 
@@ -156,6 +157,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertNotNull($run);
         $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
         $this->assertStringContainsString('Command failed: php artisan migrate --force', (string) $run->output);
+        $this->assertStringNotContainsString('php-fpm', (string) $run->output);
         $this->assertContains('php artisan up', $runner->commands);
     }
 
@@ -327,5 +329,10 @@ class FakeUpdateCommandRunner extends UpdateCommandRunner
                 'Command failed: '.$formatted,
             );
         }
+    }
+
+    public function phpBinary(): string
+    {
+        return 'php';
     }
 }

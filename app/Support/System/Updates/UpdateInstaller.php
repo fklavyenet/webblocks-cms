@@ -12,12 +12,14 @@ class UpdateInstaller
 
     public function enterMaintenance(array &$output): void
     {
-        $this->commandRunner->run([
-            PHP_BINARY,
-            'artisan',
+        $command = $this->commandRunner->artisanCommand([
             'down',
             '--render=errors::503',
-        ], $this->targetPath(), $output);
+        ]);
+
+        $output[] = 'Using PHP binary: '.$command[0];
+
+        $this->commandRunner->run($command, $this->targetPath(), $output);
     }
 
     public function applyPackage(string $packageRoot, array &$output): void
@@ -94,21 +96,21 @@ class UpdateInstaller
             ['cache:clear'],
             ['route:clear'],
         ] as $artisanCommand) {
-            $this->commandRunner->run([
-                PHP_BINARY,
-                'artisan',
-                ...$artisanCommand,
-            ], $this->targetPath(), $output);
+            $this->commandRunner->run(
+                $this->commandRunner->artisanCommand($artisanCommand),
+                $this->targetPath(),
+                $output,
+            );
         }
     }
 
     public function leaveMaintenance(array &$output): void
     {
-        $this->commandRunner->run([
-            PHP_BINARY,
-            'artisan',
-            'up',
-        ], $this->targetPath(), $output);
+        $this->commandRunner->run(
+            $this->commandRunner->artisanCommand(['up']),
+            $this->targetPath(),
+            $output,
+        );
     }
 
     public function targetPath(): string
