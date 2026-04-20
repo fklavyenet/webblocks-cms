@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Asset extends Model
 {
@@ -100,6 +101,56 @@ class Asset extends Model
         }
 
         return number_format($this->size / 1048576, 1).' MB';
+    }
+
+    public function displayTitle(): string
+    {
+        return $this->title ?: $this->filename;
+    }
+
+    public function thumbnailLabel(): string
+    {
+        return $this->alt_text ?: $this->displayTitle();
+    }
+
+    public function previewIconClass(): string
+    {
+        return match ($this->kind) {
+            self::KIND_IMAGE => 'wb-icon-image',
+            self::KIND_VIDEO => 'wb-icon-video',
+            self::KIND_DOCUMENT => 'wb-icon-file-text',
+            default => 'wb-icon-file',
+        };
+    }
+
+    public function compactTypeLabel(): string
+    {
+        if (is_string($this->extension) && trim($this->extension) !== '') {
+            return Str::upper($this->extension);
+        }
+
+        return match ($this->kind) {
+            self::KIND_IMAGE => 'Image',
+            self::KIND_VIDEO => 'Video',
+            self::KIND_DOCUMENT => 'Doc',
+            default => 'File',
+        };
+    }
+
+    public function compactMetaLabel(): string
+    {
+        $parts = [
+            $this->compactTypeLabel(),
+            $this->humanSize(),
+        ];
+
+        if ($this->width && $this->height) {
+            $parts[] = $this->width.'x'.$this->height;
+        }
+
+        return collect($parts)
+            ->filter(fn (?string $part) => $part !== null && $part !== '' && $part !== '-')
+            ->implode(' • ');
     }
 
     public function pickerPayload(): array

@@ -24,15 +24,59 @@ class MediaController extends Controller
     {
         $selectedFolderId = request()->integer('folder_id') ?: null;
         $search = trim((string) request('search'));
+        $kind = request()->string('kind')->toString();
+        $usage = request()->string('usage')->toString();
+        $view = request()->string('view')->toString() === 'grid' ? 'grid' : 'list';
         $openModal = old('_media_modal', request()->string('modal')->toString() ?: null);
+        $previewAssetId = request()->integer('preview') ?: null;
+        $usageAssetId = request()->integer('usage_asset') ?: null;
+
+        if (! in_array($kind, [Asset::KIND_IMAGE, Asset::KIND_VIDEO, Asset::KIND_DOCUMENT, Asset::KIND_OTHER], true)) {
+            $kind = '';
+        }
+
+        if (! in_array($usage, ['used', 'unused'], true)) {
+            $usage = '';
+        }
+
+        $assetPaginator = $this->assetListingQuery($selectedFolderId, $search, $kind, $usage)
+            ->paginate($view === 'grid' ? 24 : 20)
+            ->withQueryString();
+
+        $assetPaginator->getCollection()->transform(function (Asset $asset) {
+            $usages = $this->assetUsageResolver->resolve($asset);
+            $asset->setRelation('resolvedUsages', $usages);
+            $asset->setAttribute('resolved_usage_count', $usages->count());
+
+            return $asset;
+        });
+
+        $assets = $assetPaginator;
+        $previewAsset = $previewAssetId
+            ? ($assets->getCollection()->firstWhere('id', $previewAssetId) ?: Asset::query()->with(['folder', 'uploader'])->find($previewAssetId))
+            : null;
+        $usageAsset = $usageAssetId
+            ? ($assets->getCollection()->firstWhere('id', $usageAssetId) ?: Asset::query()->with(['folder', 'uploader'])->find($usageAssetId))
+            : null;
+
+        if ($previewAsset instanceof Asset && ! $previewAsset->relationLoaded('resolvedUsages')) {
+            $previewAsset->setRelation('resolvedUsages', $this->assetUsageResolver->resolve($previewAsset));
+        }
+
+        if ($usageAsset instanceof Asset && ! $usageAsset->relationLoaded('resolvedUsages')) {
+            $usageAsset->setRelation('resolvedUsages', $this->assetUsageResolver->resolve($usageAsset));
+        }
 
         return view('admin.media.index', [
             'folders' => $this->folderOptions(),
-            'assets' => $this->assetListingQuery($selectedFolderId, $search)
-                ->paginate(20)
-                ->withQueryString(),
+            'assets' => $assets,
             'selectedFolderId' => $selectedFolderId,
             'search' => $search,
+            'kind' => $kind,
+            'usage' => $usage,
+            'viewMode' => $view,
+            'previewAsset' => $previewAsset,
+            'usageAsset' => $usageAsset,
             'openModal' => in_array($openModal, ['upload-asset', 'new-folder'], true) ? $openModal : null,
         ]);
     }
@@ -164,18 +208,37 @@ class MediaController extends Controller
             ->get();
     }
 
-    private function assetListingQuery(?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $accept = null)
+    private function assetListingQuery(?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
     {
         return Asset::query()
             ->with(['folder', 'uploader'])
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($kind, fn ($query) => $query->where('kind', $kind))
-            ->when($accept, fn ($query) => $query->where('kind', $accept))
+            ->when($usage === 'used', function ($query) {
+                $query->where(function ($inner) {
+                    $inner->whereNotNull('asset_id')
+                        ->orWhereExists(function ($exists) {
+                            $exists->selectRaw('1')
+                                ->from('block_assets')
+                                ->whereColumn('block_assets.asset_id', 'assets.id');
+                        });
+                });
+            })
+            ->when($usage === 'unused', function ($query) {
+                $query->whereNull('asset_id')
+                    ->whereNotExists(function ($exists) {
+                        $exists->selectRaw('1')
+                            ->from('block_assets')
+                            ->whereColumn('block_assets.asset_id', 'assets.id');
+                    });
+            })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('filename', 'like', "%{$search}%")
                         ->orWhere('original_name', 'like', "%{$search}%")
-                        ->orWhere('title', 'like', "%{$search}%");
+                        ->orWhere('title', 'like', "%{$search}%")
+                        ->orWhere('alt_text', 'like', "%{$search}%")
+                        ->orWhere('caption', 'like', "%{$search}%");
                 });
             })
             ->latest();
