@@ -104,6 +104,7 @@ The full showcase site is no longer installed by the default seed path.
 - install-specific branding and env values
 - runtime pages, blocks, navigation, media, and contact submissions
 - any custom install-specific block types
+- single-site public customizations loaded from `public/site/...`
 
 ### Starter/Showcase
 
@@ -132,6 +133,17 @@ First-pass rule:
 - This is a Laravel application.
 - WebBlocks UI assets are loaded via CDN in the layout templates.
 - The application uses server-rendered Blade views.
+- The public site can optionally load single-site custom assets from:
+  - `public/site/css/site.css`
+  - `public/site/js/site.js`
+
+## Site-Specific Public Assets
+
+- WebBlocks CMS currently follows a single-site-per-install convention.
+- Use `public/site/css/site.css` for site-specific public branding, theming, and visual refinements.
+- Use `public/site/js/site.js` for site-specific public behavior.
+- These files are optional. Public pages continue to work when they do not exist.
+- The shared CMS/core public layout stays generic; site-specific customizations should go into these `public/site` files instead of core public templates.
 
 ## Application Identity
 

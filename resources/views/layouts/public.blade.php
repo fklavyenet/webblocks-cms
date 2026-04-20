@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    @php
+        $siteCssPath = public_path('site/css/site.css');
+        $siteJsPath = public_path('site/js/site.js');
+    @endphp
+
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -196,6 +201,10 @@
                 }
             }
         </style>
+
+        @if (is_file($siteCssPath))
+            <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
+        @endif
     </head>
     <body class="wb-public-body">
         @yield('content')
@@ -225,6 +234,9 @@
         </div>
 
         <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
+        @if (is_file($siteJsPath))
+            <script src="{{ asset('site/js/site.js') }}?v={{ filemtime($siteJsPath) }}"></script>
+        @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('[data-wb-slider]').forEach(function (slider) {
