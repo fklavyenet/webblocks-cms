@@ -8,6 +8,8 @@
  |
  */
 
+/* Brand Theme */
+
 :root {
     --fklavye-teal-strong: #117d79;
     --fklavye-teal-deep: #0f5c5a;
@@ -45,6 +47,11 @@
     opacity: 0.72;
     font-size: 0.74rem;
     line-height: 1.2;
+}
+
+.wb-public-header-brand-image {
+    max-height: 2.5rem;
+    width: auto;
 }
 
 .wb-public-header-identity {
@@ -143,6 +150,12 @@
     flex: 0 0 auto;
 }
 
+.wb-public-header-mobile-menu {
+    min-width: 16rem;
+}
+
+/* Contact Page */
+
 .wb-public-contact-columns {
     align-items: start;
 }
@@ -232,6 +245,8 @@
     border-top: 1px solid rgba(17, 125, 121, 0.12);
     background: rgba(250, 253, 252, 0.8);
 }
+
+/* Responsive Tweaks */
 
 @media (max-width: 959px) {
     .wb-public-banner-inner {

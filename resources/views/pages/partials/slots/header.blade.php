@@ -80,7 +80,7 @@
         <div class="wb-public-header-bar">
             <a href="{{ route('pages.show', 'home') }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
                 @if ($brandImage)
-                    <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" style="max-height: 2rem; width: auto;">
+                    <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" class="wb-public-header-brand-image">
                 @endif
                 <span>
                     <span class="wb-public-header-brand">{{ $brandLabel }}</span>
@@ -114,7 +114,7 @@
                         <i class="wb-icon wb-icon-menu-2" aria-hidden="true"></i>
                     </button>
                     <div class="wb-dropdown-menu" id="public-mobile-menu">
-                        <div class="wb-stack wb-gap-2" style="min-width: 16rem;">
+                        <div class="wb-stack wb-gap-2 wb-public-header-mobile-menu">
                             <ul class="wb-stack wb-gap-2">{!! $renderHeaderItems($mobileItems, true) !!}</ul>
                         </div>
                     </div>
