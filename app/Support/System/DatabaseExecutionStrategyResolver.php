@@ -47,10 +47,6 @@ class DatabaseExecutionStrategyResolver
             return false;
         }
 
-        if ($this->isRunningInsideDdev()) {
-            return false;
-        }
-
         return $this->isDdevUrl((string) config('app.url')) || $this->isDdevProject();
     }
 }
