@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\ImportDemoMedia;
+use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         ImportDemoMedia::class,
+        SiteCloneCommand::class,
         SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {

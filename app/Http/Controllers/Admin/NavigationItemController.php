@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\NavigationItemReorderRequest;
 use App\Http\Requests\Admin\NavigationItemRequest;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\Site;
 use App\Support\Navigation\NavigationTree;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,32 +21,40 @@ class NavigationItemController extends Controller
     public function index(): View
     {
         $menuKey = request('menu_key', NavigationItem::MENU_PRIMARY);
+        $siteId = request()->integer('site_id') ?: Site::primary()?->id;
 
         if (! in_array($menuKey, NavigationItem::menuKeys(), true)) {
             $menuKey = NavigationItem::MENU_PRIMARY;
         }
 
+        $site = Site::query()->findOrFail($siteId);
+
         return view('admin.navigation.index', [
+            'site' => $site,
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
             'activeMenuKey' => $menuKey,
             'menuOptions' => NavigationItem::menuOptions(),
-            'items' => $this->tree->buildMenuTree($menuKey),
-            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
-            'newItem' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'newGroup' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'editableItems' => NavigationItem::query()->forMenu($menuKey)->with('page')->ordered()->get(),
+            'items' => $this->tree->buildMenuTree($menuKey, $site),
+            'pages' => Page::query()->where('site_id', $site->id)->with('translations')->orderBy('title')->get(),
+            'newItem' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
+            'newGroup' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
+            'editableItems' => NavigationItem::query()->forSite($site)->forMenu($menuKey)->with('page')->ordered()->get(),
         ]);
     }
 
     public function create(): View
     {
         $menuKey = request('menu_key', NavigationItem::MENU_PRIMARY);
+        $site = Site::query()->findOrFail(request()->integer('site_id') ?: Site::primary()?->id);
 
         return view('admin.navigation.create', [
-            'item' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
-            'parents' => $this->tree->parentOptions($menuKey),
+            'item' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
+            'pages' => Page::query()->where('site_id', $site->id)->with('translations')->orderBy('title')->get(),
+            'parents' => $this->tree->parentOptions($menuKey, $site),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
+            'site' => $site,
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);
     }
 
@@ -54,7 +63,7 @@ class NavigationItemController extends Controller
         NavigationItem::create($this->validatedData($request));
 
         return redirect()
-            ->route('admin.navigation.index', ['menu_key' => $request->string('menu_key')->toString()])
+            ->route('admin.navigation.index', ['site_id' => $request->integer('site_id'), 'menu_key' => $request->string('menu_key')->toString()])
             ->with('status', 'Navigation item created successfully.');
     }
 
@@ -62,10 +71,12 @@ class NavigationItemController extends Controller
     {
         return view('admin.navigation.edit', [
             'item' => $navigation,
-            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
-            'parents' => $this->tree->parentOptions($navigation->menu_key, $navigation->id),
+            'pages' => Page::query()->where('site_id', $navigation->site_id)->with('translations')->orderBy('title')->get(),
+            'parents' => $this->tree->parentOptions($navigation->menu_key, $navigation->site_id, $navigation->id),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
+            'site' => $navigation->site,
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);
     }
 
@@ -74,7 +85,7 @@ class NavigationItemController extends Controller
         $navigation->update($this->validatedData($request));
 
         return redirect()
-            ->route('admin.navigation.index', ['menu_key' => $navigation->fresh()->menu_key])
+            ->route('admin.navigation.index', ['site_id' => $navigation->fresh()->site_id, 'menu_key' => $navigation->fresh()->menu_key])
             ->with('status', 'Navigation item updated successfully.');
     }
 
@@ -84,14 +95,15 @@ class NavigationItemController extends Controller
         $navigation->delete();
 
         return redirect()
-            ->route('admin.navigation.index', ['menu_key' => $menuKey])
+            ->route('admin.navigation.index', ['site_id' => $navigation->site_id, 'menu_key' => $menuKey])
             ->with('status', 'Navigation item deleted successfully.');
     }
 
     public function reorder(NavigationItemReorderRequest $request): JsonResponse
     {
         $menuKey = $request->string('menu_key')->toString();
-        $items = $this->tree->validateAndNormalizeTreePayload($menuKey, $request->validated('items'));
+        $siteId = $request->integer('site_id');
+        $items = $this->tree->validateAndNormalizeTreePayload($menuKey, $siteId, $request->validated('items'));
 
         DB::transaction(function () use ($items): void {
             foreach ($items as $item) {
@@ -108,6 +120,7 @@ class NavigationItemController extends Controller
             'ok' => true,
             'message' => 'Saved',
             'menu_key' => $menuKey,
+            'site_id' => $siteId,
         ]);
     }
 
@@ -118,13 +131,14 @@ class NavigationItemController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.navigation.index', ['menu_key' => $navigation->menu_key])
+            ->route('admin.navigation.index', ['site_id' => $navigation->site_id, 'menu_key' => $navigation->menu_key])
             ->with('status', 'Navigation item updated successfully.');
     }
 
     private function validatedData(NavigationItemRequest $request): array
     {
         $data = $request->validated();
+        $data['site_id'] = (int) $data['site_id'];
 
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
         $data['url'] = trim((string) ($data['url'] ?? '')) ?: null;
@@ -136,6 +150,7 @@ class NavigationItemController extends Controller
 
         if ($data['link_type'] === NavigationItem::LINK_PAGE) {
             $data['url'] = null;
+            $data['site_id'] = Page::query()->find($data['page_id'])?->site_id ?? $data['site_id'];
 
             if (! $data['title'] && ! empty($data['page_id'])) {
                 $data['title'] = Page::query()->with('translations')->find($data['page_id'])?->name;
@@ -154,6 +169,7 @@ class NavigationItemController extends Controller
 
         if (! $request->filled('position')) {
             $maxPosition = NavigationItem::query()
+                ->forSite($data['site_id'])
                 ->forMenu($data['menu_key'])
                 ->where('parent_id', $data['parent_id'])
                 ->max('position');

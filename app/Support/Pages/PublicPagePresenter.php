@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Navigation\NavigationTree;
 use Illuminate\Support\Collection;
@@ -32,7 +33,7 @@ class PublicPagePresenter
 
         $slots = $page->slots
             ->sortBy('sort_order')
-            ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks))
+            ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks, $page->site))
             ->filter(fn (array $slot) => $slot['blocks']->isNotEmpty())
             ->values();
 
@@ -48,7 +49,7 @@ class PublicPagePresenter
         ];
     }
 
-    private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
+    private function presentSlot(PageSlot $slot, Collection $topLevelBlocks, ?Site $site): array
     {
         $slug = $slot->slotType?->slug ?? 'main';
         $blocks = $topLevelBlocks
@@ -61,7 +62,7 @@ class PublicPagePresenter
             'region' => $this->regionFor($slug),
             'view' => $this->viewFor($slug),
             'blocks' => $blocks,
-            'chrome' => $this->chromeFor($slug, $blocks),
+            'chrome' => $this->chromeFor($slug, $blocks, $site),
         ];
     }
 
@@ -85,11 +86,11 @@ class PublicPagePresenter
         };
     }
 
-    private function chromeFor(string $slotSlug, Collection $blocks): array
+    private function chromeFor(string $slotSlug, Collection $blocks, ?Site $site): array
     {
         return match ($slotSlug) {
-            'header' => $this->headerChrome($blocks),
-            'footer' => $this->footerChrome($blocks),
+            'header' => $this->headerChrome($blocks, $site),
+            'footer' => $this->footerChrome($blocks, $site),
             'sidebar' => [
                 'label' => 'Sidebar',
             ],
@@ -99,7 +100,7 @@ class PublicPagePresenter
         };
     }
 
-    private function headerChrome(Collection $blocks): array
+    private function headerChrome(Collection $blocks, ?Site $site): array
     {
         $branding = $blocks->first(fn (Block $block) => in_array($block->typeSlug(), ['heading', 'image', 'rich-text', 'section'], true));
         $menuBlock = $blocks->first(fn (Block $block) => in_array($block->typeSlug(), ['navigation-auto', 'menu'], true) && $block->navigationMenuKey() === NavigationItem::MENU_PRIMARY);
@@ -112,13 +113,13 @@ class PublicPagePresenter
             'branding' => $branding,
             'navigation_block' => $menuBlock,
             'mobile_navigation_block' => $mobileMenuBlock,
-            'primary_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_PRIMARY)->filter(fn ($item) => $item->isVisible())->values(),
-            'mobile_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_MOBILE)->filter(fn ($item) => $item->isVisible())->values(),
+            'primary_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_PRIMARY, $site)->filter(fn ($item) => $item->isVisible())->values(),
+            'mobile_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_MOBILE, $site)->filter(fn ($item) => $item->isVisible())->values(),
             'actions' => $actionBlocks,
         ];
     }
 
-    private function footerChrome(Collection $blocks): array
+    private function footerChrome(Collection $blocks, ?Site $site): array
     {
         $footerNavBlock = $blocks->first(fn (Block $block) => in_array($block->typeSlug(), ['navigation-auto', 'menu'], true) && $block->navigationMenuKey() === NavigationItem::MENU_FOOTER);
         $legalNavBlock = $blocks->first(fn (Block $block) => in_array($block->typeSlug(), ['navigation-auto', 'menu'], true) && $block->navigationMenuKey() === NavigationItem::MENU_LEGAL);
@@ -133,8 +134,8 @@ class PublicPagePresenter
         return [
             'footer_navigation_block' => $footerNavBlock,
             'legal_navigation_block' => $legalNavBlock,
-            'footer_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_FOOTER)->filter(fn ($item) => $item->isVisible())->values(),
-            'legal_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_LEGAL)->filter(fn ($item) => $item->isVisible())->values(),
+            'footer_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_FOOTER, $site)->filter(fn ($item) => $item->isVisible())->values(),
+            'legal_items' => $this->navigationTree->buildMenuTree(NavigationItem::MENU_LEGAL, $site)->filter(fn ($item) => $item->isVisible())->values(),
             'supporting_blocks' => $supportingBlocks,
         ];
     }

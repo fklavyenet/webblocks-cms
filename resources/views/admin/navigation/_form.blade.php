@@ -5,7 +5,14 @@
 @endphp
 
 <div class="wb-stack wb-gap-4">
+    <input type="hidden" name="site_id" value="{{ old('site_id', $item->site_id ?: $site->id) }}">
+
     <div class="wb-grid wb-grid-2">
+        <div class="wb-stack wb-gap-1">
+            <label>Site</label>
+            <input class="wb-input" type="text" value="{{ $site->name }}" disabled>
+        </div>
+
         <div class="wb-stack wb-gap-1">
             <label for="menu_key">Menu</label>
             <select id="menu_key" name="menu_key" class="wb-select" required>
@@ -80,7 +87,7 @@
     <input type="hidden" name="position" value="{{ old('position', $item->position ?: 1) }}">
 
     <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-        <a href="{{ route('admin.navigation.index', ['menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]) }}" class="wb-btn wb-btn-secondary">Back</a>
+        <a href="{{ route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]) }}" class="wb-btn wb-btn-secondary">Back</a>
         <button type="submit" class="wb-btn wb-btn-primary">Save Navigation Item</button>
     </div>
 </div>
