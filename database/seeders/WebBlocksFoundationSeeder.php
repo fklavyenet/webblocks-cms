@@ -30,22 +30,32 @@ class WebBlocksFoundationSeeder extends Seeder
 
         $rootSite = Site::query()->updateOrCreate(
             ['handle' => 'root'],
-            ['name' => 'WebBlocks', 'domain' => 'webblocksui.lvh.me', 'is_primary' => true],
+            ['name' => 'WebBlocks', 'domain' => 'webblocksui.com.ddev.site', 'is_primary' => true],
         );
 
         $uiSite = Site::query()->updateOrCreate(
             ['handle' => 'ui'],
-            ['name' => 'WebBlocks UI', 'domain' => 'ui.webblocksui.lvh.me', 'is_primary' => false],
+            ['name' => 'WebBlocks UI', 'domain' => 'ui.webblocksui.com.ddev.site', 'is_primary' => false],
+        );
+
+        $uiDocsSite = Site::query()->updateOrCreate(
+            ['handle' => 'ui-docs'],
+            ['name' => 'WebBlocks UI Docs', 'domain' => 'ui.docs.webblocksui.com.ddev.site', 'is_primary' => false],
         );
 
         $cmsSite = Site::query()->updateOrCreate(
             ['handle' => 'cms'],
-            ['name' => 'WebBlocks CMS', 'domain' => 'cms.webblocksui.lvh.me', 'is_primary' => false],
+            ['name' => 'WebBlocks CMS', 'domain' => 'cms.webblocksui.com.ddev.site', 'is_primary' => false],
         );
 
-        Site::query()->whereNotIn('id', [$rootSite->id, $uiSite->id, $cmsSite->id])->delete();
+        $cmsDocsSite = Site::query()->updateOrCreate(
+            ['handle' => 'cms-docs'],
+            ['name' => 'WebBlocks CMS Docs', 'domain' => 'cms.docs.webblocksui.com.ddev.site', 'is_primary' => false],
+        );
 
-        foreach ([$rootSite, $uiSite, $cmsSite] as $site) {
+        Site::query()->whereNotIn('id', [$rootSite->id, $uiSite->id, $uiDocsSite->id, $cmsSite->id, $cmsDocsSite->id])->delete();
+
+        foreach ([$rootSite, $uiSite, $uiDocsSite, $cmsSite, $cmsDocsSite] as $site) {
             $site->locales()->sync([
                 $english->id => ['is_enabled' => true],
                 $turkish->id => ['is_enabled' => true],
@@ -56,7 +66,9 @@ class WebBlocksFoundationSeeder extends Seeder
         $rootAbout = $this->createPage($rootSite, 'about', 'About');
         $rootContact = $this->createPage($rootSite, 'contact', 'Contact');
         $uiHome = $this->createPage($uiSite, 'home', 'WebBlocks UI');
+        $uiDocsHome = $this->createPage($uiDocsSite, 'home', 'WebBlocks UI Docs');
         $cmsHome = $this->createPage($cmsSite, 'home', 'WebBlocks CMS');
+        $cmsDocsHome = $this->createPage($cmsDocsSite, 'home', 'WebBlocks CMS Docs');
 
         $this->translatePage($rootHome, $english, 'WebBlocks', 'home');
         $this->translatePage($rootHome, $turkish, 'WebBlocks Ekosistemi', 'home');
@@ -66,8 +78,12 @@ class WebBlocksFoundationSeeder extends Seeder
         $this->translatePage($rootContact, $turkish, 'Iletisim', 'iletisim');
         $this->translatePage($uiHome, $english, 'WebBlocks UI', 'home');
         $this->translatePage($uiHome, $turkish, 'WebBlocks UI', 'home');
+        $this->translatePage($uiDocsHome, $english, 'WebBlocks UI Docs', 'home');
+        $this->translatePage($uiDocsHome, $turkish, 'WebBlocks UI Dokumantasyon', 'home');
         $this->translatePage($cmsHome, $english, 'WebBlocks CMS', 'home');
         $this->translatePage($cmsHome, $turkish, 'WebBlocks CMS', 'home');
+        $this->translatePage($cmsDocsHome, $english, 'WebBlocks CMS Docs', 'home');
+        $this->translatePage($cmsDocsHome, $turkish, 'WebBlocks CMS Dokumantasyon', 'home');
 
         $this->seedGlobalNavigation();
     }
@@ -94,18 +110,24 @@ class WebBlocksFoundationSeeder extends Seeder
     private function seedGlobalNavigation(): void
     {
         $items = [
-            [NavigationItem::MENU_PRIMARY, 'Ecosystem', 'http://webblocksui.lvh.me:8000/', 1],
-            [NavigationItem::MENU_PRIMARY, 'UI', 'http://ui.webblocksui.lvh.me:8000/', 2],
-            [NavigationItem::MENU_PRIMARY, 'CMS', 'http://cms.webblocksui.lvh.me:8000/', 3],
-            [NavigationItem::MENU_PRIMARY, 'About', 'http://webblocksui.lvh.me:8000/p/about', 4],
-            [NavigationItem::MENU_MOBILE, 'Ecosystem', 'http://webblocksui.lvh.me:8000/', 1],
-            [NavigationItem::MENU_MOBILE, 'UI', 'http://ui.webblocksui.lvh.me:8000/', 2],
-            [NavigationItem::MENU_MOBILE, 'CMS', 'http://cms.webblocksui.lvh.me:8000/', 3],
-            [NavigationItem::MENU_MOBILE, 'Contact', 'http://webblocksui.lvh.me:8000/p/contact', 4],
-            [NavigationItem::MENU_FOOTER, 'WebBlocks', 'http://webblocksui.lvh.me:8000/', 1],
-            [NavigationItem::MENU_FOOTER, 'WebBlocks UI', 'http://ui.webblocksui.lvh.me:8000/', 2],
-            [NavigationItem::MENU_FOOTER, 'WebBlocks CMS', 'http://cms.webblocksui.lvh.me:8000/', 3],
-            [NavigationItem::MENU_FOOTER, 'Contact', 'http://webblocksui.lvh.me:8000/p/contact', 4],
+            [NavigationItem::MENU_PRIMARY, 'Ecosystem', 'https://webblocksui.com.ddev.site/', 1],
+            [NavigationItem::MENU_PRIMARY, 'UI', 'https://ui.webblocksui.com.ddev.site/', 2],
+            [NavigationItem::MENU_PRIMARY, 'UI Docs', 'https://ui.docs.webblocksui.com.ddev.site/', 3],
+            [NavigationItem::MENU_PRIMARY, 'CMS', 'https://cms.webblocksui.com.ddev.site/', 4],
+            [NavigationItem::MENU_PRIMARY, 'CMS Docs', 'https://cms.docs.webblocksui.com.ddev.site/', 5],
+            [NavigationItem::MENU_PRIMARY, 'About', 'https://webblocksui.com.ddev.site/p/about', 6],
+            [NavigationItem::MENU_MOBILE, 'Ecosystem', 'https://webblocksui.com.ddev.site/', 1],
+            [NavigationItem::MENU_MOBILE, 'UI', 'https://ui.webblocksui.com.ddev.site/', 2],
+            [NavigationItem::MENU_MOBILE, 'UI Docs', 'https://ui.docs.webblocksui.com.ddev.site/', 3],
+            [NavigationItem::MENU_MOBILE, 'CMS', 'https://cms.webblocksui.com.ddev.site/', 4],
+            [NavigationItem::MENU_MOBILE, 'CMS Docs', 'https://cms.docs.webblocksui.com.ddev.site/', 5],
+            [NavigationItem::MENU_MOBILE, 'Contact', 'https://webblocksui.com.ddev.site/p/contact', 6],
+            [NavigationItem::MENU_FOOTER, 'WebBlocks', 'https://webblocksui.com.ddev.site/', 1],
+            [NavigationItem::MENU_FOOTER, 'WebBlocks UI', 'https://ui.webblocksui.com.ddev.site/', 2],
+            [NavigationItem::MENU_FOOTER, 'WebBlocks UI Docs', 'https://ui.docs.webblocksui.com.ddev.site/', 3],
+            [NavigationItem::MENU_FOOTER, 'WebBlocks CMS', 'https://cms.webblocksui.com.ddev.site/', 4],
+            [NavigationItem::MENU_FOOTER, 'WebBlocks CMS Docs', 'https://cms.docs.webblocksui.com.ddev.site/', 5],
+            [NavigationItem::MENU_FOOTER, 'Contact', 'https://webblocksui.com.ddev.site/p/contact', 6],
             [NavigationItem::MENU_LEGAL, 'GitHub', 'https://github.com/fklavyenet/webblocks-cms', 1],
         ];
 
