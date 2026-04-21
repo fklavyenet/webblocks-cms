@@ -1,5 +1,9 @@
 @php
     $children = $block->children->where('status', 'published')->sortBy('sort_order')->values();
+    $childSlugs = $children->map(fn ($child) => $child->typeSlug())->values();
+    $isContactColumns = $childSlugs->count() === 2
+        && $childSlugs->contains('contact-info')
+        && $childSlugs->contains('contact_form');
     $layoutClass = match (true) {
         $children->count() <= 1 => 'wb-stack wb-gap-4',
         $children->count() === 2 => 'wb-grid wb-grid-2',
@@ -28,7 +32,7 @@
         @endif
 
         @if ($children->isNotEmpty())
-            <div class="{{ $layoutClass }}">
+            <div class="{{ $layoutClass }}{{ $isContactColumns ? ' wb-public-contact-columns' : '' }}">
                 @foreach ($children as $child)
                     @if ($child->isColumnItem())
                         <div class="wb-card">

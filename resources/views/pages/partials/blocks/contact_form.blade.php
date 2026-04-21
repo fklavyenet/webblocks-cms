@@ -44,7 +44,7 @@
             <input type="hidden" name="source_url" value="{{ request()->fullUrl() }}">
             <input type="hidden" name="submitted_at" value="{{ now()->timestamp }}">
 
-            <div style="position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;" aria-hidden="true">
+            <div class="wb-public-contact-honeypot" aria-hidden="true">
                 <label for="contact-website-{{ $block->id }}">Website</label>
                 <input id="contact-website-{{ $block->id }}" type="text" name="website" tabindex="-1" autocomplete="off">
             </div>

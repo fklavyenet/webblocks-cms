@@ -143,10 +143,12 @@
     flex: 0 0 auto;
 }
 
-.wb-public-contact-pair {
-    display: grid;
-    gap: 1.25rem;
+.wb-public-contact-columns {
     align-items: start;
+}
+
+.wb-public-contact-columns > div {
+    min-width: 0;
 }
 
 .wb-public-contact-card,
@@ -163,6 +165,14 @@
     background: rgba(255, 255, 255, 0.98);
 }
 
+.wb-public-contact-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
 .wb-public-contact-meta strong {
     color: var(--fklavye-teal-deep);
     font-size: 0.82rem;
@@ -170,7 +180,7 @@
     text-transform: uppercase;
 }
 
-.wb-public-contact-pair .wb-btn,
+.wb-public-contact-form-card .wb-btn,
 .wb-public-header-actions .wb-btn {
     background: linear-gradient(135deg, var(--fklavye-gold) 0%, #9d6f1f 100%);
     border-color: rgba(117, 78, 11, 0.32);
@@ -221,12 +231,6 @@
 .wb-public-footer {
     border-top: 1px solid rgba(17, 125, 121, 0.12);
     background: rgba(250, 253, 252, 0.8);
-}
-
-@media (min-width: 960px) {
-    .wb-public-contact-pair {
-        grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-    }
 }
 
 @media (max-width: 959px) {
