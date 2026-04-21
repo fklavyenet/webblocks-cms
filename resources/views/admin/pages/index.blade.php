@@ -58,7 +58,7 @@
                     </div>
                 </div>
 
-                <div class="wb-cluster wb-cluster-2" style="align-self: end;">
+                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
                     @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['site_id'] !== 0 || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
                         <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>

@@ -25,97 +25,6 @@
 
     @include('admin.partials.flash')
 
-    @push('styles')
-        <style>
-            .wb-media-toolbar {
-                align-items: end;
-            }
-
-            .wb-media-folder-pills {
-                gap: var(--wb-s2);
-            }
-
-            .wb-media-folder-pill {
-                border-radius: 9999px;
-            }
-
-            .wb-media-view-toggle .wb-btn[aria-current="page"] {
-                background: var(--wb-accent);
-                border-color: var(--wb-accent);
-                color: var(--wb-accent-contrast, #fff);
-            }
-
-            .wb-media-preview-box {
-                width: 88px;
-                height: 64px;
-                border-radius: var(--wb-radius-lg);
-                background: var(--wb-surface-2);
-                border: 1px solid color-mix(in srgb, var(--wb-border) 78%, transparent);
-                overflow: hidden;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--wb-text-muted);
-            }
-
-            .wb-media-preview-box img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }
-
-            .wb-media-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: var(--wb-s4);
-            }
-
-            .wb-media-grid-card .wb-card-body {
-                padding: var(--wb-s3);
-            }
-
-            .wb-media-grid-preview {
-                width: 100%;
-                aspect-ratio: 16 / 10;
-                border-radius: var(--wb-radius-lg);
-                background: var(--wb-surface-2);
-                border: 1px solid color-mix(in srgb, var(--wb-border) 78%, transparent);
-                overflow: hidden;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-bottom: var(--wb-s3);
-                color: var(--wb-text-muted);
-            }
-
-            .wb-media-grid-preview img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }
-
-            .wb-media-grid-actions {
-                justify-content: space-between;
-            }
-
-            .wb-media-copy-feedback {
-                min-height: 1.25rem;
-            }
-
-            .wb-media-usage-list {
-                max-height: 18rem;
-                overflow: auto;
-            }
-
-            .wb-media-table .wb-action-group,
-            .wb-media-grid .wb-action-group {
-                flex-wrap: nowrap;
-            }
-        </style>
-    @endpush
-
     <div class="wb-card">
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
@@ -164,7 +73,8 @@
                     </div>
                 </div>
 
-                <div class="wb-cluster wb-cluster-2" style="align-self: end;">
+                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
+                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
                     @if ($selectedFolderId)
                         <input type="hidden" name="folder_id" value="{{ $selectedFolderId }}">
                     @endif

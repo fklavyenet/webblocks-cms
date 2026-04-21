@@ -40,7 +40,7 @@
                     </div>
                 </div>
 
-                <div class="wb-cluster wb-cluster-2" style="align-self: end;">
+                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
                     @if (($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['notification'] ?? '') !== '')
                         <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
@@ -49,18 +49,6 @@
             </form>
         </div>
     </div>
-
-    @push('styles')
-        <style>
-            .wb-contact-message-source {
-                min-width: 11rem;
-            }
-
-            .wb-contact-message-cell {
-                line-height: 1.3;
-            }
-        </style>
-    @endpush
 
     @if ($messages->isEmpty())
         <div class="wb-card">

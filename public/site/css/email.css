@@ -1,0 +1,25 @@
+/*
+ |--------------------------------------------------------------------------
+ | Email styles
+ |--------------------------------------------------------------------------
+ */
+
+.wb-email-body {
+    color: #0f172a;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+.wb-email-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.wb-email-message {
+    margin-top: 20px;
+}
+
+.wb-email-message-body {
+    margin-top: 8px;
+    white-space: pre-line;
+}

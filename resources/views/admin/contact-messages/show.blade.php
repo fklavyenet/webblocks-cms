@@ -55,7 +55,7 @@
 
     <div class="wb-card">
         <div class="wb-card-header"><strong>Message</strong></div>
-        <div class="wb-card-body wb-stack wb-gap-2" style="white-space: pre-line; min-height: 12rem;">{{ $message->message }}</div>
+        <div class="wb-card-body wb-stack wb-gap-2 wb-contact-message-body">{{ $message->message }}</div>
     </div>
 
     <div class="wb-grid wb-grid-2">

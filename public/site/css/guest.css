@@ -1,0 +1,44 @@
+/*
+ |--------------------------------------------------------------------------
+ | Guest view styles
+ |--------------------------------------------------------------------------
+ */
+
+.wb-auth-shell.wb-auth-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.wb-auth-shell.wb-auth-split .wb-auth-panel {
+    max-width: 50vw;
+}
+
+.wb-auth-shell .wb-auth-panel.wb-bg-primary,
+.wb-auth-shell .wb-auth-panel.wb-bg-success,
+.wb-auth-shell .wb-auth-panel.wb-bg-danger,
+.wb-auth-shell .wb-auth-panel.wb-bg-warning,
+.wb-auth-shell .wb-auth-panel.wb-bg-info {
+    color: #fff;
+}
+
+.wb-auth-shell .wb-auth-panel.wb-bg-primary .wb-auth-panel-title,
+.wb-auth-shell .wb-auth-panel.wb-bg-primary .wb-auth-panel-text,
+.wb-auth-shell .wb-auth-panel.wb-bg-success .wb-auth-panel-title,
+.wb-auth-shell .wb-auth-panel.wb-bg-success .wb-auth-panel-text,
+.wb-auth-shell .wb-auth-panel.wb-bg-danger .wb-auth-panel-title,
+.wb-auth-shell .wb-auth-panel.wb-bg-danger .wb-auth-panel-text,
+.wb-auth-shell .wb-auth-panel.wb-bg-warning .wb-auth-panel-title,
+.wb-auth-shell .wb-auth-panel.wb-bg-warning .wb-auth-panel-text,
+.wb-auth-shell .wb-auth-panel.wb-bg-info .wb-auth-panel-title,
+.wb-auth-shell .wb-auth-panel.wb-bg-info .wb-auth-panel-text {
+    color: inherit;
+}
+
+@media (max-width: 900px) {
+    .wb-auth-shell.wb-auth-split {
+        grid-template-columns: 1fr;
+    }
+
+    .wb-auth-shell.wb-auth-split .wb-auth-panel {
+        max-width: none;
+    }
+}

@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    @php
+        $adminCssPath = public_path('site/css/admin.css');
+    @endphp
+
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,117 +16,10 @@
 
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.css">
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
+        @if (is_file($adminCssPath))
+            <link rel="stylesheet" href="{{ asset('site/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
+        @endif
         @stack('styles')
-        <style>
-            #wb-overlay-root .wb-drawer {
-                display: none;
-            }
-
-            #wb-overlay-root .wb-drawer.is-open {
-                display: flex;
-            }
-
-            .wb-sidebar-footer {
-                text-align: center;
-            }
-
-            .wb-slot-visual {
-                border: 1px solid color-mix(in srgb, var(--wb-border) 72%, transparent);
-            }
-
-            .wb-slot-visual-header {
-                background: color-mix(in srgb, var(--wb-accent-soft) 55%, white);
-            }
-
-            .wb-slot-visual-main {
-                background: color-mix(in srgb, #2563eb 10%, white);
-            }
-
-            .wb-slot-visual-sidebar {
-                background: color-mix(in srgb, #7c3aed 10%, white);
-            }
-
-            .wb-slot-visual-footer {
-                background: color-mix(in srgb, #ea580c 10%, white);
-            }
-
-            .wb-navbar-iconbar {
-                display: inline-flex;
-                align-items: center;
-                gap: var(--wb-s2);
-            }
-
-            .wb-navbar-icon-trigger {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 2.5rem;
-                height: 2.5rem;
-                border-radius: 9999px;
-                color: var(--wb-text);
-                transition: background var(--wb-t), color var(--wb-t);
-            }
-
-            .wb-navbar-icon-trigger:hover,
-            .wb-navbar-icon-trigger[aria-expanded="true"] {
-                background: var(--wb-surface-2);
-                text-decoration: none;
-            }
-
-            .wb-navbar-avatar-trigger {
-                display: inline-flex;
-                align-items: center;
-                gap: var(--wb-s2);
-                color: var(--wb-text);
-                text-decoration: none;
-            }
-
-            .wb-navbar-avatar {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 2.5rem;
-                height: 2.5rem;
-                border-radius: 9999px;
-                background: var(--wb-accent-soft);
-                color: var(--wb-accent-text);
-                font-size: 0.8rem;
-                font-weight: 700;
-                letter-spacing: 0.04em;
-                text-transform: uppercase;
-            }
-
-            .wb-slot-block-toggle {
-                flex-shrink: 0;
-            }
-
-            .wb-slot-block-toggle-icon {
-                transition: transform var(--wb-t);
-            }
-
-            .wb-slot-block-toggle[aria-expanded="false"] .wb-slot-block-toggle-icon {
-                transform: rotate(-90deg);
-            }
-
-            .wb-slot-block-child-meta,
-            .wb-slot-block-child-summary {
-                padding-left: var(--wb-s4);
-            }
-
-            .wb-slot-block-child-meta {
-                position: relative;
-            }
-
-            .wb-slot-block-child-meta::before {
-                content: '';
-                position: absolute;
-                left: var(--wb-s2);
-                top: 0.45rem;
-                bottom: 0.45rem;
-                width: 1px;
-                background: color-mix(in srgb, var(--wb-border) 75%, transparent);
-            }
-        </style>
     </head>
         <body>
         @php
@@ -173,7 +70,7 @@
                                     @if (request()->routeIs($item['active'])) aria-current="page" @endif
                                 >
                                     <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
-                                    <span class="wb-cluster wb-cluster-between wb-cluster-2" style="width: 100%;">
+                                    <span class="wb-cluster wb-cluster-between wb-cluster-2 wb-sidebar-link-label">
                                         <span>{{ $item['label'] }}</span>
 
                                         @if (($item['update_available'] ?? false) === true)

@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    @php
+        $guestCssPath = public_path('site/css/guest.css');
+    @endphp
+
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,34 +16,9 @@
 
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.css">
         <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
-        <style>
-            .wb-auth-shell.wb-auth-split {
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            }
-
-            .wb-auth-shell.wb-auth-split .wb-auth-panel {
-                max-width: 50vw;
-            }
-
-            .wb-auth-shell .wb-auth-panel:is([style*="background"], .wb-bg-primary, .wb-bg-success, .wb-bg-danger, .wb-bg-warning, .wb-bg-info) {
-                color: #fff;
-            }
-
-            .wb-auth-shell .wb-auth-panel:is([style*="background"], .wb-bg-primary, .wb-bg-success, .wb-bg-danger, .wb-bg-warning, .wb-bg-info) .wb-auth-panel-title,
-            .wb-auth-shell .wb-auth-panel:is([style*="background"], .wb-bg-primary, .wb-bg-success, .wb-bg-danger, .wb-bg-warning, .wb-bg-info) .wb-auth-panel-text {
-                color: inherit;
-            }
-
-            @media (max-width: 900px) {
-                .wb-auth-shell.wb-auth-split {
-                    grid-template-columns: 1fr;
-                }
-
-                .wb-auth-shell.wb-auth-split .wb-auth-panel {
-                    max-width: none;
-                }
-            }
-        </style>
+        @if (is_file($guestCssPath))
+            <link rel="stylesheet" href="{{ asset('site/css/guest.css') }}?v={{ filemtime($guestCssPath) }}">
+        @endif
     </head>
     <body>
         <main>

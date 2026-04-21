@@ -12,7 +12,6 @@
         'xl' => 'wb-modal-xl',
         '2xl' => 'wb-modal-xl',
     ][$maxWidth] ?? '';
-    $displayStyle = $show ? 'display: block;' : 'display: none;';
 @endphp
 
 <div
@@ -46,7 +45,8 @@
     x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
     x-show="show"
     @class(['wb-modal', $modalSize])
-    style="{{ $displayStyle }}"
+    x-bind:hidden="! show"
+    @if (! $show) hidden @endif
     role="dialog"
     aria-modal="true"
 >

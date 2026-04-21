@@ -61,12 +61,12 @@
                 <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}">
             @endif
 
-            <div class="wb-stack wb-gap-1" style="grid-column: 1 / -1;">
+            <div class="wb-stack wb-gap-1 wb-slot-block-picker-span-all">
                 <label for="slot_block_type_search">Search block types</label>
                 <input id="slot_block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ $pickerSearch }}" placeholder="Search by name, intent, or slug">
             </div>
 
-            <div class="wb-cluster wb-cluster-end wb-cluster-2" style="grid-column: 1 / -1;">
+            <div class="wb-cluster wb-cluster-end wb-cluster-2 wb-slot-block-picker-span-all">
                 <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary">Reset</a>
                 <a href="{{ $slotBlockRoute() }}" class="wb-btn wb-btn-secondary">Close</a>
                 <button type="submit" class="wb-btn wb-btn-primary">Search</button>
