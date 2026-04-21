@@ -200,7 +200,7 @@ class ImportDemoMedia extends Command
         $block = Block::query()
             ->where('type', $type)
             ->where('title', $title)
-            ->whereHas('page', fn ($query) => $query->where('slug', $pageSlug))
+            ->whereHas('page.translations', fn ($query) => $query->where('slug', $pageSlug))
             ->first();
 
         if (! $block) {
@@ -231,7 +231,7 @@ class ImportDemoMedia extends Command
         $block = Block::query()
             ->where('type', 'product-grid')
             ->where('title', 'Northstar Labs service lines')
-            ->whereHas('page', fn ($query) => $query->where('slug', 'services'))
+            ->whereHas('page.translations', fn ($query) => $query->where('slug', 'services'))
             ->first();
 
         if (! $block) {
@@ -269,7 +269,7 @@ class ImportDemoMedia extends Command
             return 0;
         }
 
-        $page = Page::query()->where('slug', 'contact')->first();
+        $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'contact'))->first();
         $slotType = SlotType::query()->where('slug', 'main')->first();
         $blockType = BlockType::query()->where('slug', 'image')->first();
 
@@ -324,7 +324,7 @@ class ImportDemoMedia extends Command
         $block = Block::query()
             ->where('type', $type)
             ->where('title', $title)
-            ->whereHas('page', fn ($query) => $query->where('slug', $pageSlug))
+            ->whereHas('page.translations', fn ($query) => $query->where('slug', $pageSlug))
             ->first();
 
         if (! $block) {

@@ -5,8 +5,11 @@ namespace App\Http\Requests\Admin;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\NavigationItem;
+use App\Models\Page;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -23,9 +26,12 @@ class BlockRequest extends FormRequest
         $block = $this->route('block');
         $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $block?->block_type_id ?: 0);
         $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+        $translationRegistry = app(BlockTranslationRegistry::class);
+        $isTranslatedColumnItem = $selectedBlockType?->slug === 'column_item' && $translationRegistry->isTranslatable($selectedBlockType?->slug) && $this->filled('locale');
         $isColumnItem = $selectedBlockType?->slug === 'column_item';
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
+        $isLocaleRequest = $this->filled('locale');
 
         return [
             'page_id' => ['required', 'integer', 'exists:pages,id'],
@@ -38,9 +44,10 @@ class BlockRequest extends FormRequest
             'block_type_id' => ['required', 'integer', 'exists:block_types,id'],
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
-            'title' => [$isColumnItem ? 'required' : 'nullable', 'string', 'max:255'],
+            'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
+            'title' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'content' => [$isColumnItem ? 'required' : 'nullable', 'string'],
+            'content' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string'],
             'url' => ['nullable', 'string', 'max:2048'],
             'asset_id' => ['nullable', 'integer', 'exists:assets,id'],
             'gallery_asset_ids' => ['nullable', 'array'],
@@ -61,11 +68,11 @@ class BlockRequest extends FormRequest
             'settings' => ['nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
             'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
-            'submit_label' => [$isContactForm ? 'required' : 'nullable', 'string', 'max:255'],
-            'success_message' => [$isContactForm ? 'required' : 'nullable', 'string', 'max:1000'],
-            'recipient_email' => [$isContactForm ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
-            'send_email_notification' => [$isContactForm ? 'required' : 'nullable', 'boolean'],
-            'store_submissions' => [$isContactForm ? 'required' : 'nullable', 'boolean'],
+            'submit_label' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:255'],
+            'success_message' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:1000'],
+            'recipient_email' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
+            'send_email_notification' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
+            'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
@@ -74,6 +81,13 @@ class BlockRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            $page = Page::query()->with('site.locales')->find($this->integer('page_id'));
+            $localeCode = Locale::normalizeCode($this->input('locale'));
+
+            if ($localeCode !== null && (! $page || ! $page->site || ! $page->site->hasEnabledLocale($localeCode))) {
+                $validator->errors()->add('locale', 'Selected locale must be enabled for the page site.');
+            }
+
             $parentId = $this->integer('parent_id');
             $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
             $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
@@ -140,6 +154,7 @@ class BlockRequest extends FormRequest
     public function validatedData(): array
     {
         $data = $this->validated();
+        $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
         $pageId = (int) $data['page_id'];
 
         if (! empty($data['parent_id'])) {
@@ -207,6 +222,12 @@ class BlockRequest extends FormRequest
             }
 
             if ($blockType?->slug === 'contact_form') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedContactFormEdit = $data['locale'] !== null;
+
                 $data['title'] = trim((string) ($data['heading'] ?? '')) ?: null;
                 $data['subtitle'] = null;
                 $data['content'] = trim((string) ($data['intro_text'] ?? '')) ?: null;
@@ -217,9 +238,15 @@ class BlockRequest extends FormRequest
                 $data['settings'] = json_encode([
                     'submit_label' => trim((string) ($data['submit_label'] ?? 'Send message')) ?: 'Send message',
                     'success_message' => trim((string) ($data['success_message'] ?? config('contact.success_message'))) ?: config('contact.success_message'),
-                    'recipient_email' => trim((string) ($data['recipient_email'] ?? '')) ?: null,
-                    'send_email_notification' => (bool) ($data['send_email_notification'] ?? true),
-                    'store_submissions' => (bool) ($data['store_submissions'] ?? true),
+                    'recipient_email' => $isTranslatedContactFormEdit
+                        ? ($existingSettings['recipient_email'] ?? null)
+                        : (trim((string) ($data['recipient_email'] ?? '')) ?: null),
+                    'send_email_notification' => $isTranslatedContactFormEdit
+                        ? (bool) ($existingSettings['send_email_notification'] ?? true)
+                        : (bool) ($data['send_email_notification'] ?? true),
+                    'store_submissions' => $isTranslatedContactFormEdit
+                        ? (bool) ($existingSettings['store_submissions'] ?? true)
+                        : (bool) ($data['store_submissions'] ?? true),
                 ], JSON_UNESCAPED_SLASHES);
             }
         }

@@ -3,7 +3,10 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -21,6 +24,7 @@ class PageRequest extends FormRequest
         $slug = (string) $this->input('slug');
 
         $this->merge([
+            'site_id' => $this->input('site_id') ?: Site::primary()?->id,
             'slug' => Str::slug($slug !== '' ? $slug : $title),
         ]);
     }
@@ -28,14 +32,28 @@ class PageRequest extends FormRequest
     public function rules(): array
     {
         $page = $this->route('page');
+        $page = $page instanceof Page ? $page : null;
+        $siteId = (int) $this->input('site_id');
+        $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
+        $translationId = $page
+            ? $page->translations()->where('locale_id', $defaultLocaleId)->value('id')
+            : null;
 
         return [
+            'site_id' => ['required', 'integer', 'exists:sites,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique(Page::class, 'slug')->ignore($page),
+                (function () use ($translationId, $siteId, $defaultLocaleId) {
+                    $rule = Rule::unique(PageTranslation::class, 'slug')
+                        ->where(fn ($query) => $query
+                            ->where('locale_id', $defaultLocaleId)
+                            ->whereIn('page_id', Page::query()->select('id')->where('site_id', $siteId)));
+
+                    return $translationId ? $rule->ignore($translationId) : $rule;
+                })(),
             ],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'slots' => ['nullable', 'array'],
@@ -69,6 +87,10 @@ class PageRequest extends FormRequest
     {
         $data = $this->validated();
         $data['page_type'] = 'default';
+        $data['translation'] = [
+            'name' => $data['title'],
+            'slug' => $data['slug'],
+        ];
 
         $data['slots'] = collect($data['slots'] ?? [])
             ->map(function (array $slot, int $index) {

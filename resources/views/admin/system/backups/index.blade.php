@@ -76,7 +76,7 @@
                         </div>
                     @endif
 
-                    <div class="wb-text-sm wb-text-muted">Backup Manager V1 creates a local zip archive with a database dump, the current `storage/app/public` uploads snapshot, and a manifest. Restore tooling is intentionally not included yet.</div>
+                    <div class="wb-text-sm wb-text-muted">Each backup archive includes a database dump, the current `storage/app/public` uploads snapshot, and a manifest. Restores are explicit, create a fresh safety backup first, and are only available from the backup details screen or the artisan restore command.</div>
 
                     <form method="POST" action="{{ route('admin.system.backups.store') }}">
                         @csrf
@@ -124,10 +124,24 @@
                                         <td>{{ $backup->durationLabel() }}</td>
                                         <td>
                                             <div class="wb-cluster wb-cluster-2 wb-row-end">
-                                                <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-btn wb-btn-secondary">Details</a>
+                                                <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="Backup details" aria-label="Backup details">
+                                                    <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                                </a>
 
                                                 @if ($backup->isSuccessful() && $backup->archive_path)
-                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-btn wb-btn-primary">Download</a>
+                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-edit" title="Download backup" aria-label="Download backup">
+                                                        <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
+                                                    </a>
+                                                @endif
+
+                                                @if ($backup->isDeletable())
+                                                    <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('Delete this backup record? This action cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete backup record" aria-label="Delete backup record">
+                                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                        </button>
+                                                    </form>
                                                 @endif
                                             </div>
                                         </td>

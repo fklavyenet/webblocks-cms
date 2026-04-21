@@ -7,7 +7,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Create a new page, then add the slots that define its visible structure.',
+        'description' => 'Create the page on a site and save the English base translation first.',
     ])
 
     @include('admin.partials.flash')

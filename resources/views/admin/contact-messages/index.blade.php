@@ -9,17 +9,46 @@
 
     @include('admin.partials.flash')
 
-    @push('styles')
-        <style>
-            .wb-contact-message-source {
-                min-width: 14rem;
-            }
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            <form method="GET" action="{{ route('admin.contact-messages.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
+                <div class="wb-cluster wb-cluster-2">
+                    <div class="wb-stack wb-gap-1">
+                        <label for="contact_messages_search">Search</label>
+                        <input id="contact_messages_search" name="search" type="text" class="wb-input" value="{{ $filters['search'] ?? '' }}" placeholder="Search name, email, subject, or message">
+                    </div>
 
-            .wb-contact-message-cell {
-                line-height: 1.3;
-            }
-        </style>
-    @endpush
+                    <div class="wb-stack wb-gap-1">
+                        <label for="contact_messages_status">Status</label>
+                        <select id="contact_messages_status" name="status" class="wb-select">
+                            <option value="">All statuses</option>
+                            @foreach (\App\Models\ContactMessage::statuses() as $status)
+                                <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <label for="contact_messages_notification">Notification</label>
+                        <select id="contact_messages_notification" name="notification" class="wb-select">
+                            <option value="">All notifications</option>
+                            <option value="sent" @selected(($filters['notification'] ?? '') === 'sent')>Sent</option>
+                            <option value="pending" @selected(($filters['notification'] ?? '') === 'pending')>Pending</option>
+                            <option value="failed" @selected(($filters['notification'] ?? '') === 'failed')>Failed</option>
+                            <option value="disabled" @selected(($filters['notification'] ?? '') === 'disabled')>Disabled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
+                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
+                    @if (($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['notification'] ?? '') !== '')
+                        <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
 
     @if ($messages->isEmpty())
         <div class="wb-card">
@@ -40,7 +69,6 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Subject</th>
-                                <th>Source</th>
                                 <th>Status</th>
                                 <th>Notification</th>
                                 <th>Received</th>
@@ -62,15 +90,6 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <div class="wb-stack wb-gap-1 wb-contact-message-source">
-                                            <strong>{{ $message->sourceLabel() }}</strong>
-                                            <span class="wb-text-sm wb-text-muted"><code>{{ $message->sourcePath() }}</code></span>
-                                            @if ($message->source_url)
-                                                <a href="{{ $message->source_url }}" target="_blank" rel="noopener noreferrer" class="wb-text-sm wb-link">Open source</a>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
                                         <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span>
                                     </td>
                                     <td>
@@ -78,7 +97,7 @@
                                     </td>
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
                                     <td>
-                                        <div class="wb-cluster wb-cluster-2 wb-row-end">
+                                        <div class="wb-action-group">
                                             <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="View message detail" aria-label="View message detail">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
@@ -94,7 +113,7 @@
 
                                             <div class="wb-dropdown wb-dropdown-end">
                                                 <button class="wb-action-btn" type="button" data-wb-toggle="dropdown" data-wb-target="#contact-message-actions-{{ $message->id }}" aria-expanded="false" title="More message actions" aria-label="More message actions">
-                                                    <i class="wb-icon wb-icon-dots" aria-hidden="true"></i>
+                                                    <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
                                                 </button>
 
                                                 <div class="wb-dropdown-menu" id="contact-message-actions-{{ $message->id }}">

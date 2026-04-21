@@ -49,7 +49,7 @@ class ContactMessage extends Model
 
     public function page(): BelongsTo
     {
-        return $this->belongsTo(Page::class);
+        return $this->belongsTo(Page::class)->with('translations');
     }
 
     public function statusClass(): string

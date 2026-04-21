@@ -35,7 +35,7 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -63,7 +63,7 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
         app(InstalledVersionStore::class)->persist('0.2.0');
 
         $result = app(UpdateServerClient::class)->check();
@@ -76,7 +76,7 @@ class UpdateServerClientTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('timeout'));
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -90,7 +90,7 @@ class UpdateServerClientTest extends TestCase
             '*' => Http::response('not json', 200, ['Content-Type' => 'application/json']),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -114,10 +114,41 @@ class UpdateServerClientTest extends TestCase
             ]),
         ]);
 
-        config()->set('webblocks-updates.client.server_url', 'https://updates.example.test');
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
 
         $result = app(UpdateServerClient::class)->check();
 
         $this->assertSame('incompatible', $result->state);
+    }
+
+    #[Test]
+    public function legacy_0_1_8_install_sees_0_2_0_as_a_compatible_update_when_minimum_client_version_is_0_1_8(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'status' => 'ok',
+                'data' => [
+                    'product' => 'webblocks-cms',
+                    'channel' => 'stable',
+                    'version' => '0.2.0',
+                    'published_at' => '2026-04-21T10:00:00Z',
+                    'release_notes' => 'Multisite and multilingual upgrade path.',
+                    'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+                    'checksum_sha256' => str_repeat('b', 64),
+                    'source_reference' => 'v0.2.0',
+                    'minimum_client_version' => '0.1.8',
+                ],
+            ]),
+        ]);
+
+        config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+        app(InstalledVersionStore::class)->persist('0.1.8');
+
+        $result = app(UpdateServerClient::class)->check();
+
+        $this->assertSame('update_available', $result->state);
+        $this->assertTrue($result->updateAvailable);
+        $this->assertSame('compatible', $result->compatibility['status']);
+        $this->assertSame('0.1.8', $result->release['requirements']['supported_from_version']);
     }
 }

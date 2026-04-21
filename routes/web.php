@@ -4,20 +4,26 @@ use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Admin\BlockTypeController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LocaleController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NavigationItemController;
 use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\PageTranslationController;
+use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
+use App\Models\Locale;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return app(PublicPageController::class)->home();
-})->name('home');
+Route::get('/', [PublicPageController::class, 'home'])->name('home');
+
+Route::get('/{locale}', [PublicPageController::class, 'home'])
+    ->where('locale', Locale::routePattern())
+    ->name('localized.home');
 
 Route::middleware('auth')->group(function () {
     Route::redirect('/dashboard', '/admin')->name('dashboard');
@@ -31,7 +37,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::patch('/pages/{page}/status', [PageController::class, 'updateStatus'])->name('pages.status');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
+    Route::get('/pages/{page}/translations/{locale}/create', [PageTranslationController::class, 'create'])->name('pages.translations.create');
+    Route::post('/pages/{page}/translations/{locale}', [PageTranslationController::class, 'store'])->name('pages.translations.store');
+    Route::get('/pages/{page}/translations/{translation}/edit', [PageTranslationController::class, 'edit'])->name('pages.translations.edit');
+    Route::put('/pages/{page}/translations/{translation}', [PageTranslationController::class, 'update'])->name('pages.translations.update');
     Route::resource('pages', PageController::class)->except([]);
+    Route::resource('sites', SiteController::class)->except(['show', 'destroy']);
+    Route::resource('locales', LocaleController::class)->except(['show', 'destroy']);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
     Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');
@@ -46,8 +58,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('block-types', BlockTypeController::class)->except(['show']);
     Route::get('system/backups', [SystemBackupController::class, 'index'])->name('system.backups.index');
     Route::post('system/backups', [SystemBackupController::class, 'store'])->name('system.backups.store');
+    Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
     Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
     Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
+    Route::post('system/backups/{backup}/restore', [SystemBackupController::class, 'restore'])->name('system.backups.restore');
     Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
     Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
     Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
@@ -65,5 +79,8 @@ Route::post('/contact-messages', [ContactMessageController::class, 'store'])
     ->name('contact-messages.store');
 
 Route::get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
+Route::get('/{locale}/p/{slug}', [PublicPageController::class, 'show'])
+    ->where('locale', Locale::routePattern())
+    ->name('localized.pages.show');
 
 require __DIR__.'/auth.php';

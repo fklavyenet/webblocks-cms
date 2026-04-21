@@ -3,34 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Page;
+use App\Support\Pages\PageRouteResolver;
 use App\Support\Pages\PublicPagePresenter;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
-    public function __construct(private readonly PublicPagePresenter $presenter) {}
+    public function __construct(
+        private readonly PublicPagePresenter $presenter,
+        private readonly PageRouteResolver $routeResolver,
+    ) {}
 
-    public function home(): View
+    public function home(Request $request): View
     {
-        $homePage = Page::query()
-            ->where('status', 'published')
-            ->orderByRaw("case when slug = 'home' then 0 else 1 end")
-            ->orderBy('title')
-            ->first();
+        $homePage = $this->routeResolver->findPublishedPage($request);
 
         if (! $homePage) {
+            if ($request->route('locale')) {
+                abort(404);
+            }
+
             return view('welcome');
         }
 
         return $this->renderPage($homePage);
     }
 
-    public function show(string $slug): View
+    public function show(Request $request, string $localeOrSlug, ?string $slug = null): View
     {
-        $page = Page::query()
-            ->where('slug', $slug)
-            ->where('status', 'published')
-            ->firstOrFail();
+        $resolvedSlug = $slug ?? $localeOrSlug;
+
+        $page = $this->routeResolver->findPublishedPage($request, $resolvedSlug);
+
+        abort_unless($page, 404);
 
         return $this->renderPage($page);
     }
@@ -38,14 +44,16 @@ class PageController extends Controller
     private function renderPage(Page $page): View
     {
         $page->load([
+            'site',
+            'translations.locale',
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset'])
+                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
                 ->orderBy('sort_order'),
             'blocks.children' => fn ($query) => $query
                 ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset'])
+                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
                 ->orderBy('sort_order'),
         ]);
 

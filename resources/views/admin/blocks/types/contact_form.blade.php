@@ -11,6 +11,9 @@
         <div>
             <div class="wb-alert-title">Reusable Contact Block</div>
             <div>Messages are always saved first. Email notification runs after persistence so inbox records survive delivery failures.</div>
+            @if (isset($activeLocale) && $block->supportsTranslations())
+                <div>Heading, intro text, submit label, and success message are translated per locale. Delivery settings stay shared across locales.</div>
+            @endif
         </div>
     </div>
 
@@ -39,8 +42,14 @@
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="recipient_email">Recipient Email Override</label>
-            <input id="recipient_email" name="recipient_email" class="wb-input" type="email" value="{{ $recipientEmail }}">
-            <span class="wb-text-sm wb-text-muted">If empty, the form falls back to <code>CONTACT_RECIPIENT_EMAIL</code>.</span>
+            <input id="recipient_email" name="recipient_email" class="wb-input" type="email" value="{{ $recipientEmail }}" @disabled(isset($activeLocale) && ! $isDefaultLocale)>
+            <span class="wb-text-sm wb-text-muted">
+                @if (isset($activeLocale) && ! $isDefaultLocale)
+                    Delivery settings stay shared. Switch to the default locale to update the recipient.
+                @else
+                    If empty, the form falls back to <code>CONTACT_RECIPIENT_EMAIL</code>.
+                @endif
+            </span>
         </div>
 
         <div class="wb-stack wb-gap-2">
@@ -48,17 +57,11 @@
 
             <label class="wb-checkbox">
                 <input type="hidden" name="send_email_notification" value="0">
-                <input type="checkbox" name="send_email_notification" value="1" @checked($sendEmailNotification)>
+                <input type="checkbox" name="send_email_notification" value="1" @checked($sendEmailNotification) @disabled(isset($activeLocale) && ! $isDefaultLocale)>
                 <span>Send email notification</span>
             </label>
 
-            <label class="wb-checkbox">
-                <input type="hidden" name="store_submissions" value="0">
-                <input type="checkbox" name="store_submissions" value="1" @checked($storeSubmissions)>
-                <span>Store submissions</span>
-            </label>
-
-            <span class="wb-text-sm wb-text-muted">V1 always stores the message first so Contact Messages remains the primary source of truth.</span>
+            <span class="wb-text-sm wb-text-muted">Contact messages are always stored first. Notification settings stay shared across locales.</span>
         </div>
     </div>
 </div>

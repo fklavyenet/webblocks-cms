@@ -12,7 +12,7 @@ class UpdatePackageDownloader
     {
         try {
             $response = Http::timeout((int) config('webblocks-updates.installer.download_timeout_seconds', 120))
-                ->connectTimeout((int) config('webblocks-updates.client.connect_timeout_seconds', 3))
+                ->connectTimeout((int) config('webblocks-updates.connect_timeout_seconds', 3))
                 ->withHeaders([
                     'User-Agent' => 'WebBlocks-CMS-Updater/'.config('app.version', 'unknown'),
                 ])

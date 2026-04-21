@@ -57,11 +57,11 @@ class SystemUpdateInspector
             'auto_update' => $autoUpdate,
             'environment' => [
                 'server_url' => $version['server_url'] ?? '',
-                'product' => $version['product'] ?? config('webblocks-updates.client.product', 'webblocks-cms'),
-                'channel' => $version['channel'] ?? config('webblocks-updates.client.channel', 'stable'),
+                'product' => $version['product'] ?? config('webblocks-updates.product', 'webblocks-cms'),
+                'channel' => $version['channel'] ?? config('webblocks-updates.channel', 'stable'),
                 'php_version' => PHP_VERSION,
                 'laravel_version' => Application::VERSION,
-                'site_url' => (string) config('webblocks-updates.client.site_url', config('app.url')),
+                'site_url' => (string) config('webblocks-updates.site_url', config('app.url')),
             ],
         ];
     }

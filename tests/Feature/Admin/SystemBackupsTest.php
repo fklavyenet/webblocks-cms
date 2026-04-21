@@ -128,6 +128,36 @@ class SystemBackupsTest extends TestCase
     }
 
     #[Test]
+    public function backup_detail_page_shows_visible_restore_danger_zone_for_restorable_backups(): void
+    {
+        $user = User::factory()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/demo.zip',
+            'archive_filename' => 'demo.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
+
+        $response->assertOk();
+        $response->assertSee('Danger Zone');
+        $response->assertSee('Restore backup');
+        $response->assertSee('Restoring a backup will overwrite your current database and files.');
+        $response->assertSee('I understand this will overwrite current data.');
+        $response->assertSee(route('admin.system.backups.restore', $backup), false);
+        $response->assertSee('data-wb-restore-submit', false);
+        $response->assertSee('disabled', false);
+        $response->assertSee('required', false);
+    }
+
+    #[Test]
     public function download_route_requires_authentication(): void
     {
         $backup = SystemBackup::query()->create([
@@ -146,6 +176,145 @@ class SystemBackupsTest extends TestCase
         $response = $this->get(route('admin.system.backups.download', $backup));
 
         $response->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function backups_list_shows_delete_action_for_failed_and_running_backups_only(): void
+    {
+        $user = User::factory()->create();
+        $failedBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_FAILED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/failed.zip',
+            'archive_filename' => 'failed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Failed.',
+            'error_message' => 'Failed.',
+        ]);
+        $runningBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_RUNNING,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/running.zip',
+            'archive_filename' => 'running.zip',
+            'started_at' => now(),
+            'summary' => 'Running.',
+        ]);
+        $completedBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/completed.zip',
+            'archive_filename' => 'completed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.system.backups.destroy', $failedBackup), false);
+        $response->assertSee(route('admin.system.backups.destroy', $runningBackup), false);
+        $response->assertSee('action="'.route('admin.system.backups.destroy', $failedBackup).'"', false);
+        $response->assertSee('action="'.route('admin.system.backups.destroy', $runningBackup).'"', false);
+        $response->assertDontSee('action="'.route('admin.system.backups.destroy', $completedBackup).'"', false);
+        $response->assertSee('Delete this backup record? This action cannot be undone.');
+    }
+
+    #[Test]
+    public function admin_can_delete_failed_backup_record_and_archive(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_FAILED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/failed.zip',
+            'archive_filename' => 'failed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Failed.',
+            'error_message' => 'Failed.',
+        ]);
+
+        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup record deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+    }
+
+    #[Test]
+    public function admin_can_delete_running_backup_record_and_archive(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_RUNNING,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/running.zip',
+            'archive_filename' => 'running.zip',
+            'started_at' => now(),
+            'summary' => 'Running.',
+        ]);
+
+        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup record deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+    }
+
+    #[Test]
+    public function deleting_completed_backup_is_blocked(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/completed.zip',
+            'archive_filename' => 'completed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHasErrors(['system_backup' => 'Only failed or running backups can be deleted.']);
+        $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+        $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
     }
 
     protected function tearDown(): void

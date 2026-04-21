@@ -1,4 +1,10 @@
 <div class="wb-stack wb-gap-4">
+    @if (isset($activeLocale) && $block->supportsTranslations())
+        <div class="wb-alert wb-alert-info">
+            <div>Caption and alt text are translated per locale. The selected asset and link URL stay shared across locales.</div>
+        </div>
+    @endif
+
     <div class="wb-stack wb-gap-1">
         <label>Media Asset</label>
         @include('admin.media.asset-picker-panel', [

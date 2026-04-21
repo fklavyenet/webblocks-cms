@@ -17,12 +17,12 @@ class UpdateServerClient
 
     public function check(): UpdateCheckResult
     {
-        $serverUrl = rtrim((string) config('webblocks-updates.client.server_url', ''), '/');
-        $product = (string) config('webblocks-updates.client.product', 'webblocks-cms');
-        $channel = (string) config('webblocks-updates.client.channel', 'stable');
+        $serverUrl = rtrim((string) config('webblocks-updates.server_url', ''), '/');
+        $product = (string) config('webblocks-updates.product', 'webblocks-cms');
+        $channel = (string) config('webblocks-updates.channel', 'stable');
         $installedVersion = $this->installedVersionStore->currentVersion();
 
-        if (! config('webblocks-updates.enabled', true) || ! config('webblocks-updates.client.enabled', true)) {
+        if (! config('webblocks-updates.enabled', true)) {
             return $this->result(
                 state: 'client_disabled',
                 label: 'Update checks disabled',
@@ -66,18 +66,18 @@ class UpdateServerClient
 
         $request = Http::acceptJson()
             ->asJson()
-            ->timeout((int) config('webblocks-updates.client.timeout_seconds', 5))
-            ->connectTimeout((int) config('webblocks-updates.client.connect_timeout_seconds', 3))
+            ->timeout((int) config('webblocks-updates.timeout_seconds', 5))
+            ->connectTimeout((int) config('webblocks-updates.connect_timeout_seconds', 3))
             ->withHeaders(array_filter([
                 'User-Agent' => 'WebBlocks-CMS/'.$installedVersion,
-                'X-WebBlocks-Site-Url' => (string) config('webblocks-updates.client.site_url', config('app.url')),
-                'X-WebBlocks-Instance-Id' => config('webblocks-updates.client.instance_id'),
+                'X-WebBlocks-Site-Url' => (string) config('webblocks-updates.site_url', config('app.url')),
+                'X-WebBlocks-Instance-Id' => config('webblocks-updates.instance_id'),
             ], fn ($value): bool => is_string($value) && $value !== ''));
 
-        $retryTimes = (int) config('webblocks-updates.client.retry_times', 0);
+        $retryTimes = (int) config('webblocks-updates.retry_times', 0);
 
         if ($retryTimes > 0) {
-            $request = $request->retry($retryTimes, (int) config('webblocks-updates.client.retry_sleep_milliseconds', 150));
+            $request = $request->retry($retryTimes, (int) config('webblocks-updates.retry_sleep_milliseconds', 150));
         }
 
         try {

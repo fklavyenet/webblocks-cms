@@ -61,13 +61,228 @@ class MediaManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Upload Asset');
         $response->assertSee('New Folder');
-        $response->assertSee('All Assets');
+        $response->assertSee('All folders');
         $response->assertSee('Example image');
         $response->assertDontSee('Accepted: images, videos, PDF, Office files, text, CSV, ZIP.');
         $response->assertDontSee('Organize shared assets into compact folders.');
         $response->assertDontSee('MIME Type');
         $response->assertDontSee('Size');
         $response->assertSee(route('admin.media.show', $asset), false);
+        $response->assertSee('Copy asset URL');
+        $response->assertSee('List');
+        $response->assertSee('Grid');
+    }
+
+    #[Test]
+    public function media_index_supports_grid_view_filters_and_usage_drawer(): void
+    {
+        $user = User::factory()->create();
+        $folder = AssetFolder::create(['name' => 'Brand']);
+        $slotType = $this->slotType();
+        $page = Page::create([
+            'title' => 'Media Library Page',
+            'slug' => 'media-library-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        $usedAsset = Asset::create([
+            'folder_id' => $folder->id,
+            'disk' => 'public',
+            'path' => 'media/images/used-grid.jpg',
+            'filename' => 'used-grid.jpg',
+            'original_name' => 'used-grid.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 2048,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Used grid asset',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $unusedAsset = Asset::create([
+            'folder_id' => $folder->id,
+            'disk' => 'public',
+            'path' => 'media/documents/unused-guide.pdf',
+            'filename' => 'unused-guide.pdf',
+            'original_name' => 'unused-guide.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 4096,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Unused guide',
+        ]);
+
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Hero visual',
+            'asset_id' => $usedAsset->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', [
+            'view' => 'grid',
+            'kind' => 'image',
+            'usage' => 'used',
+            'folder_id' => $folder->id,
+            'usage_asset' => $usedAsset->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Used grid asset');
+        $response->assertDontSee('Unused guide');
+        $response->assertSee('Used in 1');
+        $response->assertSee('Asset usage');
+        $response->assertSee('Media Library Page');
+        $response->assertSee('Hero visual');
+        $response->assertSee('wb-media-grid', false);
+    }
+
+    #[Test]
+    public function media_index_supports_unused_filter_and_preview_modal(): void
+    {
+        $user = User::factory()->create();
+
+        $previewable = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/preview-modal.jpg',
+            'filename' => 'preview-modal.jpg',
+            'original_name' => 'preview-modal.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Preview modal asset',
+        ]);
+
+        $other = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/other-used.jpg',
+            'filename' => 'other-used.jpg',
+            'original_name' => 'other-used.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Other used asset',
+        ]);
+
+        $slotType = $this->slotType();
+        $page = Page::create([
+            'title' => 'Preview Test Page',
+            'slug' => 'preview-test-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Used image',
+            'asset_id' => $other->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', [
+            'usage' => 'unused',
+            'preview' => $previewable->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Preview modal asset');
+        $response->assertDontSee('Other used asset');
+        $response->assertSee('Unused');
+        $response->assertSee('media-preview-modal');
+    }
+
+    #[Test]
+    public function asset_detail_can_link_back_to_preview_modal(): void
+    {
+        $user = User::factory()->create();
+
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/back-to-preview.jpg',
+            'filename' => 'back-to-preview.jpg',
+            'original_name' => 'back-to-preview.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Back to preview asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Back to Preview');
+        $response->assertSee(route('admin.media.index', ['preview' => $asset->id]), false);
+    }
+
+    #[Test]
+    public function asset_edit_preserves_back_to_preview_context(): void
+    {
+        $user = User::factory()->create();
+
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/edit-context.jpg',
+            'filename' => 'edit-context.jpg',
+            'original_name' => 'edit-context.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Edit context asset',
+        ]);
+
+        $editResponse = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'back_to_preview' => 1]));
+
+        $editResponse->assertOk();
+        $editResponse->assertSee(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]), false);
+        $editResponse->assertSee('name="back_to_preview" value="1"', false);
+
+        $updateResponse = $this->actingAs($user)->put(route('admin.media.update', $asset), [
+            'title' => 'Updated title',
+            'alt_text' => 'Alt text',
+            'caption' => 'Caption',
+            'description' => 'Description',
+            'folder_id' => null,
+            'back_to_preview' => 1,
+        ]);
+
+        $updateResponse->assertRedirect(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
     }
 
     #[Test]

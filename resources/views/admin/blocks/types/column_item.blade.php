@@ -1,4 +1,10 @@
 <div class="wb-stack wb-gap-4">
+    @if (isset($activeLocale) && $block->supportsTranslations())
+        <div class="wb-alert wb-alert-info">
+            <div>Column title and text are translated per locale. Optional link stays shared across locales.</div>
+        </div>
+    @endif
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="title">Column Title</label>

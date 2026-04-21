@@ -17,6 +17,8 @@ class SystemBackupManager
 
     public const RECENT_BACKUP_HOURS = 24;
 
+    public const TYPE_RESTORE_SAFETY = 'restore_safety';
+
     public function __construct(
         private readonly DatabaseDumpWriter $databaseDumpWriter,
         private readonly BackupManifestBuilder $backupManifestBuilder,
@@ -25,9 +27,26 @@ class SystemBackupManager
 
     public function createManualBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
     {
+        return $this->createBackup(SystemBackup::TYPE_MANUAL, $triggeredByUserId, $label);
+    }
+
+    public function createRestoreSafetyBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+    {
+        return $this->createBackup(self::TYPE_RESTORE_SAFETY, $triggeredByUserId, $label);
+    }
+
+    public function assertValidArchiveRelativePath(string $path): void
+    {
+        if ($this->hasInvalidRelativePath($path)) {
+            throw new RuntimeException('Backup archive path is invalid.');
+        }
+    }
+
+    private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+    {
         $startedAt = now();
         $backup = SystemBackup::query()->create([
-            'type' => SystemBackup::TYPE_MANUAL,
+            'type' => $type,
             'status' => SystemBackup::STATUS_RUNNING,
             'label' => $label,
             'includes_database' => true,
@@ -160,6 +179,26 @@ class SystemBackupManager
         return response()->download($resolvedPath, $backup->archive_filename, [
             'Content-Type' => 'application/zip',
         ]);
+    }
+
+    public function deleteBackupRecord(SystemBackup $backup): void
+    {
+        if (! $backup->isDeletable()) {
+            throw new RuntimeException('Only failed or running backups can be deleted.');
+        }
+
+        $archivePath = $backup->archiveRelativePath();
+
+        if ($archivePath !== null) {
+            $this->assertValidArchiveRelativePath($archivePath);
+            $disk = Storage::disk($backup->archive_disk ?: self::ARCHIVE_DISK);
+
+            if ($disk->exists($archivePath)) {
+                $disk->delete($archivePath);
+            }
+        }
+
+        $backup->delete();
     }
 
     private function hasBackupTable(): bool

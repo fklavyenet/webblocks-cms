@@ -12,6 +12,8 @@ class SystemBackup extends Model
 
     public const TYPE_MANUAL = 'manual';
 
+    public const TYPE_RESTORE_SAFETY = 'restore_safety';
+
     public const STATUS_RUNNING = 'running';
 
     public const STATUS_COMPLETED = 'completed';
@@ -52,6 +54,26 @@ class SystemBackup extends Model
     public function isSuccessful(): bool
     {
         return $this->status === self::STATUS_COMPLETED;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    public function isRunning(): bool
+    {
+        return $this->status === self::STATUS_RUNNING;
+    }
+
+    public function isDeletable(): bool
+    {
+        return $this->isFailed() || $this->isRunning();
+    }
+
+    public function archiveRelativePath(): ?string
+    {
+        return $this->archive_path;
     }
 
     public function isRecentSuccessful(int $hours = 24): bool

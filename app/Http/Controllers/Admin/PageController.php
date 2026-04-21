@@ -9,25 +9,77 @@ use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
-    public function index(): View
+    public function __construct(
+        private readonly BlockTranslationResolver $blockTranslationResolver,
+    ) {}
+
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->string('search'));
+        $status = $request->string('status')->toString();
+        $siteId = $request->integer('site_id');
+        $sort = $request->string('sort')->toString();
+        $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
+        $allowedStatuses = ['draft', 'published'];
+        $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
+
+        if (! in_array($status, $allowedStatuses, true)) {
+            $status = '';
+        }
+
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'created_at';
+        }
+
+        $siteLocaleCounts = Site::query()
+            ->withCount(['enabledLocales as locales_count'])
+            ->pluck('locales_count', 'id');
+
         return view('admin.pages.index', [
             'pages' => Page::query()
+                ->with(['site', 'translations.locale'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
-                ->latest()
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($inner) use ($search) {
+                        $inner->where('title', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%")
+                            ->orWhere('page_type', 'like', "%{$search}%")
+                            ->orWhereHas('translations', fn ($translations) => $translations
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('slug', 'like', "%{$search}%"));
+                    });
+                })
+                ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->when($siteId > 0, fn ($query) => $query->where('site_id', $siteId))
+                ->orderBy($sort, $direction)
+                ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
                 ->withQueryString(),
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'site_id' => $siteId,
+                'sort' => $sort,
+                'direction' => $direction,
+            ],
+            'siteLocaleCounts' => $siteLocaleCounts,
         ]);
     }
 
@@ -38,8 +90,15 @@ class PageController extends Controller
 
     public function create(): View
     {
+        $sites = Site::query()
+            ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
+            ->orderByDesc('is_primary')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.pages.create', [
             'page' => new Page,
+            'sites' => $sites,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
         ]);
     }
@@ -50,9 +109,11 @@ class PageController extends Controller
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
             $blocks = $data['blocks'] ?? [];
-            unset($data['slots'], $data['blocks']);
+            $translation = $data['translation'];
+            unset($data['slots'], $data['blocks'], $data['translation']);
 
             $page = Page::create($data);
+            $this->syncDefaultTranslation($page, $translation);
             $this->syncSlots($page, $slots);
 
             if ($blocks === []) {
@@ -64,18 +125,27 @@ class PageController extends Controller
             return $page;
         });
 
-        return redirect()
+        $previewUrl = $page->publicUrl();
+
+        $redirect = redirect()
             ->route('admin.pages.edit', $page)
-            ->with('status', 'Page created successfully.')
-            ->with('status_action', [
+            ->with('status', 'Page created successfully.');
+
+        if ($previewUrl) {
+            $redirect->with('status_action', [
                 'label' => 'View page',
-                'url' => $page->publicUrl(),
+                'url' => $previewUrl,
             ]);
+        }
+
+        return $redirect;
     }
 
     public function edit(Page $page): View
     {
         $page->loadMissing([
+            'site',
+            'translations.locale',
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->with('children')
@@ -91,8 +161,14 @@ class PageController extends Controller
 
         return view('admin.pages.edit', [
             'page' => $page,
+            'sites' => Site::query()
+                ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
+                ->primaryFirst()
+                ->orderBy('name')
+                ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
+            'translationStatuses' => $page->translationStatusForSite(),
         ]);
     }
 
@@ -101,30 +177,54 @@ class PageController extends Controller
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
-            unset($data['slots'], $data['blocks']);
+            $translation = $data['translation'];
+            unset($data['slots'], $data['blocks'], $data['translation']);
 
             $page->update($data);
+            $this->syncDefaultTranslation($page, $translation);
             $this->syncSlots($page, $slots);
         });
 
-        return redirect()
+        $previewUrl = $page->publicUrl();
+
+        $redirect = redirect()
             ->route('admin.pages.edit', $page)
-            ->with('status', 'Page updated successfully.')
-            ->with('status_action', [
+            ->with('status', 'Page updated successfully.');
+
+        if ($previewUrl) {
+            $redirect->with('status_action', [
                 'label' => 'View page',
-                'url' => $page->publicUrl(),
+                'url' => $previewUrl,
             ]);
+        }
+
+        return $redirect;
     }
 
     public function editSlotBlocks(Page $page, PageSlot $slot): View
     {
         abort_unless($slot->page_id === $page->id, 404);
 
-        $page->loadMissing('slots.slotType');
+        $page->loadMissing(['slots.slotType', 'site.locales', 'translations.locale']);
         $slot->loadMissing('slotType');
 
+        $activeLocale = $this->slotEditorLocale($page);
+
         $blocks = Block::query()
-            ->with(['blockType', 'slotType', 'blockAssets.asset', 'children.blockType'])
+            ->with([
+                'blockType',
+                'slotType',
+                'blockAssets.asset',
+                'textTranslations',
+                'buttonTranslations',
+                'imageTranslations',
+                'contactFormTranslations',
+                'children.blockType',
+                'children.textTranslations',
+                'children.buttonTranslations',
+                'children.imageTranslations',
+                'children.contactFormTranslations',
+            ])
             ->where('page_id', $page->id)
             ->where('slot_type_id', $slot->slot_type_id)
             ->orderBy('sort_order')
@@ -132,7 +232,9 @@ class PageController extends Controller
 
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes);
-        $rootBlocks = $blocks->whereNull('parent_id')->values();
+        $rootBlocks = $this->blockTranslationResolver
+            ->resolveCollection($blocks->whereNull('parent_id')->values(), $activeLocale)
+            ->values();
         $expandedBlockIds = $this->slotExpandedBlockIds($rootBlocks, $modalState['block']);
 
         return view('admin.pages.slot-blocks', [
@@ -140,6 +242,8 @@ class PageController extends Controller
             'slot' => $slot,
             'blocks' => $rootBlocks,
             'blockTypes' => $blockTypes,
+            'activeLocale' => $activeLocale,
+            'availableLocales' => $page->translationStatusForSite(),
             'assetPickerAssets' => $this->assetPickerAssets(),
             'assetPickerFolders' => $this->assetPickerFolders(),
             'pickerSearch' => trim((string) request('block_type_search')),
@@ -152,7 +256,7 @@ class PageController extends Controller
             'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
             'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
             'expandedBlockIds' => $expandedBlockIds,
-            'slotParentBlocks' => $this->slotParentBlocks($blocks, $modalState['block']?->id),
+            'slotParentBlocks' => $this->slotParentBlocks($this->blockTranslationResolver->resolveCollection($blocks, $activeLocale), $modalState['block']?->id),
         ]);
     }
 
@@ -226,6 +330,33 @@ class PageController extends Controller
             ->delete();
     }
 
+    private function syncDefaultTranslation(Page $page, array $translation): void
+    {
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+
+        if (! $defaultLocaleId) {
+            return;
+        }
+
+        $page->translations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'name' => $translation['name'],
+                'slug' => $translation['slug'],
+                'path' => PageTranslation::pathFromSlug($translation['slug']),
+            ],
+        );
+
+        $page->forceFill([
+            'title' => $translation['name'],
+            'slug' => $translation['slug'],
+        ])->saveQuietly();
+
+        $page->unsetRelation('translations');
+        $page->load('translations');
+        $page->setRelation('currentTranslation', $page->defaultTranslation());
+    }
+
     private function syncBlockAssets(Block $block, array $blockAssets): void
     {
         $block->blockAssets()->delete();
@@ -248,6 +379,7 @@ class PageController extends Controller
 
     private function slotBlockModalState(Page $page, PageSlot $slot, $blocks, $blockTypes): array
     {
+        $activeLocale = $this->slotEditorLocale($page);
         $editingBlockId = old('_slot_block_mode') === 'edit'
             ? (int) old('_slot_block_id')
             : request()->integer('edit');
@@ -257,6 +389,7 @@ class PageController extends Controller
             : null;
 
         if ($editingBlock) {
+            $editingBlock = $this->blockTranslationResolver->resolve($editingBlock, $activeLocale);
             $selectedBlockType = $blockTypes->firstWhere('id', (int) old('block_type_id', $editingBlock->block_type_id));
 
             if ($selectedBlockType) {
@@ -302,6 +435,8 @@ class PageController extends Controller
         $block->source_type = $selectedBlockType->source_type ?: 'static';
         $block->setRelation('blockType', $selectedBlockType);
         $block->setRelation('slotType', $slot->slotType);
+        $block->setAttribute('translation_state', $selectedBlockType->slug === 'navigation-auto' || $selectedBlockType->slug === 'menu' ? 'shared' : 'missing');
+        $block->setAttribute('resolved_locale_code', $activeLocale->code);
 
         return [
             'mode' => 'create',
@@ -386,6 +521,25 @@ class PageController extends Controller
             ->where('page_id', $pageId)
             ->where('slot_type_id', $slotTypeId)
             ->value('id');
+    }
+
+    private function slotEditorLocale(Page $page): Locale
+    {
+        $requestedCode = Locale::normalizeCode(request('locale'));
+        $siteLocales = $page->availableSiteLocales();
+
+        if ($requestedCode !== null) {
+            $requestedLocale = $siteLocales->firstWhere('code', $requestedCode);
+
+            if ($requestedLocale) {
+                return $requestedLocale;
+            }
+
+            abort(404);
+        }
+
+        return $siteLocales->firstWhere('is_default', true)
+            ?? Locale::query()->where('is_default', true)->firstOrFail();
     }
 
     private function syncSlots(Page $page, array $submittedSlots): void

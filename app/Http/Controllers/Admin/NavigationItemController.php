@@ -29,7 +29,7 @@ class NavigationItemController extends Controller
             'activeMenuKey' => $menuKey,
             'menuOptions' => NavigationItem::menuOptions(),
             'items' => $this->tree->buildMenuTree($menuKey),
-            'pages' => Page::query()->orderBy('title')->get(),
+            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
             'newItem' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'newGroup' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'editableItems' => NavigationItem::query()->forMenu($menuKey)->with('page')->ordered()->get(),
@@ -42,7 +42,7 @@ class NavigationItemController extends Controller
 
         return view('admin.navigation.create', [
             'item' => new NavigationItem(['menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'pages' => Page::query()->orderBy('title')->get(),
+            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
             'parents' => $this->tree->parentOptions($menuKey),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
@@ -62,7 +62,7 @@ class NavigationItemController extends Controller
     {
         return view('admin.navigation.edit', [
             'item' => $navigation,
-            'pages' => Page::query()->orderBy('title')->get(),
+            'pages' => Page::query()->with('translations')->orderBy('title')->get(),
             'parents' => $this->tree->parentOptions($navigation->menu_key, $navigation->id),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
@@ -138,7 +138,7 @@ class NavigationItemController extends Controller
             $data['url'] = null;
 
             if (! $data['title'] && ! empty($data['page_id'])) {
-                $data['title'] = Page::query()->find($data['page_id'])?->title;
+                $data['title'] = Page::query()->with('translations')->find($data['page_id'])?->name;
             }
         }
 

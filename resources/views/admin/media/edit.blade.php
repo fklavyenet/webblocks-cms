@@ -1,5 +1,9 @@
 @extends('layouts.admin', ['title' => 'Edit Asset', 'heading' => 'Edit Asset'])
 
+@php
+    $showPreviewBackLink = request()->boolean('back_to_preview');
+@endphp
+
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Edit Asset',
@@ -13,6 +17,9 @@
             <form method="POST" action="{{ route('admin.media.update', $asset) }}" class="wb-stack wb-gap-4">
                 @csrf
                 @method('PUT')
+                @if ($showPreviewBackLink)
+                    <input type="hidden" name="back_to_preview" value="1">
+                @endif
 
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-1">
@@ -56,7 +63,7 @@
                 </div>
 
                 <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                    <a href="{{ route('admin.media.show', $asset) }}" class="wb-btn wb-btn-secondary">Back</a>
+                    <a href="{{ route('admin.media.show', array_filter(['asset' => $asset, 'back_to_preview' => $showPreviewBackLink ? 1 : null])) }}" class="wb-btn wb-btn-secondary">Back</a>
                     <button type="submit" class="wb-btn wb-btn-primary">Save Asset</button>
                 </div>
             </form>

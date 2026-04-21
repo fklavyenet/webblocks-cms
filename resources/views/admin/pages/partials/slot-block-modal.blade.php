@@ -13,7 +13,7 @@
         ? 'Configure the new block, then save it back into the list.'
         : 'Update this block without leaving the slot management screen.';
     $expandedBlockQuery = trim((string) request('expanded'));
-    $closeUrl = route('admin.pages.slots.blocks', [$page, $slot, 'picker' => $isCreateMode ? 1 : null, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]);
+    $closeUrl = route('admin.pages.slots.blocks', [$page, $slot, 'picker' => $isCreateMode ? 1 : null, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
     $activeTab = old('_slot_block_tab', 'block-fields');
 @endphp
 
@@ -43,6 +43,9 @@
 
                         <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
                         <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
+                        @unless ($activeLocale->is_default)
+                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                        @endunless
 
                         @include('admin.blocks._form', [
                             'block' => $slotModalBlock,
@@ -62,6 +65,7 @@
                             'cancelUrl' => $closeUrl,
                             'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Changes',
                             'activeTab' => $activeTab,
+                            'activeLocale' => $activeLocale,
                         ])
 
                         <div class="wb-modal-footer">
