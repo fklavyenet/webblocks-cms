@@ -156,6 +156,116 @@ First-pass rule:
 - Existing installs are backfilled so legacy pages stay live under the primary site and default English locale.
 - Public routing keeps default English prefixless and uses a locale prefix for non-default locales such as `/tr/p/about`.
 
+## Block Content Translations
+
+- Phase 3 keeps page and block structure canonical while localizing block content per locale.
+- The canonical `blocks` table still owns shared structure and configuration such as parent/child placement, slot assignment, sort order, publish status, variants, URLs, asset references, and system settings.
+- Locale-specific block content now lives in explicit relational tables instead of JSON blobs:
+  - `block_text_translations`
+  - `block_button_translations`
+  - `block_image_translations`
+  - `block_contact_form_translations`
+- Supported translatable block families currently cover the starter/editorial path:
+  - text family: `heading`, `text`, `rich-text`, `html`, `section`, `columns`, `column_item`, `callout`, `quote`, `faq`, `tabs`
+  - button family: `button`
+  - image family: `image`
+  - contact form family: `contact_form`
+- Shared/system blocks such as `navigation-auto`, `menu`, and `page-title` remain canonical for now.
+
+### Field Ownership
+
+- Text family:
+  - translated: `title`, `subtitle`, `content`
+  - shared: `variant`, `url`, `settings`, structural fields
+- Button family:
+  - translated: `title`
+  - shared: `url`, `subtitle` target, `variant`
+- Image family:
+  - translated: caption and alt text
+  - shared: `asset_id`, `url`, `variant`
+- Contact form family:
+  - translated: heading/title, intro text, submit label, success message
+  - shared: recipient email override and delivery/storage settings
+
+### Fallback Behavior
+
+- Public rendering resolves block content through a centralized translation resolver.
+- Requested locale content is used when a translation row exists.
+- If a row is missing, rendering falls back explicitly to the default locale `en`.
+- Admin slot editing surfaces translation state per block as `Translated`, `Fallback`, `Missing`, or `Shared`.
+- Default locale admin edits update both canonical block fields and the default translation row.
+- Non-default locale edits only update translated fields for supported block families and leave shared block config untouched.
+
+### Extending A New Block Type
+
+- Decide whether the new block's editable fields are translated or shared.
+- Add the block slug to the correct family in `App\Support\Blocks\BlockTranslationRegistry`.
+- Add or update the translation model/table if the family needs new translated columns.
+- Ensure admin forms clearly separate translated copy from shared config.
+- Cover the behavior with one admin locale-edit test and one public rendering/fallback test.
+
+## Multisite Domain Resolution
+
+- Public site resolution is now host-aware instead of relying on the primary site by default.
+- Each `sites` row can carry one canonical `domain` value.
+- Stored domains are normalized to host-only lowercase values:
+  - protocol is stripped
+  - path, query, and fragment input is rejected
+  - port suffixes are removed for matching
+- Public request flow is now:
+  - host resolves the active site
+  - locale prefix is validated against that site's enabled locales
+  - page translation lookup is scoped by `site_id + locale_id + slug/path`
+  - page rendering and generated public URLs continue in that same resolved site context
+
+### Unknown Host Behavior
+
+- Unknown host behavior is explicit and config-driven.
+- `config('cms.multisite.unknown_host_fallback')` controls whether unmapped hosts fall back to the primary site.
+- Default behavior:
+  - local/testing: fallback enabled
+  - production: fallback disabled
+- When fallback is disabled, unmapped public hosts return `404` instead of silently leaking primary-site content.
+
+### Site-Aware Locale Rules
+
+- A locale prefix only works when that locale is enabled for the resolved site.
+- Default locale remains prefixless.
+- Non-default locale URLs stay prefixed.
+- If a locale is disabled for the resolved site, the request returns `404` rather than downgrading silently to English.
+- If a locale-specific page translation is missing, page lookup stays scoped to the resolved site and uses the existing page-translation fallback behavior only within valid site/locale bounds.
+
+### URL Generation
+
+- `Page::publicPath()` remains path-only and locale-aware.
+- `Page::publicUrl()` now uses the page's site domain when one is configured.
+- Admin preview/open links automatically use the correct site domain when available.
+- If no site domain is configured, URL generation falls back to the normal application base URL.
+
+## Admin Multisite Boundaries
+
+- Page management stays site-aware through explicit `site_id` assignment.
+- Pages index includes site context and continues to support site filtering.
+- Page edit and slot/block flows show clearer site/domain context so editors know which site they are working in.
+- Page translation creation is limited to locales enabled for the page's assigned site.
+- Site editing keeps the system default locale enabled automatically so a site cannot become unroutable.
+
+## Local Multisite Testing
+
+- The starter seed now creates a second site to prove host-based isolation.
+- Demo host setup used by the seeded content:
+  - primary site: `primary.ddev.site`
+  - campaign site: `campaign.ddev.site`
+- In DDEV or another local proxy, map those hosts to the same project and test with host-based requests.
+- If your local environment does not support multiple mapped hosts yet, unknown-host fallback remains enabled in local/testing by default so the primary site still works.
+- Useful manual checks:
+  - primary site English home
+  - primary site Turkish page
+  - campaign site English home
+  - overlapping `/p/about` on primary vs campaign host
+  - `/tr/...` on campaign host returning `404`
+  - unknown host fallback in local, `404` when config disables fallback
+
 ## Application Identity
 
 Project metadata is normalized to the CMS brand:
