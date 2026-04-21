@@ -1,6 +1,7 @@
 @php
     $drawerId = $drawerId ?? 'pageDetailsDrawer';
     $drawerTitleId = $drawerId.'Title';
+    $defaultPublicUrl = $page->publicUrl();
     $publishedAt = data_get($page, 'published_at');
     $slotCount = $page->slots_count ?? ($page->relationLoaded('slots') ? $page->slots->count() : $page->slots()->count());
     $blockCount = $page->blocks_count ?? ($page->relationLoaded('blocks') ? $page->blocks->count() : $page->blocks()->count());
@@ -52,7 +53,7 @@
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Default URL</span>
-                        <span class="wb-list-item-sub">{{ $page->publicUrl() }}</span>
+                        <span class="wb-list-item-sub">{{ $defaultPublicUrl ?? 'Missing' }}</span>
                     </div>
                 </div>
 
@@ -115,8 +116,8 @@
                 </div>
             </div>
 
-            @if ($page->status === 'published')
-                <a href="{{ $page->publicUrl() }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary wb-w-full">Open Public Page</a>
+            @if ($page->status === 'published' && $defaultPublicUrl)
+                <a href="{{ $defaultPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary wb-w-full">Open Public Page</a>
             @endif
         </div>
     </div>

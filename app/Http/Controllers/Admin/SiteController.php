@@ -8,7 +8,6 @@ use App\Models\Locale;
 use App\Models\Site;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SiteController extends Controller
@@ -19,7 +18,7 @@ class SiteController extends Controller
             'sites' => Site::query()
                 ->with(['locales' => fn ($query) => $query->orderBy('name')])
                 ->withCount('pages')
-                ->orderByDesc('is_primary')
+                ->primaryFirst()
                 ->orderBy('name')
                 ->paginate(15),
         ]);
@@ -43,12 +42,9 @@ class SiteController extends Controller
             $localeIds = $data['locale_ids'];
             unset($data['locale_ids']);
 
-            $site = Site::query()->create($data + [
-                'handle' => Str::slug($data['handle']),
-                'domain' => $data['domain'] ?: null,
-            ]);
+            $site = Site::query()->create($data);
 
-            $this->syncPrimarySite($site, (bool) $site->is_primary);
+            Site::enforcePrimaryInvariant($site);
             $this->syncLocales($site, $localeIds);
 
             return $site;
@@ -75,29 +71,13 @@ class SiteController extends Controller
             $localeIds = $data['locale_ids'];
             unset($data['locale_ids']);
 
-            $site->update($data + [
-                'handle' => Str::slug($data['handle']),
-                'domain' => $data['domain'] ?: null,
-            ]);
+            $site->update($data);
 
-            $this->syncPrimarySite($site, (bool) $site->is_primary);
+            Site::enforcePrimaryInvariant($site);
             $this->syncLocales($site, $localeIds);
         });
 
         return redirect()->route('admin.sites.edit', $site)->with('status', 'Site updated successfully.');
-    }
-
-    private function syncPrimarySite(Site $site, bool $isPrimary): void
-    {
-        if (! $isPrimary) {
-            if (Site::query()->where('is_primary', true)->whereKeyNot($site->id)->doesntExist()) {
-                $site->forceFill(['is_primary' => true])->saveQuietly();
-            }
-
-            return;
-        }
-
-        Site::query()->whereKeyNot($site->id)->update(['is_primary' => false]);
     }
 
     private function syncLocales(Site $site, array $localeIds): void
@@ -105,6 +85,10 @@ class SiteController extends Controller
         $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
 
         if ($defaultLocaleId && ! in_array($defaultLocaleId, $localeIds, true)) {
+            $localeIds[] = (int) $defaultLocaleId;
+        }
+
+        if ($localeIds === []) {
             $localeIds[] = (int) $defaultLocaleId;
         }
 

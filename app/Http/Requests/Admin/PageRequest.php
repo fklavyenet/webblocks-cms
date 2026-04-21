@@ -24,7 +24,7 @@ class PageRequest extends FormRequest
         $slug = (string) $this->input('slug');
 
         $this->merge([
-            'site_id' => $this->input('site_id') ?: Site::query()->orderByDesc('is_primary')->value('id'),
+            'site_id' => $this->input('site_id') ?: Site::primary()?->id,
             'slug' => Str::slug($slug !== '' ? $slug : $title),
         ]);
     }
@@ -49,8 +49,8 @@ class PageRequest extends FormRequest
                 (function () use ($translationId, $siteId, $defaultLocaleId) {
                     $rule = Rule::unique(PageTranslation::class, 'slug')
                         ->where(fn ($query) => $query
-                            ->where('site_id', $siteId)
-                            ->where('locale_id', $defaultLocaleId));
+                            ->where('locale_id', $defaultLocaleId)
+                            ->whereIn('page_id', Page::query()->select('id')->where('site_id', $siteId)));
 
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),

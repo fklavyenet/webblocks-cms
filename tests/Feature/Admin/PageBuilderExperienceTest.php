@@ -220,6 +220,103 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function public_pages_render_translated_block_content_and_fallback_to_default_locale(): void
+    {
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+        $buttonType = BlockType::query()->firstOrCreate(
+            ['slug' => 'button'],
+            ['name' => 'Button', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2]
+        );
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+            'path' => '/p/hakkinda',
+        ]);
+
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $section = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'About us',
+            'content' => 'English section copy',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $button = Block::create([
+            'page_id' => $page->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'title' => 'Contact us',
+            'url' => '/p/contact',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $section->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'About us',
+            'content' => 'English section copy',
+        ]);
+        $section->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Hakkimizda',
+            'content' => 'Turkce bolum icerigi',
+        ]);
+        $button->buttonTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact us',
+        ]);
+
+        $response = $this->get('/tr/p/hakkinda');
+
+        $response->assertOk();
+        $response->assertSee('Hakkimizda');
+        $response->assertSee('Turkce bolum icerigi');
+        $response->assertSee('Contact us');
+        $response->assertDontSee('About us');
+        $response->assertDontSee('English section copy');
+    }
+
+    #[Test]
     public function pages_list_shows_slots_and_page_centered_actions(): void
     {
         $user = User::factory()->create();
@@ -333,7 +430,6 @@ class PageBuilderExperienceTest extends TestCase
 
         PageTranslation::query()->create([
             'page_id' => $about->id,
-            'site_id' => $site->id,
             'locale_id' => $locale->id,
             'name' => 'Hakkinda',
             'slug' => 'ortak',
@@ -463,6 +559,34 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee($page->publicUrl(), false);
         $response->assertSee($page->publicUrl('tr'), false);
         $response->assertSee('/tr/p/hakkinda', false);
+    }
+
+    #[Test]
+    public function preview_links_do_not_render_for_non_routable_locale_requests(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'de',
+            'name' => 'German',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $this->assertNull($page->publicUrl('de'));
+        $this->assertNull($page->publicPath('de'));
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertDontSee('/de/p/about');
     }
 
     #[Test]
@@ -1540,6 +1664,289 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_editor_can_edit_translated_block_content_in_locale_context(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+            'path' => '/p/hakkinda',
+        ]);
+
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Hero',
+            'content' => 'English content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'locale' => 'tr', 'edit' => $block->id]));
+
+        $response->assertOk();
+        $response->assertSee('Editing content for TR');
+        $response->assertSee('Missing');
+
+        $update = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $sectionType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Kahraman',
+            'content' => 'Turkce icerik',
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ]);
+
+        $update->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'locale' => 'tr']));
+
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Kahraman',
+            'content' => 'Turkce icerik',
+        ]);
+
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'title' => 'Hero',
+            'content' => 'English content',
+        ]);
+    }
+
+    #[Test]
+    public function slot_block_editor_rejects_locales_that_are_not_enabled_for_the_page_site(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $german = Locale::query()->create([
+            'code' => 'de',
+            'name' => 'German',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Hero',
+            'content' => 'English content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $slot, 'locale' => 'de', 'edit' => $block->id]))
+            ->assertNotFound();
+
+        $response = $this->actingAs($user)->from(route('admin.pages.slots.blocks', [$page, $slot]))->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $sectionType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Held',
+            'content' => 'German content',
+            'status' => 'published',
+            'locale' => 'de',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
+        $response->assertSessionHasErrors('locale');
+    }
+
+    #[Test]
+    public function page_translation_routes_cannot_be_created_for_locales_not_enabled_on_the_page_site(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $german = Locale::query()->create([
+            'code' => 'de',
+            'name' => 'German',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.translations.create', [$page, $german]))
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->post(route('admin.pages.translations.store', [$page, $german]), [
+                'name' => 'Info',
+                'slug' => 'info',
+            ])
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function contact_form_translations_keep_delivery_settings_shared_and_text_fields_localized(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $contactType = BlockType::query()->firstOrCreate(
+            ['slug' => 'contact_form'],
+            ['name' => 'Contact Form', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 10]
+        );
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Iletisim',
+            'slug' => 'iletisim',
+            'path' => '/p/iletisim',
+        ]);
+
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $contactType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Contact us',
+            'content' => 'English intro',
+            'settings' => json_encode([
+                'submit_label' => 'Send message',
+                'success_message' => 'Thanks for your message.',
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $contactType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'heading' => 'Bize ulasin',
+            'intro_text' => 'Turkce tanitim',
+            'submit_label' => 'Mesaj gonder',
+            'success_message' => 'Tesekkurler',
+            'recipient_email' => 'ignored-change@example.com',
+            'send_email_notification' => 0,
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ]);
+
+        $this->assertStringContainsString('/admin/pages/'.$page->id.'/slots/'.$slot->id.'/blocks?locale=tr', (string) $response->headers->get('Location'));
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Bize ulasin',
+            'content' => 'Turkce tanitim',
+            'submit_label' => 'Mesaj gonder',
+            'success_message' => 'Tesekkurler',
+        ]);
+
+        $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
+
+        $this->assertSame('team@example.com', $settings['recipient_email']);
+        $this->assertTrue($settings['send_email_notification']);
+    }
+
+    #[Test]
     public function starter_content_seed_creates_real_columns_children_without_duplicates(): void
     {
         $this->seed(CoreCatalogSeeder::class);
@@ -1550,7 +1957,10 @@ class PageBuilderExperienceTest extends TestCase
         $columns = Block::query()->where('page_id', $home->id)->where('type', 'columns')->where('title', 'Starter features')->first();
 
         $this->assertNotNull($columns);
-        $this->assertDatabaseCount('pages', 3);
+        $this->assertDatabaseCount('pages', 5);
+        $this->assertDatabaseHas('sites', ['handle' => 'campaign', 'domain' => 'campaign.ddev.site']);
+        $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'About']);
+        $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'Campaign About']);
         $this->assertSame(3, Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->count());
         $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Fast setup']);
         $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Flexible content']);

@@ -100,12 +100,13 @@
                                     $translations = $page->translations->sortByDesc(fn ($translation) => $translation->locale?->is_default)->values();
                                     $enabledLocaleCount = (int) ($siteLocaleCounts[$page->site_id] ?? $translations->count());
                                     $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
+                                    $defaultPublicUrl = $page->publicUrl();
                                 @endphp
                                 <tr>
                                     <td>
-                                        @if ($page->status === 'published')
+                                        @if ($page->status === 'published' && $defaultPublicUrl)
                                             <a
-                                                href="{{ $page->publicUrl() }}"
+                                                href="{{ $defaultPublicUrl }}"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 class="wb-action-btn wb-action-btn-view"
@@ -125,6 +126,9 @@
                                             <div class="wb-cluster wb-cluster-2">
                                                 <strong>{{ $page->title }}</strong>
                                                 <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
+                                                @if ($page->site?->domain)
+                                                    <span class="wb-text-sm wb-text-muted">{{ $page->site->domain }}</span>
+                                                @endif
                                             </div>
 
                                             <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
@@ -144,9 +148,17 @@
 
                                             <div class="wb-cluster wb-cluster-2 wb-text-sm">
                                                 @foreach ($translations->take(3) as $translation)
-                                                    <a href="{{ $page->publicUrl($translation->locale?->code) }}" target="_blank" rel="noopener noreferrer" class="wb-link">
-                                                        {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $page->publicPath($translation->locale?->code) }}
-                                                    </a>
+                                                    @php
+                                                        $translationPublicUrl = $page->publicUrl($translation->locale?->code);
+                                                        $translationPublicPath = $page->publicPath($translation->locale?->code);
+                                                    @endphp
+                                                    @if ($translationPublicUrl && $translationPublicPath)
+                                                        <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">
+                                                            {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }}
+                                                        </a>
+                                                    @else
+                                                        <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
+                                                    @endif
                                                 @endforeach
                                             </div>
                                         </div>

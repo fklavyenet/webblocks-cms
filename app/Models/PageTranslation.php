@@ -12,7 +12,6 @@ class PageTranslation extends Model
 
     protected $fillable = [
         'page_id',
-        'site_id',
         'locale_id',
         'name',
         'slug',
@@ -22,10 +21,6 @@ class PageTranslation extends Model
     protected static function booted(): void
     {
         static::saving(function (self $translation): void {
-            if (! $translation->site_id) {
-                $translation->site_id = $translation->page?->site_id;
-            }
-
             $translation->path = self::pathFromSlug((string) $translation->slug);
         });
     }
@@ -38,11 +33,6 @@ class PageTranslation extends Model
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);
-    }
-
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(Site::class);
     }
 
     public function locale(): BelongsTo

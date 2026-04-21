@@ -42,7 +42,7 @@ class PageTranslationController extends Controller
         DB::transaction(function () use ($request, $page, $locale): void {
             $page->translations()->updateOrCreate(
                 ['locale_id' => $locale->id],
-                $request->validatedTranslation() + ['site_id' => $page->site_id],
+                $request->validatedTranslation(),
             );
         });
 
@@ -52,6 +52,8 @@ class PageTranslationController extends Controller
     public function edit(Page $page, PageTranslation $translation): View
     {
         abort_unless($translation->page_id === $page->id, 404);
+        $page->loadMissing('site');
+        abort_if($page->site->locales()->where('locales.id', $translation->locale_id)->wherePivot('is_enabled', true)->doesntExist(), 404);
 
         return view('admin.pages.translations.form', [
             'page' => $page->loadMissing(['site', 'translations.locale']),
@@ -66,9 +68,11 @@ class PageTranslationController extends Controller
     public function update(PageTranslationRequest $request, Page $page, PageTranslation $translation): RedirectResponse
     {
         abort_unless($translation->page_id === $page->id, 404);
+        $page->loadMissing('site');
+        abort_if($page->site->locales()->where('locales.id', $translation->locale_id)->wherePivot('is_enabled', true)->doesntExist(), 404);
 
-        DB::transaction(function () use ($request, $page, $translation): void {
-            $translation->update($request->validatedTranslation() + ['site_id' => $page->site_id]);
+        DB::transaction(function () use ($request, $translation): void {
+            $translation->update($request->validatedTranslation());
         });
 
         return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation updated successfully.');

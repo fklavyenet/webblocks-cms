@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Navigation\NavigationTree;
 use Illuminate\Support\Collection;
 
@@ -14,6 +15,7 @@ class PublicPagePresenter
     public function __construct(
         private readonly NavigationTree $navigationTree,
         private readonly PageRouteResolver $pageRouteResolver,
+        private readonly BlockTranslationResolver $blockTranslationResolver,
     ) {}
 
     public function present(Page $page): array
@@ -24,9 +26,13 @@ class PublicPagePresenter
             ->sortBy('sort_order')
             ->values();
 
+        $translatedTopLevelBlocks = $this->blockTranslationResolver
+            ->resolveCollection($topLevelBlocks)
+            ->values();
+
         $slots = $page->slots
             ->sortBy('sort_order')
-            ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $topLevelBlocks))
+            ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks))
             ->filter(fn (array $slot) => $slot['blocks']->isNotEmpty())
             ->values();
 
@@ -37,7 +43,7 @@ class PublicPagePresenter
             'mainSlot' => $slots->firstWhere('slug', 'main'),
             'sidebarSlot' => $slots->firstWhere('slug', 'sidebar'),
             'footerSlot' => $slots->firstWhere('slug', 'footer'),
-            'metaDescription' => $this->resolveMetaDescription($page, $topLevelBlocks),
+            'metaDescription' => $this->resolveMetaDescription($page, $translatedTopLevelBlocks),
             'homePath' => $this->pageRouteResolver->homePath(),
         ];
     }

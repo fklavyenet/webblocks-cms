@@ -23,7 +23,7 @@ class Page extends Model
             }
 
             if (! $page->site_id) {
-                $page->site_id = Site::query()->orderByDesc('is_primary')->value('id');
+                $page->site_id = Site::primary()?->id;
             }
         });
 
@@ -34,7 +34,6 @@ class Page extends Model
                 $page->translations()->firstOrCreate(
                     ['locale_id' => $defaultLocaleId],
                     [
-                        'site_id' => $page->site_id,
                         'name' => $page->title,
                         'slug' => $page->slug,
                         'path' => PageTranslation::pathFromSlug($page->slug),
@@ -135,7 +134,7 @@ class Page extends Model
         $localeId = match (true) {
             $locale instanceof Locale => $locale->id,
             is_numeric($locale) => (int) $locale,
-            is_string($locale) && $locale !== '' => Locale::query()->where('code', $locale)->value('id'),
+            is_string($locale) && $locale !== '' => Locale::query()->where('code', Locale::normalizeCode($locale))->value('id'),
             default => null,
         };
 
@@ -180,12 +179,12 @@ class Page extends Model
         });
     }
 
-    public function publicUrl(?string $localeCode = null): string
+    public function publicUrl(?string $localeCode = null): ?string
     {
         return app(PageRouteResolver::class)->urlFor($this, $localeCode, $this->site);
     }
 
-    public function publicPath(?string $localeCode = null): string
+    public function publicPath(?string $localeCode = null): ?string
     {
         return app(PageRouteResolver::class)->pathFor($this, $localeCode, $this->site);
     }

@@ -85,7 +85,6 @@ return new class extends Migration
         Schema::create('page_translations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
-            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
             $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
             $table->string('name');
             $table->string('slug');
@@ -93,8 +92,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['page_id', 'locale_id']);
-            $table->unique(['site_id', 'locale_id', 'slug']);
-            $table->unique(['site_id', 'locale_id', 'path']);
+            $table->index(['locale_id', 'slug']);
+            $table->index(['locale_id', 'path']);
         });
 
         $pages = DB::table('pages')
@@ -108,7 +107,6 @@ return new class extends Migration
             DB::table('page_translations')->updateOrInsert(
                 ['page_id' => $page->id, 'locale_id' => $defaultLocaleId],
                 [
-                    'site_id' => $page->site_id,
                     'name' => $page->title,
                     'slug' => $slug,
                     'path' => $slug === 'home' ? '/' : '/p/'.$slug,

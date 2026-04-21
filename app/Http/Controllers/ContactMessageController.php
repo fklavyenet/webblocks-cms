@@ -27,7 +27,7 @@ class ContactMessageController extends Controller
 
         $minimumSubmitSeconds = (int) config('contact.minimum_submit_seconds', 3);
         $successMessage = (string) $block->setting('success_message', config('contact.success_message'));
-        $redirectUrl = $this->redirectUrl($payload['source_url'] ?: $block->page?->publicUrl(), $block->id);
+        $redirectUrl = $this->redirectUrl($payload['source_url'] ?: $block->page?->publicUrl() ?: url('/'), $block->id);
 
         // Honeypot and timing failures intentionally look successful so obvious bots do not learn the validation rules.
         if ($payload['website'] !== '' || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
@@ -47,7 +47,7 @@ class ContactMessageController extends Controller
             'subject' => $payload['subject'],
             'message' => $payload['message'],
             'status' => 'new',
-            'source_url' => $payload['source_url'] ?: $block->page?->publicUrl(),
+            'source_url' => $payload['source_url'] ?: $block->page?->publicUrl() ?: url('/'),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'referer' => $request->headers->get('referer'),

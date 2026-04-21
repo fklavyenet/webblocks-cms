@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Blocks\BlockTranslationRegistry;
+use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -100,9 +102,44 @@ class Block extends Model
         return $this->hasMany(BlockAsset::class)->orderBy('position');
     }
 
+    public function textTranslations(): HasMany
+    {
+        return $this->hasMany(BlockTextTranslation::class);
+    }
+
+    public function buttonTranslations(): HasMany
+    {
+        return $this->hasMany(BlockButtonTranslation::class);
+    }
+
+    public function imageTranslations(): HasMany
+    {
+        return $this->hasMany(BlockImageTranslation::class);
+    }
+
+    public function contactFormTranslations(): HasMany
+    {
+        return $this->hasMany(BlockContactFormTranslation::class);
+    }
+
     public function typeSlug(): ?string
     {
         return $this->blockType?->slug ?? $this->type;
+    }
+
+    public function translationFamily(): ?string
+    {
+        return app(BlockTranslationRegistry::class)->familyFor($this);
+    }
+
+    public function supportsTranslations(): bool
+    {
+        return $this->translationFamily() !== null;
+    }
+
+    public function translationStatus(?Locale $locale = null): array
+    {
+        return app(BlockTranslationResolver::class)->statusFor($this, $locale);
     }
 
     public function typeName(): string

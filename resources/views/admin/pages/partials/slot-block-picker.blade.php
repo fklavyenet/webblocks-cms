@@ -3,8 +3,12 @@
     $recommendedSlugs = collect(['section', 'heading', 'rich-text', 'callout', 'button']);
     $expandedBlockQuery = trim((string) request('expanded'));
 
-    $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery) {
+    $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery, $activeLocale) {
         $resolved = $parameters;
+
+        if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
+            $resolved['locale'] = $activeLocale->code;
+        }
 
         if ($expandedBlockQuery !== '' && ! array_key_exists('expanded', $resolved)) {
             $resolved['expanded'] = $expandedBlockQuery;
@@ -50,6 +54,9 @@
     <div class="wb-stack wb-gap-4">
         <form method="GET" action="{{ route('admin.pages.slots.blocks', [$page, $slot]) }}" class="wb-grid wb-grid-4">
             <input type="hidden" name="picker" value="1">
+            @unless ($activeLocale->is_default)
+                <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+            @endunless
             @if ($expandedBlockQuery !== '')
                 <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}">
             @endif

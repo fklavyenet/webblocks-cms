@@ -1,3 +1,20 @@
+@php
+	$selectedSite = $sites->firstWhere('id', old('site_id', $page->site_id ?: $sites->first()?->id));
+	$submittedSlots = old('slots');
+	$pageSlots = $submittedSlots
+		? collect($submittedSlots)->map(function ($slot) use ($slotTypes, $page) {
+			$pageSlot = new \App\Models\PageSlot($slot);
+			$pageSlot->page_id = $page->id;
+			$pageSlot->slot_type_id = $slot['slot_type_id'] ?? null;
+			$pageSlot->setRelation('slotType', $slotTypes->firstWhere('id', $pageSlot->slot_type_id));
+
+			return $pageSlot;
+		})
+		: ($page->exists ? $page->slots()->with('slotType')->orderBy('sort_order')->get() : collect());
+	$availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
+	$slotBlockPreviews = $slotBlockPreviews ?? collect();
+@endphp
+
 <div class="wb-stack wb-gap-4">
 	<div class="wb-grid wb-grid-2">
 		<div class="wb-stack-4 wb-gap-1">
@@ -20,6 +37,10 @@
 		</div>
 		<div class="wb-stack wb-gap-2">
 			<div class="wb-stack-2 wb-field">
+				<label>Site Context</label>
+				<input class="wb-input" type="text" value="{{ ($selectedSite?->name ?? 'Site') }}{{ $selectedSite?->domain ? ' | '.$selectedSite->domain : '' }}" disabled>
+			</div>
+			<div class="wb-stack-2 wb-field">
 				<label>Locale</label>
 				<input class="wb-input" type="text" value="English (default)" disabled>
 			</div>
@@ -38,23 +59,6 @@
 			</div>
 		</div>
 	</div>
-
-	@php
-	$submittedSlots = old('slots');
-	$pageSlots = $submittedSlots
-	? collect($submittedSlots)->map(function ($slot) use ($slotTypes, $page) {
-		$pageSlot = new \App\Models\PageSlot($slot);
-		$pageSlot->page_id = $page->id;
-		$pageSlot->slot_type_id = $slot['slot_type_id'] ?? null;
-		$pageSlot->setRelation('slotType', $slotTypes->firstWhere('id', $pageSlot->slot_type_id));
-
-		return $pageSlot;
-	})
-	: ($page->exists ? $page->slots()->with('slotType')->orderBy('sort_order')->get() : collect());
-
-	$availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
-	$slotBlockPreviews = $slotBlockPreviews ?? collect();
-	@endphp
 
 	<div class="wb-card wb-card-accent" data-wb-slot-builder>
 		<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

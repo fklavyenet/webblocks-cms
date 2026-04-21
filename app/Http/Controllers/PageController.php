@@ -49,11 +49,11 @@ class PageController extends Controller
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset'])
+                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
                 ->orderBy('sort_order'),
             'blocks.children' => fn ($query) => $query
                 ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset'])
+                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
                 ->orderBy('sort_order'),
         ]);
 

@@ -16,12 +16,13 @@ use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
+use App\Models\Locale;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicPageController::class, 'home'])->name('home');
 
 Route::get('/{locale}', [PublicPageController::class, 'home'])
-    ->where('locale', '[a-z]{2}')
+    ->where('locale', Locale::routePattern())
     ->name('localized.home');
 
 Route::middleware('auth')->group(function () {
@@ -79,7 +80,7 @@ Route::post('/contact-messages', [ContactMessageController::class, 'store'])
 
 Route::get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
 Route::get('/{locale}/p/{slug}', [PublicPageController::class, 'show'])
-    ->where('locale', '[a-z]{2}')
+    ->where('locale', Locale::routePattern())
     ->name('localized.pages.show');
 
 require __DIR__.'/auth.php';

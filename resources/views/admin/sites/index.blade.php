@@ -30,7 +30,14 @@
                             <tr>
                                 <td><strong>{{ $site->name }}</strong></td>
                                 <td><code>{{ $site->handle }}</code></td>
-                                <td>{{ $site->domain ?: 'Not set' }}</td>
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
+                                        <span>{{ $site->domain ?: 'Not set' }}</span>
+                                        @if ($site->domain)
+                                            <span class="wb-text-sm wb-text-muted">https://{{ $site->domain }}</span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2 wb-text-sm">
                                         @foreach ($site->locales as $locale)
