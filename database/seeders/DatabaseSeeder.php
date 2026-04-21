@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             FoundationSiteLocaleSeeder::class,
             CoreCatalogSeeder::class,
+            WebBlocksFoundationSeeder::class,
         ]);
 
         app(InstalledVersionStore::class)->persist((string) config('app.version', 'dev'));
