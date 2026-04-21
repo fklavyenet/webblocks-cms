@@ -101,7 +101,7 @@
                                     <div class="wb-link-list-main">
                                         <div class="wb-link-list-title">{{ $page->title }}</div>
                                         <div class="wb-link-list-meta">
-                                            <code>{{ $page->slug }}</code> | {{ $page->slots->pluck('slotType.name')->filter()->implode(', ') ?: 'No slots' }} |
+                                            <code>{{ $page->slug }}</code> | {{ $page->site?->name }} | {{ $page->slots->pluck('slotType.name')->filter()->implode(', ') ?: 'No slots' }} |
                                             <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $page->status }}</span>
                                         </div>
                                     </div>

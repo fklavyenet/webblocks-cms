@@ -15,7 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([CoreCatalogSeeder::class]);
+        $this->call([
+            FoundationSiteLocaleSeeder::class,
+            CoreCatalogSeeder::class,
+        ]);
 
         app(InstalledVersionStore::class)->persist((string) config('app.version', 'dev'));
     }

@@ -126,7 +126,7 @@ class NavigationItem extends Model
 
     public function resolvedTitle(): string
     {
-        return $this->title ?: ($this->page?->title ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url));
+        return $this->title ?: ($this->page?->name ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url));
     }
 
     public function resolvedLabel(): string

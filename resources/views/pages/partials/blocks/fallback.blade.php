@@ -11,8 +11,9 @@
     $page = $block->page;
     $publishedPages = \App\Models\Page::query()
         ->where('status', 'published')
+        ->with(['translations', 'site'])
         ->orderBy('title')
-        ->get(['id', 'title', 'slug', 'page_type']);
+        ->get();
     $pageIndex = $publishedPages->search(fn ($candidate) => $candidate->id === $page?->id);
     $previousPage = $pageIndex !== false && $pageIndex > 0 ? $publishedPages[$pageIndex - 1] : null;
     $nextPage = $pageIndex !== false && $pageIndex < ($publishedPages->count() - 1) ? $publishedPages[$pageIndex + 1] : null;
@@ -309,7 +310,7 @@
     @case('breadcrumb')
         <nav aria-label="Breadcrumb">
             <ol class="wb-cluster wb-cluster-2 wb-text-sm">
-                <li><a href="{{ route('pages.show', 'home') }}" class="wb-link">Home</a></li>
+                <li><a href="{{ $homePath }}" class="wb-link">Home</a></li>
                 <li>/</li>
                 <li>{{ $page?->title }}</li>
             </ol>
@@ -320,12 +321,12 @@
         <nav class="wb-cluster wb-cluster-between wb-cluster-2" aria-label="Pagination">
             <div>
                 @if ($previousPage)
-                    <a href="{{ route('pages.show', $previousPage->slug) }}" class="wb-btn wb-btn-secondary">Previous: {{ $previousPage->title }}</a>
+                    <a href="{{ $previousPage->publicPath() }}" class="wb-btn wb-btn-secondary">Previous: {{ $previousPage->title }}</a>
                 @endif
             </div>
             <div>
                 @if ($nextPage)
-                    <a href="{{ route('pages.show', $nextPage->slug) }}" class="wb-btn wb-btn-secondary">Next: {{ $nextPage->title }}</a>
+                    <a href="{{ $nextPage->publicPath() }}" class="wb-btn wb-btn-secondary">Next: {{ $nextPage->title }}</a>
                 @endif
             </div>
         </nav>
@@ -437,7 +438,7 @@
             <div class="wb-card-header"><strong>{{ $block->title ?: 'Page Summary' }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-1">
                 <div><strong>Title:</strong> {{ $page?->title }}</div>
-                <div><strong>Slug:</strong> /p/{{ $page?->slug }}</div>
+                <div><strong>Path:</strong> {{ $page?->publicPath() }}</div>
                 <div><strong>Type:</strong> {{ $page?->page_type ?: 'page' }}</div>
                 @if ($block->content)
                     <p>{{ $block->content }}</p>
@@ -452,6 +453,7 @@
             <div class="wb-card-body wb-stack wb-gap-1">
                 <div><strong>Title:</strong> {{ $page?->title }}</div>
                 <div><strong>Slug:</strong> {{ $page?->slug }}</div>
+                <div><strong>Path:</strong> {{ $page?->publicPath() }}</div>
                 <div><strong>Status:</strong> {{ $page?->status }}</div>
                 <div><strong>Page Type:</strong> {{ $page?->page_type }}</div>
             </div>
@@ -464,7 +466,7 @@
             <div class="wb-card-body">
                 <ul class="wb-stack wb-gap-1">
                     @foreach ($relatedPages as $relatedPage)
-                        <li><a href="{{ route('pages.show', $relatedPage->slug) }}" class="wb-link">{{ $relatedPage->title }}</a></li>
+                        <li><a href="{{ $relatedPage->publicPath() }}" class="wb-link">{{ $relatedPage->title }}</a></li>
                     @endforeach
                 </ul>
             </div>

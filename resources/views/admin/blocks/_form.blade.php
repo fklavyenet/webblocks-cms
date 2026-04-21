@@ -11,6 +11,10 @@
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
     $columnItemBlockType = $columnItemBlockType ?? null;
+    $activeLocale = $activeLocale ?? null;
+    $translationStatus = $activeLocale ? $block->translationStatus($activeLocale) : null;
+    $isDefaultLocale = $activeLocale?->is_default ?? false;
+    $isTranslatableBlock = $block->supportsTranslations();
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -123,6 +127,42 @@
                             </div>
                         </div>
                     </div>
+
+                    @if ($activeLocale)
+                        <div class="wb-grid wb-grid-2">
+                            <div class="wb-stack wb-gap-1">
+                                <label>Locale</label>
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body">
+                                        <strong>{{ strtoupper($activeLocale->code) }}{{ $activeLocale->is_default ? ' (Default)' : '' }}</strong>
+                                        <div>{{ $activeLocale->name }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <label>Translation Status</label>
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body">
+                                        <strong>{{ $translationStatus['label'] ?? 'Shared' }}</strong>
+                                        <div>
+                                            @if (! $isTranslatableBlock)
+                                                This block uses shared canonical fields across all locales.
+                                            @elseif ($isDefaultLocale)
+                                                Default locale edits update the canonical source and the English translation row.
+                                            @elseif (($translationStatus['state'] ?? null) === 'fallback')
+                                                This locale is currently falling back to {{ strtoupper($translationStatus['resolved_locale']->code) }} until you save translated content.
+                                            @elseif (($translationStatus['state'] ?? null) === 'missing')
+                                                This locale does not have translated content yet.
+                                            @else
+                                                This locale has its own translated content.
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 

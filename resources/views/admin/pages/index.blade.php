@@ -29,6 +29,16 @@
                     </div>
 
                     <div class="wb-stack wb-gap-1">
+                        <label for="pages_site">Site</label>
+                        <select id="pages_site" name="site_id" class="wb-select">
+                            <option value="">All sites</option>
+                            @foreach ($sites as $site)
+                                <option value="{{ $site->id }}" @selected((string) $filters['site_id'] === (string) $site->id)>{{ $site->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
                         <label for="pages_sort">Sort by</label>
                         <select id="pages_sort" name="sort" class="wb-select">
                             <option value="created_at" @selected($filters['sort'] === 'created_at')>Created at</option>
@@ -50,7 +60,7 @@
 
                 <div class="wb-cluster wb-cluster-2" style="align-self: end;">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
+                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['site_id'] !== 0 || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
                         <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
                     @endif
                 </div>
@@ -78,7 +88,7 @@
                         <thead>
                             <tr>
                                 <th>View</th>
-                                <th>Title</th>
+                                <th>Page</th>
                                 <th>Blocks</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -86,11 +96,17 @@
                         </thead>
                         <tbody>
                             @foreach ($pages as $page)
+                                @php
+                                    $translations = $page->translations->sortByDesc(fn ($translation) => $translation->locale?->is_default)->values();
+                                    $enabledLocaleCount = (int) ($siteLocaleCounts[$page->site_id] ?? $translations->count());
+                                    $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
+                                    $defaultPublicUrl = $page->publicUrl();
+                                @endphp
                                 <tr>
                                     <td>
-                                        @if ($page->status === 'published')
+                                        @if ($page->status === 'published' && $defaultPublicUrl)
                                             <a
-                                                href="{{ $page->publicUrl() }}"
+                                                href="{{ $defaultPublicUrl }}"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 class="wb-action-btn wb-action-btn-view"
@@ -105,7 +121,48 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td>{{ $page->title }}</td>
+                                    <td>
+                                        <div class="wb-stack wb-gap-1">
+                                            <div class="wb-cluster wb-cluster-2">
+                                                <strong>{{ $page->title }}</strong>
+                                                <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
+                                                @if ($page->site?->domain)
+                                                    <span class="wb-text-sm wb-text-muted">{{ $page->site->domain }}</span>
+                                                @endif
+                                            </div>
+
+                                            <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
+                                                @foreach ($translations as $translation)
+                                                    <span class="wb-status-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
+                                                        {{ $translation->locale?->code }}
+                                                        @if ($translation->locale?->is_default)
+                                                            Default
+                                                        @endif
+                                                    </span>
+                                                @endforeach
+
+                                                @if ($missingTranslations > 0)
+                                                    <span class="wb-text-sm wb-text-muted">Missing {{ $missingTranslations }}</span>
+                                                @endif
+                                            </div>
+
+                                            <div class="wb-cluster wb-cluster-2 wb-text-sm">
+                                                @foreach ($translations->take(3) as $translation)
+                                                    @php
+                                                        $translationPublicUrl = $page->publicUrl($translation->locale?->code);
+                                                        $translationPublicPath = $page->publicPath($translation->locale?->code);
+                                                    @endphp
+                                                    @if ($translationPublicUrl && $translationPublicPath)
+                                                        <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">
+                                                            {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }}
+                                                        </a>
+                                                    @else
+                                                        <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">

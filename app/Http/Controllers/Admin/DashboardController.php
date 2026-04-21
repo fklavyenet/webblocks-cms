@@ -25,7 +25,7 @@ class DashboardController extends Controller
                 'publishedPages' => Page::query()->where('status', 'published')->count(),
             ],
             'recentPages' => Page::query()
-                ->with('slots.slotType')
+                ->with(['slots.slotType', 'translations'])
                 ->latest()
                 ->limit(5)
                 ->get(),

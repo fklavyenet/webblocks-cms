@@ -12,6 +12,7 @@ use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,10 @@ use Illuminate\View\View;
 
 class BlockController extends Controller
 {
+    public function __construct(
+        private readonly BlockTranslationWriter $blockTranslationWriter,
+    ) {}
+
     public function moveUp(Block $block): RedirectResponse
     {
         return $this->move($block, 'up');
@@ -63,7 +68,7 @@ class BlockController extends Controller
         $block->parent_id = $request->integer('parent_id') ?: null;
         $block->block_type_id = $request->integer('block_type_id') ?: null;
         $block->slot_type_id = $request->integer('slot_type_id') ?: null;
-        $pages = Page::query()->with('blocks')->orderBy('title')->get();
+        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
@@ -97,12 +102,16 @@ class BlockController extends Controller
     public function store(BlockRequest $request): RedirectResponse
     {
         $data = $request->validatedData();
+        $localeCode = $data['locale'] ?? null;
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
-        unset($data['_block_assets']);
+        $page = Page::query()->findOrFail($data['page_id']);
+        $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, null, $page, $localeCode, true);
+        unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
-        $block = DB::transaction(function () use ($data, $blockAssets, $columnItems) {
-            $block = Block::create($data);
+        $block = DB::transaction(function () use ($canonicalData, $blockAssets, $columnItems, $data, $localeCode) {
+            $block = Block::create($canonicalData);
+            $this->blockTranslationWriter->sync($block, $data, $localeCode, true);
             $this->syncBlockAssets($block, $blockAssets);
             $this->syncColumnItems($block, $columnItems);
 
@@ -111,14 +120,20 @@ class BlockController extends Controller
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $expanded = $this->expandedStateFor($request, $block);
+        $previewUrl = $block->page->publicUrl($localeCode);
 
-        return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null])
-            ->with('status', 'Block created successfully.')
-            ->with('status_action', [
+        $redirect = redirect()
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $localeCode])
+            ->with('status', 'Block created successfully.');
+
+        if ($previewUrl) {
+            $redirect->with('status_action', [
                 'label' => 'View page',
-                'url' => $block->page->publicUrl(),
+                'url' => $previewUrl,
             ]);
+        }
+
+        return $redirect;
     }
 
     public function edit(Request $request, Block $block): View
@@ -135,7 +150,7 @@ class BlockController extends Controller
             }
         }
 
-        $pages = Page::query()->with('blocks')->orderBy('title')->get();
+        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
@@ -170,26 +185,36 @@ class BlockController extends Controller
     public function update(BlockRequest $request, Block $block): RedirectResponse
     {
         $data = $request->validatedData();
+        $localeCode = $data['locale'] ?? null;
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
-        unset($data['_block_assets']);
+        $page = Page::query()->findOrFail($data['page_id']);
+        $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, $block, $page, $localeCode);
+        unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
-        DB::transaction(function () use ($block, $data, $blockAssets, $columnItems): void {
-            $block->update($data);
+        DB::transaction(function () use ($block, $canonicalData, $blockAssets, $columnItems, $data, $localeCode): void {
+            $block->update($canonicalData);
+            $this->blockTranslationWriter->sync($block, $data, $localeCode);
             $this->syncBlockAssets($block, $blockAssets);
             $this->syncColumnItems($block, $columnItems);
         });
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $expanded = $this->expandedStateFor($request, $block);
+        $previewUrl = $block->page->publicUrl($localeCode);
 
-        return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null])
-            ->with('status', 'Block updated successfully.')
-            ->with('status_action', [
+        $redirect = redirect()
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $localeCode])
+            ->with('status', 'Block updated successfully.');
+
+        if ($previewUrl) {
+            $redirect->with('status_action', [
                 'label' => 'View page',
-                'url' => $block->page->publicUrl(),
+                'url' => $previewUrl,
             ]);
+        }
+
+        return $redirect;
     }
 
     public function destroy(Request $request, Block $block): RedirectResponse
@@ -200,7 +225,7 @@ class BlockController extends Controller
         $block->delete();
 
         return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null])
+            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $this->requestedLocaleCode(request())])
             ->with('status', 'Block deleted successfully.');
     }
 
@@ -428,6 +453,14 @@ class BlockController extends Controller
             'page' => $block->page_id,
             'slot' => $pageSlotId ?: $block->slot_type_id,
             'expanded' => $expanded !== '' ? $expanded : null,
+            'locale' => $this->requestedLocaleCode(request()),
         ];
+    }
+
+    private function requestedLocaleCode(Request $request): ?string
+    {
+        $localeCode = trim((string) $request->input('locale', $request->query('locale', '')));
+
+        return $localeCode !== '' ? $localeCode : null;
     }
 }

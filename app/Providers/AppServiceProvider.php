@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Support\Locales\LocaleResolver;
+use App\Support\Pages\PageRouteResolver;
+use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -16,7 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SiteResolver::class);
+        $this->app->singleton(LocaleResolver::class);
+        $this->app->singleton(PageRouteResolver::class);
     }
 
     /**

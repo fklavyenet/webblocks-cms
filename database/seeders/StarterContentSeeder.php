@@ -5,11 +5,15 @@ namespace Database\Seeders;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationRegistry;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 
@@ -17,8 +21,38 @@ class StarterContentSeeder extends Seeder
 {
     public function run(): void
     {
+        $defaultSite = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultSite->update(['domain' => 'primary.ddev.site']);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkishLocale = Locale::query()->updateOrCreate(
+            ['code' => 'tr'],
+            [
+                'name' => 'Turkish',
+                'is_default' => false,
+                'is_enabled' => true,
+            ],
+        );
+
+        $defaultSite->locales()->syncWithoutDetaching([
+            $defaultLocale->id => ['is_enabled' => true],
+            $turkishLocale->id => ['is_enabled' => true],
+        ]);
+
+        $campaignSite = Site::query()->updateOrCreate(
+            ['handle' => 'campaign'],
+            [
+                'name' => 'Campaign Site',
+                'domain' => 'campaign.ddev.site',
+                'is_primary' => false,
+            ],
+        );
+
+        $campaignSite->locales()->syncWithoutDetaching([
+            $defaultLocale->id => ['is_enabled' => true],
+        ]);
+
         $homePage = Page::query()->updateOrCreate(
-            ['slug' => 'home'],
+            ['site_id' => $defaultSite->id, 'slug' => 'home'],
             [
                 'title' => 'Home',
                 'page_type' => 'default',
@@ -27,7 +61,7 @@ class StarterContentSeeder extends Seeder
         );
 
         $aboutPage = Page::query()->updateOrCreate(
-            ['slug' => 'about'],
+            ['site_id' => $defaultSite->id, 'slug' => 'about'],
             [
                 'title' => 'About',
                 'page_type' => 'default',
@@ -36,13 +70,88 @@ class StarterContentSeeder extends Seeder
         );
 
         $contactPage = Page::query()->updateOrCreate(
-            ['slug' => 'contact'],
+            ['site_id' => $defaultSite->id, 'slug' => 'contact'],
             [
                 'title' => 'Contact',
                 'page_type' => 'default',
                 'status' => 'published',
             ],
         );
+
+        $campaignHomePage = Page::query()->updateOrCreate(
+            ['site_id' => $campaignSite->id, 'slug' => 'home'],
+            [
+                'title' => 'Campaign Home',
+                'page_type' => 'default',
+                'status' => 'published',
+            ],
+        );
+
+        $campaignAboutPage = Page::query()->updateOrCreate(
+            ['site_id' => $campaignSite->id, 'slug' => 'about'],
+            [
+                'title' => 'Campaign About',
+                'page_type' => 'default',
+                'status' => 'published',
+            ],
+        );
+
+        foreach ([$homePage, $aboutPage, $contactPage, $campaignHomePage, $campaignAboutPage] as $page) {
+            PageTranslation::query()->updateOrCreate(
+                ['page_id' => $page->id, 'locale_id' => $defaultLocale->id],
+                [
+                    'name' => $page->title,
+                    'slug' => $page->slug,
+                    'path' => PageTranslation::pathFromSlug($page->slug),
+                ],
+            );
+        }
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $homePage->id, 'locale_id' => $turkishLocale->id],
+            [
+                'name' => 'Ana Sayfa',
+                'slug' => 'anasayfa',
+                'path' => PageTranslation::pathFromSlug('anasayfa'),
+            ],
+        );
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $aboutPage->id, 'locale_id' => $turkishLocale->id],
+            [
+                'name' => 'Hakkinda',
+                'slug' => 'hakkinda',
+                'path' => PageTranslation::pathFromSlug('hakkinda'),
+            ],
+        );
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $contactPage->id, 'locale_id' => $turkishLocale->id],
+            [
+                'name' => 'Iletisim',
+                'slug' => 'iletisim',
+                'path' => PageTranslation::pathFromSlug('iletisim'),
+            ],
+        );
+
+        $campaignSlotTypes = SlotType::query()
+            ->whereIn('slug', ['main'])
+            ->get()
+            ->keyBy('slug');
+
+        $campaignMainSlotType = $campaignSlotTypes->get('main');
+
+        if ($campaignMainSlotType) {
+            PageSlot::query()->updateOrCreate(
+                ['page_id' => $campaignHomePage->id, 'slot_type_id' => $campaignMainSlotType->id],
+                ['sort_order' => 0],
+            );
+
+            PageSlot::query()->updateOrCreate(
+                ['page_id' => $campaignAboutPage->id, 'slot_type_id' => $campaignMainSlotType->id],
+                ['sort_order' => 0],
+            );
+        }
 
         $slotTypes = SlotType::query()
             ->whereIn('slug', ['header', 'main', 'footer'])
@@ -325,6 +434,154 @@ class StarterContentSeeder extends Seeder
         if ($seedUser) {
             Asset::query()->whereNull('uploaded_by')->update(['uploaded_by' => $seedUser->id]);
         }
+
+        $this->seedBlockTranslations($homePage, $aboutPage, $contactPage, $turkishLocale);
+        $this->seedCampaignSiteContent($campaignSite, $campaignHomePage, $campaignAboutPage, $blockTypes);
+    }
+
+    private function seedCampaignSiteContent(Site $campaignSite, Page $campaignHomePage, Page $campaignAboutPage, $blockTypes): void
+    {
+        $mainSlotType = SlotType::query()->where('slug', 'main')->first();
+
+        if (! $mainSlotType) {
+            return;
+        }
+
+        $campaignHero = $this->upsertBlock($campaignHomePage, $blockTypes->get('section'), $mainSlotType->id, [
+            'sort_order' => 0,
+            'title' => 'Campaign launch site',
+            'subtitle' => null,
+            'content' => 'This second site uses its own domain, keeps English only, and intentionally overlaps the about slug with the primary site.',
+            'url' => null,
+            'asset_id' => null,
+            'variant' => 'accent',
+            'meta' => null,
+            'settings' => null,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        if ($campaignHero) {
+            $this->upsertBlock($campaignHomePage, $blockTypes->get('button'), $mainSlotType->id, [
+                'parent_id' => $campaignHero->id,
+                'sort_order' => 0,
+                'title' => 'Read campaign details',
+                'subtitle' => '_self',
+                'content' => null,
+                'url' => '/p/about',
+                'asset_id' => null,
+                'variant' => 'primary',
+                'meta' => null,
+                'settings' => null,
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+        }
+
+        $this->upsertBlock($campaignAboutPage, $blockTypes->get('section'), $mainSlotType->id, [
+            'sort_order' => 0,
+            'title' => 'About this campaign',
+            'subtitle' => null,
+            'content' => 'The campaign site shares the about slug with the primary site, but routing stays isolated by host.',
+            'url' => null,
+            'asset_id' => null,
+            'variant' => 'muted',
+            'meta' => null,
+            'settings' => null,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+    }
+
+    private function seedBlockTranslations(Page $homePage, Page $aboutPage, Page $contactPage, Locale $locale): void
+    {
+        $registry = app(BlockTranslationRegistry::class);
+
+        Block::query()
+            ->whereIn('page_id', [$homePage->id, $aboutPage->id, $contactPage->id])
+            ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->get()
+            ->each(function (Block $block) use ($locale, $registry): void {
+                $family = $registry->familyFor($block);
+
+                if (! $family) {
+                    return;
+                }
+
+                if ($family === 'text') {
+                    $payload = match ($block->getRawOriginal('title')) {
+                        'Build faster with WebBlocks CMS' => [
+                            'title' => 'WebBlocks CMS ile daha hizli olusturun',
+                            'subtitle' => null,
+                            'content' => 'Yapilandirilmis sayfalar, tekrar kullanilabilir icerik ve esnek yerlesimler icin modern bir blok tabanli CMS.',
+                        ],
+                        'Starter features' => [
+                            'title' => 'Baslangic ozellikleri',
+                            'subtitle' => 'Yuvalarin ve bloklarin bir sayfayi nasil sekillendirebilecegine dair uc ornek.',
+                            'content' => 'Bu bloklarin tamamini yonetim arayuzunden duzenleyebilir, siralayabilir veya degistirebilirsiniz.',
+                        ],
+                        'Fast setup' => [
+                            'title' => 'Hizli kurulum',
+                            'subtitle' => null,
+                            'content' => 'Bos bir tuval yerine anlamli varsayilanlarla baslayin.',
+                        ],
+                        'Flexible content' => [
+                            'title' => 'Esnek icerik',
+                            'subtitle' => null,
+                            'content' => 'Sayfalari tekrar kullanilabilir yuvalar ve bloklarla kurun.',
+                        ],
+                        'Contact us' => [
+                            'title' => 'Bize ulasin',
+                            'subtitle' => null,
+                            'content' => 'Planladiginiz isi bize anlatin, mesajinizi dogru editor veya uygulama sorumlusuna yonlendirelim.',
+                        ],
+                        default => null,
+                    };
+
+                    if ($payload) {
+                        $block->textTranslations()->updateOrCreate(['locale_id' => $locale->id], $payload);
+                    }
+
+                    return;
+                }
+
+                if ($family === 'button') {
+                    $payload = match ($block->getRawOriginal('title')) {
+                        'Get Started' => ['title' => 'Baslayin'],
+                        default => null,
+                    };
+
+                    if ($payload) {
+                        $block->buttonTranslations()->updateOrCreate(['locale_id' => $locale->id], $payload);
+                    }
+
+                    return;
+                }
+
+                if ($family === 'image' && $block->getRawOriginal('title') === 'Starter media preview') {
+                    $block->imageTranslations()->updateOrCreate(
+                        ['locale_id' => $locale->id],
+                        [
+                            'caption' => 'Baslangic medya onizlemesi',
+                            'alt_text' => 'Kutuphanelerinizden kendi gorsellerinizle degistirebileceginiz medya blogu.',
+                        ],
+                    );
+
+                    return;
+                }
+
+                if ($family === 'contact_form' && $block->getRawOriginal('title') === 'Contact us') {
+                    $block->contactFormTranslations()->updateOrCreate(
+                        ['locale_id' => $locale->id],
+                        [
+                            'title' => 'Bize ulasin',
+                            'content' => 'Planladiginiz isi bize anlatin, mesajinizi dogru editor veya uygulama sorumlusuna yonlendirelim.',
+                            'submit_label' => 'Mesaj gonder',
+                            'success_message' => 'Mesajiniz icin tesekkurler. En kisa surede size donus yapacagiz.',
+                        ],
+                    );
+                }
+            });
     }
 
     private function seedNavigation(Page $homePage, Page $aboutPage, Page $contactPage): void

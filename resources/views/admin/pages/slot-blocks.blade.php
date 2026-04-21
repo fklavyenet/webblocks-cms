@@ -1,5 +1,6 @@
 @php
     $slotTitle = 'Edit Slot: '.($slot->slotType?->name ?? 'Slot').' ('.$page->title.')';
+    $activePreviewUrl = $page->publicUrl($activeLocale->code);
 @endphp
 
 @extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -8,8 +9,12 @@
     @php
         $expandedBlockQuery = $expandedBlockIds->implode(',');
 
-        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery) {
+        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery, $activeLocale) {
             $resolved = $parameters;
+
+            if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
+                $resolved['locale'] = $activeLocale->code;
+            }
 
             if ($expandedBlockQuery !== '' && ! array_key_exists('expanded', $resolved)) {
                 $resolved['expanded'] = $expandedBlockQuery;
@@ -18,7 +23,11 @@
             return route('admin.pages.slots.blocks', [$page, $slot] + $resolved);
         };
 
-        $slotBlockBaseRoute = function (array $parameters = []) use ($page, $slot) {
+        $slotBlockBaseRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
+            if (! array_key_exists('locale', $parameters) && ! $activeLocale->is_default) {
+                $parameters['locale'] = $activeLocale->code;
+            }
+
             return route('admin.pages.slots.blocks', [$page, $slot] + $parameters);
         };
     @endphp
@@ -26,15 +35,35 @@
     @include('admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.index').'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.($slot->slotType?->name ?? 'Slot').'</span></li></ol></nav>',
         'title' => $slotTitle,
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', $page).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a><a href="'.$page->publicUrl().'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a></div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', $page).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
     ])
 
     @include('admin.partials.flash')
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Blocks</strong>
+            <div class="wb-stack wb-gap-1">
+                <strong>Blocks</strong>
+                <span class="wb-text-sm wb-text-muted">Editing content for {{ strtoupper($activeLocale->code) }}. Structure, ordering, and shared block config remain canonical.</span>
+            </div>
             <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+        </div>
+
+        <div class="wb-card-body wb-border-b">
+            <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                <div class="wb-cluster wb-cluster-2">
+                    @foreach ($availableLocales as $translationStatus)
+                        @php
+                            $locale = $translationStatus['locale'];
+                            $isActiveLocale = $locale->id === $activeLocale->id;
+                        @endphp
+                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_search' => request('block_type_search')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                            {{ strtoupper($locale->code) }}
+                        </a>
+                    @endforeach
+                </div>
+                <span class="wb-text-sm wb-text-muted">Page route translation and block content translation are edited separately.</span>
+            </div>
         </div>
 
         @if ($isPickerOpen)
@@ -116,6 +145,8 @@
                                             @if ($block->editorSummary())
                                                 <span class="wb-text-sm wb-text-muted">{{ $block->editorSummary() }}</span>
                                             @endif
+                                            @php($translationStatus = $block->translationStatus($activeLocale))
+                                            <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>
                                         </div>
                                     </td>
                                     <td>
@@ -128,11 +159,17 @@
                                             <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
                                                 @csrf
                                                 <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
+                                                @unless ($activeLocale->is_default)
+                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                @endunless
                                                 <button type="submit" class="wb-action-btn" title="Move block up" aria-label="Move block up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
                                             </form>
                                             <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
                                                 @csrf
                                                 <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
+                                                @unless ($activeLocale->is_default)
+                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                @endunless
                                                 <button type="submit" class="wb-action-btn" title="Move block down" aria-label="Move block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                                             </form>
                                             <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
@@ -140,6 +177,9 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
+                                                @unless ($activeLocale->is_default)
+                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                @endunless
                                                 <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                             </form>
                                         </div>
@@ -164,6 +204,8 @@
                                                     @if ($child->editorSummary())
                                                         <span class="wb-text-sm wb-text-muted">{{ $child->editorSummary() }}</span>
                                                     @endif
+                                                    @php($childTranslationStatus = $child->translationStatus($activeLocale))
+                                                    <span class="wb-text-sm wb-text-muted">{{ $childTranslationStatus['label'] }}{{ $childTranslationStatus['state'] === 'fallback' ? ' from '.strtoupper($childTranslationStatus['resolved_locale']->code) : '' }}</span>
                                                 </div>
                                             </td>
                                             <td>
@@ -176,11 +218,17 @@
                                                     <form method="POST" action="{{ route('admin.blocks.move-up', $child) }}">
                                                         @csrf
                                                         <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
+                                                        @unless ($activeLocale->is_default)
+                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                        @endunless
                                                         <button type="submit" class="wb-action-btn" title="Move child block up" aria-label="Move child block up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
                                                     </form>
                                                     <form method="POST" action="{{ route('admin.blocks.move-down', $child) }}">
                                                         @csrf
                                                         <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
+                                                        @unless ($activeLocale->is_default)
+                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                        @endunless
                                                         <button type="submit" class="wb-action-btn" title="Move child block down" aria-label="Move child block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                                                     </form>
                                                     <a href="{{ $slotBlockRoute(['edit' => $child->id, 'expanded' => $blockExpandedQuery]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit child block" aria-label="Edit child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $child->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
@@ -188,6 +236,9 @@
                                                         @csrf
                                                         @method('DELETE')
                                                         <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
+                                                        @unless ($activeLocale->is_default)
+                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                                                        @endunless
                                                         <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete child block" aria-label="Delete child block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                                     </form>
                                                 </div>
