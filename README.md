@@ -139,11 +139,11 @@ First-pass rule:
 
 ## Site-Specific Public Assets
 
-- WebBlocks CMS currently follows a single-site-per-install convention.
-- Use `public/site/css/site.css` for site-specific public branding, theming, and visual refinements.
-- Use `public/site/js/site.js` for site-specific public behavior.
+- WebBlocks CMS now supports multisite installs in core.
+- `public/site/css/site.css` and `public/site/js/site.js` remain optional install-level public overrides.
+- In a multisite install, treat these files as shared install assets and keep site-specific routing/content/domain behavior in CMS data instead of core templates.
 - These files are optional. Public pages continue to work when they do not exist.
-- The shared CMS/core public layout stays generic; site-specific customizations should go into these `public/site` files instead of core public templates.
+- The shared CMS/core public layout stays generic; install-specific visual customization should go into these `public/site` files instead of core public templates.
 
 ## Multisite And Locale Foundation
 
@@ -324,25 +324,17 @@ Project metadata is normalized to the CMS brand:
 - The workflow strips the leading `v` to derive the release version, builds `webblocks-cms-<version>.zip`, creates a GitHub Release, and publishes release metadata to WebBlocks Publisher.
 - Release notes come from the annotated tag message when present. If the tag has no message, the workflow uses the matching `CHANGELOG.md` section when available and otherwise falls back to a short default note.
 - The release archive is a source package and excludes local/runtime content such as `.git`, `.github`, `.ddev`, `node_modules`, `vendor`, `.env*`, logs, caches, and generated storage artifacts.
-- Publisher payload fields are based on the last known CMS-side publisher contract and currently include:
+- The current publish workflow sends a multipart payload with:
   - `product`
   - `version`
   - `channel`
-  - `released_at`
+  - `minimum_client_version`
+  - `release_notes`
   - `notes`
-  - `source.type`
-  - `source.url`
-  - `source.reference`
-  - `meta.app_name`
-  - `meta.app_version`
-  - `meta.commit`
-  - `meta.tag`
-  - `meta.php_version`
-  - `meta.laravel_version`
-  - `meta.artifact_name`
-  - `meta.artifact_url`
-  - `meta.checksum`
-  - `meta.checksum_algorithm`
+  - `source_reference`
+  - `checksum_sha256`
+  - `package`
+- The first structural multisite + multilingual release pins `minimum_client_version=0.1.8` so legacy single-site installs on `0.1.8` remain explicitly eligible for the stable upgrade path.
 - Required GitHub Actions secret:
   - `WEBBLOCKS_PUBLISH_TOKEN`: bearer token used for `POST https://updates.webblocksui.com/api/updates/publish`
 - Optional GitHub Actions secret:

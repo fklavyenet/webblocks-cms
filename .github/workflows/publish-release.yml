@@ -15,6 +15,7 @@ jobs:
       PRODUCT_KEY: webblocks-cms
       DEFAULT_CHANNEL: stable
       SOURCE_TYPE: github
+      MINIMUM_CLIENT_VERSION: 0.1.8
 
     steps:
       - name: Check out source
@@ -131,6 +132,7 @@ jobs:
             --form "product=${PRODUCT_KEY}" \
             --form "version=${VERSION}" \
             --form "channel=${DEFAULT_CHANNEL}" \
+            --form "minimum_client_version=${MINIMUM_CLIENT_VERSION}" \
             --form "release_notes=<release-notes.md" \
             --form "notes=GitHub release package publish for ${TAG_NAME}" \
             --form "source_reference=${TAG_NAME}" \
