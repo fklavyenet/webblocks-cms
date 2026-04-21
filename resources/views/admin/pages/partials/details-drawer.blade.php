@@ -51,7 +51,7 @@
 
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Public URL</span>
+                        <span class="wb-list-item-title">Default URL</span>
                         <span class="wb-list-item-sub">{{ $page->publicUrl() }}</span>
                     </div>
                 </div>
@@ -63,12 +63,14 @@
                     </div>
                 </div>
 
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Locale</span>
-                        <span class="wb-list-item-sub">en</span>
+                @foreach ($page->translationStatusForSite() as $translationStatus)
+                    <div class="wb-list-item">
+                        <div class="wb-list-item-text">
+                            <span class="wb-list-item-title">{{ strtoupper($translationStatus['locale']->code) }}</span>
+                            <span class="wb-list-item-sub">{{ $translationStatus['translation']?->slug ?? 'Missing' }}{{ $translationStatus['public_path'] ? ' | '.$translationStatus['public_path'] : '' }}</span>
+                        </div>
                     </div>
-                </div>
+                @endforeach
 
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">

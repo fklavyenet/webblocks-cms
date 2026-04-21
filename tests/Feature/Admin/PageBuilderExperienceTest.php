@@ -4,9 +4,12 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
@@ -29,14 +32,26 @@ class PageBuilderExperienceTest extends TestCase
         );
     }
 
+    private function defaultSite(): Site
+    {
+        return Site::query()->where('is_primary', true)->firstOrFail();
+    }
+
+    private function defaultLocale(): Locale
+    {
+        return Locale::query()->where('is_default', true)->firstOrFail();
+    }
+
     #[Test]
     public function creating_a_page_starts_empty_and_persists_selected_slots(): void
     {
         $user = User::factory()->create();
         $header = $this->slotType('header', 'Header', 1);
         $main = $this->slotType('main', 'Main', 2);
+        $site = $this->defaultSite();
 
         $response = $this->actingAs($user)->post(route('admin.pages.store'), [
+            'site_id' => $site->id,
             'title' => 'About',
             'slug' => 'about',
             'status' => 'draft',
@@ -51,6 +66,13 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotNull($page);
         $response->assertRedirect(route('admin.pages.edit', $page));
         $this->assertSame('default', $page->fresh()->page_type);
+        $this->assertSame($site->id, $page->fresh()->site_id);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'name' => 'About',
+            'slug' => 'about',
+        ]);
         $this->assertSame(0, Block::query()->where('page_id', $page->id)->count());
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $header->id, 'sort_order' => 0]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id, 'sort_order' => 1]);
@@ -202,7 +224,16 @@ class PageBuilderExperienceTest extends TestCase
     {
         $user = User::factory()->create();
         $main = $this->slotType('main', 'Main', 2);
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
         $page = Page::create([
+            'site_id' => $site->id,
             'title' => 'About',
             'slug' => 'about',
             'status' => 'draft',
@@ -212,15 +243,226 @@ class PageBuilderExperienceTest extends TestCase
             'slot_type_id' => $main->id,
             'sort_order' => 0,
         ]);
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $locale->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+        ]);
 
         $response = $this->actingAs($user)->get(route('admin.pages.index'));
 
         $response->assertOk();
         $response->assertSee('Main');
+        $response->assertSee($site->name);
+        $response->assertSee('Default');
+        $response->assertSee('tr');
+        $response->assertSee('/tr/p/hakkinda');
         $response->assertSee(route('admin.pages.edit', $page), false);
         $response->assertDontSee('<th>Slug</th>', false);
         $response->assertDontSee('<th>Slots</th>', false);
         $response->assertDontSee(route('admin.blocks.index', ['page_id' => $page->id]), false);
+    }
+
+    #[Test]
+    public function page_edit_can_create_a_missing_translation(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $edit = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $edit->assertOk();
+        $edit->assertSee('Translations');
+        $edit->assertSee('Missing');
+        $edit->assertSee(route('admin.pages.translations.create', [$page, $locale]), false);
+
+        $store = $this->actingAs($user)->post(route('admin.pages.translations.store', [$page, $locale]), [
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+        ]);
+
+        $store->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'locale_id' => $locale->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+        ]);
+    }
+
+    #[Test]
+    public function translation_validation_enforces_slug_uniqueness_within_site_and_locale_scope(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $about = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        $contact = Page::create([
+            'site_id' => $site->id,
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $about->id,
+            'site_id' => $site->id,
+            'locale_id' => $locale->id,
+            'name' => 'Hakkinda',
+            'slug' => 'ortak',
+        ]);
+
+        $response = $this->actingAs($user)->from(route('admin.pages.edit', $contact))->post(route('admin.pages.translations.store', [$contact, $locale]), [
+            'name' => 'Iletisim',
+            'slug' => 'ortak',
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $contact));
+        $response->assertSessionHasErrors('slug');
+    }
+
+    #[Test]
+    public function site_locale_assignments_control_available_translation_options(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'de',
+            'name' => 'German',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $before = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $before->assertOk();
+        $before->assertDontSee('German');
+
+        $updateSite = $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => $site->name,
+            'handle' => $site->handle,
+            'domain' => $site->domain,
+            'is_primary' => 1,
+            'locale_ids' => [$this->defaultLocale()->id, $locale->id],
+        ]);
+        $updateSite->assertRedirect(route('admin.sites.edit', $site));
+
+        $after = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $after->assertOk();
+        $after->assertSee('German');
+        $after->assertSee(route('admin.pages.translations.create', [$page, $locale]), false);
+    }
+
+    #[Test]
+    public function sites_and_locales_admin_enforce_primary_and_default_invariants(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $defaultLocale = $this->defaultLocale();
+
+        $secondarySite = $this->actingAs($user)->post(route('admin.sites.store'), [
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign.example.test',
+            'is_primary' => 0,
+            'locale_ids' => [$defaultLocale->id],
+        ]);
+        $secondarySite->assertRedirect();
+
+        $secondary = Site::query()->where('handle', 'campaign-site')->firstOrFail();
+        $this->assertTrue($site->fresh()->is_primary);
+        $this->assertFalse($secondary->fresh()->is_primary);
+
+        $localeResponse = $this->actingAs($user)->post(route('admin.locales.store'), [
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => 1,
+            'is_enabled' => 1,
+        ]);
+        $localeResponse->assertRedirect();
+
+        $turkish = Locale::query()->where('code', 'tr')->firstOrFail();
+        $this->assertTrue($turkish->fresh()->is_default);
+        $this->assertFalse($defaultLocale->fresh()->is_default);
+        $this->assertTrue($turkish->fresh()->is_enabled);
+
+        $disableDefault = $this->actingAs($user)->put(route('admin.locales.update', $turkish), [
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => 1,
+            'is_enabled' => 0,
+        ]);
+        $disableDefault->assertRedirect(route('admin.locales.edit', $turkish));
+        $this->assertTrue($turkish->fresh()->is_enabled);
+    }
+
+    #[Test]
+    public function preview_links_resolve_for_default_and_non_default_locale_translations(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $locale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $locale->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee($page->publicUrl(), false);
+        $response->assertSee($page->publicUrl('tr'), false);
+        $response->assertSee('/tr/p/hakkinda', false);
     }
 
     #[Test]
@@ -921,7 +1163,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('slot-preview-check');
         $response->assertSee('Path');
         $response->assertSee($page->publicPath(), false);
-        $response->assertSee('Public URL');
+        $response->assertSee('Default URL');
         $response->assertSee($page->publicUrl(), false);
         $response->assertSee('Slot count');
         $response->assertSee('1');

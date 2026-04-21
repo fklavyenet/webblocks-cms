@@ -41,16 +41,23 @@ class PageController extends Controller
             $sort = 'created_at';
         }
 
+        $siteLocaleCounts = Site::query()
+            ->withCount(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)])
+            ->pluck('locales_count', 'id');
+
         return view('admin.pages.index', [
             'pages' => Page::query()
-                ->with(['site', 'translations'])
+                ->with(['site', 'translations.locale'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
                 ->when($search !== '', function ($query) use ($search) {
                     $query->where(function ($inner) use ($search) {
                         $inner->where('title', 'like', "%{$search}%")
                             ->orWhere('slug', 'like', "%{$search}%")
-                            ->orWhere('page_type', 'like', "%{$search}%");
+                            ->orWhere('page_type', 'like', "%{$search}%")
+                            ->orWhereHas('translations', fn ($translations) => $translations
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('slug', 'like', "%{$search}%"));
                     });
                 })
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
@@ -67,6 +74,7 @@ class PageController extends Controller
                 'sort' => $sort,
                 'direction' => $direction,
             ],
+            'siteLocaleCounts' => $siteLocaleCounts,
         ]);
     }
 
@@ -77,9 +85,15 @@ class PageController extends Controller
 
     public function create(): View
     {
+        $sites = Site::query()
+            ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
+            ->orderByDesc('is_primary')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.pages.create', [
             'page' => new Page,
-            'sites' => Site::query()->orderByDesc('is_primary')->orderBy('name')->get(),
+            'sites' => $sites,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
         ]);
     }
@@ -135,9 +149,14 @@ class PageController extends Controller
 
         return view('admin.pages.edit', [
             'page' => $page,
-            'sites' => Site::query()->orderByDesc('is_primary')->orderBy('name')->get(),
+            'sites' => Site::query()
+                ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
+                ->orderByDesc('is_primary')
+                ->orderBy('name')
+                ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
+            'translationStatuses' => $page->translationStatusForSite(),
         ]);
     }
 
@@ -295,6 +314,8 @@ class PageController extends Controller
             'title' => $translation['name'],
             'slug' => $translation['slug'],
         ])->saveQuietly();
+
+        $page->translations()->where('site_id', '!=', $page->site_id)->update(['site_id' => $page->site_id]);
 
         $page->unsetRelation('translations');
         $page->load('translations');

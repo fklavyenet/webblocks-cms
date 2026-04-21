@@ -88,9 +88,7 @@
                         <thead>
                             <tr>
                                 <th>View</th>
-                                <th>Title</th>
-                                <th>Site</th>
-                                <th>Locale</th>
+                                <th>Page</th>
                                 <th>Blocks</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -98,6 +96,11 @@
                         </thead>
                         <tbody>
                             @foreach ($pages as $page)
+                                @php
+                                    $translations = $page->translations->sortByDesc(fn ($translation) => $translation->locale?->is_default)->values();
+                                    $enabledLocaleCount = (int) ($siteLocaleCounts[$page->site_id] ?? $translations->count());
+                                    $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
+                                @endphp
                                 <tr>
                                     <td>
                                         @if ($page->status === 'published')
@@ -117,9 +120,37 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td>{{ $page->title }}</td>
-                                    <td>{{ $page->site?->name }}</td>
-                                    <td>en</td>
+                                    <td>
+                                        <div class="wb-stack wb-gap-1">
+                                            <div class="wb-cluster wb-cluster-2">
+                                                <strong>{{ $page->title }}</strong>
+                                                <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
+                                            </div>
+
+                                            <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
+                                                @foreach ($translations as $translation)
+                                                    <span class="wb-status-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
+                                                        {{ $translation->locale?->code }}
+                                                        @if ($translation->locale?->is_default)
+                                                            Default
+                                                        @endif
+                                                    </span>
+                                                @endforeach
+
+                                                @if ($missingTranslations > 0)
+                                                    <span class="wb-text-sm wb-text-muted">Missing {{ $missingTranslations }}</span>
+                                                @endif
+                                            </div>
+
+                                            <div class="wb-cluster wb-cluster-2 wb-text-sm">
+                                                @foreach ($translations->take(3) as $translation)
+                                                    <a href="{{ $page->publicUrl($translation->locale?->code) }}" target="_blank" rel="noopener noreferrer" class="wb-link">
+                                                        {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $page->publicPath($translation->locale?->code) }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">

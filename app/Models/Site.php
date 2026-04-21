@@ -41,4 +41,9 @@ class Site extends Model
     {
         return $this->hasMany(SiteLocale::class);
     }
+
+    public function enabledLocales(): BelongsToMany
+    {
+        return $this->locales()->wherePivot('is_enabled', true);
+    }
 }

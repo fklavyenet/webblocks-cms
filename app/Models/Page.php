@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -127,6 +128,56 @@ class Page extends Model
 
         return $this->translations->firstWhere('locale_id', $defaultLocaleId)
             ?? $this->translations()->where('locale_id', $defaultLocaleId)->first();
+    }
+
+    public function translationForLocale(Locale|int|string|null $locale): ?PageTranslation
+    {
+        $localeId = match (true) {
+            $locale instanceof Locale => $locale->id,
+            is_numeric($locale) => (int) $locale,
+            is_string($locale) && $locale !== '' => Locale::query()->where('code', $locale)->value('id'),
+            default => null,
+        };
+
+        if (! $localeId) {
+            return null;
+        }
+
+        return $this->translations->firstWhere('locale_id', $localeId)
+            ?? $this->translations()->where('locale_id', $localeId)->first();
+    }
+
+    public function availableSiteLocales(): Collection
+    {
+        $site = $this->relationLoaded('site') ? $this->site : $this->site()->first();
+
+        if (! $site) {
+            return collect();
+        }
+
+        return $site->locales()
+            ->wherePivot('is_enabled', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function translationStatusForSite(): Collection
+    {
+        $translations = $this->relationLoaded('translations') ? $this->translations : $this->translations()->with('locale')->get();
+
+        return $this->availableSiteLocales()->map(function (Locale $locale) use ($translations) {
+            $translation = $translations->firstWhere('locale_id', $locale->id);
+
+            return [
+                'locale' => $locale,
+                'translation' => $translation,
+                'is_missing' => ! $translation,
+                'is_default' => $locale->is_default,
+                'public_path' => $translation ? $this->publicPath($locale->code) : null,
+                'public_url' => $translation ? $this->publicUrl($locale->code) : null,
+            ];
+        });
     }
 
     public function publicUrl(?string $localeCode = null): string
