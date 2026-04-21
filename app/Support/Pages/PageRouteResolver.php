@@ -78,9 +78,12 @@ class PageRouteResolver
             return url($path);
         }
 
-        $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
+        $appUrl = (string) config('app.url');
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
+        $port = parse_url($appUrl, PHP_URL_PORT) ?: request()?->getPort();
+        $portSuffix = $port && ! in_array((int) $port, [80, 443], true) ? ':'.$port : '';
 
-        return $scheme.'://'.$resolvedSite->domain.$path;
+        return $scheme.'://'.$resolvedSite->domain.$portSuffix.$path;
     }
 
     public function findPublishedPage(Request $request, ?string $slug = null): ?Page
