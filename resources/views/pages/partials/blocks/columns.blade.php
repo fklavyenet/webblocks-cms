@@ -1,3 +1,12 @@
+@php
+    $children = $block->children->where('status', 'published')->sortBy('sort_order')->values();
+    $layoutClass = match (true) {
+        $children->count() <= 1 => 'wb-stack wb-gap-4',
+        $children->count() === 2 => 'wb-grid wb-grid-2',
+        default => 'wb-grid wb-grid-3',
+    };
+@endphp
+
 <section class="wb-card wb-card-muted">
     <div class="wb-card-body wb-stack wb-gap-4">
         @if ($block->title || $block->subtitle)
@@ -18,14 +27,20 @@
             </div>
         @endif
 
-        @if ($block->children->where('status', 'published')->isNotEmpty())
-            <div class="wb-grid wb-grid-3">
-                @foreach ($block->children->where('status', 'published')->sortBy('sort_order') as $child)
-                    <div class="wb-card">
-                        <div class="wb-card-body">
+        @if ($children->isNotEmpty())
+            <div class="{{ $layoutClass }}">
+                @foreach ($children as $child)
+                    @if ($child->isColumnItem())
+                        <div class="wb-card">
+                            <div class="wb-card-body">
+                                @include('pages.partials.block', ['block' => $child])
+                            </div>
+                        </div>
+                    @else
+                        <div>
                             @include('pages.partials.block', ['block' => $child])
                         </div>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         @endif
