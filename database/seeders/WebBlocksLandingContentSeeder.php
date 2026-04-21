@@ -33,13 +33,17 @@ class WebBlocksLandingContentSeeder extends Seeder
         $rootAbout = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'root'))->where('slug', 'about')->firstOrFail();
         $rootContact = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'root'))->where('slug', 'contact')->firstOrFail();
         $uiHome = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'ui'))->where('slug', 'home')->firstOrFail();
+        $uiDocsHome = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'ui-docs'))->where('slug', 'home')->firstOrFail();
         $cmsHome = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'cms'))->where('slug', 'home')->firstOrFail();
+        $cmsDocsHome = Page::query()->whereHas('site', fn ($query) => $query->where('handle', 'cms-docs'))->where('slug', 'home')->firstOrFail();
 
         $this->seedRootHome($rootHome, $english, $turkish);
         $this->seedRootAbout($rootAbout, $english, $turkish);
         $this->seedRootContact($rootContact, $english, $turkish);
         $this->seedUiHome($uiHome, $english, $turkish);
+        $this->seedUiDocsHome($uiDocsHome, $english, $turkish);
         $this->seedCmsHome($cmsHome, $english, $turkish);
+        $this->seedCmsDocsHome($cmsDocsHome, $english, $turkish);
     }
 
     private function seedRootHome(Page $page, Locale $english, Locale $turkish): void
@@ -80,7 +84,7 @@ class WebBlocksLandingContentSeeder extends Seeder
             'parent_id' => $products->id,
             'title' => 'WebBlocks UI',
             'content' => 'Design system patterns, composable building blocks, and a consistent visual grammar for products and sites.',
-            'url' => 'http://ui.webblocksui.lvh.me:8000/',
+            'url' => 'https://ui.webblocksui.com.ddev.site/',
         ]);
         $this->textTranslation($uiCard, $english, 'WebBlocks UI', null, 'Design system patterns, composable building blocks, and a consistent visual grammar for products and sites.');
         $this->textTranslation($uiCard, $turkish, 'WebBlocks UI', null, 'Tasarim sistemi desenleri, birlesebilir yapi taslari ve urunler ile siteler icin tutarli bir gorsel dil.');
@@ -88,7 +92,7 @@ class WebBlocksLandingContentSeeder extends Seeder
             'parent_id' => $products->id,
             'title' => 'WebBlocks CMS',
             'content' => 'A block-based CMS with multisite, multilingual content, and editorial structures that stay close to the product model.',
-            'url' => 'http://cms.webblocksui.lvh.me:8000/',
+            'url' => 'https://cms.webblocksui.com.ddev.site/',
         ]);
         $this->textTranslation($cmsCard, $english, 'WebBlocks CMS', null, 'A block-based CMS with multisite, multilingual content, and editorial structures that stay close to the product model.');
         $this->textTranslation($cmsCard, $turkish, 'WebBlocks CMS', null, 'Multisite, cok dilli icerik ve urun modeline yakin editor yapilari sunan blok tabanli CMS.');
@@ -108,7 +112,7 @@ class WebBlocksLandingContentSeeder extends Seeder
         $rootButton = $this->block($page, 'button', $main, 0, [
             'parent_id' => $cta->id,
             'title' => 'Visit WebBlocks UI',
-            'url' => 'http://ui.webblocksui.lvh.me:8000/',
+            'url' => 'https://ui.webblocksui.com.ddev.site/',
             'subtitle' => '_self',
             'variant' => 'primary',
         ]);
@@ -180,7 +184,7 @@ class WebBlocksLandingContentSeeder extends Seeder
             'tr' => ['title' => 'WebBlocks UI', 'content' => 'Ekosistem icin tasarim sistemi desenleri ve arayuz primitivelari.'],
         ]);
         $this->navigationBlocks($page, $header, $footer);
-        $this->headerAction($page, $header, 'CMS admin', 'http://webblocksui.lvh.me:8000/admin');
+        $this->headerAction($page, $header, 'CMS admin', 'https://webblocksui.com.ddev.site/admin');
 
         $hero = $this->block($page, 'section', $main, 0, [
             'title' => 'WebBlocks UI',
@@ -226,7 +230,7 @@ class WebBlocksLandingContentSeeder extends Seeder
         $button = $this->block($page, 'button', $main, 0, [
             'parent_id' => $cta->id,
             'title' => 'Back to ecosystem',
-            'url' => 'http://webblocksui.lvh.me:8000/',
+            'url' => 'https://webblocksui.com.ddev.site/',
             'subtitle' => '_self',
             'variant' => 'primary',
         ]);
@@ -245,7 +249,7 @@ class WebBlocksLandingContentSeeder extends Seeder
             'tr' => ['title' => 'WebBlocks CMS', 'content' => 'Cekirdekte multisite ve cok dilli yapi ile blok tabanli yayinlama.'],
         ]);
         $this->navigationBlocks($page, $header, $footer);
-        $this->headerAction($page, $header, 'Open admin', 'http://webblocksui.lvh.me:8000/admin');
+        $this->headerAction($page, $header, 'Open admin', 'https://webblocksui.com.ddev.site/admin');
 
         $hero = $this->block($page, 'section', $main, 0, [
             'title' => 'WebBlocks CMS',
@@ -291,7 +295,7 @@ class WebBlocksLandingContentSeeder extends Seeder
         $button = $this->block($page, 'button', $main, 0, [
             'parent_id' => $cta->id,
             'title' => 'Open admin',
-            'url' => 'http://webblocksui.lvh.me:8000/admin',
+            'url' => 'https://webblocksui.com.ddev.site/admin',
             'subtitle' => '_self',
             'variant' => 'primary',
         ]);
@@ -300,6 +304,126 @@ class WebBlocksLandingContentSeeder extends Seeder
 
         $this->footerBrand($page, $footer, 'WebBlocks CMS', 'Structured editorial foundation for the ecosystem.', [
             'tr' => ['title' => 'WebBlocks CMS', 'content' => 'Ekosistem icin yapisal editor temeli.'],
+        ]);
+    }
+
+    private function seedUiDocsHome(Page $page, Locale $english, Locale $turkish): void
+    {
+        [$header, $main, $footer] = $this->standardSlots($page);
+        $this->brandHeader($page, $header, 'WebBlocks UI Docs', 'Documentation home for UI patterns, primitives, and integration guidance.', [
+            'tr' => ['title' => 'WebBlocks UI Dokumantasyon', 'content' => 'UI desenleri, primitivelar ve entegrasyon rehberi icin dokumantasyon anasayfasi.'],
+        ]);
+        $this->navigationBlocks($page, $header, $footer);
+        $this->headerAction($page, $header, 'Back to UI site', 'https://ui.webblocksui.com.ddev.site/');
+
+        $hero = $this->block($page, 'section', $main, 0, [
+            'title' => 'WebBlocks UI documentation',
+            'content' => 'This is the documentation home for WebBlocks UI. It sets the first docs boundary for patterns, primitives, integration notes, and future JavaScript guidance.',
+            'variant' => 'accent',
+        ]);
+        $this->textTranslation($hero, $english, 'WebBlocks UI documentation', null, 'This is the documentation home for WebBlocks UI. It sets the first docs boundary for patterns, primitives, integration notes, and future JavaScript guidance.');
+        $this->textTranslation($hero, $turkish, 'WebBlocks UI dokumantasyonu', null, 'Bu alan WebBlocks UI icin dokumantasyon anasayfasidir. Desenler, primitivelar, entegrasyon notlari ve gelecekteki JavaScript rehberi icin ilk dokumantasyon sinirini kurar.');
+
+        $topics = $this->block($page, 'columns', $main, 1, [
+            'title' => 'Docs topics',
+            'subtitle' => 'What this docs site will grow into.',
+            'content' => 'Start with high-level orientation now, then expand into full reference structure in the next phase.',
+        ]);
+        $this->textTranslation($topics, $english, 'Docs topics', 'What this docs site will grow into.', 'Start with high-level orientation now, then expand into full reference structure in the next phase.');
+        $this->textTranslation($topics, $turkish, 'Dokumantasyon basliklari', 'Bu dokumantasyon sitesinin buyuyecegi alanlar.', 'Simdilik yuksek seviyeli yonlendirme ile baslayin, sonraki fazda tam referans yapisina genisletin.');
+        foreach ([
+            0 => ['Patterns', 'Reusable page and shell patterns for product surfaces.', 'Desenler', 'Urun yuzeyleri icin tekrar kullanilabilir sayfa ve shell desenleri.'],
+            1 => ['Primitives', 'Base building blocks that keep the UI language consistent.', 'Primitiveler', 'UI dilini tutarli tutan temel yapi taslari.'],
+            2 => ['Integration', 'How UI composition fits Laravel, Blade, and CMS surfaces.', 'Entegrasyon', 'UI kompozisyonunun Laravel, Blade ve CMS yuzeyleriyle nasil uyumlu calistigi.'],
+            3 => ['JavaScript direction', 'Progressive enhancement and future interactive guidance.', 'JavaScript yonu', 'Asamali gelistirme ve gelecekteki etkilesim rehberi.'],
+        ] as $index => [$enTitle, $enContent, $trTitle, $trContent]) {
+            $item = $this->block($page, 'column_item', $main, $index, [
+                'parent_id' => $topics->id,
+                'title' => $enTitle,
+                'content' => $enContent,
+            ]);
+            $this->textTranslation($item, $english, $enTitle, null, $enContent);
+            $this->textTranslation($item, $turkish, $trTitle, null, $trContent);
+        }
+
+        $cta = $this->block($page, 'section', $main, 2, [
+            'title' => 'Docs structure comes next',
+            'content' => 'This phase creates the real docs site and host boundary. The next phase can add categories, side navigation, and deeper guides.',
+        ]);
+        $this->textTranslation($cta, $english, 'Docs structure comes next', null, 'This phase creates the real docs site and host boundary. The next phase can add categories, side navigation, and deeper guides.');
+        $this->textTranslation($cta, $turkish, 'Dokumantasyon yapisi sonraki adimda', null, 'Bu faz gercek dokumantasyon sitesini ve host sinirini kurar. Sonraki faz kategoriler, yan navigasyon ve daha derin rehberler ekleyebilir.');
+        $button = $this->block($page, 'button', $main, 0, [
+            'parent_id' => $cta->id,
+            'title' => 'Open UI landing',
+            'url' => 'https://ui.webblocksui.com.ddev.site/',
+            'subtitle' => '_self',
+            'variant' => 'primary',
+        ]);
+        $this->buttonTranslation($button, $english, 'Open UI landing');
+        $this->buttonTranslation($button, $turkish, 'UI acilis sayfasini ac');
+
+        $this->footerBrand($page, $footer, 'WebBlocks UI Docs', 'The first documentation layer for WebBlocks UI.', [
+            'tr' => ['title' => 'WebBlocks UI Dokumantasyon', 'content' => 'WebBlocks UI icin ilk dokumantasyon katmani.'],
+        ]);
+    }
+
+    private function seedCmsDocsHome(Page $page, Locale $english, Locale $turkish): void
+    {
+        [$header, $main, $footer] = $this->standardSlots($page);
+        $this->brandHeader($page, $header, 'WebBlocks CMS Docs', 'Documentation home for install, multisite, multilingual, and editorial system guidance.', [
+            'tr' => ['title' => 'WebBlocks CMS Dokumantasyon', 'content' => 'Kurulum, multisite, cok dilli ve editor sistem rehberi icin dokumantasyon anasayfasi.'],
+        ]);
+        $this->navigationBlocks($page, $header, $footer);
+        $this->headerAction($page, $header, 'Back to CMS site', 'https://cms.webblocksui.com.ddev.site/');
+
+        $hero = $this->block($page, 'section', $main, 0, [
+            'title' => 'WebBlocks CMS documentation',
+            'content' => 'This is the documentation home for WebBlocks CMS. It establishes the docs site for install guidance, multisite, multilingual setup, block modeling, media, navigation, and update workflows.',
+            'variant' => 'accent',
+        ]);
+        $this->textTranslation($hero, $english, 'WebBlocks CMS documentation', null, 'This is the documentation home for WebBlocks CMS. It establishes the docs site for install guidance, multisite, multilingual setup, block modeling, media, navigation, and update workflows.');
+        $this->textTranslation($hero, $turkish, 'WebBlocks CMS dokumantasyonu', null, 'Bu alan WebBlocks CMS icin dokumantasyon anasayfasidir. Kurulum rehberi, multisite, cok dilli kurulum, blok modelleme, medya, navigasyon ve guncelleme akislarina ayrilan dokumantasyon sitesini kurar.');
+
+        $topics = $this->block($page, 'columns', $main, 1, [
+            'title' => 'Docs topics',
+            'subtitle' => 'The first CMS documentation map.',
+            'content' => 'This docs site starts as a clear landing page and can grow into a deeper reference system next.',
+        ]);
+        $this->textTranslation($topics, $english, 'Docs topics', 'The first CMS documentation map.', 'This docs site starts as a clear landing page and can grow into a deeper reference system next.');
+        $this->textTranslation($topics, $turkish, 'Dokumantasyon basliklari', 'Ilk CMS dokumantasyon haritasi.', 'Bu dokumantasyon sitesi net bir acilis sayfasi olarak baslar ve sonra daha derin bir referans sistemine buyuyebilir.');
+        foreach ([
+            0 => ['Install and upgrade', 'Environment setup, install flow, and update direction.', 'Kurulum ve guncelleme', 'Ortam kurulumu, kurulum akisi ve guncelleme yonu.'],
+            1 => ['Multisite and multilingual', 'Hosts, locales, translations, and site boundaries.', 'Multisite ve cok dilli', 'Hostlar, locale kayitlari, ceviriler ve site sinirlari.'],
+            2 => ['Blocks and layouts', 'Pages, slots, blocks, navigation, and editorial structure.', 'Bloklar ve layoutlar', 'Sayfalar, slotlar, bloklar, navigasyon ve editor yapisi.'],
+            3 => ['Media and system tools', 'Media flows, backups, and update system surfaces.', 'Medya ve sistem araclari', 'Medya akislar, yedekler ve guncelleme sistemi yuzeyleri.'],
+        ] as $index => [$enTitle, $enContent, $trTitle, $trContent]) {
+            $item = $this->block($page, 'column_item', $main, $index, [
+                'parent_id' => $topics->id,
+                'title' => $enTitle,
+                'content' => $enContent,
+            ]);
+            $this->textTranslation($item, $english, $enTitle, null, $enContent);
+            $this->textTranslation($item, $turkish, $trTitle, null, $trContent);
+        }
+
+        $cta = $this->block($page, 'section', $main, 2, [
+            'title' => 'Deeper docs are the next phase',
+            'content' => 'This phase creates the real docs site and multilingual host boundary. The next phase can add structured sections, navigation depth, and operational guides.',
+        ]);
+        $this->textTranslation($cta, $english, 'Deeper docs are the next phase', null, 'This phase creates the real docs site and multilingual host boundary. The next phase can add structured sections, navigation depth, and operational guides.');
+        $this->textTranslation($cta, $turkish, 'Daha derin dokumantasyon sonraki fazda', null, 'Bu faz gercek dokumantasyon sitesini ve cok dilli host sinirini kurar. Sonraki faz yapisal bolumler, daha derin navigasyon ve operasyon rehberleri ekleyebilir.');
+        $button = $this->block($page, 'button', $main, 0, [
+            'parent_id' => $cta->id,
+            'title' => 'Open CMS landing',
+            'url' => 'https://cms.webblocksui.com.ddev.site/',
+            'subtitle' => '_self',
+            'variant' => 'primary',
+        ]);
+        $this->buttonTranslation($button, $english, 'Open CMS landing');
+        $this->buttonTranslation($button, $turkish, 'CMS acilis sayfasini ac');
+
+        $this->footerBrand($page, $footer, 'WebBlocks CMS Docs', 'The first documentation layer for WebBlocks CMS.', [
+            'tr' => ['title' => 'WebBlocks CMS Dokumantasyon', 'content' => 'WebBlocks CMS icin ilk dokumantasyon katmani.'],
         ]);
     }
 
