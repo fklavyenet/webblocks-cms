@@ -9,4 +9,21 @@ return [
         'dump_timeout_seconds' => env('CMS_BACKUP_DUMP_TIMEOUT_SECONDS', 120),
         'restore_timeout_seconds' => env('CMS_BACKUP_RESTORE_TIMEOUT_SECONDS', 300),
     ],
+    'visitor_reports' => [
+        'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),
+        'ignored_user_agents' => [
+            'bot',
+            'crawler',
+            'spider',
+            'slurp',
+            'bingpreview',
+            'facebookexternalhit',
+            'google-inspectiontool',
+            'googleother',
+            'uptime',
+            'monitoring',
+            'curl/',
+            'wget/',
+        ],
+    ],
 ];

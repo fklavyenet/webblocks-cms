@@ -44,6 +44,7 @@ class MultisiteMultilingualFoundationTest extends TestCase
         Schema::dropIfExists('block_image_translations');
         Schema::dropIfExists('block_button_translations');
         Schema::dropIfExists('block_text_translations');
+        Schema::dropIfExists('visitor_events');
         Schema::dropIfExists('page_translations');
         Schema::dropIfExists('site_locales');
         Schema::dropIfExists('locales');

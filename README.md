@@ -337,6 +337,76 @@ php artisan site:clone {source} {target}
 - Set `CONTACT_RECIPIENT_EMAIL` to a local inbox target, submit `/p/contact`, then confirm both the saved `contact_messages` row and the notification state in the admin detail view.
 - If mail delivery fails locally, the message record remains saved and the detail view shows the notification recipient, status, and captured error text.
 
+## Visitor Reports V1
+
+- Admin path: `GET /admin/reports/visitors`
+- Visitor Reports is a lightweight, CMS-native page visit reporting feature for public page renders.
+- Admin navigation adds a `Reports` group with `Visitor Reports` inside the CMS sidebar.
+- Tracking is multisite-aware and locale-aware:
+  - every event is scoped to `site_id`
+  - page-linked visits store `page_id` when a CMS page is rendered
+  - locale context is stored in `locale_id` when the resolved page translation has a locale
+- V1 stores one row per tracked visit in `visitor_events` with the following fields:
+  - `site_id`
+  - `page_id` nullable
+  - `locale_id` nullable
+  - `path`
+  - `referrer`
+  - `utm_source`
+  - `utm_medium`
+  - `utm_campaign`
+  - `device_type`
+  - `browser_family`
+  - `os_family`
+  - `session_key`
+  - `ip_hash`
+  - `visited_at`
+
+### Privacy
+
+- Raw IP addresses are never stored in Visitor Reports.
+- `ip_hash` is generated as a one-way HMAC using the visitor IP plus the application key, so the stored value is not reversible back to the original IP.
+- V1 intentionally avoids collecting extra personal data beyond lightweight visit analytics needed for aggregate reporting.
+
+### Tracking Behavior
+
+- Tracking only runs for public CMS page requests that resolve and render successfully through the public page controller flow.
+- Admin routes, API routes, asset requests, and missing pages are not tracked by this feature path.
+- Obvious bot user agents are ignored with a lightweight fragment-based filter.
+- Visitor session grouping uses a dedicated session-backed visitor key instead of storing raw Laravel session payload data in reports.
+
+### Admin Screen
+
+- The Visitor Reports screen includes:
+  - date range filters for Today, Last 7 days, Last 30 days, This month, and custom from/to
+  - site filtering for multisite installs
+  - locale filtering for enabled locales
+  - summary cards for total page views, unique visitors, total sessions, and average pages per session
+  - report tables for top pages, top entry pages, top referrers, locale summary, and device summary
+
+### Configuration
+
+- Visitor Reports can be enabled or disabled with:
+
+```bash
+CMS_VISITOR_REPORTS_ENABLED=true
+```
+
+### V1 Limits
+
+- V1 focuses on readable aggregate reports inside the CMS and is intentionally not a full analytics platform.
+- There is no deep bot detection, campaign attribution modeling, heatmaps, event funnels, or referrer/UTM filtering yet.
+
+### Test Coverage
+
+- Feature coverage includes:
+  - public page renders creating `visitor_events`
+  - localized page renders storing the resolved locale
+  - authenticated admin access to the Visitor Reports screen
+  - site and date-range filter behavior in the reports query layer
+  - obvious bot traffic being ignored
+- Migration/backfill coverage now also accounts for the presence of the `visitor_events` table in the multisite foundation test path.
+
 ## Demo Media
 
 - Demo media import remains available through `php artisan demo:import-media`.

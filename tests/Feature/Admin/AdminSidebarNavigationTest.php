@@ -65,4 +65,17 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('href="'.route('admin.pages.index').'"', false);
         $response->assertSee('class="wb-sidebar-link is-active"', false);
     }
+
+    #[Test]
+    public function visitor_reports_page_marks_reports_group_and_item_active(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
+
+        $response->assertOk();
+        $response->assertSee('href="'.route('admin.reports.visitors.index').'"', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+        $response->assertSee('>Reports<', false);
+    }
 }

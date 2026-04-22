@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Pages\PublicPagePresenter;
+use App\Support\Visitors\VisitorEventLogger;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -13,6 +14,7 @@ class PageController extends Controller
     public function __construct(
         private readonly PublicPagePresenter $presenter,
         private readonly PageRouteResolver $routeResolver,
+        private readonly VisitorEventLogger $visitorEventLogger,
     ) {}
 
     public function home(Request $request): View
@@ -27,7 +29,7 @@ class PageController extends Controller
             return view('welcome');
         }
 
-        return $this->renderPage($homePage);
+        return $this->renderPage($request, $homePage);
     }
 
     public function show(Request $request, string $localeOrSlug, ?string $slug = null): View
@@ -38,10 +40,10 @@ class PageController extends Controller
 
         abort_unless($page, 404);
 
-        return $this->renderPage($page);
+        return $this->renderPage($request, $page);
     }
 
-    private function renderPage(Page $page): View
+    private function renderPage(Request $request, Page $page): View
     {
         $page->load([
             'site',
@@ -56,6 +58,8 @@ class PageController extends Controller
                 ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
                 ->orderBy('sort_order'),
         ]);
+
+        $this->visitorEventLogger->logPageView($request, $page);
 
         return view('pages.show', $this->presenter->present($page));
     }

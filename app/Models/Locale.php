@@ -80,6 +80,11 @@ class Locale extends Model
         return $this->hasMany(PageTranslation::class);
     }
 
+    public function visitorEvents(): HasMany
+    {
+        return $this->hasMany(VisitorEvent::class);
+    }
+
     public static function enforceDefaultInvariant(self $locale): void
     {
         if ($locale->is_default) {

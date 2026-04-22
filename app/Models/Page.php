@@ -129,6 +129,11 @@ class Page extends Model
         return $this->hasMany(NavigationItem::class);
     }
 
+    public function visitorEvents(): HasMany
+    {
+        return $this->hasMany(VisitorEvent::class);
+    }
+
     public function defaultTranslation(): ?PageTranslation
     {
         $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');

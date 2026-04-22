@@ -49,6 +49,11 @@ class Site extends Model
         return $this->hasMany(NavigationItem::class);
     }
 
+    public function visitorEvents(): HasMany
+    {
+        return $this->hasMany(VisitorEvent::class);
+    }
+
     public function scopePrimaryFirst(Builder $query): Builder
     {
         return $query->orderByDesc('is_primary')->orderBy('id');

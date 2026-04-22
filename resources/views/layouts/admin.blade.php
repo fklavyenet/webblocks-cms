@@ -40,6 +40,13 @@
 
             $sidebarGroups = [
                 [
+                    'label' => 'Reports',
+                    'icon' => 'wb-icon-chart-bar',
+                    'items' => [
+                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
+                    ],
+                ],
+                [
                     'label' => 'System',
                     'icon' => 'wb-icon-language',
                     'items' => [
