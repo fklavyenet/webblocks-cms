@@ -155,11 +155,11 @@ class BlockTranslationResolver
     private function resolveLocale(Locale|string|null $locale = null): Locale
     {
         if ($locale instanceof Locale) {
-            return $locale;
+            return $locale->is_enabled ? $locale : $this->localeResolver->default();
         }
 
         if (is_string($locale) && $locale !== '') {
-            return $this->localeResolver->resolve($locale) ?? $this->localeResolver->default();
+            return $this->localeResolver->enabled($locale) ?? $this->localeResolver->default();
         }
 
         return $this->localeResolver->current();

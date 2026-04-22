@@ -38,6 +38,7 @@ class SiteRequest extends FormRequest
     {
         $site = $this->route('site');
         $site = $site instanceof Site ? $site : null;
+        $preservedLocaleIds = $site?->locales()->pluck('locales.id')->map(fn ($id) => (int) $id)->all() ?? [];
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -45,7 +46,10 @@ class SiteRequest extends FormRequest
             'domain' => ['nullable', 'string', 'max:255', Rule::unique(Site::class, 'domain')->ignore($site?->id)],
             'is_primary' => ['nullable', 'boolean'],
             'locale_ids' => ['required', 'array', 'min:1'],
-            'locale_ids.*' => ['integer', 'exists:locales,id'],
+            'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query
+                ->where(fn ($enabled) => $enabled
+                    ->where('is_enabled', true)
+                    ->when($preservedLocaleIds !== [], fn ($preserved) => $preserved->orWhereIn('id', $preservedLocaleIds))))],
         ];
     }
 

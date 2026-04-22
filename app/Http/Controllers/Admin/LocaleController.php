@@ -5,20 +5,27 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LocaleRequest;
 use App\Models\Locale;
+use App\Support\Locales\LocaleLifecycleGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LocaleController extends Controller
 {
+    public function __construct(
+        private readonly LocaleLifecycleGuard $lifecycleGuard,
+    ) {}
+
     public function index(): View
     {
+        $locales = Locale::query()
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->paginate(15);
+
         return view('admin.locales.index', [
-            'locales' => Locale::query()
-                ->withCount(['pageTranslations', 'sites'])
-                ->orderByDesc('is_default')
-                ->orderBy('name')
-                ->paginate(15),
+            'locales' => $locales,
+            'reports' => $this->lifecycleGuard->inspectMany(collect($locales->items())),
         ]);
     }
 
@@ -48,6 +55,7 @@ class LocaleController extends Controller
     {
         return view('admin.locales.form', [
             'locale' => $locale,
+            'report' => $this->lifecycleGuard->inspect($locale),
             'pageTitle' => 'Edit Locale: '.$locale->name,
             'formAction' => route('admin.locales.update', $locale),
             'formMethod' => 'PUT',
@@ -62,5 +70,49 @@ class LocaleController extends Controller
         });
 
         return redirect()->route('admin.locales.edit', $locale)->with('status', 'Locale updated successfully.');
+    }
+
+    public function enable(Locale $locale): RedirectResponse
+    {
+        $report = $this->lifecycleGuard->inspect($locale);
+
+        if (! $report->canEnable()) {
+            return redirect()->route('admin.locales.index')
+                ->withErrors(['locale_lifecycle' => $locale->is_default
+                    ? 'Default locale remains enabled automatically.'
+                    : 'Locale is already enabled.']);
+        }
+
+        $locale->forceFill(['is_enabled' => true])->save();
+
+        return redirect()->route('admin.locales.index')->with('status', 'Locale enabled successfully.');
+    }
+
+    public function disable(Locale $locale): RedirectResponse
+    {
+        $report = $this->lifecycleGuard->inspect($locale);
+
+        if (! $report->canDisable()) {
+            return redirect()->route('admin.locales.index')
+                ->withErrors(['locale_lifecycle' => $report->disableBlockedReason() ?? 'Locale cannot be disabled.']);
+        }
+
+        $locale->forceFill(['is_enabled' => false])->save();
+
+        return redirect()->route('admin.locales.index')->with('status', 'Locale disabled successfully.');
+    }
+
+    public function destroy(Locale $locale): RedirectResponse
+    {
+        $report = $this->lifecycleGuard->inspect($locale);
+
+        if (! $report->canDelete()) {
+            return redirect()->route('admin.locales.index')
+                ->withErrors(['locale_lifecycle' => $report->deleteBlockedReason() ?? 'Locale cannot be deleted safely.']);
+        }
+
+        $locale->delete();
+
+        return redirect()->route('admin.locales.index')->with('status', 'Locale deleted successfully.');
     }
 }

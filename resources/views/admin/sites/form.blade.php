@@ -55,17 +55,25 @@
                                     <input type="hidden" name="locale_ids[]" value="{{ $locale->id }}">
                                 @endif
 
+                                @if (! $locale->is_enabled && $selectedLocaleIds->contains($locale->id))
+                                    <input type="hidden" name="locale_ids[]" value="{{ $locale->id }}">
+                                @endif
+
                                 <label class="wb-nowrap">
                                     <input
                                         type="checkbox"
                                         name="locale_ids[]"
                                         value="{{ $locale->id }}"
                                         @checked($selectedLocaleIds->contains($locale->id))
-                                        @disabled($locale->is_default)
+                                        @disabled($locale->is_default || ! $locale->is_enabled)
                                     >
-                                    <span>{{ strtoupper($locale->code) }} - {{ $locale->name }}@if ($locale->is_default) (Default) @endif</span>
+                                    <span>{{ strtoupper($locale->code) }} - {{ $locale->name }}@if ($locale->is_default) (Default) @elseif (! $locale->is_enabled) (Disabled) @endif</span>
                                 </label>
                             @endforeach
+
+                            @if ($locales->contains(fn ($locale) => ! $locale->is_default && ! $locale->is_enabled))
+                                <div class="wb-text-sm wb-text-muted">Disabled locales stay unavailable for new site assignments until they are enabled again from the Locales screen.</div>
+                            @endif
                         </div>
                     </div>
                 </div>

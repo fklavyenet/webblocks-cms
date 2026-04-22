@@ -167,6 +167,7 @@ class Page extends Model
         }
 
         return $site->locales()
+            ->where('locales.is_enabled', true)
             ->wherePivot('is_enabled', true)
             ->orderByDesc('is_default')
             ->orderBy('name')

@@ -41,6 +41,15 @@
     </div>
 @endif
 
+@if ($errors->has('locale_lifecycle'))
+    <div class="wb-alert wb-alert-danger">
+        <div>
+            <div class="wb-alert-title">Locale Action Blocked</div>
+            <div>{{ $errors->first('locale_lifecycle') }}</div>
+        </div>
+    </div>
+@endif
+
 @if ($errors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>

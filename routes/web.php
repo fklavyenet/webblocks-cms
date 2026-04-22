@@ -51,6 +51,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
     Route::resource('sites', SiteController::class)->except(['show']);
     Route::resource('locales', LocaleController::class)->except(['show', 'destroy']);
+    Route::post('locales/{locale}/enable', [LocaleController::class, 'enable'])->name('locales.enable');
+    Route::post('locales/{locale}/disable', [LocaleController::class, 'disable'])->name('locales.disable');
+    Route::delete('locales/{locale}', [LocaleController::class, 'destroy'])->name('locales.destroy');
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
     Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');

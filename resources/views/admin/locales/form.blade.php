@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Keep locale setup small and safe. The default locale always remains enabled.',
+        'description' => 'Keep locale setup small and safe. Default locale remains enabled automatically, and delete is reserved for disabled locales that are fully unused.',
     ])
 
     @include('admin.partials.flash')
@@ -36,13 +36,22 @@
                                 <span>Default</span>
                             </label>
 
-                            <label class="wb-nowrap">
-                                <input type="checkbox" name="is_enabled" value="1" @checked(old('is_enabled', $locale->exists ? $locale->is_enabled : true)) @disabled($locale->is_default)>
-                                <span>Enabled</span>
-                            </label>
-
                             @if ($locale->is_default)
                                 <div class="wb-text-sm wb-text-muted">The default locale remains enabled automatically.</div>
+                            @elseif ($locale->exists)
+                                <div class="wb-text-sm wb-text-muted">Use the locale index actions to enable, disable, or delete this locale safely.</div>
+                            @else
+                                <div class="wb-text-sm wb-text-muted">New locales start enabled. Disable them later from the locale index if they should stop participating in routing and editing.</div>
+                            @endif
+
+                            <div class="wb-text-sm wb-text-muted">
+                                Current state: <strong>{{ $locale->exists ? ($locale->is_enabled ? 'Enabled' : 'Disabled') : 'Enabled on create' }}</strong>
+                            </div>
+
+                            @if (isset($report) && $locale->exists)
+                                <div class="wb-text-sm wb-text-muted">
+                                    Usage: {{ $report->count('site_assignments') }} site assignments, {{ $report->count('page_translations') }} page translations, {{ $report->count('block_translation_rows') }} block translation rows.
+                                </div>
                             @endif
                         </div>
                     </div>

@@ -16,7 +16,7 @@ class PageTranslationController extends Controller
     public function create(Page $page, Locale $locale): View
     {
         $page->loadMissing('site');
-        abort_if($page->site->locales()->where('locales.id', $locale->id)->wherePivot('is_enabled', true)->doesntExist(), 404);
+        abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
 
         $translation = new PageTranslation([
             'name' => $page->defaultTranslation()?->name,
@@ -37,7 +37,7 @@ class PageTranslationController extends Controller
     public function store(PageTranslationRequest $request, Page $page, Locale $locale): RedirectResponse
     {
         $page->loadMissing('site');
-        abort_if($page->site->locales()->where('locales.id', $locale->id)->wherePivot('is_enabled', true)->doesntExist(), 404);
+        abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
 
         DB::transaction(function () use ($request, $page, $locale): void {
             $page->translations()->updateOrCreate(
@@ -53,7 +53,7 @@ class PageTranslationController extends Controller
     {
         abort_unless($translation->page_id === $page->id, 404);
         $page->loadMissing('site');
-        abort_if($page->site->locales()->where('locales.id', $translation->locale_id)->wherePivot('is_enabled', true)->doesntExist(), 404);
+        abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
 
         return view('admin.pages.translations.form', [
             'page' => $page->loadMissing(['site', 'translations.locale']),
@@ -69,7 +69,7 @@ class PageTranslationController extends Controller
     {
         abort_unless($translation->page_id === $page->id, 404);
         $page->loadMissing('site');
-        abort_if($page->site->locales()->where('locales.id', $translation->locale_id)->wherePivot('is_enabled', true)->doesntExist(), 404);
+        abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
 
         DB::transaction(function () use ($request, $translation): void {
             $translation->update($request->validatedTranslation());

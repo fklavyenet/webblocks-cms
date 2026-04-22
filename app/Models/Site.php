@@ -68,7 +68,9 @@ class Site extends Model
 
     public function enabledLocales(): BelongsToMany
     {
-        return $this->locales()->wherePivot('is_enabled', true);
+        return $this->locales()
+            ->where('locales.is_enabled', true)
+            ->wherePivot('is_enabled', true);
     }
 
     public function hasEnabledLocale(Locale|int|string|null $locale): bool

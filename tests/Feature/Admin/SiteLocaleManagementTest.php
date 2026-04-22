@@ -2,9 +2,15 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Block;
+use App\Models\BlockTextTranslation;
 use App\Models\Locale;
+use App\Models\Page;
+use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\User;
+use App\Support\Locales\LocaleResolver;
+use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -55,6 +61,39 @@ class SiteLocaleManagementTest extends TestCase
         $response->assertSee('Default');
         $response->assertSee('German');
         $response->assertSee('Disabled');
+    }
+
+    #[Test]
+    public function locales_index_shows_lifecycle_actions_and_explanations(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $inUseLocale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$inUseLocale->id => ['is_enabled' => true]]);
+
+        $disabledLocale = Locale::query()->create([
+            'code' => 'de',
+            'name' => 'German',
+            'is_default' => false,
+            'is_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.locales.index'));
+
+        $response->assertOk();
+        $response->assertSee('Default locale cannot be disabled or deleted.');
+        $response->assertSee('Cannot delete because this locale is in use.');
+        $response->assertSee('Disabled locale keeps translation data until deleted.');
+        $response->assertSee(route('admin.locales.disable', $inUseLocale), false);
+        $response->assertSee(route('admin.locales.enable', $disabledLocale), false);
+        $response->assertSee(route('admin.locales.destroy', $disabledLocale), false);
     }
 
     #[Test]
@@ -194,5 +233,197 @@ class SiteLocaleManagementTest extends TestCase
         $this->assertSame('pt-br', $locale->fresh()->code);
         $this->assertTrue($locale->fresh()->is_default);
         $this->assertFalse($primaryDefault->fresh()->is_default);
+    }
+
+    #[Test]
+    public function default_locale_cannot_be_disabled(): void
+    {
+        $user = User::factory()->create();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.locales.disable', $defaultLocale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $response->assertSessionHasErrors('locale_lifecycle');
+        $this->assertTrue($defaultLocale->fresh()->is_enabled);
+    }
+
+    #[Test]
+    public function non_default_locale_can_be_disabled_and_enabled_again(): void
+    {
+        $user = User::factory()->create();
+        $locale = Locale::query()->create([
+            'code' => 'fr',
+            'name' => 'French',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $disable = $this->actingAs($user)->post(route('admin.locales.disable', $locale));
+        $disable->assertRedirect(route('admin.locales.index'));
+        $this->assertFalse($locale->fresh()->is_enabled);
+
+        $enable = $this->actingAs($user)->post(route('admin.locales.enable', $locale));
+        $enable->assertRedirect(route('admin.locales.index'));
+        $this->assertTrue($locale->fresh()->is_enabled);
+    }
+
+    #[Test]
+    public function default_locale_cannot_be_deleted(): void
+    {
+        $user = User::factory()->create();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $defaultLocale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $response->assertSessionHasErrors('locale_lifecycle');
+        $this->assertDatabaseHas('locales', ['id' => $defaultLocale->id]);
+    }
+
+    #[Test]
+    public function locale_assigned_to_a_site_cannot_be_deleted(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $locale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => false,
+        ]);
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $response->assertSessionHasErrors('locale_lifecycle');
+        $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    }
+
+    #[Test]
+    public function locale_with_page_translations_cannot_be_deleted(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $locale = Locale::query()->create([
+            'code' => 'it',
+            'name' => 'Italian',
+            'is_default' => false,
+            'is_enabled' => false,
+        ]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'locale_id' => $locale->id,
+            'name' => 'Chi Siamo',
+            'slug' => 'chi-siamo',
+            'path' => '/chi-siamo',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $response->assertSessionHasErrors('locale_lifecycle');
+        $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    }
+
+    #[Test]
+    public function locale_with_block_translation_rows_cannot_be_deleted(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $locale = Locale::query()->create([
+            'code' => 'es',
+            'name' => 'Spanish',
+            'is_default' => false,
+            'is_enabled' => false,
+        ]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'text',
+            'block_type_id' => 1,
+            'slot' => 'main',
+            'sort_order' => 0,
+            'status' => 'published',
+            'title' => 'About',
+            'content' => 'Default copy',
+        ]);
+
+        BlockTextTranslation::query()->create([
+            'block_id' => $block->id,
+            'locale_id' => $defaultLocale->id,
+            'title' => 'About',
+            'content' => 'Default copy',
+        ]);
+
+        BlockTextTranslation::query()->create([
+            'block_id' => $block->id,
+            'locale_id' => $locale->id,
+            'title' => 'Acerca de',
+            'content' => 'Copia traducida',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $response->assertSessionHasErrors('locale_lifecycle');
+        $this->assertDatabaseHas('locales', ['id' => $locale->id]);
+    }
+
+    #[Test]
+    public function fully_unused_disabled_non_default_locale_can_be_deleted(): void
+    {
+        $user = User::factory()->create();
+        $locale = Locale::query()->create([
+            'code' => 'nl',
+            'name' => 'Dutch',
+            'is_default' => false,
+            'is_enabled' => false,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
+
+        $response->assertRedirect(route('admin.locales.index'));
+        $this->assertDatabaseMissing('locales', ['id' => $locale->id]);
+    }
+
+    #[Test]
+    public function disabled_locale_is_not_treated_as_enabled_in_locale_resolution(): void
+    {
+        $resolver = app(LocaleResolver::class);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $locale = Locale::query()->create([
+            'code' => 'sv',
+            'name' => 'Swedish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $this->assertSame($locale->id, $resolver->enabled('sv')?->id);
+
+        $locale->forceFill(['is_enabled' => false])->save();
+
+        $this->assertNull($resolver->enabled('sv'));
+        $this->assertSame($defaultLocale->id, $resolver->current(request()->create('/sv'))->id);
     }
 }
