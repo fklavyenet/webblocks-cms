@@ -41,14 +41,14 @@
             $sidebarGroups = [
                 [
                     'label' => 'Reports',
-                    'icon' => 'wb-icon-chart-bar',
+                    'icon' => 'wb-icon-list',
                     'items' => [
                         ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
                     ],
                 ],
                 [
                     'label' => 'System',
-                    'icon' => 'wb-icon-language',
+                    'icon' => 'wb-icon-globe',
                     'items' => [
                         ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
                         ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],

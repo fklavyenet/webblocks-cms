@@ -77,5 +77,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('href="'.route('admin.reports.visitors.index').'"', false);
         $response->assertSee('class="wb-nav-group-item is-active"', false);
         $response->assertSee('>Reports<', false);
+        $response->assertSee('wb-icon-list', false);
+        $response->assertSee('wb-icon-globe', false);
     }
 }

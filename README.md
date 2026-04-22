@@ -383,6 +383,7 @@ php artisan site:clone {source} {target}
   - locale filtering for enabled locales
   - summary cards for total page views, unique visitors, total sessions, and average pages per session
   - report tables for top pages, top entry pages, top referrers, locale summary, and device summary
+- Sidebar group icons use existing WebBlocks UI icon names so the admin navigation renders without fallback question-mark icons.
 
 ### Configuration
 
