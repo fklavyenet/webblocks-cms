@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Fix release workflow script invocation so release note generation and archive builds run reliably in GitHub Actions even when executable bits are not preserved.
+- Include post-merge stabilization after the integrated multisite and site-management release flow.
+- Retain the combined multisite, site clone/import, site delete, settings, and sidebar improvements introduced across the 0.3.x line.
+
 ## 0.3.0
 
 - Merge the multisite and multilingual foundation into the main line as the base for site-aware admin and public flows.

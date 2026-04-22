@@ -72,10 +72,10 @@ jobs:
           printf 'released_at=%s\n' "$release_time" >> "$GITHUB_OUTPUT"
 
       - name: Generate release notes
-        run: scripts/release-notes.sh "${{ steps.release.outputs.tag }}" release-notes.md
+        run: bash scripts/release-notes.sh "${{ steps.release.outputs.tag }}" release-notes.md
 
       - name: Build release archive
-        run: scripts/build-release.sh "${{ steps.release.outputs.version }}" dist
+        run: bash scripts/build-release.sh "${{ steps.release.outputs.version }}" dist
 
       - name: Capture archive checksum
         id: checksum
