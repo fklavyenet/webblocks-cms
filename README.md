@@ -250,6 +250,15 @@ First-pass rule:
 - Page translation creation is limited to locales enabled for the page's assigned site.
 - Site editing keeps the system default locale enabled automatically so a site cannot become unroutable.
 
+## Site Deletion Rules
+
+- Site deletion is explicit through an admin confirmation screen and `php artisan site:delete`.
+- The primary site cannot be deleted.
+- The last remaining site cannot be deleted.
+- Deletion is refused when linked install-level contact messages would be orphaned.
+- Deleting a site removes only site-scoped rows such as the site record, locale assignments, pages, page translations, page slots, blocks, block translation rows, and site navigation items.
+- Shared media assets and physical files are not blindly deleted during site removal.
+
 ## Local Multisite Testing
 
 - The starter seed now creates a second site to prove host-based isolation.

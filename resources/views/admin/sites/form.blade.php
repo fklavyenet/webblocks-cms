@@ -67,7 +67,12 @@
                 </div>
 
                 <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                    <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Back</a>
+                    <div class="wb-cluster wb-cluster-2">
+                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Back</a>
+                        @if ($site->exists && isset($siteDeleteReport))
+                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-btn wb-btn-danger" @if (! $siteDeleteReport->canDelete) aria-disabled="true" @endif>Delete Site</a>
+                        @endif
+                    </div>
                     <button type="submit" class="wb-btn wb-btn-primary">Save</button>
                 </div>
             </form>

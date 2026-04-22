@@ -45,7 +45,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');
     Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
     Route::post('sites/clone', [SiteController::class, 'cloneStore'])->name('sites.clone.store');
-    Route::resource('sites', SiteController::class)->except(['show', 'destroy']);
+    Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
+    Route::resource('sites', SiteController::class)->except(['show']);
     Route::resource('locales', LocaleController::class)->except(['show', 'destroy']);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
