@@ -3,6 +3,7 @@
 namespace App\Support\Navigation;
 
 use App\Models\NavigationItem;
+use App\Models\Site;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -10,9 +11,10 @@ class NavigationTree
 {
     public const MAX_DEPTH = 3;
 
-    public function buildMenuTree(string $menuKey): Collection
+    public function buildMenuTree(string $menuKey, Site|int|null $site = null): Collection
     {
         $items = NavigationItem::query()
+            ->forSite($site)
             ->forMenu($menuKey)
             ->with(['page.translations'])
             ->ordered()
@@ -21,9 +23,10 @@ class NavigationTree
         return $this->nestItems($items);
     }
 
-    public function parentOptions(string $menuKey, ?int $ignoreId = null): Collection
+    public function parentOptions(string $menuKey, Site|int|null $site = null, ?int $ignoreId = null): Collection
     {
         $items = NavigationItem::query()
+            ->forSite($site)
             ->forMenu($menuKey)
             ->with(['children', 'page.translations'])
             ->ordered()
@@ -34,9 +37,10 @@ class NavigationTree
         return $this->flattenOptions($nested, '', $ignoreId);
     }
 
-    public function validateAndNormalizeTreePayload(string $menuKey, array $items): array
+    public function validateAndNormalizeTreePayload(string $menuKey, Site|int|null $site, array $items): array
     {
         $existing = NavigationItem::query()
+            ->forSite($site)
             ->forMenu($menuKey)
             ->ordered()
             ->get(['id', 'menu_key']);

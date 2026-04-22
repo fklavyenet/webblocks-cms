@@ -44,6 +44,11 @@ class Site extends Model
         return $this->hasMany(Page::class);
     }
 
+    public function navigationItems(): HasMany
+    {
+        return $this->hasMany(NavigationItem::class);
+    }
+
     public function scopePrimaryFirst(Builder $query): Builder
     {
         return $query->orderByDesc('is_primary')->orderBy('id');

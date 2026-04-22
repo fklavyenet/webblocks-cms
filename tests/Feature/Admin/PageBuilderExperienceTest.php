@@ -786,7 +786,7 @@ class PageBuilderExperienceTest extends TestCase
             'visibility' => 'visible',
         ]);
 
-        $navigation->assertRedirect(route('admin.navigation.index', ['menu_key' => 'primary']));
+        $navigation->assertRedirect(route('admin.navigation.index', ['site_id' => $page->site_id, 'menu_key' => 'primary']));
         $this->assertDatabaseHas('navigation_items', [
             'menu_key' => 'primary',
             'title' => 'Home',
@@ -806,7 +806,7 @@ class PageBuilderExperienceTest extends TestCase
         $picker->assertSee('System Block');
         $picker->assertSee('Renders navigation items assigned to the selected menu.');
 
-        $index = $this->actingAs($user)->get(route('admin.navigation.index', ['menu_key' => 'primary']));
+        $index = $this->actingAs($user)->get(route('admin.navigation.index', ['site_id' => $page->site_id, 'menu_key' => 'primary']));
         $index->assertOk();
         $index->assertSee('Navigation Items');
         $index->assertSee('Home');

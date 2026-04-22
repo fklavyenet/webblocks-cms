@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class NavigationItem extends Model
 {
@@ -30,6 +31,7 @@ class NavigationItem extends Model
     public const VISIBILITY_HIDDEN = 'hidden';
 
     protected $fillable = [
+        'site_id',
         'menu_key',
         'parent_id',
         'page_id',
@@ -47,6 +49,17 @@ class NavigationItem extends Model
         return [
             'is_system' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $item): void {
+            if (! $item->site_id && Schema::hasColumn($item->getTable(), 'site_id')) {
+                $item->site_id = $item->page?->site_id
+                    ?? ($item->page_id ? Page::query()->whereKey($item->page_id)->value('site_id') : null)
+                    ?? Site::primary()?->id;
+            }
+        });
     }
 
     public static function menuKeys(): array
@@ -84,6 +97,11 @@ class NavigationItem extends Model
         return $this->belongsTo(Page::class);
     }
 
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
+    }
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
@@ -102,6 +120,17 @@ class NavigationItem extends Model
     public function scopeActive($query)
     {
         return $this->scopeVisible($query);
+    }
+
+    public function scopeForSite($query, Site|int|null $site)
+    {
+        $siteId = $site instanceof Site ? $site->id : $site;
+
+        if ($siteId) {
+            return $query->where('site_id', $siteId);
+        }
+
+        return $query;
     }
 
     public function scopeForMenu($query, string $menuKey)

@@ -277,10 +277,45 @@ Project metadata is normalized to the CMS brand:
 ## Navigation Items Note
 
 - Navigation Items now use a tree editor instead of a CRUD table.
+- Navigation items are site-scoped and stay isolated per site.
 - `menu_key`, `parent_id`, and `position` define menu structure and ordering.
 - Navigation Auto blocks render data from `navigation_items` by `menu_key`.
 - Drag and drop reordering auto-saves immediately after drop.
 - Cycle protection and a maximum depth of 3 levels are enforced.
+
+## Site Clone
+
+- WebBlocks CMS now includes a first-party site clone/import flow for multisite content duplication.
+- The primary orchestration lives in `App\Support\Sites\SiteCloneService`.
+- CLI entry point:
+
+```bash
+php artisan site:clone {source} {target}
+```
+
+- The command supports explicit safety and scope flags such as:
+  - `--target-name`
+  - `--target-handle`
+  - `--target-domain`
+  - `--with-navigation` / `--without-navigation`
+  - `--with-media` / `--without-media`
+  - `--copy-media-files`
+  - `--with-translations` / `--without-translations`
+  - `--overwrite-target`
+  - `--dry-run`
+- The admin Sites area includes a compact clone screen as a thin wrapper around the same service.
+- Clone scope includes:
+  - target site creation/update
+  - site locale assignments
+  - pages and page translations
+  - page slots
+  - blocks and nested block trees
+  - block translation rows
+  - site-scoped navigation items
+  - asset references, with optional duplicated asset files
+- Clone intentionally does not include install-global/runtime data such as users, sessions, backups, update logs, or contact submissions.
+- Default media behavior keeps install-global assets shared. Use `--copy-media-files` only when duplicated asset records and files are required.
+- See `docs/site-clone.md` for focused usage and safety notes.
 
 ## Contact Form Block
 

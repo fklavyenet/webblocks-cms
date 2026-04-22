@@ -586,27 +586,28 @@ class StarterContentSeeder extends Seeder
 
     private function seedNavigation(Page $homePage, Page $aboutPage, Page $contactPage): void
     {
+        $siteId = $homePage->site_id;
         $primaryItems = [
-            ['menu_key' => 'primary', 'title' => 'Home', 'link_type' => 'page', 'page_id' => $homePage->id, 'position' => 1, 'visibility' => 'visible'],
-            ['menu_key' => 'primary', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 2, 'visibility' => 'visible'],
-            ['menu_key' => 'primary', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 3, 'visibility' => 'visible'],
+            ['site_id' => $siteId, 'menu_key' => 'primary', 'title' => 'Home', 'link_type' => 'page', 'page_id' => $homePage->id, 'position' => 1, 'visibility' => 'visible'],
+            ['site_id' => $siteId, 'menu_key' => 'primary', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 2, 'visibility' => 'visible'],
+            ['site_id' => $siteId, 'menu_key' => 'primary', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 3, 'visibility' => 'visible'],
         ];
 
         foreach ($primaryItems as $item) {
             NavigationItem::query()->updateOrCreate(
-                ['menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
+                ['site_id' => $item['site_id'], 'menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
                 $item + ['url' => null, 'target' => null],
             );
         }
 
         $footerItems = [
-            ['menu_key' => 'footer', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 1, 'visibility' => 'visible'],
-            ['menu_key' => 'footer', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 2, 'visibility' => 'visible'],
+            ['site_id' => $siteId, 'menu_key' => 'footer', 'title' => 'About', 'link_type' => 'page', 'page_id' => $aboutPage->id, 'position' => 1, 'visibility' => 'visible'],
+            ['site_id' => $siteId, 'menu_key' => 'footer', 'title' => 'Contact', 'link_type' => 'page', 'page_id' => $contactPage->id, 'position' => 2, 'visibility' => 'visible'],
         ];
 
         foreach ($footerItems as $item) {
             NavigationItem::query()->updateOrCreate(
-                ['menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
+                ['site_id' => $item['site_id'], 'menu_key' => $item['menu_key'], 'title' => $item['title'], 'parent_id' => null],
                 $item + ['url' => null, 'target' => null],
             );
         }

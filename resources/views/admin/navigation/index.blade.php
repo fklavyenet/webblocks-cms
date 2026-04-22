@@ -2,6 +2,9 @@
 
 @php
     $menuSelector = '<form method="GET" action="'.route('admin.navigation.index').'" class="wb-cluster wb-cluster-2">'
+        .'<select name="site_id" class="wb-select" onchange="this.form.submit()">'
+        .collect($sites)->map(fn ($candidate) => '<option value="'.$candidate->id.'" '.($site->id === $candidate->id ? 'selected' : '').'>'.$candidate->name.'</option>')->implode('')
+        .'</select>'
         .'<select name="menu_key" class="wb-select" onchange="this.form.submit()">'
         .collect($menuOptions)->map(fn ($label, $key) => '<option value="'.$key.'" '.($activeMenuKey === $key ? 'selected' : '').'>'.$label.'</option>')->implode('')
         .'</select>'
@@ -38,11 +41,12 @@
 
     @include('admin.partials.flash')
 
-    <div class="wb-card" data-navigation-tree-editor data-menu-key="{{ $activeMenuKey }}" data-reorder-url="{{ route('admin.navigation.reorder') }}">
+    <div class="wb-card" data-navigation-tree-editor data-site-id="{{ $site->id }}" data-menu-key="{{ $activeMenuKey }}" data-reorder-url="{{ route('admin.navigation.reorder') }}">
         <div class="wb-card-body wb-stack wb-gap-3">
             <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
                 <div class="wb-cluster wb-cluster-2">
-                    <span class="wb-status-pill wb-status-info">{{ $menuOptions[$activeMenuKey] }}</span>
+                    <span class="wb-status-pill wb-status-info">{{ $site->name }}</span>
+                    <span class="wb-status-pill wb-status-active">{{ $menuOptions[$activeMenuKey] }}</span>
                     <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">Drag items by the handle. Changes save automatically.</span>
                 </div>
                 <div class="wb-cluster wb-cluster-2">
@@ -93,7 +97,7 @@
             'drawerTitle' => 'Edit Navigation Item: '.$editableItem->resolvedTitle(),
             'item' => $editableItem,
             'pages' => $pages,
-            'parents' => app(\App\Support\Navigation\NavigationTree::class)->parentOptions($editableItem->menu_key, $editableItem->id),
+            'parents' => app(\App\Support\Navigation\NavigationTree::class)->parentOptions($editableItem->menu_key, $editableItem->site_id, $editableItem->id),
             'menuOptions' => $menuOptions,
             'linkTypes' => \App\Models\NavigationItem::linkTypes(),
             'formAction' => route('admin.navigation.update', $editableItem),
@@ -115,6 +119,7 @@
 
                 var status = root.querySelector('[data-navigation-save-status]');
                 var menuKey = root.getAttribute('data-menu-key');
+                var siteId = Number(root.getAttribute('data-site-id'));
                 var reorderUrl = root.getAttribute('data-reorder-url');
                 var csrf = document.querySelector('meta[name="csrf-token"]');
                 var previousSnapshot = root.querySelector('[data-navigation-tree]') ? root.querySelector('[data-navigation-tree]').innerHTML : '';
@@ -162,6 +167,7 @@
                     var siblingPositions = {};
 
                     return {
+                        site_id: siteId,
                         menu_key: menuKey,
                         items: rows.map(function (row) {
                             var parentList = row.parentElement.closest('[data-navigation-item]');

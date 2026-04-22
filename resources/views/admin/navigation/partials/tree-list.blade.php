@@ -36,6 +36,7 @@
                     <form method="POST" action="{{ route('admin.navigation.visibility', $item) }}">
                         @csrf
                         @method('PATCH')
+                        <input type="hidden" name="site_id" value="{{ $item->site_id }}">
                         <button type="submit" class="wb-action-btn" title="{{ $item->isVisible() ? 'Hide item' : 'Show item' }}" aria-label="{{ $item->isVisible() ? 'Hide item' : 'Show item' }}"><i class="wb-icon {{ $item->isVisible() ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i></button>
                     </form>
 
