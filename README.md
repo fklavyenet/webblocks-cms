@@ -542,6 +542,11 @@ CMS_VISITOR_UTM_ENABLED=true
 
 - WebBlocks CMS now includes a first-party admin-managed user system for CMS/system accounts.
 - Admin navigation adds a top-level `Users` item for admin users only.
+- The Users index now includes compact search and filtering for install-level accounts:
+  - `q` searches `name` and `email`
+  - `status` filters `active` or `inactive`
+  - `role` filters `admins` or `non-admins`
+  - pagination preserves active search and filter params
 - Users Phase 1 admin routes:
   - `GET /admin/users`
   - `GET /admin/users/create`
@@ -556,6 +561,7 @@ CMS_VISITOR_UTM_ENABLED=true
 - Phase 1 authorization boundary:
   - only admin users can open `/admin/users`
   - only admin users can create, edit, activate/deactivate, and delete users from that screen
+  - users remain install-level accounts, not site-scoped or multisite-assigned in this phase
   - self-profile editing remains available at `/profile`
 - Login behavior:
   - inactive users cannot authenticate

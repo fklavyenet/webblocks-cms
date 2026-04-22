@@ -7,25 +7,35 @@ use App\Http\Requests\Admin\UserStoreRequest;
 use App\Http\Requests\Admin\UserUpdateRequest;
 use App\Models\User;
 use App\Support\Users\UserLifecycleGuard;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function __construct(private readonly UserLifecycleGuard $lifecycleGuard) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        abort_unless(request()->user()?->can('manage-users'), 403);
+        abort_unless($request->user()?->can('manage-users'), 403);
 
-        $users = User::query()
+        $filters = [
+            'q' => trim((string) $request->string('q')),
+            'status' => $this->normalizedStatusFilter((string) $request->string('status')),
+            'role' => $this->normalizedRoleFilter((string) $request->string('role')),
+        ];
+
+        $users = $this->filteredUsersQuery($filters)
             ->orderByDesc('is_admin')
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('admin.users.index', [
             'users' => $users,
+            'filters' => $filters,
             'userLifecycleGuard' => $this->lifecycleGuard,
         ]);
     }
@@ -93,5 +103,33 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('status', 'User deleted successfully.');
+    }
+
+    private function filteredUsersQuery(array $filters): Builder
+    {
+        return User::query()
+            ->when($filters['q'] !== '', function (Builder $query) use ($filters): void {
+                $term = '%'.$filters['q'].'%';
+
+                $query->where(function (Builder $subquery) use ($term): void {
+                    $subquery
+                        ->where('name', 'like', $term)
+                        ->orWhere('email', 'like', $term);
+                });
+            })
+            ->when($filters['status'] === 'active', fn (Builder $query) => $query->where('is_active', true))
+            ->when($filters['status'] === 'inactive', fn (Builder $query) => $query->where('is_active', false))
+            ->when($filters['role'] === 'admins', fn (Builder $query) => $query->where('is_admin', true))
+            ->when($filters['role'] === 'non-admins', fn (Builder $query) => $query->where('is_admin', false));
+    }
+
+    private function normalizedStatusFilter(string $value): string
+    {
+        return in_array($value, ['active', 'inactive'], true) ? $value : '';
+    }
+
+    private function normalizedRoleFilter(string $value): string
+    {
+        return in_array($value, ['admins', 'non-admins'], true) ? $value : '';
     }
 }

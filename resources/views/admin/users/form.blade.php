@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Keep user management compact. Admin access and active status are controlled directly on the account record.',
+        'description' => 'Keep user management compact. Users stay install-level, while admin access and active status are controlled directly on the account record.',
     ])
 
     @include('admin.partials.flash')
@@ -38,6 +38,10 @@
                             wrapper-class="wb-form-group"
                         />
 
+                        @if ($managedUser->exists)
+                            <div class="wb-text-sm wb-text-muted">Leave both password fields blank to keep the current password unchanged.</div>
+                        @endif
+
                         <x-auth-password-field
                             id="password_confirmation"
                             name="password_confirmation"
@@ -55,6 +59,7 @@
                                 <input type="checkbox" name="is_admin" value="1" @checked(old('is_admin', $managedUser->is_admin))>
                                 <span>Admin user</span>
                             </label>
+                            <div class="wb-text-sm wb-text-muted">Admins can open the Users screen and manage other install-level accounts.</div>
 
                             <label class="wb-nowrap">
                                 <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $managedUser->exists ? $managedUser->is_active : true))>
@@ -68,11 +73,15 @@
                                 <div class="wb-text-sm wb-text-muted">Created: <strong>{{ $managedUser->created_at?->format('Y-m-d H:i') }}</strong></div>
                             @endif
 
+                            @if (! empty($deleteBlockedMessage))
+                                <div class="wb-text-sm wb-text-muted">Delete protection: {{ $deleteBlockedMessage }}</div>
+                            @endif
+
                             @if (! empty($updateBlockedMessage))
                                 <div class="wb-alert wb-alert-warning">
                                     <div>
                                         <div class="wb-alert-title">Protected Admin</div>
-                                        <div>{{ $updateBlockedMessage }}</div>
+                                        <div>{{ $updateBlockedMessage }} Keep at least one active admin user available.</div>
                                     </div>
                                 </div>
                             @endif

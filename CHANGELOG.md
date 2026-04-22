@@ -5,6 +5,7 @@
 - Add Users Phase 1 as a first-party admin-managed CMS user system with `/admin/users` index, create, edit, and delete flows.
 - Extend the `users` table with `is_admin`, `is_active`, and `last_login_at`, and keep self-profile editing available alongside the new admin user management UI.
 - Block inactive-user authentication, update `last_login_at` on successful login, and protect destructive edge cases such as deleting, deactivating, or demoting the last active admin.
+- Polish the Users admin index with compact `q` search, role/status filters, clearer empty states, and query-preserving pagination.
 - Document the new user management behavior and upgrade note in `README.md`.
 
 ## 0.3.3

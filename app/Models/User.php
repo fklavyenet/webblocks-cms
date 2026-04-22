@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->is_active ? 'wb-status-active' : 'wb-status-pending';
     }
+
+    public function lastLoginLabel(): string
+    {
+        return $this->last_login_at?->format('Y-m-d H:i') ?? 'No login yet';
+    }
 }
