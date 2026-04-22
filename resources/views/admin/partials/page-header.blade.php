@@ -15,6 +15,12 @@
         @isset($description)
             <p class="wb-page-subtitle">{{ $description }}</p>
         @endisset
+
+        @isset($context)
+            <div class="wb-page-subtitle">
+                {!! $context !!}
+            </div>
+        @endisset
     </div>
 
     @isset($actions)

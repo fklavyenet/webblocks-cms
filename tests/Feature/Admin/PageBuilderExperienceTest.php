@@ -394,7 +394,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('value="'.$primarySite->id.'" selected', false);
         $response->assertSee(route('admin.pages.edit', $primaryPage), false);
         $response->assertDontSee(route('admin.pages.edit', $secondaryPage), false);
-        $response->assertSee('Current context');
+        $response->assertSee('label for="pages_site_context">Site</label>', false);
+        $response->assertDontSee('Current context');
     }
 
     #[Test]
@@ -465,7 +466,7 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.index', ['site' => 'all']));
 
         $response->assertOk();
-        $response->assertSee('All sites selected');
+        $response->assertSee('value="all" selected', false);
         $response->assertSee('Showing pages across all sites');
         $response->assertSee(route('admin.pages.edit', $primaryPage), false);
         $response->assertSee(route('admin.pages.edit', $secondaryPage), false);
@@ -502,7 +503,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(route('admin.pages.index', ['site' => $site->id]), false);
-        $response->assertSee('>Pages<', false);
+        $response->assertSeeInOrder([$site->name, '>Pages<', $page->title], false);
         $response->assertSee($site->name);
         $response->assertSee('default.example.test');
         $response->assertSee($page->title);
