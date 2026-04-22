@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3
+
+- Add Visitor Reports Phase 2 on top of the stable `0.3.x` line so installed CMS sites can receive the update through the normal updater.
+- Extend public visitor tracking with sanitized nullable `utm_source`, `utm_medium`, and `utm_campaign` capture, plus optional `CMS_VISITOR_UTM_ENABLED` control.
+- Expand `/admin/reports/visitors` with Top Campaigns, Source Breakdown, and Medium Breakdown cards that continue to respect date range, site, and locale filters.
+- Add a compact Visitor Summary widget to `/admin` with the last 7 days of page views, unique visitors, and top page context.
+- Document the Phase 2 tracking model, campaign reporting behavior, privacy notes, limits, and dashboard summary updates in the Markdown docs.
+
 ## 0.3.2
 
 - Promote Visitor Reports V1 release to the 0.3.x line so it becomes visible as the latest stable update.

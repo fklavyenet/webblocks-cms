@@ -425,6 +425,7 @@ CMS_VISITOR_UTM_ENABLED=true
   - Top Campaigns
   - Source Breakdown
   - Medium Breakdown
+- These Phase 2 sections are part of the stable updater release for the `0.3.x` line, so existing CMS installs can receive campaign-aware visitor reporting without leaving the normal release channel.
 - Each campaign row shows:
   - campaign label
   - page views
@@ -441,6 +442,11 @@ CMS_VISITOR_UTM_ENABLED=true
   - unique visitors
   - top page path
 - If visitor tracking is disabled or the migration is missing, the widget renders an empty-state message instead of failing.
+
+### Release Readiness
+
+- Phase 2 is documented in `README.md`, `CHANGELOG.md`, and the release notes used by the publish workflow.
+- Stable updater releases continue to be distributed through tagged GitHub releases and WebBlocks Publisher so installed CMS sites can detect and apply the update in-app.
 
 ### Privacy
 

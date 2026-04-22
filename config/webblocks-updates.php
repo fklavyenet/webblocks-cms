@@ -6,7 +6,7 @@ return [
     'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', 'stable'),
     'api_version' => '1',
     'product' => 'webblocks-cms',
-    'current_version' => env('APP_VERSION', '0.3.2'),
+    'current_version' => env('APP_VERSION', '0.3.3'),
     'site_url' => env('APP_URL', 'http://localhost'),
     'instance_id' => null,
     'timeout_seconds' => 5,
