@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\VisitorEvent;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -89,6 +90,20 @@ class VisitorReportsTest extends TestCase
         $response->assertSee('Visitor Reports');
         $response->assertSee('Total page views');
         $response->assertSee('Top Pages');
+    }
+
+    #[Test]
+    public function admin_visitor_reports_screen_handles_missing_table_gracefully(): void
+    {
+        $user = User::factory()->create();
+
+        Schema::dropIfExists('visitor_events');
+
+        $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
+
+        $response->assertOk();
+        $response->assertSee('Visitor reports migration is missing');
+        $response->assertSee('php artisan migrate');
     }
 
     #[Test]

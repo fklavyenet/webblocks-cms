@@ -392,6 +392,8 @@ php artisan site:clone {source} {target}
 CMS_VISITOR_REPORTS_ENABLED=true
 ```
 
+- If the admin screen says the visitor reports migration is missing, run `php artisan migrate` so the `visitor_events` table is created before opening `/admin/reports/visitors`.
+
 ### V1 Limits
 
 - V1 focuses on readable aggregate reports inside the CMS and is intentionally not a full analytics platform.

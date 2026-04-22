@@ -28,6 +28,15 @@
                 </div>
             </div>
         </div>
+    @elseif (! $visitorEventsTableExists)
+        <div class="wb-card">
+            <div class="wb-card-body">
+                <div class="wb-empty">
+                    <div class="wb-empty-title">Visitor reports migration is missing</div>
+                    <div class="wb-empty-text">Run <code>php artisan migrate</code> to create the <code>visitor_events</code> table before opening this report.</div>
+                </div>
+            </div>
+        </div>
     @else
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body">
