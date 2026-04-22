@@ -5,8 +5,7 @@
         : 'Showing pages for '.$activeSite->name.($activeSite->domain ? ' ('.$activeSite->domain.')' : '').'.';
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
-    $siteSwitcher = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-row wb-row-middle wb-gap-2">'
-        .'<div class="wb-row wb-row-middle wb-gap-2 wb-nowrap">'
+    $headerActions = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-cluster wb-cluster-2">'
         .'<span class="wb-text-sm wb-text-muted wb-nowrap">Site</span>'
         .'<select id="pages_site_context" name="site" class="wb-select" aria-label="Site" onchange="this.form.submit()">'
         .collect($sites)->map(function ($site) use ($filters) {
@@ -16,13 +15,12 @@
         })->implode('')
         .'<option value="all"'.($filters['site'] === 'all' ? ' selected' : '').'>All sites</option>'
         .'</select>'
-        .'</div>'
         .($filters['search'] !== '' ? '<input type="hidden" name="search" value="'.e($filters['search']).'">' : '')
         .($filters['status'] !== '' ? '<input type="hidden" name="status" value="'.e($filters['status']).'">' : '')
         .($filters['sort'] !== 'created_at' ? '<input type="hidden" name="sort" value="'.e($filters['sort']).'">' : '')
         .($filters['direction'] !== 'desc' ? '<input type="hidden" name="direction" value="'.e($filters['direction']).'">' : '')
+        .'<a href="'.$newPageUrl.'" class="wb-btn wb-btn-primary">New Page</a>'
         .'</form>';
-    $headerActions = '<div class="wb-row wb-row-middle wb-gap-2">'.$siteSwitcher.'<a href="'.$newPageUrl.'" class="wb-btn wb-btn-primary">New Page</a></div>';
 @endphp
 
 @extends('layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
