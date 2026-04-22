@@ -394,7 +394,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('value="'.$primarySite->id.'" selected', false);
         $response->assertSee(route('admin.pages.edit', $primaryPage), false);
         $response->assertDontSee(route('admin.pages.edit', $secondaryPage), false);
-        $response->assertSee('label for="pages_site_context">Site</label>', false);
+        $response->assertSee('label for="pages_site_context" class="wb-text-sm wb-text-muted wb-nowrap">Site</label>', false);
         $response->assertDontSee('Current context');
     }
 

@@ -6,8 +6,8 @@
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
     $siteSwitcher = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-cluster wb-cluster-2">'
-        .'<div class="wb-stack wb-gap-1">'
-        .'<label for="pages_site_context">Site</label>'
+        .'<div class="wb-cluster wb-cluster-2">'
+        .'<label for="pages_site_context" class="wb-text-sm wb-text-muted wb-nowrap">Site</label>'
         .'<select id="pages_site_context" name="site" class="wb-select" onchange="this.form.submit()">'
         .collect($sites)->map(function ($site) use ($filters) {
             $selected = $filters['site'] === (string) $site->id ? ' selected' : '';
