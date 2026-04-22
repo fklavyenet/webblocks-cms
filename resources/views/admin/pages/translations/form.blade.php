@@ -1,12 +1,14 @@
 @php
     $translationPublicUrl = $translation->exists ? $page->publicUrl($locale->code) : null;
+    $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
+    $siteName = $page->site?->name ?? 'Site';
 @endphp
 
 @extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.index').'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
         'title' => $pageTitle,
         'description' => 'Edit page name and routing for this locale. Block content stays shared in this phase.',
         'actions' => $translationPublicUrl ? '<a href="'.$translationPublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>Open</span></a>' : '',
@@ -26,7 +28,7 @@
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label>Site</label>
-                            <input class="wb-input" type="text" value="{{ $page->site?->name }}" disabled>
+                            <input class="wb-input" type="text" value="{{ $page->site?->name }}{{ $page->site?->domain ? ' | '.$page->site->domain : '' }}" disabled>
                         </div>
 
                         <div class="wb-stack-2 wb-field">

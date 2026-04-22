@@ -1,14 +1,67 @@
+@php
+    $siteContext = $activeSite?->name ?? 'All sites';
+    $siteContextDescription = $showAllSites
+        ? 'Showing pages across all sites. Choose a site to return to the normal editorial flow.'
+        : 'Showing pages for '.$activeSite->name.($activeSite->domain ? ' ('.$activeSite->domain.')' : '').'.';
+    $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
+    $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
+@endphp
+
 @extends('layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
 
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Pages',
-        'description' => 'Manage pages, review status, and jump into content editing.',
+        'description' => $siteContextDescription,
         'count' => $pages->total(),
-        'actions' => '<a href="'.route('admin.pages.create').'" class="wb-btn wb-btn-primary">New Page</a>',
+        'actions' => '<a href="'.$newPageUrl.'" class="wb-btn wb-btn-primary">New Page</a>',
     ])
 
     @include('admin.partials.flash')
+
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            <form method="GET" action="{{ route('admin.pages.index') }}" class="wb-cluster wb-cluster-between wb-cluster-2">
+                <div class="wb-cluster wb-cluster-2">
+                    <div class="wb-stack wb-gap-1">
+                        <label for="pages_site_context">Site</label>
+                        <select id="pages_site_context" name="site" class="wb-select" onchange="this.form.submit()">
+                            @foreach ($sites as $site)
+                                <option value="{{ $site->id }}" @selected($filters['site'] === (string) $site->id)>{{ $site->name }}</option>
+                            @endforeach
+                            <option value="all" @selected($filters['site'] === 'all')>All sites</option>
+                        </select>
+                    </div>
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Current context</span>
+                        <div class="wb-cluster wb-cluster-2">
+                            <strong>{{ $siteContext }}</strong>
+                            @if ($activeSite?->domain)
+                                <span class="wb-text-sm wb-text-muted">{{ $activeSite->domain }}</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wb-text-sm wb-text-muted">
+                    {{ $showAllSites ? 'All sites selected' : 'Showing pages for '.$activeSite->name }}
+                </div>
+
+                @if ($filters['search'] !== '')
+                    <input type="hidden" name="search" value="{{ $filters['search'] }}">
+                @endif
+                @if ($filters['status'] !== '')
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                @if ($filters['sort'] !== 'created_at')
+                    <input type="hidden" name="sort" value="{{ $filters['sort'] }}">
+                @endif
+                @if ($filters['direction'] !== 'desc')
+                    <input type="hidden" name="direction" value="{{ $filters['direction'] }}">
+                @endif
+            </form>
+        </div>
+    </div>
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
@@ -25,16 +78,6 @@
                             <option value="">All statuses</option>
                             <option value="draft" @selected($filters['status'] === 'draft')>Draft</option>
                             <option value="published" @selected($filters['status'] === 'published')>Published</option>
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="pages_site">Site</label>
-                        <select id="pages_site" name="site_id" class="wb-select">
-                            <option value="">All sites</option>
-                            @foreach ($sites as $site)
-                                <option value="{{ $site->id }}" @selected((string) $filters['site_id'] === (string) $site->id)>{{ $site->name }}</option>
-                            @endforeach
                         </select>
                     </div>
 
@@ -59,9 +102,10 @@
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
+                    <input type="hidden" name="site" value="{{ $filters['site'] }}">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['site_id'] !== 0 || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
-                        <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
+                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
+                        <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">Clear</a>
                     @endif
                 </div>
             </form>
@@ -71,14 +115,14 @@
     @if ($pages->isEmpty())
         <div class="wb-card">
             <div class="wb-card-body">
-                <div class="wb-empty">
-                    <div class="wb-empty-title">No pages found</div>
-                    <div class="wb-empty-text">Adjust the filters or create your first page to start the CMS content flow.</div>
-                    <div class="wb-empty-action">
-                        <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">Create Page</a>
+                    <div class="wb-empty">
+                        <div class="wb-empty-title">No pages found</div>
+                        <div class="wb-empty-text">Adjust the filters or create your first page for {{ strtolower($siteContext) }}.</div>
+                        <div class="wb-empty-action">
+                            <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">Create Page</a>
+                        </div>
                     </div>
                 </div>
-            </div>
         </div>
     @else
         <div class="wb-card">
@@ -125,9 +169,11 @@
                                         <div class="wb-stack wb-gap-1">
                                             <div class="wb-cluster wb-cluster-2">
                                                 <strong>{{ $page->title }}</strong>
-                                                <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
-                                                @if ($page->site?->domain)
-                                                    <span class="wb-text-sm wb-text-muted">{{ $page->site->domain }}</span>
+                                                @if ($showAllSites)
+                                                    <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
+                                                    @if ($page->site?->domain)
+                                                        <span class="wb-text-sm wb-text-muted">{{ $page->site->domain }}</span>
+                                                    @endif
                                                 @endif
                                             </div>
 

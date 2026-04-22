@@ -64,7 +64,7 @@
                             'lockSlot' => true,
                             'cancelUrl' => $closeUrl,
                             'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
-                            'submitLabel' => 'Save',
+                            'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Block',
                             'modeLabel' => $isCreateMode ? 'Create' : 'Edit',
                             'activeTab' => $activeTab,
                             'activeLocale' => $activeLocale,

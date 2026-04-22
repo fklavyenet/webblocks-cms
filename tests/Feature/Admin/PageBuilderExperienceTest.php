@@ -363,6 +363,152 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function pages_index_defaults_to_the_primary_site_context(): void
+    {
+        $user = User::factory()->create();
+        $primarySite = $this->defaultSite();
+        $secondarySite = Site::query()->create([
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+
+        $primaryPage = Page::create([
+            'site_id' => $primarySite->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        $secondaryPage = Page::create([
+            'site_id' => $secondarySite->id,
+            'title' => 'Campaign Landing',
+            'slug' => 'campaign-landing',
+            'status' => 'published',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index'));
+
+        $response->assertOk();
+        $response->assertSee('Showing pages for '.$primarySite->name);
+        $response->assertSee('value="'.$primarySite->id.'" selected', false);
+        $response->assertSee(route('admin.pages.edit', $primaryPage), false);
+        $response->assertDontSee(route('admin.pages.edit', $secondaryPage), false);
+        $response->assertSee('Current context');
+    }
+
+    #[Test]
+    public function pages_index_respects_the_selected_site_query_param_and_legacy_site_id_param(): void
+    {
+        $user = User::factory()->create();
+        $primarySite = $this->defaultSite();
+        $secondarySite = Site::query()->create([
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+
+        $primaryPage = Page::create([
+            'site_id' => $primarySite->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        $secondaryPage = Page::create([
+            'site_id' => $secondarySite->id,
+            'title' => 'Campaign Landing',
+            'slug' => 'campaign-landing',
+            'status' => 'draft',
+        ]);
+
+        $selected = $this->actingAs($user)->get(route('admin.pages.index', ['site' => $secondarySite->id]));
+
+        $selected->assertOk();
+        $selected->assertSee('Showing pages for '.$secondarySite->name);
+        $selected->assertSee(route('admin.pages.edit', $secondaryPage), false);
+        $selected->assertDontSee(route('admin.pages.edit', $primaryPage), false);
+
+        $legacy = $this->actingAs($user)->get(route('admin.pages.index', ['site_id' => $secondarySite->id]));
+
+        $legacy->assertOk();
+        $legacy->assertSee('Showing pages for '.$secondarySite->name);
+        $legacy->assertSee(route('admin.pages.edit', $secondaryPage), false);
+        $legacy->assertDontSee(route('admin.pages.edit', $primaryPage), false);
+    }
+
+    #[Test]
+    public function pages_index_can_explicitly_switch_to_all_sites_mode(): void
+    {
+        $user = User::factory()->create();
+        $primarySite = $this->defaultSite();
+        $secondarySite = Site::query()->create([
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+
+        $primaryPage = Page::create([
+            'site_id' => $primarySite->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        $secondaryPage = Page::create([
+            'site_id' => $secondarySite->id,
+            'title' => 'Campaign Landing',
+            'slug' => 'campaign-landing',
+            'status' => 'published',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', ['site' => 'all']));
+
+        $response->assertOk();
+        $response->assertSee('All sites selected');
+        $response->assertSee('Showing pages across all sites');
+        $response->assertSee(route('admin.pages.edit', $primaryPage), false);
+        $response->assertSee(route('admin.pages.edit', $secondaryPage), false);
+        $response->assertSee($primarySite->name);
+        $response->assertSee($secondarySite->name);
+    }
+
+    #[Test]
+    public function sites_list_links_into_the_pages_index_for_that_site(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.index'));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.pages.index', ['site' => $site->id]), false);
+    }
+
+    #[Test]
+    public function page_edit_displays_site_context_in_breadcrumb_and_header(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $site->update(['domain' => 'default.example.test']);
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee(route('admin.pages.index', ['site' => $site->id]), false);
+        $response->assertSee('>Pages<', false);
+        $response->assertSee($site->name);
+        $response->assertSee('default.example.test');
+        $response->assertSee($page->title);
+    }
+
+    #[Test]
     public function page_edit_can_create_a_missing_translation(): void
     {
         $user = User::factory()->create();

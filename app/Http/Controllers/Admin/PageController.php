@@ -18,25 +18,29 @@ use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    private const SITE_CONTEXT_SESSION_KEY = 'admin.pages.site';
+
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
     ) {}
 
     public function index(Request $request): View
     {
+        $sites = Site::query()->primaryFirst()->orderBy('name')->get();
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
-        $siteId = $request->integer('site_id');
         $sort = $request->string('sort')->toString();
         $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
         $allowedStatuses = ['draft', 'published'];
         $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
+        [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
 
         if (! in_array($status, $allowedStatuses, true)) {
             $status = '';
@@ -66,16 +70,19 @@ class PageController extends Controller
                     });
                 })
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->when($siteId > 0, fn ($query) => $query->where('site_id', $siteId))
+                ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
                 ->orderBy($sort, $direction)
                 ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
                 ->withQueryString(),
-            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'sites' => $sites,
+            'activeSite' => $activeSite,
+            'showAllSites' => $siteFilterValue === 'all',
             'filters' => [
                 'search' => $search,
                 'status' => $status,
-                'site_id' => $siteId,
+                'site' => $siteFilterValue,
+                'site_id' => $activeSite?->id ?? 0,
                 'sort' => $sort,
                 'direction' => $direction,
             ],
@@ -88,17 +95,20 @@ class PageController extends Controller
         return redirect()->route('admin.pages.edit', $page);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $sites = Site::query()
             ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
             ->orderByDesc('is_primary')
             ->orderBy('name')
             ->get();
+        [$activeSite] = $this->resolveSiteContext($request, $sites, persist: false);
+        $selectedSiteId = $activeSite?->id ?? ($sites->firstWhere('is_primary', true)?->id ?? $sites->first()?->id);
 
         return view('admin.pages.create', [
             'page' => new Page,
             'sites' => $sites,
+            'selectedSiteId' => $selectedSiteId,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
         ]);
     }
@@ -260,12 +270,67 @@ class PageController extends Controller
         ]);
     }
 
+    private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array
+    {
+        $requestedSite = null;
+        $hasRequestedSite = false;
+
+        if ($request->query->has('site')) {
+            $requestedSite = $request->query('site');
+            $hasRequestedSite = true;
+        } elseif ($request->query->has('site_id')) {
+            $requestedSite = $request->query('site_id');
+            $hasRequestedSite = true;
+        } elseif ($request->hasSession()) {
+            $requestedSite = $request->session()->get(self::SITE_CONTEXT_SESSION_KEY);
+            $hasRequestedSite = $requestedSite !== null;
+        }
+
+        if ($hasRequestedSite) {
+            $normalizedSite = is_string($requestedSite) ? trim($requestedSite) : (string) $requestedSite;
+
+            if (Str::lower($normalizedSite) === 'all') {
+                if ($persist && $request->hasSession()) {
+                    $request->session()->put(self::SITE_CONTEXT_SESSION_KEY, 'all');
+                }
+
+                return [null, 'all'];
+            }
+
+            if (ctype_digit($normalizedSite)) {
+                $site = $sites->firstWhere('id', (int) $normalizedSite);
+
+                if ($site) {
+                    if ($persist && $request->hasSession()) {
+                        $request->session()->put(self::SITE_CONTEXT_SESSION_KEY, (string) $site->id);
+                    }
+
+                    return [$site, (string) $site->id];
+                }
+            }
+        }
+
+        $defaultSite = $sites->firstWhere('is_primary', true) ?? $sites->first();
+
+        if ($persist && $request->hasSession()) {
+            if ($defaultSite) {
+                $request->session()->put(self::SITE_CONTEXT_SESSION_KEY, (string) $defaultSite->id);
+            } else {
+                $request->session()->forget(self::SITE_CONTEXT_SESSION_KEY);
+            }
+        }
+
+        return [$defaultSite, $defaultSite ? (string) $defaultSite->id : 'all'];
+    }
+
     public function destroy(Page $page): RedirectResponse
     {
+        $siteId = $page->site_id;
+
         $page->delete();
 
         return redirect()
-            ->route('admin.pages.index')
+            ->route('admin.pages.index', $siteId ? ['site' => $siteId] : [])
             ->with('status', 'Page deleted successfully.');
     }
 

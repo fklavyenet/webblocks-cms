@@ -51,21 +51,26 @@
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? 'Primary' : 'Standard' }}</span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.sites.edit', $site) }}" class="wb-action-btn wb-action-btn-edit" title="Edit site" aria-label="Edit site">
-                                        <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
-                                    </a>
-                                    <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
-                                        <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
-                                    </a>
-                                    @if ($deleteReport?->canDelete)
-                                        <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site">
-                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                    <div class="wb-action-group">
+                                        <a href="{{ route('admin.pages.index', ['site' => $site->id]) }}" class="wb-action-btn wb-action-btn-view" title="Open site pages" aria-label="Open site pages">
+                                            <i class="wb-icon wb-icon-file-text" aria-hidden="true"></i>
                                         </a>
-                                    @else
-                                        <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site" aria-disabled="true">
-                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                        <a href="{{ route('admin.sites.edit', $site) }}" class="wb-action-btn wb-action-btn-edit" title="Edit site" aria-label="Edit site">
+                                            <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
-                                    @endif
+                                        <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
+                                            <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                                        </a>
+                                        @if ($deleteReport?->canDelete)
+                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site">
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </a>
+                                        @else
+                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site" aria-disabled="true">
+                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                            </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

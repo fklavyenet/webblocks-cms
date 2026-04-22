@@ -10,6 +10,7 @@
     @include('admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Keep site setup compact. Each site can map one canonical host and its enabled public locales.',
+        'actions' => $site->exists ? '<a href="'.route('admin.pages.index', ['site' => $site->id]).'" class="wb-btn wb-btn-secondary">Open Pages</a>' : '',
     ])
 
     @include('admin.partials.flash')

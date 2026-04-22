@@ -1,5 +1,6 @@
 @php
-	$selectedSite = $sites->firstWhere('id', old('site_id', $page->site_id ?: $sites->first()?->id));
+	$formSiteId = old('site_id', $page->site_id ?: ($selectedSiteId ?? $sites->first()?->id));
+	$selectedSite = $sites->firstWhere('id', $formSiteId);
 	$submittedSlots = old('slots');
 	$pageSlots = $submittedSlots
 		? collect($submittedSlots)->map(function ($slot) use ($slotTypes, $page) {
@@ -22,7 +23,7 @@
 				<label for="site_id">Site</label>
 				<select id="site_id" name="site_id" class="wb-select" required>
 					@foreach ($sites as $site)
-						<option value="{{ $site->id }}" @selected((string) old('site_id', $page->site_id ?: $sites->first()?->id) === (string) $site->id)>{{ $site->name }}</option>
+						<option value="{{ $site->id }}" @selected((string) $formSiteId === (string) $site->id)>{{ $site->name }}</option>
 					@endforeach
 				</select>
 			</div>
@@ -153,5 +154,5 @@
 		</div>
 	</div>
 
-	<x-admin.form-actions :cancel-url="route('admin.pages.index')" />
+	<x-admin.form-actions :cancel-url="route('admin.pages.index', ['site' => $formSiteId])" />
 </div>
