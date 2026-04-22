@@ -133,22 +133,34 @@
                 ->map(fn ($part) => mb_substr($part, 0, 1))
                 ->implode('');
 
-            $menuGroups = [
+            $menuItems = [
+                ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
+                ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*', 'icon' => 'wb-icon-globe'],
+                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
+                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
+                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
+            ];
+
+            $sidebarGroups = [
                 [
-                    ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
-                    ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
-                    ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*', 'icon' => 'wb-icon-globe'],
-                    ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*', 'icon' => 'wb-icon-language'],
-                    ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
-                    ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
-                    ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
-                    ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*', 'icon' => 'wb-icon-sidebar'],
-                    ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*', 'icon' => 'wb-icon-layers'],
+                    'label' => 'System',
+                    'icon' => 'wb-icon-language',
+                    'items' => [
+                        ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
+                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
+                    ],
                 ],
                 [
-                    ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*', 'icon' => 'wb-icon-package'],
-                    ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*', 'icon' => 'wb-icon-database'],
-                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh'],
+                    'label' => 'Maintenance',
+                    'icon' => 'wb-icon-database',
+                    'items' => [
+                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
+                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
+                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
+                    ],
                 ],
             ];
         @endphp
@@ -165,29 +177,42 @@
                 </a>
 
                 <nav class="wb-sidebar-nav" aria-label="Admin navigation">
-                    @foreach ($menuGroups as $items)
-                        <div class="wb-stack wb-stack-1">
-                            @foreach ($items as $item)
-                                <a
-                                    href="{{ route($item['route']) }}"
-                                    class="wb-sidebar-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
-                                    @if (request()->routeIs($item['active'])) aria-current="page" @endif
-                                >
-                                    <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
-                                    <span class="wb-cluster wb-cluster-between wb-cluster-2" style="width: 100%;">
-                                        <span>{{ $item['label'] }}</span>
+                    <div class="wb-stack wb-stack-1">
+                        @foreach ($menuItems as $item)
+                            <a
+                                href="{{ route($item['route']) }}"
+                                class="wb-sidebar-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
+                                @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                            >
+                                <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
 
-                                        @if (($item['update_available'] ?? false) === true)
-                                            <span class="wb-status-pill wb-status-pending">1 update</span>
-                                        @endif
-                                    </span>
-                                </a>
-                            @endforeach
+                    <hr class="wb-divider">
+
+                    @foreach ($sidebarGroups as $group)
+                        @php($groupIsActive = collect($group['items'])->contains(fn ($item) => request()->routeIs($item['active'])))
+                        <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}">
+                            <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}" data-wb-nav-group-toggle>
+                                <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
+                                <span class="wb-nav-group-label">{{ $group['label'] }}</span>
+                                <span class="wb-nav-group-arrow" aria-hidden="true"></span>
+                            </button>
+
+                            <div class="wb-nav-group-items">
+                                @foreach ($group['items'] as $item)
+                                    <a
+                                        href="{{ route($item['route']) }}"
+                                        class="wb-nav-group-item {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
+                                        @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                                    >
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
-
-                        @unless ($loop->last)
-                            <hr class="wb-divider">
-                        @endunless
                     @endforeach
                 </nav>
 
@@ -285,6 +310,19 @@
         <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
         @stack('scripts')
         <script>
+            document.querySelectorAll('[data-wb-nav-group-toggle]').forEach(function (toggle) {
+                toggle.addEventListener('click', function () {
+                    var group = toggle.closest('.wb-nav-group');
+
+                    if (!group) {
+                        return;
+                    }
+
+                    var isOpen = group.classList.toggle('is-open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            });
+
             function escapeHtml(value) {
                 return String(value || '')
                     .replace(/&/g, '&amp;')

@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
+use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
@@ -79,6 +80,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
     Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
     Route::post('system/backups/{backup}/restore', [SystemBackupController::class, 'restore'])->name('system.backups.restore');
+    Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
+    Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
     Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
     Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
     Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');

@@ -4,10 +4,15 @@ namespace App\Support\Locales;
 
 use App\Models\Locale;
 use App\Models\Site;
+use App\Support\System\SystemSettings;
 use Illuminate\Http\Request;
 
 class LocaleResolver
 {
+    public function __construct(
+        private readonly SystemSettings $systemSettings,
+    ) {}
+
     public function current(?Request $request = null, ?Site $site = null): Locale
     {
         $request ??= request();
@@ -22,8 +27,15 @@ class LocaleResolver
 
     public function default(): Locale
     {
+        $configuredCode = $this->systemSettings->defaultLocaleCode();
+
         return Locale::query()
-            ->where('is_default', true)
+            ->where('is_enabled', true)
+            ->where(function ($query) use ($configuredCode) {
+                $query->where('code', $configuredCode)
+                    ->orWhere('is_default', true);
+            })
+            ->orderByRaw('case when code = ? then 0 else 1 end', [$configuredCode])
             ->orderByDesc('is_default')
             ->orderBy('id')
             ->firstOrFail();
