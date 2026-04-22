@@ -5,9 +5,9 @@
         : 'Showing pages for '.$activeSite->name.($activeSite->domain ? ' ('.$activeSite->domain.')' : '').'.';
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
-    $headerActions = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-cluster wb-cluster-2">'
+    $headerActions = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-inline-flex wb-items-center wb-gap-2 wb-flex-wrap">'
         .'<span class="wb-text-sm wb-text-muted wb-nowrap">Site</span>'
-        .'<select id="pages_site_context" name="site" class="wb-select" aria-label="Site" onchange="this.form.submit()">'
+        .'<select id="pages_site_context" name="site" class="wb-select wb-w-auto" aria-label="Site" onchange="this.form.submit()">'
         .collect($sites)->map(function ($site) use ($filters) {
             $selected = $filters['site'] === (string) $site->id ? ' selected' : '';
 

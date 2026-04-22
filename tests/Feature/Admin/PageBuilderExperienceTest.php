@@ -394,9 +394,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('value="'.$primarySite->id.'" selected', false);
         $response->assertSee(route('admin.pages.edit', $primaryPage), false);
         $response->assertDontSee(route('admin.pages.edit', $secondaryPage), false);
-        $response->assertSee('<form method="GET" action="'.route('admin.pages.index').'" class="wb-cluster wb-cluster-2">', false);
+        $response->assertSee('<form method="GET" action="'.route('admin.pages.index').'" class="wb-inline-flex wb-items-center wb-gap-2 wb-flex-wrap">', false);
         $response->assertSee('<span class="wb-text-sm wb-text-muted wb-nowrap">Site</span>', false);
-        $response->assertSee('id="pages_site_context" name="site" class="wb-select" aria-label="Site"', false);
+        $response->assertSee('id="pages_site_context" name="site" class="wb-select wb-w-auto" aria-label="Site"', false);
         $response->assertSee('<a href="'.route('admin.pages.create', ['site' => $primarySite->id]).'" class="wb-btn wb-btn-primary">New Page</a>', false);
         $response->assertDontSee('Current context');
     }
