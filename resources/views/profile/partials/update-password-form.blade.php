@@ -7,23 +7,32 @@
         @csrf
         @method('put')
 
-        <div class="wb-stack wb-stack-1">
-            <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-            <x-text-input id="update_password_current_password" name="current_password" type="password" class="mt-1 block w-full" autocomplete="current-password" />
-            <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
-        </div>
+        <x-auth-password-field
+            id="update_password_current_password"
+            name="current_password"
+            :label="__('Current Password')"
+            :messages="$errors->updatePassword->get('current_password')"
+            autocomplete="current-password"
+            wrapper-class="wb-form-group"
+        />
 
-        <div class="wb-stack wb-stack-1">
-            <x-input-label for="update_password_password" :value="__('New Password')" />
-            <x-text-input id="update_password_password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
-        </div>
+        <x-auth-password-field
+            id="update_password_password"
+            name="password"
+            :label="__('New Password')"
+            :messages="$errors->updatePassword->get('password')"
+            autocomplete="new-password"
+            wrapper-class="wb-form-group"
+        />
 
-        <div class="wb-stack wb-stack-1">
-            <x-input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
-            <x-text-input id="update_password_password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
-        </div>
+        <x-auth-password-field
+            id="update_password_password_confirmation"
+            name="password_confirmation"
+            :label="__('Confirm Password')"
+            :messages="$errors->updatePassword->get('password_confirmation')"
+            autocomplete="new-password"
+            wrapper-class="wb-form-group"
+        />
 
         <div class="wb-cluster wb-cluster-2">
             <x-primary-button>{{ __('Save') }}</x-primary-button>

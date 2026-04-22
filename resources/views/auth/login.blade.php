@@ -18,11 +18,14 @@
                 <x-input-error :messages="$errors->get('email')" />
             </div>
 
-            <div class="wb-field">
-                <x-input-label for="password" :value="__('Password')" />
-                <x-text-input id="password" type="password" name="password" required autocomplete="current-password" />
-                <x-input-error :messages="$errors->get('password')" />
-            </div>
+            <x-auth-password-field
+                id="password"
+                name="password"
+                :label="__('Password')"
+                :messages="$errors->get('password')"
+                required
+                autocomplete="current-password"
+            />
 
             <div class="wb-split">
                 <label class="wb-check" for="remember">

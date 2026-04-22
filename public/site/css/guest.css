@@ -33,6 +33,14 @@
     color: inherit;
 }
 
+.wb-password-field {
+    align-items: stretch;
+}
+
+.wb-password-field-toggle {
+    min-width: 2.75rem;
+}
+
 @media (max-width: 900px) {
     .wb-auth-shell.wb-auth-split {
         grid-template-columns: 1fr;

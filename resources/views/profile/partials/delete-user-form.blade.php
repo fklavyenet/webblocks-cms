@@ -21,19 +21,15 @@
                 {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
             </p>
 
-            <div class="wb-stack wb-stack-1">
-                <x-input-label for="password" value="{{ __('Password') }}" class="sr-only" />
-
-                <x-text-input
-                    id="password"
-                    name="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    placeholder="{{ __('Password') }}"
-                />
-
-                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
-            </div>
+            <x-auth-password-field
+                id="password"
+                name="password"
+                :label="__('Password')"
+                :messages="$errors->userDeletion->get('password')"
+                :placeholder="__('Password')"
+                wrapper-class="wb-form-group"
+                label-class="sr-only"
+            />
 
             <div class="wb-cluster wb-cluster-end wb-cluster-2">
                 <x-secondary-button x-on:click="$dispatch('close')">

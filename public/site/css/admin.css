@@ -220,6 +220,14 @@
     overflow: auto;
 }
 
+.wb-password-field {
+    align-items: stretch;
+}
+
+.wb-password-field-toggle {
+    min-width: 2.75rem;
+}
+
 .wb-media-table .wb-action-group,
 .wb-media-grid .wb-action-group {
     flex-wrap: nowrap;

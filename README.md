@@ -532,6 +532,12 @@ CMS_VISITOR_UTM_ENABLED=true
 - `/admin/dashboard` remains available as a backward-compatible redirect to `/admin`.
 - Auth redirects and admin entry points now resolve to the canonical `/admin` path.
 
+## Auth Password Toggle
+
+- Auth password fields now use a shared Blade password-field pattern mapped to existing WebBlocks UI field classes, including `wb-form-group`, `wb-input-group`, `wb-input-addon-btn`, `wb-field-error`, and the WebBlocks icon set.
+- The reusable password field is used across sign in, registration, password reset, confirm password, and profile password forms.
+- The reveal behavior uses small data-attribute driven JavaScript with icon-only trailing actions, `aria-label`, `aria-pressed`, and `aria-controls` updates instead of inline handlers or new frontend dependencies.
+
 ## Backup Manager V1
 
 - Admin path: `/admin/system/backups`
