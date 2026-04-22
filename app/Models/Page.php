@@ -70,6 +70,8 @@ class Page extends Model
         'title',
         'slug',
         'page_type',
+        'page_type_id',
+        'layout_id',
         'status',
     ];
 
@@ -95,6 +97,16 @@ class Page extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    public function pageType(): BelongsTo
+    {
+        return $this->belongsTo(PageType::class);
+    }
+
+    public function layout(): BelongsTo
+    {
+        return $this->belongsTo(Layout::class);
     }
 
     public function translations(): HasMany
