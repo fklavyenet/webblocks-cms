@@ -427,6 +427,78 @@ php artisan site:clone {source} {target}
   - cloud or remote backup storage sync is still not included
   - incremental/differential and encrypted backup flows are still not included
 
+## Export / Import
+
+- Admin paths:
+  - `GET /admin/site-transfers/exports`
+  - `GET /admin/site-transfers/imports`
+  - `GET /admin/site-transfers/imports/create`
+- Export / Import is a portable site package feature for migration and transfer between installs.
+- It is intentionally distinct from Backup / Restore:
+  - Backup / Restore is an environment-level safety and recovery tool.
+  - Export / Import is a site-level portability tool.
+- V1 scope:
+  - export one site into a `.zip` package
+  - include site record, locale assignments, pages, page translations, page slots, blocks, block translations, navigation items, and optional media/assets
+  - import a validated package as a new local site
+  - handle site handle collisions safely by generating `-imported` style suffixes when needed
+  - never make an imported site primary automatically
+  - never silently reuse an already claimed local domain
+- Package structure uses explicit transport JSON files such as:
+  - `manifest.json`
+  - `data/site.json`
+  - `data/locales.json`
+  - `data/site_locales.json`
+  - `data/pages.json`
+  - `data/page_translations.json`
+  - `data/page_slots.json`
+  - `data/blocks.json`
+  - `data/block_assets.json`
+  - `data/block_*_translations.json`
+  - `data/navigation_items.json`
+  - `data/asset_folders.json`
+  - `data/assets.json`
+  - `files/public/...` when media is included
+- Import validation rejects:
+  - missing or invalid `manifest.json`
+  - unsupported product or format version
+  - corrupted JSON payload files
+  - dangerous archive paths such as traversal entries
+- Stored package archives live on the dedicated `site-transfers` disk under `storage/app/site-transfers/...` and are only downloaded through authenticated admin responses.
+
+### Admin Usage
+
+- Exports screen:
+  - choose a site
+  - optionally enable `Include media/assets`
+  - run export and download the completed package from the details screen or index action
+- Imports screen:
+  - upload a `.zip` import package
+  - review the manifest preview and counts
+  - enter the new local site name, optional handle override, and optional domain
+  - run import to create a new local site from the package
+
+### Artisan Commands
+
+- Export one site:
+
+```bash
+php artisan site:export {site} {--with-media}
+```
+
+- Import one package:
+
+```bash
+php artisan site:import {archive} {--name=} {--handle=} {--domain=} {--force}
+```
+
+### Limitations
+
+- V1 import is `Create new site from package` only.
+- Replace/merge/overwrite import modes are intentionally not included yet.
+- Package import recreates site-scoped content and optional media, but does not import install-global runtime data such as users, sessions, system backups, update history, or contact submissions.
+- Catalog references such as block types, slot types, layouts, and page types are resolved against the local install instead of being exported as site-owned content.
+
 ## License
 
 WebBlocks CMS is open-sourced software licensed under the MIT license.
