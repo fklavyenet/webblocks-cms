@@ -51,6 +51,10 @@
                             <strong>Locales</strong>
                             <div class="wb-text-sm wb-text-muted">Each site must keep at least one locale enabled. The system default locale is always forced on.</div>
                             @foreach ($locales as $locale)
+                                @if ($locale->is_default)
+                                    <input type="hidden" name="locale_ids[]" value="{{ $locale->id }}">
+                                @endif
+
                                 <label class="wb-nowrap">
                                     <input
                                         type="checkbox"

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\SiteExport;
+use App\Models\SiteImport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -69,6 +70,46 @@ class SiteExportImportAdminTest extends TestCase
 
         $runResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
         $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+    }
+
+    #[Test]
+    public function imported_site_can_be_saved_after_import_when_only_domain_changes(): void
+    {
+        Storage::fake('site-transfers');
+        Storage::fake('public');
+        [$site] = $this->seedCloneableSite(withFile: true);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
+            'site_id' => $site->id,
+            'includes_media' => '1',
+        ]);
+
+        $siteExport = SiteExport::query()->latest()->firstOrFail();
+        $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
+            'archive' => new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+        ]);
+
+        $siteImport = SiteImport::query()->latest()->firstOrFail();
+        $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
+            'site_name' => 'Imported Site',
+            'site_handle' => 'imported-site',
+            'site_domain' => '',
+        ]);
+
+        $importedSite = $siteImport->fresh()->targetSite;
+        $defaultLocale = \App\Models\Locale::query()->where('is_default', true)->firstOrFail();
+
+        $updateResponse = $this->actingAs($user)->put(route('admin.sites.update', $importedSite), [
+            'name' => $importedSite->name,
+            'handle' => $importedSite->handle,
+            'domain' => 'imported.example.test',
+            'is_primary' => 0,
+        ]);
+
+        $updateResponse->assertRedirect(route('admin.sites.edit', $importedSite));
+        $this->assertSame('imported.example.test', $importedSite->fresh()->domain);
+        $this->assertTrue($importedSite->fresh()->hasEnabledLocale($defaultLocale));
     }
 
     #[Test]

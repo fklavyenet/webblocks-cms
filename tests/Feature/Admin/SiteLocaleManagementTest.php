@@ -79,6 +79,65 @@ class SiteLocaleManagementTest extends TestCase
     }
 
     #[Test]
+    public function site_can_be_saved_without_explicit_locale_ids_and_preserves_default_locale(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => $site->name,
+            'handle' => $site->handle,
+            'domain' => 'imported.example.test',
+            'is_primary' => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.sites.edit', $site));
+        $this->assertSame('imported.example.test', $site->fresh()->domain);
+        $this->assertTrue($site->fresh()->hasEnabledLocale($defaultLocale));
+    }
+
+    #[Test]
+    public function site_update_with_additional_locale_keeps_default_locale_attached(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => $site->name,
+            'handle' => $site->handle,
+            'domain' => $site->domain,
+            'is_primary' => 1,
+            'locale_ids' => [$turkish->id],
+        ]);
+
+        $response->assertRedirect(route('admin.sites.edit', $site));
+        $this->assertTrue($site->fresh()->hasEnabledLocale($defaultLocale));
+        $this->assertTrue($site->fresh()->hasEnabledLocale($turkish));
+    }
+
+    #[Test]
+    public function site_edit_form_renders_forced_default_locale_hidden_input(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.edit', $site));
+
+        $response->assertOk();
+        $response->assertSee('name="locale_ids[]" value="'.$defaultLocale->id.'"', false);
+        $response->assertSee('disabled', false);
+    }
+
+    #[Test]
     public function site_domain_must_be_unique_after_normalization(): void
     {
         $user = User::factory()->create();
