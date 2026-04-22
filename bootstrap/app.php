@@ -1,6 +1,8 @@
 <?php
 
 use App\Console\Commands\ImportDemoMedia;
+use App\Console\Commands\SiteExportCommand;
+use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SiteDeleteCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
@@ -43,6 +45,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         ImportDemoMedia::class,
+        SiteExportCommand::class,
+        SiteImportCommand::class,
         SiteCloneCommand::class,
         SiteDeleteCommand::class,
         SystemBackupRestoreCommand::class,

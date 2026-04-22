@@ -146,6 +146,7 @@
                     ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*', 'icon' => 'wb-icon-layers'],
                 ],
                 [
+                    ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*', 'icon' => 'wb-icon-package'],
                     ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*', 'icon' => 'wb-icon-database'],
                     ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh'],
                 ],
