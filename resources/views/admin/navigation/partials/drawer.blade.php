@@ -45,6 +45,9 @@
                 'parents' => $drawerParents,
                 'menuOptions' => $menuOptions,
                 'linkTypes' => $linkTypes,
+                'cancelType' => 'button',
+                'cancelUrl' => null,
+                'cancelAttributes' => ['data-wb-dismiss' => 'drawer'],
             ])
         </form>
     </div>

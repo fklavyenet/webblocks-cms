@@ -46,8 +46,5 @@
         </div>
     </div>
 
-    <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-        <a href="{{ route('admin.layout-types.index') }}" class="wb-btn wb-btn-secondary">Back</a>
-        <button type="submit" class="wb-btn wb-btn-primary">Save Layout Type</button>
-    </div>
+    <x-admin.form-actions :cancel-url="route('admin.layout-types.index')" />
 </div>

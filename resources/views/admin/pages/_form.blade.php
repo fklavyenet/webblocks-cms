@@ -153,10 +153,5 @@
 		</div>
 	</div>
 
-	<div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-		<a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-		<div class="wb-row wb-row-middle wb-gap-2">
-			<button type="submit" class="wb-btn wb-btn-primary">Save</button>
-		</div>
-	</div>
+	<x-admin.form-actions :cancel-url="route('admin.pages.index')" />
 </div>

@@ -63,9 +63,11 @@
                     </div>
                 </div>
 
-                <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                    <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Back</a>
-                    <button type="submit" class="wb-btn wb-btn-primary">Run Clone</button>
+                <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                    <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
+                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <button type="submit" class="wb-btn wb-btn-primary">Run Clone</button>
+                    </div>
                 </div>
             </form>
         </div>

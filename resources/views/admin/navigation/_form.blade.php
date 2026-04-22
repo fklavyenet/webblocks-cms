@@ -2,6 +2,9 @@
     $isPage = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_PAGE;
     $isUrl = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_CUSTOM_URL;
     $isGroup = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_GROUP;
+    $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]);
+    $cancelType = $cancelType ?? 'link';
+    $cancelAttributes = $cancelAttributes ?? [];
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -86,8 +89,9 @@
 
     <input type="hidden" name="position" value="{{ old('position', $item->position ?: 1) }}">
 
-    <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-        <a href="{{ route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]) }}" class="wb-btn wb-btn-secondary">Back</a>
-        <button type="submit" class="wb-btn wb-btn-primary">Save Navigation Item</button>
-    </div>
+    <x-admin.form-actions
+        :cancel-url="$cancelUrl"
+        :cancel-type="$cancelType"
+        :cancel-attributes="$cancelAttributes"
+    />
 </div>

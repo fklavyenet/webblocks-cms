@@ -24,8 +24,11 @@
                     <div class="wb-text-sm wb-text-muted">V1 imports create a new local site from the package. Overwrite and merge flows are intentionally out of scope for now.</div>
                 </div>
 
-                <div>
-                    <button type="submit" class="wb-btn wb-btn-primary">Validate Package</button>
+                <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                    <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
+                        <a href="{{ route('admin.site-transfers.imports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <button type="submit" class="wb-btn wb-btn-primary">Validate Package</button>
+                    </div>
                 </div>
             </form>
         </div>

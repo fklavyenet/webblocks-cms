@@ -54,10 +54,12 @@
                         <span>I understand this will permanently delete this site.</span>
                     </label>
 
-                    <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                        <button type="submit" class="wb-btn wb-btn-danger" @disabled($report->hasBlockers())>Delete Site</button>
-                    </div>
+                    <x-admin.form-actions
+                        :cancel-url="route('admin.sites.index')"
+                        :show-submit="false"
+                        :delete-submit="true"
+                        :delete-disabled="$report->hasBlockers()"
+                    />
                 </form>
             </div>
         </div>

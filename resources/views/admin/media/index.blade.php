@@ -470,10 +470,10 @@
                             </div>
                         </div>
 
-                        <div class="wb-modal-footer">
-                            <a href="{{ route('admin.media.index', $baseQuery) }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                            <button type="submit" class="wb-btn wb-btn-primary">Upload Asset</button>
-                        </div>
+                        <x-admin.form-actions
+                            :cancel-url="route('admin.media.index', $baseQuery)"
+                            container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+                        />
                     </form>
                 </div>
             </div>
@@ -527,10 +527,10 @@
                             </div>
                         </div>
 
-                        <div class="wb-modal-footer">
-                            <a href="{{ route('admin.media.index', $baseQuery) }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                            <button type="submit" class="wb-btn wb-btn-primary">Create Folder</button>
-                        </div>
+                        <x-admin.form-actions
+                            :cancel-url="route('admin.media.index', $baseQuery)"
+                            container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+                        />
                     </form>
                 </div>
             </div>

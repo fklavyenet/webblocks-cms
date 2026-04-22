@@ -6,7 +6,9 @@
     $lockPage = $lockPage ?? false;
     $lockSlot = $lockSlot ?? false;
     $cancelUrl = $cancelUrl ?? (($selectedPageId && $selectedSlotTypeId) ? route('admin.pages.slots.blocks', ['page' => $selectedPageId, 'slot' => $selectedSlotTypeId]) : ($selectedPageId ? route('admin.pages.edit', $selectedPageId) : route('admin.blocks.index')));
-    $submitLabel = $submitLabel ?? 'Save Block';
+    $submitLabel = $submitLabel ?? 'Save';
+    $modeLabel = $modeLabel ?? ($block->exists ? 'Edit' : 'Create');
+    $actionsContainerClass = $actionsContainerClass ?? 'wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap';
     $activeTab = $activeTab ?? old('_slot_block_tab', 'block-fields');
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
@@ -102,7 +104,7 @@
                             <label>Mode</label>
                             <div class="wb-card wb-card-muted">
                                 <div class="wb-card-body">
-                                    <strong>{{ $submitLabel === 'Save New Block' ? 'Create' : 'Edit' }}</strong>
+                                    <strong>{{ $modeLabel }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -184,4 +186,10 @@
             </div>
         </div>
     </div>
+
+    <x-admin.form-actions
+        :cancel-url="$cancelUrl"
+        :submit-label="$submitLabel"
+        :container-class="$actionsContainerClass"
+    />
 </div>

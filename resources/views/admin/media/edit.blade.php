@@ -62,10 +62,7 @@
                     </div>
                 </div>
 
-                <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                    <a href="{{ route('admin.media.show', array_filter(['asset' => $asset, 'back_to_preview' => $showPreviewBackLink ? 1 : null])) }}" class="wb-btn wb-btn-secondary">Back</a>
-                    <button type="submit" class="wb-btn wb-btn-primary">Save Asset</button>
-                </div>
+                <x-admin.form-actions :cancel-url="route('admin.media.show', array_filter(['asset' => $asset, 'back_to_preview' => $showPreviewBackLink ? 1 : null]))" />
             </form>
         </div>
     </div>

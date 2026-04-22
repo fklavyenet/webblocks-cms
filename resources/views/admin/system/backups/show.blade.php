@@ -75,8 +75,11 @@
 
                         <div class="wb-text-sm wb-text-muted">This restore imports <code>database/database.sql</code>, restores <code>uploads/public/...</code> when present, reruns <code>storage:link</code>, and clears framework caches after the restore.</div>
 
-                        <div>
-                            <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>Restore backup</button>
+                        <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                            <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                                <button type="submit" class="wb-btn wb-btn-danger" data-wb-restore-submit @disabled(! old('acknowledge_restore_risk'))>Restore backup</button>
+                            </div>
                         </div>
                     </form>
                 @else
@@ -87,8 +90,11 @@
                         </div>
                     </div>
 
-                    <div>
-                        <button type="button" class="wb-btn wb-btn-danger" disabled>Restore backup</button>
+                    <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                        <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
+                            <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                            <button type="button" class="wb-btn wb-btn-danger" disabled>Restore backup</button>
+                        </div>
                     </div>
                 @endif
             </div>
