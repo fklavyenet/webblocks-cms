@@ -8,10 +8,15 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\SlotType;
+use App\Support\Visitors\VisitorReportsQuery;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly VisitorReportsQuery $visitorReports,
+    ) {}
+
     public function __invoke(): View
     {
         return view('admin.dashboard', [
@@ -33,6 +38,7 @@ class DashboardController extends Controller
                 ->latest()
                 ->limit(5)
                 ->get(),
+            'visitorSummary' => $this->visitorReports->dashboardSummary(),
         ]);
     }
 }

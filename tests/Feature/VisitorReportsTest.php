@@ -68,6 +68,25 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
+    public function utm_values_are_sanitized_and_empty_values_become_null(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->get(route('pages.show', [
+            'slug' => $page->slug,
+            'utm_source' => "  Newsletter\nLaunch  ",
+            'utm_medium' => '   ',
+            'utm_campaign' => str_repeat('A', 300),
+        ], false))->assertOk();
+
+        $event = VisitorEvent::query()->firstOrFail();
+
+        $this->assertSame('Newsletter Launch', $event->utm_source);
+        $this->assertNull($event->utm_medium);
+        $this->assertSame(str_repeat('A', 255), $event->utm_campaign);
+    }
+
+    #[Test]
     public function obvious_bot_requests_are_not_tracked(): void
     {
         $page = $this->createPublishedPage();
@@ -154,6 +173,131 @@ class VisitorReportsTest extends TestCase
         $response->assertDontSee('/p/primary-about');
         $response->assertSee('Campaign');
         $response->assertSee('1');
+    }
+
+    #[Test]
+    public function campaign_source_and_medium_reports_respect_filters(): void
+    {
+        $user = User::factory()->create();
+        $primarySite = $this->defaultSite();
+        $campaignSite = Site::query()->create([
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign-site.example.test',
+            'is_primary' => false,
+        ]);
+
+        $defaultLocale = $this->defaultLocale();
+        $trLocale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+
+        $campaignSite->locales()->syncWithoutDetaching([
+            $defaultLocale->id => ['is_enabled' => true],
+            $trLocale->id => ['is_enabled' => true],
+        ]);
+
+        $primaryPage = $this->createPublishedPage($primarySite, 'Primary About', 'primary-about');
+        $campaignPage = $this->createPublishedPage($campaignSite, 'Campaign Launch', 'campaign-launch');
+
+        VisitorEvent::query()->create([
+            'site_id' => $campaignSite->id,
+            'page_id' => $campaignPage->id,
+            'locale_id' => $defaultLocale->id,
+            'path' => '/p/campaign-launch',
+            'utm_source' => 'newsletter',
+            'utm_medium' => 'email',
+            'utm_campaign' => 'spring-launch',
+            'session_key' => 'session-1',
+            'ip_hash' => 'hash-1',
+            'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $campaignSite->id,
+            'page_id' => $campaignPage->id,
+            'locale_id' => $defaultLocale->id,
+            'path' => '/p/campaign-launch',
+            'utm_source' => 'newsletter',
+            'utm_medium' => 'email',
+            'utm_campaign' => 'spring-launch',
+            'session_key' => 'session-2',
+            'ip_hash' => 'hash-2',
+            'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $campaignSite->id,
+            'page_id' => $campaignPage->id,
+            'locale_id' => $trLocale->id,
+            'path' => '/tr/p/campaign-launch',
+            'utm_source' => null,
+            'utm_medium' => null,
+            'utm_campaign' => null,
+            'session_key' => 'session-3',
+            'ip_hash' => 'hash-3',
+            'visited_at' => CarbonImmutable::today()->setTime(11, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $primarySite->id,
+            'page_id' => $primaryPage->id,
+            'locale_id' => $defaultLocale->id,
+            'path' => '/p/primary-about',
+            'utm_source' => 'ads',
+            'utm_medium' => 'cpc',
+            'utm_campaign' => 'other-campaign',
+            'session_key' => 'session-4',
+            'ip_hash' => 'hash-4',
+            'visited_at' => CarbonImmutable::today()->setTime(12, 0),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.reports.visitors.index', [
+            'site' => $campaignSite->id,
+            'locale' => $defaultLocale->id,
+            'date_range' => 'today',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Top Campaigns');
+        $response->assertSee('Source Breakdown');
+        $response->assertSee('Medium Breakdown');
+        $response->assertSee('spring-launch');
+        $response->assertSee('newsletter');
+        $response->assertSee('email');
+        $response->assertDontSee('other-campaign');
+        $response->assertDontSee('Direct / None');
+    }
+
+    #[Test]
+    public function reports_group_null_utm_values_without_breaking(): void
+    {
+        $user = User::factory()->create();
+        $site = $this->defaultSite();
+        $page = $this->createPublishedPage($site, 'Landing', 'landing');
+
+        VisitorEvent::query()->create([
+            'site_id' => $site->id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/landing',
+            'utm_source' => null,
+            'utm_medium' => null,
+            'utm_campaign' => null,
+            'session_key' => 'direct-session',
+            'ip_hash' => 'direct-hash',
+            'visited_at' => CarbonImmutable::today()->setTime(8, 0),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.reports.visitors.index', [
+            'date_range' => 'today',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Direct / None');
     }
 
     #[Test]

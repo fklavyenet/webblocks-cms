@@ -9,10 +9,12 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class VisitorReportsQuery
 {
+    private const DIRECT_LABEL = 'Direct / None';
+
     public function filters(Request $request): array
     {
         $dateRange = $this->normalizeDateRange($request);
@@ -33,14 +35,64 @@ class VisitorReportsQuery
     {
         $query = $this->filteredQuery($filters);
         $summary = $this->summary(clone $query);
+        $supportsUtmBreakdowns = $this->supportsUtmBreakdowns();
 
         return [
             'summary' => $summary,
             'top_pages' => $this->topPages(clone $query),
             'top_entry_pages' => $this->topEntryPages(clone $query),
             'top_referrers' => $this->topReferrers(clone $query),
+            'top_campaigns' => $supportsUtmBreakdowns ? $this->topCampaigns(clone $query) : collect(),
+            'source_breakdown' => $supportsUtmBreakdowns ? $this->sourceBreakdown(clone $query) : collect(),
+            'medium_breakdown' => $supportsUtmBreakdowns ? $this->mediumBreakdown(clone $query) : collect(),
             'locale_summary' => $this->localeSummary(clone $query),
             'device_summary' => $this->deviceSummary(clone $query),
+        ];
+    }
+
+    public function hasEventsTable(): bool
+    {
+        return Schema::hasTable('visitor_events');
+    }
+
+    public function utmTrackingEnabled(): bool
+    {
+        return (bool) config('cms.visitor_reports.utm_enabled', true);
+    }
+
+    public function supportsUtmBreakdowns(): bool
+    {
+        return $this->hasEventsTable() && Schema::hasColumns('visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
+    }
+
+    public function dashboardSummary(): array
+    {
+        $summary = [
+            'is_enabled' => (bool) config('cms.visitor_reports.enabled', true),
+            'table_exists' => $this->hasEventsTable(),
+            'range_label' => 'Last 7 days',
+            'total_page_views' => 0,
+            'unique_visitors' => 0,
+            'top_page_path' => null,
+            'top_page_views' => 0,
+        ];
+
+        if (! $summary['is_enabled'] || ! $summary['table_exists']) {
+            return $summary;
+        }
+
+        $from = CarbonImmutable::today()->subDays(6)->startOfDay();
+        $to = CarbonImmutable::today()->endOfDay();
+        $query = VisitorEvent::query()->whereBetween('visited_at', [$from, $to]);
+        $totals = $this->summary(clone $query);
+        $topPage = $this->topPages(clone $query, 1)->first();
+
+        return [
+            ...$summary,
+            'total_page_views' => $totals['total_page_views'],
+            'unique_visitors' => $totals['unique_visitors'],
+            'top_page_path' => $topPage['path'] ?? null,
+            'top_page_views' => $topPage['page_views'] ?? 0,
         ];
     }
 
@@ -75,7 +127,7 @@ class VisitorReportsQuery
         ];
     }
 
-    private function topPages(Builder $query): Collection
+    private function topPages(Builder $query, int $limit = 15): Collection
     {
         return $query
             ->select('site_id', 'locale_id', 'path')
@@ -84,7 +136,7 @@ class VisitorReportsQuery
             ->groupBy('site_id', 'locale_id', 'path')
             ->orderByDesc('page_views')
             ->orderBy('path')
-            ->limit(15)
+            ->limit($limit)
             ->get()
             ->map(fn (VisitorEvent $event) => [
                 'site_name' => $event->site?->name ?? 'Unknown site',
@@ -144,6 +196,21 @@ class VisitorReportsQuery
             ->values();
     }
 
+    private function topCampaigns(Builder $query): Collection
+    {
+        return $this->utmBreakdown($query, 'utm_campaign', 10);
+    }
+
+    private function sourceBreakdown(Builder $query): Collection
+    {
+        return $this->utmBreakdown($query, 'utm_source', 10);
+    }
+
+    private function mediumBreakdown(Builder $query): Collection
+    {
+        return $this->utmBreakdown($query, 'utm_medium', 10);
+    }
+
     private function localeSummary(Builder $query): Collection
     {
         $localeNames = Locale::query()->pluck('name', 'id');
@@ -184,6 +251,26 @@ class VisitorReportsQuery
                     default => 'Unknown',
                 },
                 'page_views' => (int) $event->page_views,
+                'sessions' => (int) $event->sessions,
+            ]);
+    }
+
+    private function utmBreakdown(Builder $query, string $column, int $limit): Collection
+    {
+        return $query
+            ->select($column)
+            ->selectRaw('COUNT(*) as page_views')
+            ->selectRaw('COUNT(DISTINCT COALESCE(ip_hash, session_key)) as unique_visitors')
+            ->selectRaw('COUNT(DISTINCT session_key) as sessions')
+            ->groupBy($column)
+            ->orderByDesc('page_views')
+            ->orderBy($column)
+            ->limit($limit)
+            ->get()
+            ->map(fn (VisitorEvent $event) => [
+                'label' => $this->utmLabel($event->{$column}),
+                'page_views' => (int) $event->page_views,
+                'unique_visitors' => (int) $event->unique_visitors,
                 'sessions' => (int) $event->sessions,
             ]);
     }
@@ -289,5 +376,12 @@ class VisitorReportsQuery
         }
 
         return $normalized;
+    }
+
+    private function utmLabel(?string $value): string
+    {
+        $normalized = trim((string) $value);
+
+        return $normalized !== '' ? $normalized : self::DIRECT_LABEL;
     }
 }

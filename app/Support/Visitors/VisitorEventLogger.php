@@ -5,6 +5,7 @@ namespace App\Support\Visitors;
 use App\Models\Page;
 use App\Models\VisitorEvent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Throwable;
 
 class VisitorEventLogger
@@ -28,9 +29,9 @@ class VisitorEventLogger
                 'locale_id' => $translation?->locale_id,
                 'path' => $this->normalizePath($request->getPathInfo()),
                 'referrer' => $this->truncate($request->headers->get('referer'), 2048),
-                'utm_source' => $this->truncate($request->query('utm_source')),
-                'utm_medium' => $this->truncate($request->query('utm_medium')),
-                'utm_campaign' => $this->truncate($request->query('utm_campaign')),
+                'utm_source' => $this->utmValue($request, 'utm_source'),
+                'utm_medium' => $this->utmValue($request, 'utm_medium'),
+                'utm_campaign' => $this->utmValue($request, 'utm_campaign'),
                 'device_type' => $device['device_type'],
                 'browser_family' => $device['browser_family'],
                 'os_family' => $device['os_family'],
@@ -182,5 +183,25 @@ class VisitorEventLogger
         }
 
         return mb_substr($normalized, 0, $limit);
+    }
+
+    private function utmValue(Request $request, string $key): ?string
+    {
+        if (! config('cms.visitor_reports.utm_enabled', true)) {
+            return null;
+        }
+
+        $normalized = $this->truncate($request->query($key));
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        $sanitized = Str::of($normalized)
+            ->replaceMatches('/[[:cntrl:]]+/u', ' ')
+            ->squish()
+            ->value();
+
+        return $sanitized !== '' ? $sanitized : null;
     }
 }

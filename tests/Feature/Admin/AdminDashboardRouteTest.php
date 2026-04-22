@@ -2,7 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Page;
+use App\Models\Site;
 use App\Models\User;
+use App\Models\VisitorEvent;
+use Carbon\CarbonImmutable;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,13 +26,32 @@ class AdminDashboardRouteTest extends TestCase
     public function admin_root_opens_dashboard_for_authenticated_users(): void
     {
         $user = User::factory()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
         app(InstalledVersionStore::class)->persist('0.1.4');
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Dashboard Landing',
+            'slug' => 'dashboard-landing',
+            'status' => 'published',
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'path' => '/p/dashboard-landing',
+            'session_key' => 'dashboard-session',
+            'ip_hash' => 'dashboard-hash',
+            'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+        ]);
 
         $response = $this->actingAs($user)->get('/admin');
 
         $response->assertOk();
         $response->assertSee('Dashboard');
         $response->assertSee('WebBlocks CMS v0.1.4');
+        $response->assertSee('Visitor Summary');
+        $response->assertSee('/p/dashboard-landing');
     }
 
     #[Test]

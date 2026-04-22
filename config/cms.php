@@ -11,6 +11,7 @@ return [
     ],
     'visitor_reports' => [
         'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),
+        'utm_enabled' => env('CMS_VISITOR_UTM_ENABLED', true),
         'ignored_user_agents' => [
             'bot',
             'crawler',

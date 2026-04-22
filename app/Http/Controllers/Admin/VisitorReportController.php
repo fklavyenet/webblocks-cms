@@ -7,7 +7,6 @@ use App\Models\Locale;
 use App\Models\Site;
 use App\Support\Visitors\VisitorReportsQuery;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class VisitorReportController extends Controller
@@ -21,7 +20,7 @@ class VisitorReportController extends Controller
         $sites = Site::query()->primaryFirst()->orderBy('name')->get();
         $locales = Locale::query()->where('is_enabled', true)->orderByDesc('is_default')->orderBy('name')->get();
         $filters = $this->reports->filters($request);
-        $tableExists = Schema::hasTable('visitor_events');
+        $tableExists = $this->reports->hasEventsTable();
 
         return view('admin.reports.visitors.index', [
             'sites' => $sites,
@@ -31,6 +30,8 @@ class VisitorReportController extends Controller
                 ? $this->reports->build($filters)
                 : null,
             'isEnabled' => (bool) config('cms.visitor_reports.enabled', true),
+            'utmEnabled' => $this->reports->utmTrackingEnabled(),
+            'supportsUtmBreakdowns' => $this->reports->supportsUtmBreakdowns(),
             'visitorEventsTableExists' => $tableExists,
         ]);
     }

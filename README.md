@@ -395,10 +395,69 @@ CMS_VISITOR_REPORTS_ENABLED=true
 
 - If the admin screen says the visitor reports migration is missing, run `php artisan migrate` so the `visitor_events` table is created before opening `/admin/reports/visitors`.
 
+## Visitor Reports Phase 2
+
+- Phase 2 extends the existing Visitor Reports flow without changing the V1 public-page tracking boundary.
+- New admin reporting blocks now cover campaign attribution and a compact visitor summary on `/admin`.
+- Existing site, locale, and date-range filters continue to scope all visitor report aggregates, including the new UTM-based sections.
+
+### UTM Tracking
+
+- Public page requests now capture these optional query parameters when present:
+  - `utm_source`
+  - `utm_medium`
+  - `utm_campaign`
+- Missing or empty values are stored as `null`.
+- UTM values are normalized with basic sanitization and truncated to 255 characters before insert.
+- The `visitor_events` schema includes nullable columns for:
+  - `utm_source`
+  - `utm_medium`
+  - `utm_campaign`
+- UTM tracking can be enabled or disabled independently with:
+
+```bash
+CMS_VISITOR_UTM_ENABLED=true
+```
+
+### Campaign Reporting
+
+- `/admin/reports/visitors` now includes:
+  - Top Campaigns
+  - Source Breakdown
+  - Medium Breakdown
+- Each campaign row shows:
+  - campaign label
+  - page views
+  - unique visitors
+  - sessions
+- Null or empty UTM values are grouped under `Direct / None` so reporting stays readable instead of silently dropping unattributed traffic.
+- Breakdowns are ordered from highest to lowest traffic and keep the current multisite and locale filter behavior.
+
+### Dashboard Widget
+
+- `/admin` now shows a compact `Visitor Summary` card for the last 7 days.
+- The widget includes:
+  - total page views
+  - unique visitors
+  - top page path
+- If visitor tracking is disabled or the migration is missing, the widget renders an empty-state message instead of failing.
+
+### Privacy
+
+- Phase 2 does not introduce raw personal identifiers.
+- `ip_hash` remains one-way and non-reversible.
+- UTM values are stored exactly for lightweight attribution reporting, so campaign naming should avoid embedding personal data in URLs.
+
+### V2 Limits
+
+- Phase 2 adds simple attribution reporting only.
+- There is still no full acquisition funnel, first-touch/last-touch attribution model, ad-network API sync, or advanced marketing analytics workspace.
+- The dashboard widget is intentionally compact and limited to a 7-day operational snapshot.
+
 ### V1 Limits
 
 - V1 focuses on readable aggregate reports inside the CMS and is intentionally not a full analytics platform.
-- There is no deep bot detection, campaign attribution modeling, heatmaps, event funnels, or referrer/UTM filtering yet.
+- The baseline reporting model remains intentionally lightweight and does not include deep bot detection, heatmaps, funnels, or advanced attribution modeling.
 
 ### Test Coverage
 
@@ -408,6 +467,9 @@ CMS_VISITOR_REPORTS_ENABLED=true
   - authenticated admin access to the Visitor Reports screen
   - site and date-range filter behavior in the reports query layer
   - obvious bot traffic being ignored
+  - UTM parameter capture, sanitization, and null normalization
+  - campaign/source/medium report aggregation under filters
+  - dashboard visitor summary rendering on `/admin`
 - Migration/backfill coverage now also accounts for the presence of the `visitor_events` table in the multisite foundation test path.
 
 ## Demo Media

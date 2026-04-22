@@ -7,6 +7,7 @@
         'total_sessions' => 0,
         'average_pages_per_session' => 0,
     ];
+    $supportsCampaignReports = ($supportsUtmBreakdowns ?? false) && ($utmEnabled ?? true);
     $hasFilters = $filters['date_range'] !== 'last_30_days' || $filters['site'] !== 'all' || $filters['locale'] !== 'all';
 @endphp
 
@@ -125,6 +126,127 @@
         </div>
 
         <div class="wb-grid wb-grid-2">
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Top Campaigns</strong></div>
+                <div class="wb-card-body">
+                    @if (! $supportsCampaignReports)
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">Campaign tracking is unavailable</div>
+                            <div class="wb-empty-text">
+                                @if (! $utmEnabled)
+                                    Set <code>CMS_VISITOR_UTM_ENABLED=true</code> to capture UTM parameters for campaign reporting.
+                                @else
+                                    Run <code>php artisan migrate</code> so the UTM columns are available in <code>visitor_events</code>.
+                                @endif
+                            </div>
+                        </div>
+                    @elseif ($report['top_campaigns']->isEmpty())
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No campaign data yet</div>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped wb-table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Campaign</th>
+                                        <th>Page views</th>
+                                        <th>Visitors</th>
+                                        <th>Sessions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['top_campaigns'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ number_format($row['page_views']) }}</td>
+                                            <td>{{ number_format($row['unique_visitors']) }}</td>
+                                            <td>{{ number_format($row['sessions']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Source Breakdown</strong></div>
+                <div class="wb-card-body">
+                    @if (! $supportsCampaignReports)
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No source breakdown yet</div>
+                        </div>
+                    @elseif ($report['source_breakdown']->isEmpty())
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No source data yet</div>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped wb-table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Page views</th>
+                                        <th>Visitors</th>
+                                        <th>Sessions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['source_breakdown'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ number_format($row['page_views']) }}</td>
+                                            <td>{{ number_format($row['unique_visitors']) }}</td>
+                                            <td>{{ number_format($row['sessions']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Medium Breakdown</strong></div>
+                <div class="wb-card-body">
+                    @if (! $supportsCampaignReports)
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No medium breakdown yet</div>
+                        </div>
+                    @elseif ($report['medium_breakdown']->isEmpty())
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No medium data yet</div>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped wb-table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Medium</th>
+                                        <th>Page views</th>
+                                        <th>Visitors</th>
+                                        <th>Sessions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['medium_breakdown'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ number_format($row['page_views']) }}</td>
+                                            <td>{{ number_format($row['unique_visitors']) }}</td>
+                                            <td>{{ number_format($row['sessions']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <div class="wb-card">
                 <div class="wb-card-header"><strong>Top Entry Pages</strong></div>
                 <div class="wb-card-body">
