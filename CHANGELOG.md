@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Promote Visitor Reports V1 release to the 0.3.x line so it becomes visible as the latest stable update.
+- No functional changes compared to 0.2.1.
+
 ## 0.2.1
 
 - Add Visitor Reports V1 with a compact admin screen at `/admin/reports/visitors`.
