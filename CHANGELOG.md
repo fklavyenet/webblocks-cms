@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Add Visitor Reports V1 with a compact admin screen at `/admin/reports/visitors`.
+- Implement lightweight public visitor tracking backed by the new `visitor_events` table with multisite-aware and locale-aware reporting queries.
+- Keep tracking privacy-safe by storing `ip_hash` instead of raw IP addresses and documenting the feature, config, and V1 limits in the README.
+
 ## 0.3.1
 
 - Fix release workflow script invocation so release note generation and archive builds run reliably in GitHub Actions even when executable bits are not preserved.
