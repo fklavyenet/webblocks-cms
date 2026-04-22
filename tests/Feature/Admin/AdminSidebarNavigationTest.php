@@ -80,4 +80,19 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('wb-icon-list', false);
         $response->assertSee('wb-icon-globe', false);
     }
+
+    #[Test]
+    public function admin_users_navigation_item_is_visible_only_to_admin_users(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+
+        $adminResponse = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $adminResponse->assertOk();
+        $adminResponse->assertSee('href="'.route('admin.users.index').'"', false);
+
+        $userResponse = $this->actingAs($user)->get(route('admin.dashboard'));
+        $userResponse->assertOk();
+        $userResponse->assertDontSee('href="'.route('admin.users.index').'"', false);
+    }
 }

@@ -3,6 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Profile',
+        'description' => 'Update your own account details and password. User management for other accounts lives in the Users admin screen.',
     ])
 
     @include('admin.partials.flash')

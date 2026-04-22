@@ -538,6 +538,37 @@ CMS_VISITOR_UTM_ENABLED=true
 - The reusable password field is used across sign in, registration, password reset, confirm password, and profile password forms.
 - The reveal behavior uses small data-attribute driven JavaScript with icon-only trailing actions, `aria-label`, `aria-pressed`, and `aria-controls` updates instead of inline handlers or new frontend dependencies.
 
+## Users Phase 1
+
+- WebBlocks CMS now includes a first-party admin-managed user system for CMS/system accounts.
+- Admin navigation adds a top-level `Users` item for admin users only.
+- Users Phase 1 admin routes:
+  - `GET /admin/users`
+  - `GET /admin/users/create`
+  - `POST /admin/users`
+  - `GET /admin/users/{user}/edit`
+  - `PUT/PATCH /admin/users/{user}`
+  - `DELETE /admin/users/{user}`
+- User records now support:
+  - `is_admin`
+  - `is_active`
+  - `last_login_at`
+- Phase 1 authorization boundary:
+  - only admin users can open `/admin/users`
+  - only admin users can create, edit, activate/deactivate, and delete users from that screen
+  - self-profile editing remains available at `/profile`
+- Login behavior:
+  - inactive users cannot authenticate
+  - blocked inactive logins return a friendly validation message
+  - successful logins update `last_login_at`
+- Safety rules:
+  - the last active admin cannot be deleted
+  - the last active admin cannot be deactivated or demoted from admin
+  - admins cannot delete themselves from the admin Users screen
+  - the last active admin also cannot delete their own account from `/profile`
+- Public `/register` remains available in the current project line. New self-registered users are created as active non-admin users unless promoted later by an admin.
+- If an existing install upgrades to this feature, run `php artisan migrate` so the new user management columns are added before opening `/admin/users`.
+
 ## Backup Manager V1
 
 - Admin path: `/admin/system/backups`

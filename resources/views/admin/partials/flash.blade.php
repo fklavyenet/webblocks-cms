@@ -50,6 +50,15 @@
     </div>
 @endif
 
+@if ($errors->has('user_lifecycle'))
+    <div class="wb-alert wb-alert-danger">
+        <div>
+            <div class="wb-alert-title">User Action Blocked</div>
+            <div>{{ $errors->first('user_lifecycle') }}</div>
+        </div>
+    </div>
+@endif
+
 @if ($errors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>

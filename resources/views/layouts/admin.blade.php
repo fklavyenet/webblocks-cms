@@ -33,10 +33,15 @@
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'icon' => 'wb-icon-user'],
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
                 ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
             ];
+
+            if (! $user?->can('manage-users')) {
+                $menuItems = array_values(array_filter($menuItems, fn (array $item) => $item['route'] !== 'admin.users.index'));
+            }
 
             $sidebarGroups = [
                 [

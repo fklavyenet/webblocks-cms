@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add Users Phase 1 as a first-party admin-managed CMS user system with `/admin/users` index, create, edit, and delete flows.
+- Extend the `users` table with `is_admin`, `is_active`, and `last_login_at`, and keep self-profile editing available alongside the new admin user management UI.
+- Block inactive-user authentication, update `last_login_at` on successful login, and protect destructive edge cases such as deleting, deactivating, or demoting the last active admin.
+- Document the new user management behavior and upgrade note in `README.md`.
+
 ## 0.3.3
 
 - Add Visitor Reports Phase 2 on top of the stable `0.3.x` line so installed CMS sites can receive the update through the normal updater.

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Support\Users\UserLifecycleGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    public function __construct(private readonly UserLifecycleGuard $lifecycleGuard) {}
+
     /**
      * Display the user's profile form.
      */
@@ -47,6 +50,10 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($message = $this->lifecycleGuard->selfDeletionBlocker($user)) {
+            return Redirect::route('profile.edit')->withErrors(['user_lifecycle' => $message]);
+        }
 
         Auth::logout();
 

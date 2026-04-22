@@ -14,8 +14,8 @@ class DevelopmentUserSeeder extends Seeder
     public function run(): void
     {
         collect([
-            ['name' => 'Admin User', 'email' => 'admin@example.com'],
-            ['name' => 'Test User', 'email' => 'test@example.com'],
+            ['name' => 'Admin User', 'email' => 'admin@example.com', 'is_admin' => true],
+            ['name' => 'Test User', 'email' => 'test@example.com', 'is_admin' => false],
         ])->each(function (array $user): void {
             User::query()->updateOrCreate([
                 'email' => $user['email'],
@@ -23,6 +23,8 @@ class DevelopmentUserSeeder extends Seeder
                 'name' => $user['name'],
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
+                'is_admin' => $user['is_admin'],
+                'is_active' => true,
             ]);
         });
     }
