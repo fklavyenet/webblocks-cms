@@ -92,7 +92,7 @@
                 </div>
             </div>
 
-            <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
+            <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                 <div>
                     @if ($selectedBlockType)
                         <span class="wb-status-pill {{ $selectedBlockType->is_system ? 'wb-status-info' : 'wb-status-active' }}">

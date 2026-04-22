@@ -6,11 +6,14 @@ use App\Support\Locales\LocaleResolver;
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
+use App\Support\System\SystemSettings;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SiteResolver::class);
         $this->app->singleton(LocaleResolver::class);
         $this->app->singleton(PageRouteResolver::class);
+        $this->app->singleton(SystemSettings::class);
     }
 
     /**
@@ -29,6 +33,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        try {
+            $systemSettings = app(SystemSettings::class);
+
+            Config::set('app.name', $systemSettings->appName());
+            Config::set('app.slogan', $systemSettings->appSlogan());
+            Config::set('app.locale', $systemSettings->defaultLocaleCode());
+            Config::set('app.fallback_locale', $systemSettings->defaultLocaleCode());
+            Config::set('app.timezone', $systemSettings->timezone());
+            date_default_timezone_set((string) config('app.timezone', 'UTC'));
+        } catch (Throwable) {
+            // Keep config fallbacks when the database is unavailable during bootstrap.
+        }
+
         // Public navigation now renders explicitly through Navigation Auto blocks.
 
         View::composer('layouts.admin', function ($view): void {

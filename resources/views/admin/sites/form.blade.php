@@ -51,6 +51,10 @@
                             <strong>Locales</strong>
                             <div class="wb-text-sm wb-text-muted">Each site must keep at least one locale enabled. The system default locale is always forced on.</div>
                             @foreach ($locales as $locale)
+                                @if ($locale->is_default)
+                                    <input type="hidden" name="locale_ids[]" value="{{ $locale->id }}">
+                                @endif
+
                                 <label class="wb-nowrap">
                                     <input
                                         type="checkbox"
@@ -66,10 +70,11 @@
                     </div>
                 </div>
 
-                <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                    <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Back</a>
-                    <button type="submit" class="wb-btn wb-btn-primary">Save</button>
-                </div>
+                <x-admin.form-actions
+                    :cancel-url="route('admin.sites.index')"
+                    :delete-href="$site->exists && isset($siteDeleteReport) ? route('admin.sites.delete', $site) : null"
+                    :delete-disabled="$site->exists && isset($siteDeleteReport) ? ! $siteDeleteReport->canDelete : false"
+                />
             </form>
         </div>
     </div>

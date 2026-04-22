@@ -27,6 +27,7 @@
                     </thead>
                     <tbody>
                         @foreach ($sites as $site)
+                            @php($deleteReport = $siteDeleteReports[$site->id] ?? null)
                             <tr>
                                 <td><strong>{{ $site->name }}</strong></td>
                                 <td><code>{{ $site->handle }}</code></td>
@@ -56,6 +57,15 @@
                                     <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
                                         <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                                     </a>
+                                    @if ($deleteReport?->canDelete)
+                                        <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site">
+                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                        </a>
+                                    @else
+                                        <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site" aria-disabled="true">
+                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

@@ -78,9 +78,14 @@
 
                     <div class="wb-text-sm wb-text-muted">Each backup archive includes a database dump, the current `storage/app/public` uploads snapshot, and a manifest. Restores are explicit, create a fresh safety backup first, and are only available from the backup details screen or the artisan restore command.</div>
 
-                    <form method="POST" action="{{ route('admin.system.backups.store') }}">
+                    <form method="POST" action="{{ route('admin.system.backups.store') }}" class="wb-stack wb-gap-3">
                         @csrf
-                        <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
+                        <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                            <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                                <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>

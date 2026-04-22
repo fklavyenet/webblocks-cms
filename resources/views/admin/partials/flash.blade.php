@@ -32,6 +32,15 @@
     </div>
 @endif
 
+@if ($errors->has('site_delete'))
+    <div class="wb-alert wb-alert-danger">
+        <div>
+            <div class="wb-alert-title">Delete Failed</div>
+            <div>{{ $errors->first('site_delete') }}</div>
+        </div>
+    </div>
+@endif
+
 @if ($errors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>

@@ -2,6 +2,9 @@
 
 @php
     $showPreviewBackLink = request()->boolean('back_to_preview');
+    $cancelUrl = $showPreviewBackLink
+        ? route('admin.media.index', ['preview' => $asset->id])
+        : route('admin.media.index');
 @endphp
 
 @section('content')
@@ -78,14 +81,7 @@
     </div>
 
     <div class="wb-card">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>File Details</strong>
-            <form method="POST" action="{{ route('admin.media.destroy', $asset) }}" onsubmit="return confirm('Delete this asset?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="wb-btn wb-btn-danger" @disabled($usages->isNotEmpty())>Delete Asset</button>
-            </form>
-        </div>
+        <div class="wb-card-header"><strong>File Details</strong></div>
         <div class="wb-card-body">
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-2">
@@ -103,6 +99,14 @@
                     <div><strong>Created:</strong> {{ $asset->created_at?->format('Y-m-d H:i') }}</div>
                 </div>
             </div>
+
+            <x-admin.form-actions
+                :cancel-url="$cancelUrl"
+                :show-submit="false"
+                :delete-form-action="route('admin.media.destroy', $asset)"
+                delete-confirm="Delete this asset?"
+                :delete-disabled="$usages->isNotEmpty()"
+            />
         </div>
     </div>
 @endsection

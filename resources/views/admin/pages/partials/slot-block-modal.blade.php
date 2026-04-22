@@ -63,15 +63,12 @@
                             'lockPage' => true,
                             'lockSlot' => true,
                             'cancelUrl' => $closeUrl,
-                            'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Changes',
+                            'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
+                            'submitLabel' => 'Save',
+                            'modeLabel' => $isCreateMode ? 'Create' : 'Edit',
                             'activeTab' => $activeTab,
                             'activeLocale' => $activeLocale,
                         ])
-
-                        <div class="wb-modal-footer">
-                            <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                            <button type="submit" class="wb-btn wb-btn-primary">{{ $isCreateMode ? 'Save New Block' : 'Save Changes' }}</button>
-                        </div>
                     </form>
                 </div>
             </div>

@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiteCloneRequest;
+use App\Http\Requests\Admin\SiteDeleteRequest;
 use App\Http\Requests\Admin\SiteRequest;
 use App\Models\Locale;
 use App\Models\Site;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
+use App\Support\Sites\SiteDeleteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -18,10 +20,13 @@ class SiteController extends Controller
 {
     public function __construct(
         private readonly SiteCloneService $siteCloneService,
+        private readonly SiteDeleteService $siteDeleteService,
     ) {}
 
     public function index(): View
     {
+        $siteCount = Site::query()->count();
+
         return view('admin.sites.index', [
             'sites' => Site::query()
                 ->with(['locales' => fn ($query) => $query->orderBy('name')])
@@ -29,6 +34,11 @@ class SiteController extends Controller
                 ->primaryFirst()
                 ->orderBy('name')
                 ->paginate(15),
+            'siteDeleteReports' => Site::query()
+                ->get()
+                ->keyBy('id')
+                ->map(fn (Site $site) => $this->siteDeleteService->inspect($site)),
+            'siteCount' => $siteCount,
         ]);
     }
 
@@ -63,13 +73,45 @@ class SiteController extends Controller
 
     public function edit(Site $site): View
     {
+        $deleteReport = $this->siteDeleteService->inspect($site);
+
         return view('admin.sites.form', [
             'site' => $site->loadMissing('locales'),
             'locales' => Locale::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'pageTitle' => 'Edit Site: '.$site->name,
             'formAction' => route('admin.sites.update', $site),
             'formMethod' => 'PUT',
+            'siteDeleteReport' => $deleteReport,
         ]);
+    }
+
+    public function deleteConfirm(Site $site): View
+    {
+        return view('admin.sites.delete', [
+            'site' => $site->loadMissing('locales'),
+            'report' => $this->siteDeleteService->inspect($site),
+        ]);
+    }
+
+    public function destroy(SiteDeleteRequest $request, Site $site): RedirectResponse
+    {
+        $report = $this->siteDeleteService->delete($site);
+
+        if (! $report->deleted) {
+            return redirect()
+                ->route('admin.sites.delete', $site)
+                ->withErrors(['site_delete' => $report->firstBlocker() ?? 'Site could not be deleted safely.']);
+        }
+
+        $summary = sprintf(
+            'Site deleted. Pages: %d, blocks: %d, navigation: %d, locale assignments: %d.',
+            $report->count('pages'),
+            $report->count('blocks'),
+            $report->count('navigation_items'),
+            $report->count('site_locales'),
+        );
+
+        return redirect()->route('admin.sites.index')->with('status', $summary);
     }
 
     public function cloneForm(?Site $site = null): View
