@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Merge the multisite and multilingual foundation into the main line as the base for site-aware admin and public flows.
+- Add first-party site clone and export/import workflows for controlled duplication and package-based transfer between installs.
+- Add site deletion safeguards, a minimal system settings screen, and reorganized System and Maintenance navigation in the admin sidebar.
+- Improve controlled system settings persistence and clarify admin UX across site-management flows.
+
 ## 0.2.0
 
 - Ship the first real multisite and multilingual core release with legacy single-site upgrade migrations for existing `0.1.8` installs.
