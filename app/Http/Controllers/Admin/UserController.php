@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UserStoreRequest;
 use App\Http\Requests\Admin\UserUpdateRequest;
+use App\Models\Site;
 use App\Models\User;
 use App\Support\Users\UserLifecycleGuard;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,7 +29,8 @@ class UserController extends Controller
         ];
 
         $users = $this->filteredUsersQuery($filters)
-            ->orderByDesc('is_admin')
+            ->with('sites')
+            ->withRoleOrder()
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -45,16 +47,22 @@ class UserController extends Controller
         abort_unless(request()->user()?->can('manage-users'), 403);
 
         return view('admin.users.form', [
-            'managedUser' => new User(['is_active' => true]),
+            'managedUser' => new User(['is_active' => true, 'role' => User::ROLE_EDITOR]),
             'pageTitle' => 'Add User',
             'formAction' => route('admin.users.store'),
             'formMethod' => 'POST',
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);
     }
 
     public function store(UserStoreRequest $request): RedirectResponse
     {
-        $user = User::query()->create($request->validated());
+        $validated = $request->validated();
+        $siteIds = $validated['site_ids'] ?? [];
+        unset($validated['site_ids']);
+
+        $user = User::query()->create($validated);
+        $user->sites()->sync($user->isSuperAdmin() ? [] : $siteIds);
 
         return redirect()->route('admin.users.edit', $user)->with('status', 'User created successfully.');
     }
@@ -69,17 +77,20 @@ class UserController extends Controller
             'formAction' => route('admin.users.update', $user),
             'formMethod' => 'PUT',
             'deleteBlockedMessage' => $this->lifecycleGuard->deletionBlocker($user, request()->user()),
-            'updateBlockedMessage' => $this->lifecycleGuard->updateBlocker($user, old('is_admin', $user->is_admin), old('is_active', $user->is_active)),
+            'updateBlockedMessage' => $this->lifecycleGuard->updateBlocker($user, (string) old('role', $user->normalizedRole()), (bool) old('is_active', $user->is_active)),
+            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);
     }
 
     public function update(UserUpdateRequest $request, User $user): RedirectResponse
     {
         $validated = $request->validated();
-        $nextIsAdmin = (bool) $validated['is_admin'];
+        $siteIds = $validated['site_ids'] ?? [];
+        unset($validated['site_ids']);
+        $nextRole = (string) $validated['role'];
         $nextIsActive = (bool) $validated['is_active'];
 
-        if ($message = $this->lifecycleGuard->updateBlocker($user, $nextIsAdmin, $nextIsActive)) {
+        if ($message = $this->lifecycleGuard->updateBlocker($user, $nextRole, $nextIsActive)) {
             return back()->withInput()->withErrors(['user_lifecycle' => $message]);
         }
 
@@ -87,7 +98,8 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update(Arr::only($validated, ['name', 'email', 'password', 'is_admin', 'is_active']));
+        $user->update(Arr::only($validated, ['name', 'email', 'password', 'role', 'is_active']));
+        $user->sites()->sync($user->isSuperAdmin() ? [] : $siteIds);
 
         return redirect()->route('admin.users.edit', $user)->with('status', 'User updated successfully.');
     }
@@ -119,8 +131,7 @@ class UserController extends Controller
             })
             ->when($filters['status'] === 'active', fn (Builder $query) => $query->where('is_active', true))
             ->when($filters['status'] === 'inactive', fn (Builder $query) => $query->where('is_active', false))
-            ->when($filters['role'] === 'admins', fn (Builder $query) => $query->where('is_admin', true))
-            ->when($filters['role'] === 'non-admins', fn (Builder $query) => $query->where('is_admin', false));
+            ->when($filters['role'] !== '', fn (Builder $query) => $query->where('role', $filters['role']));
     }
 
     private function normalizedStatusFilter(string $value): string
@@ -130,6 +141,6 @@ class UserController extends Controller
 
     private function normalizedRoleFilter(string $value): string
     {
-        return in_array($value, ['admins', 'non-admins'], true) ? $value : '';
+        return in_array($value, User::roles(), true) ? $value : '';
     }
 }

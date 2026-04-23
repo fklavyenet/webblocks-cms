@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,15 +23,18 @@ class BlockController extends Controller
 {
     public function __construct(
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly AdminAuthorization $authorization,
     ) {}
 
     public function moveUp(Block $block): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
         return $this->move($block, 'up');
     }
 
     public function moveDown(Block $block): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
         return $this->move($block, 'down');
     }
 
@@ -39,13 +43,13 @@ class BlockController extends Controller
         $pageId = request()->integer('page_id') ?: null;
 
         return view('admin.blocks.index', [
-            'blocks' => Block::query()
+            'blocks' => $this->authorization->scopeBlocksForUser(Block::query(), request()->user())
                 ->with(['page', 'parent', 'blockType', 'slotType', 'children'])
                 ->when($pageId, fn ($query) => $query->where('page_id', $pageId))
                 ->orderByDesc('id')
                 ->paginate(15)
                 ->withQueryString(),
-            'currentPage' => $pageId ? Page::query()->find($pageId) : null,
+            'currentPage' => $pageId ? $this->authorization->scopePagesForUser(Page::query(), request()->user())->find($pageId) : null,
         ]);
     }
 
@@ -68,11 +72,13 @@ class BlockController extends Controller
         $block->parent_id = $request->integer('parent_id') ?: null;
         $block->block_type_id = $request->integer('block_type_id') ?: null;
         $block->slot_type_id = $request->integer('slot_type_id') ?: null;
-        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
+        $pages = $this->authorization->scopePagesForUser(Page::query(), request()->user())->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
-        $selectedAsset = $block->asset_id ? Asset::query()->find($block->asset_id) : null;
+        $selectedAsset = $block->asset_id
+            ? $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())->find($block->asset_id)
+            : null;
         $selectedGalleryAssets = $block->galleryAssets();
         $selectedAttachmentAsset = $block->attachmentAsset();
         $selectedBlockType = $this->selectedBlockType($request, $block, $blockTypes);
@@ -105,7 +111,7 @@ class BlockController extends Controller
         $localeCode = $data['locale'] ?? null;
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
-        $page = Page::query()->findOrFail($data['page_id']);
+        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, null, $page, $localeCode, true);
         unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
@@ -138,6 +144,8 @@ class BlockController extends Controller
 
     public function edit(Request $request, Block $block): View
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
+
         if ($block->page_id && $block->slot_type_id) {
             $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
 
@@ -150,11 +158,13 @@ class BlockController extends Controller
             }
         }
 
-        $pages = Page::query()->with(['blocks', 'translations'])->orderBy('title')->get();
+        $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())->with(['blocks', 'translations'])->orderBy('title')->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
-        $selectedAsset = $block->asset_id ? Asset::query()->find($block->asset_id) : null;
+        $selectedAsset = $block->asset_id
+            ? $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())->find($block->asset_id)
+            : null;
         $selectedGalleryAssets = $block->galleryAssets();
         $selectedAttachmentAsset = $block->attachmentAsset();
         $selectedBlockType = $this->selectedBlockType($request, $block, $blockTypes);
@@ -184,11 +194,12 @@ class BlockController extends Controller
 
     public function update(BlockRequest $request, Block $block): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
-        $page = Page::query()->findOrFail($data['page_id']);
+        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, $block, $page, $localeCode);
         unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
@@ -219,6 +230,7 @@ class BlockController extends Controller
 
     public function destroy(Request $request, Block $block): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         $pageId = $block->page_id;
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $expanded = $this->expandedStateFor($request, $block, false);
@@ -262,7 +274,7 @@ class BlockController extends Controller
             return collect();
         }
 
-        $blocks = Block::query()
+        $blocks = $this->authorization->scopeBlocksForUser(Block::query(), request()->user())
             ->where('page_id', $pageId)
             ->with('children')
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
@@ -415,7 +427,7 @@ class BlockController extends Controller
 
     private function assetPickerAssets()
     {
-        return Asset::query()
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();

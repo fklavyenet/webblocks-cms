@@ -16,7 +16,7 @@ class SystemSettingsTest extends TestCase
     #[Test]
     public function admin_can_view_settings_page_from_system_maintenance_navigation(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
@@ -35,7 +35,7 @@ class SystemSettingsTest extends TestCase
     #[Test]
     public function admin_can_save_minimal_system_settings(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
         $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
@@ -61,7 +61,7 @@ class SystemSettingsTest extends TestCase
     #[Test]
     public function settings_require_valid_enabled_locale_and_non_blank_app_name(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $disabledLocale = Locale::query()->create([
             'code' => 'de',
             'name' => 'German',

@@ -71,6 +71,12 @@ class Site extends Model
         return $this->hasMany(SiteLocale::class);
     }
 
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
+    }
+
     public function enabledLocales(): BelongsToMany
     {
         return $this->locales()

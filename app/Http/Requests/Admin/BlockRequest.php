@@ -10,6 +10,7 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationRegistry;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -153,6 +154,8 @@ class BlockRequest extends FormRequest
 
     public function validatedData(): array
     {
+        /** @var AdminAuthorization $authorization */
+        $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
         $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
         $pageId = (int) $data['page_id'];
@@ -172,16 +175,10 @@ class BlockRequest extends FormRequest
         $data['settings'] = $settings === '' ? null : $settings;
         $meta = trim((string) ($data['meta'] ?? ''));
         $data['meta'] = $meta === '' ? null : $meta;
-        if (! empty($data['asset_id']) && Asset::query()->whereKey($data['asset_id'])->doesntExist()) {
-            $data['asset_id'] = null;
-        }
+        $data['asset_id'] = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['asset_id']) ? (int) $data['asset_id'] : null);
 
-        $galleryAssetIds = collect($data['gallery_asset_ids'] ?? [])
-            ->map(fn ($id) => (int) $id)
-            ->filter(fn ($id) => $id > 0)
-            ->values()
-            ->all();
-        $attachmentAssetId = ! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null;
+        $galleryAssetIds = $authorization->filterAllowedAssetIds($this->user(), $data['gallery_asset_ids'] ?? []);
+        $attachmentAssetId = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null);
 
         $decodedSettings = [];
 

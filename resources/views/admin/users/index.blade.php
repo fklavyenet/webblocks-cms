@@ -36,8 +36,9 @@
                         <label for="users_role">Role</label>
                         <select id="users_role" name="role" class="wb-select">
                             <option value="">All roles</option>
-                            <option value="admins" @selected($filters['role'] === 'admins')>Admins</option>
-                            <option value="non-admins" @selected($filters['role'] === 'non-admins')>Non-admins</option>
+                            <option value="super_admin" @selected($filters['role'] === 'super_admin')>Super admins</option>
+                            <option value="site_admin" @selected($filters['role'] === 'site_admin')>Site admins</option>
+                            <option value="editor" @selected($filters['role'] === 'editor')>Editors</option>
                         </select>
                     </div>
                 </div>
@@ -79,6 +80,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Site Access</th>
                                 <th>Status</th>
                                 <th>Last Login</th>
                                 <th>Created</th>
@@ -104,8 +106,10 @@
                                     </td>
                                     <td><a href="mailto:{{ $managedUser->email }}" class="wb-link">{{ $managedUser->email }}</a></td>
                                     <td><span class="wb-status-pill {{ $managedUser->roleBadgeClass() }}">{{ $managedUser->roleLabel() }}</span></td>
+                                    <td>{{ $managedUser->siteAccessSummary() }}</td>
                                     <td><span class="wb-status-pill {{ $managedUser->statusBadgeClass() }}">{{ $managedUser->statusLabel() }}</span></td>
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
+                                    <td>{{ $managedUser->created_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.users.edit', $managedUser) }}" class="wb-action-btn wb-action-btn-edit" title="Edit user" aria-label="Edit user">

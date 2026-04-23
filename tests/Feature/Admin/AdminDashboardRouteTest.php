@@ -25,7 +25,7 @@ class AdminDashboardRouteTest extends TestCase
     #[Test]
     public function admin_root_opens_dashboard_for_authenticated_users(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         app(InstalledVersionStore::class)->persist('0.1.4');
 
@@ -57,7 +57,7 @@ class AdminDashboardRouteTest extends TestCase
     #[Test]
     public function admin_dashboard_legacy_path_redirects_to_canonical_admin_path(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
 
         $response = $this->actingAs($user)->get('/admin/dashboard');
 
@@ -75,7 +75,7 @@ class AdminDashboardRouteTest extends TestCase
     #[Test]
     public function top_level_dashboard_redirect_uses_canonical_admin_path(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
 
         $response = $this->actingAs($user)->get('/dashboard');
 

@@ -42,6 +42,17 @@ class PageBuilderExperienceTest extends TestCase
         return Locale::query()->where('is_default', true)->firstOrFail();
     }
 
+    private function editorWithSites(array $siteIds = []): User
+    {
+        $user = User::factory()->editor()->create();
+
+        if ($siteIds !== []) {
+            $user->sites()->sync($siteIds);
+        }
+
+        return $user;
+    }
+
     #[Test]
     public function creating_a_page_starts_empty_and_persists_selected_slots(): void
     {
@@ -365,7 +376,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function pages_index_defaults_to_the_primary_site_context(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $primarySite = $this->defaultSite();
         $secondarySite = Site::query()->create([
             'name' => 'Campaign Site',
@@ -404,7 +415,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function pages_index_respects_the_selected_site_query_param_and_legacy_site_id_param(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $primarySite = $this->defaultSite();
         $secondarySite = Site::query()->create([
             'name' => 'Campaign Site',
@@ -444,7 +455,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function pages_index_can_explicitly_switch_to_all_sites_mode(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $primarySite = $this->defaultSite();
         $secondarySite = Site::query()->create([
             'name' => 'Campaign Site',
@@ -480,7 +491,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function sites_list_links_into_the_pages_index_for_that_site(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
 
         $response = $this->actingAs($user)->get(route('admin.sites.index'));
@@ -597,7 +608,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function site_locale_assignments_control_available_translation_options(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $locale = Locale::query()->create([
             'code' => 'de',
@@ -635,7 +646,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function sites_and_locales_admin_enforce_primary_and_default_invariants(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $defaultLocale = $this->defaultLocale();
 

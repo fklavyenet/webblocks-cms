@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-- Add Users Phase 1 as a first-party admin-managed CMS user system with `/admin/users` index, create, edit, and delete flows.
-- Extend the `users` table with `is_admin`, `is_active`, and `last_login_at`, and keep self-profile editing available alongside the new admin user management UI.
-- Block inactive-user authentication, update `last_login_at` on successful login, and protect destructive edge cases such as deleting, deactivating, or demoting the last active admin.
-- Polish the Users admin index with compact `q` search, role/status filters, clearer empty states, and query-preserving pagination.
-- Document the new user management behavior and upgrade note in `README.md`.
+- Add Users Phase 2 with first-party role-based CMS access using `super_admin`, `site_admin`, and `editor` roles plus multisite user assignments through `site_user`.
+- Backfill legacy `is_admin` installs onto the new `role` model while keeping `is_active`, `last_login_at`, and the `is_admin` compatibility bridge intact.
+- Restrict install-level system screens and Users management to `super_admin`, and enforce assigned-site scoping across pages, navigation, media, reports, contact messages, and major site-content admin flows.
+- Update the Users admin UX with role filters, assigned-site management, site-access summaries, and safety guards that prevent deleting, deactivating, or demoting the last active `super_admin`.
+- Expand test coverage and docs for the new role model, assignment rules, login compatibility behavior, and system-vs-site authorization boundaries.
 
 ## 0.3.3
 

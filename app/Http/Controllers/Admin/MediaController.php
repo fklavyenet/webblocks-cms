@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Support\Assets\AssetKindResolver;
 use App\Support\Assets\AssetUsageResolver;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,10 @@ use Illuminate\View\View;
 
 class MediaController extends Controller
 {
-    public function __construct(private readonly AssetUsageResolver $assetUsageResolver) {}
+    public function __construct(
+        private readonly AssetUsageResolver $assetUsageResolver,
+        private readonly AdminAuthorization $authorization,
+    ) {}
 
     public function index(): View
     {
@@ -39,7 +43,7 @@ class MediaController extends Controller
             $usage = '';
         }
 
-        $assetPaginator = $this->assetListingQuery($selectedFolderId, $search, $kind, $usage)
+        $assetPaginator = $this->assetListingQuery(request()->user(), $selectedFolderId, $search, $kind, $usage)
             ->paginate($view === 'grid' ? 24 : 20)
             ->withQueryString();
 
@@ -53,10 +57,10 @@ class MediaController extends Controller
 
         $assets = $assetPaginator;
         $previewAsset = $previewAssetId
-            ? ($assets->getCollection()->firstWhere('id', $previewAssetId) ?: Asset::query()->with(['folder', 'uploader'])->find($previewAssetId))
+            ? ($assets->getCollection()->firstWhere('id', $previewAssetId) ?: $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())->with(['folder', 'uploader'])->find($previewAssetId))
             : null;
         $usageAsset = $usageAssetId
-            ? ($assets->getCollection()->firstWhere('id', $usageAssetId) ?: Asset::query()->with(['folder', 'uploader'])->find($usageAssetId))
+            ? ($assets->getCollection()->firstWhere('id', $usageAssetId) ?: $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())->with(['folder', 'uploader'])->find($usageAssetId))
             : null;
 
         if ($previewAsset instanceof Asset && ! $previewAsset->relationLoaded('resolvedUsages')) {
@@ -83,6 +87,8 @@ class MediaController extends Controller
 
     public function show(Asset $asset): View
     {
+        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
+
         return view('admin.media.show', [
             'asset' => $asset->load('folder'),
             'usages' => $this->assetUsageResolver->resolve($asset),
@@ -91,6 +97,8 @@ class MediaController extends Controller
 
     public function edit(Asset $asset): View
     {
+        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
+
         return view('admin.media.edit', [
             'asset' => $asset,
             'folders' => $this->folderOptions(),
@@ -99,6 +107,7 @@ class MediaController extends Controller
 
     public function update(AssetUpdateRequest $request, Asset $asset): RedirectResponse
     {
+        $this->authorization->abortUnlessAssetAccess($request->user(), $asset);
         $asset->update($request->validated());
 
         return redirect()
@@ -111,6 +120,7 @@ class MediaController extends Controller
 
     public function destroy(Asset $asset): RedirectResponse
     {
+        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
         $usages = $this->assetUsageResolver->resolve($asset);
 
         if ($usages->isNotEmpty()) {
@@ -205,15 +215,14 @@ class MediaController extends Controller
     private function folderOptions()
     {
         return AssetFolder::query()
-            ->withCount('assets')
             ->with('parent')
             ->orderBy('name')
             ->get();
     }
 
-    private function assetListingQuery(?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
+    private function assetListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
     {
-        return Asset::query()
+        return $this->authorization->scopeAssetsForUser(Asset::query(), $user)
             ->with(['folder', 'uploader'])
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($kind, fn ($query) => $query->where('kind', $kind))

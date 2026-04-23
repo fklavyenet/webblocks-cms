@@ -7,6 +7,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\Site;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -85,6 +86,8 @@ class PageRequest extends FormRequest
 
     public function validatedData(): array
     {
+        /** @var AdminAuthorization $authorization */
+        $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
         $data['page_type'] = 'default';
         $data['translation'] = [
@@ -107,11 +110,8 @@ class PageRequest extends FormRequest
                 $blockType = ! empty($block['block_type_id'])
                     ? BlockType::query()->find($block['block_type_id'])
                     : null;
-                $galleryAssetIds = collect($block['gallery_asset_ids'] ?? [])
-                    ->map(fn ($id) => (int) $id)
-                    ->filter(fn ($id) => $id > 0)
-                    ->values()
-                    ->all();
+                $galleryAssetIds = $authorization->filterAllowedAssetIds($this->user(), $block['gallery_asset_ids'] ?? []);
+                $attachmentAssetId = $authorization->normalizeAllowedAssetId($this->user(), ! empty($block['attachment_asset_id']) ? (int) $block['attachment_asset_id'] : null);
 
                 $block['settings'] = trim((string) ($block['settings'] ?? '')) ?: null;
                 $decodedSettings = [];
@@ -126,12 +126,13 @@ class PageRequest extends FormRequest
                     : json_encode($decodedSettings, JSON_UNESCAPED_SLASHES);
 
                 $block['meta'] = trim((string) ($block['meta'] ?? '')) ?: null;
+                $block['asset_id'] = $authorization->normalizeAllowedAssetId($this->user(), ! empty($block['asset_id']) ? (int) $block['asset_id'] : null);
                 $block['is_system'] = (bool) ($blockType?->is_system ?? false);
                 $block['_delete'] = (bool) ($block['_delete'] ?? false);
                 $block['sort_order'] = $index;
                 $block['_block_assets'] = [
                     'gallery_item' => $galleryAssetIds,
-                    'attachment' => ! empty($block['attachment_asset_id']) ? [(int) $block['attachment_asset_id']] : [],
+                    'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
                 ];
 
                 unset($block['gallery_asset_ids'], $block['attachment_asset_id']);

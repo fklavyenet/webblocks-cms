@@ -23,7 +23,7 @@ class SiteExportImportAdminTest extends TestCase
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
             'site_id' => $site->id,
@@ -47,7 +47,7 @@ class SiteExportImportAdminTest extends TestCase
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
             'site_id' => $site->id,
@@ -78,7 +78,7 @@ class SiteExportImportAdminTest extends TestCase
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
             'site_id' => $site->id,

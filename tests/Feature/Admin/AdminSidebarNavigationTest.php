@@ -15,7 +15,7 @@ class AdminSidebarNavigationTest extends TestCase
     #[Test]
     public function settings_page_marks_maintenance_group_and_settings_item_active(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
@@ -28,7 +28,7 @@ class AdminSidebarNavigationTest extends TestCase
     #[Test]
     public function locales_page_marks_system_group_and_locales_item_active(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.locales.index'));
 
@@ -41,7 +41,7 @@ class AdminSidebarNavigationTest extends TestCase
     #[Test]
     public function sites_page_is_grouped_under_system_and_not_listed_as_a_top_level_item(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
 
         $response = $this->actingAs($user)->get(route('admin.sites.index'));
@@ -78,14 +78,13 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('class="wb-nav-group-item is-active"', false);
         $response->assertSee('>Reports<', false);
         $response->assertSee('wb-icon-list', false);
-        $response->assertSee('wb-icon-globe', false);
     }
 
     #[Test]
-    public function admin_users_navigation_item_is_visible_only_to_admin_users(): void
+    public function admin_users_navigation_item_is_visible_only_to_super_admin_users(): void
     {
-        $admin = User::factory()->admin()->create();
-        $user = User::factory()->create();
+        $admin = User::factory()->superAdmin()->create();
+        $user = User::factory()->editor()->create();
 
         $adminResponse = $this->actingAs($admin)->get(route('admin.dashboard'));
         $adminResponse->assertOk();

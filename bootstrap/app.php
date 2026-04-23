@@ -6,6 +6,7 @@ use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SiteDeleteCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
+use App\Http\Middleware\RequireAdminAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -52,7 +53,9 @@ return Application::configure(basePath: dirname(__DIR__))
         SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'admin.access' => RequireAdminAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

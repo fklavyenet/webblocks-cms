@@ -21,6 +21,11 @@ class MediaManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function editor(): User
+    {
+        return User::factory()->editor()->create();
+    }
+
     private function slotType(string $slug = 'main', string $name = 'Main', int $sortOrder = 2): SlotType
     {
         return SlotType::query()->updateOrCreate(
@@ -40,7 +45,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function media_index_is_library_first_and_does_not_show_large_inline_forms(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $folder = AssetFolder::create(['name' => 'Images']);
         $asset = Asset::create([
             'folder_id' => $folder->id,
@@ -76,7 +81,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function media_index_supports_grid_view_filters_and_usage_drawer(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $folder = AssetFolder::create(['name' => 'Brand']);
         $slotType = $this->slotType();
         $page = Page::create([
@@ -157,7 +162,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function media_index_supports_unused_filter_and_preview_modal(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $previewable = Asset::create([
             'disk' => 'public',
@@ -227,7 +232,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function asset_detail_can_link_back_to_preview_modal(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $asset = Asset::create([
             'disk' => 'public',
@@ -252,7 +257,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function asset_edit_preserves_back_to_preview_context(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $asset = Asset::create([
             'disk' => 'public',
@@ -290,7 +295,7 @@ class MediaManagementTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = $this->editor();
         $images = AssetFolder::create(['name' => 'Images']);
 
         $modalResponse = $this->actingAs($user)->get(route('admin.media.index', ['modal' => 'upload-asset']));
@@ -336,7 +341,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function image_block_uses_selected_internal_asset_only(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $page = Page::create([
             'title' => 'Media Page',
             'slug' => 'media-page',
@@ -364,6 +369,7 @@ class MediaManagementTest extends TestCase
             'kind' => 'image',
             'visibility' => 'public',
             'title' => 'Picked image',
+            'uploaded_by' => $user->id,
         ]);
 
         $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -405,7 +411,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function an_asset_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $folder = AssetFolder::create(['name' => 'Library']);
         $asset = Asset::create([
             'folder_id' => null,
@@ -418,6 +424,7 @@ class MediaManagementTest extends TestCase
             'size' => 1234,
             'kind' => 'image',
             'visibility' => 'public',
+            'uploaded_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->put(route('admin.media.update', $asset), [
@@ -443,7 +450,7 @@ class MediaManagementTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = $this->editor();
         $file = UploadedFile::fake()->image('delete-me.jpg');
         $path = $file->store('media/images', 'public');
 
@@ -457,6 +464,7 @@ class MediaManagementTest extends TestCase
             'size' => Storage::disk('public')->size($path),
             'kind' => 'image',
             'visibility' => 'public',
+            'uploaded_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
@@ -495,6 +503,7 @@ class MediaManagementTest extends TestCase
             'kind' => 'image',
             'visibility' => 'public',
             'title' => 'Example',
+            'uploaded_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -527,7 +536,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function used_asset_cannot_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $page = Page::create([
             'title' => 'Test Page',
             'slug' => 'test-page',
@@ -577,7 +586,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function gallery_block_can_store_asset_references(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $page = Page::create([
             'title' => 'Gallery Page',
             'slug' => 'gallery-page',
@@ -605,6 +614,7 @@ class MediaManagementTest extends TestCase
             'size' => 100,
             'kind' => 'image',
             'visibility' => 'public',
+            'uploaded_by' => $user->id,
         ]);
         $secondAsset = Asset::create([
             'disk' => 'public',
@@ -616,6 +626,7 @@ class MediaManagementTest extends TestCase
             'size' => 100,
             'kind' => 'image',
             'visibility' => 'public',
+            'uploaded_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -663,7 +674,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function download_block_can_store_document_asset(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $page = Page::create([
             'title' => 'Downloads',
             'slug' => 'downloads',
@@ -690,6 +701,7 @@ class MediaManagementTest extends TestCase
             'size' => 200,
             'kind' => 'document',
             'visibility' => 'public',
+            'uploaded_by' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -725,7 +737,7 @@ class MediaManagementTest extends TestCase
     #[Test]
     public function used_gallery_asset_cannot_be_deleted_when_referenced_through_block_assets(): void
     {
-        $user = User::factory()->create();
+        $user = $this->editor();
         $page = Page::create([
             'title' => 'Gallery Page',
             'slug' => 'gallery-page',

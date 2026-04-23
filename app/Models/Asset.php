@@ -6,6 +6,7 @@ use App\Support\Assets\AssetUsageResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +53,16 @@ class Asset extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(Block::class);
+    }
+
+    public function blockAssets(): HasMany
+    {
+        return $this->hasMany(BlockAsset::class);
     }
 
     public function url(): ?string

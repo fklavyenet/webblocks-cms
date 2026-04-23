@@ -4,7 +4,9 @@ namespace App\Support\Visitors;
 
 use App\Models\Locale;
 use App\Models\Site;
+use App\Models\User;
 use App\Models\VisitorEvent;
+use App\Support\Users\AdminAuthorization;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -15,10 +17,12 @@ class VisitorReportsQuery
 {
     private const DIRECT_LABEL = 'Direct / None';
 
-    public function filters(Request $request): array
+    public function __construct(private readonly AdminAuthorization $authorization) {}
+
+    public function filters(Request $request, ?User $user = null): array
     {
         $dateRange = $this->normalizeDateRange($request);
-        $site = $this->normalizeSite($request->query('site'));
+        $site = $this->normalizeSite($request->query('site'), $user);
         $locale = $this->normalizeLocale($request->query('locale'));
 
         return [
@@ -28,6 +32,7 @@ class VisitorReportsQuery
             'site' => $site,
             'locale' => $locale,
             'range_label' => $this->rangeLabel($dateRange['preset'], $dateRange['from'], $dateRange['to']),
+            'user' => $user,
         ];
     }
 
@@ -65,7 +70,7 @@ class VisitorReportsQuery
         return $this->hasEventsTable() && Schema::hasColumns('visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
     }
 
-    public function dashboardSummary(): array
+    public function dashboardSummary(?User $user = null): array
     {
         $summary = [
             'is_enabled' => (bool) config('cms.visitor_reports.enabled', true),
@@ -83,7 +88,8 @@ class VisitorReportsQuery
 
         $from = CarbonImmutable::today()->subDays(6)->startOfDay();
         $to = CarbonImmutable::today()->endOfDay();
-        $query = VisitorEvent::query()->whereBetween('visited_at', [$from, $to]);
+        $query = $this->filteredVisitorEvents($user)
+            ->whereBetween('visited_at', [$from, $to]);
         $totals = $this->summary(clone $query);
         $topPage = $this->topPages(clone $query, 1)->first();
 
@@ -98,7 +104,7 @@ class VisitorReportsQuery
 
     private function filteredQuery(array $filters): Builder
     {
-        return VisitorEvent::query()
+        return $this->filteredVisitorEvents($filters['user'] ?? null)
             ->with(['site', 'locale'])
             ->when($filters['site'] !== 'all', fn (Builder $query) => $query->where('site_id', (int) $filters['site']))
             ->when($filters['locale'] !== 'all', fn (Builder $query) => $query->where('locale_id', (int) $filters['locale']))
@@ -304,7 +310,7 @@ class VisitorReportsQuery
         ];
     }
 
-    private function normalizeSite(mixed $site): string
+    private function normalizeSite(mixed $site, ?User $user = null): string
     {
         $normalized = is_string($site) ? trim($site) : (string) $site;
 
@@ -312,11 +318,37 @@ class VisitorReportsQuery
             return 'all';
         }
 
-        if (! ctype_digit($normalized) || ! Site::query()->whereKey((int) $normalized)->exists()) {
+        if (! ctype_digit($normalized) || ! $this->allowedSitesQuery($user)->whereKey((int) $normalized)->exists()) {
             return 'all';
         }
 
         return $normalized;
+    }
+
+    private function filteredVisitorEvents(?User $user = null): Builder
+    {
+        $query = VisitorEvent::query();
+
+        if ($user) {
+            $siteIds = $user->accessibleSiteIds();
+
+            if (! $user->isSuperAdmin()) {
+                $query->whereIn('site_id', $siteIds);
+            }
+        }
+
+        return $query;
+    }
+
+    private function allowedSitesQuery(?User $user): Builder
+    {
+        $query = Site::query();
+
+        if (! $user) {
+            return $query;
+        }
+
+        return $this->authorization->scopeSitesForUser($query, $user);
     }
 
     private function normalizeLocale(mixed $locale): string

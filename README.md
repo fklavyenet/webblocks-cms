@@ -538,16 +538,17 @@ CMS_VISITOR_UTM_ENABLED=true
 - The reusable password field is used across sign in, registration, password reset, confirm password, and profile password forms.
 - The reveal behavior uses small data-attribute driven JavaScript with icon-only trailing actions, `aria-label`, `aria-pressed`, and `aria-controls` updates instead of inline handlers or new frontend dependencies.
 
-## Users Phase 1
+## Users Phase 2
 
-- WebBlocks CMS now includes a first-party admin-managed user system for CMS/system accounts.
-- Admin navigation adds a top-level `Users` item for admin users only.
-- The Users index now includes compact search and filtering for install-level accounts:
+- WebBlocks CMS now includes a first-party admin-managed user system for install-level CMS/system accounts with role-based and site-assignment-based access control.
+- Users remain install-global accounts and are not exported or imported as site content.
+- Admin navigation adds a top-level `Users` item for `super_admin` users only.
+- The Users index includes compact search and filtering for install-level accounts:
   - `q` searches `name` and `email`
   - `status` filters `active` or `inactive`
-  - `role` filters `admins` or `non-admins`
+  - `role` filters `super_admin`, `site_admin`, or `editor`
   - pagination preserves active search and filter params
-- Users Phase 1 admin routes:
+- Users admin routes:
   - `GET /admin/users`
   - `GET /admin/users/create`
   - `POST /admin/users`
@@ -555,25 +556,40 @@ CMS_VISITOR_UTM_ENABLED=true
   - `PUT/PATCH /admin/users/{user}`
   - `DELETE /admin/users/{user}`
 - User records now support:
+  - `role`
   - `is_admin`
   - `is_active`
   - `last_login_at`
-- Phase 1 authorization boundary:
-  - only admin users can open `/admin/users`
-  - only admin users can create, edit, activate/deactivate, and delete users from that screen
-  - users remain install-level accounts, not site-scoped or multisite-assigned in this phase
+- Site assignments now persist in the `site_user` pivot with one row per allowed site.
+- Roles for this phase are:
+  - `super_admin`
+  - `site_admin`
+  - `editor`
+- Phase 2 authorization boundary:
+  - only `super_admin` users can open `/admin/users`
+  - only `super_admin` users can create, edit, activate/deactivate, change roles, assign sites, and delete users from that screen
+  - only `super_admin` users can access install-level system screens such as sites, locales, settings, updates, backups, and export/import
+  - `site_admin` and `editor` users can access `/admin` and site-scoped CMS flows only for assigned sites
+  - server-side scoping is enforced for pages, navigation, media, visitor reports, contact messages, and major block/page editing flows
   - self-profile editing remains available at `/profile`
 - Login behavior:
   - inactive users cannot authenticate
   - blocked inactive logins return a friendly validation message
   - successful logins update `last_login_at`
 - Safety rules:
-  - the last active admin cannot be deleted
-  - the last active admin cannot be deactivated or demoted from admin
+  - the last active `super_admin` cannot be deleted
+  - the last active `super_admin` cannot be deactivated or demoted
   - admins cannot delete themselves from the admin Users screen
-  - the last active admin also cannot delete their own account from `/profile`
-- Public `/register` remains available in the current project line. New self-registered users are created as active non-admin users unless promoted later by an admin.
-- If an existing install upgrades to this feature, run `php artisan migrate` so the new user management columns are added before opening `/admin/users`.
+  - the last active `super_admin` also cannot delete their own account from `/profile`
+- Site assignment rules:
+  - `site_admin` and `editor` users must have at least one assigned site
+  - `super_admin` users do not require assigned sites and always have access to all sites
+- Public `/register` remains available in the current project line. New self-registered users are created as active editors unless promoted later by a `super_admin`.
+- Upgrade note:
+  - run `php artisan migrate` so the new `role` column and `site_user` assignments are added before opening `/admin/users`
+  - existing installs are backfilled so legacy `is_admin=true` users become `super_admin`
+  - existing non-admin users become `editor`
+  - existing non-super-admin users receive primary-site access as the compatibility baseline
 
 ## Backup Manager V1
 

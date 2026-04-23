@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,8 @@ use Illuminate\View\View;
 
 class ContactMessageController extends Controller
 {
+    public function __construct(private readonly AdminAuthorization $authorization) {}
+
     public function index(Request $request): View
     {
         $search = trim((string) $request->string('search'));
@@ -27,6 +30,7 @@ class ContactMessageController extends Controller
 
         return view('admin.contact-messages.index', [
             'messages' => ContactMessage::query()
+                ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()))
                 ->with(['page', 'block.slotType', 'block.blockType'])
                 ->when($search !== '', function ($query) use ($search) {
                     $query->where(function ($inner) use ($search) {
@@ -59,6 +63,7 @@ class ContactMessageController extends Controller
 
     public function show(ContactMessage $contactMessage): View
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $contactMessage);
         $contactMessage->load(['page', 'block.blockType', 'block.slotType']);
 
         if ($contactMessage->status === 'new') {
@@ -74,6 +79,7 @@ class ContactMessageController extends Controller
 
     public function updateStatus(Request $request, ContactMessage $contactMessage): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $contactMessage);
         $validated = $request->validate([
             'status' => ['required', Rule::in(ContactMessage::statuses())],
         ]);
@@ -89,6 +95,7 @@ class ContactMessageController extends Controller
 
     public function destroy(ContactMessage $contactMessage): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $contactMessage);
         $contactMessage->delete();
 
         return redirect()

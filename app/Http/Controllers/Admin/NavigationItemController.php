@@ -9,6 +9,7 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Site;
 use App\Support\Navigation\NavigationTree;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,22 +17,26 @@ use Illuminate\View\View;
 
 class NavigationItemController extends Controller
 {
-    public function __construct(private readonly NavigationTree $tree) {}
+    public function __construct(
+        private readonly NavigationTree $tree,
+        private readonly AdminAuthorization $authorization,
+    ) {}
 
     public function index(): View
     {
         $menuKey = request('menu_key', NavigationItem::MENU_PRIMARY);
-        $siteId = request()->integer('site_id') ?: Site::primary()?->id;
+        $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get();
+        $siteId = request()->integer('site_id') ?: $sites->first()?->id;
 
         if (! in_array($menuKey, NavigationItem::menuKeys(), true)) {
             $menuKey = NavigationItem::MENU_PRIMARY;
         }
 
-        $site = Site::query()->findOrFail($siteId);
+        $site = $sites->firstWhere('id', $siteId) ?? abort(403);
 
         return view('admin.navigation.index', [
             'site' => $site,
-            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'sites' => $sites,
             'activeMenuKey' => $menuKey,
             'menuOptions' => NavigationItem::menuOptions(),
             'items' => $this->tree->buildMenuTree($menuKey, $site),
@@ -45,7 +50,8 @@ class NavigationItemController extends Controller
     public function create(): View
     {
         $menuKey = request('menu_key', NavigationItem::MENU_PRIMARY);
-        $site = Site::query()->findOrFail(request()->integer('site_id') ?: Site::primary()?->id);
+        $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get();
+        $site = $sites->firstWhere('id', request()->integer('site_id')) ?? $sites->first() ?? abort(403);
 
         return view('admin.navigation.create', [
             'item' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
@@ -54,12 +60,13 @@ class NavigationItemController extends Controller
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
             'site' => $site,
-            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'sites' => $sites,
         ]);
     }
 
     public function store(NavigationItemRequest $request): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $request->integer('site_id'));
         NavigationItem::create($this->validatedData($request));
 
         return redirect()
@@ -69,6 +76,8 @@ class NavigationItemController extends Controller
 
     public function edit(NavigationItem $navigation): View
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $navigation);
+
         return view('admin.navigation.edit', [
             'item' => $navigation,
             'pages' => Page::query()->where('site_id', $navigation->site_id)->with('translations')->orderBy('title')->get(),
@@ -76,12 +85,14 @@ class NavigationItemController extends Controller
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
             'site' => $navigation->site,
-            'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'sites' => $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get(),
         ]);
     }
 
     public function update(NavigationItemRequest $request, NavigationItem $navigation): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $navigation);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $request->integer('site_id'));
         $navigation->update($this->validatedData($request));
 
         return redirect()
@@ -91,6 +102,7 @@ class NavigationItemController extends Controller
 
     public function destroy(NavigationItem $navigation): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $navigation);
         $menuKey = $navigation->menu_key;
         $navigation->delete();
 
@@ -101,6 +113,7 @@ class NavigationItemController extends Controller
 
     public function reorder(NavigationItemReorderRequest $request): JsonResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $request->integer('site_id'));
         $menuKey = $request->string('menu_key')->toString();
         $siteId = $request->integer('site_id');
         $items = $this->tree->validateAndNormalizeTreePayload($menuKey, $siteId, $request->validated('items'));
@@ -126,6 +139,7 @@ class NavigationItemController extends Controller
 
     public function toggleVisibility(NavigationItem $navigation): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $navigation);
         $navigation->update([
             'visibility' => $navigation->isVisible() ? NavigationItem::VISIBILITY_HIDDEN : NavigationItem::VISIBILITY_VISIBLE,
         ]);

@@ -16,7 +16,7 @@ class SiteDeleteAdminTest extends TestCase
     #[Test]
     public function delete_confirmation_screen_is_available_for_a_normal_site(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->createSecondarySite();
 
         $response = $this->actingAs($user)->get(route('admin.sites.delete', $site));
@@ -29,7 +29,7 @@ class SiteDeleteAdminTest extends TestCase
     #[Test]
     public function delete_requires_explicit_confirmation_checkbox(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->createSecondarySite();
 
         $response = $this->actingAs($user)->delete(route('admin.sites.destroy', $site), []);
@@ -41,7 +41,7 @@ class SiteDeleteAdminTest extends TestCase
     #[Test]
     public function delete_removes_site_after_confirmation_and_redirects_to_index(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->createSecondarySite();
 
         $response = $this->actingAs($user)->delete(route('admin.sites.destroy', $site), [
@@ -56,7 +56,7 @@ class SiteDeleteAdminTest extends TestCase
     #[Test]
     public function primary_site_has_blocked_delete_path(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $primary = Site::primary();
         $this->createSecondarySite();
 

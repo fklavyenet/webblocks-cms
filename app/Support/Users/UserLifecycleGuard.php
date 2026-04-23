@@ -12,17 +12,17 @@ class UserLifecycleGuard
             return 'You cannot delete your own account from the Users screen.';
         }
 
-        if ($this->wouldRemoveLastActiveAdmin($target, false, false)) {
-            return 'The last active admin user cannot be deleted.';
+        if ($this->wouldRemoveLastActiveSuperAdmin($target, User::ROLE_EDITOR, false)) {
+            return 'The last active super admin cannot be deleted.';
         }
 
         return null;
     }
 
-    public function updateBlocker(User $target, bool $nextIsAdmin, bool $nextIsActive): ?string
+    public function updateBlocker(User $target, string $nextRole, bool $nextIsActive): ?string
     {
-        if ($this->wouldRemoveLastActiveAdmin($target, $nextIsAdmin, $nextIsActive)) {
-            return 'The last active admin user cannot be deactivated or demoted.';
+        if ($this->wouldRemoveLastActiveSuperAdmin($target, $nextRole, $nextIsActive)) {
+            return 'The last active super admin cannot be deactivated or demoted.';
         }
 
         return null;
@@ -30,8 +30,8 @@ class UserLifecycleGuard
 
     public function selfDeletionBlocker(User $user): ?string
     {
-        if ($this->wouldRemoveLastActiveAdmin($user, false, false)) {
-            return 'The last active admin user cannot delete their own account.';
+        if ($this->wouldRemoveLastActiveSuperAdmin($user, User::ROLE_EDITOR, false)) {
+            return 'The last active super admin cannot delete their own account.';
         }
 
         return null;
@@ -42,23 +42,23 @@ class UserLifecycleGuard
         return $this->deletionBlocker($target, $actingUser) === null;
     }
 
-    public function canUpdate(User $target, bool $nextIsAdmin, bool $nextIsActive): bool
+    public function canUpdate(User $target, string $nextRole, bool $nextIsActive): bool
     {
-        return $this->updateBlocker($target, $nextIsAdmin, $nextIsActive) === null;
+        return $this->updateBlocker($target, $nextRole, $nextIsActive) === null;
     }
 
-    private function wouldRemoveLastActiveAdmin(User $target, bool $nextIsAdmin, bool $nextIsActive): bool
+    private function wouldRemoveLastActiveSuperAdmin(User $target, string $nextRole, bool $nextIsActive): bool
     {
-        if (! $target->is_admin || ! $target->is_active) {
+        if (! $target->isSuperAdmin() || ! $target->is_active) {
             return false;
         }
 
-        if ($nextIsAdmin && $nextIsActive) {
+        if ($nextRole === User::ROLE_SUPER_ADMIN && $nextIsActive) {
             return false;
         }
 
         return User::query()
-            ->where('is_admin', true)
+            ->where('role', User::ROLE_SUPER_ADMIN)
             ->where('is_active', true)
             ->count() <= 1;
     }

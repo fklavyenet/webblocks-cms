@@ -17,7 +17,7 @@ class SiteCloneAdminTest extends TestCase
     #[Test]
     public function clone_form_is_available_from_sites_area_and_can_run_a_dry_run(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $source = Site::query()->create([
             'name' => 'Source',
             'handle' => 'source',

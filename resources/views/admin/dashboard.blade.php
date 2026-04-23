@@ -121,8 +121,12 @@
                         <div class="wb-stack wb-stack-2">
                             <div class="wb-text-sm wb-text-muted">Catalog</div>
                             <div class="wb-cluster wb-cluster-2">
-                                <a href="{{ route('admin.slot-types.index') }}" class="wb-btn wb-btn-secondary">Slot Types</a>
-                                <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">Block Types</a>
+                                @can('access-system')
+                                    <a href="{{ route('admin.slot-types.index') }}" class="wb-btn wb-btn-secondary">Slot Types</a>
+                                    <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">Block Types</a>
+                                @else
+                                    <span class="wb-text-sm wb-text-muted">System catalogs are available to super admins only.</span>
+                                @endcan
                             </div>
                         </div>
                     </div>

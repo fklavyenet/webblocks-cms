@@ -16,6 +16,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -29,11 +30,12 @@ class PageController extends Controller
 
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly AdminAuthorization $authorization,
     ) {}
 
     public function index(Request $request): View
     {
-        $sites = Site::query()->primaryFirst()->orderBy('name')->get();
+        $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
         $sort = $request->string('sort')->toString();
@@ -50,12 +52,12 @@ class PageController extends Controller
             $sort = 'created_at';
         }
 
-        $siteLocaleCounts = Site::query()
+        $siteLocaleCounts = $this->authorization->scopeSitesForUser(Site::query(), $request->user())
             ->withCount(['enabledLocales as locales_count'])
             ->pluck('locales_count', 'id');
 
         return view('admin.pages.index', [
-            'pages' => Page::query()
+            'pages' => $this->authorization->scopePagesForUser(Page::query(), $request->user())
                 ->with(['site', 'translations.locale'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
@@ -97,7 +99,7 @@ class PageController extends Controller
 
     public function create(Request $request): View
     {
-        $sites = Site::query()
+        $sites = $this->authorization->scopeSitesForUser(Site::query(), $request->user())
             ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
             ->orderByDesc('is_primary')
             ->orderBy('name')
@@ -115,6 +117,8 @@ class PageController extends Controller
 
     public function store(PageRequest $request): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
+
         $page = DB::transaction(function () use ($request) {
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
@@ -153,6 +157,8 @@ class PageController extends Controller
 
     public function edit(Page $page): View
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+
         $page->loadMissing([
             'site',
             'translations.locale',
@@ -172,6 +178,7 @@ class PageController extends Controller
         return view('admin.pages.edit', [
             'page' => $page,
             'sites' => Site::query()
+                ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
                 ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
                 ->primaryFirst()
                 ->orderBy('name')
@@ -184,6 +191,9 @@ class PageController extends Controller
 
     public function update(PageRequest $request, Page $page): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
+
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
@@ -213,6 +223,7 @@ class PageController extends Controller
 
     public function editSlotBlocks(Page $page, PageSlot $slot): View
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
         abort_unless($slot->page_id === $page->id, 404);
 
         $page->loadMissing(['slots.slotType', 'site.locales', 'translations.locale']);
@@ -325,6 +336,7 @@ class PageController extends Controller
 
     public function destroy(Page $page): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
         $siteId = $page->site_id;
 
         $page->delete();
@@ -336,6 +348,7 @@ class PageController extends Controller
 
     public function updateStatus(Request $request, Page $page): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
         $status = $request->string('status')->toString();
 
         if (! in_array($status, ['draft', 'published'], true)) {
@@ -517,7 +530,12 @@ class PageController extends Controller
     {
         $resolvedId = (int) $assetId;
 
-        return $resolvedId > 0 ? Asset::query()->find($resolvedId) : null;
+        if ($resolvedId <= 0) {
+            return null;
+        }
+
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+            ->find($resolvedId);
     }
 
     private function resolveGalleryAssets(mixed $assetIds)
@@ -531,7 +549,7 @@ class PageController extends Controller
             return collect();
         }
 
-        return Asset::query()
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
             ->whereIn('id', $resolvedIds)
             ->get()
             ->sortBy(fn (Asset $asset) => $resolvedIds->search($asset->id))
@@ -668,7 +686,7 @@ class PageController extends Controller
 
     private function assetPickerAssets()
     {
-        return Asset::query()
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();

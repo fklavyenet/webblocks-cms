@@ -22,7 +22,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function sites_index_renders_primary_and_locale_context(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $locale = Locale::query()->create([
             'code' => 'tr',
@@ -45,7 +45,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function locales_index_renders_default_and_enabled_context(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         Locale::query()->create([
             'code' => 'de',
             'name' => 'German',
@@ -66,7 +66,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function locales_index_shows_lifecycle_actions_and_explanations(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
@@ -99,7 +99,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function site_domains_are_normalized_and_default_locale_is_preserved_on_save(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
@@ -120,7 +120,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function site_can_be_saved_without_explicit_locale_ids_and_preserves_default_locale(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
@@ -139,7 +139,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function site_update_with_additional_locale_keeps_default_locale_attached(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
         $turkish = Locale::query()->create([
@@ -165,7 +165,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function site_edit_form_renders_forced_default_locale_hidden_input(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
@@ -179,7 +179,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function site_domain_must_be_unique_after_normalization(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
         Site::query()->create([
@@ -238,7 +238,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function default_locale_cannot_be_disabled(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
         $response = $this->actingAs($user)->post(route('admin.locales.disable', $defaultLocale));
@@ -251,7 +251,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function non_default_locale_can_be_disabled_and_enabled_again(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $locale = Locale::query()->create([
             'code' => 'fr',
             'name' => 'French',
@@ -271,7 +271,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function default_locale_cannot_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
         $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $defaultLocale));
@@ -284,7 +284,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function locale_assigned_to_a_site_cannot_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $locale = Locale::query()->create([
             'code' => 'tr',
@@ -304,7 +304,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function locale_with_page_translations_cannot_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $locale = Locale::query()->create([
             'code' => 'it',
@@ -340,7 +340,7 @@ class SiteLocaleManagementTest extends TestCase
     {
         $this->seed(BlockTypeSeeder::class);
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
         $locale = Locale::query()->create([
@@ -392,7 +392,7 @@ class SiteLocaleManagementTest extends TestCase
     #[Test]
     public function fully_unused_disabled_non_default_locale_can_be_deleted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $locale = Locale::query()->create([
             'code' => 'nl',
             'name' => 'Dutch',

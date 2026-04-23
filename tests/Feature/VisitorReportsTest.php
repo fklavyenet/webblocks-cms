@@ -101,7 +101,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function admin_visitor_reports_screen_opens_for_authenticated_users(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
 
         $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
 
@@ -114,7 +114,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function admin_visitor_reports_screen_handles_missing_table_gracefully(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
 
         Schema::dropIfExists('visitor_events');
 
@@ -128,7 +128,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function reports_respect_site_and_date_range_filters(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
         $primarySite = $this->defaultSite();
         $campaignSite = Site::query()->create([
             'name' => 'Campaign',
@@ -139,6 +139,7 @@ class VisitorReportsTest extends TestCase
 
         $defaultLocale = $this->defaultLocale();
         $campaignSite->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+        $user->sites()->sync([$primarySite->id, $campaignSite->id]);
 
         $primaryPage = $this->createPublishedPage($primarySite, 'Primary About', 'primary-about');
         $campaignPage = $this->createPublishedPage($campaignSite, 'Campaign Launch', 'campaign-launch');
@@ -178,7 +179,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function campaign_source_and_medium_reports_respect_filters(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
         $primarySite = $this->defaultSite();
         $campaignSite = Site::query()->create([
             'name' => 'Campaign Site',
@@ -199,6 +200,7 @@ class VisitorReportsTest extends TestCase
             $defaultLocale->id => ['is_enabled' => true],
             $trLocale->id => ['is_enabled' => true],
         ]);
+        $user->sites()->sync([$primarySite->id, $campaignSite->id]);
 
         $primaryPage = $this->createPublishedPage($primarySite, 'Primary About', 'primary-about');
         $campaignPage = $this->createPublishedPage($campaignSite, 'Campaign Launch', 'campaign-launch');
@@ -275,7 +277,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function reports_group_null_utm_values_without_breaking(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->editor()->create();
         $site = $this->defaultSite();
         $page = $this->createPublishedPage($site, 'Landing', 'landing');
 

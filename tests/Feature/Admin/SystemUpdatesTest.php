@@ -31,7 +31,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function system_updates_page_renders(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.4');
         $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, '0.1.4');
 
@@ -54,7 +54,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function disabled_client_state_is_honest_when_no_installed_version_has_been_recorded_yet(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         config()->set('webblocks-updates.enabled', false);
         config()->set('app.version', '0.1.8');
@@ -70,7 +70,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function check_flow_shows_correct_state_from_mocked_client_response(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.check'));
@@ -89,7 +89,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function page_can_show_update_server_unavailable_state(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $this->mockClientResult('server_unreachable', 'Update server unavailable', 'The update server could not be reached within the configured timeout.', false, null, null, 'server_unreachable', 'timeout');
 
         $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
@@ -103,7 +103,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function successful_update_flow_persists_version_records_run_and_updates_sidebar(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.0');
 
         [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
@@ -147,7 +147,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function failed_update_flow_keeps_version_old_records_failure_and_recovers_maintenance(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.0');
 
         [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
@@ -181,7 +181,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function second_update_cannot_start_while_lock_is_held(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.0');
         $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
 
@@ -204,7 +204,7 @@ class SystemUpdatesTest extends TestCase
     #[Test]
     public function update_requires_backup_acknowledgement(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
 
         $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));

@@ -22,7 +22,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function admin_can_view_backups_page(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
 
@@ -36,7 +36,7 @@ class SystemBackupsTest extends TestCase
     {
         Schema::drop('system_backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
 
@@ -52,7 +52,7 @@ class SystemBackupsTest extends TestCase
         Storage::fake('public');
         Storage::fake('backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $folder = AssetFolder::query()->create(['name' => 'Docs', 'slug' => 'docs']);
 
         Storage::disk('public')->put('media/documents/readme.txt', 'backup me');
@@ -107,7 +107,7 @@ class SystemBackupsTest extends TestCase
         Storage::fake('public');
         Storage::fake('backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $mock = Mockery::mock(DatabaseDumpWriter::class);
         $mock->shouldReceive('dumpTo')->once()->andThrow(new \RuntimeException('mysqldump is not available.'));
         $this->app->instance(DatabaseDumpWriter::class, $mock);
@@ -130,7 +130,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function backup_detail_page_shows_visible_restore_danger_zone_for_restorable_backups(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
             'type' => SystemBackup::TYPE_MANUAL,
             'status' => SystemBackup::STATUS_COMPLETED,
@@ -181,7 +181,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function backups_list_shows_delete_action_for_failed_and_running_backups_only(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $failedBackup = SystemBackup::query()->create([
             'type' => SystemBackup::TYPE_MANUAL,
             'status' => SystemBackup::STATUS_FAILED,
@@ -235,7 +235,7 @@ class SystemBackupsTest extends TestCase
     {
         Storage::fake('backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
             'type' => SystemBackup::TYPE_MANUAL,
             'status' => SystemBackup::STATUS_FAILED,
@@ -265,7 +265,7 @@ class SystemBackupsTest extends TestCase
     {
         Storage::fake('backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
             'type' => SystemBackup::TYPE_MANUAL,
             'status' => SystemBackup::STATUS_RUNNING,
@@ -293,7 +293,7 @@ class SystemBackupsTest extends TestCase
     {
         Storage::fake('backups');
 
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
             'type' => SystemBackup::TYPE_MANUAL,
             'status' => SystemBackup::STATUS_COMPLETED,

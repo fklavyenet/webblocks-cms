@@ -51,7 +51,10 @@
                         ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
                     ],
                 ],
-                [
+            ];
+
+            if ($user?->can('access-system')) {
+                $sidebarGroups[] = [
                     'label' => 'System',
                     'icon' => 'wb-icon-globe',
                     'items' => [
@@ -60,8 +63,9 @@
                         ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
                         ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
                     ],
-                ],
-                [
+                ];
+
+                $sidebarGroups[] = [
                     'label' => 'Maintenance',
                     'icon' => 'wb-icon-database',
                     'items' => [
@@ -70,8 +74,8 @@
                         ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
                         ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
                     ],
-                ],
-            ];
+                ];
+            }
         @endphp
 
         <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
