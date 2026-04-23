@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Move the Users admin navigation item under the System group and consolidate install-level admin tools in the left sidebar.
+- Restructure `README.md` into a v1.0 entry-point overview with focused links to detailed docs.
+- Add compact v1.0 documentation pages for installation, getting started, users and permissions, editorial workflow, revisions, and operations.
 - Add Install Wizard V1 for fresh installs with browser-based requirements, database, core setup, and first super admin steps.
 - Add install state guards so public, admin, and auth entry points guide incomplete installs into setup and lock the installer after completion.
 - Add safe first-run environment handling for app key generation, `.env` updates, database validation, and storage link setup within the installer flow.

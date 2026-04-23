@@ -1,0 +1,107 @@
+# Installation
+
+## Overview
+
+WebBlocks CMS supports a browser-based install wizard for fresh installs, a manual Laravel CLI install path, and an optional DDEV local setup flow.
+
+An install is considered complete when the application has a working CMS baseline:
+
+- an app key exists
+- the database is reachable
+- required tables exist
+- core seed data exists
+- the first active `super_admin` exists
+- an install completion marker is stored in `system_settings`
+
+## Browser Install Wizard
+
+Use the browser wizard for a fresh install.
+
+Start with:
+
+```bash
+composer install
+cp .env.example .env
+php artisan serve
+```
+
+Then open `http://127.0.0.1:8000/install`.
+
+The wizard covers:
+
+- environment readiness checks
+- database configuration and connection validation
+- core CMS installation
+- first `super_admin` creation
+- install locking after completion
+
+Notes:
+
+- the installer is for fresh installs
+- if setup is incomplete, the wizard can be reopened and resumed safely
+- after completion, install routes are locked and normal auth/admin flow takes over
+- the installer writes the selected database configuration into `.env`
+
+## Manual CLI Installation
+
+Use the CLI flow when you prefer a standard Laravel setup path.
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan storage:link
+php artisan serve
+```
+
+Notes:
+
+- `php artisan db:seed` installs the core CMS catalogs and records the current app version as the installed version for a fresh install
+- `php artisan storage:link` is required if public file serving should use `storage/app/public`
+- runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are created automatically on first run
+
+## Optional DDEV Local Install
+
+```bash
+ddev start
+ddev composer install
+cp .env.example .env
+ddev artisan key:generate
+ddev artisan migrate
+ddev artisan db:seed
+ddev artisan storage:link
+```
+
+Then open:
+
+- public site: `https://<your-project>.ddev.site`
+- admin: `https://<your-project>.ddev.site/admin`
+- installer on a fresh install: `https://<your-project>.ddev.site/install`
+
+## First Super Admin Creation
+
+The first `super_admin` is required for a completed install.
+
+- in the browser wizard, create the first admin during the final setup step
+- in a manual install, ensure at least one active `super_admin` account exists before considering the CMS fully installed
+
+`super_admin` is the install-level role that can access Users, sites, locales, settings, updates, backups, export/import, and all site content.
+
+## Common Setup Notes
+
+- the installer is locked after completion
+- `/admin` is the canonical admin entry point
+- `/admin/dashboard` redirects to `/admin`
+- new pages start in `draft`
+- if install-level features such as revisions, backups, or updates report missing tables, run `php artisan migrate`
+
+## Post-Install Next Steps
+
+1. Sign in to `/admin`.
+2. Review your site and locale configuration.
+3. Create or edit a site if needed.
+4. Create your first page.
+5. Add media, navigation, and blocks.
+6. Publish content through the editorial workflow.

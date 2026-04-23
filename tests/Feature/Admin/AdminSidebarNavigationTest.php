@@ -89,9 +89,26 @@ class AdminSidebarNavigationTest extends TestCase
         $adminResponse = $this->actingAs($admin)->get(route('admin.dashboard'));
         $adminResponse->assertOk();
         $adminResponse->assertSee('href="'.route('admin.users.index').'"', false);
+        $adminResponse->assertSee('>System<', false);
+        $this->assertSame(1, substr_count($adminResponse->getContent(), 'href="'.route('admin.users.index').'"'));
 
         $userResponse = $this->actingAs($user)->get(route('admin.dashboard'));
         $userResponse->assertOk();
         $userResponse->assertDontSee('href="'.route('admin.users.index').'"', false);
+    }
+
+    #[Test]
+    public function users_page_is_grouped_under_system_and_not_listed_as_a_top_level_item(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.users.index'));
+
+        $response->assertOk();
+        $response->assertSee('href="'.route('admin.users.index').'"', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+        $response->assertSee('>System<', false);
+        $response->assertDontSee('class="wb-sidebar-link is-active"><i class="wb-icon wb-icon-user wb-sidebar-icon"', false);
+        $this->assertSame(1, substr_count($response->getContent(), 'href="'.route('admin.users.index').'"'));
     }
 }

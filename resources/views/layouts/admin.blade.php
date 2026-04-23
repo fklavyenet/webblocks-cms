@@ -33,15 +33,10 @@
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
-                ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*', 'icon' => 'wb-icon-user'],
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
                 ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
             ];
-
-            if (! $user?->can('manage-users')) {
-                $menuItems = array_values(array_filter($menuItems, fn (array $item) => $item['route'] !== 'admin.users.index'));
-            }
 
             $sidebarGroups = [
                 [
@@ -58,21 +53,15 @@
                     'label' => 'System',
                     'icon' => 'wb-icon-globe',
                     'items' => [
+                        ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
                         ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
                         ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
-                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
-                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
-                    ],
-                ];
-
-                $sidebarGroups[] = [
-                    'label' => 'Maintenance',
-                    'icon' => 'wb-icon-database',
-                    'items' => [
                         ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
                         ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
                         ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
-                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
+                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
                     ],
                 ];
             }

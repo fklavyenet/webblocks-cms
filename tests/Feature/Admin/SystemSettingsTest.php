@@ -29,7 +29,7 @@ class SystemSettingsTest extends TestCase
         $response->assertSee('Installed version');
         $response->assertSee('Environment');
         $response->assertSee('System');
-        $response->assertSee('Maintenance');
+        $response->assertDontSee('Maintenance');
     }
 
     #[Test]
