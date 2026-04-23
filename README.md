@@ -101,6 +101,8 @@ See `docs/editorial-workflow.md` for status and role details.
 - Backup / Restore is for recovering the install environment.
 - System Updates handle installed version checks and in-app update runs.
 
+Admin session expiry is handled defensively: after re-authentication, the original admin tab now resets transient overlay, drawer, and body-lock state so it does not stay dimmed or non-interactive.
+
 These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.

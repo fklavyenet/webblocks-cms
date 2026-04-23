@@ -79,6 +79,20 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
+    public function media_index_handles_expired_upload_sessions_with_a_full_login_redirect(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.media.index'));
+
+        $response->assertOk();
+        $response->assertSee("credentials: 'same-origin'", false);
+        $response->assertSee('if (response.redirected)', false);
+        $response->assertSee('response.status === 401 || response.status === 403 || response.status === 419', false);
+        $response->assertSee('function redirectToLoginFromAdmin()', false);
+    }
+
+    #[Test]
     public function media_index_supports_grid_view_filters_and_usage_drawer(): void
     {
         $user = User::factory()->superAdmin()->create();

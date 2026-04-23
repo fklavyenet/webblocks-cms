@@ -212,6 +212,60 @@
         <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
         @stack('scripts')
         <script>
+            function resetAdminTransientUiState() {
+                if (document.body) {
+                    document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');
+                    document.body.style.overflow = '';
+                }
+
+                var sidebar = document.getElementById('admin-sidebar');
+
+                if (sidebar) {
+                    sidebar.classList.remove('is-open');
+                }
+
+                document.querySelectorAll('[data-wb-sidebar-backdrop]').forEach(function (backdrop) {
+                    backdrop.classList.remove('is-open');
+                });
+
+                document.querySelectorAll('[data-wb-toggle="sidebar"]').forEach(function (trigger) {
+                    trigger.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                });
+
+                var overlayRoot = document.getElementById('wb-overlay-root');
+
+                if (!overlayRoot) {
+                    return;
+                }
+
+                overlayRoot.querySelectorAll('.wb-overlay-backdrop').forEach(function (backdrop) {
+                    backdrop.hidden = true;
+                    backdrop.className = 'wb-overlay-backdrop';
+                    delete backdrop.dataset.wbOverlayOwner;
+                });
+
+                overlayRoot.querySelectorAll('[data-wb-overlay-runtime="true"]').forEach(function (element) {
+                    element.classList.remove('is-open');
+                    element.hidden = true;
+                });
+            }
+
+            function bindAdminTransientUiReset() {
+                resetAdminTransientUiState();
+
+                window.addEventListener('pageshow', function () {
+                    resetAdminTransientUiState();
+                });
+            }
+
+            function redirectToLoginFromAdmin() {
+                resetAdminTransientUiState();
+                window.location.assign('{{ route('login') }}');
+            }
+
+            bindAdminTransientUiReset();
+
             document.addEventListener('click', function (event) {
                 var button = event.target.closest('[data-password-toggle]');
 
@@ -667,8 +721,19 @@
                     method: 'POST',
                     headers: token ? { 'X-CSRF-TOKEN': token.getAttribute('content') } : {},
                     body: formData,
+                    credentials: 'same-origin',
                 })
                     .then(function (response) {
+                        if (response.redirected) {
+                            redirectToLoginFromAdmin();
+                            return;
+                        }
+
+                        if (response.status === 401 || response.status === 403 || response.status === 419) {
+                            redirectToLoginFromAdmin();
+                            return;
+                        }
+
                         if (!response.ok) {
                             throw new Error('Upload failed');
                         }

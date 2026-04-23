@@ -73,6 +73,21 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
+    public function admin_layout_resets_transient_overlay_and_sidebar_state_on_restore(): void
+    {
+        $user = User::factory()->editor()->create();
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertOk();
+        $response->assertSee('function resetAdminTransientUiState()', false);
+        $response->assertSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
+        $response->assertSee("window.addEventListener('pageshow'", false);
+        $response->assertSee("document.querySelectorAll('[data-wb-sidebar-backdrop]')", false);
+        $response->assertSee("overlayRoot.querySelectorAll('[data-wb-overlay-runtime=\"true\"]')", false);
+    }
+
+    #[Test]
     public function top_level_dashboard_redirect_uses_canonical_admin_path(): void
     {
         $user = User::factory()->editor()->create();
