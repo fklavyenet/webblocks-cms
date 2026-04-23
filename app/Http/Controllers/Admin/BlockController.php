@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,7 @@ class BlockController extends Controller
 {
     public function __construct(
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -126,6 +128,13 @@ class BlockController extends Controller
             $this->syncBlockAssets($block, $blockAssets);
             $this->syncColumnItems($block, $columnItems);
 
+            $this->revisionManager->capture(
+                $block->page()->firstOrFail(),
+                request()->user(),
+                'Block created',
+                'Page block structure or content was updated by adding a block.',
+            );
+
             return $block;
         });
 
@@ -215,6 +224,13 @@ class BlockController extends Controller
             $this->blockTranslationWriter->sync($block, $data, $localeCode);
             $this->syncBlockAssets($block, $blockAssets);
             $this->syncColumnItems($block, $columnItems);
+
+            $this->revisionManager->capture(
+                $block->page()->firstOrFail(),
+                request()->user(),
+                'Block updated',
+                'Page block structure or content was updated.',
+            );
         });
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
@@ -240,12 +256,24 @@ class BlockController extends Controller
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
         $pageId = $block->page_id;
-        $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
+        $slotTypeId = $block->slot_type_id;
+        $pageSlotId = $this->pageSlotRouteId($pageId, $slotTypeId);
         $expanded = $this->expandedStateFor($request, $block, false);
-        $block->delete();
+
+        DB::transaction(function () use ($block, $request): void {
+            $page = $block->page()->firstOrFail();
+            $block->delete();
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Block deleted',
+                'Page block structure or content was updated by removing a block.',
+            );
+        });
 
         return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $this->requestedLocaleCode(request())])
+            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'expanded' => $expanded ?: null, 'locale' => $this->requestedLocaleCode(request())])
             ->with('status', 'Block deleted successfully.');
     }
 
@@ -269,6 +297,13 @@ class BlockController extends Controller
             $currentOrder = $block->sort_order;
             $block->update(['sort_order' => $sibling->sort_order]);
             $sibling->update(['sort_order' => $currentOrder]);
+
+            $this->revisionManager->capture(
+                $block->page()->firstOrFail(),
+                request()->user(),
+                'Block order updated',
+                'Page block order was changed.',
+            );
         });
 
         return redirect()

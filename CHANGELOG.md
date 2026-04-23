@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add Page Revisions / Restore V1 for pages with automatic page-scoped revision snapshots across page edits, workflow changes, page translations, and slot/block changes.
+- Add admin revision history and in-place restore for pages, including pre-restore safety snapshots, multisite-aware access control, and restore coverage for page fields, page translations, slots, blocks, and block translation rows.
+- Keep page revisions explicitly separate from environment Backup / Restore and site Export / Import flows.
 - Add Editorial Workflow V1 for pages with `draft`, `in_review`, `published`, and `archived` statuses.
 - Add role-based workflow enforcement so `site_admin` and `super_admin` users can publish while `editor` users can only work in draft and submit for review.
 - Restrict public page rendering to workflow-published pages while preserving existing block-level visibility rules inside published pages.

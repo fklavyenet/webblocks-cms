@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\PageTranslationRequest;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
+use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,7 @@ class PageTranslationController extends Controller
 {
     public function __construct(
         private readonly AdminAuthorization $authorization,
+        private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
     ) {}
 
@@ -55,6 +57,13 @@ class PageTranslationController extends Controller
                 ['locale_id' => $locale->id],
                 $request->validatedTranslation(),
             );
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Translation added',
+                'Page translation was added for locale '.$locale->code.'.',
+            );
         });
 
         return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation added successfully.');
@@ -86,8 +95,15 @@ class PageTranslationController extends Controller
         $page->loadMissing('site');
         abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
 
-        DB::transaction(function () use ($request, $translation): void {
+        DB::transaction(function () use ($request, $page, $translation): void {
             $translation->update($request->validatedTranslation());
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Translation updated',
+                'Page translation was updated for locale '.$translation->locale->code.'.',
+            );
         });
 
         return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation updated successfully.');

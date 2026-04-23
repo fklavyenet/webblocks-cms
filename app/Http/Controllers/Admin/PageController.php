@@ -16,6 +16,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,7 @@ class PageController extends Controller
 
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -139,6 +141,13 @@ class PageController extends Controller
                 $this->syncBlocks($page, $blocks);
             }
 
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Page created',
+                'Initial page state was captured when the page was created.',
+            );
+
             return $page;
         });
 
@@ -165,6 +174,7 @@ class PageController extends Controller
         $page->loadCount('blocks');
 
         $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
+        $canViewRevisions = $this->revisionManager->canView(request()->user(), $page);
 
         $slotBlockPreviews = $page->slots
             ->mapWithKeys(fn (PageSlot $slot) => [
@@ -183,6 +193,7 @@ class PageController extends Controller
             'slotBlockPreviews' => $slotBlockPreviews,
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
+            'canViewRevisions' => $canViewRevisions,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
         ]);
     }
@@ -203,6 +214,12 @@ class PageController extends Controller
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
             $this->syncSlots($page, $slots);
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Page updated',
+                'Page fields, default translation, and slot assignments were updated.',
+            );
         });
 
         $redirect = redirect()
@@ -285,7 +302,21 @@ class PageController extends Controller
         $this->authorization->abortUnlessSiteAccess($request->user(), $page);
 
         $action = $request->string('action')->toString();
-        $message = $this->workflowManager->apply($page, $request->user(), $action);
+        $fromStatus = $page->status;
+        $message = DB::transaction(function () use ($page, $request, $action, $fromStatus): string {
+            $message = $this->workflowManager->apply($page, $request->user(), $action);
+            $updatedPage = $page->fresh();
+
+            $this->revisionManager->capture(
+                $updatedPage,
+                $request->user(),
+                'Workflow updated',
+                'Page workflow changed from '.$fromStatus.' to '.$updatedPage->status.'.',
+            );
+
+            return $message;
+        });
+        $page = $page->fresh();
 
         $redirect = redirect()
             ->route('admin.pages.edit', $page)

@@ -616,6 +616,48 @@ CMS_VISITOR_UTM_ENABLED=true
 - Workflow actions live on the page edit screen and show only the actions allowed for the current role and page status.
 - For safety, editors cannot keep changing a page after it leaves `draft`; non-draft page editing, translation editing, and slot/block editing require a `site_admin` or `super_admin` to move the page back to draft first.
 
+## Page Revisions / Restore V1
+
+- Page Revisions / Restore V1 is a page-scoped content safety feature for editorial recovery.
+- It is intentionally distinct from:
+  - Backup / Restore, which is an environment-level recovery tool
+  - Export / Import, which is a site portability tool
+- Admin paths:
+  - `GET /admin/pages/{page}/revisions`
+  - `POST /admin/pages/{page}/revisions/{revision}/restore`
+- Revision snapshots are stored in `page_revisions` as structured JSON with `schema_version: 1`.
+- V1 snapshot scope includes:
+  - page core fields
+  - page translations
+  - page slots
+  - page block tree
+  - block translation rows
+  - asset ID references only
+- V1 does not include:
+  - visual diffs
+  - branching
+  - comments
+  - scheduled restore
+  - full-site snapshots
+  - asset binary versioning
+  - autosave or collaborative editing
+- Revisions are created automatically when any of the following change:
+  - page fields and default translation
+  - workflow status
+  - page translation records
+  - slot structure
+  - block creation, updates, deletion, and ordering
+- Restore behavior:
+  - restore always targets the current page in place instead of creating a duplicate page
+  - restore creates a fresh pre-restore safety revision first
+  - restore then reapplies the selected revision snapshot for page fields, translations, slots, blocks, and block translation rows in one transaction
+  - restore records a new post-restore revision entry linked to the source revision
+- Access rules:
+  - `super_admin`: can view and restore revisions
+  - `site_admin`: can view and restore revisions within assigned sites
+  - `editor`: can view revisions within assigned sites, but cannot restore
+- Public rendering continues to use only the current live page state. Revisions stay admin-only and do not introduce public version browsing.
+
 ## Backup Manager V1
 
 - Admin path: `/admin/system/backups`

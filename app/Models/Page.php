@@ -170,6 +170,11 @@ class Page extends Model
         return $this->hasMany(VisitorEvent::class);
     }
 
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(PageRevision::class)->latest('created_at');
+    }
+
     public function defaultTranslation(): ?PageTranslation
     {
         $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');

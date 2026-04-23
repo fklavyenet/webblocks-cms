@@ -2,7 +2,12 @@
     $pageTitle = 'Edit Page: '.$page->title;
     $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
+    $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
     $siteName = $page->site?->name ?? 'Site';
+    $headerActions = collect([
+        $pageRevisionsUrl ? '<a href="'.$pageRevisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : null,
+        $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : null,
+    ])->filter()->implode('');
 @endphp
 
 @extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -12,7 +17,7 @@
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.$page->title.'</span></li></ol></nav>',
         'title' => $pageTitle,
         'description' => 'Manage the canonical page, English base fields, and translation routing from one compact screen.',
-        'actions' => $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '',
+        'actions' => $headerActions,
     ])
 
     @include('admin.partials.flash')
