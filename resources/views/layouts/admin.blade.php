@@ -239,16 +239,13 @@
                     return;
                 }
 
-                overlayRoot.querySelectorAll('.wb-overlay-backdrop').forEach(function (backdrop) {
-                    backdrop.hidden = true;
-                    backdrop.className = 'wb-overlay-backdrop';
-                    delete backdrop.dataset.wbOverlayOwner;
-                });
+                var dialogBackdrop = overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop');
 
-                overlayRoot.querySelectorAll('[data-wb-overlay-runtime="true"]').forEach(function (element) {
-                    element.classList.remove('is-open');
-                    element.hidden = true;
-                });
+                if (dialogBackdrop) {
+                    dialogBackdrop.hidden = true;
+                    dialogBackdrop.className = 'wb-overlay-backdrop';
+                    delete dialogBackdrop.dataset.wbOverlayOwner;
+                }
             }
 
             function bindAdminTransientUiReset() {

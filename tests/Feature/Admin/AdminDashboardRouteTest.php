@@ -84,7 +84,8 @@ class AdminDashboardRouteTest extends TestCase
         $response->assertSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
         $response->assertSee("window.addEventListener('pageshow'", false);
         $response->assertSee("document.querySelectorAll('[data-wb-sidebar-backdrop]')", false);
-        $response->assertSee("overlayRoot.querySelectorAll('[data-wb-overlay-runtime=\"true\"]')", false);
+        $response->assertSee("overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop')", false);
+        $response->assertDontSee("overlayRoot.querySelectorAll('[data-wb-overlay-runtime=\"true\"]')", false);
     }
 
     #[Test]
