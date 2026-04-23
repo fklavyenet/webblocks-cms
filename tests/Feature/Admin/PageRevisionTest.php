@@ -12,6 +12,7 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -243,6 +244,21 @@ class PageRevisionTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.pages.revisions.index', $page))
             ->assertForbidden();
+    }
+
+    #[Test]
+    public function revision_history_redirects_cleanly_when_revision_table_is_missing(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $page = $this->pageFor($site);
+
+        Schema::dropIfExists('page_revisions');
+
+        $response = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $response->assertSessionHasErrors('revisions');
     }
 
     #[Test]

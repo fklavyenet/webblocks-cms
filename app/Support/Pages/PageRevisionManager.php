@@ -10,6 +10,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class PageRevisionManager
 {
@@ -30,8 +32,21 @@ class PageRevisionManager
             && $user->hasSiteAccess($page->site_id);
     }
 
+    public function revisionsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('page_revisions');
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     public function capture(Page $page, ?User $actor = null, ?string $label = null, ?string $reason = null, ?PageRevision $restoredFrom = null): PageRevision
     {
+        if (! $this->revisionsTableExists()) {
+            throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
+        }
+
         $page->loadMissing([
             'site',
             'translations.locale',
@@ -61,6 +76,10 @@ class PageRevisionManager
 
     public function restore(Page $page, PageRevision $revision, User $actor): void
     {
+        if (! $this->revisionsTableExists()) {
+            throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
+        }
+
         abort_unless($page->id === $revision->page_id, 404);
 
         DB::transaction(function () use ($page, $revision, $actor): void {

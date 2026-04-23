@@ -22,6 +22,13 @@ class PageRevisionController extends Controller
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
         abort_unless($this->revisionManager->canView(request()->user(), $page), 403);
 
+        if (! $this->revisionManager->revisionsTableExists()) {
+            return redirect()
+                ->route('admin.pages.edit', $page)
+                ->withErrors(['revisions' => 'Page revisions are not ready yet. Run the latest migrations before opening revision history.'])
+                ->throwResponse();
+        }
+
         return view('admin.pages.revisions.index', [
             'page' => $page->loadMissing('site'),
             'revisions' => $page->revisions()->with(['actor', 'restoredFrom'])->get(),
@@ -34,6 +41,12 @@ class PageRevisionController extends Controller
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
         abort_unless($revision->page_id === $page->id, 404);
         abort_unless($this->revisionManager->canRestore(request()->user(), $page), 403);
+
+        if (! $this->revisionManager->revisionsTableExists()) {
+            return redirect()
+                ->route('admin.pages.edit', $page)
+                ->withErrors(['revisions' => 'Page revisions are not ready yet. Run the latest migrations before restoring revisions.']);
+        }
 
         $this->revisionManager->restore($page, $revision, request()->user());
         $page = $page->fresh();
