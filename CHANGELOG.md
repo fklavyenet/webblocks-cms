@@ -13,6 +13,18 @@
 - Restrict public page rendering to workflow-published pages while preserving existing block-level visibility rules inside published pages.
 - Add compact workflow badges and actions across the page admin flow, plus server-side workflow guards for page editing, translations, and slot/block editing.
 
+## 1.0.0
+
+First stable release of WebBlocks CMS.
+
+- Introduces a complete block-based CMS with multisite support
+- Adds role-based access control (`super_admin`, `site_admin`, `editor`)
+- Adds Editorial Workflow V1 (`draft`, `in_review`, `published`, `archived`)
+- Adds Page Revisions and Restore V1
+- Adds Install Wizard V1 for browser-based setup
+- Includes media management, navigation, and page builder
+- Includes Export / Import, Backup / Restore, and Updates system
+
 ## 0.4.0
 
 - Add Users Phase 1 with admin-managed user system including create, edit, delete, active/inactive state, and last login tracking.
