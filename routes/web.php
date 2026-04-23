@@ -19,26 +19,38 @@ use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\VisitorReportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Install\InstallWizardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Locale;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [PublicPageController::class, 'home'])->name('home');
+Route::middleware('install.complete')->prefix('install')->name('install.')->group(function () {
+    Route::get('/', [InstallWizardController::class, 'welcome'])->name('welcome');
+    Route::get('/database', [InstallWizardController::class, 'database'])->name('database');
+    Route::post('/database', [InstallWizardController::class, 'saveDatabase'])->name('database.store');
+    Route::get('/core', [InstallWizardController::class, 'core'])->name('core');
+    Route::post('/core', [InstallWizardController::class, 'installCore'])->name('core.store');
+    Route::get('/admin', [InstallWizardController::class, 'admin'])->name('admin');
+    Route::post('/admin', [InstallWizardController::class, 'storeAdmin'])->name('admin.store');
+    Route::get('/finish', [InstallWizardController::class, 'finish'])->name('finish');
+});
 
-Route::get('/{locale}', [PublicPageController::class, 'home'])
+Route::middleware('install.required')->get('/', [PublicPageController::class, 'home'])->name('home');
+
+Route::middleware('install.required')->get('/{locale}', [PublicPageController::class, 'home'])
     ->where('locale', Locale::routePattern())
     ->name('localized.home');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['install.required', 'auth'])->group(function () {
     Route::redirect('/dashboard', '/admin')->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
@@ -107,12 +119,12 @@ Route::middleware(['auth', 'admin.access'])->prefix('admin')->name('admin.')->gr
     });
 });
 
-Route::post('/contact-messages', [ContactMessageController::class, 'store'])
+Route::middleware('install.required')->post('/contact-messages', [ContactMessageController::class, 'store'])
     ->middleware('throttle:contact-form-submissions')
     ->name('contact-messages.store');
 
-Route::get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
-Route::get('/{locale}/p/{slug}', [PublicPageController::class, 'show'])
+Route::middleware('install.required')->get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
+Route::middleware('install.required')->get('/{locale}/p/{slug}', [PublicPageController::class, 'show'])
     ->where('locale', Locale::routePattern())
     ->name('localized.pages.show');
 

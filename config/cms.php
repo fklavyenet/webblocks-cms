@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'install' => [
+        'guard_enabled' => env('CMS_INSTALL_GUARD_ENABLED', env('APP_ENV') !== 'testing'),
+        'environment_path' => env('CMS_INSTALL_ENV_PATH', base_path('.env')),
+        'environment_example_path' => env('CMS_INSTALL_ENV_EXAMPLE_PATH', base_path('.env.example')),
+        'storage_link_enabled' => env('CMS_INSTALL_STORAGE_LINK_ENABLED', env('APP_ENV') !== 'testing'),
+    ],
     'multisite' => [
         'unknown_host_fallback' => env('CMS_MULTISITE_UNKNOWN_HOST_FALLBACK', env('APP_ENV', 'production') !== 'production'),
     ],

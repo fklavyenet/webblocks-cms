@@ -5,6 +5,8 @@ use App\Console\Commands\SiteExportCommand;
 use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SiteDeleteCommand;
+use App\Http\Middleware\RedirectIfInstalled;
+use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Console\Commands\SystemBackupRestoreCommand;
 use App\Http\Middleware\RequireAdminAccess;
 use Illuminate\Foundation\Application;
@@ -55,6 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin.access' => RequireAdminAccess::class,
+            'install.complete' => RedirectIfInstalled::class,
+            'install.required' => RedirectIfNotInstalled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

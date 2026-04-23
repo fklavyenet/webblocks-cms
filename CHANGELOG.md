@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add Install Wizard V1 for fresh installs with browser-based requirements, database, core setup, and first super admin steps.
+- Add install state guards so public, admin, and auth entry points guide incomplete installs into setup and lock the installer after completion.
+- Add safe first-run environment handling for app key generation, `.env` updates, database validation, and storage link setup within the installer flow.
 - Add Page Revisions / Restore V1 for pages with automatic page-scoped revision snapshots across page edits, workflow changes, page translations, and slot/block changes.
 - Add admin revision history and in-place restore for pages, including pre-restore safety snapshots, multisite-aware access control, and restore coverage for page fields, page translations, slots, blocks, and block translation rows.
 - Keep page revisions explicitly separate from environment Backup / Restore and site Export / Import flows.

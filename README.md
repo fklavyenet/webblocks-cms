@@ -17,6 +17,49 @@ This project provides:
 
 ## Installation
 
+### Browser install wizard
+
+For a fresh install, WebBlocks CMS can now be set up through a guided browser flow at `/install`.
+
+The Install Wizard V1 covers:
+
+- environment readiness checks
+- database configuration and connection validation
+- core CMS install steps
+- first `super_admin` creation
+- install locking after completion
+
+Recommended fresh install flow:
+
+```bash
+composer install
+cp .env.example .env
+php artisan serve
+```
+
+Then open:
+
+- installer: `http://127.0.0.1:8000/install`
+- public site: `http://127.0.0.1:8000/`
+- admin: `http://127.0.0.1:8000/admin`
+
+Install completion is determined by the minimum working CMS state:
+
+- app key exists
+- database is reachable
+- required tables exist
+- core seed data exists
+- first active `super_admin` exists
+- install completion marker is stored in `system_settings`
+
+Notes:
+
+- The browser installer is for fresh installs.
+- Once install is complete, installer routes are locked and normal auth/admin flow takes over.
+- If setup is incomplete, the installer can be reopened and resumed safely.
+- The installer writes the selected database configuration into `.env` and keeps saved passwords hidden on subsequent screens.
+- During setup, the app uses a safe first-run runtime path so a fresh install can become usable without manual code-level intervention.
+
 ### Generic Laravel install
 
 ```bash
@@ -51,6 +94,17 @@ Then open:
 
 - public site: `https://<your-project>.ddev.site`
 - admin: `https://<your-project>.ddev.site/admin`
+- installer on a fresh install: `https://<your-project>.ddev.site/install`
+
+### Build your first site
+
+After install completes:
+
+1. Sign in at `/login`.
+2. Open `/admin/pages` and create a page. New pages start in `draft`.
+3. Add or edit blocks in the page builder.
+4. Submit the page for review, then publish it as a `site_admin` or `super_admin`.
+5. Open the public route or use the page preview link to confirm the published result.
 
 ### Seed choices
 
@@ -593,6 +647,14 @@ CMS_VISITOR_UTM_ENABLED=true
   - existing non-admin users become `editor`
   - existing non-super-admin users receive primary-site access as the compatibility baseline
 
+### How permissions work
+
+- `super_admin` is install-wide and can access all sites plus system-level areas.
+- `site_admin` is site-scoped and can manage content only for assigned sites.
+- `editor` is site-scoped and can edit draft content and submit for review, but cannot publish or archive.
+- Navigation visibility follows the same authorization rules as server-side access. System areas do not appear for non-`super_admin` users.
+- Inactive users are blocked from login.
+
 ## Editorial Workflow V1
 
 - Editorial Workflow V1 applies to pages as the canonical content unit.
@@ -615,6 +677,13 @@ CMS_VISITOR_UTM_ENABLED=true
 - Admin page editing now exposes one clear workflow model instead of a separate page publish toggle.
 - Workflow actions live on the page edit screen and show only the actions allowed for the current role and page status.
 - For safety, editors cannot keep changing a page after it leaves `draft`; non-draft page editing, translation editing, and slot/block editing require a `site_admin` or `super_admin` to move the page back to draft first.
+
+### How publishing works
+
+- New pages always start as `draft`.
+- `draft`, `in_review`, and `archived` pages stay non-public.
+- Editors can draft and submit for review, but cannot publish.
+- Publishing a page makes the page publicly routable, after which block-level visibility rules still apply inside that page.
 
 ## Page Revisions / Restore V1
 
@@ -657,6 +726,13 @@ CMS_VISITOR_UTM_ENABLED=true
   - `site_admin`: can view and restore revisions within assigned sites
   - `editor`: can view revisions within assigned sites, but cannot restore
 - Public rendering continues to use only the current live page state. Revisions stay admin-only and do not introduce public version browsing.
+
+### Revisions vs export/import vs backup/restore
+
+- Page revisions are page-scoped editorial safety snapshots.
+- Export / Import is for moving one site between installs.
+- Backup / Restore is for recovering the whole environment state.
+- These flows are intentionally separate and should not be treated as substitutes for one another.
 
 ## Backup Manager V1
 
