@@ -3,12 +3,16 @@
     $drawerTitleId = $drawerId.'Title';
     $defaultPublicUrl = $page->publicUrl();
     $publishedAt = data_get($page, 'published_at');
+    $reviewRequestedAt = data_get($page, 'review_requested_at');
     $slotCount = $page->slots_count ?? ($page->relationLoaded('slots') ? $page->slots->count() : $page->slots()->count());
     $blockCount = $page->blocks_count ?? ($page->relationLoaded('blocks') ? $page->blocks->count() : $page->blocks()->count());
     $firstSlot = $page->relationLoaded('slots') ? $page->slots->first() : $page->slots()->orderBy('sort_order')->first();
     $publishedLabel = $publishedAt instanceof \Illuminate\Support\Carbon
         ? $publishedAt->format('Y-m-d H:i')
         : ($publishedAt ?: 'Not recorded');
+    $reviewRequestedLabel = $reviewRequestedAt instanceof \Illuminate\Support\Carbon
+        ? $reviewRequestedAt->format('Y-m-d H:i')
+        : ($reviewRequestedAt ?: 'Not recorded');
 @endphp
 
 <div class="wb-drawer wb-drawer-right wb-drawer-sm" id="{{ $drawerId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $drawerTitleId }}">
@@ -76,7 +80,14 @@
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Status</span>
-                        <span class="wb-list-item-sub"><span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $page->status }}</span></span>
+                        <span class="wb-list-item-sub"><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Review Requested</span>
+                        <span class="wb-list-item-sub">{{ $reviewRequestedLabel }}</span>
                     </div>
                 </div>
 
@@ -116,7 +127,7 @@
                 </div>
             </div>
 
-            @if ($page->status === 'published' && $defaultPublicUrl)
+            @if ($page->isPublished() && $defaultPublicUrl)
                 <a href="{{ $defaultPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary wb-w-full">Open Public Page</a>
             @endif
         </div>

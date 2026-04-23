@@ -15,7 +15,7 @@
             <span>{{ $blockSummary['total'] }} blocks</span>
             <span>{{ $blockSummary['published'] }} published</span>
             <span>{{ $blockSummary['draft'] }} draft</span>
-            <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $page->status }}</span>
+            <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
         </div>
     </div>
 

@@ -1,6 +1,7 @@
 @php
 	$formSiteId = old('site_id', $page->site_id ?: ($selectedSiteId ?? $sites->first()?->id));
 	$selectedSite = $sites->firstWhere('id', $formSiteId);
+	$canEditContent = $canEditContent ?? true;
 	$submittedSlots = old('slots');
 	$pageSlots = $submittedSlots
 		? collect($submittedSlots)->map(function ($slot) use ($slotTypes, $page) {
@@ -45,28 +46,27 @@
 				<label>Locale</label>
 				<input class="wb-input" type="text" value="English (default)" disabled>
 			</div>
-			<label>Status</label>
-			<div class="wb-split">
-				<div class="wb-cluster">
-					<label class="wb-nowrap">
-						<input type="radio" name="status" value="draft" @checked(old('status', $page->status ?: 'draft') === 'draft')>
-						<span>Draft</span>
-					</label>
-					<label class="wb-nowrap">
-						<input type="radio" name="status" value="published" @checked(old('status', $page->status) === 'published')>
-						<span>Published</span>
-					</label>
+			@if ($page->exists)
+				<div class="wb-stack-2 wb-field">
+					<label>Workflow</label>
+					<input class="wb-input" type="text" value="{{ $page->workflowLabel() }}" disabled>
 				</div>
-			</div>
+			@endif
 		</div>
 	</div>
+
+	@if (! $canEditContent)
+		<div class="wb-alert wb-alert-info">
+			Content editing is locked while this page is {{ strtolower($page->workflowLabel()) }}. Move it back to draft to continue editing.
+		</div>
+	@endif
 
 	<div class="wb-card wb-card-accent" data-wb-slot-builder>
 		<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
 			<strong>Slots</strong>
 
 			<div class="wb-dropdown wb-dropdown-end">
-				<button class="wb-btn wb-btn-primary" type="button" data-wb-toggle="dropdown" data-wb-target="#page-slot-menu" aria-expanded="false" @disabled($availableSlotTypes->isEmpty())>Add Slot</button>
+				<button class="wb-btn wb-btn-primary" type="button" data-wb-toggle="dropdown" data-wb-target="#page-slot-menu" aria-expanded="false" @disabled(! $canEditContent || $availableSlotTypes->isEmpty())>Add Slot</button>
 				<div class="wb-dropdown-menu" id="page-slot-menu">
 					@forelse ($availableSlotTypes as $slotType)
 					@php
@@ -136,14 +136,16 @@
 							</td>
 							<td class="wb-text-end">
 								<div class="wb-action-group">
-									@if ($page->exists && $pageSlot->id)
+									@if ($canEditContent && $page->exists && $pageSlot->id)
 									<a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-action-btn wb-action-btn-view" title="Edit slot blocks" aria-label="Edit slot blocks"><i class="wb-icon wb-icon-layers" aria-hidden="true"></i></a>
 									@else
-									<span class="wb-action-btn" aria-disabled="true" title="Save the page before editing slot blocks"><i class="wb-icon wb-icon-layers" aria-hidden="true"></i></span>
+									<span class="wb-action-btn" aria-disabled="true" title="Workflow locks slot editing for this page"><i class="wb-icon wb-icon-layers" aria-hidden="true"></i></span>
 									@endif
-									<button type="button" class="wb-action-btn" data-wb-slot-move="up" title="Move slot up" aria-label="Move slot up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-									<button type="button" class="wb-action-btn" data-wb-slot-move="down" title="Move slot down" aria-label="Move slot down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-									<button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-slot-remove title="Delete slot" aria-label="Delete slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+									@if ($canEditContent)
+										<button type="button" class="wb-action-btn" data-wb-slot-move="up" title="Move slot up" aria-label="Move slot up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+										<button type="button" class="wb-action-btn" data-wb-slot-move="down" title="Move slot down" aria-label="Move slot down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+										<button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-slot-remove title="Delete slot" aria-label="Delete slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+									@endif
 								</div>
 							</td>
 						</tr>
@@ -154,5 +156,5 @@
 		</div>
 	</div>
 
-	<x-admin.form-actions :cancel-url="route('admin.pages.index', ['site' => $formSiteId])" />
+	<x-admin.form-actions :cancel-url="route('admin.pages.index', ['site' => $formSiteId])" :show-submit="$canEditContent" :submit-label="$page->exists ? 'Save Changes' : 'Save Draft'" />
 </div>

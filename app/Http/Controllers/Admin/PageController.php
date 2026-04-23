@@ -16,6 +16,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class PageController extends Controller
 
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
 
@@ -40,7 +42,7 @@ class PageController extends Controller
         $status = $request->string('status')->toString();
         $sort = $request->string('sort')->toString();
         $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
-        $allowedStatuses = ['draft', 'published'];
+        $allowedStatuses = $this->workflowManager->allowedStatuses();
         $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
         [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
 
@@ -112,6 +114,7 @@ class PageController extends Controller
             'sites' => $sites,
             'selectedSiteId' => $selectedSiteId,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
+            'canEditContent' => true,
         ]);
     }
 
@@ -139,18 +142,9 @@ class PageController extends Controller
             return $page;
         });
 
-        $previewUrl = $page->publicUrl();
-
         $redirect = redirect()
             ->route('admin.pages.edit', $page)
-            ->with('status', 'Page created successfully.');
-
-        if ($previewUrl) {
-            $redirect->with('status_action', [
-                'label' => 'View page',
-                'url' => $previewUrl,
-            ]);
-        }
+            ->with('status', 'Page saved as draft.');
 
         return $redirect;
     }
@@ -170,6 +164,8 @@ class PageController extends Controller
         ]);
         $page->loadCount('blocks');
 
+        $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
+
         $slotBlockPreviews = $page->slots
             ->mapWithKeys(fn (PageSlot $slot) => [
                 $slot->id => $this->slotBlockPreviewFor($page, $slot),
@@ -186,6 +182,8 @@ class PageController extends Controller
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
             'translationStatuses' => $page->translationStatusForSite(),
+            'canEditContent' => $canEditContent,
+            'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
         ]);
     }
 
@@ -193,6 +191,8 @@ class PageController extends Controller
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $page);
         $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
+
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
@@ -205,16 +205,14 @@ class PageController extends Controller
             $this->syncSlots($page, $slots);
         });
 
-        $previewUrl = $page->publicUrl();
-
         $redirect = redirect()
             ->route('admin.pages.edit', $page)
             ->with('status', 'Page updated successfully.');
 
-        if ($previewUrl) {
+        if ($page->isPublished() && $page->publicUrl()) {
             $redirect->with('status_action', [
                 'label' => 'View page',
-                'url' => $previewUrl,
+                'url' => $page->publicUrl(),
             ]);
         }
 
@@ -224,6 +222,7 @@ class PageController extends Controller
     public function editSlotBlocks(Page $page, PageSlot $slot): View
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
         abort_unless($slot->page_id === $page->id, 404);
 
         $page->loadMissing(['slots.slotType', 'site.locales', 'translations.locale']);
@@ -279,6 +278,27 @@ class PageController extends Controller
             'expandedBlockIds' => $expandedBlockIds,
             'slotParentBlocks' => $this->slotParentBlocks($this->blockTranslationResolver->resolveCollection($blocks, $activeLocale), $modalState['block']?->id),
         ]);
+    }
+
+    public function updateWorkflow(Request $request, Page $page): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+
+        $action = $request->string('action')->toString();
+        $message = $this->workflowManager->apply($page, $request->user(), $action);
+
+        $redirect = redirect()
+            ->route('admin.pages.edit', $page)
+            ->with('status', $message);
+
+        if ($page->isPublished() && $page->publicUrl()) {
+            $redirect->with('status_action', [
+                'label' => 'View page',
+                'url' => $page->publicUrl(),
+            ]);
+        }
+
+        return $redirect;
     }
 
     private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array
@@ -344,20 +364,6 @@ class PageController extends Controller
         return redirect()
             ->route('admin.pages.index', $siteId ? ['site' => $siteId] : [])
             ->with('status', 'Page deleted successfully.');
-    }
-
-    public function updateStatus(Request $request, Page $page): RedirectResponse
-    {
-        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
-        $status = $request->string('status')->toString();
-
-        if (! in_array($status, ['draft', 'published'], true)) {
-            return back()->with('status', 'Invalid page status.');
-        }
-
-        $page->update(['status' => $status]);
-
-        return back()->with('status', 'Page status updated successfully.');
     }
 
     private function syncBlocks(Page $page, array $submittedBlocks): void

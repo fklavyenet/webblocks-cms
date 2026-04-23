@@ -56,7 +56,6 @@ class PageRequest extends FormRequest
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
             ],
-            'status' => ['required', Rule::in(['draft', 'published'])],
             'slots' => ['nullable', 'array'],
             'slots.*.id' => ['nullable', 'integer', 'exists:page_slots,id'],
             'slots.*.slot_type_id' => ['required', 'integer', 'exists:slot_types,id', 'distinct:strict'],
@@ -89,7 +88,9 @@ class PageRequest extends FormRequest
         /** @var AdminAuthorization $authorization */
         $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
+        $page = $this->route('page');
         $data['page_type'] = 'default';
+        $data['status'] = $page instanceof Page ? $page->status : Page::STATUS_DRAFT;
         $data['translation'] = [
             'name' => $data['title'],
             'slug' => $data['slug'],

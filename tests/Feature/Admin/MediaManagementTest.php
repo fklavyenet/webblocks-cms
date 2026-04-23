@@ -346,7 +346,7 @@ class MediaManagementTest extends TestCase
             'title' => 'Media Page',
             'slug' => 'media-page',
             'page_type' => 'default',
-            'status' => 'published',
+            'status' => 'draft',
         ]);
         $slotType = $this->slotType();
         PageSlot::create([
@@ -396,11 +396,6 @@ class MediaManagementTest extends TestCase
         $this->assertNotNull($block);
         $this->assertSame($asset->id, $block->asset_id);
         $this->assertSame($asset->url(), $block->fresh()->asset?->url());
-
-        $publicResponse = $this->get(route('pages.show', $page->slug));
-
-        $publicResponse->assertOk();
-        $publicResponse->assertSee($asset->url(), false);
 
         $deleteResponse = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 

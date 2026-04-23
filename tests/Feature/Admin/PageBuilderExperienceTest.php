@@ -526,7 +526,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function page_edit_can_create_a_missing_translation(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $locale = Locale::query()->create([
             'code' => 'tr',
@@ -1035,8 +1035,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Sidebar block');
         $response->assertSee('Add Block');
         $response->assertSee(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1]), false);
-        $response->assertSee($page->publicUrl(), false);
-        $response->assertSee('View Page');
+        $response->assertDontSee('View Page');
         $response->assertDontSee('Manage the blocks assigned to this slot');
     }
 
@@ -1220,7 +1219,6 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
             'title' => 'About Updated',
             'slug' => 'about',
-            'status' => 'published',
             'slots' => [
                 [
                     'id' => $existingSlot->id,
@@ -1233,7 +1231,7 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertDatabaseHas('pages', ['id' => $page->id, 'title' => 'About Updated', 'status' => 'published']);
+        $this->assertDatabaseHas('pages', ['id' => $page->id, 'title' => 'About Updated', 'status' => 'draft']);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id, 'sort_order' => 0]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id, 'sort_order' => 1]);
         $this->assertDatabaseHas('blocks', ['id' => $existing->id, 'title' => 'Old title', 'slot_type_id' => $main->id]);
@@ -1458,9 +1456,9 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function editor_screens_show_view_page_action_and_success_messages_include_preview_link(): void
+    public function privileged_page_edit_screens_show_view_page_action_and_success_messages_include_preview_link(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 2);
         $sectionType = BlockType::query()->firstOrCreate(
             ['slug' => 'section'],
@@ -1469,7 +1467,7 @@ class PageBuilderExperienceTest extends TestCase
         $page = Page::create([
             'title' => 'About',
             'slug' => 'about',
-            'status' => 'draft',
+            'status' => 'published',
         ]);
         $mainSlot = PageSlot::create([
             'page_id' => $page->id,
@@ -1504,7 +1502,6 @@ class PageBuilderExperienceTest extends TestCase
         $pageUpdate = $this->actingAs($user)->from(route('admin.pages.edit', $page))->put(route('admin.pages.update', $page), [
             'title' => 'About',
             'slug' => 'about',
-            'status' => 'published',
             'slots' => [
                 ['id' => $mainSlot->id, 'slot_type_id' => $main->id],
             ],
@@ -1827,7 +1824,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function slot_block_editor_can_edit_translated_block_content_in_locale_context(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $turkish = Locale::query()->create([
             'code' => 'tr',
@@ -1918,7 +1915,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function slot_block_editor_rejects_locales_that_are_not_enabled_for_the_page_site(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $german = Locale::query()->create([
             'code' => 'de',
@@ -1985,7 +1982,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function page_translation_routes_cannot_be_created_for_locales_not_enabled_on_the_page_site(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $german = Locale::query()->create([
             'code' => 'de',
@@ -2015,7 +2012,7 @@ class PageBuilderExperienceTest extends TestCase
     #[Test]
     public function contact_form_translations_keep_delivery_settings_shared_and_text_fields_localized(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $turkish = Locale::query()->create([
             'code' => 'tr',

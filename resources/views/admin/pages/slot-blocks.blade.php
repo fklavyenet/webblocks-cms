@@ -1,6 +1,6 @@
 @php
     $slotTitle = 'Edit Slot: '.($slot->slotType?->name ?? 'Slot').' ('.$page->title.')';
-    $activePreviewUrl = $page->publicUrl($activeLocale->code);
+    $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $siteName = $page->site?->name ?? 'Site';
 @endphp

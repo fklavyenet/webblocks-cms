@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
-    Route::patch('/pages/{page}/status', [PageController::class, 'updateStatus'])->name('pages.status');
+    Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->name('reports.visitors.index');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::get('/pages/{page}/translations/{locale}/create', [PageTranslationController::class, 'create'])->name('pages.translations.create');

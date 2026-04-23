@@ -15,6 +15,14 @@ class Page extends Model
 {
     use HasFactory;
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_IN_REVIEW = 'in_review';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_ARCHIVED = 'archived';
+
     protected static function booted(): void
     {
         static::creating(function (self $page): void {
@@ -22,8 +30,16 @@ class Page extends Model
                 $page->page_type = 'default';
             }
 
+            if (! $page->status) {
+                $page->status = self::STATUS_DRAFT;
+            }
+
             if (! $page->site_id) {
                 $page->site_id = Site::primary()?->id;
+            }
+
+            if ($page->status === self::STATUS_PUBLISHED && ! $page->published_at) {
+                $page->published_at = now();
             }
         });
 
@@ -73,11 +89,31 @@ class Page extends Model
         'page_type_id',
         'layout_id',
         'status',
+        'published_at',
+        'review_requested_at',
     ];
 
     protected $appends = [
         'name',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'published_at' => 'datetime',
+            'review_requested_at' => 'datetime',
+        ];
+    }
+
+    public static function workflowStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_IN_REVIEW,
+            self::STATUS_PUBLISHED,
+            self::STATUS_ARCHIVED,
+        ];
+    }
 
     public function getNameAttribute(): ?string
     {
@@ -205,5 +241,30 @@ class Page extends Model
     public function publicPath(?string $localeCode = null): ?string
     {
         return app(PageRouteResolver::class)->pathFor($this, $localeCode, $this->site);
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED;
+    }
+
+    public function workflowLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_IN_REVIEW => 'In Review',
+            self::STATUS_PUBLISHED => 'Published',
+            self::STATUS_ARCHIVED => 'Archived',
+            default => 'Draft',
+        };
+    }
+
+    public function workflowBadgeClass(): string
+    {
+        return match ($this->status) {
+            self::STATUS_IN_REVIEW => 'wb-status-info',
+            self::STATUS_PUBLISHED => 'wb-status-active',
+            self::STATUS_ARCHIVED => 'wb-status-danger',
+            default => 'wb-status-pending',
+        };
     }
 }

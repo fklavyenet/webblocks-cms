@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,18 +24,21 @@ class BlockController extends Controller
 {
     public function __construct(
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
 
     public function moveUp(Block $block): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $block->page), 403);
         return $this->move($block, 'up');
     }
 
     public function moveDown(Block $block): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $block->page), 403);
         return $this->move($block, 'down');
     }
 
@@ -112,6 +116,7 @@ class BlockController extends Controller
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, null, $page, $localeCode, true);
         unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
@@ -145,6 +150,7 @@ class BlockController extends Controller
     public function edit(Request $request, Block $block): View
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
 
         if ($block->page_id && $block->slot_type_id) {
             $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
@@ -200,6 +206,7 @@ class BlockController extends Controller
         $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, $block, $page, $localeCode);
         unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
@@ -231,6 +238,7 @@ class BlockController extends Controller
     public function destroy(Request $request, Block $block): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
         $pageId = $block->page_id;
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $expanded = $this->expandedStateFor($request, $block, false);

@@ -7,7 +7,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => 'Create the page on a site and save the English base translation first.',
+        'description' => 'Create the page on a site and save the English base translation first. New pages start as draft.',
     ])
 
     @include('admin.partials.flash')

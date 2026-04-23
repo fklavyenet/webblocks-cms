@@ -50,7 +50,9 @@
                         <select id="pages_status" name="status" class="wb-select">
                             <option value="">All statuses</option>
                             <option value="draft" @selected($filters['status'] === 'draft')>Draft</option>
+                            <option value="in_review" @selected($filters['status'] === 'in_review')>In Review</option>
                             <option value="published" @selected($filters['status'] === 'published')>Published</option>
+                            <option value="archived" @selected($filters['status'] === 'archived')>Archived</option>
                         </select>
                     </div>
 
@@ -121,7 +123,7 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        @if ($page->status === 'published' && $defaultPublicUrl)
+                                        @if ($page->isPublished() && $defaultPublicUrl)
                                             <a
                                                 href="{{ $defaultPublicUrl }}"
                                                 target="_blank"
@@ -133,7 +135,7 @@
                                                 <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                             </a>
                                         @else
-                                            <span class="wb-action-btn" title="Draft page cannot be previewed yet" aria-label="Draft page cannot be previewed yet" aria-disabled="true">
+                                            <span class="wb-action-btn" title="Only published pages can be opened publicly" aria-label="Only published pages can be opened publicly" aria-disabled="true">
                                                 <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                             </span>
                                         @endif
@@ -171,23 +173,25 @@
                                                         $translationPublicUrl = $page->publicUrl($translation->locale?->code);
                                                         $translationPublicPath = $page->publicPath($translation->locale?->code);
                                                     @endphp
-                                                    @if ($translationPublicUrl && $translationPublicPath)
-                                                        <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">
+                                                    @if ($translationPublicUrl && $translationPublicPath && $page->isPublished())
+                                                         <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">
                                                             {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }}
-                                                        </a>
-                                                    @else
-                                                        <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
-                                                    @endif
-                                                @endforeach
+                                                         </a>
+                                                     @elseif ($translationPublicPath && ! $page->isPublished())
+                                                         <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }} (not public)</span>
+                                                     @else
+                                                         <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
+                                                      @endif
+                                                  @endforeach
                                             </div>
                                         </div>
                                     </td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $page->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ $page->status }}
+                                     <td>
+                                        <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
+                                            {{ $page->workflowLabel() }}
                                         </span>
-                                    </td>
+                                     </td>
                                     <td>
                                         <div class="wb-action-group">
                                             <button

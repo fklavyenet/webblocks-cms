@@ -593,6 +593,29 @@ CMS_VISITOR_UTM_ENABLED=true
   - existing non-admin users become `editor`
   - existing non-super-admin users receive primary-site access as the compatibility baseline
 
+## Editorial Workflow V1
+
+- Editorial Workflow V1 applies to pages as the canonical content unit.
+- Pages now use a first-party workflow status model:
+  - `draft`: editable working content, not public
+  - `in_review`: ready for review, not public
+  - `published`: public
+  - `archived`: retired from live use, not public
+- New pages default to `draft`.
+- Role permissions:
+  - `super_admin`: can create, edit, submit for review, publish, move back to draft, and archive across allowed content
+  - `site_admin`: can create, edit, submit for review, publish, move back to draft, and archive for assigned sites
+  - `editor`: can create and edit draft content, submit for review, and move an `in_review` page back to draft, but cannot publish or archive
+- Public rendering now requires the page workflow status to be `published`.
+- `draft`, `in_review`, and `archived` pages return `404` on public routes, including multisite and localized routes.
+- Existing block-level `draft` / `published` behavior still applies inside a published page.
+- The page workflow is the outer gate:
+  - page must be `published`
+  - then block-level public visibility rules are applied
+- Admin page editing now exposes one clear workflow model instead of a separate page publish toggle.
+- Workflow actions live on the page edit screen and show only the actions allowed for the current role and page status.
+- For safety, editors cannot keep changing a page after it leaves `draft`; non-draft page editing, translation editing, and slot/block editing require a `site_admin` or `super_admin` to move the page back to draft first.
+
 ## Backup Manager V1
 
 - Admin path: `/admin/system/backups`

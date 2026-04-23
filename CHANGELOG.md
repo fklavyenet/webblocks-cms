@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add Editorial Workflow V1 for pages with `draft`, `in_review`, `published`, and `archived` statuses.
+- Add role-based workflow enforcement so `site_admin` and `super_admin` users can publish while `editor` users can only work in draft and submit for review.
+- Restrict public page rendering to workflow-published pages while preserving existing block-level visibility rules inside published pages.
+- Add compact workflow badges and actions across the page admin flow, plus server-side workflow guards for page editing, translations, and slot/block editing.
+
 ## 0.4.0
 
 - Add Users Phase 1 with admin-managed user system including create, edit, delete, active/inactive state, and last login tracking.

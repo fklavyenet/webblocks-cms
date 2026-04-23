@@ -1,5 +1,5 @@
 <div class="wb-cluster wb-cluster-2">
-    @if ($page->publicUrl())
+    @if ($page->isPublished() && $page->publicUrl())
         <a href="{{ $page->publicUrl() }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">View Page</a>
     @endif
     <button

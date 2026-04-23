@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\PageTranslationRequest;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
+use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -14,11 +15,15 @@ use Illuminate\View\View;
 
 class PageTranslationController extends Controller
 {
-    public function __construct(private readonly AdminAuthorization $authorization) {}
+    public function __construct(
+        private readonly AdminAuthorization $authorization,
+        private readonly PageWorkflowManager $workflowManager,
+    ) {}
 
     public function create(Page $page, Locale $locale): View
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
         $page->loadMissing('site');
         abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
 
@@ -41,6 +46,7 @@ class PageTranslationController extends Controller
     public function store(PageTranslationRequest $request, Page $page, Locale $locale): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         $page->loadMissing('site');
         abort_if($page->site->enabledLocales()->where('locales.id', $locale->id)->doesntExist(), 404);
 
@@ -57,6 +63,7 @@ class PageTranslationController extends Controller
     public function edit(Page $page, PageTranslation $translation): View
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
         abort_unless($translation->page_id === $page->id, 404);
         $page->loadMissing('site');
         abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
@@ -74,6 +81,7 @@ class PageTranslationController extends Controller
     public function update(PageTranslationRequest $request, Page $page, PageTranslation $translation): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         abort_unless($translation->page_id === $page->id, 404);
         $page->loadMissing('site');
         abort_if($page->site->enabledLocales()->where('locales.id', $translation->locale_id)->doesntExist(), 404);
