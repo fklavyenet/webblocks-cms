@@ -538,16 +538,14 @@ CMS_VISITOR_UTM_ENABLED=true
 - The reusable password field is used across sign in, registration, password reset, confirm password, and profile password forms.
 - The reveal behavior uses small data-attribute driven JavaScript with icon-only trailing actions, `aria-label`, `aria-pressed`, and `aria-controls` updates instead of inline handlers or new frontend dependencies.
 
-## Users Phase 2
+## Users And Access Control
 
-- WebBlocks CMS now includes a first-party admin-managed user system for install-level CMS/system accounts with role-based and site-assignment-based access control.
-- Users remain install-global accounts and are not exported or imported as site content.
-- Admin navigation adds a top-level `Users` item for `super_admin` users only.
-- The Users index includes compact search and filtering for install-level accounts:
-  - `q` searches `name` and `email`
-  - `status` filters `active` or `inactive`
-  - `role` filters `super_admin`, `site_admin`, or `editor`
-  - pagination preserves active search and filter params
+- WebBlocks CMS includes a first-party admin-managed user system for install-level CMS and system accounts.
+- Users remain install-level accounts, not public membership users, and are not included in Export / Import packages.
+- The user system now covers:
+  - Users Phase 1: create, edit, delete, active/inactive state, and `last_login_at` tracking
+  - Users Phase 1.5: compact search, role/status filters, and admin UX polish
+  - Users Phase 2: role-based authorization and site-scoped admin access
 - Users admin routes:
   - `GET /admin/users`
   - `GET /admin/users/create`
@@ -561,11 +559,15 @@ CMS_VISITOR_UTM_ENABLED=true
   - `is_active`
   - `last_login_at`
 - Site assignments now persist in the `site_user` pivot with one row per allowed site.
-- Roles for this phase are:
+- Roles:
   - `super_admin`
   - `site_admin`
   - `editor`
-- Phase 2 authorization boundary:
+- Role meaning:
+  - `super_admin`: full install-level access, including Users, sites, locales, settings, updates, backups, export/import, and all site content
+  - `site_admin`: can access `/admin` and manage site-scoped CMS areas only for assigned sites
+  - `editor`: can access `/admin` and work in site-scoped CMS areas only for assigned sites, without install-level system access
+- Access-control boundary:
   - only `super_admin` users can open `/admin/users`
   - only `super_admin` users can create, edit, activate/deactivate, change roles, assign sites, and delete users from that screen
   - only `super_admin` users can access install-level system screens such as sites, locales, settings, updates, backups, and export/import

@@ -2,11 +2,15 @@
 
 ## Unreleased
 
-- Add Users Phase 2 with first-party role-based CMS access using `super_admin`, `site_admin`, and `editor` roles plus multisite user assignments through `site_user`.
-- Backfill legacy `is_admin` installs onto the new `role` model while keeping `is_active`, `last_login_at`, and the `is_admin` compatibility bridge intact.
-- Restrict install-level system screens and Users management to `super_admin`, and enforce assigned-site scoping across pages, navigation, media, reports, contact messages, and major site-content admin flows.
-- Update the Users admin UX with role filters, assigned-site management, site-access summaries, and safety guards that prevent deleting, deactivating, or demoting the last active `super_admin`.
-- Expand test coverage and docs for the new role model, assignment rules, login compatibility behavior, and system-vs-site authorization boundaries.
+## 0.4.0
+
+- Add Users Phase 1 with admin-managed user system including create, edit, delete, active/inactive state, and last login tracking.
+- Add Users Phase 1.5 with search, role/status filters, and improved admin UX.
+- Add Users Phase 2 with role-based user model using `super_admin`, `site_admin`, and `editor`.
+- Add install-level users with site-scoped access via `site_user` assignments.
+- Add server-side enforcement of site access across major admin areas.
+- Add `super_admin`-only access to system-level features including users, updates, backups, and settings.
+- Maintain backward compatibility by keeping `is_admin` as a temporary bridge while transitioning to role-based authorization.
 
 ## 0.3.3
 
