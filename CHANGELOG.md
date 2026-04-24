@@ -7,7 +7,7 @@
 - Fix the public cookie consent reopen UX so the footer `Cookie settings` link remains available after closing the panel and reopens the same panel in all consent states.
 - Add truthful Visitor Reports semantics so page views include anonymous rows while unique visitors, sessions, referrers, campaigns, and device summaries only use consented full-tracking rows.
 - Add public privacy settings routes, admin banner control, README documentation, and test coverage for consent-aware tracking behavior.
-- Refactor the admin sidebar into focused Content, Reports, Sites, Access, Structure, System, and Maintenance groups so install-level tools are no longer overloaded under System.
+- Reorganize the admin sidebar into direct editorial links with streamlined `Maintenance` and `System` groups so common destinations are easier to reach.
 - Restructure `README.md` into a v1.0 entry-point overview with focused links to detailed docs.
 - Add compact v1.0 documentation pages for installation, getting started, users and permissions, editorial workflow, revisions, and operations.
 - Add Install Wizard V1 for fresh installs with browser-based requirements, database, core setup, and first super admin steps.

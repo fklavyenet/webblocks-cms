@@ -32,51 +32,24 @@
 
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
+                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
+                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-photo'],
+                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
             ];
 
-            $sidebarGroups = [
-                [
-                    'label' => 'Content',
-                    'icon' => 'wb-icon-file-text',
-                    'items' => [
-                        ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*'],
-                        ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*'],
-                        ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*'],
-                    ],
-                ],
-                [
-                    'label' => 'Reports',
-                    'icon' => 'wb-icon-list',
-                    'items' => [
-                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
-                    ],
-                ],
-            ];
+            $sidebarGroups = [];
 
             if ($user?->can('access-system')) {
                 $sidebarGroups[] = [
-                    'label' => 'Sites',
-                    'icon' => 'wb-icon-globe',
+                    'label' => 'Maintenance',
+                    'icon' => 'wb-icon-file',
                     'items' => [
-                        ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
-                        ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
-                    ],
-                ];
-
-                $sidebarGroups[] = [
-                    'label' => 'Access',
-                    'icon' => 'wb-icon-user',
-                    'items' => [
-                        ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
-                    ],
-                ];
-
-                $sidebarGroups[] = [
-                    'label' => 'Structure',
-                    'icon' => 'wb-icon-layers',
-                    'items' => [
-                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
-                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
+                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
+                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
+                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
                     ],
                 ];
 
@@ -84,17 +57,11 @@
                     'label' => 'System',
                     'icon' => 'wb-icon-palette',
                     'items' => [
-                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
-                        ['label' => 'Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
-                    ],
-                ];
-
-                $sidebarGroups[] = [
-                    'label' => 'Maintenance',
-                    'icon' => 'wb-icon-file',
-                    'items' => [
-                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
-                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
+                        ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
+                        ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
+                        ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
+                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
                     ],
                 ];
             }
