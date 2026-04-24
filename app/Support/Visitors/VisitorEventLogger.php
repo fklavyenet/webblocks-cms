@@ -6,6 +6,7 @@ use App\Models\Page;
 use App\Models\VisitorEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class VisitorEventLogger
@@ -21,15 +22,20 @@ class VisitorEventLogger
         }
 
         $translation = $page->getRelation('currentTranslation');
-        $trackingMode = $this->visitorConsent->trackingMode($request);
+        $trackingMode = $this->supportsTrackingMode()
+            ? $this->visitorConsent->trackingMode($request)
+            : VisitorEvent::TRACKING_MODE_FULL;
         $payload = [
             'site_id' => $page->site_id,
             'page_id' => $page->id,
             'locale_id' => $translation?->locale_id,
             'path' => $this->normalizePath($request->getPathInfo()),
-            'tracking_mode' => $trackingMode,
             'visited_at' => now(),
         ];
+
+        if ($this->supportsTrackingMode()) {
+            $payload['tracking_mode'] = $trackingMode;
+        }
 
         if ($trackingMode === VisitorEvent::TRACKING_MODE_FULL) {
             $device = $this->deviceContext((string) $request->userAgent());
@@ -214,5 +220,10 @@ class VisitorEventLogger
             ->value();
 
         return $sanitized !== '' ? $sanitized : null;
+    }
+
+    private function supportsTrackingMode(): bool
+    {
+        return Schema::hasTable('visitor_events') && Schema::hasColumn('visitor_events', 'tracking_mode');
     }
 }

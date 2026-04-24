@@ -11,6 +11,7 @@ use App\Models\VisitorEvent;
 use App\Support\Visitors\VisitorConsent;
 use App\Support\Visitors\VisitorReportsQuery;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -53,6 +54,17 @@ class VisitorReportsTest extends TestCase
     private function consentCookieName(): string
     {
         return app(VisitorConsent::class)->cookieName();
+    }
+
+    private function dropTrackingModeColumnForLegacySchema(): void
+    {
+        Schema::table('visitor_events', function (Blueprint $table) {
+            $table->dropIndex(['tracking_mode', 'visited_at']);
+        });
+
+        Schema::table('visitor_events', function (Blueprint $table) {
+            $table->dropColumn('tracking_mode');
+        });
     }
 
     #[Test]
@@ -190,6 +202,43 @@ class VisitorReportsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Visitor reports migration is missing');
         $response->assertSee('php artisan migrate');
+    }
+
+    #[Test]
+    public function admin_visitor_reports_screen_handles_legacy_schema_without_tracking_mode(): void
+    {
+        $user = User::factory()->editor()->create();
+
+        $this->dropTrackingModeColumnForLegacySchema();
+
+        VisitorEvent::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'path' => '/p/about',
+            'session_key' => 'legacy-session',
+            'ip_hash' => 'legacy-hash',
+            'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
+
+        $response->assertOk();
+        $response->assertSee('Visitor Reports');
+        $response->assertSee('1');
+    }
+
+    #[Test]
+    public function public_tracking_falls_back_to_legacy_full_row_when_tracking_mode_column_is_missing(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->dropTrackingModeColumnForLegacySchema();
+
+        $this->get(route('pages.show', $page->slug, false))->assertOk();
+
+        $event = VisitorEvent::query()->firstOrFail();
+
+        $this->assertNotEmpty($event->session_key);
+        $this->assertNotEmpty($event->ip_hash);
     }
 
     #[Test]

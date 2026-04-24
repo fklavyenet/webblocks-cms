@@ -72,6 +72,11 @@ class VisitorReportsQuery
         return $this->hasEventsTable() && Schema::hasColumns('visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
     }
 
+    public function supportsTrackingMode(): bool
+    {
+        return $this->hasEventsTable() && Schema::hasColumn('visitor_events', 'tracking_mode');
+    }
+
     public function dashboardSummary(?User $user = null): array
     {
         $summary = [
@@ -422,16 +427,28 @@ class VisitorReportsQuery
 
     private function fullTrackingQuery(Builder $query): Builder
     {
+        if (! $this->supportsTrackingMode()) {
+            return $query;
+        }
+
         return $query->where('tracking_mode', self::FULL_TRACKING_MODE);
     }
 
     private function totalSessionsExpression(): string
     {
+        if (! $this->supportsTrackingMode()) {
+            return 'COUNT(DISTINCT session_key)';
+        }
+
         return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN session_key END)";
     }
 
     private function uniqueVisitorsExpression(): string
     {
+        if (! $this->supportsTrackingMode()) {
+            return 'COUNT(DISTINCT COALESCE(ip_hash, session_key))';
+        }
+
         return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN COALESCE(ip_hash, session_key) END)";
     }
 }
