@@ -21,6 +21,7 @@ class SystemSettingsRequest extends FormRequest
             'app_slogan' => trim((string) $this->input('app_slogan')),
             'default_locale' => Locale::normalizeCode($this->input('default_locale')),
             'timezone' => trim((string) $this->input('timezone')),
+            'visitor_consent_banner_enabled' => $this->boolean('visitor_consent_banner_enabled'),
         ]);
     }
 
@@ -35,6 +36,7 @@ class SystemSettingsRequest extends FormRequest
                 Rule::exists(Locale::class, 'code')->where(fn ($query) => $query->where('is_enabled', true)),
             ],
             'timezone' => ['required', 'string', Rule::in(array_keys(app(SystemSettings::class)->timezoneOptions()))],
+            'visitor_consent_banner_enabled' => ['required', 'boolean'],
         ];
     }
 
@@ -45,6 +47,7 @@ class SystemSettingsRequest extends FormRequest
             SystemSettings::APP_SLOGAN => $this->validated('app_slogan'),
             SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),
             SystemSettings::TIMEZONE => $this->validated('timezone'),
+            SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => $this->validated('visitor_consent_banner_enabled'),
         ];
     }
 }

@@ -95,6 +95,12 @@
             </div>
         </div>
 
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body wb-text-sm wb-text-muted">
+                {{ $privacyAwareReportingMessage }}
+            </div>
+        </div>
+
         <div class="wb-grid wb-grid-4">
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">

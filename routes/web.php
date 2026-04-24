@@ -23,6 +23,7 @@ use App\Http\Controllers\Install\InstallWizardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicPrivacyConsentController;
 use App\Models\Locale;
 use Illuminate\Support\Facades\Route;
 
@@ -122,6 +123,11 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
 Route::middleware('install.required')->post('/contact-messages', [ContactMessageController::class, 'store'])
     ->middleware('throttle:contact-form-submissions')
     ->name('contact-messages.store');
+
+Route::middleware('install.required')->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
+    Route::post('/accept', [PublicPrivacyConsentController::class, 'accept'])->name('accept');
+    Route::post('/decline', [PublicPrivacyConsentController::class, 'decline'])->name('decline');
+});
 
 Route::middleware('install.required')->get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');
 Route::middleware('install.required')->get('/{locale}/p/{slug}', [PublicPageController::class, 'show'])

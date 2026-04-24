@@ -26,6 +26,7 @@ class SystemSettingsTest extends TestCase
         $response->assertSee('Application slogan');
         $response->assertSee('Default locale');
         $response->assertSee('Timezone');
+        $response->assertSee('privacy settings banner', false);
         $response->assertSee('Installed version');
         $response->assertSee('Environment');
         $response->assertSee('System');
@@ -43,6 +44,7 @@ class SystemSettingsTest extends TestCase
             'app_slogan' => 'Compact system copy',
             'default_locale' => $locale->code,
             'timezone' => 'Europe/Istanbul',
+            'visitor_consent_banner_enabled' => '1',
         ]);
 
         $response->assertRedirect(route('admin.system.settings.edit'));
@@ -51,6 +53,7 @@ class SystemSettingsTest extends TestCase
         $this->assertSame('Compact system copy', SystemSetting::query()->where('key', 'system.app_slogan')->value('value'));
         $this->assertSame($locale->code, SystemSetting::query()->where('key', 'system.default_locale')->value('value'));
         $this->assertSame('Europe/Istanbul', SystemSetting::query()->where('key', 'system.timezone')->value('value'));
+        $this->assertSame('1', SystemSetting::query()->where('key', 'system.visitor_consent_banner_enabled')->value('value'));
 
         $followUp = $this->actingAs($user)->get(route('admin.system.settings.edit'));
         $followUp->assertSee('My WebBlocks');
@@ -73,6 +76,7 @@ class SystemSettingsTest extends TestCase
             'app_slogan' => 'Bad payload',
             'default_locale' => $disabledLocale->code,
             'timezone' => 'Not/A_Timezone',
+            'visitor_consent_banner_enabled' => '1',
         ]);
 
         $response->assertRedirect(route('admin.system.settings.edit'));

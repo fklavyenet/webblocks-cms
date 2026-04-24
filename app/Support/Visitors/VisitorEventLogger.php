@@ -12,6 +12,8 @@ class VisitorEventLogger
 {
     private const SESSION_KEY = 'cms.visitor_reports.session_key';
 
+    public function __construct(private readonly VisitorConsent $visitorConsent) {}
+
     public function logPageView(Request $request, Page $page): void
     {
         if (! config('cms.visitor_reports.enabled', true) || $this->shouldIgnore($request)) {
@@ -19,15 +21,21 @@ class VisitorEventLogger
         }
 
         $translation = $page->getRelation('currentTranslation');
-        $userAgent = (string) $request->userAgent();
-        $device = $this->deviceContext($userAgent);
+        $trackingMode = $this->visitorConsent->trackingMode($request);
+        $payload = [
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $translation?->locale_id,
+            'path' => $this->normalizePath($request->getPathInfo()),
+            'tracking_mode' => $trackingMode,
+            'visited_at' => now(),
+        ];
 
-        try {
-            VisitorEvent::query()->create([
-                'site_id' => $page->site_id,
-                'page_id' => $page->id,
-                'locale_id' => $translation?->locale_id,
-                'path' => $this->normalizePath($request->getPathInfo()),
+        if ($trackingMode === VisitorEvent::TRACKING_MODE_FULL) {
+            $device = $this->deviceContext((string) $request->userAgent());
+
+            $payload = [
+                ...$payload,
                 'referrer' => $this->truncate($request->headers->get('referer'), 2048),
                 'utm_source' => $this->utmValue($request, 'utm_source'),
                 'utm_medium' => $this->utmValue($request, 'utm_medium'),
@@ -37,8 +45,11 @@ class VisitorEventLogger
                 'os_family' => $device['os_family'],
                 'session_key' => $this->sessionKey($request),
                 'ip_hash' => $this->ipHash($request),
-                'visited_at' => now(),
-            ]);
+            ];
+        }
+
+        try {
+            VisitorEvent::query()->create($payload);
         } catch (Throwable $exception) {
             report($exception);
         }

@@ -14,12 +14,14 @@ class SystemSettings
     public const APP_SLOGAN = 'system.app_slogan';
     public const DEFAULT_LOCALE = 'system.default_locale';
     public const TIMEZONE = 'system.timezone';
+    public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
     public const MANAGED_KEYS = [
         self::APP_NAME,
         self::APP_SLOGAN,
         self::DEFAULT_LOCALE,
         self::TIMEZONE,
+        self::VISITOR_CONSENT_BANNER_ENABLED,
     ];
 
     public function all(): array
@@ -83,6 +85,17 @@ class SystemSettings
         $timezone = trim((string) $this->get(self::TIMEZONE, ''));
 
         return $timezone !== '' ? $timezone : (string) config('app.timezone', 'UTC');
+    }
+
+    public function visitorConsentBannerEnabled(): bool
+    {
+        $stored = $this->get(self::VISITOR_CONSENT_BANNER_ENABLED);
+
+        if ($stored === null || $stored === '') {
+            return (bool) config('cms.visitor_reports.consent_banner_enabled', true);
+        }
+
+        return filter_var($stored, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
     }
 
     public function save(array $values): void

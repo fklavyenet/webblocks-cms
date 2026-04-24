@@ -8,6 +8,7 @@ use App\Support\Pages\PageRouteResolver;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\SystemSettings;
+use App\Support\Visitors\VisitorConsent;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(LocaleResolver::class);
         $this->app->singleton(PageRouteResolver::class);
         $this->app->singleton(SystemSettings::class);
+        $this->app->singleton(VisitorConsent::class);
     }
 
     /**
@@ -50,6 +52,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Public navigation now renders explicitly through Navigation Auto blocks.
+
+        View::composer('layouts.public', function ($view): void {
+            $request = request();
+            $consent = app(VisitorConsent::class);
+
+            $view->with('visitorPrivacy', [
+                'banner_enabled' => $consent->bannerEnabled(),
+                'show_banner' => $consent->shouldShowBanner($request),
+                'has_choice' => $consent->hasStoredChoice($request),
+                'reopen_url' => $request->fullUrlWithQuery(['privacy_settings' => 'open']),
+                'show_settings' => $consent->bannerEnabled() && $request->query('privacy_settings') === 'open',
+                'redirect_to' => $request->fullUrlWithoutQuery('privacy_settings'),
+            ]);
+        });
 
         View::composer('layouts.admin', function ($view): void {
             $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());

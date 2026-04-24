@@ -45,6 +45,23 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <input type="hidden" name="visitor_consent_banner_enabled" value="0">
+                            <label class="wb-cluster wb-cluster-2" for="settings_visitor_consent_banner_enabled">
+                                <input
+                                    id="settings_visitor_consent_banner_enabled"
+                                    name="visitor_consent_banner_enabled"
+                                    type="checkbox"
+                                    value="1"
+                                    @checked($settings['visitor_consent_banner_enabled'])
+                                >
+                                <span>Show the public privacy settings banner when visitor reports are enabled.</span>
+                            </label>
+                            <div class="wb-text-sm wb-text-muted">
+                                Visitors can accept or decline optional analytics tracking in one click. Necessary Laravel and admin cookies remain separate.
+                            </div>
+                        </div>
                     </div>
 
                     <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />

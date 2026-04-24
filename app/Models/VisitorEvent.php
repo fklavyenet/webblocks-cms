@@ -10,11 +10,16 @@ class VisitorEvent extends Model
 {
     use HasFactory;
 
+    public const TRACKING_MODE_BASIC = 'basic';
+
+    public const TRACKING_MODE_FULL = 'full';
+
     protected $fillable = [
         'site_id',
         'page_id',
         'locale_id',
         'path',
+        'tracking_mode',
         'referrer',
         'utm_source',
         'utm_medium',
@@ -32,6 +37,11 @@ class VisitorEvent extends Model
         return [
             'visited_at' => 'datetime',
         ];
+    }
+
+    public function isFullTracking(): bool
+    {
+        return $this->tracking_mode === self::TRACKING_MODE_FULL;
     }
 
     public function site(): BelongsTo

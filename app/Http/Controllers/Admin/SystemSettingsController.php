@@ -24,6 +24,7 @@ class SystemSettingsController extends Controller
                 'app_slogan' => old('app_slogan', $this->systemSettings->appSlogan()),
                 'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
                 'timezone' => old('timezone', $this->systemSettings->timezone()),
+                'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),
             ],
             'localeOptions' => $this->systemSettings->enabledLocaleOptions(),
             'timezoneOptions' => $this->systemSettings->timezoneOptions(),

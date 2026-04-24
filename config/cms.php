@@ -18,6 +18,9 @@ return [
     'visitor_reports' => [
         'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),
         'utm_enabled' => env('CMS_VISITOR_UTM_ENABLED', true),
+        'consent_banner_enabled' => env('CMS_VISITOR_CONSENT_BANNER_ENABLED', env('CMS_VISITOR_REPORTS_ENABLED', true)),
+        'consent_cookie_name' => env('CMS_VISITOR_CONSENT_COOKIE_NAME', 'webblocks_visitor_consent'),
+        'consent_cookie_lifetime_days' => env('CMS_VISITOR_CONSENT_COOKIE_LIFETIME_DAYS', 180),
         'ignored_user_agents' => [
             'bot',
             'crawler',

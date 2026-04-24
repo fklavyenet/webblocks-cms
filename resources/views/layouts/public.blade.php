@@ -24,6 +24,8 @@
     <body class="wb-public-body">
         @yield('content')
 
+        @include('partials.public-privacy-consent')
+
         <div id="wb-overlay-root" class="wb-overlay-root">
             <div class="wb-modal wb-modal-xl" id="wb-gallery-viewer" role="dialog" aria-modal="true" aria-label="Gallery viewer">
                 <div class="wb-modal-dialog">

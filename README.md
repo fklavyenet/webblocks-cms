@@ -107,6 +107,27 @@ These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
 
+## Privacy-Aware Visitor Reports V2
+
+- Public page views are always counted when `CMS_VISITOR_REPORTS_ENABLED=true`, but tracking now has two modes.
+- Without consent, WebBlocks stores only privacy-safe anonymous page view data: `site_id`, `page_id` when resolved, `locale_id` when resolved, `path`, and `visited_at`.
+- With consent, WebBlocks keeps the richer Visitor Reports model, including sessions, unique visitor estimation, referrers, optional UTM campaign fields, and browser or device summaries.
+- Accept enables optional analytics tracking for sessions, unique visitors, referrers, UTM campaigns, browser summaries, device summaries, and OS summaries.
+- Decline still allows anonymous aggregate page view counting for Visitor Reports.
+- Necessary Laravel cookies and sessions used for CSRF protection, admin authentication, forms, and general application security are separate from optional analytics consent.
+
+### Visitor Report Config
+
+- `CMS_VISITOR_REPORTS_ENABLED`: enables or disables all visitor report tracking.
+- `CMS_VISITOR_UTM_ENABLED`: enables UTM capture for consented full tracking only.
+- `CMS_VISITOR_CONSENT_BANNER_ENABLED`: shows or hides the public privacy settings banner and reopen link.
+
+### Report Semantics
+
+- Page views include all privacy-safe anonymous views and all consented full views.
+- Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.
+- Anonymous privacy-safe rows are not treated as `Direct / None` campaign traffic.
+
 ## Documentation
 
 - [Installation](docs/installation.md)

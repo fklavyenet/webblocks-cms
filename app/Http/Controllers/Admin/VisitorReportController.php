@@ -35,6 +35,7 @@ class VisitorReportController extends Controller
             'utmEnabled' => $this->reports->utmTrackingEnabled(),
             'supportsUtmBreakdowns' => $this->reports->supportsUtmBreakdowns(),
             'visitorEventsTableExists' => $tableExists,
+            'privacyAwareReportingMessage' => 'Page views include privacy-safe anonymous views. Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.',
         ]);
     }
 }

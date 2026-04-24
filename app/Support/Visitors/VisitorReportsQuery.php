@@ -17,6 +17,8 @@ class VisitorReportsQuery
 {
     private const DIRECT_LABEL = 'Direct / None';
 
+    private const FULL_TRACKING_MODE = 'full';
+
     public function __construct(private readonly AdminAuthorization $authorization) {}
 
     public function filters(Request $request, ?User $user = null): array
@@ -118,8 +120,8 @@ class VisitorReportsQuery
     {
         $summary = $query
             ->selectRaw('COUNT(*) as total_page_views')
-            ->selectRaw('COUNT(DISTINCT session_key) as total_sessions')
-            ->selectRaw('COUNT(DISTINCT COALESCE(ip_hash, session_key)) as unique_visitors')
+            ->selectRaw($this->totalSessionsExpression().' as total_sessions')
+            ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
             ->first();
 
         $totalPageViews = (int) ($summary?->total_page_views ?? 0);
@@ -138,7 +140,7 @@ class VisitorReportsQuery
         return $query
             ->select('site_id', 'locale_id', 'path')
             ->selectRaw('COUNT(*) as page_views')
-            ->selectRaw('COUNT(DISTINCT COALESCE(ip_hash, session_key)) as unique_visitors')
+            ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
             ->groupBy('site_id', 'locale_id', 'path')
             ->orderByDesc('page_views')
             ->orderBy('path')
@@ -155,7 +157,8 @@ class VisitorReportsQuery
 
     private function topEntryPages(Builder $query): Collection
     {
-        $entries = $query
+        $entries = $this->fullTrackingQuery($query)
+            ->whereNotNull('session_key')
             ->select(['id', 'site_id', 'locale_id', 'path', 'session_key', 'visited_at'])
             ->orderBy('session_key')
             ->orderBy('visited_at')
@@ -187,7 +190,7 @@ class VisitorReportsQuery
 
     private function topReferrers(Builder $query): Collection
     {
-        return $query
+        return $this->fullTrackingQuery($query)
             ->whereNotNull('referrer')
             ->get(['referrer'])
             ->map(fn (VisitorEvent $event) => $this->referrerLabel($event->referrer))
@@ -224,7 +227,7 @@ class VisitorReportsQuery
         return $query
             ->select('locale_id')
             ->selectRaw('COUNT(*) as page_views')
-            ->selectRaw('COUNT(DISTINCT COALESCE(ip_hash, session_key)) as unique_visitors')
+            ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
             ->groupBy('locale_id')
             ->orderByDesc('page_views')
             ->get()
@@ -242,10 +245,10 @@ class VisitorReportsQuery
 
     private function deviceSummary(Builder $query): Collection
     {
-        return $query
+        return $this->fullTrackingQuery($query)
             ->select('device_type')
             ->selectRaw('COUNT(*) as page_views')
-            ->selectRaw('COUNT(DISTINCT session_key) as sessions')
+            ->selectRaw($this->totalSessionsExpression().' as sessions')
             ->groupBy('device_type')
             ->orderByDesc('page_views')
             ->get()
@@ -263,11 +266,11 @@ class VisitorReportsQuery
 
     private function utmBreakdown(Builder $query, string $column, int $limit): Collection
     {
-        return $query
+        return $this->fullTrackingQuery($query)
             ->select($column)
             ->selectRaw('COUNT(*) as page_views')
-            ->selectRaw('COUNT(DISTINCT COALESCE(ip_hash, session_key)) as unique_visitors')
-            ->selectRaw('COUNT(DISTINCT session_key) as sessions')
+            ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
+            ->selectRaw($this->totalSessionsExpression().' as sessions')
             ->groupBy($column)
             ->orderByDesc('page_views')
             ->orderBy($column)
@@ -415,5 +418,20 @@ class VisitorReportsQuery
         $normalized = trim((string) $value);
 
         return $normalized !== '' ? $normalized : self::DIRECT_LABEL;
+    }
+
+    private function fullTrackingQuery(Builder $query): Builder
+    {
+        return $query->where('tracking_mode', self::FULL_TRACKING_MODE);
+    }
+
+    private function totalSessionsExpression(): string
+    {
+        return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN session_key END)";
+    }
+
+    private function uniqueVisitorsExpression(): string
+    {
+        return "COUNT(DISTINCT CASE WHEN tracking_mode = '".self::FULL_TRACKING_MODE."' THEN COALESCE(ip_hash, session_key) END)";
     }
 }

@@ -8,8 +8,11 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\User;
 use App\Models\VisitorEvent;
+use App\Support\Visitors\VisitorConsent;
+use App\Support\Visitors\VisitorReportsQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -38,8 +41,22 @@ class VisitorReportsTest extends TestCase
         ]);
     }
 
+    private function todayFilters(): array
+    {
+        $request = Request::create(route('admin.reports.visitors.index', ['date_range' => 'today'], false), 'GET', [
+            'date_range' => 'today',
+        ]);
+
+        return app(VisitorReportsQuery::class)->filters($request);
+    }
+
+    private function consentCookieName(): string
+    {
+        return app(VisitorConsent::class)->cookieName();
+    }
+
     #[Test]
-    public function public_page_render_creates_a_visitor_event(): void
+    public function public_page_with_no_consent_cookie_creates_a_basic_tracking_row_only(): void
     {
         $page = $this->createPublishedPage();
 
@@ -48,13 +65,61 @@ class VisitorReportsTest extends TestCase
             ->get(route('pages.show', ['slug' => $page->slug, 'utm_source' => 'newsletter', 'utm_medium' => 'email', 'utm_campaign' => 'spring'], false))
             ->assertOk();
 
-        $event = VisitorEvent::query()->first();
+        $event = VisitorEvent::query()->firstOrFail();
 
-        $this->assertNotNull($event);
         $this->assertSame($page->site_id, $event->site_id);
         $this->assertSame($page->id, $event->page_id);
         $this->assertSame($this->defaultLocale()->id, $event->locale_id);
         $this->assertSame('/p/about', $event->path);
+        $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
+        $this->assertNull($event->referrer);
+        $this->assertNull($event->utm_source);
+        $this->assertNull($event->utm_medium);
+        $this->assertNull($event->utm_campaign);
+        $this->assertNull($event->device_type);
+        $this->assertNull($event->browser_family);
+        $this->assertNull($event->os_family);
+        $this->assertNull($event->session_key);
+        $this->assertNull($event->ip_hash);
+    }
+
+    #[Test]
+    public function public_page_with_declined_consent_creates_a_basic_tracking_row_only(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->withCookie($this->consentCookieName(), VisitorConsent::DECLINED)
+            ->withHeader('referer', 'https://example.test/campaign')
+            ->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit Chrome')
+            ->get(route('pages.show', ['slug' => $page->slug, 'utm_source' => 'newsletter'], false))
+            ->assertOk();
+
+        $event = VisitorEvent::query()->firstOrFail();
+
+        $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
+        $this->assertNull($event->session_key);
+        $this->assertNull($event->ip_hash);
+        $this->assertNull($event->referrer);
+        $this->assertNull($event->utm_source);
+        $this->assertNull($event->device_type);
+        $this->assertNull($event->browser_family);
+        $this->assertNull($event->os_family);
+    }
+
+    #[Test]
+    public function public_page_with_accepted_consent_creates_a_full_tracking_row_with_current_rich_fields(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
+            ->withHeader('referer', 'https://example.test/campaign')
+            ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit Safari')
+            ->get(route('pages.show', ['slug' => $page->slug, 'utm_source' => 'newsletter', 'utm_medium' => 'email', 'utm_campaign' => 'spring'], false))
+            ->assertOk();
+
+        $event = VisitorEvent::query()->firstOrFail();
+
+        $this->assertSame(VisitorEvent::TRACKING_MODE_FULL, $event->tracking_mode);
         $this->assertSame('https://example.test/campaign', $event->referrer);
         $this->assertSame('newsletter', $event->utm_source);
         $this->assertSame('email', $event->utm_medium);
@@ -68,16 +133,17 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
-    public function utm_values_are_sanitized_and_empty_values_become_null(): void
+    public function accepted_consent_preserves_utm_sanitization_behavior(): void
     {
         $page = $this->createPublishedPage();
 
-        $this->get(route('pages.show', [
-            'slug' => $page->slug,
-            'utm_source' => "  Newsletter\nLaunch  ",
-            'utm_medium' => '   ',
-            'utm_campaign' => str_repeat('A', 300),
-        ], false))->assertOk();
+        $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
+            ->get(route('pages.show', [
+                'slug' => $page->slug,
+                'utm_source' => "  Newsletter\nLaunch  ",
+                'utm_medium' => '   ',
+                'utm_campaign' => str_repeat('A', 300),
+            ], false))->assertOk();
 
         $event = VisitorEvent::query()->firstOrFail();
 
@@ -109,6 +175,7 @@ class VisitorReportsTest extends TestCase
         $response->assertSee('Visitor Reports');
         $response->assertSee('Total page views');
         $response->assertSee('Top Pages');
+        $response->assertSee('Page views include privacy-safe anonymous views. Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.');
     }
 
     #[Test]
@@ -300,6 +367,182 @@ class VisitorReportsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Direct / None');
+    }
+
+    #[Test]
+    public function accept_route_sets_the_consent_cookie_and_redirects_back(): void
+    {
+        $page = $this->createPublishedPage();
+        $target = route('pages.show', $page->slug, false);
+
+        $response = $this->post(route('public.privacy-consent.accept'), [
+            'redirect_to' => $target,
+        ]);
+
+        $response->assertRedirect($target);
+        $response->assertCookie($this->consentCookieName(), VisitorConsent::ACCEPTED);
+    }
+
+    #[Test]
+    public function decline_route_sets_the_consent_cookie_and_redirects_back(): void
+    {
+        $page = $this->createPublishedPage();
+        $target = route('pages.show', $page->slug, false);
+
+        $response = $this->post(route('public.privacy-consent.decline'), [
+            'redirect_to' => $target,
+        ]);
+
+        $response->assertRedirect($target);
+        $response->assertCookie($this->consentCookieName(), VisitorConsent::DECLINED);
+    }
+
+    #[Test]
+    public function consent_routes_do_not_require_login(): void
+    {
+        $response = $this->post(route('public.privacy-consent.accept'), [
+            'redirect_to' => '/p/example',
+        ]);
+
+        $response->assertRedirect('/p/example');
+    }
+
+    #[Test]
+    public function banner_appears_when_no_consent_cookie_exists(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $response = $this->get(route('pages.show', $page->slug, false));
+
+        $response->assertSee('Privacy settings');
+        $response->assertSee('Necessary:');
+        $response->assertSee('Analytics:');
+        $response->assertSee('Accept');
+        $response->assertSee('Decline');
+    }
+
+    #[Test]
+    public function banner_does_not_appear_when_a_consent_cookie_exists(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $response = $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
+            ->get(route('pages.show', $page->slug, false));
+
+        $response->assertSee('Privacy settings');
+        $response->assertDontSeeText('Necessary: always active');
+        $response->assertDontSeeText('Decline keeps privacy-safe anonymous page view counts only.');
+    }
+
+    #[Test]
+    public function privacy_settings_link_is_present_on_public_pages(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->withCookie($this->consentCookieName(), VisitorConsent::DECLINED)
+            ->get(route('pages.show', $page->slug, false))
+            ->assertOk()
+            ->assertSee('Privacy settings');
+    }
+
+    #[Test]
+    public function admin_report_page_views_include_basic_and_full_rows(): void
+    {
+        $page = $this->createPublishedPage();
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+            'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
+            'session_key' => 'session-1',
+            'ip_hash' => 'hash-1',
+            'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+        ]);
+
+        $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
+
+        $this->assertSame(2, $report['summary']['total_page_views']);
+        $this->assertSame(2, $report['top_pages']->first()['page_views']);
+    }
+
+    #[Test]
+    public function admin_unique_visitors_and_sessions_only_count_full_rows(): void
+    {
+        $page = $this->createPublishedPage();
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+            'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
+            'session_key' => 'session-1',
+            'ip_hash' => 'hash-1',
+            'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+        ]);
+
+        $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
+
+        $this->assertSame(1, $report['summary']['unique_visitors']);
+        $this->assertSame(1, $report['summary']['total_sessions']);
+        $this->assertSame(1, $report['top_pages']->first()['unique_visitors']);
+    }
+
+    #[Test]
+    public function campaign_source_and_medium_summaries_do_not_include_basic_rows_as_direct_none(): void
+    {
+        $page = $this->createPublishedPage();
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+            'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+        ]);
+
+        VisitorEvent::query()->create([
+            'site_id' => $page->site_id,
+            'page_id' => $page->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'path' => '/p/about',
+            'tracking_mode' => VisitorEvent::TRACKING_MODE_FULL,
+            'session_key' => 'session-1',
+            'ip_hash' => 'hash-1',
+            'utm_source' => null,
+            'utm_medium' => null,
+            'utm_campaign' => null,
+            'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+        ]);
+
+        $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
+
+        $this->assertCount(1, $report['top_campaigns']);
+        $this->assertSame('Direct / None', $report['top_campaigns']->first()['label']);
+        $this->assertSame(1, $report['top_campaigns']->first()['page_views']);
+        $this->assertSame(1, $report['source_breakdown']->first()['page_views']);
+        $this->assertSame(1, $report['medium_breakdown']->first()['page_views']);
     }
 
     #[Test]
