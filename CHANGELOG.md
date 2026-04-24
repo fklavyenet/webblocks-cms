@@ -5,7 +5,7 @@
 - Add Privacy-Aware Visitor Reports V2 with a first-party consent cookie, compact public privacy banner, basic anonymous page view tracking by default, and richer full tracking only after explicit acceptance.
 - Add truthful Visitor Reports semantics so page views include anonymous rows while unique visitors, sessions, referrers, campaigns, and device summaries only use consented full-tracking rows.
 - Add public privacy settings routes, admin banner control, README documentation, and test coverage for consent-aware tracking behavior.
-- Move the Users admin navigation item under the System group and consolidate install-level admin tools in the left sidebar.
+- Refactor the admin sidebar into focused Content, Reports, Sites, Access, Structure, System, and Maintenance groups so install-level tools are no longer overloaded under System.
 - Restructure `README.md` into a v1.0 entry-point overview with focused links to detailed docs.
 - Add compact v1.0 documentation pages for installation, getting started, users and permissions, editorial workflow, revisions, and operations.
 - Add Install Wizard V1 for fresh installs with browser-based requirements, database, core setup, and first super admin steps.

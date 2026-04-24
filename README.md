@@ -71,13 +71,24 @@ See `docs/installation.md` for the complete install guide.
 
 See `docs/getting-started.md` for the first-use workflow.
 
+## Admin Navigation
+
+- Dashboard
+- Content: Pages, Navigation, Media
+- Reports: Visitor Reports
+- Sites: Sites, Locales
+- Access: Users
+- Structure: Block Types, Slot Types
+- System: Settings, Updates
+- Maintenance: Backups, Export / Import
+
 ## Roles And Permissions
 
 - `super_admin`: full install-level access, including Users, sites, locales, settings, updates, backups, export/import, and site content
 - `site_admin`: site-scoped admin access for assigned sites, including publishing and other editorial approvals
 - `editor`: site-scoped editorial access for assigned sites, including draft editing and review submission
 
-Users are install-level accounts, so the Users area lives under the admin `System` navigation rather than alongside site content tools.
+Users are install-level accounts, so the Users area lives under the admin `Access` navigation group rather than under content or platform maintenance tools.
 
 See `docs/users-and-permissions.md` for the full permissions model.
 
