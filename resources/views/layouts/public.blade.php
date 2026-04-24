@@ -56,6 +56,11 @@
             .wb-cookie-settings-shell:not(.is-open) {
                 display: none;
             }
+
+            .wb-public-footer .wb-footer-cookie-settings-link {
+                display: inline;
+                width: auto;
+            }
         </style>
     </head>
     <body class="wb-public-body">
@@ -96,14 +101,14 @@
                 var cookieShell = document.querySelector('[data-wb-cookie-panel-shell]');
                 var cookiePanel = document.querySelector('[data-wb-cookie-panel]');
 
-                function setCookiePanelState(open) {
-                    if (!cookieShell || !cookiePanel) {
+                function setCookiePanelState(panel, open) {
+                    if (!cookieShell || !panel) {
                         return;
                     }
 
                     cookieShell.classList.toggle('is-open', open);
-                    cookiePanel.hidden = !open;
-                    cookiePanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+                    panel.hidden = !open;
+                    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
 
                     document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
                         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -113,13 +118,13 @@
                 document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
                     trigger.addEventListener('click', function (event) {
                         event.preventDefault();
-                        setCookiePanelState(true);
+                        setCookiePanelState(cookiePanel, true);
                     });
                 });
 
                 document.querySelectorAll('[data-wb-cookie-close]').forEach(function (trigger) {
-                    trigger.addEventListener('click', function () {
-                        setCookiePanelState(false);
+                    trigger.addEventListener('click', function (event) {
+                        setCookiePanelState(event.currentTarget.closest('[data-wb-cookie-panel]'), false);
                     });
                 });
 

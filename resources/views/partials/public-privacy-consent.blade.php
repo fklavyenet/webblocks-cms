@@ -12,24 +12,16 @@
 
 @if ($privacy['banner_enabled'])
     @unless ($hasFooterSlot ?? false)
-        <footer class="wb-section wb-section-muted wb-public-footer wb-public-footer-fallback">
-            <div class="wb-container wb-container-lg">
-                <div class="wb-stack wb-gap-2">
-                    <strong>Legal</strong>
-                    <button
-                        type="button"
-                        class="wb-link wb-text-sm wb-text-start wb-footer-cookie-settings-link"
-                        data-wb-cookie-open
-                        data-wb-cookie-panel="#wb-cookie-settings-panel"
-                        aria-expanded="{{ $privacy['panel_open'] ? 'true' : 'false' }}"
-                        aria-controls="wb-cookie-settings-panel"
-                    >
-                        Cookie settings
-                    </button>
-                    <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
-                </div>
-            </div>
-        </footer>
+        @include('pages.partials.slots.footer', [
+            'slot' => [
+                'chrome' => [
+                    'supporting_blocks' => collect(),
+                    'footer_items' => collect(),
+                    'legal_items' => collect(),
+                ],
+            ],
+            'footerClass' => 'wb-public-footer-fallback',
+        ])
     @endunless
 
     <div class="wb-cookie-settings-shell {{ $privacy['panel_open'] ? 'is-open' : '' }}" data-wb-cookie-panel-shell>

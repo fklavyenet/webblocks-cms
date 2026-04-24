@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Locale;
+use App\Models\Block;
+use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\Site;
+use App\Models\SlotType;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\VisitorEvent;
 use App\Support\Visitors\VisitorConsent;
@@ -42,6 +46,42 @@ class VisitorReportsTest extends TestCase
         ]);
     }
 
+    private function slotType(string $slug, string $name, int $sortOrder): SlotType
+    {
+        return SlotType::query()->updateOrCreate(
+            ['slug' => $slug],
+            ['name' => $name, 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => true],
+        );
+    }
+
+    private function attachFooterSlot(Page $page): void
+    {
+        $footer = $this->slotType('footer', 'Footer', 99);
+        $sectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1, 'is_system' => true]
+        );
+
+        $page->slots()->updateOrCreate(
+            ['slot_type_id' => $footer->id],
+            ['sort_order' => 99]
+        );
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'footer',
+            'slot_type_id' => $footer->id,
+            'sort_order' => 1,
+            'title' => 'Footer support',
+            'content' => 'Shared footer block',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+    }
+
     private function todayFilters(): array
     {
         $request = Request::create(route('admin.reports.visitors.index', ['date_range' => 'today'], false), 'GET', [
@@ -54,6 +94,27 @@ class VisitorReportsTest extends TestCase
     private function consentCookieName(): string
     {
         return app(VisitorConsent::class)->cookieName();
+    }
+
+    private function enableCookieBanner(): void
+    {
+        SystemSetting::query()->updateOrCreate(
+            ['key' => 'system.visitor_consent_banner_enabled'],
+            ['value' => '1']
+        );
+    }
+
+    private function assertFooterCookieSettingsMarkup($response): void
+    {
+        $response->assertSee('<strong>Legal</strong>', false)
+            ->assertSee('Cookie settings')
+            ->assertSee('wb-footer-cookie-settings-link', false)
+            ->assertSee('href="#cookie-settings"', false)
+            ->assertSee('data-wb-cookie-open', false)
+            ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
+            ->assertDontSee('<input type="button"', false)
+            ->assertDontSee('<input type="submit"', false)
+            ->assertDontSee('autofocus', false);
     }
 
     private function dropTrackingModeColumnForLegacySchema(): void
@@ -459,24 +520,64 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function public_page_renders_a_cookie_settings_footer_link(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $response = $this->get(route('pages.show', $page->slug, false));
 
-        $response->assertSee('wb-footer-cookie-settings-link', false);
-        $response->assertSee('Cookie settings');
+        $this->assertFooterCookieSettingsMarkup($response);
+    }
+
+    #[Test]
+    public function home_page_renders_the_shared_footer_cookie_settings_control(): void
+    {
+        $this->enableCookieBanner();
+        $this->createPublishedPage(title: 'Home', slug: 'home');
+
+        $response = $this->get(route('home', [], false));
+
+        $response->assertOk();
+        $this->assertFooterCookieSettingsMarkup($response);
+    }
+
+    #[Test]
+    public function contact_page_renders_the_same_shared_footer_cookie_settings_control(): void
+    {
+        $this->enableCookieBanner();
+        $this->createPublishedPage(title: 'Contact', slug: 'contact');
+
+        $response = $this->get(route('pages.show', 'contact', false));
+
+        $response->assertOk();
+        $this->assertFooterCookieSettingsMarkup($response);
+    }
+
+    #[Test]
+    public function cms_pages_with_a_footer_slot_use_the_same_shared_cookie_settings_control(): void
+    {
+        $this->enableCookieBanner();
+        $page = $this->createPublishedPage(title: 'Services', slug: 'services');
+        $this->attachFooterSlot($page);
+
+        $response = $this->get(route('pages.show', 'services', false));
+
+        $response->assertOk();
+        $this->assertFooterCookieSettingsMarkup($response);
+        $response->assertSee('Footer support');
     }
 
     #[Test]
     public function with_no_consent_cookie_the_cookie_panel_is_visible_by_default(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $response = $this->get(route('pages.show', $page->slug, false));
 
-        $response->assertSee('Cookie settings');
+        $this->assertFooterCookieSettingsMarkup($response);
         $response->assertSee('wb-cookie-settings-shell is-open', false);
         $response->assertSee('id="wb-cookie-settings-panel"', false);
+        $response->assertSee('data-wb-cookie-panel', false);
         $response->assertSee('Necessary:');
         $response->assertSee('Analytics:');
         $response->assertSee('Accept');
@@ -486,32 +587,38 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function with_accepted_consent_cookie_the_panel_is_closed_by_default(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $response = $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
             ->get(route('pages.show', $page->slug, false));
 
-        $response->assertSee('Cookie settings');
+        $this->assertFooterCookieSettingsMarkup($response);
         $response->assertDontSee('wb-cookie-settings-shell is-open', false);
         $response->assertSee('id="wb-cookie-settings-panel"', false);
+        $response->assertSee('data-wb-cookie-panel', false);
         $response->assertSee('hidden', false);
     }
 
     #[Test]
     public function with_declined_consent_cookie_the_panel_is_closed_by_default(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $this->withCookie($this->consentCookieName(), VisitorConsent::DECLINED)
             ->get(route('pages.show', $page->slug, false))
             ->assertOk()
+            ->assertSee('<strong>Legal</strong>', false)
             ->assertSee('Cookie settings')
+            ->assertSee('data-wb-cookie-open', false)
             ->assertDontSee('wb-cookie-settings-shell is-open', false);
     }
 
     #[Test]
     public function footer_cookie_settings_control_can_target_and_reopen_the_panel(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
@@ -519,7 +626,7 @@ class VisitorReportsTest extends TestCase
             ->assertOk()
             ->assertSee('wb-footer-cookie-settings-link', false)
             ->assertSee('data-wb-cookie-open', false)
-            ->assertSee('data-wb-cookie-panel="#wb-cookie-settings-panel', false)
+            ->assertSee('href="#cookie-settings"', false)
             ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
             ->assertSee('aria-expanded="false"', false);
     }
@@ -527,6 +634,7 @@ class VisitorReportsTest extends TestCase
     #[Test]
     public function close_x_control_exists_and_does_not_submit_accept_or_decline(): void
     {
+        $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $this->get(route('pages.show', $page->slug, false))

@@ -53,7 +53,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Public navigation now renders explicitly through Navigation Auto blocks.
 
-        View::composer('layouts.public', function ($view): void {
+        View::composer(['layouts.public', 'pages.show'], function ($view): void {
             $request = request();
             $consent = app(VisitorConsent::class);
 
