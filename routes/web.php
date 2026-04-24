@@ -125,8 +125,7 @@ Route::middleware('install.required')->post('/contact-messages', [ContactMessage
     ->name('contact-messages.store');
 
 Route::middleware('install.required')->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
-    Route::post('/accept', [PublicPrivacyConsentController::class, 'accept'])->name('accept');
-    Route::post('/decline', [PublicPrivacyConsentController::class, 'decline'])->name('decline');
+    Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 
 Route::middleware('install.required')->get('/p/{slug}', [PublicPageController::class, 'show'])->name('pages.show');

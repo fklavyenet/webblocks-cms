@@ -26,12 +26,17 @@ class VisitorConsent
 
     public function hasStoredChoice(Request $request): bool
     {
-        return in_array($this->value($request), [self::ACCEPTED, self::DECLINED], true);
+        return in_array($this->storedChoice($request), [self::ACCEPTED, self::DECLINED], true);
     }
 
     public function analyticsAccepted(Request $request): bool
     {
-        return $this->value($request) === self::ACCEPTED;
+        return $this->storedChoice($request) === self::ACCEPTED;
+    }
+
+    public function storedChoice(Request $request): ?string
+    {
+        return $this->value($request);
     }
 
     public function trackingMode(Request $request): string
@@ -69,6 +74,11 @@ class VisitorConsent
             false,
             'lax',
         );
+    }
+
+    public function decisionForAnalytics(bool $analyticsEnabled): string
+    {
+        return $analyticsEnabled ? self::ACCEPTED : self::DECLINED;
     }
 
     private function value(Request $request): ?string

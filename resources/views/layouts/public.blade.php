@@ -15,8 +15,8 @@
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
 
-        <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
         @if (is_file($siteCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
         @endif
@@ -25,41 +25,9 @@
                 padding-top: 0;
             }
 
-            .wb-cookie-settings-shell {
-                position: fixed;
-                inset-inline: 0;
-                bottom: 0;
-                z-index: 405;
-                pointer-events: none;
-                padding: var(--wb-s4);
-            }
-
-            .wb-cookie-settings-panel {
-                width: min(100%, 38rem);
-                margin: 0 auto;
-                box-shadow: var(--wb-shadow-xl);
-                pointer-events: auto;
-            }
-
-            .wb-cookie-settings-header {
-                position: relative;
-                align-items: flex-start;
-                padding-right: calc(var(--wb-s8) + var(--wb-s2));
-            }
-
-            .wb-cookie-settings-close {
-                position: absolute;
-                top: 0;
-                right: 0;
-            }
-
-            .wb-cookie-settings-shell:not(.is-open) {
-                display: none;
-            }
-
             .wb-public-footer .wb-footer-cookie-settings-link {
-                display: inline;
-                width: auto;
+                padding-inline: 0;
+                min-height: auto;
             }
         </style>
     </head>
@@ -69,6 +37,85 @@
         @include('partials.public-privacy-consent')
 
         <div id="wb-overlay-root" class="wb-overlay-root">
+            @if (($visitorPrivacy['banner_enabled'] ?? false) === true)
+                <div class="wb-modal wb-cookie-consent-modal" id="wb-cookie-consent-preferences" data-wb-cookie-consent role="dialog" aria-modal="true" aria-labelledby="wb-cookie-consent-preferences-title" hidden aria-hidden="true">
+                    <div class="wb-modal-dialog">
+                        <div class="wb-modal-header">
+                            <h2 class="wb-modal-title" id="wb-cookie-consent-preferences-title">Cookie preferences</h2>
+                            <button class="wb-btn wb-btn-secondary wb-btn-icon wb-btn-sm" type="button" data-wb-cookie-consent-close aria-label="Close cookie settings">
+                                <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="wb-modal-body">
+                            <div class="wb-stack-1">
+                                <p class="wb-text-sm wb-text-muted wb-m-0">Necessary cookies are always on. Accept, Reject, or Save preferences stores the user choice. Close does not save consent.</p>
+                            </div>
+                            <div class="wb-stack-3">
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                        <div class="wb-stack-1">
+                                            <strong>Necessary</strong>
+                                            <p class="wb-text-sm wb-text-muted wb-m-0">Required for core site rendering, forms, and security behavior.</p>
+                                        </div>
+                                        <label class="wb-switch">
+                                            <input type="checkbox" data-wb-cookie-category="necessary" data-wb-cookie-required="true" checked disabled>
+                                            <span class="wb-switch-track"></span>
+                                            <span>Always on</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                        <div class="wb-stack-1">
+                                            <strong>Preferences</strong>
+                                            <p class="wb-text-sm wb-text-muted wb-m-0">Remember language and interface preferences for returning visitors.</p>
+                                        </div>
+                                        <label class="wb-switch">
+                                            <input type="checkbox" data-wb-cookie-category="preferences">
+                                            <span class="wb-switch-track"></span>
+                                            <span>Allow</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                        <div class="wb-stack-1">
+                                            <strong>Analytics</strong>
+                                            <p class="wb-text-sm wb-text-muted wb-m-0">Measure usage, sessions, referrers, and content performance for Visitor Reports.</p>
+                                        </div>
+                                        <label class="wb-switch">
+                                            <input type="checkbox" data-wb-cookie-category="analytics">
+                                            <span class="wb-switch-track"></span>
+                                            <span>Allow</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                        <div class="wb-stack-1">
+                                            <strong>Marketing</strong>
+                                            <p class="wb-text-sm wb-text-muted wb-m-0">Support campaign attribution preferences for future public-site integrations.</p>
+                                        </div>
+                                        <label class="wb-switch">
+                                            <input type="checkbox" data-wb-cookie-category="marketing">
+                                            <span class="wb-switch-track"></span>
+                                            <span>Allow</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wb-modal-footer">
+                            <button class="wb-btn wb-btn-secondary" type="button" data-wb-cookie-consent-reject>Reject all</button>
+                            <div class="wb-cluster wb-cluster-2">
+                                <button class="wb-btn wb-btn-secondary" type="button" data-wb-cookie-consent-save>Save preferences</button>
+                                <button class="wb-btn wb-btn-primary" type="button" data-wb-cookie-consent-accept>Accept all</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="wb-modal wb-modal-xl" id="wb-gallery-viewer" role="dialog" aria-modal="true" aria-label="Gallery viewer">
                 <div class="wb-modal-dialog">
                     <div class="wb-modal-body">
@@ -92,40 +139,156 @@
             </div>
         </div>
 
-        <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script>
+            (function () {
+                var initialServerChoice = @json($visitorPrivacy['server_choice'] ?? null);
+
+                if (! initialServerChoice || !window.localStorage) {
+                    return;
+                }
+
+                var consentStatusKey = 'wb-cookie-consent';
+                var consentPreferencesKey = 'wb-cookie-consent-preferences';
+
+                if (window.localStorage.getItem(consentStatusKey)) {
+                    return;
+                }
+
+                if (initialServerChoice === 'accepted') {
+                    window.localStorage.setItem(consentStatusKey, 'accepted');
+                    window.localStorage.setItem(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: true, analytics: true, marketing: true }));
+                    return;
+                }
+
+                if (initialServerChoice === 'declined') {
+                    window.localStorage.setItem(consentStatusKey, 'rejected');
+                    window.localStorage.setItem(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: false, analytics: false, marketing: false }));
+                }
+            })();
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
         @if (is_file($siteJsPath))
             <script src="{{ asset('site/js/site.js') }}?v={{ filemtime($siteJsPath) }}"></script>
         @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                var cookieShell = document.querySelector('[data-wb-cookie-panel-shell]');
-                var cookiePanel = document.querySelector('[data-wb-cookie-panel]');
+                var consentSyncUrl = @json(route('public.privacy-consent.sync'));
+                var consentCookieName = @json(config('cms.visitor_reports.consent_cookie_name', 'webblocks_visitor_consent'));
+                var initialServerChoice = @json($visitorPrivacy['server_choice'] ?? null);
+                var consentLifetimeDays = @json(config('cms.visitor_reports.consent_cookie_lifetime_days', 180));
+                var consentStatusKey = 'wb-cookie-consent';
+                var consentPreferencesKey = 'wb-cookie-consent-preferences';
 
-                function setCookiePanelState(panel, open) {
-                    if (!cookieShell || !panel) {
+                function setCookie(name, value, days) {
+                    var maxAge = Math.max(1, Number(days || 180)) * 24 * 60 * 60;
+                    document.cookie = name + '=' + encodeURIComponent(value) + '; path=/; max-age=' + maxAge + '; samesite=lax';
+                }
+
+                function getCookie(name) {
+                    var cookies = document.cookie ? document.cookie.split('; ') : [];
+
+                    for (var index = 0; index < cookies.length; index += 1) {
+                        var parts = cookies[index].split('=');
+
+                        if (parts[0] === name) {
+                            return decodeURIComponent(parts.slice(1).join('='));
+                        }
+                    }
+
+                    return null;
+                }
+
+                function readLocalState() {
+                    if (! window.localStorage) {
+                        return null;
+                    }
+
+                    var status = String(window.localStorage.getItem(consentStatusKey) || '').trim();
+                    var preferences = null;
+
+                    try {
+                        preferences = JSON.parse(window.localStorage.getItem(consentPreferencesKey) || 'null');
+                    } catch (error) {
+                        preferences = null;
+                    }
+
+                    if (!status || !preferences || typeof preferences !== 'object') {
+                        return null;
+                    }
+
+                    return {
+                        status: status,
+                        preferences: preferences
+                    };
+                }
+
+                function serverDecisionFor(detail) {
+                    return detail && detail.preferences && detail.preferences.analytics ? 'accepted' : 'declined';
+                }
+
+                function syncClientStateFromServerChoice(choice) {
+                    if (! window.WBStorage) {
                         return;
                     }
 
-                    cookieShell.classList.toggle('is-open', open);
-                    panel.hidden = !open;
-                    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+                    if (choice === 'accepted') {
+                        WBStorage.set(consentStatusKey, 'accepted');
+                        WBStorage.set(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: true, analytics: true, marketing: true }));
+                        return;
+                    }
 
-                    document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
-                        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    if (choice === 'declined') {
+                        WBStorage.set(consentStatusKey, 'rejected');
+                        WBStorage.set(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: false, analytics: false, marketing: false }));
+                    }
+                }
+
+                function syncServerConsent(detail) {
+                    if (! detail || !detail.preferences || !window.fetch) {
+                        return Promise.resolve();
+                    }
+
+                    return window.fetch(consentSyncUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            status: detail.status,
+                            preferences: detail.preferences
+                        })
+                    }).then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Cookie consent sync failed.');
+                        }
+
+                        return response.json();
+                    }).then(function (payload) {
+                        if (payload && payload.server_decision) {
+                            setCookie(consentCookieName, payload.server_decision, consentLifetimeDays);
+                        }
+                    }).catch(function () {
+                        setCookie(consentCookieName, detail.preferences.analytics ? 'accepted' : 'declined', consentLifetimeDays);
                     });
                 }
 
-                document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
-                    trigger.addEventListener('click', function (event) {
-                        event.preventDefault();
-                        setCookiePanelState(cookiePanel, true);
-                    });
-                });
+                if (window.WBStorage && !WBStorage.get(consentStatusKey) && initialServerChoice) {
+                    syncClientStateFromServerChoice(initialServerChoice);
+                }
 
-                document.querySelectorAll('[data-wb-cookie-close]').forEach(function (trigger) {
-                    trigger.addEventListener('click', function (event) {
-                        setCookiePanelState(event.currentTarget.closest('[data-wb-cookie-panel]'), false);
-                    });
+                var localState = readLocalState();
+
+                if (localState && serverDecisionFor(localState) !== initialServerChoice && getCookie(consentCookieName) !== serverDecisionFor(localState)) {
+                    syncServerConsent(localState);
+                }
+
+                document.documentElement.addEventListener('wb:cookie-consent:change', function (event) {
+                    syncServerConsent(event.detail);
                 });
 
                 document.querySelectorAll('[data-wb-slider]').forEach(function (slider) {
@@ -161,7 +324,7 @@
                         next.addEventListener('click', function () {
                             render(activeIndex + 1);
                         });
-                    }
+                    });
 
                     dots.forEach(function (dot, dotIndex) {
                         dot.addEventListener('click', function () {

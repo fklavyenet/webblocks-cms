@@ -121,17 +121,32 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - With consent, WebBlocks keeps the richer Visitor Reports model, including sessions, unique visitor estimation, referrers, optional UTM campaign fields, and browser or device summaries.
 - Accept enables optional analytics tracking for sessions, unique visitors, referrers, UTM campaigns, browser summaries, device summaries, and OS summaries.
 - Decline still allows anonymous aggregate page view counting for Visitor Reports.
-- Public pages include a persistent footer `Cookie settings` link in the footer legal area so the same cookie panel can be reopened at any time.
-- When no consent cookie exists, the cookie settings panel is open by default. When consent already exists, it stays closed until reopened from the footer link.
-- `Accept` and `Decline` save the consent choice in one click. Closing the panel with `X` only hides it visually and does not save a consent decision.
+- Public pages use the WebBlocks UI Cookie Consent pattern: one `wb-cookie-consent` bottom banner plus one shared `wb-modal` preference center mounted inside `#wb-overlay-root`.
+- The public footer legal area includes a persistent `Cookie settings` control that reopens the shared preference modal after consent has already been saved.
+- The browser-facing source of truth follows the WebBlocks UI pattern storage model: `localStorage` stores `wb-cookie-consent` plus `wb-cookie-consent-preferences`.
+- CMS also syncs the Visitor Reports consent cookie from the pattern state so backend tracking can continue to distinguish anonymous basic tracking from consented analytics tracking.
+- `Accept all`, `Reject`, and `Save preferences` persist consent. Closing the banner or modal with `X` only dismisses the UI for the current page view and does not save a choice.
 - Necessary Laravel cookies and sessions used for CSRF protection, admin authentication, forms, and general application security are separate from optional analytics consent.
-- The admin `Settings` screen now includes a dedicated `Cookie settings` card for consent-banner controls and future privacy options.
+- Cookie consent UI only renders in the public layout. Admin and auth shells keep the shared WebBlocks UI CDN assets but do not render the consent banner.
+- The admin `Settings` screen includes a dedicated `Cookie settings` card for consent-banner controls and future privacy options.
 
 ### Visitor Report Config
 
 - `CMS_VISITOR_REPORTS_ENABLED`: enables or disables all visitor report tracking.
 - `CMS_VISITOR_UTM_ENABLED`: enables UTM capture for consented full tracking only.
 - `CMS_VISITOR_CONSENT_BANNER_ENABLED`: shows or hides the public privacy settings banner and reopen link.
+- `CMS_VISITOR_CONSENT_COOKIE_NAME`: overrides the backend consent cookie name used for Visitor Reports cookie sync.
+
+### Cookie Consent Integration
+
+- Public layout CDN assets use the WebBlocks UI jsDelivr endpoints:
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css`
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css`
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js`
+- The consent banner markup lives in `resources/views/partials/public-privacy-consent.blade.php`.
+- The shared preference modal is mounted by `resources/views/layouts/public.blade.php` inside `#wb-overlay-root`.
+- The public footer reopen control lives in `resources/views/pages/partials/slots/footer.blade.php`.
+- When the WebBlocks UI pattern emits `wb:cookie-consent:change`, CMS posts the updated state to `public.privacy-consent.sync` so Visitor Reports backend consent stays aligned with the browser-side pattern state.
 
 ### Report Semantics
 

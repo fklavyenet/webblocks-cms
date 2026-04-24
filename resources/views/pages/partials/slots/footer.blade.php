@@ -40,15 +40,14 @@
                 <strong>Legal</strong>
                 <ul class="wb-stack wb-gap-1">{!! $renderFooterList($legalItems) !!}</ul>
                 @if (($visitorPrivacy['banner_enabled'] ?? false) === true)
-                    <a
-                        href="#cookie-settings"
-                        class="wb-link wb-text-sm wb-footer-cookie-settings-link"
-                        data-wb-cookie-open
-                        aria-expanded="{{ ($visitorPrivacy['panel_open'] ?? false) ? 'true' : 'false' }}"
-                        aria-controls="wb-cookie-settings-panel"
+                    <button
+                        class="wb-btn wb-btn-ghost wb-btn-sm wb-footer-cookie-settings-link"
+                        type="button"
+                        data-wb-cookie-consent-open
+                        data-wb-target="#wb-cookie-consent-preferences"
                     >
                         Cookie settings
-                    </a>
+                    </button>
                 @endif
                 <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
             </div>

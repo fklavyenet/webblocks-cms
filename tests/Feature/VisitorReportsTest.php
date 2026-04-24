@@ -109,9 +109,9 @@ class VisitorReportsTest extends TestCase
         $response->assertSee('<strong>Legal</strong>', false)
             ->assertSee('Cookie settings')
             ->assertSee('wb-footer-cookie-settings-link', false)
-            ->assertSee('href="#cookie-settings"', false)
-            ->assertSee('data-wb-cookie-open', false)
-            ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
+            ->assertSee('data-wb-cookie-consent-open', false)
+            ->assertSee('data-wb-target="#wb-cookie-consent-preferences"', false)
+            ->assertSee('type="button"', false)
             ->assertDontSee('<input type="button"', false)
             ->assertDontSee('<input type="submit"', false)
             ->assertDontSee('autofocus', false);
@@ -480,41 +480,61 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
-    public function accept_route_sets_the_consent_cookie_and_redirects_back(): void
+    public function sync_route_sets_the_accepted_consent_cookie_for_analytics_enabled_preferences(): void
     {
-        $page = $this->createPublishedPage();
-        $target = route('pages.show', $page->slug, false);
-
-        $response = $this->post(route('public.privacy-consent.accept'), [
-            'redirect_to' => $target,
+        $response = $this->postJson(route('public.privacy-consent.sync'), [
+            'status' => 'accepted',
+            'preferences' => [
+                'necessary' => true,
+                'preferences' => true,
+                'analytics' => true,
+                'marketing' => true,
+            ],
         ]);
 
-        $response->assertRedirect($target);
+        $response->assertOk();
+        $response->assertJson([
+            'status' => 'accepted',
+            'server_decision' => VisitorConsent::ACCEPTED,
+        ]);
         $response->assertCookie($this->consentCookieName(), VisitorConsent::ACCEPTED);
     }
 
     #[Test]
-    public function decline_route_sets_the_consent_cookie_and_redirects_back(): void
+    public function sync_route_sets_the_declined_consent_cookie_for_analytics_disabled_preferences(): void
     {
-        $page = $this->createPublishedPage();
-        $target = route('pages.show', $page->slug, false);
-
-        $response = $this->post(route('public.privacy-consent.decline'), [
-            'redirect_to' => $target,
+        $response = $this->postJson(route('public.privacy-consent.sync'), [
+            'status' => 'custom',
+            'preferences' => [
+                'necessary' => true,
+                'preferences' => true,
+                'analytics' => false,
+                'marketing' => false,
+            ],
         ]);
 
-        $response->assertRedirect($target);
+        $response->assertOk();
+        $response->assertJson([
+            'status' => 'custom',
+            'server_decision' => VisitorConsent::DECLINED,
+        ]);
         $response->assertCookie($this->consentCookieName(), VisitorConsent::DECLINED);
     }
 
     #[Test]
-    public function consent_routes_do_not_require_login(): void
+    public function consent_sync_route_does_not_require_login(): void
     {
-        $response = $this->post(route('public.privacy-consent.accept'), [
-            'redirect_to' => '/p/example',
+        $response = $this->postJson(route('public.privacy-consent.sync'), [
+            'status' => 'rejected',
+            'preferences' => [
+                'necessary' => true,
+                'preferences' => false,
+                'analytics' => false,
+                'marketing' => false,
+            ],
         ]);
 
-        $response->assertRedirect('/p/example');
+        $response->assertOk();
     }
 
     #[Test]
@@ -567,7 +587,7 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
-    public function with_no_consent_cookie_the_cookie_panel_is_visible_by_default(): void
+    public function with_no_consent_cookie_the_cookie_consent_pattern_markup_is_rendered(): void
     {
         $this->enableCookieBanner();
         $page = $this->createPublishedPage();
@@ -575,17 +595,24 @@ class VisitorReportsTest extends TestCase
         $response = $this->get(route('pages.show', $page->slug, false));
 
         $this->assertFooterCookieSettingsMarkup($response);
-        $response->assertSee('wb-cookie-settings-shell is-open', false);
-        $response->assertSee('id="wb-cookie-settings-panel"', false);
-        $response->assertSee('data-wb-cookie-panel', false);
-        $response->assertSee('Necessary:');
-        $response->assertSee('Analytics:');
-        $response->assertSee('Accept');
-        $response->assertSee('Decline');
+        $response->assertSee('wb-cookie-consent wb-cookie-consent-banner', false);
+        $response->assertSee('data-wb-cookie-consent', false);
+        $response->assertSee('data-wb-cookie-consent-reject', false);
+        $response->assertSee('data-wb-cookie-consent-open', false);
+        $response->assertSee('data-wb-cookie-consent-accept', false);
+        $response->assertSee('id="wb-cookie-consent-preferences"', false);
+        $response->assertSee('data-wb-cookie-category="analytics"', false);
+        $response->assertSee('Save preferences');
+        $response->assertSeeInOrder([
+            'wb-cookie-consent wb-cookie-consent-banner',
+            'id="wb-cookie-consent-preferences"',
+        ], false);
+        $this->assertSame(1, substr_count($response->getContent(), 'wb-cookie-consent wb-cookie-consent-banner'));
+        $this->assertSame(1, substr_count($response->getContent(), 'id="wb-cookie-consent-preferences"'));
     }
 
     #[Test]
-    public function with_accepted_consent_cookie_the_panel_is_closed_by_default(): void
+    public function with_accepted_consent_cookie_the_pattern_markup_is_still_rendered_for_reopen(): void
     {
         $this->enableCookieBanner();
         $page = $this->createPublishedPage();
@@ -594,14 +621,14 @@ class VisitorReportsTest extends TestCase
             ->get(route('pages.show', $page->slug, false));
 
         $this->assertFooterCookieSettingsMarkup($response);
-        $response->assertDontSee('wb-cookie-settings-shell is-open', false);
-        $response->assertSee('id="wb-cookie-settings-panel"', false);
-        $response->assertSee('data-wb-cookie-panel', false);
+        $response->assertSee('wb-cookie-consent wb-cookie-consent-banner', false);
+        $response->assertSee('id="wb-cookie-consent-preferences"', false);
+        $response->assertSee('data-wb-cookie-consent-close', false);
         $response->assertSee('hidden', false);
     }
 
     #[Test]
-    public function with_declined_consent_cookie_the_panel_is_closed_by_default(): void
+    public function with_declined_consent_cookie_the_pattern_markup_is_still_rendered_for_reopen(): void
     {
         $this->enableCookieBanner();
         $page = $this->createPublishedPage();
@@ -611,12 +638,13 @@ class VisitorReportsTest extends TestCase
             ->assertOk()
             ->assertSee('<strong>Legal</strong>', false)
             ->assertSee('Cookie settings')
-            ->assertSee('data-wb-cookie-open', false)
-            ->assertDontSee('wb-cookie-settings-shell is-open', false);
+            ->assertSee('data-wb-cookie-consent-open', false)
+            ->assertSee('id="wb-cookie-consent-preferences"', false)
+            ->assertSee('hidden', false);
     }
 
     #[Test]
-    public function footer_cookie_settings_control_can_target_and_reopen_the_panel(): void
+    public function footer_cookie_settings_control_can_target_and_reopen_the_preference_modal(): void
     {
         $this->enableCookieBanner();
         $page = $this->createPublishedPage();
@@ -625,27 +653,24 @@ class VisitorReportsTest extends TestCase
             ->get(route('pages.show', $page->slug, false))
             ->assertOk()
             ->assertSee('wb-footer-cookie-settings-link', false)
-            ->assertSee('data-wb-cookie-open', false)
-            ->assertSee('href="#cookie-settings"', false)
-            ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
-            ->assertSee('aria-expanded="false"', false);
+            ->assertSee('data-wb-cookie-consent-open', false)
+            ->assertSee('data-wb-target="#wb-cookie-consent-preferences"', false)
+            ->assertSee('id="wb-cookie-consent-preferences"', false);
     }
 
     #[Test]
-    public function close_x_control_exists_and_does_not_submit_accept_or_decline(): void
+    public function close_controls_exist_and_do_not_submit_legacy_consent_forms(): void
     {
         $this->enableCookieBanner();
         $page = $this->createPublishedPage();
 
         $this->get(route('pages.show', $page->slug, false))
             ->assertOk()
-            ->assertSee('wb-cookie-settings-header', false)
-            ->assertSee('wb-cookie-settings-close', false)
-            ->assertSee('data-wb-cookie-close', false)
+            ->assertSee('wb-cookie-consent-card', false)
+            ->assertSee('data-wb-cookie-consent-close', false)
             ->assertSee('type="button"', false)
             ->assertSee('aria-label="Close cookie settings"', false)
-            ->assertDontSee('action="'.route('public.privacy-consent.accept').'" data-wb-cookie-close', false)
-            ->assertDontSee('action="'.route('public.privacy-consent.decline').'" data-wb-cookie-close', false);
+            ->assertDontSee('<form method="POST" action="', false);
     }
 
     #[Test]

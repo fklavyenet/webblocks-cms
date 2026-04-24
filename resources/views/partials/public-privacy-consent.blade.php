@@ -1,12 +1,8 @@
 @php
     $privacy = $visitorPrivacy ?? [
         'banner_enabled' => false,
-        'show_banner' => false,
         'has_choice' => false,
-        'reopen_url' => null,
-        'show_settings' => false,
-        'panel_open' => false,
-        'redirect_to' => '/',
+        'server_choice' => null,
     ];
 @endphp
 
@@ -24,45 +20,28 @@
         ])
     @endunless
 
-    <div class="wb-cookie-settings-shell {{ $privacy['panel_open'] ? 'is-open' : '' }}" data-wb-cookie-panel-shell>
-        <div class="wb-cookie-settings-panel wb-card wb-card-accent" id="wb-cookie-settings-panel" data-wb-cookie-panel role="dialog" aria-modal="false" aria-labelledby="wb-cookie-settings-title" aria-hidden="{{ $privacy['panel_open'] ? 'false' : 'true' }}" @if (! $privacy['panel_open']) hidden @endif>
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-cookie-settings-header wb-cluster wb-cluster-between wb-cluster-2">
-                    <div class="wb-stack wb-gap-1">
-                        <strong id="wb-cookie-settings-title">Cookie settings</strong>
-                        <div class="wb-text-sm wb-text-muted">
-                            Choose whether optional analytics can be used for richer visitor reports. Necessary cookies remain active for normal site and security behavior.
-                        </div>
-                    </div>
-
-                    <button type="button" class="wb-cookie-settings-close wb-btn wb-btn-secondary wb-btn-sm" data-wb-cookie-close aria-label="Close cookie settings">
-                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                    </button>
+    <div class="wb-cookie-consent wb-cookie-consent-banner" data-wb-cookie-consent hidden aria-hidden="true">
+        <section class="wb-card wb-cookie-consent-card" aria-label="Cookie consent">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-items-start">
+                <div class="wb-stack-1">
+                    <strong>We use cookies</strong>
                 </div>
-
-                <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>Necessary:</strong> always active</div>
-                    <div><strong>Analytics:</strong> optional, enables richer visitor reports such as sessions, unique visitors, referrers, UTM campaigns, browser/device summaries</div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-cluster-between wb-flex-wrap">
-                    <div class="wb-text-sm wb-text-muted">Accept or decline optional analytics in one click. Closing this panel does not save a choice.</div>
-
+                <button class="wb-btn wb-btn-secondary wb-btn-icon wb-btn-sm" type="button" data-wb-cookie-consent-close aria-label="Close cookie settings">
+                    <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="wb-card-body">
+                <div class="wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                    <p class="wb-text-sm wb-text-muted wb-m-0">
+                        Necessary cookies keep the site running. Optional analytics cookies help us understand usage and improve visitor reporting.
+                    </p>
                     <div class="wb-cluster wb-cluster-2">
-                        <form method="POST" action="{{ route('public.privacy-consent.decline') }}">
-                            @csrf
-                            <input type="hidden" name="redirect_to" value="{{ $privacy['redirect_to'] }}">
-                            <button type="submit" class="wb-btn wb-btn-secondary">Decline</button>
-                        </form>
-
-                        <form method="POST" action="{{ route('public.privacy-consent.accept') }}">
-                            @csrf
-                            <input type="hidden" name="redirect_to" value="{{ $privacy['redirect_to'] }}">
-                            <button type="submit" class="wb-btn wb-btn-primary">Accept</button>
-                        </form>
+                        <button class="wb-btn wb-btn-secondary wb-btn-sm" type="button" data-wb-cookie-consent-reject>Reject</button>
+                        <button class="wb-btn wb-btn-secondary wb-btn-sm" type="button" data-wb-cookie-consent-open data-wb-target="#wb-cookie-consent-preferences">Customize</button>
+                        <button class="wb-btn wb-btn-primary wb-btn-sm" type="button" data-wb-cookie-consent-accept>Accept all</button>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 @endif

@@ -282,11 +282,6 @@
     color: var(--fklavye-gold);
 }
 
-.wb-public-footer .wb-footer-cookie-settings-link {
-    display: inline;
-    width: auto;
-}
-
 .wb-public-hero,
 .wb-public-card-grid article,
 .wb-public-showcase-item,
