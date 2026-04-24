@@ -518,8 +518,8 @@ class VisitorReportsTest extends TestCase
             ->get(route('pages.show', $page->slug, false))
             ->assertOk()
             ->assertSee('wb-footer-cookie-settings-link', false)
-            ->assertSee('data-wb-cookie-settings-open', false)
-            ->assertSee('data-wb-target="#wb-cookie-settings-panel', false)
+            ->assertSee('data-wb-cookie-open', false)
+            ->assertSee('data-wb-cookie-panel="#wb-cookie-settings-panel', false)
             ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
             ->assertSee('aria-expanded="false"', false);
     }
@@ -533,10 +533,11 @@ class VisitorReportsTest extends TestCase
             ->assertOk()
             ->assertSee('wb-cookie-settings-header', false)
             ->assertSee('wb-cookie-settings-close', false)
-            ->assertSee('data-wb-cookie-settings-close', false)
+            ->assertSee('data-wb-cookie-close', false)
+            ->assertSee('type="button"', false)
             ->assertSee('aria-label="Close cookie settings"', false)
-            ->assertDontSee('action="'.route('public.privacy-consent.accept').'" data-wb-cookie-settings-close', false)
-            ->assertDontSee('action="'.route('public.privacy-consent.decline').'" data-wb-cookie-settings-close', false);
+            ->assertDontSee('action="'.route('public.privacy-consent.accept').'" data-wb-cookie-close', false)
+            ->assertDontSee('action="'.route('public.privacy-consent.decline').'" data-wb-cookie-close', false);
     }
 
     #[Test]

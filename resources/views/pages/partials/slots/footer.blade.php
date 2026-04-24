@@ -42,8 +42,8 @@
                     <button
                         type="button"
                         class="wb-link wb-text-sm wb-text-start wb-footer-cookie-settings-link"
-                        data-wb-cookie-settings-open
-                        data-wb-target="#wb-cookie-settings-panel"
+                        data-wb-cookie-open
+                        data-wb-cookie-panel="#wb-cookie-settings-panel"
                         aria-expanded="{{ ($visitorPrivacy['panel_open'] ?? false) ? 'true' : 'false' }}"
                         aria-controls="wb-cookie-settings-panel"
                     >

@@ -93,8 +93,8 @@
         @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                var cookieShell = document.querySelector('[data-wb-cookie-settings-shell]');
-                var cookiePanel = document.querySelector('#wb-cookie-settings-panel');
+                var cookieShell = document.querySelector('[data-wb-cookie-panel-shell]');
+                var cookiePanel = document.querySelector('[data-wb-cookie-panel]');
 
                 function setCookiePanelState(open) {
                     if (!cookieShell || !cookiePanel) {
@@ -103,19 +103,21 @@
 
                     cookieShell.classList.toggle('is-open', open);
                     cookiePanel.hidden = !open;
+                    cookiePanel.setAttribute('aria-hidden', open ? 'false' : 'true');
 
-                    document.querySelectorAll('[data-wb-cookie-settings-open]').forEach(function (trigger) {
+                    document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
                         trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
                     });
                 }
 
-                document.querySelectorAll('[data-wb-cookie-settings-open]').forEach(function (trigger) {
-                    trigger.addEventListener('click', function () {
+                document.querySelectorAll('[data-wb-cookie-open]').forEach(function (trigger) {
+                    trigger.addEventListener('click', function (event) {
+                        event.preventDefault();
                         setCookiePanelState(true);
                     });
                 });
 
-                document.querySelectorAll('[data-wb-cookie-settings-close]').forEach(function (trigger) {
+                document.querySelectorAll('[data-wb-cookie-close]').forEach(function (trigger) {
                     trigger.addEventListener('click', function () {
                         setCookiePanelState(false);
                     });

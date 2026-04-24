@@ -125,7 +125,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - With consent, WebBlocks keeps the richer Visitor Reports model, including sessions, unique visitor estimation, referrers, optional UTM campaign fields, and browser or device summaries.
 - Accept enables optional analytics tracking for sessions, unique visitors, referrers, UTM campaigns, browser summaries, device summaries, and OS summaries.
 - Decline still allows anonymous aggregate page view counting for Visitor Reports.
-- Public pages include a persistent footer `Cookie settings` link that reopens the narrower bottom cookie panel at any time.
+- Public pages include a persistent footer `Cookie settings` link in the footer legal area so the same cookie panel can be reopened at any time.
 - When no consent cookie exists, the cookie settings panel is open by default. When consent already exists, it stays closed until reopened from the footer link.
 - `Accept` and `Decline` save the consent choice in one click. Closing the panel with `X` only hides it visually and does not save a consent decision.
 - Necessary Laravel cookies and sessions used for CSRF protection, admin authentication, forms, and general application security are separate from optional analytics consent.

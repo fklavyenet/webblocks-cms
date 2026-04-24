@@ -19,8 +19,8 @@
                     <button
                         type="button"
                         class="wb-link wb-text-sm wb-text-start wb-footer-cookie-settings-link"
-                        data-wb-cookie-settings-open
-                        data-wb-target="#wb-cookie-settings-panel"
+                        data-wb-cookie-open
+                        data-wb-cookie-panel="#wb-cookie-settings-panel"
                         aria-expanded="{{ $privacy['panel_open'] ? 'true' : 'false' }}"
                         aria-controls="wb-cookie-settings-panel"
                     >
@@ -32,8 +32,8 @@
         </footer>
     @endunless
 
-    <div class="wb-cookie-settings-shell {{ $privacy['panel_open'] ? 'is-open' : '' }}" data-wb-cookie-settings-shell>
-        <div class="wb-cookie-settings-panel wb-card wb-card-accent" id="wb-cookie-settings-panel" role="dialog" aria-modal="false" aria-labelledby="wb-cookie-settings-title" @if (! $privacy['panel_open']) hidden @endif>
+    <div class="wb-cookie-settings-shell {{ $privacy['panel_open'] ? 'is-open' : '' }}" data-wb-cookie-panel-shell>
+        <div class="wb-cookie-settings-panel wb-card wb-card-accent" id="wb-cookie-settings-panel" data-wb-cookie-panel role="dialog" aria-modal="false" aria-labelledby="wb-cookie-settings-title" aria-hidden="{{ $privacy['panel_open'] ? 'false' : 'true' }}" @if (! $privacy['panel_open']) hidden @endif>
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-cookie-settings-header wb-cluster wb-cluster-between wb-cluster-2">
                     <div class="wb-stack wb-gap-1">
@@ -43,7 +43,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="wb-cookie-settings-close wb-btn wb-btn-secondary wb-btn-sm" data-wb-cookie-settings-close aria-label="Close cookie settings">
+                    <button type="button" class="wb-cookie-settings-close wb-btn wb-btn-secondary wb-btn-sm" data-wb-cookie-close aria-label="Close cookie settings">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </button>
                 </div>
