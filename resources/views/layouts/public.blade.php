@@ -20,6 +20,43 @@
         @if (is_file($siteCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
         @endif
+        <style>
+            .wb-public-footer-fallback {
+                padding-top: 0;
+            }
+
+            .wb-cookie-settings-shell {
+                position: fixed;
+                inset-inline: 0;
+                bottom: 0;
+                z-index: 405;
+                pointer-events: none;
+                padding: var(--wb-s4);
+            }
+
+            .wb-cookie-settings-panel {
+                width: min(100%, 38rem);
+                margin: 0 auto;
+                box-shadow: var(--wb-shadow-xl);
+                pointer-events: auto;
+            }
+
+            .wb-cookie-settings-header {
+                position: relative;
+                align-items: flex-start;
+                padding-right: calc(var(--wb-s8) + var(--wb-s2));
+            }
+
+            .wb-cookie-settings-close {
+                position: absolute;
+                top: 0;
+                right: 0;
+            }
+
+            .wb-cookie-settings-shell:not(.is-open) {
+                display: none;
+            }
+        </style>
     </head>
     <body class="wb-public-body">
         @yield('content')
@@ -56,6 +93,34 @@
         @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                var cookieShell = document.querySelector('[data-wb-cookie-settings-shell]');
+                var cookiePanel = document.querySelector('#wb-cookie-settings-panel');
+
+                function setCookiePanelState(open) {
+                    if (!cookieShell || !cookiePanel) {
+                        return;
+                    }
+
+                    cookieShell.classList.toggle('is-open', open);
+                    cookiePanel.hidden = !open;
+
+                    document.querySelectorAll('[data-wb-cookie-settings-open]').forEach(function (trigger) {
+                        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    });
+                }
+
+                document.querySelectorAll('[data-wb-cookie-settings-open]').forEach(function (trigger) {
+                    trigger.addEventListener('click', function () {
+                        setCookiePanelState(true);
+                    });
+                });
+
+                document.querySelectorAll('[data-wb-cookie-settings-close]').forEach(function (trigger) {
+                    trigger.addEventListener('click', function () {
+                        setCookiePanelState(false);
+                    });
+                });
+
                 document.querySelectorAll('[data-wb-slider]').forEach(function (slider) {
                     var track = slider.querySelector('[data-wb-slider-track]');
                     var slides = Array.prototype.slice.call(slider.querySelectorAll('[data-wb-slider-slide]'));

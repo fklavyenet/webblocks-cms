@@ -45,6 +45,30 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />
+                </form>
+            </div>
+        </div>
+
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>Cookie settings</strong></div>
+
+            <div class="wb-card-body">
+                <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-4">
+                    @csrf
+                    @method('PUT')
+
+                    <input type="hidden" name="app_name" value="{{ $settings['app_name'] }}">
+                    <input type="hidden" name="app_slogan" value="{{ $settings['app_slogan'] }}">
+                    <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
+                    <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-text-sm wb-text-muted">
+                            The public cookie settings panel lets visitors accept or decline optional analytics tracking. Necessary Laravel, admin, CSRF, and security cookies remain separate. Visitors who decline still contribute privacy-safe anonymous page view counts.
+                        </div>
 
                         <div class="wb-stack-2 wb-field">
                             <input type="hidden" name="visitor_consent_banner_enabled" value="0">
@@ -58,9 +82,6 @@
                                 >
                                 <span>Show the public privacy settings banner when visitor reports are enabled.</span>
                             </label>
-                            <div class="wb-text-sm wb-text-muted">
-                                Visitors can accept or decline optional analytics tracking in one click. Necessary Laravel and admin cookies remain separate.
-                            </div>
                         </div>
                     </div>
 

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add Privacy-Aware Visitor Reports V2 with a first-party consent cookie, compact public privacy banner, basic anonymous page view tracking by default, and richer full tracking only after explicit acceptance.
+- Refine cookie consent UX with a persistent footer `Cookie settings` trigger, a narrower bottom-sheet style public consent panel, a top-right close control, and a dedicated admin `Cookie settings` card.
 - Add truthful Visitor Reports semantics so page views include anonymous rows while unique visitors, sessions, referrers, campaigns, and device summaries only use consented full-tracking rows.
 - Add public privacy settings routes, admin banner control, README documentation, and test coverage for consent-aware tracking behavior.
 - Refactor the admin sidebar into focused Content, Reports, Sites, Access, Structure, System, and Maintenance groups so install-level tools are no longer overloaded under System.

@@ -26,11 +26,26 @@ class SystemSettingsTest extends TestCase
         $response->assertSee('Application slogan');
         $response->assertSee('Default locale');
         $response->assertSee('Timezone');
-        $response->assertSee('privacy settings banner', false);
+        $response->assertSee('Cookie settings');
+        $response->assertSee('Show the public privacy settings banner when visitor reports are enabled.');
+        $response->assertSee('Visitors who decline still contribute privacy-safe anonymous page view counts.');
         $response->assertSee('Installed version');
         $response->assertSee('Environment');
         $response->assertSee('System');
         $response->assertSee('Maintenance');
+    }
+
+    #[Test]
+    public function cookie_banner_checkbox_is_not_inside_the_general_card(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
+
+        $response->assertOk();
+        $response->assertSee('>General<', false);
+        $response->assertSee('>Cookie settings<', false);
+        $response->assertSeeInOrder(['>General<', '>Cookie settings<'], false);
     }
 
     #[Test]

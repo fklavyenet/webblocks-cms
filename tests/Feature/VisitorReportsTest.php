@@ -457,13 +457,26 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
-    public function banner_appears_when_no_consent_cookie_exists(): void
+    public function public_page_renders_a_cookie_settings_footer_link(): void
     {
         $page = $this->createPublishedPage();
 
         $response = $this->get(route('pages.show', $page->slug, false));
 
-        $response->assertSee('Privacy settings');
+        $response->assertSee('wb-footer-cookie-settings-link', false);
+        $response->assertSee('Cookie settings');
+    }
+
+    #[Test]
+    public function with_no_consent_cookie_the_cookie_panel_is_visible_by_default(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $response = $this->get(route('pages.show', $page->slug, false));
+
+        $response->assertSee('Cookie settings');
+        $response->assertSee('wb-cookie-settings-shell is-open', false);
+        $response->assertSee('id="wb-cookie-settings-panel"', false);
         $response->assertSee('Necessary:');
         $response->assertSee('Analytics:');
         $response->assertSee('Accept');
@@ -471,27 +484,59 @@ class VisitorReportsTest extends TestCase
     }
 
     #[Test]
-    public function banner_does_not_appear_when_a_consent_cookie_exists(): void
+    public function with_accepted_consent_cookie_the_panel_is_closed_by_default(): void
     {
         $page = $this->createPublishedPage();
 
         $response = $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
             ->get(route('pages.show', $page->slug, false));
 
-        $response->assertSee('Privacy settings');
-        $response->assertDontSeeText('Necessary: always active');
-        $response->assertDontSeeText('Decline keeps privacy-safe anonymous page view counts only.');
+        $response->assertSee('Cookie settings');
+        $response->assertDontSee('wb-cookie-settings-shell is-open', false);
+        $response->assertSee('id="wb-cookie-settings-panel"', false);
+        $response->assertSee('hidden', false);
     }
 
     #[Test]
-    public function privacy_settings_link_is_present_on_public_pages(): void
+    public function with_declined_consent_cookie_the_panel_is_closed_by_default(): void
     {
         $page = $this->createPublishedPage();
 
         $this->withCookie($this->consentCookieName(), VisitorConsent::DECLINED)
             ->get(route('pages.show', $page->slug, false))
             ->assertOk()
-            ->assertSee('Privacy settings');
+            ->assertSee('Cookie settings')
+            ->assertDontSee('wb-cookie-settings-shell is-open', false);
+    }
+
+    #[Test]
+    public function footer_cookie_settings_control_can_target_and_reopen_the_panel(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->withCookie($this->consentCookieName(), VisitorConsent::ACCEPTED)
+            ->get(route('pages.show', $page->slug, false))
+            ->assertOk()
+            ->assertSee('wb-footer-cookie-settings-link', false)
+            ->assertSee('data-wb-cookie-settings-open', false)
+            ->assertSee('data-wb-target="#wb-cookie-settings-panel', false)
+            ->assertSee('aria-controls="wb-cookie-settings-panel"', false)
+            ->assertSee('aria-expanded="false"', false);
+    }
+
+    #[Test]
+    public function close_x_control_exists_and_does_not_submit_accept_or_decline(): void
+    {
+        $page = $this->createPublishedPage();
+
+        $this->get(route('pages.show', $page->slug, false))
+            ->assertOk()
+            ->assertSee('wb-cookie-settings-header', false)
+            ->assertSee('wb-cookie-settings-close', false)
+            ->assertSee('data-wb-cookie-settings-close', false)
+            ->assertSee('aria-label="Close cookie settings"', false)
+            ->assertDontSee('action="'.route('public.privacy-consent.accept').'" data-wb-cookie-settings-close', false)
+            ->assertDontSee('action="'.route('public.privacy-consent.decline').'" data-wb-cookie-settings-close', false);
     }
 
     #[Test]

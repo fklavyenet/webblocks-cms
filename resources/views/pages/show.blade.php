@@ -1,4 +1,8 @@
-@extends('layouts.public', ['title' => $page->title, 'metaDescription' => $metaDescription])
+@extends('layouts.public', [
+    'title' => $page->title,
+    'metaDescription' => $metaDescription,
+    'hasFooterSlot' => $footerSlot !== null,
+])
 
 @php
     $secondarySlots = $slots->reject(function ($slot) {

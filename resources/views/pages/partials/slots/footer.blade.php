@@ -38,6 +38,18 @@
             <div class="wb-stack wb-gap-2">
                 <strong>Legal</strong>
                 <ul class="wb-stack wb-gap-1">{!! $renderFooterList($legalItems) !!}</ul>
+                @if (($visitorPrivacy['banner_enabled'] ?? false) === true)
+                    <button
+                        type="button"
+                        class="wb-link wb-text-sm wb-text-start wb-footer-cookie-settings-link"
+                        data-wb-cookie-settings-open
+                        data-wb-target="#wb-cookie-settings-panel"
+                        aria-expanded="{{ ($visitorPrivacy['panel_open'] ?? false) ? 'true' : 'false' }}"
+                        aria-controls="wb-cookie-settings-panel"
+                    >
+                        Cookie settings
+                    </button>
+                @endif
                 <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
             </div>
         </div>

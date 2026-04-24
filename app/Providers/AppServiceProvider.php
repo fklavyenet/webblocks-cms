@@ -63,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
                 'has_choice' => $consent->hasStoredChoice($request),
                 'reopen_url' => $request->fullUrlWithQuery(['privacy_settings' => 'open']),
                 'show_settings' => $consent->bannerEnabled() && $request->query('privacy_settings') === 'open',
+                'panel_open' => $consent->shouldShowBanner($request) || ($consent->bannerEnabled() && $request->query('privacy_settings') === 'open'),
                 'redirect_to' => $request->fullUrlWithoutQuery('privacy_settings'),
             ]);
         });
