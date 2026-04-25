@@ -14,11 +14,14 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use App\Support\Blocks\BlockTranslationRegistry;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 
 class StarterContentSeeder extends Seeder
 {
+    public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
+
     public function run(): void
     {
         $defaultSite = Site::query()->where('is_primary', true)->firstOrFail();
@@ -494,6 +497,12 @@ class StarterContentSeeder extends Seeder
     private function seedBlockTranslations(Page $homePage, Page $aboutPage, Page $contactPage, Locale $locale): void
     {
         $registry = app(BlockTranslationRegistry::class);
+
+        Block::query()
+            ->whereIn('page_id', [$homePage->id, $aboutPage->id, $contactPage->id])
+            ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->get()
+            ->each(fn (Block $block) => $this->blockTranslationWriter->normalizeCanonicalStorage($block));
 
         Block::query()
             ->whereIn('page_id', [$homePage->id, $aboutPage->id, $contactPage->id])

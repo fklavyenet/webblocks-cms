@@ -17,6 +17,7 @@ use App\Models\PageType;
 use App\Models\Site;
 use App\Models\SiteImport;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Sites\SiteDomainNormalizer;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +32,7 @@ class ImportDataMapper
         private readonly DatabaseManager $db,
         private readonly SiteDomainNormalizer $domainNormalizer,
         private readonly SiteTransferPathGuard $pathGuard,
+        private readonly BlockTranslationWriter $blockTranslationWriter,
     ) {}
 
     public function import(SiteImport $siteImport, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$output = []): Site
@@ -453,6 +455,13 @@ class ImportDataMapper
         }
 
         $output[] = 'Imported '.$count.' block translation row(s).';
+
+        Block::query()
+            ->whereIn('id', array_values($blockMap))
+            ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->orderBy('id')
+            ->get()
+            ->each(fn (Block $block) => $this->blockTranslationWriter->normalizeCanonicalStorage($block));
     }
 
     private function importBlockAssets(array $payload, array $blockMap, array $assetMap, array &$output): void

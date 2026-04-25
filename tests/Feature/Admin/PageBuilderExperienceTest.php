@@ -82,6 +82,11 @@ class PageBuilderExperienceTest extends TestCase
         ];
     }
 
+    private function assertTextTranslation(Block $block, int $localeId, array $expected): void
+    {
+        $this->assertDatabaseHas('block_text_translations', ['block_id' => $block->id, 'locale_id' => $localeId] + $expected);
+    }
+
     #[Test]
     public function creating_a_page_starts_empty_and_persists_selected_slots(): void
     {
@@ -1208,12 +1213,17 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('blocks', [
             'page_id' => $page->id,
             'slot_type_id' => $main->id,
+            'title' => null,
+        ]);
+        $block = Block::query()->where('page_id', $page->id)->where('slot_type_id', $main->id)->firstOrFail();
+        $this->assertTextTranslation($block, $this->defaultLocale()->id, [
             'title' => 'Intro section',
+            'content' => 'Slot-first flow',
         ]);
     }
 
     #[Test]
-    public function page_builder_store_syncs_default_locale_canonical_and_text_translation_rows(): void
+    public function page_builder_store_persists_default_locale_content_only_in_translation_rows(): void
     {
         $user = User::factory()->create();
         $site = $this->defaultSite();
@@ -1249,12 +1259,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertRedirect(route('admin.pages.edit', $page));
         $this->assertDatabaseHas('blocks', [
             'id' => $block->id,
-            'title' => 'Inline hero',
-            'content' => 'Inline builder copy',
+            'title' => null,
+            'content' => null,
         ]);
-        $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $block->id,
-            'locale_id' => $this->defaultLocale()->id,
+        $this->assertTextTranslation($block, $this->defaultLocale()->id, [
             'title' => 'Inline hero',
             'content' => 'Inline builder copy',
         ]);
@@ -1311,7 +1319,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('pages', ['id' => $page->id, 'title' => 'About Updated', 'status' => 'draft']);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id, 'sort_order' => 0]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id, 'sort_order' => 1]);
-        $this->assertDatabaseHas('blocks', ['id' => $existing->id, 'title' => 'Old title', 'slot_type_id' => $main->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $existing->id, 'slot_type_id' => $main->id]);
         $this->assertSame(1, Block::query()->where('page_id', $page->id)->count());
     }
 
@@ -1758,8 +1766,9 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => (string) $columns->id]));
-        $this->assertDatabaseHas('blocks', ['id' => $existingItem->id, 'title' => 'Flexible content']);
-        $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Editor friendly']);
+        $this->assertTextTranslation($existingItem, $this->defaultLocale()->id, ['title' => 'Flexible content']);
+        $newItem = Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->whereKeyNot($existingItem->id)->firstOrFail();
+        $this->assertTextTranslation($newItem, $this->defaultLocale()->id, ['title' => 'Editor friendly']);
         $this->assertSame(2, Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->count());
     }
 
@@ -1887,7 +1896,8 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $addResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => $expanded]));
-        $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'title' => 'Editor friendly']);
+        $addedChild = Block::query()->where('parent_id', $columns->id)->where('sort_order', 2)->firstOrFail();
+        $this->assertTextTranslation($addedChild, $this->defaultLocale()->id, ['title' => 'Editor friendly']);
 
         $reorderResponse = $this->actingAs($user)->post(route('admin.blocks.move-up', $childB), [
             'expanded' => $expanded,
@@ -1989,8 +1999,8 @@ class PageBuilderExperienceTest extends TestCase
 
         $this->assertDatabaseHas('blocks', [
             'id' => $block->id,
-            'title' => 'Hero',
-            'content' => 'English content',
+            'title' => null,
+            'content' => null,
         ]);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,
@@ -2001,7 +2011,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function default_locale_slot_block_edit_keeps_canonical_and_default_translation_in_sync(): void
+    public function default_locale_slot_block_edit_updates_only_the_default_translation_row(): void
     {
         $user = User::factory()->create();
         $page = Page::create([
@@ -2049,8 +2059,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
         $this->assertDatabaseHas('blocks', [
             'id' => $block->id,
-            'title' => 'Updated hero',
-            'content' => 'Updated default copy',
+            'title' => null,
+            'content' => null,
         ]);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,
@@ -2148,18 +2158,14 @@ class PageBuilderExperienceTest extends TestCase
         }
 
         $this->assertSame(
-            $this->blockPersistenceShape($builderBlock->fresh(), $defaultLocale, $turkish),
-            $this->blockPersistenceShape($controllerBlock->fresh(), $defaultLocale, $turkish),
+            $this->blockPersistenceShape($builderBlock->fresh(['textTranslations']), $defaultLocale, $turkish),
+            $this->blockPersistenceShape($controllerBlock->fresh(['textTranslations']), $defaultLocale, $turkish),
         );
-        $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $builderBlock->id,
-            'locale_id' => $defaultLocale->id,
+        $this->assertTextTranslation($builderBlock, $defaultLocale->id, [
             'title' => 'Shared hero',
             'content' => 'Shared English copy',
         ]);
-        $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $controllerBlock->id,
-            'locale_id' => $defaultLocale->id,
+        $this->assertTextTranslation($controllerBlock, $defaultLocale->id, [
             'title' => 'Shared hero',
             'content' => 'Shared English copy',
         ]);
@@ -2352,6 +2358,12 @@ class PageBuilderExperienceTest extends TestCase
         ]);
         $this->assertDatabaseHas('blocks', [
             'id' => $block->id,
+            'title' => null,
+            'content' => null,
+        ]);
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
             'title' => 'Contact us',
             'content' => 'English intro',
         ]);
@@ -2450,7 +2462,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->seed(StarterContentSeeder::class);
 
         $home = Page::query()->where('slug', 'home')->firstOrFail();
-        $columns = Block::query()->where('page_id', $home->id)->where('type', 'columns')->where('title', 'Starter features')->first();
+        $columns = Block::query()
+            ->where('page_id', $home->id)
+            ->where('type', 'columns')
+            ->whereHas('textTranslations', fn ($query) => $query->where('title', 'Starter features'))
+            ->first();
 
         $this->assertNotNull($columns);
         $this->assertDatabaseCount('pages', 5);
@@ -2458,9 +2474,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'About']);
         $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'Campaign About']);
         $this->assertSame(3, Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->count());
-        $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Fast setup']);
-        $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Flexible content']);
-        $this->assertDatabaseHas('blocks', ['parent_id' => $columns->id, 'type' => 'column_item', 'title' => 'Editor friendly']);
+        $children = Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->with('textTranslations')->get();
+        $this->assertSame(
+            ['Editor friendly', 'Fast setup', 'Flexible content'],
+            $children->map(fn (Block $block) => $block->textTranslations->firstWhere('locale_id', $this->defaultLocale()->id)?->title)->sort()->values()->all()
+        );
     }
 
     #[Test]

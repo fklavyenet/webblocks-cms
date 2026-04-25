@@ -12,6 +12,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Facades\Storage;
 
 trait BuildsCloneableSite
@@ -173,6 +174,10 @@ trait BuildsCloneableSite
             'caption' => 'Kahraman gorseli',
             'alt_text' => 'Kahraman alternatif',
         ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($columns->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($columnItem->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($imageBlock->fresh(['imageTranslations']));
 
         NavigationItem::query()->create([
             'site_id' => $sourceSite->id,

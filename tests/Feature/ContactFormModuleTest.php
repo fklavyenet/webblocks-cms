@@ -377,6 +377,57 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
+    public function authoritative_block_translation_migration_backfills_default_rows_and_clears_canonical_contact_copy(): void
+    {
+        $slotType = $this->slotType();
+        $blockType = $this->contactBlockType();
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'form',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Contact us',
+            'content' => 'Send a message to the editorial team.',
+            'settings' => json_encode([
+                'submit_label' => 'Legacy send',
+                'success_message' => 'Legacy success',
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => false,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $migration = require base_path('database/migrations/2026_04_25_130000_make_block_translations_authoritative.php');
+        $migration->up();
+
+        $translation = $block->fresh()->contactFormTranslations()->where('locale_id', $this->defaultLocale()->id)->first();
+        $freshBlock = $block->fresh();
+        $settings = json_decode((string) $freshBlock->getRawOriginal('settings'), true);
+
+        $this->assertNotNull($translation);
+        $this->assertSame('Contact us', $translation->title);
+        $this->assertSame('Send a message to the editorial team.', $translation->content);
+        $this->assertSame('Legacy send', $translation->submit_label);
+        $this->assertSame('Legacy success', $translation->success_message);
+        $this->assertNull($freshBlock->getRawOriginal('title'));
+        $this->assertNull($freshBlock->getRawOriginal('content'));
+        $this->assertArrayNotHasKey('submit_label', $settings);
+        $this->assertArrayNotHasKey('success_message', $settings);
+        $this->assertSame('team@example.com', $settings['recipient_email']);
+    }
+
+    #[Test]
     public function public_rendering_uses_translation_values_for_each_locale_and_safe_defaults_when_copy_is_missing(): void
     {
         $site = $this->defaultSite();

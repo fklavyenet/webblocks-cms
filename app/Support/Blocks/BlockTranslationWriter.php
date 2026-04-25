@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Support\Locales\LocaleResolver;
+use Illuminate\Support\Facades\DB;
 
 class BlockTranslationWriter
 {
@@ -18,8 +19,6 @@ class BlockTranslationWriter
     {
         $blockTypeSlug = $data['type'] ?? $block?->typeSlug();
         $family = $this->registry->familyFor($blockTypeSlug);
-        $locale = $this->resolveLocale($localeCode);
-        $defaultLocale = $this->localeResolver->default();
 
         if (! $family) {
             return $data;
@@ -35,18 +34,14 @@ class BlockTranslationWriter
                 : json_encode($settings, JSON_UNESCAPED_SLASHES);
         }
 
-        if ($locale->id === $defaultLocale->id || $isCreating) {
-            return $data;
-        }
-
         foreach ($this->canonicalBlockFieldsForFamily($family) as $field) {
-            unset($data[$field]);
+            $data[$field] = null;
         }
 
         return $data;
     }
 
-    public function sync(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false): void
+    public function sync(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
     {
         $family = $this->registry->familyFor($block);
 
@@ -56,23 +51,49 @@ class BlockTranslationWriter
 
         $locale = $this->resolveLocale($localeCode);
         $defaultLocale = $this->localeResolver->default();
+        $translationSourceBlock ??= $block;
 
-        $defaultPayload = $this->translationPayload($family, $data, $block, true);
-        $localizedPayload = $this->translationPayload($family, $data, $block, $locale->id === $defaultLocale->id || $duplicateDefaultOnCreate);
         $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
 
         if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
-            $this->writeTranslation($block, $family, $defaultLocale->id, $defaultPayload);
+            $this->writeTranslation($block, $family, $defaultLocale->id, $this->translationPayload($family, $data, $translationSourceBlock, $defaultLocale->id));
         } else {
-            $this->ensureDefaultTranslation($block, $family, $defaultLocale->id);
+            $this->ensureDefaultTranslation($block, $family, $defaultLocale->id, $translationSourceBlock);
         }
 
         if (! $isDefaultLocaleEdit) {
-            $this->writeTranslation($block, $family, $locale->id, $localizedPayload);
+            $this->writeTranslation($block, $family, $locale->id, $this->translationPayload($family, $data, $translationSourceBlock, $locale->id));
         }
     }
 
-    private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId): void
+    public function normalizeCanonicalStorage(Block $block): void
+    {
+        $family = $this->registry->familyFor($block);
+
+        if (! $family) {
+            return;
+        }
+
+        $defaultLocaleId = $this->localeResolver->default()->id;
+
+        $this->ensureDefaultTranslation($block, $family, $defaultLocaleId, $block);
+
+        $updates = array_fill_keys($this->canonicalBlockFieldsForFamily($family), null);
+
+        if ($family === 'contact_form') {
+            $settings = $this->decodeSettings($block->getRawOriginal('settings'));
+
+            unset($settings['submit_label'], $settings['success_message']);
+
+            $updates['settings'] = $settings === []
+                ? null
+                : json_encode($settings, JSON_UNESCAPED_SLASHES);
+        }
+
+        DB::table('blocks')->where('id', $block->id)->update($updates);
+    }
+
+    private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
     {
         $relation = match ($family) {
             'text' => $block->textTranslations(),
@@ -81,11 +102,13 @@ class BlockTranslationWriter
             'contact_form' => $block->contactFormTranslations(),
         };
 
+        $translationSourceBlock ??= $block;
+
         if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
             return;
         }
 
-        $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $block, true));
+        $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $translationSourceBlock, $defaultLocaleId));
     }
 
     private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void
@@ -98,35 +121,33 @@ class BlockTranslationWriter
         };
     }
 
-    private function translationPayload(string $family, array $data, Block $block, bool $preferCanonical): array
+    private function translationPayload(string $family, array $data, Block $block, int $localeId): array
     {
         return match ($family) {
             'text' => [
-                'title' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title')) : ($data['title'] ?? null),
-                'subtitle' => $preferCanonical ? ($data['subtitle'] ?? $block->getRawOriginal('subtitle')) : ($data['subtitle'] ?? null),
-                'content' => $preferCanonical ? ($data['content'] ?? $block->getRawOriginal('content')) : ($data['content'] ?? null),
+                'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'title', $block->getRawOriginal('title')),
+                'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
+                'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'content', $block->getRawOriginal('content')),
             ],
             'button' => [
-                'title' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title') ?: 'Open link') : ($data['title'] ?? 'Open link'),
+                'title' => $this->submittedString($data, 'title')
+                    ?? $this->existingTranslationValue($block, 'buttonTranslations', $localeId, 'title', $block->getRawOriginal('title'))
+                    ?? 'Open link',
             ],
             'image' => [
-                'caption' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title')) : ($data['title'] ?? null),
-                'alt_text' => $preferCanonical ? ($data['subtitle'] ?? $block->getRawOriginal('subtitle')) : ($data['subtitle'] ?? null),
+                'caption' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'imageTranslations', $localeId, 'caption', $block->getRawOriginal('title')),
+                'alt_text' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'imageTranslations', $localeId, 'alt_text', $block->getRawOriginal('subtitle')),
             ],
             'contact_form' => [
-                'title' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title')) : ($data['title'] ?? null),
-                'content' => $preferCanonical ? ($data['content'] ?? $block->getRawOriginal('content')) : ($data['content'] ?? null),
-                'submit_label' => $preferCanonical
-                    ? $this->resolvedContactTranslationValue($data, $block, 'submit_label', 'Send message')
-                    : $this->submittedContactTranslationValue($data, 'submit_label'),
-                'success_message' => $preferCanonical
-                    ? $this->resolvedContactTranslationValue($data, $block, 'success_message', config('contact.success_message'))
-                    : $this->submittedContactTranslationValue($data, 'success_message'),
+                'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'title', $block->getRawOriginal('title')),
+                'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
+                'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
+                'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
             ],
         };
     }
 
-    private function resolvedContactTranslationValue(array $data, Block $block, string $field, string $default): string
+    private function resolvedContactTranslationValue(array $data, Block $block, int $localeId, string $field, string $default): string
     {
         $submitted = $this->submittedContactTranslationValue($data, $field);
 
@@ -141,11 +162,7 @@ class BlockTranslationWriter
             return $submittedSettingValue;
         }
 
-        $translation = $block->contactFormTranslations()
-            ->where('locale_id', $this->localeResolver->default()->id)
-            ->first();
-
-        $existing = trim((string) ($translation?->{$field} ?? ''));
+        $existing = trim((string) ($this->existingTranslationValue($block, 'contactFormTranslations', $localeId, $field) ?? ''));
 
         if ($existing !== '') {
             return $existing;
@@ -154,6 +171,28 @@ class BlockTranslationWriter
         $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
 
         return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
+    }
+
+    private function existingTranslationValue(Block $block, string $relation, int $localeId, string $field, mixed $fallback = null): mixed
+    {
+        $translations = $block->relationLoaded($relation)
+            ? $block->getRelation($relation)
+            : $block->{$relation}()->get();
+
+        $translation = $translations->firstWhere('locale_id', $localeId);
+
+        return $translation?->{$field} ?? $fallback;
+    }
+
+    private function submittedString(array $data, string $field): ?string
+    {
+        if (! array_key_exists($field, $data)) {
+            return null;
+        }
+
+        $value = trim((string) $data[$field]);
+
+        return $value !== '' ? $value : null;
     }
 
     private function submittedContactTranslationValue(array $data, string $field): ?string

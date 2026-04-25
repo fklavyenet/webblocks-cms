@@ -14,6 +14,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -34,6 +35,8 @@ class FullShowcaseSeeder extends Seeder
     private ?int $uploaderId = null;
 
     private ?int $defaultLocaleId = null;
+
+    public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
 
     public function run(): void
     {
@@ -341,6 +344,13 @@ class FullShowcaseSeeder extends Seeder
                 $contactTranslation,
             );
         }
+
+        $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
+            'textTranslations',
+            'buttonTranslations',
+            'imageTranslations',
+            'contactFormTranslations',
+        ]));
 
         return $block;
     }

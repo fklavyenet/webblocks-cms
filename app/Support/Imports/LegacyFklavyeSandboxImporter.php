@@ -2,12 +2,16 @@
 
 namespace App\Support\Imports;
 
+use App\Models\Block;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class LegacyFklavyeSandboxImporter
 {
+    public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
+
     public function import(array $sourceConfig): array
     {
         $source = $this->configureSourceConnection($sourceConfig);
@@ -56,6 +60,12 @@ class LegacyFklavyeSandboxImporter
                 'block_assets' => DB::table('block_assets')->count(),
             ];
         });
+
+        Block::query()
+            ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->orderBy('id')
+            ->get()
+            ->each(fn (Block $block) => $this->blockTranslationWriter->normalizeCanonicalStorage($block));
 
         return [
             'cleanup' => $cleanupCounts,

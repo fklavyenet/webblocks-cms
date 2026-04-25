@@ -128,9 +128,13 @@ class SiteExportImportTest extends TestCase
 
         $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('type', 'column_item')->firstOrFail();
         $this->assertDatabaseHas('block_text_translations', ['block_id' => $columnItem->id, 'title' => 'Hizli kurulum']);
+        $this->assertNull($columnItem->getRawOriginal('title'));
+        $this->assertNull($columnItem->getRawOriginal('content'));
 
         $imageBlock = Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->firstOrFail();
         $this->assertNotNull($imageBlock->asset_id);
+        $this->assertNull($imageBlock->getRawOriginal('title'));
+        $this->assertNull($imageBlock->getRawOriginal('subtitle'));
         Storage::disk('public')->assertExists($imageBlock->asset->path);
     }
 

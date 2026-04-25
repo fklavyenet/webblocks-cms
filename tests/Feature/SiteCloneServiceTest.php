@@ -63,9 +63,12 @@ class SiteCloneServiceTest extends TestCase
             'block_id' => $columnItem->id,
             'title' => 'Hizli kurulum',
         ]);
+        $this->assertNull($columnItem->getRawOriginal('title'));
 
         $imageBlock = Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->firstOrFail();
         $this->assertSame($heroAsset->id, $imageBlock->asset_id);
+        $this->assertNull($imageBlock->getRawOriginal('title'));
+        $this->assertNull($imageBlock->getRawOriginal('subtitle'));
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,
             'menu_key' => NavigationItem::MENU_PRIMARY,

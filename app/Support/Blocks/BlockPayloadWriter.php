@@ -13,6 +13,7 @@ class BlockPayloadWriter
     public function save(Block $block, Page $page, array $data, ?string $localeCode = null): Block
     {
         $isCreating = ! $block->exists;
+        $translationSourceBlock = $isCreating ? null : clone $block;
         $blockAssets = $data['_block_assets'] ?? [];
         $canonicalData = $this->blockTranslationWriter->canonicalPayload(
             $data,
@@ -27,7 +28,7 @@ class BlockPayloadWriter
         $block->fill($canonicalData);
         $block->save();
 
-        $this->blockTranslationWriter->sync($block, $data, $localeCode, $isCreating);
+        $this->blockTranslationWriter->sync($block, $data, $localeCode, $isCreating, $translationSourceBlock);
         $this->syncAssets($block, $blockAssets);
 
         return $block;

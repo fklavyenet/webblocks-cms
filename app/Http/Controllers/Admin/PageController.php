@@ -71,6 +71,20 @@ class PageController extends Controller
                         $inner->where('title', 'like', "%{$search}%")
                             ->orWhere('slug', 'like', "%{$search}%")
                             ->orWhere('page_type', 'like', "%{$search}%")
+                            ->orWhereHas('blocks.textTranslations', fn ($translations) => $translations
+                                ->where('title', 'like', "%{$search}%")
+                                ->orWhere('subtitle', 'like', "%{$search}%")
+                                ->orWhere('content', 'like', "%{$search}%"))
+                            ->orWhereHas('blocks.buttonTranslations', fn ($translations) => $translations
+                                ->where('title', 'like', "%{$search}%"))
+                            ->orWhereHas('blocks.imageTranslations', fn ($translations) => $translations
+                                ->where('caption', 'like', "%{$search}%")
+                                ->orWhere('alt_text', 'like', "%{$search}%"))
+                            ->orWhereHas('blocks.contactFormTranslations', fn ($translations) => $translations
+                                ->where('title', 'like', "%{$search}%")
+                                ->orWhere('content', 'like', "%{$search}%")
+                                ->orWhere('submit_label', 'like', "%{$search}%")
+                                ->orWhere('success_message', 'like', "%{$search}%"))
                             ->orWhereHas('translations', fn ($translations) => $translations
                                 ->where('name', 'like', "%{$search}%")
                                 ->orWhere('slug', 'like', "%{$search}%"));

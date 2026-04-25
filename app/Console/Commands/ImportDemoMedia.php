@@ -199,7 +199,11 @@ class ImportDemoMedia extends Command
 
         $block = Block::query()
             ->where('type', $type)
-            ->where('title', $title)
+            ->where(function ($query) use ($title) {
+                $query->where('title', $title)
+                    ->orWhereHas('textTranslations', fn ($translations) => $translations->where('title', $title))
+                    ->orWhereHas('imageTranslations', fn ($translations) => $translations->where('caption', $title));
+            })
             ->whereHas('page.translations', fn ($query) => $query->where('slug', $pageSlug))
             ->first();
 
@@ -230,7 +234,10 @@ class ImportDemoMedia extends Command
 
         $block = Block::query()
             ->where('type', 'product-grid')
-            ->where('title', 'Northstar Labs service lines')
+            ->where(function ($query) {
+                $query->where('title', 'Northstar Labs service lines')
+                    ->orWhereHas('textTranslations', fn ($translations) => $translations->where('title', 'Northstar Labs service lines'));
+            })
             ->whereHas('page.translations', fn ($query) => $query->where('slug', 'services'))
             ->first();
 
@@ -281,7 +288,10 @@ class ImportDemoMedia extends Command
             ->where('page_id', $page->id)
             ->where('slot_type_id', $slotType->id)
             ->where('type', 'image')
-            ->where('title', 'Office interior')
+            ->where(function ($query) {
+                $query->where('title', 'Office interior')
+                    ->orWhereHas('imageTranslations', fn ($translations) => $translations->where('caption', 'Office interior'));
+            })
             ->first();
 
         $payload = [
@@ -323,7 +333,14 @@ class ImportDemoMedia extends Command
     {
         $block = Block::query()
             ->where('type', $type)
-            ->where('title', $title)
+            ->where(function ($query) use ($type, $title) {
+                $query->where('title', $title)
+                    ->orWhereHas('textTranslations', fn ($translations) => $translations->where('title', $title));
+
+                if ($type === 'image') {
+                    $query->orWhereHas('imageTranslations', fn ($translations) => $translations->where('caption', $title));
+                }
+            })
             ->whereHas('page.translations', fn ($query) => $query->where('slug', $pageSlug))
             ->first();
 
