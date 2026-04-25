@@ -20,9 +20,11 @@ class PageTranslationRequest extends FormRequest
     {
         $name = (string) $this->input('name');
         $slug = (string) $this->input('slug');
+        $normalizedSlug = Str::slug($slug !== '' ? $slug : $name);
 
         $this->merge([
-            'slug' => Str::slug($slug !== '' ? $slug : $name),
+            'slug' => $normalizedSlug,
+            'path' => PageTranslation::pathFromSlug($normalizedSlug),
         ]);
     }
 
@@ -43,6 +45,7 @@ class PageTranslationRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique(PageTranslation::class, 'slug')
                     ->ignore($translation?->id)
                     ->where(fn ($query) => $query
@@ -50,6 +53,28 @@ class PageTranslationRequest extends FormRequest
                         ->where('locale_id', $localeId)
                     ),
             ],
+            'path' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^(?:\/|\/p\/[a-z0-9]+(?:-[a-z0-9]+)*)$/',
+                Rule::unique(PageTranslation::class, 'path')
+                    ->ignore($translation?->id)
+                    ->where(fn ($query) => $query
+                        ->where('site_id', $siteId)
+                        ->where('locale_id', $localeId)
+                    ),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
+            'slug.unique' => 'This slug is already used in this site for this locale.',
+            'path.regex' => 'The generated path format is invalid.',
+            'path.unique' => 'This path is already used in this site for this locale.',
         ];
     }
 

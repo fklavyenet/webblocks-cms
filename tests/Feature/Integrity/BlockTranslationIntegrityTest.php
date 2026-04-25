@@ -9,6 +9,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\User;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -268,5 +269,33 @@ class BlockTranslationIntegrityTest extends TestCase
             ->assertSee('Bize ulasin')
             ->assertSee('Mesaj gonder')
             ->assertDontSee('French orphan');
+    }
+
+    #[Test]
+    public function invalid_block_locale_is_rejected_at_request_level(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $german = $this->createLocale('de');
+        $page = $this->pageWithMainSlot($site);
+        $blockType = $this->blockType('section');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.blocks.create', ['page_id' => $page->id, 'slot_type_id' => $this->slotType()->id]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => null,
+                'block_type_id' => $blockType->id,
+                'slot_type_id' => $this->slotType()->id,
+                'sort_order' => 0,
+                'title' => 'Titel',
+                'content' => 'Inhalt',
+                'status' => 'published',
+                'locale' => $german->code,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['locale' => 'Selected locale must be enabled for the page site.']);
+        $this->assertSame(0, Block::query()->where('page_id', $page->id)->count());
     }
 }

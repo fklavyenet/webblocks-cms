@@ -252,4 +252,28 @@ class NavigationIntegrityTest extends TestCase
         $this->assertCount(1, $items);
         $this->assertSame('Broken Link', $items->first()->resolvedTitle());
     }
+
+    #[Test]
+    public function cross_site_page_links_are_rejected_at_request_level(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $otherSite = $this->createSite('campaign', 'campaign.example.test');
+        $foreignPage = $this->createPage($otherSite, 'Campaign About', 'about');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_PRIMARY]))
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+                'title' => 'Broken Link',
+                'link_type' => NavigationItem::LINK_PAGE,
+                'page_id' => $foreignPage->id,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+            ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_PRIMARY]));
+        $response->assertSessionHasErrors(['page_id' => 'Selected page does not belong to this site.']);
+        $this->assertSame(0, NavigationItem::query()->where('site_id', $site->id)->count());
+    }
 }

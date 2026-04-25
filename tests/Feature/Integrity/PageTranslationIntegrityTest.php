@@ -6,6 +6,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\Site;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -131,5 +132,63 @@ class PageTranslationIntegrityTest extends TestCase
 
         $this->get('http://primary.example.test/tr/p/about')->assertNotFound();
         $this->get('http://primary.example.test/tr')->assertNotFound();
+    }
+
+    #[Test]
+    public function duplicate_slug_is_rejected_with_a_validation_error_before_hitting_the_database(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $locale = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $about = $this->createPage($site, 'About', 'about');
+        $contact = $this->createPage($site, 'Contact', 'contact');
+
+        $about->translations()->create([
+            'locale_id' => $locale->id,
+            'name' => 'Hakkinda',
+            'slug' => 'ortak',
+            'path' => '/p/ortak',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.edit', $contact))
+            ->post(route('admin.pages.translations.store', [$contact, $locale]), [
+                'name' => 'Iletisim',
+                'slug' => 'ortak',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $contact));
+        $response->assertSessionHasErrors(['slug' => 'This slug is already used in this site for this locale.']);
+    }
+
+    #[Test]
+    public function duplicate_path_is_rejected_with_a_validation_error_before_hitting_the_database(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $locale = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+
+        $home = $this->createPage($site, 'Home', 'home');
+        $other = $this->createPage($site, 'About', 'about');
+
+        $home->translations()->create([
+            'locale_id' => $locale->id,
+            'name' => 'Ana Sayfa',
+            'slug' => 'home',
+            'path' => '/',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.edit', $other))
+            ->post(route('admin.pages.translations.store', [$other, $locale]), [
+                'name' => 'Ana Sayfa Kopya',
+                'slug' => 'home',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $other));
+        $response->assertSessionHasErrors(['path' => 'This path is already used in this site for this locale.']);
     }
 }

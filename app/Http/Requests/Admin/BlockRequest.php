@@ -153,6 +153,14 @@ class BlockRequest extends FormRequest
         }];
     }
 
+    public function messages(): array
+    {
+        return [
+            'locale.regex' => 'Use a valid locale code.',
+            'locale.exists' => 'Selected locale is invalid.',
+        ];
+    }
+
     public function validatedData(): array
     {
         /** @var AdminAuthorization $authorization */

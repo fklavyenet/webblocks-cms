@@ -62,7 +62,7 @@ class NavigationItemRequest extends FormRequest
             }
 
             if ($pageId && Page::query()->whereKey($pageId)->value('site_id') !== $siteId) {
-                $validator->errors()->add('page_id', 'Selected page must belong to the selected site.');
+                $validator->errors()->add('page_id', 'Selected page does not belong to this site.');
             }
 
             if ($linkType === NavigationItem::LINK_CUSTOM_URL && $url === '') {
@@ -110,5 +110,12 @@ class NavigationItemRequest extends FormRequest
                 $cursor = $cursor->parent;
             }
         }];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'url.max' => 'The URL may not be greater than 2048 characters.',
+        ];
     }
 }
