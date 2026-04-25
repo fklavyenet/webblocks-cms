@@ -65,6 +65,9 @@ class AdminSidebarNavigationTest extends TestCase
             && strpos($content, $localesHref) < strpos($content, $slotTypesHref)
             && strpos($content, $slotTypesHref) < strpos($content, $blockTypesHref)
         );
+        $this->assertTrue(
+            strpos($content, '>System<') < strpos($content, '>Maintenance<')
+        );
     }
 
     #[Test]

@@ -42,18 +42,6 @@
 
             if ($user?->can('access-system')) {
                 $sidebarGroups[] = [
-                    'label' => 'Maintenance',
-                    'icon' => 'wb-icon-file',
-                    'items' => [
-                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
-                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
-                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
-                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
-                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
-                    ],
-                ];
-
-                $sidebarGroups[] = [
                     'label' => 'System',
                     'icon' => 'wb-icon-palette',
                     'items' => [
@@ -62,6 +50,18 @@
                         ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
                         ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
                         ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
+                    ],
+                ];
+
+                $sidebarGroups[] = [
+                    'label' => 'Maintenance',
+                    'icon' => 'wb-icon-file',
+                    'items' => [
+                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
+                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
+                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
+                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
                     ],
                 ];
             }

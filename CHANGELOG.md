@@ -15,6 +15,10 @@
 - Contact form submit and success copy moved out of block settings and treated as translation-owned content.
 - Extensive integrity, regression, and edge-case coverage added across multisite, multilingual, validation, URL, and reconstruction flows.
 
+## 1.0.1
+
+- Reorder the admin sidebar so System appears before Maintenance.
+
 ## 1.0.0
 
 First stable release of WebBlocks CMS.
