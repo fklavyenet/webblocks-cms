@@ -7,6 +7,7 @@
 - Add regression coverage proving public rendering, admin editing, revision restore, clone/import flows, and intentional legacy normalization continue to work when canonical block text fields are null.
 - Remove legacy `pages.title` and `pages.slug` storage after moving page identity to translations, and harden site-scoped page routing, cloning, importing, and revisions around translation-backed slugs.
 - Enforce stronger multisite and multilingual integrity for page translations, navigation links, site/default locale invariants, and block translation locale usage without changing public URL behavior.
+- Expand integrity and edge-case test coverage for multisite, translations, navigation, and reconstruction flows.
 - Move contact form submit and success copy out of block JSON settings and into translation rows, keeping contact form settings reserved for shared operational configuration.
 - Stabilize page-builder block saves so inline edits and block form edits use the same translation-aware write path, preventing default-locale and localized block content drift.
 - Make block translation rows authoritative for translatable block content, backfill default-locale translation rows across legacy import/seed/reconstruction paths, and keep `blocks.title` / `blocks.subtitle` / `blocks.content` as compatibility columns instead of active content sources.

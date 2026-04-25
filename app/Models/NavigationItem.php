@@ -184,8 +184,10 @@ class NavigationItem extends Model
 
     public function resolvedUrl(): ?string
     {
+        $requestedLocale = request()?->route('locale');
+
         return match ($this->link_type) {
-            self::LINK_PAGE => $this->page?->publicPath(),
+            self::LINK_PAGE => $this->page?->publicPath(is_string($requestedLocale) && $requestedLocale !== '' ? $requestedLocale : null),
             self::LINK_CUSTOM_URL => $this->url,
             default => null,
         };
@@ -208,12 +210,15 @@ class NavigationItem extends Model
 
     public function metaLabel(): string
     {
+        $requestedLocale = request()?->route('locale');
+        $pagePath = $this->page?->publicPath(is_string($requestedLocale) && $requestedLocale !== '' ? $requestedLocale : null);
+
         if ($this->link_type === self::LINK_PAGE) {
-            if ($this->page?->name && $this->page?->publicPath()) {
-                return $this->page->name.' '.$this->page->publicPath();
+            if ($this->page?->name && $pagePath) {
+                return $this->page->name.' '.$pagePath;
             }
 
-            return $this->page?->name ?: ($this->page?->publicPath() ?: 'Linked page');
+            return $this->page?->name ?: ($pagePath ?: 'Linked page');
         }
 
         if ($this->link_type === self::LINK_CUSTOM_URL) {

@@ -126,7 +126,7 @@ class ContactFormModuleTest extends TestCase
 
         $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
-        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false).'#contact-form-'.$block->id);
         $this->assertDatabaseHas('contact_messages', [
             'block_id' => $block->id,
             'page_id' => $block->page_id,
@@ -176,7 +176,8 @@ class ContactFormModuleTest extends TestCase
             'website' => 'https://spam.example.com',
         ]));
 
-        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $response->assertStatus(302);
+        $this->assertSame('https://webblocks-cms.ddev.site/p/contact#contact-form-'.$block->id, $response->baseResponse->headers->get('Location'));
         $this->assertDatabaseCount('contact_messages', 0);
         Mail::assertNothingSent();
     }
@@ -550,5 +551,94 @@ class ContactFormModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Send message')
             ->assertSee(config('contact.success_message'));
+    }
+
+    #[Test]
+    public function contact_form_submit_and_success_copy_come_from_translations_only_after_cleanup(): void
+    {
+        [$page, $block] = $this->createContactFormPage();
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
+
+        $freshBlock = $block->fresh(['contactFormTranslations']);
+
+        $this->assertNull($freshBlock->getRawOriginal('title'));
+        $this->assertNull($freshBlock->getRawOriginal('content'));
+
+        $this->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Contact us')
+            ->assertSee('Send message');
+
+        $this->withSession(['contact_form_success_block_id' => $block->id])
+            ->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Thanks for your message. We will get back to you soon.');
+    }
+
+    #[Test]
+    public function non_default_locale_contact_form_renders_localized_copy_after_translation_cleanup(): void
+    {
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->update(['domain' => 'primary.example.test']);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        [$page, $block] = $this->createContactFormPage();
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Iletisim',
+            'slug' => 'iletisim',
+            'path' => '/p/iletisim',
+        ]);
+
+        $block->contactFormTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Bize ulasin',
+            'content' => 'Turkce tanitim',
+            'submit_label' => 'Mesaj gonder',
+            'success_message' => 'Tesekkurler.',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
+
+        $this->get('http://primary.example.test/tr/p/iletisim')
+            ->assertOk()
+            ->assertSee('Bize ulasin')
+            ->assertSee('Mesaj gonder');
+
+        $this->withSession(['contact_form_success_block_id' => $block->id])
+            ->get('http://primary.example.test/tr/p/iletisim')
+            ->assertOk()
+            ->assertSee('Tesekkurler.');
+    }
+
+    #[Test]
+    public function submission_flow_still_works_after_translation_cleanup(): void
+    {
+        Mail::fake();
+        [$page, $block] = $this->createContactFormPage();
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
+
+        $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+            'source_url' => route('pages.show', ['slug' => $page->slug]),
+        ]));
+
+        $response->assertRedirect(route('pages.show', ['slug' => 'contact']).'#contact-form-'.$block->id);
+        $this->assertDatabaseHas('contact_messages', [
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'email' => 'taylor@example.com',
+            'status' => 'new',
+        ]);
     }
 }
