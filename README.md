@@ -15,25 +15,50 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - install wizard for first-run setup
 - system updates, backups, and site export/import tools
 
-## Install Options
+## Data Model Principles
 
-### Install Wizard
+- DB-first architecture
+- `page_translations` is authoritative for page title, slug, and path
+- `pages` stores structural and editorial metadata such as site, type, layout, workflow, and SEO fields
+- `block_*_translations` tables are authoritative for translatable block content
+- `blocks` stores structure, placement, shared config, assets, status, and variant or meta fields
+- canonical page and block text columns, where still present, are compatibility-only and not the active source of truth
+- contact form `submit_label` and `success_message` live in translation rows; block `settings` is reserved for shared operational config
+- no JSON storage is used for user-facing page or block content
 
-For a fresh install, run:
+## Installation
+
+### DDEV Quick Start
 
 ```bash
-composer install
-cp .env.example .env
-php artisan serve
+ddev start
+ddev composer install
+ddev artisan migrate
+ddev artisan db:seed
+ddev artisan serve # if needed outside the DDEV web server
 ```
 
-Then open:
+For a fresh install with the browser flow, open `/install` after dependencies are available. The install wizard guides database setup, environment creation, core install steps, and first super admin creation.
 
-- installer: `http://127.0.0.1:8000/install`
-- public site: `http://127.0.0.1:8000/`
-- admin: `http://127.0.0.1:8000/admin`
+Typical local URLs:
+
+- installer: `/install`
+- public site: `/`
+- admin: `/admin`
 
 ### Manual CLI Install
+
+```bash
+ddev start
+ddev composer install
+cp .env.example .env
+ddev artisan key:generate
+ddev artisan migrate
+ddev artisan db:seed
+ddev artisan storage:link
+```
+
+If you are not using DDEV, the equivalent Laravel dev server flow is:
 
 ```bash
 composer install
@@ -45,17 +70,11 @@ php artisan storage:link
 php artisan serve
 ```
 
-### Optional DDEV Local Install
+Then open:
 
-```bash
-ddev start
-ddev composer install
-cp .env.example .env
-ddev artisan key:generate
-ddev artisan migrate
-ddev artisan db:seed
-ddev artisan storage:link
-```
+- installer: `http://127.0.0.1:8000/install`
+- public site: `http://127.0.0.1:8000/`
+- admin: `http://127.0.0.1:8000/admin`
 
 See `docs/installation.md` for the complete install guide.
 
@@ -113,6 +132,23 @@ Admin session expiry is handled defensively: after re-authentication, the origin
 These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
+
+## Multisite & Multilingual
+
+- each site can have its own domain
+- each site has its own enabled locale set
+- the default locale is prefixless in public URLs
+- non-default locales use a locale prefix
+- public page resolution, navigation, and preview links are site-aware and locale-aware
+- URLs are generated only when the requested translation exists and the locale is valid for the site
+
+## URL Behavior
+
+- default locale page URLs use `/p/{slug}`
+- localized page URLs use `/{locale}/p/{slug}`, for example `/tr/p/hakkinda`
+- the default locale is not prefixed, so `/en/...` is intentionally not routable when `en` is the default locale
+- home routes follow the same rule: `/` for the default locale and `/{locale}` for non-default locales
+- admin preview and navigation page links are only generated when a valid site-scoped translation exists
 
 ## Privacy-Aware Visitor Reports V2
 

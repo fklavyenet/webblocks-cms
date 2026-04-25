@@ -1,44 +1,19 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
 
-- Complete a final consistency audit across source-of-truth, translation, URL, validation, and reconstruction paths after the data integrity hardening phases.
-- Fix the standalone admin block editor parent-block option labels so they resolve through authoritative block translation rows when canonical block text fields are null.
-- Harden reconstruction compatibility paths across revision restore, clone, export/import, and legacy import flows while keeping translation rows authoritative for active content.
-- Fix legacy import compatibility coverage so old-package reconstruction tests correctly simulate archives missing block translation arrays but still carrying canonical block text.
-- Improve legacy SQLite import handling for the Fklavye sandbox importer and make its required core block-type assumptions explicit.
-- Ensure revision restore coverage resolves block content through authoritative translation rows instead of legacy canonical block fields.
-- Audit remaining block compatibility-field usage after making translation rows authoritative, and keep `blocks.title` / `blocks.subtitle` / `blocks.content` only for documented compatibility and reconstruction paths.
-- Remove stale admin fallback dependence on legacy canonical block copy by resolving default-locale translation content in the standalone block editor before rendering translatable block forms.
-- Add regression coverage proving public rendering, admin editing, revision restore, clone/import flows, and intentional legacy normalization continue to work when canonical block text fields are null.
-- Remove legacy `pages.title` and `pages.slug` storage after moving page identity to translations, and harden site-scoped page routing, cloning, importing, and revisions around translation-backed slugs.
-- Enforce stronger multisite and multilingual integrity for page translations, navigation links, site/default locale invariants, and block translation locale usage without changing public URL behavior.
-- Expand integrity and edge-case test coverage for multisite, translations, navigation, and reconstruction flows.
-- Add request-level validation for page translations, block translations, and navigation integrity to prevent invalid operations before DB constraints.
-- Harden runtime URL consistency coverage so generated page, navigation, and admin preview links stay aligned with site, locale, and public route resolution rules.
-- Move contact form submit and success copy out of block JSON settings and into translation rows, keeping contact form settings reserved for shared operational configuration.
-- Stabilize page-builder block saves so inline edits and block form edits use the same translation-aware write path, preventing default-locale and localized block content drift.
-- Make block translation rows authoritative for translatable block content, backfill default-locale translation rows across legacy import/seed/reconstruction paths, and keep `blocks.title` / `blocks.subtitle` / `blocks.content` as compatibility columns instead of active content sources.
-- Add Privacy-Aware Visitor Reports V2 with a first-party consent cookie, compact public privacy banner, basic anonymous page view tracking by default, and richer full tracking only after explicit acceptance.
-- Align the CMS public cookie consent banner with the WebBlocks UI Cookie Consent pattern, including the shared preference modal, footer reopen control, localStorage consent model, and backend cookie sync for Visitor Reports.
-- Refine cookie consent UX with a persistent footer `Cookie settings` trigger, a narrower bottom-sheet style public consent panel, a top-right close control, and a dedicated admin `Cookie settings` card.
-- Fix the public cookie consent reopen UX so the footer `Cookie settings` link remains available after closing the panel and reopens the same panel in all consent states.
-- Fix the public footer so home, contact, and CMS-rendered pages all use the same shared `Legal` / `Cookie settings` footer markup and reopen the existing cookie panel consistently.
-- Add truthful Visitor Reports semantics so page views include anonymous rows while unique visitors, sessions, referrers, campaigns, and device summaries only use consented full-tracking rows.
-- Add public privacy settings routes, admin banner control, README documentation, and test coverage for consent-aware tracking behavior.
-- Reorganize the admin sidebar into direct editorial links with streamlined `Maintenance` and `System` groups so common destinations are easier to reach.
-- Restructure `README.md` into a v1.0 entry-point overview with focused links to detailed docs.
-- Add compact v1.0 documentation pages for installation, getting started, users and permissions, editorial workflow, revisions, and operations.
-- Add Install Wizard V1 for fresh installs with browser-based requirements, database, core setup, and first super admin steps.
-- Add install state guards so public, admin, and auth entry points guide incomplete installs into setup and lock the installer after completion.
-- Add safe first-run environment handling for app key generation, `.env` updates, database validation, and storage link setup within the installer flow.
-- Add Page Revisions / Restore V1 for pages with automatic page-scoped revision snapshots across page edits, workflow changes, page translations, and slot/block changes.
-- Add admin revision history and in-place restore for pages, including pre-restore safety snapshots, multisite-aware access control, and restore coverage for page fields, page translations, slots, blocks, and block translation rows.
-- Keep page revisions explicitly separate from environment Backup / Restore and site Export / Import flows.
-- Add Editorial Workflow V1 for pages with `draft`, `in_review`, `published`, and `archived` statuses.
-- Add role-based workflow enforcement so `site_admin` and `super_admin` users can publish while `editor` users can only work in draft and submit for review.
-- Restrict public page rendering to workflow-published pages while preserving existing block-level visibility rules inside published pages.
-- Add compact workflow badges and actions across the page admin flow, plus server-side workflow guards for page editing, translations, and slot/block editing.
+### Stability & Integrity
+- Data model unified around translation tables for page identity and translatable block content.
+- Legacy page title and slug storage removed from active page identity handling.
+- Multisite, locale, navigation, and block translation integrity hardened without changing public routing behavior.
+- Request-level validation improved so invalid translation, block locale, and cross-site navigation writes fail before DB exceptions where practical.
+- Runtime URL generation and public route resolution verified to stay aligned across pages, navigation, and admin previews.
+- Revision restore, clone, export/import, and legacy import reconstruction paths hardened while keeping compatibility normalization isolated.
+
+### Internal
+- Legacy compatibility paths isolated to reconstruction, import, migration, and backfill workflows.
+- Contact form submit and success copy moved out of block settings and treated as translation-owned content.
+- Extensive integrity, regression, and edge-case coverage added across multisite, multilingual, validation, URL, and reconstruction flows.
 
 ## 1.0.0
 
