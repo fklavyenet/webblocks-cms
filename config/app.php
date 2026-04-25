@@ -17,7 +17,7 @@ return [
 
     'slogan' => env('APP_SLOGAN', 'A modern block-based CMS'),
 
-    'version' => env('APP_VERSION', '1.0.1'),
+    'version' => env('APP_VERSION', '1.0.2'),
 
     /*
     |--------------------------------------------------------------------------

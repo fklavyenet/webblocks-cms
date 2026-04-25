@@ -45,24 +45,53 @@ return new class extends Migration
             throw new RuntimeException('Cannot enforce site-scoped page translation path uniqueness because duplicate rows already exist.');
         }
 
-        Schema::table('pages', function (Blueprint $table) {
-            $table->unique(['id', 'site_id']);
-        });
+        if (! $this->hasIndex('pages', 'pages_id_site_id_unique')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->unique(['id', 'site_id']);
+            });
+        }
 
-        Schema::table('page_translations', function (Blueprint $table) {
-            $table->foreign('site_id')->references('id')->on('sites')->cascadeOnDelete();
-            $table->foreign(['page_id', 'site_id'])->references(['id', 'site_id'])->on('pages')->cascadeOnDelete();
-            $table->unique(['site_id', 'locale_id', 'slug']);
-            $table->unique(['site_id', 'locale_id', 'path']);
-        });
+        if (! $this->hasForeignKey('page_translations', 'page_translations_site_id_foreign')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->foreign('site_id')->references('id')->on('sites')->cascadeOnDelete();
+            });
+        }
 
-        Schema::table('page_translations', function (Blueprint $table) {
-            $table->dropIndex(['locale_id', 'slug']);
-            $table->dropIndex(['locale_id', 'path']);
-            $table->index(['site_id', 'page_id']);
-            $table->index(['locale_id', 'site_id']);
-            $table->foreignId('site_id')->nullable(false)->change();
-        });
+        if (! $this->hasForeignKey('page_translations', 'page_translations_page_id_site_id_foreign')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->foreign(['page_id', 'site_id'])->references(['id', 'site_id'])->on('pages')->cascadeOnDelete();
+            });
+        }
+
+        if (! $this->hasIndex('page_translations', 'page_translations_site_locale_slug_unique')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->unique(['site_id', 'locale_id', 'slug'], 'page_translations_site_locale_slug_unique');
+            });
+        }
+
+        if (! $this->hasIndex('page_translations', 'page_translations_site_locale_path_unique')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->unique(['site_id', 'locale_id', 'path'], 'page_translations_site_locale_path_unique');
+            });
+        }
+
+        if (! $this->hasIndex('page_translations', 'page_translations_site_id_page_id_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->index(['site_id', 'page_id']);
+            });
+        }
+
+        if (! $this->hasIndex('page_translations', 'page_translations_locale_id_site_id_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->index(['locale_id', 'site_id']);
+            });
+        }
+
+        if ($this->columnIsNullable('page_translations', 'site_id')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->foreignId('site_id')->nullable(false)->change();
+            });
+        }
     }
 
     public function down(): void
@@ -71,23 +100,108 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('page_translations', function (Blueprint $table) {
-            $table->dropForeign(['site_id']);
-            $table->dropForeign(['page_id', 'site_id']);
-            $table->dropUnique(['site_id', 'locale_id', 'slug']);
-            $table->dropUnique(['site_id', 'locale_id', 'path']);
-            $table->dropIndex(['site_id', 'page_id']);
-            $table->dropIndex(['locale_id', 'site_id']);
-        });
+        if ($this->hasForeignKey('page_translations', 'page_translations_site_id_foreign')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropForeign(['site_id']);
+            });
+        }
 
-        Schema::table('pages', function (Blueprint $table) {
-            $table->dropUnique(['id', 'site_id']);
-        });
+        if ($this->hasForeignKey('page_translations', 'page_translations_page_id_site_id_foreign')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropForeign(['page_id', 'site_id']);
+            });
+        }
+
+        if ($this->hasIndex('page_translations', 'page_translations_site_locale_slug_unique')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropUnique('page_translations_site_locale_slug_unique');
+            });
+        }
+
+        if ($this->hasIndex('page_translations', 'page_translations_site_locale_path_unique')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropUnique('page_translations_site_locale_path_unique');
+            });
+        }
+
+        if ($this->hasIndex('page_translations', 'page_translations_site_id_page_id_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropIndex('page_translations_site_id_page_id_index');
+            });
+        }
+
+        if ($this->hasIndex('page_translations', 'page_translations_locale_id_site_id_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->dropIndex('page_translations_locale_id_site_id_index');
+            });
+        }
+
+        if ($this->hasIndex('pages', 'pages_id_site_id_unique')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropUnique('pages_id_site_id_unique');
+            });
+        }
 
         Schema::table('page_translations', function (Blueprint $table) {
             $table->dropColumn('site_id');
-            $table->index(['locale_id', 'slug']);
-            $table->index(['locale_id', 'path']);
         });
+
+        if (! $this->hasIndex('page_translations', 'page_translations_locale_id_slug_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->index(['locale_id', 'slug']);
+            });
+        }
+
+        if (! $this->hasIndex('page_translations', 'page_translations_locale_id_path_index')) {
+            Schema::table('page_translations', function (Blueprint $table) {
+                $table->index(['locale_id', 'path']);
+            });
+        }
+    }
+
+    private function hasForeignKey(string $table, string $foreignKey): bool
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            return false;
+        }
+
+        return DB::table('information_schema.table_constraints')
+            ->where('table_schema', DB::raw('database()'))
+            ->where('table_name', $table)
+            ->where('constraint_name', $foreignKey)
+            ->where('constraint_type', 'FOREIGN KEY')
+            ->exists();
+    }
+
+    private function hasIndex(string $table, string $index): bool
+    {
+        $driver = DB::getDriverName();
+
+        return match ($driver) {
+            'mysql' => DB::table('information_schema.statistics')
+                ->where('table_schema', DB::raw('database()'))
+                ->where('table_name', $table)
+                ->where('index_name', $index)
+                ->exists(),
+            'sqlite' => collect(DB::select("pragma index_list('{$table}')"))
+                ->contains(fn (object $row) => ($row->name ?? null) === $index),
+            default => false,
+        };
+    }
+
+    private function columnIsNullable(string $table, string $column): bool
+    {
+        $driver = DB::getDriverName();
+
+        return match ($driver) {
+            'mysql' => DB::table('information_schema.columns')
+                ->where('table_schema', DB::raw('database()'))
+                ->where('table_name', $table)
+                ->where('column_name', $column)
+                ->value('is_nullable') === 'YES',
+            'sqlite' => collect(DB::select("pragma table_info('{$table}')"))
+                ->firstWhere('name', $column)?->notnull !== 1,
+            default => false,
+        };
     }
 };
