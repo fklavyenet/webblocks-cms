@@ -75,11 +75,18 @@ Recommended sequence:
 3. update `README.md` for any meaningful behavior, setup, route, usage, admin, command, or release-note change
 4. update `CHANGELOG.md`
 5. prepare release notes
-6. update the app version in code or config if the project stores it there
+6. update `App\Support\WebBlocks::VERSION`
 7. create and push the real git tag
 8. allow GitHub release and package publication to complete
 9. verify the published release is visible to the update infrastructure
 10. only after the release is real, synchronize the dev environment installed version if needed
+
+Before creating a release:
+
+1. update `App\Support\WebBlocks::VERSION`
+2. ensure the git tag matches that version, for example `v1.0.4`
+
+Never reintroduce `APP_VERSION` into `.env` or `.env.example`.
 
 ## AI / Agent Workflow Rules
 
@@ -117,7 +124,8 @@ Before creating a release tag, confirm:
 - `README.md` is updated
 - `CHANGELOG.md` is updated
 - release notes are prepared
-- app version is updated if the project stores it in config or code
+- `App\Support\WebBlocks::VERSION` is updated for the release
+- the release tag matches `App\Support\WebBlocks::VERSION`
 - update metadata is compatible with the intended minimum client version
 - no local or runtime files are included in the release
 

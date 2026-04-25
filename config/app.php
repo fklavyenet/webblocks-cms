@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\WebBlocks;
+
 return [
 
     /*
@@ -13,11 +15,11 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'WebBlocks CMS'),
+    'name' => env('APP_NAME', WebBlocks::NAME),
 
-    'slogan' => env('APP_SLOGAN', 'A modern block-based CMS'),
+    'slogan' => env('APP_SLOGAN', WebBlocks::SLOGAN),
 
-    'version' => env('APP_VERSION', '1.0.4'),
+    'version' => WebBlocks::VERSION,
 
     /*
     |--------------------------------------------------------------------------

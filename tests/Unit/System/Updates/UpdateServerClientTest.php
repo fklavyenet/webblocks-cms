@@ -36,6 +36,7 @@ class UpdateServerClientTest extends TestCase
         ]);
 
         config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+        app(InstalledVersionStore::class)->persist('0.1.0');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -91,6 +92,7 @@ class UpdateServerClientTest extends TestCase
         ]);
 
         config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+        app(InstalledVersionStore::class)->persist('0.1.0');
 
         $result = app(UpdateServerClient::class)->check();
 
@@ -115,6 +117,7 @@ class UpdateServerClientTest extends TestCase
         ]);
 
         config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+        app(InstalledVersionStore::class)->persist('0.1.0');
 
         $result = app(UpdateServerClient::class)->check();
 

@@ -1,12 +1,14 @@
 <?php
 
+use App\Support\WebBlocks;
+
 return [
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
     'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://updates.webblocksui.com'),
     'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', 'stable'),
     'api_version' => '1',
-    'product' => 'webblocks-cms',
-    'current_version' => env('APP_VERSION', '1.0.4'),
+    'product' => WebBlocks::HANDLE,
+    'current_version' => WebBlocks::VERSION,
     'site_url' => env('APP_URL', 'http://localhost'),
     'instance_id' => null,
     'timeout_seconds' => 5,
