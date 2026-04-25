@@ -12,6 +12,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,6 +76,22 @@ class SiteCloneServiceTest extends TestCase
         $this->assertSame($heroAsset->id, $imageBlock->asset_id);
         $this->assertNull($imageBlock->getRawOriginal('title'));
         $this->assertNull($imageBlock->getRawOriginal('subtitle'));
+        $presented = app(PublicPagePresenter::class)->present($aboutPage->fresh([
+            'site',
+            'translations',
+            'slots.slotType',
+            'blocks.blockType',
+            'blocks.children.blockType',
+            'blocks.children.textTranslations',
+            'blocks.textTranslations',
+            'blocks.imageTranslations',
+            'blocks.blockAssets.asset',
+        ]));
+        $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
+        $columnsBlock = $mainSlot['blocks']->firstWhere('type', 'columns');
+        $presentedChild = $columnsBlock->children->firstWhere('type', 'column_item');
+        $this->assertSame('Fast setup', $presentedChild->title);
+        $this->assertSame('English child content', $presentedChild->content);
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,
             'menu_key' => NavigationItem::MENU_PRIMARY,

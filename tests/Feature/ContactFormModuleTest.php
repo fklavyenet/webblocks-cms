@@ -13,6 +13,7 @@ use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
@@ -329,6 +330,24 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
+    public function public_rendering_does_not_require_canonical_contact_form_copy(): void
+    {
+        [$page, $block] = $this->createContactFormPage();
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
+
+        $freshBlock = $block->fresh();
+
+        $this->assertNull($freshBlock->getRawOriginal('title'));
+        $this->assertNull($freshBlock->getRawOriginal('content'));
+
+        $this->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Contact us')
+            ->assertSee('Send a message to the editorial team.');
+    }
+
+    #[Test]
     public function migration_backfills_contact_form_copy_into_translation_rows_and_removes_json_keys(): void
     {
         $slotType = $this->slotType();
@@ -425,6 +444,48 @@ class ContactFormModuleTest extends TestCase
         $this->assertArrayNotHasKey('submit_label', $settings);
         $this->assertArrayNotHasKey('success_message', $settings);
         $this->assertSame('team@example.com', $settings['recipient_email']);
+    }
+
+    #[Test]
+    public function authoritative_translation_normalization_can_backfill_contact_form_copy_from_legacy_canonical_fields(): void
+    {
+        $slotType = $this->slotType();
+        $blockType = $this->contactBlockType();
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'form',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Legacy contact heading',
+            'content' => 'Legacy intro copy',
+            'settings' => json_encode([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block);
+
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Legacy contact heading',
+            'content' => 'Legacy intro copy',
+        ]);
+        $this->assertNull($block->fresh()->getRawOriginal('title'));
+        $this->assertNull($block->fresh()->getRawOriginal('content'));
     }
 
     #[Test]

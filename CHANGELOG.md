@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Audit remaining block compatibility-field usage after making translation rows authoritative, and keep `blocks.title` / `blocks.subtitle` / `blocks.content` only for documented compatibility and reconstruction paths.
+- Remove stale admin fallback dependence on legacy canonical block copy by resolving default-locale translation content in the standalone block editor before rendering translatable block forms.
+- Add regression coverage proving public rendering, admin editing, revision restore, clone/import flows, and intentional legacy normalization continue to work when canonical block text fields are null.
 - Remove legacy `pages.title` and `pages.slug` storage after moving page identity to translations, and harden site-scoped page routing, cloning, importing, and revisions around translation-backed slugs.
 - Enforce stronger multisite and multilingual integrity for page translations, navigation links, site/default locale invariants, and block translation locale usage without changing public URL behavior.
 - Move contact form submit and success copy out of block JSON settings and into translation rows, keeping contact form settings reserved for shared operational configuration.

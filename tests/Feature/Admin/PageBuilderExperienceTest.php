@@ -12,6 +12,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\StarterContentSeeder;
@@ -2457,6 +2458,67 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame('editor@example.com', $settings['recipient_email']);
         $this->assertTrue($settings['send_email_notification']);
         $this->assertFalse($settings['store_submissions']);
+    }
+
+    #[Test]
+    public function standalone_admin_block_edit_form_uses_default_translation_values_when_canonical_fields_are_null(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $contactType = BlockType::query()->firstOrCreate(
+            ['slug' => 'contact_form'],
+            ['name' => 'Contact Form', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 10]
+        );
+
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $contactType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Contact us',
+            'content' => 'English intro',
+            'settings' => json_encode([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->contactFormTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact us',
+            'content' => 'English intro',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message.',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
+
+        $response = $this->actingAs($user)
+            ->followingRedirects()
+            ->get(route('admin.blocks.edit', $block));
+
+        $response->assertOk();
+        $response->assertSee('value="Contact us"', false);
+        $response->assertSee('English intro', false);
+        $response->assertSee('Send message');
     }
 
     #[Test]

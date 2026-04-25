@@ -12,6 +12,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
+use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -24,6 +25,7 @@ class BlockController extends Controller
 {
     public function __construct(
         private readonly BlockPayloadWriter $blockPayloadWriter,
+        private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -157,6 +159,11 @@ class BlockController extends Controller
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
+
+        if ($block->supportsTranslations()) {
+            $defaultLocale = $block->page?->availableSiteLocales()->firstWhere('is_default', true);
+            $block = $this->blockTranslationResolver->resolve($block, $defaultLocale);
+        }
 
         if ($block->page_id && $block->slot_type_id) {
             $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);

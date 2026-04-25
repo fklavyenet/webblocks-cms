@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Site;
+use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use App\Support\Sites\ExportImport\SiteImportManager;
 use App\Support\Sites\ExportImport\SiteImportOptions;
@@ -141,6 +142,22 @@ class SiteExportImportTest extends TestCase
         $this->assertNotNull($imageBlock->asset_id);
         $this->assertNull($imageBlock->getRawOriginal('title'));
         $this->assertNull($imageBlock->getRawOriginal('subtitle'));
+        $presented = app(PublicPagePresenter::class)->present($aboutPage->fresh([
+            'site',
+            'translations',
+            'slots.slotType',
+            'blocks.blockType',
+            'blocks.children.blockType',
+            'blocks.children.textTranslations',
+            'blocks.textTranslations',
+            'blocks.imageTranslations',
+            'blocks.blockAssets.asset',
+        ]));
+        $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
+        $columnsBlock = $mainSlot['blocks']->firstWhere('type', 'columns');
+        $presentedChild = $columnsBlock->children->firstWhere('type', 'column_item');
+        $this->assertSame('Fast setup', $presentedChild->title);
+        $this->assertSame('English child content', $presentedChild->content);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
     }
 

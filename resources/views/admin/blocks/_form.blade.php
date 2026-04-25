@@ -151,7 +151,7 @@
                                             @if (! $isTranslatableBlock)
                                                 This block uses shared canonical fields across all locales.
                                             @elseif ($isDefaultLocale)
-                                                Default locale edits update the canonical source and the English translation row.
+                                                Default locale edits update the default translation row.
                                             @elseif (($translationStatus['state'] ?? null) === 'fallback')
                                                 This locale is currently falling back to {{ strtoupper($translationStatus['resolved_locale']->code) }} until you save translated content.
                                             @elseif (($translationStatus['state'] ?? null) === 'missing')

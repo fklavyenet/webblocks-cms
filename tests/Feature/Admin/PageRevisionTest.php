@@ -11,6 +11,8 @@ use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
@@ -401,5 +403,87 @@ class PageRevisionTest extends TestCase
         $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
         $history->assertOk();
         $history->assertSee('Restored from revision #'.$revisionToRestore->id);
+    }
+
+    #[Test]
+    public function revision_restore_keeps_translated_block_content_working_when_canonical_fields_are_null(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $main = $this->slotType('main', 'Main', 1);
+        $sectionType = $this->sectionBlockType();
+        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
+
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Hero',
+            'content' => 'Original content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Hero',
+            'content' => 'Original content',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $sectionType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Hero updated',
+            'content' => 'Updated content',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
+
+        $revisionToRestore = $page->fresh()->revisions()->latest('id')->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $sectionType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Second update',
+            'content' => 'Second content',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('admin.pages.revisions.restore', [$page, $revisionToRestore]))
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
+        $resolvedBlock = app(BlockTranslationResolver::class)->resolve($restoredBlock, $this->defaultLocale());
+
+        $this->assertNull($restoredBlock->getRawOriginal('title'));
+        $this->assertNull($restoredBlock->getRawOriginal('content'));
+        $this->assertSame('Hero updated', $resolvedBlock->title);
+        $this->assertSame('Updated content', $resolvedBlock->content);
+        $this->get(route('pages.show', 'about'))
+            ->assertOk()
+            ->assertSee('Hero updated')
+            ->assertSee('Updated content');
     }
 }
