@@ -59,12 +59,33 @@ class BlockTranslationWriter
 
         $defaultPayload = $this->translationPayload($family, $data, $block, true);
         $localizedPayload = $this->translationPayload($family, $data, $block, $locale->id === $defaultLocale->id || $duplicateDefaultOnCreate);
+        $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
 
-        $this->writeTranslation($block, $family, $defaultLocale->id, $defaultPayload);
+        if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
+            $this->writeTranslation($block, $family, $defaultLocale->id, $defaultPayload);
+        } else {
+            $this->ensureDefaultTranslation($block, $family, $defaultLocale->id);
+        }
 
-        if ($locale->id !== $defaultLocale->id) {
+        if (! $isDefaultLocaleEdit) {
             $this->writeTranslation($block, $family, $locale->id, $localizedPayload);
         }
+    }
+
+    private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId): void
+    {
+        $relation = match ($family) {
+            'text' => $block->textTranslations(),
+            'button' => $block->buttonTranslations(),
+            'image' => $block->imageTranslations(),
+            'contact_form' => $block->contactFormTranslations(),
+        };
+
+        if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
+            return;
+        }
+
+        $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $block, true));
     }
 
     private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void

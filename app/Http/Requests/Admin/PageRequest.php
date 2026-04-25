@@ -107,7 +107,7 @@ class PageRequest extends FormRequest
             ->all();
 
         $data['blocks'] = collect($data['blocks'] ?? [])
-            ->map(function (array $block, int $index) {
+            ->map(function (array $block, int $index) use ($authorization) {
                 $blockType = ! empty($block['block_type_id'])
                     ? BlockType::query()->find($block['block_type_id'])
                     : null;

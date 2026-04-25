@@ -7,12 +7,11 @@ use App\Http\Requests\Admin\BlockRequest;
 use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
-use App\Models\BlockAsset;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -24,7 +23,7 @@ use Illuminate\View\View;
 class BlockController extends Controller
 {
     public function __construct(
-        private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly BlockPayloadWriter $blockPayloadWriter,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -115,18 +114,13 @@ class BlockController extends Controller
     {
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
-        $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
-        $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, null, $page, $localeCode, true);
-        unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
-        $block = DB::transaction(function () use ($canonicalData, $blockAssets, $columnItems, $data, $localeCode) {
-            $block = Block::create($canonicalData);
-            $this->blockTranslationWriter->sync($block, $data, $localeCode, true);
-            $this->syncBlockAssets($block, $blockAssets);
-            $this->syncColumnItems($block, $columnItems);
+        $block = DB::transaction(function () use ($page, $columnItems, $data, $localeCode) {
+            $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
+            $this->syncColumnItems($block, $columnItems, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -212,18 +206,13 @@ class BlockController extends Controller
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
-        $blockAssets = $data['_block_assets'] ?? [];
         $columnItems = $this->columnItemsFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
-        $canonicalData = $this->blockTranslationWriter->canonicalPayload($data, $block, $page, $localeCode);
-        unset($canonicalData['_block_assets'], $canonicalData['locale']);
 
-        DB::transaction(function () use ($block, $canonicalData, $blockAssets, $columnItems, $data, $localeCode): void {
-            $block->update($canonicalData);
-            $this->blockTranslationWriter->sync($block, $data, $localeCode);
-            $this->syncBlockAssets($block, $blockAssets);
-            $this->syncColumnItems($block, $columnItems);
+        DB::transaction(function () use ($block, $page, $columnItems, $data, $localeCode): void {
+            $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
+            $this->syncColumnItems($block, $columnItems, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -355,26 +344,6 @@ class BlockController extends Controller
         return $blockTypes->firstWhere('id', $selectedId);
     }
 
-    private function syncBlockAssets(Block $block, array $blockAssets): void
-    {
-        $block->blockAssets()->delete();
-
-        foreach ($blockAssets as $role => $assetIds) {
-            foreach (array_values($assetIds) as $position => $assetId) {
-                if (! $assetId) {
-                    continue;
-                }
-
-                BlockAsset::create([
-                    'block_id' => $block->id,
-                    'asset_id' => $assetId,
-                    'role' => $role,
-                    'position' => $position,
-                ]);
-            }
-        }
-    }
-
     private function columnItemsFrom(Request $request): array
     {
         return collect($request->input('column_items', []))
@@ -396,7 +365,7 @@ class BlockController extends Controller
             ->all();
     }
 
-    private function syncColumnItems(Block $block, array $columnItems): void
+    private function syncColumnItems(Block $block, array $columnItems, ?string $localeCode = null): void
     {
         if (! $block->isColumnContainer()) {
             return;
@@ -441,8 +410,10 @@ class BlockController extends Controller
             ];
 
             $columnItem = $itemId && $existingItems->has($itemId)
-                ? tap($existingItems[$itemId])->update($payload)
-                : Block::create($payload);
+                ? $existingItems[$itemId]
+                : new Block;
+
+            $columnItem = $this->blockPayloadWriter->save($columnItem, $block->page, $payload, $localeCode);
 
             $keptIds[] = $columnItem->id;
         }

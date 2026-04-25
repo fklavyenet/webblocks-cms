@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Stabilize page-builder block saves so inline edits and block form edits use the same translation-aware write path, preventing default-locale and localized block content drift.
 - Add Privacy-Aware Visitor Reports V2 with a first-party consent cookie, compact public privacy banner, basic anonymous page view tracking by default, and richer full tracking only after explicit acceptance.
 - Align the CMS public cookie consent banner with the WebBlocks UI Cookie Consent pattern, including the shared preference modal, footer reopen control, localStorage consent model, and backend cookie sync for Visitor Reports.
 - Refine cookie consent UX with a persistent footer `Cookie settings` trigger, a narrower bottom-sheet style public consent panel, a top-right close control, and a dedicated admin `Cookie settings` card.

@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\PageRequest;
 use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
-use App\Models\BlockAsset;
 use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
@@ -15,6 +14,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
@@ -31,6 +31,7 @@ class PageController extends Controller
     private const SITE_CONTEXT_SESSION_KEY = 'admin.pages.site';
 
     public function __construct(
+        private readonly BlockPayloadWriter $blockPayloadWriter,
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
@@ -401,13 +402,13 @@ class PageController extends Controller
     {
         $existingBlocks = $page->blocks()->with('blockAssets')->get()->keyBy('id');
         $keptBlockIds = [];
+        $localeCode = Locale::normalizeCode(request('locale'));
 
         foreach (array_values($submittedBlocks) as $index => $blockData) {
             $blockId = $blockData['id'] ?? null;
             $delete = (bool) ($blockData['_delete'] ?? false);
-            $blockAssets = $blockData['_block_assets'] ?? [];
 
-            unset($blockData['id'], $blockData['_delete'], $blockData['_block_assets']);
+            unset($blockData['id'], $blockData['_delete']);
 
             $blockType = ! empty($blockData['block_type_id'])
                 ? BlockType::query()->find($blockData['block_type_id'])
@@ -433,10 +434,10 @@ class PageController extends Controller
             }
 
             $block = $blockId && $existingBlocks->has($blockId)
-                ? tap($existingBlocks[$blockId])->update($blockData)
-                : Block::create($blockData);
+                ? $existingBlocks[$blockId]
+                : new Block;
 
-            $this->syncBlockAssets($block, $blockAssets);
+            $block = $this->blockPayloadWriter->save($block, $page, $blockData, $localeCode);
             $keptBlockIds[] = $block->id;
         }
 
@@ -470,26 +471,6 @@ class PageController extends Controller
         $page->unsetRelation('translations');
         $page->load('translations');
         $page->setRelation('currentTranslation', $page->defaultTranslation());
-    }
-
-    private function syncBlockAssets(Block $block, array $blockAssets): void
-    {
-        $block->blockAssets()->delete();
-
-        foreach ($blockAssets as $role => $assetIds) {
-            foreach (array_values($assetIds) as $position => $assetId) {
-                if (! $assetId) {
-                    continue;
-                }
-
-                BlockAsset::create([
-                    'block_id' => $block->id,
-                    'asset_id' => $assetId,
-                    'role' => $role,
-                    'position' => $position,
-                ]);
-            }
-        }
     }
 
     private function slotBlockModalState(Page $page, PageSlot $slot, $blocks, $blockTypes): array
