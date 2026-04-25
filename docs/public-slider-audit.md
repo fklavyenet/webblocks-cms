@@ -165,3 +165,10 @@ Questions for the UI project:
 - WebBlocks UI already supports it: no evidence found in the shipped CDN asset or local UI source
 - classification: **B. Missing WebBlocks UI pattern that should be implemented in the UI project later**
 - recommended next action: move it later to a narrowly named CMS asset and treat UI formalization as a separate future task
+
+## Implemented Refactor
+
+- slider behavior moved to `public/assets/webblocks-cms/js/public-slider.js`
+- `resources/views/layouts/public.blade.php` now loads that asset with `defer`
+- the welcome page may load the asset, but it safely no-ops because no slider markup exists there
+- a formal WebBlocks UI slider or carousel pattern is still a future task outside this CMS refactor
