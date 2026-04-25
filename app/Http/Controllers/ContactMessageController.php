@@ -16,6 +16,7 @@ class ContactMessageController extends Controller
         $payload = $request->payload();
         $block = Block::query()->with(['blockType', 'page'])->findOrFail($payload['block_id']);
         $block->page?->loadMissing('translations');
+        $block = app(\App\Support\Blocks\BlockTranslationResolver::class)->resolve($block);
 
         abort_unless($block->typeSlug() === 'contact_form', 404);
         abort_unless($block->status === 'published', 404);
@@ -26,14 +27,12 @@ class ContactMessageController extends Controller
         }
 
         $minimumSubmitSeconds = (int) config('contact.minimum_submit_seconds', 3);
-        $successMessage = (string) $block->setting('success_message', config('contact.success_message'));
         $redirectUrl = $this->redirectUrl($payload['source_url'] ?: $block->page?->publicUrl() ?: url('/'), $block->id);
 
         // Honeypot and timing failures intentionally look successful so obvious bots do not learn the validation rules.
         if ($payload['website'] !== '' || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
             return redirect($redirectUrl)
-                ->with('contact_form_success_block_id', $block->id)
-                ->with('contact_form_success_message', $successMessage);
+                ->with('contact_form_success_block_id', $block->id);
         }
 
         $notificationEnabled = (bool) $block->setting('send_email_notification', true);
@@ -77,8 +76,7 @@ class ContactMessageController extends Controller
         }
 
         return redirect($redirectUrl)
-            ->with('contact_form_success_block_id', $block->id)
-            ->with('contact_form_success_message', $successMessage);
+            ->with('contact_form_success_block_id', $block->id);
     }
 
     private function redirectUrl(?string $sourceUrl, int $blockId): string

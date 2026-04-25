@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Mail\ContactMessageNotification;
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\BlockType;
 use App\Models\ContactMessage;
 use App\Models\Page;
+use App\Models\PageTranslation;
 use App\Models\PageSlot;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +21,16 @@ use Tests\TestCase;
 class ContactFormModuleTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function defaultLocale(): Locale
+    {
+        return Locale::query()->where('is_default', true)->firstOrFail();
+    }
+
+    private function defaultSite(): Site
+    {
+        return Site::query()->where('is_primary', true)->firstOrFail();
+    }
 
     private function slotType(): SlotType
     {
@@ -70,14 +83,20 @@ class ContactFormModuleTest extends TestCase
             'title' => 'Contact us',
             'content' => 'Send a message to the editorial team.',
             'settings' => json_encode([
-                'submit_label' => 'Send message',
-                'success_message' => 'Thanks for your message. We will get back to you soon.',
                 'recipient_email' => 'team@example.com',
                 'send_email_notification' => true,
                 'store_submissions' => true,
             ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
+        ]);
+
+        $block->contactFormTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact us',
+            'content' => 'Send a message to the editorial team.',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message. We will get back to you soon.',
         ]);
 
         return [$page, $block];
@@ -307,5 +326,117 @@ class ContactFormModuleTest extends TestCase
         $response->assertSee('Subject');
         $response->assertSee('Message');
         $response->assertSee(route('contact-messages.store'), false);
+    }
+
+    #[Test]
+    public function migration_backfills_contact_form_copy_into_translation_rows_and_removes_json_keys(): void
+    {
+        $slotType = $this->slotType();
+        $blockType = $this->contactBlockType();
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'form',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Contact us',
+            'content' => 'Send a message to the editorial team.',
+            'settings' => json_encode([
+                'submit_label' => 'Legacy send',
+                'success_message' => 'Legacy success',
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => false,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $migration = require base_path('database/migrations/2026_04_25_120000_move_contact_form_copy_out_of_block_settings.php');
+        $migration->up();
+
+        $translation = $block->fresh()->contactFormTranslations()->where('locale_id', $this->defaultLocale()->id)->first();
+        $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
+
+        $this->assertNotNull($translation);
+        $this->assertSame('Legacy send', $translation->submit_label);
+        $this->assertSame('Legacy success', $translation->success_message);
+        $this->assertArrayNotHasKey('submit_label', $settings);
+        $this->assertArrayNotHasKey('success_message', $settings);
+        $this->assertSame('team@example.com', $settings['recipient_email']);
+        $this->assertTrue($settings['send_email_notification']);
+        $this->assertFalse($settings['store_submissions']);
+    }
+
+    #[Test]
+    public function public_rendering_uses_translation_values_for_each_locale_and_safe_defaults_when_copy_is_missing(): void
+    {
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        [$page, $block] = $this->createContactFormPage();
+
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Iletisim',
+            'slug' => 'iletisim',
+            'path' => '/tr/p/iletisim',
+        ]);
+
+        $block->contactFormTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Bize ulasin',
+            'content' => 'Turkce tanitim',
+            'submit_label' => 'Mesaj gonder',
+            'success_message' => 'Tesekkurler.',
+        ]);
+
+        $this->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Send message');
+
+        $this->withSession(['contact_form_success_block_id' => $block->id])
+            ->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Thanks for your message. We will get back to you soon.');
+
+        $this->get('/tr/p/iletisim')
+            ->assertOk()
+            ->assertSee('Mesaj gonder');
+
+        $this->withSession(['contact_form_success_block_id' => $block->id])
+            ->get('/tr/p/iletisim')
+            ->assertOk()
+            ->assertSee('Tesekkurler.');
+
+        $block->contactFormTranslations()->where('locale_id', $this->defaultLocale()->id)->update([
+            'submit_label' => null,
+            'success_message' => null,
+        ]);
+        $block->contactFormTranslations()->where('locale_id', $turkish->id)->update([
+            'submit_label' => null,
+            'success_message' => null,
+        ]);
+
+        $this->get(route('pages.show', $page->slug))
+            ->assertOk()
+            ->assertSee('Send message')
+            ->assertSee(config('contact.success_message'));
     }
 }

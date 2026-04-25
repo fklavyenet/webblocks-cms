@@ -1,8 +1,8 @@
 @php
     $isSubmittedBlock = (int) session('contact_form_success_block_id') === $block->id;
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
-    $submitLabel = $block->setting('submit_label', 'Send message');
-    $successMessage = session('contact_form_success_message') ?: $block->setting('success_message', config('contact.success_message'));
+    $submitLabel = $block->submit_label ?? 'Send message';
+    $successMessage = $block->success_message ?? config('contact.success_message');
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">

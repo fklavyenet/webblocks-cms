@@ -25,14 +25,6 @@ class BlockTranslationWriter
             return $data;
         }
 
-        if ($locale->id === $defaultLocale->id || $isCreating) {
-            return $data;
-        }
-
-        foreach ($this->canonicalBlockFieldsForFamily($family) as $field) {
-            unset($data[$field]);
-        }
-
         if ($family === 'contact_form') {
             $settings = $this->decodeSettings($data['settings'] ?? null);
 
@@ -41,6 +33,14 @@ class BlockTranslationWriter
             $data['settings'] = $settings === []
                 ? null
                 : json_encode($settings, JSON_UNESCAPED_SLASHES);
+        }
+
+        if ($locale->id === $defaultLocale->id || $isCreating) {
+            return $data;
+        }
+
+        foreach ($this->canonicalBlockFieldsForFamily($family) as $field) {
+            unset($data[$field]);
         }
 
         return $data;
@@ -100,9 +100,6 @@ class BlockTranslationWriter
 
     private function translationPayload(string $family, array $data, Block $block, bool $preferCanonical): array
     {
-        $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
-        $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
-
         return match ($family) {
             'text' => [
                 'title' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title')) : ($data['title'] ?? null),
@@ -120,13 +117,55 @@ class BlockTranslationWriter
                 'title' => $preferCanonical ? ($data['title'] ?? $block->getRawOriginal('title')) : ($data['title'] ?? null),
                 'content' => $preferCanonical ? ($data['content'] ?? $block->getRawOriginal('content')) : ($data['content'] ?? null),
                 'submit_label' => $preferCanonical
-                    ? ($submittedSettings['submit_label'] ?? $rawSettings['submit_label'] ?? 'Send message')
-                    : (trim((string) ($submittedSettings['submit_label'] ?? '')) ?: null),
+                    ? $this->resolvedContactTranslationValue($data, $block, 'submit_label', 'Send message')
+                    : $this->submittedContactTranslationValue($data, 'submit_label'),
                 'success_message' => $preferCanonical
-                    ? ($submittedSettings['success_message'] ?? $rawSettings['success_message'] ?? config('contact.success_message'))
-                    : (trim((string) ($submittedSettings['success_message'] ?? '')) ?: null),
+                    ? $this->resolvedContactTranslationValue($data, $block, 'success_message', config('contact.success_message'))
+                    : $this->submittedContactTranslationValue($data, 'success_message'),
             ],
         };
+    }
+
+    private function resolvedContactTranslationValue(array $data, Block $block, string $field, string $default): string
+    {
+        $submitted = $this->submittedContactTranslationValue($data, $field);
+
+        if ($submitted !== null) {
+            return $submitted;
+        }
+
+        $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
+        $submittedSettingValue = trim((string) ($submittedSettings[$field] ?? ''));
+
+        if ($submittedSettingValue !== '') {
+            return $submittedSettingValue;
+        }
+
+        $translation = $block->contactFormTranslations()
+            ->where('locale_id', $this->localeResolver->default()->id)
+            ->first();
+
+        $existing = trim((string) ($translation?->{$field} ?? ''));
+
+        if ($existing !== '') {
+            return $existing;
+        }
+
+        $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
+
+        return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
+    }
+
+    private function submittedContactTranslationValue(array $data, string $field): ?string
+    {
+        $value = trim((string) ($data[$field] ?? ''));
+
+        if ($value === '') {
+            $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
+            $value = trim((string) ($submittedSettings[$field] ?? ''));
+        }
+
+        return $value !== '' ? $value : null;
     }
 
     private function canonicalBlockFieldsForFamily(string $family): array

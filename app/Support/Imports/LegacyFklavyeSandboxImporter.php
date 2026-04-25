@@ -42,6 +42,7 @@ class LegacyFklavyeSandboxImporter
             $this->importPages($sourcePages, $pageTypeId);
             $this->importPageSlots($sourcePages, $slotTypeIds);
             $this->importMainBlocks($sourceBlocks, $sourceBlockTypeSlugs, $blockTypeMap, $blockTypeSourceTypes, (int) $slotTypeIds['main']);
+            $this->seedDefaultContactFormTranslations();
             $this->importNavigation($sourceNavigationItems);
             $this->seedSiteChrome($sourcePages, $blockTypeMap, $blockTypeSourceTypes, $slotTypeIds, $sourceBlocks, $sourceBlockTypeSlugs);
 
@@ -428,8 +429,6 @@ class LegacyFklavyeSandboxImporter
 
         if ($targetSlug === 'contact_form') {
             $decoded = array_merge([
-                'submit_label' => 'Send message',
-                'success_message' => 'Thanks for your message. We will get back to you soon.',
                 'recipient_email' => null,
                 'send_email_notification' => true,
                 'store_submissions' => true,
@@ -437,6 +436,33 @@ class LegacyFklavyeSandboxImporter
         }
 
         return $decoded === [] ? null : json_encode($decoded, JSON_UNESCAPED_SLASHES);
+    }
+
+    private function seedDefaultContactFormTranslations(): void
+    {
+        $defaultLocaleId = DB::table('locales')->where('is_default', true)->value('id');
+
+        if (! $defaultLocaleId) {
+            return;
+        }
+
+        DB::table('blocks')
+            ->where('type', 'contact_form')
+            ->orderBy('id')
+            ->get()
+            ->each(function (object $block) use ($defaultLocaleId): void {
+                DB::table('block_contact_form_translations')->updateOrInsert(
+                    ['block_id' => $block->id, 'locale_id' => $defaultLocaleId],
+                    [
+                        'title' => $block->title,
+                        'content' => $block->content,
+                        'submit_label' => 'Send message',
+                        'success_message' => 'Thanks for your message. We will get back to you soon.',
+                        'created_at' => $block->created_at,
+                        'updated_at' => $block->updated_at,
+                    ],
+                );
+            });
     }
 
     private function importDerivedBlockAssets(int $blockId, string $targetSlug, ?string $settings): void

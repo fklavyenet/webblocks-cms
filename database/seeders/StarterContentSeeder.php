@@ -415,8 +415,6 @@ class StarterContentSeeder extends Seeder
                 'variant' => null,
                 'meta' => null,
                 'settings' => json_encode([
-                    'submit_label' => 'Send message',
-                    'success_message' => 'Thanks for your message. We will get back to you soon.',
                     'recipient_email' => null,
                     'send_email_notification' => true,
                     'store_submissions' => true,
@@ -571,6 +569,16 @@ class StarterContentSeeder extends Seeder
                 }
 
                 if ($family === 'contact_form' && $block->getRawOriginal('title') === 'Contact us') {
+                    $block->contactFormTranslations()->updateOrCreate(
+                        ['locale_id' => Locale::query()->where('is_default', true)->value('id')],
+                        [
+                            'title' => 'Contact us',
+                            'content' => 'Tell us what you are planning and we will route your message to the right editorial or implementation contact.',
+                            'submit_label' => 'Send message',
+                            'success_message' => 'Thanks for your message. We will get back to you soon.',
+                        ],
+                    );
+
                     $block->contactFormTranslations()->updateOrCreate(
                         ['locale_id' => $locale->id],
                         [

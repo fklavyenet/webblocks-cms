@@ -8,6 +8,7 @@ use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
 use App\Models\DemoAssetReference;
+use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -32,6 +33,8 @@ class FullShowcaseSeeder extends Seeder
 
     private ?int $uploaderId = null;
 
+    private ?int $defaultLocaleId = null;
+
     public function run(): void
     {
         $this->blockTypes = BlockType::query()->get()->keyBy('slug');
@@ -39,6 +42,7 @@ class FullShowcaseSeeder extends Seeder
         $this->pages = collect();
         $this->folders = collect();
         $this->assets = collect();
+        $this->defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
         $this->uploaderId = User::query()->where('email', 'admin@example.com')->value('id')
             ?? User::query()->where('email', 'test@example.com')->value('id')
             ?? User::query()->value('id');
@@ -268,9 +272,22 @@ class FullShowcaseSeeder extends Seeder
         $slotType = $this->slotTypes->get($slotSlug);
 
         $settings = $definition['settings'] ?? null;
+        $contactTranslation = null;
 
         if (in_array($definition['type'], ['navigation-auto', 'menu'], true)) {
             $settings = ['menu_key' => $definition['menu_key'] ?? NavigationItem::MENU_PRIMARY];
+        }
+
+        if ($definition['type'] === 'contact_form') {
+            $settings = is_array($settings) ? $settings : [];
+            $contactTranslation = [
+                'title' => $definition['title'] ?? null,
+                'content' => $definition['content'] ?? null,
+                'submit_label' => trim((string) ($settings['submit_label'] ?? '')) ?: 'Send message',
+                'success_message' => trim((string) ($settings['success_message'] ?? '')) ?: config('contact.success_message'),
+            ];
+
+            unset($settings['submit_label'], $settings['success_message']);
         }
 
         $block = Block::query()->create([
@@ -316,6 +333,13 @@ class FullShowcaseSeeder extends Seeder
 
         foreach (array_values($definition['children'] ?? []) as $childSortOrder => $childDefinition) {
             $this->createBlock($page, $slotSlug, $childDefinition, $block, $childSortOrder);
+        }
+
+        if ($definition['type'] === 'contact_form' && $this->defaultLocaleId && $contactTranslation) {
+            $block->contactFormTranslations()->updateOrCreate(
+                ['locale_id' => $this->defaultLocaleId],
+                $contactTranslation,
+            );
         }
 
         return $block;

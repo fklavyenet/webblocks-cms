@@ -1,6 +1,6 @@
 @php
-    $submitLabel = old('submit_label', $block->setting('submit_label', 'Send message'));
-    $successMessage = old('success_message', $block->setting('success_message', config('contact.success_message')));
+    $submitLabel = old('submit_label', $block->submit_label ?? 'Send message');
+    $successMessage = old('success_message', $block->success_message ?? config('contact.success_message'));
     $recipientEmail = old('recipient_email', $block->setting('recipient_email'));
     $sendEmailNotification = (bool) old('send_email_notification', $block->setting('send_email_notification', true));
     $storeSubmissions = (bool) old('store_submissions', $block->setting('store_submissions', true));

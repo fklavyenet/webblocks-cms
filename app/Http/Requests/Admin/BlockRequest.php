@@ -33,6 +33,7 @@ class BlockRequest extends FormRequest
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
         $isLocaleRequest = $this->filled('locale');
+        $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
         return [
             'page_id' => ['required', 'integer', 'exists:pages,id'],
@@ -69,8 +70,8 @@ class BlockRequest extends FormRequest
             'settings' => ['nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
             'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
-            'submit_label' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:255'],
-            'success_message' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:1000'],
+            'submit_label' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:255'],
+            'success_message' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:1000'],
             'recipient_email' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
             'send_email_notification' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
             'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
@@ -233,8 +234,6 @@ class BlockRequest extends FormRequest
                 $data['meta'] = null;
                 $data['asset_id'] = null;
                 $data['settings'] = json_encode([
-                    'submit_label' => trim((string) ($data['submit_label'] ?? 'Send message')) ?: 'Send message',
-                    'success_message' => trim((string) ($data['success_message'] ?? config('contact.success_message'))) ?: config('contact.success_message'),
                     'recipient_email' => $isTranslatedContactFormEdit
                         ? ($existingSettings['recipient_email'] ?? null)
                         : (trim((string) ($data['recipient_email'] ?? '')) ?: null),
@@ -253,7 +252,7 @@ class BlockRequest extends FormRequest
             $data['slot'] = $slotType?->slug;
         }
 
-        unset($data['heading'], $data['intro_text'], $data['submit_label'], $data['success_message'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
+        unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
         unset($data['navigation_menu_key']);
 
         return $data;

@@ -2358,8 +2358,88 @@ class PageBuilderExperienceTest extends TestCase
 
         $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
 
+        $this->assertArrayNotHasKey('submit_label', $settings);
+        $this->assertArrayNotHasKey('success_message', $settings);
         $this->assertSame('team@example.com', $settings['recipient_email']);
         $this->assertTrue($settings['send_email_notification']);
+    }
+
+    #[Test]
+    public function default_locale_contact_form_edits_store_copy_in_translation_rows_not_json_settings(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $contactType = BlockType::query()->firstOrCreate(
+            ['slug' => 'contact_form'],
+            ['name' => 'Contact Form', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 10]
+        );
+
+        $page = Page::create([
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::create([
+            'page_id' => $page->id,
+            'type' => 'contact_form',
+            'block_type_id' => $contactType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Old title',
+            'content' => 'Old intro',
+            'settings' => json_encode([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $contactType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'heading' => 'Contact us',
+            'intro_text' => 'English intro',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message.',
+            'recipient_email' => 'editor@example.com',
+            'send_email_notification' => 1,
+            'store_submissions' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+        ]);
+
+        $this->assertStringContainsString('/admin/pages/'.$page->id.'/slots/'.$slot->id.'/blocks', (string) $response->headers->get('Location'));
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact us',
+            'content' => 'English intro',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message.',
+        ]);
+
+        $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
+
+        $this->assertArrayNotHasKey('submit_label', $settings);
+        $this->assertArrayNotHasKey('success_message', $settings);
+        $this->assertSame('editor@example.com', $settings['recipient_email']);
+        $this->assertTrue($settings['send_email_notification']);
+        $this->assertFalse($settings['store_submissions']);
     }
 
     #[Test]
