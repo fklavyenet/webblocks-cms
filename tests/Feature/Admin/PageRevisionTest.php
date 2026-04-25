@@ -373,9 +373,12 @@ class PageRevisionTest extends TestCase
         $restore->assertSessionHas('status', 'Page revision restored successfully.');
 
         $page = $page->fresh()->load(['translations', 'slots', 'blocks.textTranslations']);
+        $defaultTranslation = $page->defaultTranslation();
 
-        $this->assertSame('About', $page->getRawOriginal('title'));
-        $this->assertSame('about', $page->getRawOriginal('slug'));
+        $this->assertSame('About', $defaultTranslation?->name);
+        $this->assertSame('about', $defaultTranslation?->slug);
+        $this->assertSame('About', $page->title);
+        $this->assertSame('about', $page->slug);
         $this->assertSame(Page::STATUS_ARCHIVED, $page->status);
         $this->assertSame('Hakkinda', $page->translations->firstWhere('locale_id', $turkish->id)?->name);
         $this->assertCount(1, $page->slots);

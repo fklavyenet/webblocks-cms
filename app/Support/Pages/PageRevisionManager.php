@@ -104,6 +104,7 @@ class PageRevisionManager
 
     private function snapshot(Page $page): array
     {
+        $defaultTranslation = $page->defaultTranslation();
         $blocks = $page->blocks
             ->sortBy(fn (Block $block) => sprintf('%04d-%04d', $block->parent_id ?? 0, $block->sort_order))
             ->values();
@@ -112,8 +113,8 @@ class PageRevisionManager
             'schema_version' => self::SNAPSHOT_SCHEMA_VERSION,
             'captured_at' => now()->toIso8601String(),
             'page' => [
-                'title' => $page->getRawOriginal('title'),
-                'slug' => $page->getRawOriginal('slug'),
+                'title' => $defaultTranslation?->name ?? $page->getRawOriginal('title'),
+                'slug' => $defaultTranslation?->slug ?? $page->getRawOriginal('slug'),
                 'page_type' => $page->page_type,
                 'page_type_id' => $page->page_type_id,
                 'layout_id' => $page->layout_id,
@@ -216,8 +217,6 @@ class PageRevisionManager
         $pageData = Arr::get($snapshot, 'page', []);
 
         $page->forceFill([
-            'title' => Arr::get($pageData, 'title', $page->getRawOriginal('title')),
-            'slug' => Arr::get($pageData, 'slug', $page->getRawOriginal('slug')),
             'page_type' => Arr::get($pageData, 'page_type', $page->page_type),
             'page_type_id' => Arr::get($pageData, 'page_type_id', $page->page_type_id),
             'layout_id' => Arr::get($pageData, 'layout_id', $page->layout_id),

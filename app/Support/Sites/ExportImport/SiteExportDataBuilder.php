@@ -91,8 +91,8 @@ class SiteExportDataBuilder
             'pages' => $pages->map(fn (Page $page) => [
                 'id' => $page->id,
                 'site_id' => $page->site_id,
-                'title' => $page->getRawOriginal('title'),
-                'slug' => $page->getRawOriginal('slug'),
+                'title' => $page->defaultTranslation()?->name,
+                'slug' => $page->defaultTranslation()?->slug,
                 'page_type' => $page->page_type,
                 'page_type_slug' => $page->page_type_id ? optional($page->pageType)->slug : null,
                 'layout_slug' => $page->layout_id ? optional($page->layout)->slug : null,

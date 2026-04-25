@@ -210,10 +210,12 @@ class SiteCloneService
             ->get();
 
         foreach ($sourcePages as $page) {
+            $defaultTranslation = $page->defaultTranslation();
+
             $newPage = Page::query()->create([
                 'site_id' => $targetSite->id,
-                'title' => $page->getRawOriginal('title'),
-                'slug' => $page->getRawOriginal('slug'),
+                'title' => $defaultTranslation?->name ?? $page->getRawOriginal('title'),
+                'slug' => $defaultTranslation?->slug ?? $page->getRawOriginal('slug'),
                 'page_type' => $page->page_type,
                 'status' => $page->status,
             ]);

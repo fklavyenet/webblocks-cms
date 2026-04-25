@@ -190,11 +190,11 @@ class NavigationItem extends Model
     public function metaLabel(): string
     {
         if ($this->link_type === self::LINK_PAGE) {
-            if ($this->page?->title && $this->page?->publicPath()) {
-                return $this->page->title.' '.$this->page->publicPath();
+            if ($this->page?->name && $this->page?->publicPath()) {
+                return $this->page->name.' '.$this->page->publicPath();
             }
 
-            return $this->page?->title ?: ($this->page?->publicPath() ?: 'Linked page');
+            return $this->page?->name ?: ($this->page?->publicPath() ?: 'Linked page');
         }
 
         if ($this->link_type === self::LINK_CUSTOM_URL) {

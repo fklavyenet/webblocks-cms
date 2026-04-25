@@ -77,7 +77,10 @@ class BlockController extends Controller
         $block->parent_id = $request->integer('parent_id') ?: null;
         $block->block_type_id = $request->integer('block_type_id') ?: null;
         $block->slot_type_id = $request->integer('slot_type_id') ?: null;
-        $pages = $this->authorization->scopePagesForUser(Page::query(), request()->user())->with(['blocks', 'translations'])->orderBy('title')->get();
+        $pages = $this->authorization->scopePagesForUser(Page::query(), request()->user())
+            ->with(['blocks', 'translations'])
+            ->orderByDefaultTranslation('name')
+            ->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
@@ -167,7 +170,10 @@ class BlockController extends Controller
             }
         }
 
-        $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())->with(['blocks', 'translations'])->orderBy('title')->get();
+        $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
+            ->with(['blocks', 'translations'])
+            ->orderByDefaultTranslation('name')
+            ->get();
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();

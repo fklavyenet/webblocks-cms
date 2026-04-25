@@ -47,6 +47,7 @@ class PageController extends Controller
         $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
         $allowedStatuses = $this->workflowManager->allowedStatuses();
         $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
+        $defaultLocaleId = Page::defaultLocaleId();
         [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
 
         if (! in_array($status, $allowedStatuses, true)) {
@@ -66,11 +67,9 @@ class PageController extends Controller
                 ->with(['site', 'translations.locale'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
-                ->when($search !== '', function ($query) use ($search) {
-                    $query->where(function ($inner) use ($search) {
-                        $inner->where('title', 'like', "%{$search}%")
-                            ->orWhere('slug', 'like', "%{$search}%")
-                            ->orWhere('page_type', 'like', "%{$search}%")
+                ->when($search !== '', function ($query) use ($search, $defaultLocaleId) {
+                    $query->where(function ($inner) use ($search, $defaultLocaleId) {
+                        $inner->where('page_type', 'like', "%{$search}%")
                             ->orWhereHas('blocks.textTranslations', fn ($translations) => $translations
                                 ->where('title', 'like', "%{$search}%")
                                 ->orWhere('subtitle', 'like', "%{$search}%")
@@ -86,13 +85,18 @@ class PageController extends Controller
                                 ->orWhere('submit_label', 'like', "%{$search}%")
                                 ->orWhere('success_message', 'like', "%{$search}%"))
                             ->orWhereHas('translations', fn ($translations) => $translations
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('slug', 'like', "%{$search}%"));
+                                ->when($defaultLocaleId, fn ($defaultTranslations) => $defaultTranslations->where('locale_id', $defaultLocaleId))
+                                ->where(function ($translationQuery) use ($search) {
+                                    $translationQuery->where('name', 'like', "%{$search}%")
+                                        ->orWhere('slug', 'like', "%{$search}%");
+                                }));
                     });
                 })
                 ->when($status !== '', fn ($query) => $query->where('status', $status))
                 ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
-                ->orderBy($sort, $direction)
+                ->when($sort === 'title', fn ($query) => $query->orderByDefaultTranslation('name', $direction))
+                ->when($sort === 'slug', fn ($query) => $query->orderByDefaultTranslation('slug', $direction))
+                ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
                 ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
                 ->withQueryString(),
@@ -224,7 +228,7 @@ class PageController extends Controller
             $data = $request->validatedData();
             $slots = $data['slots'] ?? [];
             $translation = $data['translation'];
-            unset($data['slots'], $data['blocks'], $data['translation']);
+            unset($data['title'], $data['slug'], $data['slots'], $data['blocks'], $data['translation']);
 
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
@@ -462,7 +466,7 @@ class PageController extends Controller
 
     private function syncDefaultTranslation(Page $page, array $translation): void
     {
-        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $defaultLocaleId = Page::defaultLocaleId();
 
         if (! $defaultLocaleId) {
             return;
@@ -476,11 +480,6 @@ class PageController extends Controller
                 'path' => PageTranslation::pathFromSlug($translation['slug']),
             ],
         );
-
-        $page->forceFill([
-            'title' => $translation['name'],
-            'slug' => $translation['slug'],
-        ])->saveQuietly();
 
         $page->unsetRelation('translations');
         $page->load('translations');

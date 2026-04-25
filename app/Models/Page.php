@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Pages\PageRouteResolver;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class Page extends Model
 {
@@ -44,15 +46,21 @@ class Page extends Model
         });
 
         static::created(function (self $page): void {
-            $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+            $defaultLocaleId = self::defaultLocaleId();
+            $canonicalTitle = $page->attributes['title'] ?? null;
+            $canonicalSlug = $page->attributes['slug'] ?? null;
 
-            if ($defaultLocaleId) {
+            if (($canonicalSlug === null || $canonicalSlug === '') && is_string($canonicalTitle) && $canonicalTitle !== '') {
+                $canonicalSlug = Str::slug($canonicalTitle);
+            }
+
+            if ($defaultLocaleId && $canonicalTitle !== null && $canonicalTitle !== '' && $canonicalSlug !== null && $canonicalSlug !== '') {
                 $page->translations()->firstOrCreate(
                     ['locale_id' => $defaultLocaleId],
                     [
-                        'name' => $page->title,
-                        'slug' => $page->slug,
-                        'path' => PageTranslation::pathFromSlug($page->slug),
+                        'name' => $canonicalTitle,
+                        'slug' => $canonicalSlug,
+                        'path' => PageTranslation::pathFromSlug($canonicalSlug),
                     ],
                 );
             }
@@ -117,17 +125,37 @@ class Page extends Model
 
     public function getNameAttribute(): ?string
     {
-        return $this->currentTranslation?->name ?? $this->attributes['title'] ?? null;
+        return $this->resolvedTitle();
     }
 
     public function getTitleAttribute($value): ?string
     {
-        return $this->currentTranslation?->name ?? $value;
+        return $this->resolvedTitle($value);
     }
 
     public function getSlugAttribute($value): ?string
     {
-        return $this->currentTranslation?->slug ?? $value;
+        return $this->defaultTranslation()?->slug
+            ?? $this->currentTranslation?->slug
+            ?? $value;
+    }
+
+    public function scopeOrderByDefaultTranslation(Builder $query, string $column, string $direction = 'asc'): Builder
+    {
+        $defaultLocaleId = self::defaultLocaleId();
+
+        if (! $defaultLocaleId || ! in_array($column, ['name', 'slug'], true)) {
+            return $query;
+        }
+
+        return $query->orderBy(
+            PageTranslation::query()
+                ->select($column)
+                ->whereColumn('page_translations.page_id', 'pages.id')
+                ->where('locale_id', $defaultLocaleId)
+                ->limit(1),
+            $direction,
+        );
     }
 
     public function site(): BelongsTo
@@ -177,10 +205,18 @@ class Page extends Model
 
     public function defaultTranslation(): ?PageTranslation
     {
-        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $defaultLocaleId = self::defaultLocaleId();
 
         if (! $defaultLocaleId) {
             return null;
+        }
+
+        if ($this->relationLoaded('currentTranslation')) {
+            $currentTranslation = $this->getRelation('currentTranslation');
+
+            if ($currentTranslation?->locale_id === $defaultLocaleId) {
+                return $currentTranslation;
+            }
         }
 
         return $this->translations->firstWhere('locale_id', $defaultLocaleId)
@@ -271,5 +307,19 @@ class Page extends Model
             self::STATUS_ARCHIVED => 'wb-status-danger',
             default => 'wb-status-pending',
         };
+    }
+
+    public static function defaultLocaleId(): ?int
+    {
+        return Locale::query()->where('is_default', true)->value('id');
+    }
+
+    private function resolvedTitle(mixed $fallback = null): ?string
+    {
+        return $this->currentTranslation?->name
+            ?? $this->defaultTranslation()?->name
+            ?? $fallback
+            ?? $this->attributes['title']
+            ?? null;
     }
 }

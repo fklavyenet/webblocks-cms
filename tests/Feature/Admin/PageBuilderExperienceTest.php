@@ -1316,7 +1316,8 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertDatabaseHas('pages', ['id' => $page->id, 'title' => 'About Updated', 'status' => 'draft']);
+        $this->assertDatabaseHas('pages', ['id' => $page->id, 'status' => 'draft']);
+        $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'name' => 'About Updated', 'slug' => 'about']);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id, 'sort_order' => 0]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id, 'sort_order' => 1]);
         $this->assertDatabaseHas('blocks', ['id' => $existing->id, 'slot_type_id' => $main->id]);
