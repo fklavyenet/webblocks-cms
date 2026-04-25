@@ -88,20 +88,33 @@ Notes:
 After the source code is present locally:
 
 ```bash
+ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>
 ddev start
 ddev composer install
 cp .env.example .env
 ddev artisan key:generate
-ddev artisan migrate
-ddev artisan db:seed
-ddev artisan storage:link
 ```
+
+Notes:
+
+- `ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>` is required on a fresh clone to create `.ddev/config.yaml`
+- without `.ddev/config.yaml`, `ddev start` fails with a `no project found` error
 
 Then open:
 
 - public site: `https://<your-project>.ddev.site`
 - admin: `https://<your-project>.ddev.site/admin`
 - installer on a fresh install: `https://<your-project>.ddev.site/install`
+
+Complete the fresh install in the browser wizard after those setup steps are done.
+
+## Accessing the Install Wizard
+
+- fresh installs automatically redirect to `/install`
+- you can also open the wizard manually at `/install`
+- you can open `/install/core` to jump directly to the core install step when earlier requirements are already satisfied
+- the wizard may advance steps automatically as requirements are completed
+- opening `/` and `/install` in multiple browser tabs can show different wizard steps; this is expected because the installer tracks progress and routes accordingly
 
 ## First Super Admin Creation
 

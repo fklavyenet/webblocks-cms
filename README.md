@@ -40,11 +40,11 @@ If you already created an empty target directory, use `git clone git@github.com:
 ### DDEV Quick Start
 
 ```bash
+ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>
 ddev start
 ddev composer install
-ddev artisan migrate
-ddev artisan db:seed
-ddev artisan serve # if needed outside the DDEV web server
+cp .env.example .env
+ddev artisan key:generate
 ```
 
 For a fresh install with the browser flow, open `/install` after the source code, dependencies, and local environment are in place. The install wizard guides database setup, environment creation, core install steps, and first super admin creation.
