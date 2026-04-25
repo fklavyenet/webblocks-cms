@@ -3,9 +3,11 @@
 namespace App\Support\Pages;
 
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageRevision;
 use App\Models\User;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -17,7 +19,10 @@ class PageRevisionManager
 {
     private const SNAPSHOT_SCHEMA_VERSION = 1;
 
-    public function __construct(private readonly PageWorkflowManager $workflowManager) {}
+    public function __construct(
+        private readonly PageWorkflowManager $workflowManager,
+        private readonly BlockTranslationWriter $blockTranslationWriter,
+    ) {}
 
     public function canView(User $user, Page $page): bool
     {
@@ -321,7 +326,137 @@ class PageRevisionManager
             foreach ($block['contact_form_translations'] ?? [] as $translation) {
                 $restoredBlock->contactFormTranslations()->create($translation);
             }
+
+            $this->normalizeRestoredBlock($restoredBlock, $block);
         }
+    }
+
+    private function normalizeRestoredBlock(Block $block, array $snapshotBlock): void
+    {
+        $legacyFallbackUsed = $this->ensureLegacySnapshotFallbackTranslations($block, $snapshotBlock);
+
+        if ($legacyFallbackUsed || $this->blockHasTranslationRows($block)) {
+            // Older revisions may only carry canonical block copy. Restore those payloads into
+            // translation rows and immediately clear canonical fields so reconstructed content
+            // follows the same authoritative translation model as current revisions.
+            $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
+                'textTranslations',
+                'buttonTranslations',
+                'imageTranslations',
+                'contactFormTranslations',
+            ]));
+        }
+    }
+
+    private function ensureLegacySnapshotFallbackTranslations(Block $block, array $snapshotBlock): bool
+    {
+        if (
+            ($snapshotBlock['text_translations'] ?? []) !== []
+            || ($snapshotBlock['button_translations'] ?? []) !== []
+            || ($snapshotBlock['image_translations'] ?? []) !== []
+            || ($snapshotBlock['contact_form_translations'] ?? []) !== []
+        ) {
+            return false;
+        }
+
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+
+        if (! $defaultLocaleId) {
+            return false;
+        }
+
+        $rawTitle = $snapshotBlock['title'] ?? null;
+        $rawSubtitle = $snapshotBlock['subtitle'] ?? null;
+        $rawContent = $snapshotBlock['content'] ?? null;
+        $rawSettings = $snapshotBlock['settings'] ?? null;
+
+        return match ($block->type) {
+            'column_item', 'section', 'text', 'rich-text', 'heading', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
+            'button' => $this->seedLegacyButtonSnapshotFallback($block, $defaultLocaleId, $rawTitle),
+            'image' => $this->seedLegacyImageSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle),
+            'contact_form' => $this->seedLegacyContactFormSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawContent, $rawSettings),
+            default => false,
+        };
+    }
+
+    private function seedLegacyTextSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle, mixed $content): bool
+    {
+        if (! is_string($title) && ! is_string($subtitle) && ! is_string($content)) {
+            return false;
+        }
+
+        $block->textTranslations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'content' => $content,
+            ],
+        );
+
+        return true;
+    }
+
+    private function seedLegacyButtonSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title): bool
+    {
+        if (! is_string($title) || trim($title) === '') {
+            return false;
+        }
+
+        $block->buttonTranslations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            ['title' => $title],
+        );
+
+        return true;
+    }
+
+    private function seedLegacyImageSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle): bool
+    {
+        if (! is_string($title) && ! is_string($subtitle)) {
+            return false;
+        }
+
+        $block->imageTranslations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'caption' => $title,
+                'alt_text' => $subtitle,
+            ],
+        );
+
+        return true;
+    }
+
+    private function seedLegacyContactFormSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $content, mixed $settings): bool
+    {
+        $decodedSettings = is_array($settings)
+            ? $settings
+            : (is_string($settings) && trim($settings) !== '' ? (json_decode($settings, true) ?: []) : []);
+
+        if (! is_string($title) && ! is_string($content) && ! isset($decodedSettings['submit_label'], $decodedSettings['success_message'])) {
+            return false;
+        }
+
+        $block->contactFormTranslations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'title' => $title,
+                'content' => $content,
+                'submit_label' => trim((string) ($decodedSettings['submit_label'] ?? '')) ?: 'Send message',
+                'success_message' => trim((string) ($decodedSettings['success_message'] ?? '')) ?: config('contact.success_message'),
+            ],
+        );
+
+        return true;
+    }
+
+    private function blockHasTranslationRows(Block $block): bool
+    {
+        return $block->textTranslations()->exists()
+            || $block->buttonTranslations()->exists()
+            || $block->imageTranslations()->exists()
+            || $block->contactFormTranslations()->exists();
     }
 
     private function dateOrNull(mixed $value): ?Carbon

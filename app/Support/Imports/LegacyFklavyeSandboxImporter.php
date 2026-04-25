@@ -3,6 +3,9 @@
 namespace App\Support\Imports;
 
 use App\Models\Block;
+use App\Models\Locale;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
@@ -75,15 +78,27 @@ class LegacyFklavyeSandboxImporter
 
     private function configureSourceConnection(array $sourceConfig): ConnectionInterface
     {
-        $baseConfig = config('database.connections.mysql');
+        $configuredConnection = config('database.connections.legacy_fklavye_source');
+        $driver = (string) ($sourceConfig['driver'] ?? $configuredConnection['driver'] ?? 'mysql');
 
-        config()->set('database.connections.legacy_fklavye_source', array_merge($baseConfig, [
-            'host' => $sourceConfig['host'],
-            'port' => $sourceConfig['port'],
-            'database' => $sourceConfig['database'],
-            'username' => $sourceConfig['username'],
-            'password' => $sourceConfig['password'],
-        ]));
+        $connection = match ($driver) {
+            'sqlite' => [
+                'driver' => 'sqlite',
+                'database' => $sourceConfig['database'],
+                'prefix' => $sourceConfig['prefix'] ?? ($configuredConnection['prefix'] ?? ''),
+                'foreign_key_constraints' => (bool) ($sourceConfig['foreign_key_constraints'] ?? $configuredConnection['foreign_key_constraints'] ?? false),
+            ],
+            default => array_merge(config('database.connections.mysql'), [
+                'driver' => $driver,
+                'host' => $sourceConfig['host'],
+                'port' => $sourceConfig['port'],
+                'database' => $sourceConfig['database'],
+                'username' => $sourceConfig['username'],
+                'password' => $sourceConfig['password'],
+            ]),
+        };
+
+        config()->set('database.connections.legacy_fklavye_source', $connection);
 
         DB::purge('legacy_fklavye_source');
 
@@ -93,6 +108,7 @@ class LegacyFklavyeSandboxImporter
     private function cleanupTargetSiteContent(): array
     {
         return DB::transaction(function (): array {
+            $primarySiteId = (int) (Site::query()->where('is_primary', true)->value('id') ?: 0);
             $counts = [
                 'block_assets' => DB::table('block_assets')->count(),
                 'blocks' => DB::table('blocks')->count(),
@@ -105,13 +121,16 @@ class LegacyFklavyeSandboxImporter
                 'contact_messages' => Schema::hasTable('contact_messages') ? DB::table('contact_messages')->count() : 0,
             ];
 
+            if ($primarySiteId > 0) {
+                DB::table('navigation_items')->where('site_id', $primarySiteId)->delete();
+                DB::table('pages')->where('site_id', $primarySiteId)->delete();
+            }
+
             DB::table('block_assets')->delete();
             DB::table('blocks')->delete();
             DB::table('page_slots')->delete();
-            DB::table('navigation_items')->delete();
             DB::table('assets')->delete();
             DB::table('asset_folders')->delete();
-            DB::table('pages')->delete();
             DB::table('layouts')->delete();
 
             if (Schema::hasTable('contact_messages')) {
@@ -127,6 +146,10 @@ class LegacyFklavyeSandboxImporter
         $now = now();
 
         foreach ([
+            ['name' => 'Text', 'slug' => 'text', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 1, 'status' => 'published'],
+            ['name' => 'Rich Text', 'slug' => 'rich-text', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 3, 'status' => 'published'],
+            ['name' => 'Image', 'slug' => 'image', 'category' => 'media', 'source_type' => 'asset', 'is_system' => false, 'is_container' => false, 'sort_order' => 12, 'status' => 'published'],
+            ['name' => 'Navigation Auto', 'slug' => 'navigation-auto', 'category' => 'system', 'source_type' => 'navigation', 'is_system' => true, 'is_container' => false, 'sort_order' => 58, 'status' => 'published'],
             ['name' => 'Hero', 'slug' => 'hero', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 80, 'status' => 'published'],
             ['name' => 'Card Grid', 'slug' => 'card-grid', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 81, 'status' => 'published'],
             ['name' => 'Showcase List', 'slug' => 'showcase-list', 'category' => 'data display', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 82, 'status' => 'published'],
@@ -184,11 +207,13 @@ class LegacyFklavyeSandboxImporter
 
     private function importPages($sourcePages, mixed $pageTypeId): void
     {
+        $primarySiteId = (int) (Site::query()->where('is_primary', true)->value('id') ?: 0);
+        $defaultLocaleId = (int) (Locale::query()->where('is_default', true)->value('id') ?: 0);
+
         foreach ($sourcePages as $page) {
             $payload = [
                 'id' => $page->id,
-                'title' => $page->title,
-                'slug' => $page->slug,
+                'site_id' => $primarySiteId,
                 'page_type' => 'default',
                 'page_type_id' => $pageTypeId,
                 'layout_id' => null,
@@ -198,14 +223,28 @@ class LegacyFklavyeSandboxImporter
             ];
 
             if (Schema::hasColumn('pages', 'meta_title')) {
-                $payload['meta_title'] = $page->meta_title;
+                $payload['meta_title'] = $page->meta_title ?? null;
             }
 
             if (Schema::hasColumn('pages', 'meta_description')) {
-                $payload['meta_description'] = $page->meta_description;
+                $payload['meta_description'] = $page->meta_description ?? null;
             }
 
             DB::table('pages')->insert($payload);
+
+            if ($defaultLocaleId > 0) {
+                PageTranslation::query()->updateOrCreate(
+                    ['page_id' => $page->id, 'locale_id' => $defaultLocaleId],
+                    [
+                        'site_id' => $primarySiteId,
+                        'name' => $page->title,
+                        'slug' => $page->slug,
+                        'path' => PageTranslation::pathFromSlug((string) $page->slug),
+                        'created_at' => $page->created_at,
+                        'updated_at' => $page->updated_at,
+                    ],
+                );
+            }
         }
     }
 
@@ -262,8 +301,11 @@ class LegacyFklavyeSandboxImporter
 
     private function importNavigation($sourceNavigationItems): void
     {
+        $primarySiteId = (int) (Site::query()->where('is_primary', true)->value('id') ?: 0);
+
         foreach ($sourceNavigationItems as $item) {
             DB::table('navigation_items')->insert([
+                'site_id' => $primarySiteId,
                 'menu_key' => $item->location,
                 'parent_id' => null,
                 'page_id' => $item->page_id,
@@ -280,6 +322,7 @@ class LegacyFklavyeSandboxImporter
 
             if ($item->location === 'primary') {
                 DB::table('navigation_items')->insert([
+                    'site_id' => $primarySiteId,
                     'menu_key' => 'mobile',
                     'parent_id' => null,
                     'page_id' => $item->page_id,

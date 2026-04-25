@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageRevision;
 use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
@@ -205,5 +206,156 @@ class ReconstructionIntegrityTest extends TestCase
         $this->assertSame(['en', 'tr'], $site->enabledLocales()->orderBy('code')->pluck('code')->all());
         $this->get('http://imported.example.test/p/about')->assertOk()->assertSee('Fast setup');
         $this->get('http://imported.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hizli kurulum');
+    }
+
+    #[Test]
+    public function revision_restore_can_normalize_legacy_snapshot_blocks_without_translation_rows(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+        $slotType = $this->slotType();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => Page::STATUS_PUBLISHED,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        $revision = PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'created_by' => $user->id,
+            'label' => 'Legacy snapshot',
+            'snapshot' => [
+                'schema_version' => 1,
+                'page' => [
+                    'page_type' => 'default',
+                    'page_type_id' => null,
+                    'layout_id' => null,
+                    'status' => Page::STATUS_PUBLISHED,
+                    'published_at' => null,
+                    'review_requested_at' => null,
+                ],
+                'translations' => [[
+                    'locale_id' => $this->defaultLocale()->id,
+                    'name' => 'About',
+                    'slug' => 'about',
+                    'path' => '/p/about',
+                ]],
+                'slots' => [[
+                    'slot_type_id' => $slotType->id,
+                    'sort_order' => 0,
+                ]],
+                'blocks' => [[
+                    'snapshot_id' => 100,
+                    'parent_snapshot_id' => null,
+                    'type' => 'section',
+                    'block_type_id' => $this->sectionType()->id,
+                    'source_type' => 'static',
+                    'slot' => 'main',
+                    'slot_type_id' => $slotType->id,
+                    'sort_order' => 0,
+                    'title' => 'Legacy hero',
+                    'subtitle' => null,
+                    'content' => 'Legacy content',
+                    'url' => null,
+                    'asset_id' => null,
+                    'variant' => null,
+                    'meta' => null,
+                    'settings' => null,
+                    'status' => 'published',
+                    'is_system' => false,
+                    'block_assets' => [],
+                    'text_translations' => [],
+                    'button_translations' => [],
+                    'image_translations' => [],
+                    'contact_form_translations' => [],
+                ]],
+            ],
+        ]);
+
+        app(PageRevisionManager::class)->restore($page->fresh(), $revision, $user);
+
+        $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
+
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $restoredBlock->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Legacy hero',
+            'content' => 'Legacy content',
+        ]);
+        $this->assertNull($restoredBlock->getRawOriginal('title'));
+        $this->assertNull($restoredBlock->getRawOriginal('content'));
+        $this->get('/p/about')->assertOk()->assertSee('Legacy hero')->assertSee('Legacy content');
+    }
+
+    #[Test]
+    public function export_import_can_normalize_packages_missing_block_translation_arrays(): void
+    {
+        Storage::fake('site-transfers');
+        Storage::fake('public');
+        [$sourceSite] = $this->seedCloneableSite(withFile: true);
+        $export = app(SiteExportManager::class)->export($sourceSite, true);
+
+        $archivePath = Storage::disk('site-transfers')->path($export->archive_path);
+        $archive = new \ZipArchive;
+        $archive->open($archivePath);
+
+        foreach ([
+            'data/block_text_translations.json',
+            'data/block_button_translations.json',
+            'data/block_image_translations.json',
+            'data/block_contact_form_translations.json',
+        ] as $file) {
+            $archive->addFromString($file, json_encode([], JSON_PRETTY_PRINT));
+        }
+
+        $blocks = json_decode((string) $archive->getFromName('data/blocks.json'), true);
+        $blocks = collect($blocks)->map(function (array $block) {
+            if ($block['type'] === 'column_item') {
+                $block['title'] = 'Fast setup';
+                $block['content'] = 'English child content';
+            }
+
+            return $block;
+        })->all();
+        $archive->addFromString('data/blocks.json', json_encode($blocks, JSON_PRETTY_PRINT));
+
+        $archive->close();
+
+        $import = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile($archivePath, $export->archive_name, 'application/zip', null, true)
+        );
+
+        $import = app(SiteImportManager::class)->import($import, SiteImportOptions::fromArray([
+            'site_name' => 'Legacy Compatible Import',
+            'site_handle' => 'legacy-compatible-import',
+            'site_domain' => 'legacy-compatible.example.test',
+        ]));
+
+        $site = Site::query()->findOrFail($import->target_site_id);
+        $aboutPage = Page::query()
+            ->where('site_id', $site->id)
+            ->whereHas('translations', fn ($query) => $query->where('slug', 'about'))
+            ->firstOrFail();
+
+        $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('type', 'column_item')->firstOrFail();
+
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $columnItem->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Fast setup',
+            'content' => 'English child content',
+        ]);
+        $this->assertNull($columnItem->fresh()->getRawOriginal('title'));
+        $this->assertNull($columnItem->fresh()->getRawOriginal('content'));
+        $this->get('http://legacy-compatible.example.test/p/about')->assertOk()->assertSee('Fast setup')->assertSee('English child content');
     }
 }

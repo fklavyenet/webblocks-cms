@@ -458,6 +458,7 @@ class StarterContentSeeder extends Seeder
     private function seedBlockTranslations(Page $homePage, Page $aboutPage, Page $contactPage, Locale $locale): void
     {
         $registry = app(BlockTranslationRegistry::class);
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
 
         Block::query()
             ->whereIn('page_id', [$homePage->id, $aboutPage->id, $contactPage->id])
@@ -469,15 +470,19 @@ class StarterContentSeeder extends Seeder
             ->whereIn('page_id', [$homePage->id, $aboutPage->id, $contactPage->id])
             ->with(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
             ->get()
-            ->each(function (Block $block) use ($locale, $registry): void {
+            ->each(function (Block $block) use ($locale, $registry, $defaultLocaleId): void {
                 $family = $registry->familyFor($block);
+                $defaultTextTranslation = $block->textTranslations->firstWhere('locale_id', $defaultLocaleId);
+                $defaultButtonTranslation = $block->buttonTranslations->firstWhere('locale_id', $defaultLocaleId);
+                $defaultImageTranslation = $block->imageTranslations->firstWhere('locale_id', $defaultLocaleId);
+                $defaultContactTranslation = $block->contactFormTranslations->firstWhere('locale_id', $defaultLocaleId);
 
                 if (! $family) {
                     return;
                 }
 
                 if ($family === 'text') {
-                    $payload = match ($block->getRawOriginal('title')) {
+                    $payload = match ($defaultTextTranslation?->title) {
                         'Build faster with WebBlocks CMS' => [
                             'title' => 'WebBlocks CMS ile daha hizli olusturun',
                             'subtitle' => null,
@@ -514,7 +519,7 @@ class StarterContentSeeder extends Seeder
                 }
 
                 if ($family === 'button') {
-                    $payload = match ($block->getRawOriginal('title')) {
+                    $payload = match ($defaultButtonTranslation?->title) {
                         'Get Started' => ['title' => 'Baslayin'],
                         default => null,
                     };
@@ -526,7 +531,7 @@ class StarterContentSeeder extends Seeder
                     return;
                 }
 
-                if ($family === 'image' && $block->getRawOriginal('title') === 'Starter media preview') {
+                if ($family === 'image' && $defaultImageTranslation?->caption === 'Starter media preview') {
                     $block->imageTranslations()->updateOrCreate(
                         ['locale_id' => $locale->id],
                         [
@@ -538,9 +543,9 @@ class StarterContentSeeder extends Seeder
                     return;
                 }
 
-                if ($family === 'contact_form' && $block->getRawOriginal('title') === 'Contact us') {
+                if ($family === 'contact_form' && $defaultContactTranslation?->title === 'Contact us') {
                     $block->contactFormTranslations()->updateOrCreate(
-                        ['locale_id' => Locale::query()->where('is_default', true)->value('id')],
+                        ['locale_id' => $defaultLocaleId],
                         [
                             'title' => 'Contact us',
                             'content' => 'Tell us what you are planning and we will route your message to the right editorial or implementation contact.',

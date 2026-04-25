@@ -15,6 +15,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Locale;
 use App\Models\Site;
+use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +27,7 @@ class SiteCloneService
     public function __construct(
         private readonly DatabaseManager $db,
         private readonly SiteDomainNormalizer $domainNormalizer,
+        private readonly BlockTranslationWriter $blockTranslationWriter,
     ) {}
 
     public function clone(string|int $source, string|int $target, SiteCloneOptions $options): SiteCloneResult
@@ -308,6 +310,15 @@ class SiteCloneService
             }
 
             $counts['block_translation_rows_cloned'] += $this->cloneBlockTranslations($block, $newBlock, $options);
+
+            if ($this->clonedBlockHasTranslationRows($newBlock)) {
+                $this->blockTranslationWriter->normalizeCanonicalStorage($newBlock->fresh([
+                    'textTranslations',
+                    'buttonTranslations',
+                    'imageTranslations',
+                    'contactFormTranslations',
+                ]));
+            }
         }
 
         foreach ($blocks as $block) {
@@ -424,6 +435,14 @@ class SiteCloneService
         }
 
         return $count;
+    }
+
+    private function clonedBlockHasTranslationRows(Block $block): bool
+    {
+        return $block->textTranslations()->exists()
+            || $block->buttonTranslations()->exists()
+            || $block->imageTranslations()->exists()
+            || $block->contactFormTranslations()->exists();
     }
 
     private function clonedAssetId(int $assetId, array &$assetMap, SiteCloneOptions $options, array &$counts): int

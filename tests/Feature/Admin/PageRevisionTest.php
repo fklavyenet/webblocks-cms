@@ -386,8 +386,13 @@ class PageRevisionTest extends TestCase
         $this->assertCount(1, $page->slots);
         $this->assertSame($main->id, $page->slots->first()->slot_type_id);
         $this->assertSame(2, $page->blocks->count());
-        $this->assertSame(['Columns block', 'Column child'], $page->blocks->sortBy('sort_order')->pluck('title')->values()->all());
-        $restoredChild = $page->blocks->firstWhere('title', 'Column child');
+        $resolvedBlocks = $page->blocks
+            ->sortBy('sort_order')
+            ->map(fn (Block $block) => app(BlockTranslationResolver::class)->resolve($block, $this->defaultLocale()));
+        $this->assertSame(['Columns block', 'Column child'], $resolvedBlocks->pluck('title')->values()->all());
+        $restoredChild = $page->blocks->first(function (Block $block) use ($turkish) {
+            return $block->textTranslations->firstWhere('locale_id', $turkish->id)?->title === 'Sutun cocuk';
+        });
         $this->assertNotNull($restoredChild);
         $this->assertSame('Sutun cocuk', $restoredChild->textTranslations->firstWhere('locale_id', $turkish->id)?->title);
         $this->assertDatabaseHas('page_revisions', [

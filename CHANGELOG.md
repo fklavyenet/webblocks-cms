@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Harden reconstruction compatibility paths across revision restore, clone, export/import, and legacy import flows while keeping translation rows authoritative for active content.
+- Fix legacy import compatibility coverage so old-package reconstruction tests correctly simulate archives missing block translation arrays but still carrying canonical block text.
+- Improve legacy SQLite import handling for the Fklavye sandbox importer and make its required core block-type assumptions explicit.
+- Ensure revision restore coverage resolves block content through authoritative translation rows instead of legacy canonical block fields.
 - Audit remaining block compatibility-field usage after making translation rows authoritative, and keep `blocks.title` / `blocks.subtitle` / `blocks.content` only for documented compatibility and reconstruction paths.
 - Remove stale admin fallback dependence on legacy canonical block copy by resolving default-locale translation content in the standalone block editor before rendering translatable block forms.
 - Add regression coverage proving public rendering, admin editing, revision restore, clone/import flows, and intentional legacy normalization continue to work when canonical block text fields are null.

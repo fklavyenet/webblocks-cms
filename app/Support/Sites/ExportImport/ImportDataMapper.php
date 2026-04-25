@@ -384,7 +384,7 @@ class ImportDataMapper
     {
         $count = 0;
 
-        foreach ($payload['block_text_translations'] as $translationData) {
+        foreach (($payload['block_text_translations'] ?? []) as $translationData) {
             $blockId = $blockMap[(int) ($translationData['block_id'] ?? 0)] ?? null;
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
@@ -403,7 +403,7 @@ class ImportDataMapper
             }
         }
 
-        foreach ($payload['block_button_translations'] as $translationData) {
+        foreach (($payload['block_button_translations'] ?? []) as $translationData) {
             $blockId = $blockMap[(int) ($translationData['block_id'] ?? 0)] ?? null;
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
@@ -419,7 +419,7 @@ class ImportDataMapper
             }
         }
 
-        foreach ($payload['block_image_translations'] as $translationData) {
+        foreach (($payload['block_image_translations'] ?? []) as $translationData) {
             $blockId = $blockMap[(int) ($translationData['block_id'] ?? 0)] ?? null;
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
@@ -436,7 +436,7 @@ class ImportDataMapper
             }
         }
 
-        foreach ($payload['block_contact_form_translations'] as $translationData) {
+        foreach (($payload['block_contact_form_translations'] ?? []) as $translationData) {
             $blockId = $blockMap[(int) ($translationData['block_id'] ?? 0)] ?? null;
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
