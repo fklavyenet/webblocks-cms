@@ -193,3 +193,10 @@ Practical condition:
 - Existing conventional JS override path: `public/site/js/site.js`, but it is not appropriate for CMS core consent logic
 - Recommended CMS-owned target path: `public/assets/webblocks-cms/js/privacy-consent-sync.js`
 - Recommended loading scope: public pages only, from the public layout, when consent sync is relevant
+
+## Implemented Refactor
+
+- target asset path: `public/assets/webblocks-cms/js/privacy-consent-sync.js`
+- loading rule: the asset is loaded from `resources/views/layouts/public.blade.php` only when consent banner rendering or server-side consent state makes public consent sync relevant
+- syntax error fix summary: the extra closing `);` was removed from the inline slider `next.addEventListener(...)` block in the public layout
+- no build step was introduced; the CMS now loads the static asset directly with `asset(...)`

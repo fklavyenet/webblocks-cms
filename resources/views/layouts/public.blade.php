@@ -139,158 +139,26 @@
             </div>
         </div>
 
-        <script>
-            (function () {
-                var initialServerChoice = @json($visitorPrivacy['server_choice'] ?? null);
-
-                if (! initialServerChoice || !window.localStorage) {
-                    return;
-                }
-
-                var consentStatusKey = 'wb-cookie-consent';
-                var consentPreferencesKey = 'wb-cookie-consent-preferences';
-
-                if (window.localStorage.getItem(consentStatusKey)) {
-                    return;
-                }
-
-                if (initialServerChoice === 'accepted') {
-                    window.localStorage.setItem(consentStatusKey, 'accepted');
-                    window.localStorage.setItem(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: true, analytics: true, marketing: true }));
-                    return;
-                }
-
-                if (initialServerChoice === 'declined') {
-                    window.localStorage.setItem(consentStatusKey, 'rejected');
-                    window.localStorage.setItem(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: false, analytics: false, marketing: false }));
-                }
-            })();
-        </script>
-
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
         @if (is_file($siteJsPath))
             <script src="{{ asset('site/js/site.js') }}?v={{ filemtime($siteJsPath) }}"></script>
         @endif
+        @if (($visitorPrivacy['banner_enabled'] ?? false) === true || ($visitorPrivacy['server_choice'] ?? null))
+            <script>
+                window.WebBlocksCmsPrivacyConsent = {
+                    syncUrl: @json(route('public.privacy-consent.sync')),
+                    csrfToken: @json(csrf_token()),
+                    consentCookieName: @json(config('cms.visitor_reports.consent_cookie_name', 'webblocks_visitor_consent')),
+                    consentLifetimeDays: @json(config('cms.visitor_reports.consent_cookie_lifetime_days', 180)),
+                    initialServerChoice: @json($visitorPrivacy['server_choice'] ?? null),
+                    reportsEnabled: @json((bool) config('cms.visitor_reports.enabled', true)),
+                    utmEnabled: @json((bool) config('cms.visitor_reports.utm_enabled', true)),
+                };
+            </script>
+            <script src="{{ asset('assets/webblocks-cms/js/privacy-consent-sync.js') }}" defer></script>
+        @endif
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                var consentSyncUrl = @json(route('public.privacy-consent.sync'));
-                var consentCookieName = @json(config('cms.visitor_reports.consent_cookie_name', 'webblocks_visitor_consent'));
-                var initialServerChoice = @json($visitorPrivacy['server_choice'] ?? null);
-                var consentLifetimeDays = @json(config('cms.visitor_reports.consent_cookie_lifetime_days', 180));
-                var consentStatusKey = 'wb-cookie-consent';
-                var consentPreferencesKey = 'wb-cookie-consent-preferences';
-
-                function setCookie(name, value, days) {
-                    var maxAge = Math.max(1, Number(days || 180)) * 24 * 60 * 60;
-                    document.cookie = name + '=' + encodeURIComponent(value) + '; path=/; max-age=' + maxAge + '; samesite=lax';
-                }
-
-                function getCookie(name) {
-                    var cookies = document.cookie ? document.cookie.split('; ') : [];
-
-                    for (var index = 0; index < cookies.length; index += 1) {
-                        var parts = cookies[index].split('=');
-
-                        if (parts[0] === name) {
-                            return decodeURIComponent(parts.slice(1).join('='));
-                        }
-                    }
-
-                    return null;
-                }
-
-                function readLocalState() {
-                    if (! window.localStorage) {
-                        return null;
-                    }
-
-                    var status = String(window.localStorage.getItem(consentStatusKey) || '').trim();
-                    var preferences = null;
-
-                    try {
-                        preferences = JSON.parse(window.localStorage.getItem(consentPreferencesKey) || 'null');
-                    } catch (error) {
-                        preferences = null;
-                    }
-
-                    if (!status || !preferences || typeof preferences !== 'object') {
-                        return null;
-                    }
-
-                    return {
-                        status: status,
-                        preferences: preferences
-                    };
-                }
-
-                function serverDecisionFor(detail) {
-                    return detail && detail.preferences && detail.preferences.analytics ? 'accepted' : 'declined';
-                }
-
-                function syncClientStateFromServerChoice(choice) {
-                    if (! window.WBStorage) {
-                        return;
-                    }
-
-                    if (choice === 'accepted') {
-                        WBStorage.set(consentStatusKey, 'accepted');
-                        WBStorage.set(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: true, analytics: true, marketing: true }));
-                        return;
-                    }
-
-                    if (choice === 'declined') {
-                        WBStorage.set(consentStatusKey, 'rejected');
-                        WBStorage.set(consentPreferencesKey, JSON.stringify({ necessary: true, preferences: false, analytics: false, marketing: false }));
-                    }
-                }
-
-                function syncServerConsent(detail) {
-                    if (! detail || !detail.preferences || !window.fetch) {
-                        return Promise.resolve();
-                    }
-
-                    return window.fetch(consentSyncUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify({
-                            status: detail.status,
-                            preferences: detail.preferences
-                        })
-                    }).then(function (response) {
-                        if (!response.ok) {
-                            throw new Error('Cookie consent sync failed.');
-                        }
-
-                        return response.json();
-                    }).then(function (payload) {
-                        if (payload && payload.server_decision) {
-                            setCookie(consentCookieName, payload.server_decision, consentLifetimeDays);
-                        }
-                    }).catch(function () {
-                        setCookie(consentCookieName, detail.preferences.analytics ? 'accepted' : 'declined', consentLifetimeDays);
-                    });
-                }
-
-                if (window.WBStorage && !WBStorage.get(consentStatusKey) && initialServerChoice) {
-                    syncClientStateFromServerChoice(initialServerChoice);
-                }
-
-                var localState = readLocalState();
-
-                if (localState && serverDecisionFor(localState) !== initialServerChoice && getCookie(consentCookieName) !== serverDecisionFor(localState)) {
-                    syncServerConsent(localState);
-                }
-
-                document.documentElement.addEventListener('wb:cookie-consent:change', function (event) {
-                    syncServerConsent(event.detail);
-                });
-
                 document.querySelectorAll('[data-wb-slider]').forEach(function (slider) {
                     var track = slider.querySelector('[data-wb-slider-track]');
                     var slides = Array.prototype.slice.call(slider.querySelectorAll('[data-wb-slider-slide]'));
@@ -324,7 +192,7 @@
                         next.addEventListener('click', function () {
                             render(activeIndex + 1);
                         });
-                    });
+                    }
 
                     dots.forEach(function (dot, dotIndex) {
                         dot.addEventListener('click', function () {
