@@ -15,6 +15,10 @@
 - Contact form submit and success copy moved out of block settings and treated as translation-owned content.
 - Extensive integrity, regression, and edge-case coverage added across multisite, multilingual, validation, URL, and reconstruction flows.
 
+## 1.0.3
+
+- Make the page translation site integrity migration fully retry-safe by skipping already-created indexes and constraints during partial upgrade recovery.
+
 ## 1.0.2
 
 - Fix MariaDB upgrade failure in the page translation site integrity migration by avoiding removal of indexes required by foreign key constraints.

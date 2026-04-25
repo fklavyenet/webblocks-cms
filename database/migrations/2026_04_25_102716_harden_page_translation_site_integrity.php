@@ -161,7 +161,7 @@ return new class extends Migration
 
     private function hasForeignKey(string $table, string $foreignKey): bool
     {
-        if (DB::getDriverName() !== 'mysql') {
+        if (! $this->usesMysqlInformationSchema()) {
             return false;
         }
 
@@ -178,7 +178,7 @@ return new class extends Migration
         $driver = DB::getDriverName();
 
         return match ($driver) {
-            'mysql' => DB::table('information_schema.statistics')
+            'mysql', 'mariadb' => DB::table('information_schema.statistics')
                 ->where('table_schema', DB::raw('database()'))
                 ->where('table_name', $table)
                 ->where('index_name', $index)
@@ -194,7 +194,7 @@ return new class extends Migration
         $driver = DB::getDriverName();
 
         return match ($driver) {
-            'mysql' => DB::table('information_schema.columns')
+            'mysql', 'mariadb' => DB::table('information_schema.columns')
                 ->where('table_schema', DB::raw('database()'))
                 ->where('table_name', $table)
                 ->where('column_name', $column)
@@ -203,5 +203,10 @@ return new class extends Migration
                 ->firstWhere('name', $column)?->notnull !== 1,
             default => false,
         };
+    }
+
+    private function usesMysqlInformationSchema(): bool
+    {
+        return in_array(DB::getDriverName(), ['mysql', 'mariadb'], true);
     }
 };
