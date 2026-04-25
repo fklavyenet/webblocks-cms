@@ -128,10 +128,59 @@ class PageTranslationIntegrityTest extends TestCase
         $site->update(['domain' => 'primary.example.test']);
         $turkish = $this->createLocale('tr');
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
-        $this->createPage($site, 'About', 'about');
+        $page = $this->createPage($site, 'About', 'about');
 
+        $this->assertNull($page->publicPath('tr'));
+        $this->assertNull($page->publicUrl('tr'));
         $this->get('http://primary.example.test/tr/p/about')->assertNotFound();
         $this->get('http://primary.example.test/tr')->assertNotFound();
+    }
+
+    #[Test]
+    public function explicit_default_locale_prefixes_do_not_resolve_public_routes(): void
+    {
+        $site = $this->defaultSite();
+        $site->update(['domain' => 'primary.example.test']);
+        $this->createPage($site, 'About', 'about');
+
+        $this->get('http://primary.example.test/en')->assertNotFound();
+        $this->get('http://primary.example.test/en/p/about')->assertNotFound();
+    }
+
+    #[Test]
+    public function admin_preview_links_use_the_page_site_domain_and_only_existing_translation_routes(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $defaultLocale = $this->defaultLocale();
+        $site = Site::query()->create([
+            'name' => 'Campaign',
+            'handle' => 'campaign',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+        $site->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+
+        $turkish = $this->createLocale('tr');
+        $german = $this->createLocale('de');
+        $site->locales()->syncWithoutDetaching([
+            $turkish->id => ['is_enabled' => true],
+            $german->id => ['is_enabled' => true],
+        ]);
+
+        $page = $this->createPage($site, 'About', 'about');
+        $page->translations()->create([
+            'locale_id' => $turkish->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+            'path' => '/p/hakkinda',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('https://campaign.example.test/p/about', false);
+        $response->assertSee('https://campaign.example.test/tr/p/hakkinda', false);
+        $response->assertDontSee('https://campaign.example.test/de/p/about', false);
     }
 
     #[Test]

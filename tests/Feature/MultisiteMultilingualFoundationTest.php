@@ -310,6 +310,26 @@ class MultisiteMultilingualFoundationTest extends TestCase
     }
 
     #[Test]
+    public function invalid_locale_prefix_formats_do_not_match_public_page_routes(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->where('handle', 'default')->firstOrFail();
+        $site->update(['domain' => 'primary.example.test']);
+
+        Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        $this->get('http://primary.example.test/TR/p/about')->assertNotFound();
+        $this->get('http://primary.example.test/tr_TR/p/about')->assertNotFound();
+        $this->get('http://primary.example.test/tur/p/about')->assertNotFound();
+    }
+
+    #[Test]
     public function unknown_host_falls_back_in_testing_but_can_be_disabled_explicitly(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

@@ -225,6 +225,44 @@ class NavigationIntegrityTest extends TestCase
     }
 
     #[Test]
+    public function localized_navigation_does_not_render_a_broken_link_when_the_active_locale_translation_is_missing(): void
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $site->update(['domain' => 'primary.example.test']);
+        $turkish = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $homePage = $this->createPage($site, 'Home', 'home');
+        $homePage->translations()->create([
+            'locale_id' => $turkish->id,
+            'name' => 'Ana Sayfa',
+            'slug' => 'home',
+            'path' => '/',
+        ]);
+
+        $linkedPage = $this->createPage($site, 'About', 'about');
+
+        $this->addNavigationBlock($homePage);
+
+        NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'About',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $linkedPage->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get('http://primary.example.test/tr');
+
+        $response->assertOk();
+        $response->assertSee('About');
+        $response->assertDontSee('href="/tr/p/about"', false);
+        $response->assertDontSee('href="/p/about"', false);
+    }
+
+    #[Test]
     public function invalid_cross_site_navigation_rows_inserted_directly_do_not_break_site_scoped_tree_queries(): void
     {
         $site = Site::query()->where('is_primary', true)->firstOrFail();
