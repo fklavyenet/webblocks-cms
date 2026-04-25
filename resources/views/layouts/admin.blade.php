@@ -14,8 +14,8 @@
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
 
-        <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://webblocksui.com/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
         @if (is_file($adminCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
         @endif
@@ -30,23 +30,42 @@
                 ->map(fn ($part) => mb_substr($part, 0, 1))
                 ->implode('');
 
-            $menuGroups = [
-                [
-                    ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
-                    ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
-                    ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*', 'icon' => 'wb-icon-globe'],
-                    ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*', 'icon' => 'wb-icon-language'],
-                    ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
-                    ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
-                    ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
-                    ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*', 'icon' => 'wb-icon-sidebar'],
-                    ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*', 'icon' => 'wb-icon-layers'],
-                ],
-                [
-                    ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*', 'icon' => 'wb-icon-database'],
-                    ['label' => 'System Updates', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*', 'icon' => 'wb-icon-refresh'],
-                ],
+            $menuItems = [
+                ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
+                ['label' => 'Docs', 'route' => 'admin.docs.index', 'active' => 'admin.docs.*', 'icon' => 'wb-icon-file'],
+                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
+                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-photo'],
+                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
             ];
+
+            $sidebarGroups = [];
+
+            if ($user?->can('access-system')) {
+                $sidebarGroups[] = [
+                    'label' => 'System',
+                    'icon' => 'wb-icon-palette',
+                    'items' => [
+                        ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
+                        ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
+                        ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
+                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
+                    ],
+                ];
+
+                $sidebarGroups[] = [
+                    'label' => 'Maintenance',
+                    'icon' => 'wb-icon-file',
+                    'items' => [
+                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
+                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
+                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
+                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
+                    ],
+                ];
+            }
         @endphp
 
         <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
@@ -61,29 +80,42 @@
                 </a>
 
                 <nav class="wb-sidebar-nav" aria-label="Admin navigation">
-                    @foreach ($menuGroups as $items)
-                        <div class="wb-stack wb-stack-1">
-                            @foreach ($items as $item)
-                                <a
-                                    href="{{ route($item['route']) }}"
-                                    class="wb-sidebar-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
-                                    @if (request()->routeIs($item['active'])) aria-current="page" @endif
-                                >
-                                    <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
-                                    <span class="wb-cluster wb-cluster-between wb-cluster-2 wb-sidebar-link-label">
-                                        <span>{{ $item['label'] }}</span>
+                    <div class="wb-stack wb-stack-1">
+                        @foreach ($menuItems as $item)
+                            <a
+                                href="{{ route($item['route']) }}"
+                                class="wb-sidebar-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
+                                @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                            >
+                                <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
+                                <span>{{ $item['label'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
 
-                                        @if (($item['update_available'] ?? false) === true)
-                                            <span class="wb-status-pill wb-status-pending">1 update</span>
-                                        @endif
-                                    </span>
-                                </a>
-                            @endforeach
+                    <hr class="wb-divider">
+
+                    @foreach ($sidebarGroups as $group)
+                        @php($groupIsActive = collect($group['items'])->contains(fn ($item) => request()->routeIs($item['active'])))
+                        <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}">
+                            <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}" data-wb-nav-group-toggle>
+                                <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
+                                <span class="wb-nav-group-label">{{ $group['label'] }}</span>
+                                <span class="wb-nav-group-arrow" aria-hidden="true"></span>
+                            </button>
+
+                            <div class="wb-nav-group-items">
+                                @foreach ($group['items'] as $item)
+                                    <a
+                                        href="{{ route($item['route']) }}"
+                                        class="wb-nav-group-item {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
+                                        @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                                    >
+                                        {{ $item['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
-
-                        @unless ($loop->last)
-                            <hr class="wb-divider">
-                        @endunless
                     @endforeach
                 </nav>
 
@@ -178,9 +210,105 @@
             @stack('overlays')
         </div>
 
-        <script src="https://webblocksui.com/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
         @stack('scripts')
         <script>
+            function resetAdminTransientUiState() {
+                if (document.body) {
+                    document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');
+                    document.body.style.overflow = '';
+                }
+
+                var sidebar = document.getElementById('admin-sidebar');
+
+                if (sidebar) {
+                    sidebar.classList.remove('is-open');
+                }
+
+                document.querySelectorAll('[data-wb-sidebar-backdrop]').forEach(function (backdrop) {
+                    backdrop.classList.remove('is-open');
+                });
+
+                document.querySelectorAll('[data-wb-toggle="sidebar"]').forEach(function (trigger) {
+                    trigger.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                });
+
+                var overlayRoot = document.getElementById('wb-overlay-root');
+
+                if (!overlayRoot) {
+                    return;
+                }
+
+                var dialogBackdrop = overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop');
+
+                if (dialogBackdrop) {
+                    dialogBackdrop.hidden = true;
+                    dialogBackdrop.className = 'wb-overlay-backdrop';
+                    delete dialogBackdrop.dataset.wbOverlayOwner;
+                }
+            }
+
+            function bindAdminTransientUiReset() {
+                resetAdminTransientUiState();
+
+                window.addEventListener('pageshow', function () {
+                    resetAdminTransientUiState();
+                });
+            }
+
+            function redirectToLoginFromAdmin() {
+                resetAdminTransientUiState();
+                window.location.assign('{{ route('login') }}');
+            }
+
+            bindAdminTransientUiReset();
+
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-password-toggle]');
+
+                if (! button) {
+                    return;
+                }
+
+                var wrapper = button.closest('[data-password-field]');
+                var input = wrapper ? wrapper.querySelector('[data-password-input]') : null;
+
+                if (! input) {
+                    return;
+                }
+
+                var isHidden = input.type === 'password';
+                var label = button.querySelector('[data-password-toggle-label]');
+                var icon = button.querySelector('[data-password-toggle-icon]');
+
+                input.type = isHidden ? 'text' : 'password';
+                button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+                button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+
+                if (label) {
+                    label.textContent = isHidden ? 'Hide password' : 'Show password';
+                }
+
+                if (icon) {
+                    icon.classList.remove('wb-icon-eye', 'wb-icon-eye-off');
+                    icon.classList.add(isHidden ? 'wb-icon-eye-off' : 'wb-icon-eye');
+                }
+            });
+
+            document.querySelectorAll('[data-wb-nav-group-toggle]').forEach(function (toggle) {
+                toggle.addEventListener('click', function () {
+                    var group = toggle.closest('.wb-nav-group');
+
+                    if (!group) {
+                        return;
+                    }
+
+                    var isOpen = group.classList.toggle('is-open');
+                    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            });
+
             function escapeHtml(value) {
                 return String(value || '')
                     .replace(/&/g, '&amp;')
@@ -591,8 +719,19 @@
                     method: 'POST',
                     headers: token ? { 'X-CSRF-TOKEN': token.getAttribute('content') } : {},
                     body: formData,
+                    credentials: 'same-origin',
                 })
                     .then(function (response) {
+                        if (response.redirected) {
+                            redirectToLoginFromAdmin();
+                            return;
+                        }
+
+                        if (response.status === 401 || response.status === 403 || response.status === 419) {
+                            redirectToLoginFromAdmin();
+                            return;
+                        }
+
                         if (!response.ok) {
                             throw new Error('Upload failed');
                         }

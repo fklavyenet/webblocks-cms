@@ -2,40 +2,51 @@
 
 > A modern block-based CMS
 
-WebBlocks CMS is a Laravel application aligned with the WebBlocks UI philosophy.
+WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, media, navigation, and editorial publishing from one admin interface. It includes install-level administration for users, updates, backups, site transfer tools, and system settings.
 
-## Overview
+## Feature Summary
 
-This project provides:
+- block-based page building with reusable layouts, slots, and blocks
+- multisite and locale-aware page management
+- install-level user management with `super_admin`, `site_admin`, and `editor` roles
+- editorial workflow for pages with review and publishing states
+- page revisions and in-place restore
+- media library and site-scoped navigation management
+- install wizard for first-run setup
+- system updates, backups, and site export/import tools
 
-- a public-facing site shell
-- an admin dashboard shell
-- authentication flows
-- reusable page, layout, block, and navigation management
-- consistent Blade views and layout patterns for the WebBlocks CMS experience
-- direct WebBlocks UI CDN integration
+## Data Model Principles
+
+- DB-first architecture
+- `page_translations` is authoritative for page title, slug, and path
+- `pages` stores structural and editorial metadata such as site, type, layout, workflow, and SEO fields
+- `block_*_translations` tables are authoritative for translatable block content
+- `blocks` stores structure, placement, shared config, assets, status, and variant or meta fields
+- canonical page and block text columns, where still present, are compatibility-only and not the active source of truth
+- contact form `submit_label` and `success_message` live in translation rows; block `settings` is reserved for shared operational config
+- no JSON storage is used for user-facing page or block content
 
 ## Installation
 
-### Generic Laravel install
+### DDEV Quick Start
 
 ```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan storage:link
-php artisan serve
+ddev start
+ddev composer install
+ddev artisan migrate
+ddev artisan db:seed
+ddev artisan serve # if needed outside the DDEV web server
 ```
 
-Notes:
+For a fresh install with the browser flow, open `/install` after dependencies are available. The install wizard guides database setup, environment creation, core install steps, and first super admin creation.
 
-- `php artisan db:seed` installs the core CMS catalogs and records the current app version as the installed version for a fresh install.
-- `php artisan storage:link` is required if your site will serve files from `storage/app/public`.
-- Runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are now created automatically on first run.
+Typical local URLs:
 
-### Optional DDEV local install
+- installer: `/install`
+- public site: `/`
+- admin: `/admin`
+
+### Manual CLI Install
 
 ```bash
 ddev start
@@ -47,341 +58,171 @@ ddev artisan db:seed
 ddev artisan storage:link
 ```
 
+If you are not using DDEV, the equivalent Laravel dev server flow is:
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan storage:link
+php artisan serve
+```
+
 Then open:
 
-- public site: `https://<your-project>.ddev.site`
-- admin: `https://<your-project>.ddev.site/admin`
+- installer: `http://127.0.0.1:8000/install`
+- public site: `http://127.0.0.1:8000/`
+- admin: `http://127.0.0.1:8000/admin`
 
-### Seed choices
+See `docs/installation.md` for the complete install guide.
 
-Use install seeders only on a fresh install. They are intentionally blocked once a site already contains pages, blocks, or navigation content.
+## Quick Start
 
-- Core CMS only:
+1. Install the CMS with the browser wizard or the CLI flow.
+2. Sign in to `/admin`.
+3. Create or edit a site if your install uses more than one site.
+4. Create a page. New pages start as `draft`.
+5. Add blocks, save your edits, and submit the page for review when ready.
+6. Publish the page as a `site_admin` or `super_admin`.
+7. Open the public URL or preview link to confirm the live result.
 
-```bash
-php artisan db:seed
-```
+See `docs/getting-started.md` for the first-use workflow.
 
-- Starter install:
+## Admin Navigation
 
-```bash
-php artisan db:seed --class=Database\\Seeders\\StarterInstallSeeder
-```
+- Dashboard
+- Direct links: Docs, Pages, Navigation, Media, Contact Messages
+- Maintenance: Visitor Reports, Settings, Backups, Export / Import, Update
+- System: Users, Sites, Locales, Slot Types, Block Types
 
-- Showcase install:
+## Docs Migration Pilot
 
-```bash
-php artisan db:seed --class=Database\\Seeders\\ShowcaseInstallSeeder
-```
+- Admin docs route: `/admin/docs`
+- Pilot documents: `README.md` and `CHANGELOG.md`
+- Behavior: renders selected repository Markdown files into a read-only admin surface using WebBlocks UI layout and content primitives
+- Boundaries: docs are not editable, not stored in the database, and not yet mixed into CMS pages or block content
+- Purpose: prove a safe Markdown-backed docs surface before deciding whether a fuller docs module is warranted later
 
-- Development/demo users:
+## Roles And Permissions
 
-```bash
-php artisan db:seed --class=Database\\Seeders\\DevelopmentUserSeeder
-```
+- `super_admin`: full install-level access, including Users, sites, locales, settings, updates, backups, export/import, and site content
+- `site_admin`: site-scoped admin access for assigned sites, including publishing and other editorial approvals
+- `editor`: site-scoped editorial access for assigned sites, including draft editing and review submission
 
-Recommended local demo setup:
+Users are install-level accounts, so the Users area lives under the admin `System` navigation group rather than under direct editorial links.
 
-```bash
-php artisan db:seed
-php artisan db:seed --class=Database\\Seeders\\DevelopmentUserSeeder
-php artisan db:seed --class=Database\\Seeders\\StarterInstallSeeder
-php artisan storage:link
-```
+See `docs/users-and-permissions.md` for the full permissions model.
 
-The full showcase site is no longer installed by the default seed path.
+## Editorial Workflow
 
-## Boundary Model
+Pages use four workflow states:
 
-### Core
+- `draft`
+- `in_review`
+- `published`
+- `archived`
 
-- reusable CMS engine and admin infrastructure
-- public rendering engine and shared neutral templates
-- core schema and product-owned catalogs
+`draft`, `in_review`, and `archived` pages are not public. Only `published` pages are routable on the public site. Editors can prepare content and submit it for review, while `site_admin` and `super_admin` users can also publish, archive, and move pages back to draft.
 
-### Site/Application
+See `docs/editorial-workflow.md` for status and role details.
 
-- install-specific branding and env values
-- runtime pages, blocks, navigation, media, and contact submissions
-- any custom install-specific block types
-- single-site public customizations loaded from `public/site/...`
+## Revisions And Operations
 
-### Starter/Showcase
+- Revisions are page-level editorial recovery snapshots. Restoring a revision first creates a fresh pre-restore safety revision.
+- Export / Import is for moving one site's content between installs.
+- Backup / Restore is for recovering the install environment.
+- System Updates handle installed version checks and in-app update runs.
 
-- optional starter content
-- optional showcase content
-- demo media config/import tooling
+### Development Version Policy
 
-## Catalog Ownership
+- Local source development does not automatically change the installed version.
+- A dev environment may show an older installed version until a real release is created.
+- Do not use the `System Updates` button to apply ordinary local or source-level changes.
+- Release flow may synchronize the dev installed version only after a real tag and published release exist.
+- See `DEVELOPMENT.md` for the full development and release workflow.
 
-The following catalogs are treated as product-owned core definitions:
+Admin session expiry is handled defensively: after re-authentication, the original admin tab now resets transient overlay, drawer, and body-lock state so it does not stay dimmed or non-interactive.
 
-- `PageType`
-- `LayoutType`
-- `SlotType`
-- system `BlockType` records
+These tools serve different purposes and are intentionally separate.
 
-First-pass rule:
+See `docs/revisions.md` and `docs/operations.md` for details.
 
-- the CMS seeds and maintains these records as core catalogs
-- runtime site content should reference them, not treat them as ordinary page/content data
-- system block types are read-only in the admin
-- non-system block types may still be created as install-specific extensions
+## Multisite & Multilingual
+
+- each site can have its own domain
+- each site has its own enabled locale set
+- the default locale is prefixless in public URLs
+- non-default locales use a locale prefix
+- public page resolution, navigation, and preview links are site-aware and locale-aware
+- URLs are generated only when the requested translation exists and the locale is valid for the site
+
+## URL Behavior
+
+- default locale page URLs use `/p/{slug}`
+- localized page URLs use `/{locale}/p/{slug}`, for example `/tr/p/hakkinda`
+- the default locale is not prefixed, so `/en/...` is intentionally not routable when `en` is the default locale
+- home routes follow the same rule: `/` for the default locale and `/{locale}` for non-default locales
+- admin preview and navigation page links are only generated when a valid site-scoped translation exists
+
+## Privacy-Aware Visitor Reports V2
+
+- Public page views are always counted when `CMS_VISITOR_REPORTS_ENABLED=true`, but tracking now has two modes.
+- Without consent, WebBlocks stores only privacy-safe anonymous page view data: `site_id`, `page_id` when resolved, `locale_id` when resolved, `path`, and `visited_at`.
+- With consent, WebBlocks keeps the richer Visitor Reports model, including sessions, unique visitor estimation, referrers, optional UTM campaign fields, and browser or device summaries.
+- Accept enables optional analytics tracking for sessions, unique visitors, referrers, UTM campaigns, browser summaries, device summaries, and OS summaries.
+- Decline still allows anonymous aggregate page view counting for Visitor Reports.
+- Public pages use the WebBlocks UI Cookie Consent pattern: one `wb-cookie-consent` bottom banner plus one shared `wb-modal` preference center mounted inside `#wb-overlay-root`.
+- The public footer legal area includes a persistent `Cookie settings` control that reopens the shared preference modal after consent has already been saved.
+- The browser-facing source of truth follows the WebBlocks UI pattern storage model: `localStorage` stores `wb-cookie-consent` plus `wb-cookie-consent-preferences`.
+- CMS also syncs the Visitor Reports consent cookie from the pattern state so backend tracking can continue to distinguish anonymous basic tracking from consented analytics tracking.
+- `Accept all`, `Reject`, and `Save preferences` persist consent. Closing the banner or modal with `X` only dismisses the UI for the current page view and does not save a choice.
+- Necessary Laravel cookies and sessions used for CSRF protection, admin authentication, forms, and general application security are separate from optional analytics consent.
+- Cookie consent UI only renders in the public layout. Admin and auth shells keep the shared WebBlocks UI CDN assets but do not render the consent banner.
+- The admin `Settings` screen includes a dedicated `Cookie settings` card for consent-banner controls and future privacy options.
+
+### Visitor Report Config
+
+- `CMS_VISITOR_REPORTS_ENABLED`: enables or disables all visitor report tracking.
+- `CMS_VISITOR_UTM_ENABLED`: enables UTM capture for consented full tracking only.
+- `CMS_VISITOR_CONSENT_BANNER_ENABLED`: shows or hides the public privacy settings banner and reopen link.
+- `CMS_VISITOR_CONSENT_COOKIE_NAME`: overrides the backend consent cookie name used for Visitor Reports cookie sync.
+
+### Cookie Consent Integration
+
+- Public layout CDN assets use the WebBlocks UI jsDelivr endpoints:
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css`
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css`
+  `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js`
+- The consent banner markup lives in `resources/views/partials/public-privacy-consent.blade.php`.
+- The shared preference modal is mounted by `resources/views/layouts/public.blade.php` inside `#wb-overlay-root`.
+- The public footer reopen control lives in `resources/views/pages/partials/slots/footer.blade.php`.
+- When the WebBlocks UI pattern emits `wb:cookie-consent:change`, CMS posts the updated state to `public.privacy-consent.sync` so Visitor Reports backend consent stays aligned with the browser-side pattern state.
+
+### Report Semantics
+
+- Page views include all privacy-safe anonymous views and all consented full views.
+- Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.
+- Anonymous privacy-safe rows are not treated as `Direct / None` campaign traffic.
+
+## Documentation
+
+- [Installation](docs/installation.md)
+- [Getting Started](docs/getting-started.md)
+- [Users And Permissions](docs/users-and-permissions.md)
+- [Editorial Workflow](docs/editorial-workflow.md)
+- [Revisions](docs/revisions.md)
+- [Operations](docs/operations.md)
+- [Development Workflow](DEVELOPMENT.md)
 
 ## Stack
 
-- This is a Laravel application.
-- WebBlocks UI assets are loaded via CDN in the layout templates.
-- The application uses server-rendered Blade views.
-- The public site can optionally load single-site custom assets from:
-  - `public/site/css/site.css`
-  - `public/site/js/site.js`
-
-## Site-Specific Public Assets
-
-- WebBlocks CMS now supports multisite installs in core.
-- `public/site/css/site.css` and `public/site/js/site.js` remain optional install-level public overrides.
-- In a multisite install, treat these files as shared install assets and keep site-specific routing/content/domain behavior in CMS data instead of core templates.
-- These files are optional. Public pages continue to work when they do not exist.
-- The shared CMS/core public layout stays generic; install-specific visual customization should go into these `public/site` files instead of core public templates.
-
-## Multisite And Locale Foundation
-
-- Phase 1 adds a DB-first foundation for future multisite and multilingual support.
-- `sites` stores install sites and seeds one primary `default` site for existing installs.
-- `locales` stores enabled locales and seeds `en` as the default enabled locale.
-- `site_locales` is the explicit relational pivot that enables locales per site.
-- `pages` remains the canonical page entity and is now scoped to a `site_id`.
-- `page_translations` stores locale-specific page routing fields such as `name`, `slug`, and canonical `path`.
-- Existing installs are backfilled so legacy pages stay live under the primary site and default English locale.
-- Public routing keeps default English prefixless and uses a locale prefix for non-default locales such as `/tr/p/about`.
-
-## Block Content Translations
-
-- Phase 3 keeps page and block structure canonical while localizing block content per locale.
-- The canonical `blocks` table still owns shared structure and configuration such as parent/child placement, slot assignment, sort order, publish status, variants, URLs, asset references, and system settings.
-- Locale-specific block content now lives in explicit relational tables instead of JSON blobs:
-  - `block_text_translations`
-  - `block_button_translations`
-  - `block_image_translations`
-  - `block_contact_form_translations`
-- Supported translatable block families currently cover the starter/editorial path:
-  - text family: `heading`, `text`, `rich-text`, `html`, `section`, `columns`, `column_item`, `callout`, `quote`, `faq`, `tabs`
-  - button family: `button`
-  - image family: `image`
-  - contact form family: `contact_form`
-- Shared/system blocks such as `navigation-auto`, `menu`, and `page-title` remain canonical for now.
-
-### Field Ownership
-
-- Text family:
-  - translated: `title`, `subtitle`, `content`
-  - shared: `variant`, `url`, `settings`, structural fields
-- Button family:
-  - translated: `title`
-  - shared: `url`, `subtitle` target, `variant`
-- Image family:
-  - translated: caption and alt text
-  - shared: `asset_id`, `url`, `variant`
-- Contact form family:
-  - translated: heading/title, intro text, submit label, success message
-  - shared: recipient email override and delivery/storage settings
-
-### Fallback Behavior
-
-- Public rendering resolves block content through a centralized translation resolver.
-- Requested locale content is used when a translation row exists.
-- If a row is missing, rendering falls back explicitly to the default locale `en`.
-- Admin slot editing surfaces translation state per block as `Translated`, `Fallback`, `Missing`, or `Shared`.
-- Default locale admin edits update both canonical block fields and the default translation row.
-- Non-default locale edits only update translated fields for supported block families and leave shared block config untouched.
-
-### Extending A New Block Type
-
-- Decide whether the new block's editable fields are translated or shared.
-- Add the block slug to the correct family in `App\Support\Blocks\BlockTranslationRegistry`.
-- Add or update the translation model/table if the family needs new translated columns.
-- Ensure admin forms clearly separate translated copy from shared config.
-- Cover the behavior with one admin locale-edit test and one public rendering/fallback test.
-
-## Multisite Domain Resolution
-
-- Public site resolution is now host-aware instead of relying on the primary site by default.
-- Each `sites` row can carry one canonical `domain` value.
-- Stored domains are normalized to host-only lowercase values:
-  - protocol is stripped
-  - path, query, and fragment input is rejected
-  - port suffixes are removed for matching
-- Public request flow is now:
-  - host resolves the active site
-  - locale prefix is validated against that site's enabled locales
-  - page translation lookup is scoped by `site_id + locale_id + slug/path`
-  - page rendering and generated public URLs continue in that same resolved site context
-
-### Unknown Host Behavior
-
-- Unknown host behavior is explicit and config-driven.
-- `config('cms.multisite.unknown_host_fallback')` controls whether unmapped hosts fall back to the primary site.
-- Default behavior:
-  - local/testing: fallback enabled
-  - production: fallback disabled
-- When fallback is disabled, unmapped public hosts return `404` instead of silently leaking primary-site content.
-
-### Site-Aware Locale Rules
-
-- A locale prefix only works when that locale is enabled for the resolved site.
-- Default locale remains prefixless.
-- Non-default locale URLs stay prefixed.
-- If a locale is disabled for the resolved site, the request returns `404` rather than downgrading silently to English.
-- If a locale-specific page translation is missing, page lookup stays scoped to the resolved site and uses the existing page-translation fallback behavior only within valid site/locale bounds.
-
-### URL Generation
-
-- `Page::publicPath()` remains path-only and locale-aware.
-- `Page::publicUrl()` now uses the page's site domain when one is configured.
-- Admin preview/open links automatically use the correct site domain when available.
-- If no site domain is configured, URL generation falls back to the normal application base URL.
-
-## Admin Multisite Boundaries
-
-- Page management stays site-aware through explicit `site_id` assignment.
-- Pages index includes site context and continues to support site filtering.
-- Page edit and slot/block flows show clearer site/domain context so editors know which site they are working in.
-- Page translation creation is limited to locales enabled for the page's assigned site.
-- Site editing keeps the system default locale enabled automatically so a site cannot become unroutable.
-
-## Local Multisite Testing
-
-- The starter seed now creates a second site to prove host-based isolation.
-- Demo host setup used by the seeded content:
-  - primary site: `primary.ddev.site`
-  - campaign site: `campaign.ddev.site`
-- In DDEV or another local proxy, map those hosts to the same project and test with host-based requests.
-- If your local environment does not support multiple mapped hosts yet, unknown-host fallback remains enabled in local/testing by default so the primary site still works.
-- Useful manual checks:
-  - primary site English home
-  - primary site Turkish page
-  - campaign site English home
-  - overlapping `/p/about` on primary vs campaign host
-  - `/tr/...` on campaign host returning `404`
-  - unknown host fallback in local, `404` when config disables fallback
-
-## Application Identity
-
-Project metadata is normalized to the CMS brand:
-
-- Composer package: `fklavyenet/webblocks-cms`
-- Application name: `WebBlocks CMS`
-- Application slogan: `A modern block-based CMS`
-
-## Navigation Items Note
-
-- Navigation Items now use a tree editor instead of a CRUD table.
-- `menu_key`, `parent_id`, and `position` define menu structure and ordering.
-- Navigation Auto blocks render data from `navigation_items` by `menu_key`.
-- Drag and drop reordering auto-saves immediately after drop.
-- Cycle protection and a maximum depth of 3 levels are enforced.
-
-## Contact Form Block
-
-- `contact_form` is a reusable block type, not a special page feature.
-- Public submissions are always stored in `contact_messages` before email delivery is attempted.
-- Notification recipients resolve from block-level `recipient_email`, then `CONTACT_RECIPIENT_EMAIL`.
-- Message statuses are `new`, `read`, `replied`, `archived`, and `spam`.
-- Anti-spam protection uses a honeypot field, a minimum submit-time check, and Laravel rate limiting on the submission route.
-- In local DDEV development, Mailpit is available at the DDEV mail URL and is the preferred way to verify contact notifications.
-- Set `CONTACT_RECIPIENT_EMAIL` to a local inbox target, submit `/p/contact`, then confirm both the saved `contact_messages` row and the notification state in the admin detail view.
-- If mail delivery fails locally, the message record remains saved and the detail view shows the notification recipient, status, and captured error text.
-
-## Demo Media
-
-- Demo media import remains available through `php artisan demo:import-media`.
-- Demo-only source tracking is isolated from the core `assets` schema.
-- Starter/showcase media refresh logic is intentionally separate from core migrations.
-
-## System Updates
-
-- Installed CMS version persists in `system_settings` under `system.installed_version`.
-- WebBlocks CMS is an update client/consumer and checks a central update service.
-- Release publishing and update server responsibilities live in the separate WebBlocks Publisher / `updates.webblocksui.com` project.
-- Configure system updates with:
-  - `WEBBLOCKS_UPDATES_ENABLED`
-  - `WEBBLOCKS_UPDATES_SERVER_URL`
-  - `WEBBLOCKS_UPDATES_CHANNEL`
-- The admin System Updates screen is now check-only in V1 and can show:
-  - update available
-  - already up to date
-  - incompatible update available
-  - no releases found
-  - update server unavailable
-  - invalid or unsupported response
-- The CMS update screen now performs in-app automatic updates. It downloads the published release package into a temporary workspace, verifies the checksum when available, applies the package with protected-path exclusions, runs maintenance and migration commands, records the update run log, and only then persists the installed version.
-- A fresh local install now records the current app version during `db:seed`, so the System Updates screen does not pretend an older published release is already installed.
-
-## Automated Releases
-
-- Git tags matching `v*` trigger `.github/workflows/publish-release.yml`.
-- The workflow strips the leading `v` to derive the release version, builds `webblocks-cms-<version>.zip`, creates a GitHub Release, and publishes release metadata to WebBlocks Publisher.
-- Release notes come from the annotated tag message when present. If the tag has no message, the workflow uses the matching `CHANGELOG.md` section when available and otherwise falls back to a short default note.
-- The release archive is a source package and excludes local/runtime content such as `.git`, `.github`, `.ddev`, `node_modules`, `vendor`, `.env*`, logs, caches, and generated storage artifacts.
-- The current publish workflow sends a multipart payload with:
-  - `product`
-  - `version`
-  - `channel`
-  - `minimum_client_version`
-  - `release_notes`
-  - `notes`
-  - `source_reference`
-  - `checksum_sha256`
-  - `package`
-- The first structural multisite + multilingual release pins `minimum_client_version=0.1.8` so legacy single-site installs on `0.1.8` remain explicitly eligible for the stable upgrade path.
-- Required GitHub Actions secret:
-  - `WEBBLOCKS_PUBLISH_TOKEN`: bearer token used for `POST https://updates.webblocksui.com/api/updates/publish`
-- Optional GitHub Actions secret:
-  - `WEBBLOCKS_PUBLISH_URL`: override publish endpoint, defaults to `https://updates.webblocksui.com/api/updates/publish`
-- The workflow is designed to fail clearly when the release already exists, the tag is invalid, the token is missing, the archive cannot be built, or the publisher rejects the request.
-
-## Admin Dashboard Path
-
-- The canonical admin dashboard URL is now `/admin`.
-- `/admin/dashboard` remains available as a backward-compatible redirect to `/admin`.
-- Auth redirects and admin entry points now resolve to the canonical `/admin` path.
-
-## Backup Manager V1
-
-- Admin path: `/admin/system/backups`
-- Backup records persist in `system_backups` with running, completed, or failed state plus summary, output log, and triggering user.
-- Restore run records persist separately in `system_backup_restores`, including source archive, restored parts, safety backup reference, output log, and failure details.
-- Backup archives are stored locally under `storage/app/backups/<Y>/<m>/<d>/webblocks-cms-backup-YYYY-MM-DD-HHMMSS.zip`.
-- Each archive includes:
-  - `database/database.sql`
-  - `uploads/public/...` from the CMS-managed `storage/app/public` area
-  - `manifest.json` with app/version/driver/archive metadata
-- Database dump behavior:
-  - SQLite: PHP-generated SQL export from the active connection, including schema and row inserts
-  - MySQL/MariaDB: environment-aware execution with `CMS_BACKUP_EXECUTION=auto|direct|ddev`
-  - `auto` uses `ddev exec` in local DDEV projects and keeps the existing direct `mysqldump` / `mariadb-dump` flow elsewhere
-  - Override example: `CMS_BACKUP_EXECUTION=direct` to force host execution or `CMS_BACKUP_EXECUTION=ddev` to always run inside DDEV
-- Restore behavior:
-  - `php artisan system:backup:restore {backup}` restores a backup by record ID or by relative archive path on the `backups` disk
-  - the command requires confirmation unless `--force` is passed
-  - the admin backup details screen includes an explicit restore action for completed backups only
-  - restore validates `manifest.json` and `database/database.sql` before doing anything destructive
-  - if the manifest says uploads are included, `uploads/public/...` must also exist in the archive
-  - restore creates a fresh pre-restore safety backup of the current environment before importing the selected archive
-  - if the safety backup fails, restore aborts
-  - restore replaces the current database with `database/database.sql`
-  - restore replaces `storage/app/public` with `uploads/public` from the archive when present
-  - restore reruns `php artisan storage:link` and `php artisan optimize:clear` after the archive is applied
-  - restore never deletes the source backup archive
-- Local DDEV notes:
-  - MySQL/MariaDB restore uses the same `CMS_BACKUP_EXECUTION=auto|direct|ddev` strategy family as backup creation
-  - in local DDEV projects, `auto` prefers `ddev exec mysql` or `ddev exec mariadb` when appropriate
-- Known limitations:
-  - restore is intentionally explicit and not scheduled or automatic
-  - restore currently targets the active configured database connection plus `storage/app/public`
-  - cloud or remote backup storage sync is still not included
-  - incremental/differential and encrypted backup flows are still not included
+- Laravel application
+- server-rendered Blade views
+- WebBlocks UI assets loaded via CDN
+- CMS core public assets live under `public/assets/webblocks-cms/`
+- optional install-level public overrides in `public/site/css/site.css` and `public/site/js/site.js`
 
 ## License
 
