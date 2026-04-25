@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Complete a final consistency audit across source-of-truth, translation, URL, validation, and reconstruction paths after the data integrity hardening phases.
+- Fix the standalone admin block editor parent-block option labels so they resolve through authoritative block translation rows when canonical block text fields are null.
 - Harden reconstruction compatibility paths across revision restore, clone, export/import, and legacy import flows while keeping translation rows authoritative for active content.
 - Fix legacy import compatibility coverage so old-package reconstruction tests correctly simulate archives missing block translation arrays but still carrying canonical block text.
 - Improve legacy SQLite import handling for the Fklavye sandbox importer and make its required core block-type assumptions explicit.

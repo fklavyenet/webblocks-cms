@@ -319,12 +319,31 @@ class BlockController extends Controller
             return collect();
         }
 
+        $page = $this->authorization->scopePagesForUser(Page::query(), request()->user())
+            ->with('site.locales')
+            ->find($pageId);
+        $defaultLocale = $page?->availableSiteLocales()->firstWhere('is_default', true);
+
         $blocks = $this->authorization->scopeBlocksForUser(Block::query(), request()->user())
             ->where('page_id', $pageId)
-            ->with('children')
+            ->with([
+                'children',
+                'textTranslations',
+                'buttonTranslations',
+                'imageTranslations',
+                'contactFormTranslations',
+                'children.textTranslations',
+                'children.buttonTranslations',
+                'children.imageTranslations',
+                'children.contactFormTranslations',
+            ])
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->orderBy('sort_order')
             ->get();
+
+        if ($defaultLocale) {
+            $blocks = $this->blockTranslationResolver->resolveCollection($blocks, $defaultLocale);
+        }
 
         return $this->flattenBlockOptions($blocks->whereNull('parent_id'));
     }

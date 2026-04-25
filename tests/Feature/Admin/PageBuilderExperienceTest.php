@@ -2522,6 +2522,76 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function standalone_admin_block_edit_parent_options_use_resolved_translation_labels_when_canonical_fields_are_null(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+        $buttonType = BlockType::query()->firstOrCreate(
+            ['slug' => 'button'],
+            ['name' => 'Button', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2]
+        );
+
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $parent = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Parent heading',
+            'content' => 'Parent body',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $parent->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Parent heading',
+            'content' => 'Parent body',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($parent->fresh(['textTranslations']));
+
+        $child = Block::create([
+            'page_id' => $page->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'title' => 'Child action',
+            'url' => 'https://example.test',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->followingRedirects()
+            ->get(route('admin.blocks.edit', $child));
+
+        $response->assertOk();
+        $response->assertSee('Parent heading');
+    }
+
+    #[Test]
     public function starter_content_seed_creates_real_columns_children_without_duplicates(): void
     {
         $this->seed(CoreCatalogSeeder::class);
