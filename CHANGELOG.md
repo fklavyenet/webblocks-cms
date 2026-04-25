@@ -17,6 +17,14 @@
 - Refine the fresh CMS welcome screen with a stronger WebBlocks UI-native product introduction and clearer first actions.
 - Add development and release workflow documentation, clarify the dev installed-version synchronization policy, and document the local development update boundary in README.
 
+## 1.0.4
+
+- Fix public slider inline JavaScript syntax issue.
+- Move public consent synchronization JavaScript into a CMS core static asset.
+- Move public slider behavior into a CMS core static asset.
+- Move public footer fallback CSS into a CMS core stylesheet.
+- Document CMS core public asset boundaries and keep install-level overrides separate.
+
 ## 1.0.3
 
 - Make the page translation site integrity migration fully retry-safe by skipping already-created indexes and constraints during partial upgrade recovery.

@@ -213,6 +213,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Laravel application
 - server-rendered Blade views
 - WebBlocks UI assets loaded via CDN
+- CMS core public assets live under `public/assets/webblocks-cms/`
 - optional install-level public overrides in `public/site/css/site.css` and `public/site/js/site.js`
 
 ## License
