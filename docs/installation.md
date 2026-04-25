@@ -4,6 +4,8 @@
 
 WebBlocks CMS supports a browser-based install wizard for fresh installs, a manual Laravel CLI install path, and an optional DDEV local setup flow.
 
+For a fresh install, start by getting the WebBlocks CMS source code onto your machine. Run Composer, create `.env`, use Artisan, start DDEV, and open the browser install wizard only after the source code exists locally.
+
 An install is considered complete when the application has a working CMS baseline:
 
 - an app key exists
@@ -13,11 +15,30 @@ An install is considered complete when the application has a working CMS baselin
 - the first active `super_admin` exists
 - an install completion marker is stored in `system_settings`
 
+## Get the Source Code
+
+Before you run any install commands, make sure the WebBlocks CMS repository is present locally.
+
+Clone into a new directory:
+
+```bash
+git clone git@github.com:fklavyenet/webblocks-cms.git
+cd webblocks-cms
+```
+
+Clone into an already-created empty directory:
+
+```bash
+git clone git@github.com:fklavyenet/webblocks-cms.git .
+```
+
+After the source code is present locally, continue with one of the fresh install paths below.
+
 ## Browser Install Wizard
 
 Use the browser wizard for a fresh install.
 
-Start with:
+After the source code is present locally, start with:
 
 ```bash
 composer install
@@ -44,7 +65,7 @@ Notes:
 
 ## Manual CLI Installation
 
-Use the CLI flow when you prefer a standard Laravel setup path.
+Use the CLI flow when you prefer a standard Laravel setup path for a fresh install.
 
 ```bash
 composer install
@@ -63,6 +84,8 @@ Notes:
 - runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are created automatically on first run
 
 ## Optional DDEV Local Install
+
+After the source code is present locally:
 
 ```bash
 ddev start

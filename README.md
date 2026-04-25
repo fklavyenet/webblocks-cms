@@ -28,6 +28,15 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 ## Installation
 
+For a fresh install, first get the source code locally:
+
+```bash
+git clone git@github.com:fklavyenet/webblocks-cms.git
+cd webblocks-cms
+```
+
+If you already created an empty target directory, use `git clone git@github.com:fklavyenet/webblocks-cms.git .` instead. After the source code is present locally, continue with one of the install paths below.
+
 ### DDEV Quick Start
 
 ```bash
@@ -38,7 +47,7 @@ ddev artisan db:seed
 ddev artisan serve # if needed outside the DDEV web server
 ```
 
-For a fresh install with the browser flow, open `/install` after dependencies are available. The install wizard guides database setup, environment creation, core install steps, and first super admin creation.
+For a fresh install with the browser flow, open `/install` after the source code, dependencies, and local environment are in place. The install wizard guides database setup, environment creation, core install steps, and first super admin creation.
 
 Typical local URLs:
 
