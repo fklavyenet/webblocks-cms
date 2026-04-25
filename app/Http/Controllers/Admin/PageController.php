@@ -148,7 +148,7 @@ class PageController extends Controller
             $slots = $data['slots'] ?? [];
             $blocks = $data['blocks'] ?? [];
             $translation = $data['translation'];
-            unset($data['slots'], $data['blocks'], $data['translation']);
+            unset($data['title'], $data['slug'], $data['slots'], $data['blocks'], $data['translation']);
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
@@ -475,6 +475,7 @@ class PageController extends Controller
         $page->translations()->updateOrCreate(
             ['locale_id' => $defaultLocaleId],
             [
+                'site_id' => $page->site_id,
                 'name' => $translation['name'],
                 'slug' => $translation['slug'],
                 'path' => PageTranslation::pathFromSlug($translation['slug']),

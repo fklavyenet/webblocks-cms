@@ -18,6 +18,7 @@ use App\Models\Site;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class SiteCloneService
@@ -211,11 +212,13 @@ class SiteCloneService
 
         foreach ($sourcePages as $page) {
             $defaultTranslation = $page->defaultTranslation();
+            $canonicalName = $defaultTranslation?->name ?? $page->name ?? 'Cloned Page';
+            $canonicalSlug = $defaultTranslation?->slug ?? $page->slug ?? Str::slug($canonicalName);
 
             $newPage = Page::query()->create([
                 'site_id' => $targetSite->id,
-                'title' => $defaultTranslation?->name ?? $page->getRawOriginal('title'),
-                'slug' => $defaultTranslation?->slug ?? $page->getRawOriginal('slug'),
+                'title' => $canonicalName,
+                'slug' => $canonicalSlug,
                 'page_type' => $page->page_type,
                 'status' => $page->status,
             ]);
@@ -232,6 +235,7 @@ class SiteCloneService
 
                 PageTranslation::query()->create([
                     'page_id' => $newPage->id,
+                    'site_id' => $targetSite->id,
                     'locale_id' => $translation->locale_id,
                     'name' => $translation->name,
                     'slug' => $translation->slug,

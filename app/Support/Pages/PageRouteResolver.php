@@ -103,6 +103,7 @@ class PageRouteResolver
 
         $translation = PageTranslation::query()
             ->with(['page', 'locale'])
+            ->where('site_id', $site->id)
             ->where('locale_id', $locale->id)
             ->where(function ($query) use ($path, $slug) {
                 $query->where('path', $path);

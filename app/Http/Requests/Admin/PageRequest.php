@@ -11,6 +11,7 @@ use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class PageRequest extends FormRequest
 {
@@ -50,8 +51,9 @@ class PageRequest extends FormRequest
                 (function () use ($translationId, $siteId, $defaultLocaleId) {
                     $rule = Rule::unique(PageTranslation::class, 'slug')
                         ->where(fn ($query) => $query
+                            ->where('site_id', $siteId)
                             ->where('locale_id', $defaultLocaleId)
-                            ->whereIn('page_id', Page::query()->select('id')->where('site_id', $siteId)));
+                        );
 
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
@@ -144,5 +146,37 @@ class PageRequest extends FormRequest
             ->all();
 
         return $data;
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $siteId = (int) $this->input('site_id');
+            $page = $this->route('page');
+            $page = $page instanceof Page ? $page->loadMissing('translations') : null;
+
+            if (! $page || $siteId <= 0 || $page->site_id === $siteId) {
+                return;
+            }
+
+            $enabledLocaleIds = Site::query()
+                ->whereKey($siteId)
+                ->with(['enabledLocales:id'])
+                ->first()?->enabledLocales
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all() ?? [];
+
+            $invalidLocaleCodes = $page->translations
+                ->reject(fn (PageTranslation $translation) => in_array((int) $translation->locale_id, $enabledLocaleIds, true))
+                ->load('locale')
+                ->map(fn (PageTranslation $translation) => strtoupper((string) $translation->locale?->code))
+                ->filter()
+                ->values();
+
+            if ($invalidLocaleCodes->isNotEmpty()) {
+                $validator->errors()->add('site_id', 'Target site must enable all existing page translation locales: '.$invalidLocaleCodes->join(', ').'.');
+            }
+        }];
     }
 }

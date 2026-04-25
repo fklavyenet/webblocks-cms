@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Locale extends Model
 {
@@ -107,6 +108,17 @@ class Locale extends Model
             Site::query()->get()->each(function (Site $site) use ($locale): void {
                 $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
             });
+        }
+
+        if (Schema::hasTable('system_settings')) {
+            $defaultLocale = static::query()->where('is_default', true)->orderBy('id')->first();
+
+            if ($defaultLocale) {
+                SystemSetting::query()->updateOrCreate(
+                    ['key' => \App\Support\System\SystemSettings::DEFAULT_LOCALE],
+                    ['value' => $defaultLocale->code],
+                );
+            }
         }
     }
 }

@@ -17,6 +17,10 @@ class Page extends Model
 {
     use HasFactory;
 
+    private ?string $pendingDefaultTranslationName = null;
+
+    private ?string $pendingDefaultTranslationSlug = null;
+
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_IN_REVIEW = 'in_review';
@@ -45,26 +49,16 @@ class Page extends Model
             }
         });
 
+        static::saved(function (self $page): void {
+            $page->translations()->update(['site_id' => $page->site_id]);
+            $page->syncPendingDefaultTranslation();
+
+            if ($page->wasChanged('site_id')) {
+                $page->unsetRelation('translations');
+            }
+        });
+
         static::created(function (self $page): void {
-            $defaultLocaleId = self::defaultLocaleId();
-            $canonicalTitle = $page->attributes['title'] ?? null;
-            $canonicalSlug = $page->attributes['slug'] ?? null;
-
-            if (($canonicalSlug === null || $canonicalSlug === '') && is_string($canonicalTitle) && $canonicalTitle !== '') {
-                $canonicalSlug = Str::slug($canonicalTitle);
-            }
-
-            if ($defaultLocaleId && $canonicalTitle !== null && $canonicalTitle !== '' && $canonicalSlug !== null && $canonicalSlug !== '') {
-                $page->translations()->firstOrCreate(
-                    ['locale_id' => $defaultLocaleId],
-                    [
-                        'name' => $canonicalTitle,
-                        'slug' => $canonicalSlug,
-                        'path' => PageTranslation::pathFromSlug($canonicalSlug),
-                    ],
-                );
-            }
-
             if (app()->runningUnitTests()) {
                 return;
             }
@@ -133,11 +127,26 @@ class Page extends Model
         return $this->resolvedTitle($value);
     }
 
+    public function setTitleAttribute($value): void
+    {
+        $normalized = is_string($value) ? trim($value) : null;
+        $this->pendingDefaultTranslationName = $normalized !== '' ? $normalized : null;
+        unset($this->attributes['title']);
+    }
+
     public function getSlugAttribute($value): ?string
     {
         return $this->defaultTranslation()?->slug
             ?? $this->currentTranslation?->slug
+            ?? $this->pendingDefaultTranslationSlug
             ?? $value;
+    }
+
+    public function setSlugAttribute($value): void
+    {
+        $normalized = is_string($value) ? trim($value) : null;
+        $this->pendingDefaultTranslationSlug = $normalized !== '' ? Str::slug($normalized) : null;
+        unset($this->attributes['slug']);
     }
 
     public function scopeOrderByDefaultTranslation(Builder $query, string $column, string $direction = 'asc'): Builder
@@ -318,8 +327,53 @@ class Page extends Model
     {
         return $this->currentTranslation?->name
             ?? $this->defaultTranslation()?->name
+            ?? $this->pendingDefaultTranslationName
             ?? $fallback
-            ?? $this->attributes['title']
             ?? null;
+    }
+
+    private function syncPendingDefaultTranslation(): void
+    {
+        $defaultLocaleId = self::defaultLocaleId();
+
+        if (! $defaultLocaleId) {
+            $this->pendingDefaultTranslationName = null;
+            $this->pendingDefaultTranslationSlug = null;
+
+            return;
+        }
+
+        if ($this->pendingDefaultTranslationName === null && $this->pendingDefaultTranslationSlug === null) {
+            return;
+        }
+
+        $existing = $this->translations()->where('locale_id', $defaultLocaleId)->first();
+        $name = $this->pendingDefaultTranslationName ?? $existing?->name;
+        $slug = $this->pendingDefaultTranslationSlug ?? $existing?->slug;
+
+        if (($slug === null || $slug === '') && is_string($name) && $name !== '') {
+            $slug = Str::slug($name);
+        }
+
+        if (! is_string($name) || $name === '' || ! is_string($slug) || $slug === '') {
+            $this->pendingDefaultTranslationName = null;
+            $this->pendingDefaultTranslationSlug = null;
+
+            return;
+        }
+
+        $this->translations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'site_id' => $this->site_id,
+                'name' => $name,
+                'slug' => $slug,
+                'path' => PageTranslation::pathFromSlug($slug),
+            ],
+        );
+
+        $this->unsetRelation('translations');
+        $this->pendingDefaultTranslationName = null;
+        $this->pendingDefaultTranslationSlug = null;
     }
 }

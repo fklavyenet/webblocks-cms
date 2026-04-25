@@ -54,50 +54,11 @@ class StarterContentSeeder extends Seeder
             $defaultLocale->id => ['is_enabled' => true],
         ]);
 
-        $homePage = Page::query()->updateOrCreate(
-            ['site_id' => $defaultSite->id, 'slug' => 'home'],
-            [
-                'title' => 'Home',
-                'page_type' => 'default',
-                'status' => 'published',
-            ],
-        );
-
-        $aboutPage = Page::query()->updateOrCreate(
-            ['site_id' => $defaultSite->id, 'slug' => 'about'],
-            [
-                'title' => 'About',
-                'page_type' => 'default',
-                'status' => 'published',
-            ],
-        );
-
-        $contactPage = Page::query()->updateOrCreate(
-            ['site_id' => $defaultSite->id, 'slug' => 'contact'],
-            [
-                'title' => 'Contact',
-                'page_type' => 'default',
-                'status' => 'published',
-            ],
-        );
-
-        $campaignHomePage = Page::query()->updateOrCreate(
-            ['site_id' => $campaignSite->id, 'slug' => 'home'],
-            [
-                'title' => 'Campaign Home',
-                'page_type' => 'default',
-                'status' => 'published',
-            ],
-        );
-
-        $campaignAboutPage = Page::query()->updateOrCreate(
-            ['site_id' => $campaignSite->id, 'slug' => 'about'],
-            [
-                'title' => 'Campaign About',
-                'page_type' => 'default',
-                'status' => 'published',
-            ],
-        );
+        $homePage = $this->upsertPage($defaultSite, 'home', 'Home');
+        $aboutPage = $this->upsertPage($defaultSite, 'about', 'About');
+        $contactPage = $this->upsertPage($defaultSite, 'contact', 'Contact');
+        $campaignHomePage = $this->upsertPage($campaignSite, 'home', 'Campaign Home');
+        $campaignAboutPage = $this->upsertPage($campaignSite, 'about', 'Campaign About');
 
         foreach ([$homePage, $aboutPage, $contactPage, $campaignHomePage, $campaignAboutPage] as $page) {
             PageTranslation::query()->updateOrCreate(
@@ -657,5 +618,34 @@ class StarterContentSeeder extends Seeder
         ]);
 
         return Block::query()->updateOrCreate($identity, $payload);
+    }
+
+    private function upsertPage(Site $site, string $slug, string $title): Page
+    {
+        $page = Page::query()
+            ->where('site_id', $site->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', Locale::query()->where('is_default', true)->value('id'))
+                ->where('slug', $slug))
+            ->first();
+
+        if (! $page) {
+            $page = Page::query()->create([
+                'site_id' => $site->id,
+                'title' => $title,
+                'slug' => $slug,
+                'page_type' => 'default',
+                'status' => 'published',
+            ]);
+        }
+
+        $page->update([
+            'title' => $title,
+            'slug' => $slug,
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        return $page->fresh();
     }
 }

@@ -34,6 +34,14 @@ class Site extends Model
             $site->domain = app(SiteDomainNormalizer::class)->normalize($site->domain);
         });
 
+        static::created(function (self $site): void {
+            $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+
+            if ($defaultLocaleId) {
+                $site->locales()->syncWithoutDetaching([$defaultLocaleId => ['is_enabled' => true]]);
+            }
+        });
+
         static::saved(function (self $site): void {
             self::enforcePrimaryInvariant($site);
         });

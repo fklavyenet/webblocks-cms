@@ -85,7 +85,11 @@ class PageEditorialWorkflowTest extends TestCase
             ],
         ]);
 
-        $page = Page::query()->where('slug', 'workflow-start')->firstOrFail();
+        $page = Page::query()
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $this->defaultLocale()->id)
+                ->where('slug', 'workflow-start'))
+            ->firstOrFail();
 
         $response->assertRedirect(route('admin.pages.edit', $page));
         $response->assertSessionHas('status', 'Page saved as draft.');

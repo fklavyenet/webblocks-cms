@@ -40,25 +40,27 @@ class MultisiteMultilingualFoundationTest extends TestCase
     #[Test]
     public function existing_pages_are_backfilled_to_the_default_site_and_english_translation_during_migration(): void
     {
+        Schema::dropIfExists('page_translations');
         Schema::dropIfExists('block_contact_form_translations');
         Schema::dropIfExists('block_image_translations');
         Schema::dropIfExists('block_button_translations');
         Schema::dropIfExists('block_text_translations');
         Schema::dropIfExists('visitor_events');
-        Schema::dropIfExists('page_translations');
-        Schema::dropIfExists('site_locales');
-        Schema::dropIfExists('locales');
-        Schema::dropIfExists('sites');
-
         Schema::table('pages', function (Blueprint $table) {
+            $table->dropUnique('pages_id_site_id_unique');
             $table->dropForeign(['site_id']);
             $table->dropColumn('site_id');
         });
 
         Schema::table('pages', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
+            $table->string('title')->nullable();
+            $table->string('slug')->nullable();
             $table->unique('slug');
         });
+
+        Schema::dropIfExists('site_locales');
+        Schema::dropIfExists('locales');
+        Schema::dropIfExists('sites');
 
         DB::table('pages')->insert([
             'title' => 'Legacy About',
@@ -105,7 +107,6 @@ class MultisiteMultilingualFoundationTest extends TestCase
             'is_default' => false,
             'is_enabled' => true,
         ]);
-
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
 
         PageTranslation::query()->create([
@@ -279,13 +280,14 @@ class MultisiteMultilingualFoundationTest extends TestCase
             'is_default' => false,
             'is_enabled' => true,
         ]);
-
         $page = Page::query()->create([
             'site_id' => $site->id,
             'title' => 'About',
             'slug' => 'about',
             'status' => 'published',
         ]);
+
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
 
         PageTranslation::query()->create([
             'page_id' => $page->id,
@@ -294,6 +296,11 @@ class MultisiteMultilingualFoundationTest extends TestCase
             'slug' => 'hakkinda',
             'path' => '/p/hakkinda',
         ]);
+
+        DB::table('site_locales')
+            ->where('site_id', $site->id)
+            ->where('locale_id', $turkish->id)
+            ->update(['is_enabled' => false]);
 
         $this->get('http://primary.example.test/tr/p/hakkinda')->assertNotFound();
 
@@ -359,7 +366,8 @@ class MultisiteMultilingualFoundationTest extends TestCase
         $translation = $page->defaultTranslation();
 
         $this->assertNotNull($translation);
-        $this->assertFalse(Schema::hasColumn('page_translations', 'site_id'));
+        $this->assertTrue(Schema::hasColumn('page_translations', 'site_id'));
+        $this->assertSame($page->site_id, $translation->site_id);
         $this->assertSame($page->site_id, $translation->page->site_id);
     }
 }

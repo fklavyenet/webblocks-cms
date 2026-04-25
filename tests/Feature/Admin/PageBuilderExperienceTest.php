@@ -106,7 +106,11 @@ class PageBuilderExperienceTest extends TestCase
             ],
         ]);
 
-        $page = Page::query()->where('slug', 'about')->first();
+        $page = Page::query()
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $this->defaultLocale()->id)
+                ->where('slug', 'about'))
+            ->first();
 
         $this->assertNotNull($page);
         $response->assertRedirect(route('admin.pages.edit', $page));
@@ -2462,7 +2466,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->seed(StarterContentSeeder::class);
         $this->seed(StarterContentSeeder::class);
 
-        $home = Page::query()->where('slug', 'home')->firstOrFail();
+        $home = Page::query()
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $this->defaultLocale()->id)
+                ->where('slug', 'home'))
+            ->firstOrFail();
         $columns = Block::query()
             ->where('page_id', $home->id)
             ->where('type', 'columns')
@@ -2472,8 +2480,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotNull($columns);
         $this->assertDatabaseCount('pages', 5);
         $this->assertDatabaseHas('sites', ['handle' => 'campaign', 'domain' => 'campaign.ddev.site']);
-        $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'About']);
-        $this->assertDatabaseHas('pages', ['slug' => 'about', 'title' => 'Campaign About']);
+        $this->assertDatabaseHas('page_translations', ['page_id' => $home->site->pages()->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->value('id'), 'slug' => 'about', 'name' => 'About']);
+        $this->assertDatabaseHas('page_translations', ['slug' => 'about', 'name' => 'Campaign About']);
         $this->assertSame(3, Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->count());
         $children = Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->with('textTranslations')->get();
         $this->assertSame(

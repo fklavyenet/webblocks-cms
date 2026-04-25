@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Site;
 use App\Support\Sites\ExportImport\SiteExportManager;
@@ -122,7 +123,12 @@ class SiteExportImportTest extends TestCase
         ]));
 
         $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
-        $aboutPage = Page::query()->where('site_id', $importedSite->id)->where('slug', 'about')->firstOrFail();
+        $aboutPage = Page::query()
+            ->where('site_id', $importedSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', Locale::query()->where('is_default', true)->value('id'))
+                ->where('slug', 'about'))
+            ->firstOrFail();
 
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
 

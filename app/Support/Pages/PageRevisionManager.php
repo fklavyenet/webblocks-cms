@@ -81,6 +81,7 @@ class PageRevisionManager
         }
 
         abort_unless($page->id === $revision->page_id, 404);
+        abort_unless((int) $page->site_id === (int) $revision->site_id, 404);
 
         DB::transaction(function () use ($page, $revision, $actor): void {
             $this->capture(
@@ -113,8 +114,8 @@ class PageRevisionManager
             'schema_version' => self::SNAPSHOT_SCHEMA_VERSION,
             'captured_at' => now()->toIso8601String(),
             'page' => [
-                'title' => $defaultTranslation?->name ?? $page->getRawOriginal('title'),
-                'slug' => $defaultTranslation?->slug ?? $page->getRawOriginal('slug'),
+                'title' => $defaultTranslation?->name ?? $page->name,
+                'slug' => $defaultTranslation?->slug ?? $page->slug,
                 'page_type' => $page->page_type,
                 'page_type_id' => $page->page_type_id,
                 'layout_id' => $page->layout_id,

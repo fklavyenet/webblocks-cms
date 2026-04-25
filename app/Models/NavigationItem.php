@@ -60,6 +60,25 @@ class NavigationItem extends Model
                     ?? Site::primary()?->id;
             }
         });
+
+        static::saving(function (self $item): void {
+            if (! $item->page_id) {
+                return;
+            }
+
+            $pageSiteId = $item->page?->site_id
+                ?? Page::query()->whereKey($item->page_id)->value('site_id');
+
+            if (! $pageSiteId) {
+                throw new \RuntimeException('Navigation page links must reference an existing page.');
+            }
+
+            if ($item->site_id && (int) $item->site_id !== (int) $pageSiteId) {
+                throw new \RuntimeException('Linked page must belong to the same site as the navigation item.');
+            }
+
+            $item->site_id = $pageSiteId;
+        });
     }
 
     public static function menuKeys(): array

@@ -281,6 +281,7 @@ class ImportDataMapper
 
             PageTranslation::query()->create([
                 'page_id' => $pageId,
+                'site_id' => $site->id,
                 'locale_id' => $localeId,
                 'name' => $translationData['name'] ?? null,
                 'slug' => $translationData['slug'] ?? null,

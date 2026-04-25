@@ -61,6 +61,16 @@ class SystemSettings
 
     public function defaultLocaleCode(): string
     {
+        try {
+            $defaultLocale = Locale::query()->where('is_default', true)->value('code');
+
+            if (is_string($defaultLocale) && $defaultLocale !== '') {
+                return $defaultLocale;
+            }
+        } catch (Throwable) {
+            // Fall back to persisted settings while locale tables are unavailable.
+        }
+
         $configured = Locale::normalizeCode((string) $this->get(self::DEFAULT_LOCALE, ''));
 
         if ($configured) {
@@ -116,6 +126,14 @@ class SystemSettings
                 ['key' => $key],
                 ['value' => $stored === '' ? null : $stored],
             );
+        }
+
+        if (array_key_exists(self::DEFAULT_LOCALE, $values) && Schema::hasTable('locales')) {
+            $locale = Locale::query()->where('code', Locale::normalizeCode((string) $values[self::DEFAULT_LOCALE]))->first();
+
+            if ($locale) {
+                $locale->forceFill(['is_default' => true, 'is_enabled' => true])->save();
+            }
         }
     }
 

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Support\Locales\LocaleResolver;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -320,12 +321,15 @@ class SiteLocaleManagementTest extends TestCase
             'status' => 'published',
         ]);
 
-        PageTranslation::query()->create([
+        DB::table('page_translations')->insert([
             'page_id' => $page->id,
+            'site_id' => $site->id,
             'locale_id' => $locale->id,
             'name' => 'Chi Siamo',
             'slug' => 'chi-siamo',
             'path' => '/chi-siamo',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));
@@ -375,11 +379,13 @@ class SiteLocaleManagementTest extends TestCase
             'content' => 'Default copy',
         ]);
 
-        BlockTextTranslation::query()->create([
+        DB::table('block_text_translations')->insert([
             'block_id' => $block->id,
             'locale_id' => $locale->id,
             'title' => 'Acerca de',
             'content' => 'Copia traducida',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->delete(route('admin.locales.destroy', $locale));

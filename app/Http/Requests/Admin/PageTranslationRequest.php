@@ -46,8 +46,9 @@ class PageTranslationRequest extends FormRequest
                 Rule::unique(PageTranslation::class, 'slug')
                     ->ignore($translation?->id)
                     ->where(fn ($query) => $query
+                        ->where('site_id', $siteId)
                         ->where('locale_id', $localeId)
-                        ->whereIn('page_id', Page::query()->select('id')->where('site_id', $siteId))),
+                    ),
             ],
         ];
     }

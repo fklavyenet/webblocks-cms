@@ -51,7 +51,13 @@ class SiteCloneServiceTest extends TestCase
         $this->assertNotSame($sourceSite->id, $targetSite->id);
         $this->assertSame(2, $result->count('pages_cloned'));
 
-        $aboutPage = Page::query()->where('site_id', $targetSite->id)->where('slug', 'about')->firstOrFail();
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $aboutPage = Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocaleId)
+                ->where('slug', 'about'))
+            ->firstOrFail();
         $this->assertDatabaseHas('page_translations', [
             'page_id' => $aboutPage->id,
             'slug' => 'hakkinda',
@@ -76,7 +82,12 @@ class SiteCloneServiceTest extends TestCase
             'page_id' => $aboutPage->id,
         ]);
 
-        $sourceAbout = Page::query()->where('site_id', $sourceSite->id)->where('slug', 'about')->firstOrFail();
+        $sourceAbout = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocaleId)
+                ->where('slug', 'about'))
+            ->firstOrFail();
         $this->assertSame(1, Block::query()->where('page_id', $sourceAbout->id)->where('type', 'columns')->count());
         $this->assertSame(2, Page::query()->where('site_id', $sourceSite->id)->count());
     }
@@ -102,7 +113,13 @@ class SiteCloneServiceTest extends TestCase
         );
 
         $targetSite = $result->targetSite;
-        $aboutPage = Page::query()->where('site_id', $targetSite->id)->where('slug', 'about')->firstOrFail();
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $aboutPage = Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocaleId)
+                ->where('slug', 'about'))
+            ->firstOrFail();
         $imageBlock = Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->firstOrFail();
         $clonedAsset = Asset::query()->findOrFail($imageBlock->asset_id);
 
@@ -182,7 +199,13 @@ class SiteCloneServiceTest extends TestCase
             ]),
         );
 
-        $this->assertSame(0, Page::query()->where('site_id', $targetSite->id)->where('slug', 'existing')->count());
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $this->assertSame(0, Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocaleId)
+                ->where('slug', 'existing'))
+            ->count());
         $this->assertSame(2, Page::query()->where('site_id', $targetSite->id)->count());
         $this->assertSame(2, $result->count('pages_cloned'));
     }
@@ -225,7 +248,13 @@ class SiteCloneServiceTest extends TestCase
         );
 
         $targetSite = $result->targetSite;
-        $aboutPage = Page::query()->where('site_id', $targetSite->id)->where('slug', 'about')->firstOrFail();
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $aboutPage = Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocaleId)
+                ->where('slug', 'about'))
+            ->firstOrFail();
 
         $this->assertSame(0, NavigationItem::query()->where('site_id', $targetSite->id)->count());
         $this->assertSame(0, PageTranslation::query()->where('page_id', $aboutPage->id)->where('slug', 'hakkinda')->count());
