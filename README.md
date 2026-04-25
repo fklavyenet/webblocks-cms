@@ -127,6 +127,14 @@ See `docs/editorial-workflow.md` for status and role details.
 - Backup / Restore is for recovering the install environment.
 - System Updates handle installed version checks and in-app update runs.
 
+### Development Version Policy
+
+- Local source development does not automatically change the installed version.
+- A dev environment may show an older installed version until a real release is created.
+- Do not use the `System Updates` button to apply ordinary local or source-level changes.
+- Release flow may synchronize the dev installed version only after a real tag and published release exist.
+- See `DEVELOPMENT.md` for the full development and release workflow.
+
 Admin session expiry is handled defensively: after re-authentication, the original admin tab now resets transient overlay, drawer, and body-lock state so it does not stay dimmed or non-interactive.
 
 These tools serve different purposes and are intentionally separate.
@@ -198,6 +206,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - [Editorial Workflow](docs/editorial-workflow.md)
 - [Revisions](docs/revisions.md)
 - [Operations](docs/operations.md)
+- [Development Workflow](DEVELOPMENT.md)
 
 ## Stack
 

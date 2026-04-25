@@ -15,6 +15,7 @@
 - Contact form submit and success copy moved out of block settings and treated as translation-owned content.
 - Extensive integrity, regression, and edge-case coverage added across multisite, multilingual, validation, URL, and reconstruction flows.
 - Refine the fresh CMS welcome screen with a stronger WebBlocks UI-native product introduction and clearer first actions.
+- Add development and release workflow documentation, clarify the dev installed-version synchronization policy, and document the local development update boundary in README.
 
 ## 1.0.3
 
