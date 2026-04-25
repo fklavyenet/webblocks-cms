@@ -1,0 +1,8 @@
+.wb-public-footer-fallback {
+    padding-top: 0;
+}
+
+.wb-public-footer .wb-footer-cookie-settings-link {
+    padding-inline: 0;
+    min-height: auto;
+}

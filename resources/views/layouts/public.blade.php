@@ -17,19 +17,10 @@
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/public.css') }}">
         @if (is_file($siteCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
         @endif
-        <style>
-            .wb-public-footer-fallback {
-                padding-top: 0;
-            }
-
-            .wb-public-footer .wb-footer-cookie-settings-link {
-                padding-inline: 0;
-                min-height: auto;
-            }
-        </style>
     </head>
     <body class="wb-public-body">
         @yield('content')
