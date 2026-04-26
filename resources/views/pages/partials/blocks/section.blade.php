@@ -2,6 +2,8 @@
     $variant = $block->variant ?? 'default';
     $isPromoVariant = in_array($variant, ['promo', 'hero'], true);
     $promoClasses = ['wb-promo'];
+    $actionBlocks = $block->children->filter(fn ($child) => $child->typeSlug() === 'button')->values();
+    $contentBlocks = $block->children->reject(fn ($child) => $child->typeSlug() === 'button')->values();
 
     if ($variant === 'centered') {
         $promoClasses[] = 'wb-text-center';
@@ -20,9 +22,14 @@
                     <p class="wb-promo-text">{{ $block->content }}</p>
                 @endif
 
-                @if ($block->children->isNotEmpty())
-                    <div class="wb-promo-actions">
-                        @foreach ($block->children as $child)
+                @include('pages.partials.blocks._actions', [
+                    'buttons' => $actionBlocks,
+                    'wrapperClass' => 'wb-promo-actions',
+                ])
+
+                @if ($contentBlocks->isNotEmpty())
+                    <div class="wb-stack wb-gap-3">
+                        @foreach ($contentBlocks as $child)
                             @include('pages.partials.block', ['block' => $child])
                         @endforeach
                     </div>

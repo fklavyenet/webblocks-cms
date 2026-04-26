@@ -27,12 +27,9 @@
             <p class="wb-promo-text">{{ $content }}</p>
         @endif
 
-        @if ($actionBlocks->isNotEmpty())
-            <div class="wb-promo-actions">
-                @foreach ($actionBlocks as $child)
-                    @include('pages.partials.block', ['block' => $child])
-                @endforeach
-            </div>
-        @endif
+        @include('pages.partials.blocks._actions', [
+            'buttons' => $actionBlocks,
+            'wrapperClass' => 'wb-promo-actions',
+        ])
     </div>
 </div>

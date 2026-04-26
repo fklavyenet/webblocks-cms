@@ -37,6 +37,9 @@ Confirmed primitives and patterns:
 Missing primitives and UI gaps for now:
 
 - `wb-prose` — NOT FOUND in the shipped WebBlocks UI assets. Treat this as a UI gap and do not rely on it for Phase 2 layout or renderer alignment.
+- `wb-promo-muted` — NOT FOUND in the shipped WebBlocks UI assets.
+- `wb-promo-accent` — NOT FOUND in the shipped WebBlocks UI assets.
+- `wb-cluster-3` — NOT FOUND in the shipped WebBlocks UI assets.
 
 Verified shipped JS hooks relevant to current public rendering:
 
@@ -189,6 +192,7 @@ Public pages now use explicit layout composition modes:
 - Intended WebBlocks UI output: default wrapper uses `wb-section`; explicit `promo` variants may map to `wb-promo` when the shipped pattern fits; CTA actions should come from child blocks, not raw HTML.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep default sections stable, treat `promo` as an explicit marketing variant, and keep child buttons/button groups structured.
+- Promo CTA behavior: child `button` blocks render in `wb-promo-actions`; non-button children continue rendering outside the CTA row.
 
 ### `hero`
 
@@ -199,6 +203,7 @@ Public pages now use explicit layout composition modes:
 - Intended WebBlocks UI output: `wb-promo > .wb-promo-copy` with optional `wb-eyebrow`, `wb-promo-title`, `wb-promo-text`, and `wb-promo-actions`
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: hero CTA actions should come from child `button` blocks, raw HTML should not be used for normal hero content, and legacy imported hero settings should only act as a fallback when canonical translated fields are empty.
+- Hero CTA behavior: child `button` blocks render in `wb-promo-actions`; non-button children are ignored in the CTA row.
 
 ### `columns`
 
@@ -266,9 +271,23 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`, `url`, `subtitle`, `variant`
 - Translatable fields: `title`
 - Shared fields: `url`, `subtitle`/target, `variant`, optional attachment asset relation
-- Intended WebBlocks UI output: `wb-btn` classes mapped from CMS variants, including `primary`, `secondary`, and `danger`; outline/ghost should only be used when supported by shipped CMS values.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: map all existing CMS values, keep download compatibility isolated, and add a future button-group wrapper/block instead of stacking ad hoc buttons.
+- Intended WebBlocks UI output: explicit `wb-btn` variant mapping for `primary`, `secondary`, `outline`, `ghost`, and `danger`; unknown values must fall back to `wb-btn wb-btn-primary`.
+- Current implementation: acceptable
+- Variant mapping:
+  - `primary` -> `wb-btn wb-btn-primary`
+  - `secondary` -> `wb-btn wb-btn-secondary`
+  - `outline` -> `wb-btn wb-btn-outline`
+  - `ghost` -> `wb-btn wb-btn-ghost`
+  - `danger` -> `wb-btn wb-btn-danger`
+  - unknown or empty -> `wb-btn wb-btn-primary`
+- Notes for later renderer/admin improvements: keep attachment/download compatibility isolated, render `<button type="button">` only when there is no URL, and formalize a first-class button-group block only when editors need it beyond child button rows.
+
+### CTA Rows
+
+- Hero and promo-style section blocks should model CTAs with child `button` blocks.
+- Promo CTA rows render in `wb-promo-actions`.
+- Outside promo contexts, ordinary action rows can use shipped cluster utilities such as `wb-cluster wb-cluster-2`.
+- A first-class `button-group` block is deferred for now; the current child-button model already supports structured CTA rows without adding new block architecture.
 
 ### `image`
 

@@ -29,10 +29,11 @@
         <div class="wb-stack wb-gap-1">
             <label for="variant">Variant</label>
             <select id="variant" name="variant" class="wb-select">
-                @foreach (['primary', 'secondary', 'ghost', 'danger'] as $variant)
+                @foreach (['primary', 'secondary', 'outline', 'ghost', 'danger'] as $variant)
                     <option value="{{ $variant }}" @selected(old('variant', $block->variant ?: 'primary') === $variant)>{{ $variant }}</option>
                 @endforeach
             </select>
+            <div class="wb-text-sm wb-text-muted">Buttons use explicit WebBlocks UI variants. Build CTA rows with child Button blocks instead of pasted HTML.</div>
         </div>
     </div>
 </div>

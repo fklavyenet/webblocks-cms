@@ -12,6 +12,9 @@
 - Promoted Hero to a first-class WebBlocks UI-aligned block.
 - Added Hero admin form and translation support.
 - Added Hero public rendering tests.
+- Normalized public button variant rendering.
+- Added structured hero and promo CTA rendering through child Button blocks.
+- Added button rendering tests.
 
 
 ## 1.0.5
