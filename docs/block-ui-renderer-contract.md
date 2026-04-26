@@ -2,6 +2,49 @@
 
 Phase 1 defines the intended public rendering contract between CMS layouts, slots, and block types and the shipped WebBlocks UI primitives already loaded by the public layout. This phase is documentation-only. It does not rewrite renderers yet.
 
+## Verified WebBlocks UI Primitives
+
+Verified against the actual shipped assets used by CMS:
+
+- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css`
+- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js`
+
+Confirmed primitives and patterns:
+
+- `wb-content-shell`
+- `wb-content-header`
+- `wb-content-body`
+- `wb-content-footer`
+- `wb-promo`
+- `wb-callout`
+- `wb-link-list`
+- `wb-stat`
+- `wb-gallery`
+- `wb-alert`
+- `wb-btn`
+- `wb-grid`
+- `wb-grid-2`
+- `wb-grid-3`
+- `wb-grid-4`
+- `wb-stack`
+- `wb-gap-1`
+- `wb-gap-2`
+- `wb-gap-3`
+- `wb-gap-4`
+- `wb-gap-6`
+- `wb-gap-8`
+
+Missing primitives and UI gaps for now:
+
+- `wb-prose` — NOT FOUND in the shipped WebBlocks UI assets. Treat this as a UI gap and do not rely on it for Phase 2 layout or renderer alignment.
+
+Verified shipped JS hooks relevant to current public rendering:
+
+- `data-wb-toggle="dropdown"`
+- `data-wb-toggle="modal"`
+- `data-wb-gallery-target`
+- `#wb-overlay-root`
+
 ## Matrix
 
 | CMS Block | WebBlocks UI primitive/pattern | Status | Priority | Next action |
@@ -62,7 +105,7 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 - Intended mapping: `header` region built from `wb-section` and `wb-container` with shipped nav/list primitives inside.
 - Use `wb-stack` or `wb-grid` for internal rhythm, depending on whether the header reads as a stacked banner or a horizontal navigation bar.
 - Primary or legal navigation may render through `navigation-auto` or `menu`, but the slot should not require block renderers to emit custom header-only HTML.
-- Current implementation is weak because the header slot owns several custom `wb-public-*` chrome classes. Phase 2 should align the slot wrapper semantics without breaking current rendering.
+- Current implementation is weak because the header slot owns several custom `wb-public-*` chrome classes. Phase 2A keeps the existing `wb-section` and `wb-container` shell intact and defers any safe reduction of custom header chrome to a later pass.
 
 ### Main slot
 
@@ -70,14 +113,14 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 - Default shell: `wb-public-main > .wb-container > .wb-stack` for ordinary block stacks.
 - Editorial/docs shell: `wb-public-main > .wb-container > .wb-content-shell` with optional `wb-content-header`, `wb-content-body`, and `wb-content-footer` sections.
 - Nested block layout should use `wb-stack`, `wb-stack-*`, `wb-gap-*`, `wb-grid`, and `wb-grid-*` before any custom wrapper class.
-- The current implementation is acceptable because it already gives the main slot a stable public wrapper and block rhythm.
+- The current implementation is acceptable because it already gives the main slot a stable public wrapper and block rhythm. Phase 2A does not force `wb-content-shell` yet.
 
 ### Sidebar slot
 
 - Intended mapping: `aside` adjacent to main content via `wb-grid` or another shipped layout primitive.
 - Default content should be a `wb-stack` of supporting blocks, optionally grouped in a `wb-card` or `wb-callout` if that matches the block content.
 - `wb-sidebar` should only be used when the page is explicitly rendering a docs/app navigation shell, not for generic supporting marketing content.
-- Current implementation is weak because it always wraps the slot in a muted card and uses a custom `wb-public-sidebar` shell.
+- Current implementation is weak because it still uses a custom `wb-public-sidebar` shell. Phase 2A removes the forced outer `wb-card` wrapper so inner blocks control whether they render as cards or callouts.
 
 ### Footer slot
 

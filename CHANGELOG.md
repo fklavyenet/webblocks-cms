@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 - Added block UI renderer contract documentation for aligning CMS public blocks with WebBlocks UI primitives and patterns.
+- Verified WebBlocks UI primitives against the shipped CDN assets used by the CMS and documented the current UI gap for `wb-prose`.
+- Stabilized public layout and slot wrapper structure by keeping the existing public shell and removing the forced sidebar card wrapper.
+- Added public layout and slot structure feature tests.
+
 
 ## 1.0.5
 
