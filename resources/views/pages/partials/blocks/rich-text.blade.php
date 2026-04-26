@@ -1,5 +1,5 @@
-<div class="wb-prose">
-    <div>{!! nl2br(e($block->content)) !!}</div>
+<div class="wb-stack wb-gap-2">
+    <p class="wb-m-0">{!! nl2br(e($block->content)) !!}</p>
 </div>
 
 @if ($block->children->isNotEmpty())

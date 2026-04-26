@@ -43,7 +43,7 @@
                             </div>
                             <div class="wb-stack-3">
                                 <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-items-center">
                                         <div class="wb-stack-1">
                                             <strong>Necessary</strong>
                                             <p class="wb-text-sm wb-text-muted wb-m-0">Required for core site rendering, forms, and security behavior.</p>
@@ -56,7 +56,7 @@
                                     </div>
                                 </div>
                                 <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-items-center">
                                         <div class="wb-stack-1">
                                             <strong>Preferences</strong>
                                             <p class="wb-text-sm wb-text-muted wb-m-0">Remember language and interface preferences for returning visitors.</p>
@@ -69,7 +69,7 @@
                                     </div>
                                 </div>
                                 <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-items-center">
                                         <div class="wb-stack-1">
                                             <strong>Analytics</strong>
                                             <p class="wb-text-sm wb-text-muted wb-m-0">Measure usage, sessions, referrers, and content performance for Visitor Reports.</p>
@@ -82,7 +82,7 @@
                                     </div>
                                 </div>
                                 <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-items-center">
                                         <div class="wb-stack-1">
                                             <strong>Marketing</strong>
                                             <p class="wb-text-sm wb-text-muted wb-m-0">Support campaign attribution preferences for future public-site integrations.</p>

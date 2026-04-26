@@ -256,9 +256,9 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`, `content`
 - Translatable fields: `title`, `content`
 - Shared fields: none
-- Intended WebBlocks UI output: repeatable FAQ/accordion style rather than one isolated card.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: either make `faq` a container/repeater or fold it into a true accordion-style block family.
+- Intended WebBlocks UI output: simple question/answer content in a stable `wb-card` and `wb-stack` shell unless a shipped accordion pattern is explicitly adopted later.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: FAQ remains simple in Phase 3. A true accordion or repeater-style FAQ can be reconsidered in Phase 4 if editors need grouped disclosure behavior.
 
 ### `tabs`
 
@@ -324,6 +324,26 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: add explicit card/download variants instead of inferring presentation from helper text alone.
 
+### `code`
+
+- CMS block slug: `code`
+- Admin fields: `title`, `content`
+- Translatable fields: `title`, `content`
+- Shared fields: optional `settings.language`
+- Intended WebBlocks UI output: escaped source inside semantic `<pre><code>` with no injected HTML and no syntax-highlighting dependency.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep code rendering safe and dependency-free. Optional language metadata may be exposed from settings, but a full code editor or syntax-highlighting stack is intentionally out of scope for Phase 3.
+
+### `toc`
+
+- CMS block slug: `toc`
+- Admin fields: `title`
+- Translatable fields: `title`
+- Shared fields: none
+- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `heading` blocks on the same page.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: the Phase 3 implementation stays intentionally minimal. It only renders when headings already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
+
 ### `navigation-auto`
 
 - CMS block slug: `navigation-auto`
@@ -361,7 +381,7 @@ Public pages now use explicit layout composition modes:
 | `card-grid` | public-render-only | should become first-class | The renderer now stays closer to the shipped grid/card primitives, but it still depends on `settings.items`; move to structured fields if this remains productized. |
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
-| `code` | fallback-only | should become first-class | Code examples need explicit semantics, language metadata, and a reviewed UI pattern. |
+| `code` | first-class public renderer | acceptable | Safe `<pre><code>` rendering is now in place; richer editor affordances remain optional future work. |
 | `list` | fallback-only | should become first-class | Lists are common editorial content and should not depend on generic fallback parsing forever. |
 | `table` | fallback-only | should become first-class | The fallback renderer is serviceable, but common table content needs structured editing. |
 | `accordion` | fallback-only | should become first-class | Interactive disclosure content should use a deliberate accordion block, not generic fallback markup. |
@@ -372,7 +392,7 @@ Public pages now use explicit layout composition modes:
 | `testimonial` | fallback-only | should become first-class | Either quote variants absorb this or it becomes a dedicated testimonial block. |
 | `timeline` | fallback-only | should become first-class | Promote only with structured milestones and a clear shipped UI pattern. |
 | `pricing` | fallback-only | should become first-class | A pricing block needs structured plan, feature, and CTA fields to be worth promoting. |
-| `toc` | fallback-only | should become first-class | Docs content needs a real table-of-contents pattern with heading anchors and current-section behavior. |
+| `toc` | first-class public renderer | acceptable | Minimal TOC rendering now uses existing heading anchors and `wb-link-list`; active-section behavior is still deferred. |
 | `breadcrumb` | fallback-only | should become first-class | Only add when the public shell truly requires breadcrumb navigation. |
 | `cookie-notice` | fallback-only | should stay fallback/custom | Public consent UI already lives in the layout shell, so this block should not compete with the shared privacy pattern. |
 
@@ -406,6 +426,8 @@ Public pages now use explicit layout composition modes:
 
 - Make hero, card-grid or feature-grid, button-group, code, and docs navigation first-class or deliberately deprecated/fallback.
 - Add admin forms and translation registry support where needed.
+
+Phase 3 completed: core public blocks now align with WebBlocks UI primitives.
 
 ### Phase 4
 

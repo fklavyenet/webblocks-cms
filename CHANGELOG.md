@@ -19,6 +19,11 @@
 - Added a `Columns Variant` control in the admin block form for `cards`, `plain`, `stats`, and `links`.
 - Kept `card-grid` on the shipped card/grid primitives while deferring a first-class replacement for `feature-grid`.
 - Added public and admin coverage for columns variant rendering and persistence.
+- Improved public `code` block rendering with safe escaped `<pre><code>` output.
+- Added minimal public TOC support using anchored heading links and shipped link-list primitives.
+- Stabilized FAQ rendering as a simple card-based structure while deferring true accordion behavior.
+- Removed remaining invalid public uses of `wb-prose` and `wb-cluster-3`.
+- Completed Phase 3 public block alignment.
 
 
 ## 1.0.5

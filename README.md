@@ -227,7 +227,15 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Hero is now a first-class WebBlocks UI-aligned marketing block using the shipped `wb-promo` pattern.
 - Buttons now use an explicit WebBlocks UI variant mapping, and hero/promo CTA rows should be modeled with child Button blocks.
 - Columns now expose explicit public variants for `cards`, `plain`, `stats`, and `links`, with child Column Item blocks rendered through shipped WebBlocks grid, stat, and link-list primitives.
+- Code blocks now render safely with escaped `<pre><code>` output, and TOC blocks now provide minimal anchor navigation when explicit heading IDs exist.
 - `feature-grid` remains a fallback/custom path for now; prefer `columns` with the `cards` variant for structured feature grids.
+
+## Public Rendering Status
+
+- Hero, Buttons, and Columns are aligned with shipped WebBlocks UI primitives.
+- `code` now has a safe first-class renderer using escaped `<pre><code>` output.
+- `toc` now renders minimal `wb-link-list` navigation from existing anchored headings.
+- `faq` remains intentionally simple and stable in Phase 3, while true accordion behavior is deferred.
 
 ## Stack
 

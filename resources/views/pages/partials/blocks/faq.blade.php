@@ -1,11 +1,14 @@
-<div class="wb-card wb-card-muted">
-    <div class="wb-card-body">
-        <div class="wb-stack wb-gap-2">
+<section class="wb-card wb-card-muted">
+    <div class="wb-card-body wb-stack wb-gap-2">
+        @if ($block->title)
             <strong>{{ $block->title }}</strong>
-            <p>{{ $block->content }}</p>
-        </div>
+        @endif
+
+        @if ($block->content)
+            <p class="wb-m-0">{{ $block->content }}</p>
+        @endif
     </div>
-</div>
+</section>
 
 @if ($block->children->isNotEmpty())
     <div class="wb-stack wb-gap-4">

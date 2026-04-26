@@ -31,7 +31,7 @@
                 </button>
             </div>
             <div class="wb-card-body">
-                <div class="wb-cluster wb-cluster-between wb-cluster-3 wb-items-center">
+                <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-items-center">
                     <p class="wb-text-sm wb-text-muted wb-m-0">
                         Necessary cookies keep the site running. Optional analytics cookies help us understand usage and improve visitor reporting.
                     </p>

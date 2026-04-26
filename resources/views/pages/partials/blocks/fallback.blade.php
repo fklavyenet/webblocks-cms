@@ -17,12 +17,6 @@
     $pageIndex = $publishedPages->search(fn ($candidate) => $candidate->id === $page?->id);
     $previousPage = $pageIndex !== false && $pageIndex > 0 ? $publishedPages[$pageIndex - 1] : null;
     $nextPage = $pageIndex !== false && $pageIndex < ($publishedPages->count() - 1) ? $publishedPages[$pageIndex + 1] : null;
-    $headingBlocks = \App\Models\Block::query()
-        ->where('page_id', $block->page_id)
-        ->where('type', 'heading')
-        ->where('status', 'published')
-        ->orderBy('sort_order')
-        ->get(['title', 'content', 'url']);
     $relatedPages = $publishedPages
         ->reject(fn ($candidate) => $candidate->id === $page?->id)
         ->filter(fn ($candidate) => $candidate->page_type === $page?->page_type || in_array($candidate->slug, $settings['related_slugs'] ?? [], true))
@@ -34,15 +28,6 @@
 @endphp
 
 @switch($slug)
-    @case('code')
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>{{ $block->title ?: 'Code Example' }}</strong></div>
-            <div class="wb-card-body">
-                <pre><code>{{ $block->content }}</code></pre>
-            </div>
-        </div>
-        @break
-
     @case('list')
         <div class="wb-stack wb-gap-2">
             @if ($block->title)
@@ -330,21 +315,6 @@
                 @endif
             </div>
         </nav>
-        @break
-
-    @case('toc')
-        @if ($headingBlocks->isNotEmpty())
-            <div class="wb-card wb-card-muted">
-                <div class="wb-card-header"><strong>{{ $block->title ?: 'On this page' }}</strong></div>
-                <div class="wb-card-body">
-                    <ul class="wb-stack wb-gap-1">
-                        @foreach ($headingBlocks as $headingBlock)
-                            <li>{{ $headingBlock->title ?: $headingBlock->content }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        @endif
         @break
 
     @case('input')
