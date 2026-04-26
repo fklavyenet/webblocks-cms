@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.0.5
+
+- Inline release helper scripts into the GitHub Actions release workflow.
+- Remove the obsolete local `scripts/` directory.
+- Keep CMS product identity and version centralized in `App\Support\WebBlocks`.
+
 ### Stability & Integrity
 - Data model unified around translation tables for page identity and translatable block content.
 - Legacy page title and slug storage removed from active page identity handling.

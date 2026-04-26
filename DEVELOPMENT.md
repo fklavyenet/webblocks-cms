@@ -74,17 +74,18 @@ Recommended sequence:
 2. run tests and required verification steps locally
 3. update `README.md` for any meaningful behavior, setup, route, usage, admin, command, or release-note change
 4. update `CHANGELOG.md`
-5. prepare release notes
-6. update `App\Support\WebBlocks::VERSION`
+5. update `App\Support\WebBlocks::VERSION`
 7. create and push the real git tag
-8. allow GitHub release and package publication to complete
+8. allow GitHub Actions to generate release notes, build the release package, and publish the release after the tag is pushed
 9. verify the published release is visible to the update infrastructure
 10. only after the release is real, synchronize the dev environment installed version if needed
+
+GitHub Actions owns release note generation and release package creation. There are no local release helper scripts.
 
 Before creating a release:
 
 1. update `App\Support\WebBlocks::VERSION`
-2. ensure the git tag matches that version, for example `v1.0.4`
+2. ensure the git tag matches that version, for example `v1.0.5`
 
 Never reintroduce `APP_VERSION` into `.env` or `.env.example`.
 
