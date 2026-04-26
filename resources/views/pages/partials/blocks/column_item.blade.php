@@ -21,9 +21,9 @@
                 <div class="wb-stat-label">{{ $block->title }}</div>
             @endif
 
-            <div class="wb-stat-value">{{ $block->subtitle ?: $block->content ?: $block->title }}</div>
+            <div class="wb-stat-value">{{ $block->subtitle ?: $block->title }}</div>
 
-            @if ($block->subtitle && $block->content)
+            @if ($block->content)
                 <div class="wb-stat-delta">{{ $block->content }}</div>
             @endif
         </div>

@@ -223,9 +223,11 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 - Public block rendering maps to shipped WebBlocks UI primitives and patterns.
 - Hero uses the shipped `wb-promo` pattern, Buttons use explicit supported variants, and Columns use explicit `cards`, `plain`, `stats`, and `links` variants.
+- Marketing patterns now consolidate into Columns variants and Quote variants instead of maintaining duplicate grid, stat, and testimonial systems.
 - List, Table, and Related Content now have dedicated editorial forms and public renderers instead of relying only on the generic fallback block path.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
 - Disclosure blocks now use semantic accordion behavior via `<details>` for grouped content, while standalone FAQ blocks remain intentionally simple and stable.
+- Duplicate card and grid systems such as legacy Card Grid remain transitional and are deprecated in favor of the aligned core primitives.
 - Breadcrumb remains deferred until the public shell has a confirmed need and a verified shipped breadcrumb pattern.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 

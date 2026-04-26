@@ -398,18 +398,18 @@ Public pages now use explicit layout composition modes:
 
 | CMS Block | Current state | Desired direction | Notes |
 | --- | --- | --- | --- |
-| `card-grid` | public-render-only | should become first-class | The renderer now stays closer to the shipped grid/card primitives, but it still depends on `settings.items`; move to structured fields if this remains productized. |
+| `card-grid` | public-render-only | should stay transitional | The renderer now matches the same `wb-grid` and `wb-card` structure as `columns.variant = cards`, but it still depends on `settings.items`. Prefer Columns for new structured content. |
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
 | `code` | first-class public renderer | acceptable | Safe `<pre><code>` rendering is now in place; richer editor affordances remain optional future work. |
 | `list` | first-class public renderer | acceptable | Dedicated line-based list rendering now exists; keep compatibility for legacy settings-driven content. |
 | `table` | first-class public renderer | acceptable | Dedicated line-based table rendering now exists; keep compatibility for legacy settings rows. |
 | `accordion` | first-class public renderer | acceptable | Grouped disclosure now uses semantic `<details>` and child blocks instead of fallback settings markup. |
-| `feature-grid` | fallback-only | should become first-class | This remains deferred for now; prefer `columns` with the `cards` variant when editors need a structured feature grid. |
-| `stats` | fallback-only | should become first-class | Stats should map cleanly to shipped stat primitives rather than generic cards. |
-| `metric-card` | fallback-only | should become first-class | The block overlaps with stats; decide whether it is its own first-class block or a `column_item`/stat variant. |
+| `feature-grid` | first-class alias | should merge into Columns | The public renderer now delegates to `columns.variant = cards`; prefer Columns for new content. |
+| `stats` | first-class alias | should merge into Columns | The public renderer now delegates to the existing `columns.variant = stats` path. |
+| `metric-card` | first-class alias | should merge into stat primitives | The public renderer now uses the same `wb-stat` direction as the Columns stats variant. |
 | `logo-cloud` | fallback-only | should become first-class | Only promote if there is a repeatable need for structured logo/media rows. |
-| `testimonial` | fallback-only | should become first-class | Either quote variants absorb this or it becomes a dedicated testimonial block. |
+| `testimonial` | first-class alias | should merge into Quote | The public renderer now delegates to the quote testimonial variant. |
 | `timeline` | fallback-only | should become first-class | Promote only with structured milestones and a clear shipped UI pattern. |
 | `pricing` | fallback-only | should become first-class | A pricing block needs structured plan, feature, and CTA fields to be worth promoting. |
 | `toc` | first-class public renderer | acceptable | Minimal TOC rendering now uses existing heading anchors and `wb-link-list`; active-section behavior is still deferred. |

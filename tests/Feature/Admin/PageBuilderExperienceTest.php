@@ -1317,6 +1317,35 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function quote_admin_form_exposes_testimonial_variant(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $quoteType = BlockType::query()->where('slug', 'quote')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $quoteType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Quote (About / Main)');
+        $response->assertSee('Quote Variant');
+        $response->assertSee('Testimonial');
+        $response->assertSee('Use Testimonial when the quote should render as a framed social-proof card.');
+        $response->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
     public function storing_a_block_from_slot_screen_redirects_back_to_the_same_slot_screen(): void
     {
         $user = User::factory()->create();

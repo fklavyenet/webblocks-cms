@@ -223,6 +223,135 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('wb-promo-text', false);
     }
 
+    #[Test]
+    public function quote_testimonial_variant_renders_correctly(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'quote',
+            'block_type_id' => $this->blockType('quote', 'Quote', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'A. Editor',
+            'subtitle' => 'Content Team',
+            'content' => 'This workflow keeps publishing tidy.',
+            'variant' => 'testimonial',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-card wb-card-muted', false);
+        $response->assertSee('<blockquote class="wb-stack wb-gap-2">', false);
+        $response->assertSee('A. Editor | Content Team');
+    }
+
+    #[Test]
+    public function testimonial_block_uses_the_quote_testimonial_variant(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'testimonial',
+            'block_type_id' => $this->blockType('testimonial', 'Testimonial', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'A. Editor',
+            'subtitle' => 'Content Team',
+            'content' => 'Quote-style testimonial rendering is enough here.',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-card wb-card-muted', false);
+        $response->assertSee('Quote-style testimonial rendering is enough here.');
+        $response->assertSee('A. Editor | Content Team');
+    }
+
+    #[Test]
+    public function feature_grid_delegates_to_the_columns_cards_pattern(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $featureGrid = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'feature-grid',
+            'block_type_id' => $this->blockType('feature-grid', 'Feature Grid', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Core features',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $featureGrid->id,
+            'type' => 'column_item',
+            'block_type_id' => $this->blockType('column_item', 'Column Item', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Fast setup',
+            'content' => 'Use the same card pattern as columns.',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-card-body wb-stack wb-gap-2', false);
+        $response->assertSee('Fast setup');
+    }
+
+    #[Test]
+    public function card_grid_matches_the_columns_cards_structure(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card-grid',
+            'block_type_id' => $this->blockType('card-grid', 'Card Grid', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Legacy cards',
+            'settings' => json_encode([
+                'items' => [
+                    ['title' => 'Structured', 'content' => 'Uses the same core card shell.'],
+                    ['title' => 'Reusable', 'content' => 'No separate legacy grid markup.'],
+                ],
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-grid wb-grid-2', false);
+        $response->assertSee('wb-card-body wb-stack wb-gap-2', false);
+        $response->assertSee('Structured');
+        $response->assertSee('Reusable');
+    }
+
     private function pageWithMainSlot(?Site $site = null): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

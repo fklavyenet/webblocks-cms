@@ -30,7 +30,7 @@ Baseline:
 | `columns` | first-class | aligned | `wb-grid` or `wb-link-list` driven by explicit parent variants | keep | P3 custom/fallback |
 | `column_item` | first-class | aligned | plain cell, card, stat, or link-list row driven by parent columns variant | keep | P3 custom/fallback |
 | `callout` | first-class | acceptable | `wb-alert` and optional `wb-callout` shell where shipped | align | P2 later |
-| `quote` | first-class | acceptable | semantic `blockquote`, optional framed card | align | P2 later |
+| `quote` | first-class | aligned | semantic `blockquote`, optional framed testimonial card | keep | P3 custom/fallback |
 | `faq` | first-class | acceptable | simple `wb-card` plus `wb-stack` for one-off Q/A | keep | P3 custom/fallback |
 | `code` | public-renderer-only | acceptable | escaped `<pre><code>` in a simple code shell | keep | P2 later |
 | `toc` | public-renderer-only | acceptable | `wb-link-list` built from existing anchored headings | keep | P2 later |
@@ -40,7 +40,7 @@ Baseline:
 | `navigation-auto` | first-class | acceptable | simple nav/list output, optionally `wb-link-list` by context | keep | P3 custom/fallback |
 | `menu` | legacy alias | acceptable | same output as `navigation-auto` | deprecate later | P3 custom/fallback |
 | `contact_form` | first-class | aligned | structured form primitives with `wb-btn` and `wb-alert` | keep | P3 custom/fallback |
-| `card-grid` | public-renderer-only | acceptable | `wb-grid` of `wb-card` items | merge into another block | P1 next |
+| `card-grid` | public-renderer-only | acceptable | `wb-grid` of `wb-card` items aligned with `columns.variant = cards` | deprecate later | P2 later |
 | `list` | first-class | aligned | semantic `ul` or `ol` in `wb-stack` rhythm | keep | P3 custom/fallback |
 | `table` | first-class | aligned | `wb-table` inside `wb-table-wrap` with explicit header/body handling | keep | P3 custom/fallback |
 | `accordion` | first-class | acceptable | grouped disclosure items using semantic `<details>` and `<summary>` | keep | P3 custom/fallback |
@@ -67,13 +67,13 @@ Baseline:
 | `checkout-summary` | fallback-only | custom-only | checkout summary card/list | custom only | P3 custom/fallback |
 | `social-links` | fallback-only | acceptable | outbound links in `wb-cluster` or `wb-link-list` | align | P2 later |
 | `share-buttons` | fallback-only | acceptable | small `wb-btn` action cluster | keep fallback | P2 later |
-| `testimonial` | fallback-only | weak | quote/testimonial card using quote semantics first | merge into another block | P1 next |
+| `testimonial` | first-class alias | acceptable | quote/testimonial card using quote semantics first | deprecate later | P2 later |
 | `comments` | fallback-only | custom-only | threaded or listed discussion items in card/list shells | custom only | P3 custom/fallback |
-| `stats` | fallback-only | weak | `wb-stat` grid or stat list | merge into another block | P1 next |
-| `metric-card` | fallback-only | weak | `wb-stat` or stat-card variant | merge into another block | P1 next |
+| `stats` | first-class alias | acceptable | `wb-stat` grid through `columns.variant = stats` | deprecate later | P2 later |
+| `metric-card` | first-class alias | acceptable | `wb-stat` single-card treatment aligned with the stat direction | deprecate later | P2 later |
 | `logo-cloud` | fallback-only | weak | simple logo grid or brand strip | align | P2 later |
 | `timeline` | fallback-only | weak | milestone stack or card list | align | P2 later |
-| `feature-grid` | fallback-only | weak | feature cards through `columns` cards variant unless a separate pattern proves necessary | merge into another block | P1 next |
+| `feature-grid` | first-class alias | acceptable | feature cards through `columns.variant = cards` | deprecate later | P2 later |
 | `comparison` | fallback-only | weak | comparison table or paired card pattern | align | P2 later |
 | `team` | fallback-only | weak | profile card grid | align | P2 later |
 | `faq-list` | first-class alias | acceptable | grouped FAQ list rendered through the accordion family block | deprecate later | P2 later |

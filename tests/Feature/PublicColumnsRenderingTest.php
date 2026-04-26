@@ -43,8 +43,8 @@ class PublicColumnsRenderingTest extends TestCase
         $page = $this->pageWithMainSlot();
         $columns = $this->columnsBlock($page, 'stats');
 
-        $this->columnItem($page, $columns, 'Active sites', '24');
-        $this->columnItem($page, $columns, 'Published pages', '128');
+        $this->columnItem($page, $columns, 'Active sites', 'Up 12%', null, '24');
+        $this->columnItem($page, $columns, 'Published pages', 'Live now', null, '128');
 
         $response = $this->get(route('pages.show', 'about'));
 
@@ -52,9 +52,39 @@ class PublicColumnsRenderingTest extends TestCase
         $response->assertSee('wb-stat', false);
         $response->assertSee('wb-stat-label', false);
         $response->assertSee('wb-stat-value', false);
+        $response->assertSee('wb-stat-delta', false);
         $response->assertSee('Active sites');
         $response->assertSee('24');
+        $response->assertSee('Up 12%');
         $response->assertDontSee('wb-link-list', false);
+    }
+
+    #[Test]
+    public function stats_block_renders_through_the_columns_stats_variant(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $stats = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'stats',
+            'block_type_id' => $this->blockType('stats', 'Stats', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Performance snapshot',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->columnItem($page, $stats, 'Activation rate', 'Steady growth', null, '91%');
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-stat', false);
+        $response->assertSee('Activation rate');
+        $response->assertSee('91%');
+        $response->assertSee('Steady growth');
     }
 
     #[Test]
@@ -117,7 +147,7 @@ class PublicColumnsRenderingTest extends TestCase
         ]);
     }
 
-    private function columnItem(Page $page, Block $parent, string $title, string $content, ?string $url = null): Block
+    private function columnItem(Page $page, Block $parent, string $title, string $content, ?string $url = null, ?string $subtitle = null): Block
     {
         return Block::query()->create([
             'page_id' => $page->id,
@@ -129,6 +159,7 @@ class PublicColumnsRenderingTest extends TestCase
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => Block::query()->where('parent_id', $parent->id)->count(),
             'title' => $title,
+            'subtitle' => $subtitle,
             'content' => $content,
             'url' => $url,
             'status' => 'published',

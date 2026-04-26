@@ -11,6 +11,9 @@
 - Kept standalone FAQ rendering stable as a simple card-based question and answer block.
 - Deferred Tabs promotion until WebBlocks UI ships a real tabs pattern.
 - Added focused disclosure block rendering tests.
+- Consolidated `stats` and `metric-card` into the existing stat-oriented primitives used by Columns.
+- Consolidated `feature-grid` into the `columns(cards)` direction and normalized legacy `card-grid` rendering to the same core card structure.
+- Merged `testimonial` into quote variants and exposed a testimonial option on the Quote admin form.
 
 ## 1.0.6
 
