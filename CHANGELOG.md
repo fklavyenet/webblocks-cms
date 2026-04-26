@@ -2,28 +2,35 @@
 
 ## [Unreleased]
 
-- Added block UI renderer contract documentation for aligning CMS public blocks with WebBlocks UI primitives and patterns.
-- Verified WebBlocks UI primitives against the shipped CDN assets used by the CMS and documented the current UI gap for `wb-prose`.
-- Stabilized public layout and slot wrapper structure by keeping the existing public shell and removing the forced sidebar card wrapper.
-- Added public layout and slot structure feature tests.
-- Added a public layout mode resolver.
-- Added sidebar-aware public shell composition while keeping `content` mode reserved until reliable metadata exists.
-- Added tests for public layout mode behavior.
-- Promoted Hero to a first-class WebBlocks UI-aligned block.
-- Added Hero admin form and translation support.
-- Added Hero public rendering tests.
-- Normalized public button variant rendering.
-- Added structured hero and promo CTA rendering through child Button blocks.
-- Added button rendering tests.
-- Aligned public `columns` rendering with shipped WebBlocks grid, card, stat, and link-list primitives through explicit parent variants.
-- Added a `Columns Variant` control in the admin block form for `cards`, `plain`, `stats`, and `links`.
-- Kept `card-grid` on the shipped card/grid primitives while deferring a first-class replacement for `feature-grid`.
-- Added public and admin coverage for columns variant rendering and persistence.
-- Improved public `code` block rendering with safe escaped `<pre><code>` output.
-- Added minimal public TOC support using anchored heading links and shipped link-list primitives.
-- Stabilized FAQ rendering as a simple card-based structure while deferring true accordion behavior.
-- Removed remaining invalid public uses of `wb-prose` and `wb-cluster-3`.
-- Completed Phase 3 public block alignment.
+## 1.0.6
+
+### Added
+
+- Hero block promoted to a first-class WebBlocks UI-aligned block.
+- Button variant normalization and structured CTA rendering through child Button blocks.
+- Columns and card grid alignment with shipped WebBlocks UI primitives.
+- Code block first-class renderer with safe escaped `<pre><code>` output.
+- Minimal TOC block rendering from explicit heading anchors.
+- Public layout modes for stack, sidebar, and content-ready composition.
+
+### Changed
+
+- Public block rendering now consistently uses shipped WebBlocks UI primitives across the Phase 3-aligned block set.
+- Section block now supports promo semantics safely.
+- Button rendering is normalized across supported public contexts.
+- Columns and column items now render through explicit parent-driven variants.
+
+### Fixed
+
+- Removed usage of non-existent UI classes such as `wb-prose` and `wb-cluster-3` from public rendering paths.
+- Removed forced card wrappers in layout and columns-related rendering where blocks should control their own framing.
+- Prevented empty or invalid HTML output in multiple public block renderers.
+
+### Notes
+
+- FAQ remains non-accordion in this release.
+- TOC is intentionally minimal and does not auto-generate anchors.
+- Feature grid remains fallback-oriented.
 
 
 ## 1.0.5

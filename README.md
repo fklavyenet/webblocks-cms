@@ -218,24 +218,13 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - [Block UI Renderer Contract](docs/block-ui-renderer-contract.md)
 - [Development Workflow](DEVELOPMENT.md)
 
-## Block UI Renderer Contract
+## Public Rendering
 
-- Public block output maps to shipped WebBlocks UI primitives and patterns.
+- Public block rendering maps to shipped WebBlocks UI primitives and patterns.
+- Hero uses the shipped `wb-promo` pattern, Buttons use explicit supported variants, and Columns use explicit `cards`, `plain`, `stats`, and `links` variants.
+- Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
+- FAQ remains intentionally simple and stable in this release, while true accordion behavior is deferred.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
-- New or changed block renderers must follow this contract.
-- Public layout mode selection controls whether a page renders as a default stack layout, a sidebar composition, or a future explicit content-shell mode.
-- Hero is now a first-class WebBlocks UI-aligned marketing block using the shipped `wb-promo` pattern.
-- Buttons now use an explicit WebBlocks UI variant mapping, and hero/promo CTA rows should be modeled with child Button blocks.
-- Columns now expose explicit public variants for `cards`, `plain`, `stats`, and `links`, with child Column Item blocks rendered through shipped WebBlocks grid, stat, and link-list primitives.
-- Code blocks now render safely with escaped `<pre><code>` output, and TOC blocks now provide minimal anchor navigation when explicit heading IDs exist.
-- `feature-grid` remains a fallback/custom path for now; prefer `columns` with the `cards` variant for structured feature grids.
-
-## Public Rendering Status
-
-- Hero, Buttons, and Columns are aligned with shipped WebBlocks UI primitives.
-- `code` now has a safe first-class renderer using escaped `<pre><code>` output.
-- `toc` now renders minimal `wb-link-list` navigation from existing anchored headings.
-- `faq` remains intentionally simple and stable in Phase 3, while true accordion behavior is deferred.
 
 ## Stack
 
