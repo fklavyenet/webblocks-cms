@@ -6,6 +6,11 @@
 - Promoted `list`, `table`, and `related-content` to dedicated admin/public renderers with focused feature coverage.
 - Preserved backward compatibility for existing fallback-style list and table settings data while introducing line-based editorial inputs.
 - Deferred `breadcrumb` until a confirmed shipped pattern or clear public-shell need is in scope.
+- Added a first-class Accordion block with semantic `<details>` disclosure rendering and focused coverage.
+- Merged `faq-list` behavior into the accordion rendering path while keeping existing content working.
+- Kept standalone FAQ rendering stable as a simple card-based question and answer block.
+- Deferred Tabs promotion until WebBlocks UI ships a real tabs pattern.
+- Added focused disclosure block rendering tests.
 
 ## 1.0.6
 

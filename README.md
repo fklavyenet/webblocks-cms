@@ -225,7 +225,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Hero uses the shipped `wb-promo` pattern, Buttons use explicit supported variants, and Columns use explicit `cards`, `plain`, `stats`, and `links` variants.
 - List, Table, and Related Content now have dedicated editorial forms and public renderers instead of relying only on the generic fallback block path.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
-- FAQ remains intentionally simple and stable in this release, while true accordion behavior is deferred.
+- Disclosure blocks now use semantic accordion behavior via `<details>` for grouped content, while standalone FAQ blocks remain intentionally simple and stable.
 - Breadcrumb remains deferred until the public shell has a confirmed need and a verified shipped breadcrumb pattern.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 

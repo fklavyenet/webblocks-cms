@@ -75,8 +75,8 @@ Public pages now use explicit layout composition modes:
 | `column_item` | plain cell, `wb-card`, `wb-stat`, or link-list item | acceptable | P1 public marketing/docs | keep item rendering driven by the parent `columns.variant` mapping |
 | `callout` | `wb-alert`, optional `wb-callout` | acceptable | P2 content quality | widen variant mapping if a shipped sidebar/help callout exists |
 | `quote` | semantic `blockquote`, optional framed card | acceptable | P2 content quality | make framing conditional rather than always card-like |
-| `faq` | FAQ/accordion pattern | weak | P2 content quality | move from single-card Q/A to repeatable accordion structure |
-| `tabs` | interactive tabs pattern | weak | P2 content quality | replace static card treatment with true tabset or rename the block |
+| `faq` | simple Q/A card | acceptable | P3 custom/fallback | keep the stable single-card treatment and let grouped disclosure live in accordion blocks |
+| `tabs` | interactive tabs pattern | weak | P2 content quality | defer until a real shipped tabs pattern exists |
 | `button` | `wb-btn` variants | weak | P1 public marketing/docs | map all supported CMS variants and add button-group direction |
 | `image` | semantic `figure`, `img`, `figcaption` | weak | P2 content quality | honor link behavior and only add media framing when needed |
 | `gallery` | `wb-gallery` plus overlay root modal | acceptable | P1 public marketing/docs | keep using shipped gallery hooks and central overlay root |
@@ -91,7 +91,7 @@ Public pages now use explicit layout composition modes:
 | `code` | code block pattern | missing | P2 content quality | add first-class renderer/admin support or keep fallback deliberately |
 | `list` | list primitive | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings compatibility |
 | `table` | `wb-table` pattern | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings rows |
-| `accordion` | accordion/disclosure pattern | weak | P2 content quality | move from fallback details/card rendering to first-class behavior |
+| `accordion` | semantic disclosure pattern | acceptable | P1 public marketing/docs | keep the first-class semantic `<details>` renderer with child blocks as items |
 | `feature-grid` | feature grid pattern | weak | P1 public marketing/docs | keep fallback rendering for now and prefer `columns` with the `cards` variant for structured use cases |
 | `stats` / `metric-card` | `wb-stat` and related metric cards | weak | P1 public marketing/docs | add real stat variants instead of fallback cards |
 | `logo-cloud` | logo grid / brand strip | weak | P1 public marketing/docs | add structured media handling if it remains productized |
@@ -256,9 +256,29 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`, `content`
 - Translatable fields: `title`, `content`
 - Shared fields: none
-- Intended WebBlocks UI output: simple question/answer content in a stable `wb-card` and `wb-stack` shell unless a shipped accordion pattern is explicitly adopted later.
+- Intended WebBlocks UI output: simple question/answer content in a stable `wb-card` and `wb-stack` shell.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: FAQ remains simple in Phase 3. A true accordion or repeater-style FAQ can be reconsidered in Phase 4 if editors need grouped disclosure behavior.
+- Notes for later renderer/admin improvements: FAQ remains simple and backward-compatible. When used as a child of an accordion-family block, its `title` and `content` act as the disclosure summary/body.
+
+### `accordion`
+
+- CMS block slug: `accordion`
+- Admin fields: `title`, `content`
+- Translatable fields: `title`, `content`
+- Shared fields: child block structure and ordering
+- Intended WebBlocks UI output: semantic grouped disclosure using `<details>` and `<summary>` with no custom accordion JS or invented classes.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: child blocks supply the disclosure items. Blocks without usable `title` and `content` are skipped rather than rendered as empty wrappers.
+
+### `faq-list`
+
+- CMS block slug: `faq-list`
+- Admin fields: same editorial expectations as `accordion`
+- Translatable fields: inherited from the parent block and child items
+- Shared fields: child block structure and ordering
+- Intended WebBlocks UI output: same as `accordion`; this slug is now a transitional alias rather than a separate long-term pattern.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep old content working, but steer future grouped disclosure usage toward `accordion`.
 
 ### `tabs`
 
@@ -268,7 +288,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: none
 - Intended WebBlocks UI output: a true interactive tabset if tabs remain a first-class block.
 - Current implementation: weak
-- Notes for later renderer/admin improvements: if the block remains non-interactive, rename or recast it instead of calling it tabs.
+- Notes for later renderer/admin improvements: tabs are explicitly deferred until WebBlocks UI ships a real tabs pattern. The current simple card treatment remains only as a compatibility fallback and is not promoted.
 
 ### `button`
 
@@ -382,9 +402,9 @@ Public pages now use explicit layout composition modes:
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
 | `code` | first-class public renderer | acceptable | Safe `<pre><code>` rendering is now in place; richer editor affordances remain optional future work. |
-| `list` | fallback-only | should become first-class | Lists are common editorial content and should not depend on generic fallback parsing forever. |
-| `table` | fallback-only | should become first-class | The fallback renderer is serviceable, but common table content needs structured editing. |
-| `accordion` | fallback-only | should become first-class | Interactive disclosure content should use a deliberate accordion block, not generic fallback markup. |
+| `list` | first-class public renderer | acceptable | Dedicated line-based list rendering now exists; keep compatibility for legacy settings-driven content. |
+| `table` | first-class public renderer | acceptable | Dedicated line-based table rendering now exists; keep compatibility for legacy settings rows. |
+| `accordion` | first-class public renderer | acceptable | Grouped disclosure now uses semantic `<details>` and child blocks instead of fallback settings markup. |
 | `feature-grid` | fallback-only | should become first-class | This remains deferred for now; prefer `columns` with the `cards` variant when editors need a structured feature grid. |
 | `stats` | fallback-only | should become first-class | Stats should map cleanly to shipped stat primitives rather than generic cards. |
 | `metric-card` | fallback-only | should become first-class | The block overlaps with stats; decide whether it is its own first-class block or a `column_item`/stat variant. |

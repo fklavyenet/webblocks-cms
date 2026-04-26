@@ -1289,6 +1289,34 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function accordion_admin_form_is_available(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $accordionType = BlockType::query()->where('slug', 'accordion')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $accordionType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Accordion (About / Main)');
+        $response->assertSee('Accordion Title');
+        $response->assertSee('Add child FAQ or content blocks as accordion items.');
+        $response->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
     public function storing_a_block_from_slot_screen_redirects_back_to_the_same_slot_screen(): void
     {
         $user = User::factory()->create();

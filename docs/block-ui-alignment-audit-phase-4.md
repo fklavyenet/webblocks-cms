@@ -31,7 +31,7 @@ Baseline:
 | `column_item` | first-class | aligned | plain cell, card, stat, or link-list row driven by parent columns variant | keep | P3 custom/fallback |
 | `callout` | first-class | acceptable | `wb-alert` and optional `wb-callout` shell where shipped | align | P2 later |
 | `quote` | first-class | acceptable | semantic `blockquote`, optional framed card | align | P2 later |
-| `faq` | first-class | acceptable | simple `wb-card` plus `wb-stack` for one-off Q/A | merge into another block | P1 next |
+| `faq` | first-class | acceptable | simple `wb-card` plus `wb-stack` for one-off Q/A | keep | P3 custom/fallback |
 | `code` | public-renderer-only | acceptable | escaped `<pre><code>` in a simple code shell | keep | P2 later |
 | `toc` | public-renderer-only | acceptable | `wb-link-list` built from existing anchored headings | keep | P2 later |
 | `image` | first-class | acceptable | semantic `figure`, `img`, optional `figcaption`, optional link | align | P2 later |
@@ -43,8 +43,8 @@ Baseline:
 | `card-grid` | public-renderer-only | acceptable | `wb-grid` of `wb-card` items | merge into another block | P1 next |
 | `list` | first-class | aligned | semantic `ul` or `ol` in `wb-stack` rhythm | keep | P3 custom/fallback |
 | `table` | first-class | aligned | `wb-table` inside `wb-table-wrap` with explicit header/body handling | keep | P3 custom/fallback |
-| `accordion` | fallback-only | weak | grouped disclosure items using shipped primitives if available, otherwise minimal semantic details/cards | promote | P1 next |
-| `tabs` | first-class | weak | true interactive tabset only if WebBlocks UI ships a real tabs pattern | deprecate later | P1 next |
+| `accordion` | first-class | acceptable | grouped disclosure items using semantic `<details>` and `<summary>` | keep | P3 custom/fallback |
+| `tabs` | first-class | weak | true interactive tabset only if WebBlocks UI ships a real tabs pattern | defer | P2 later |
 | `slider` | fallback-only | custom-only | carousel only if WebBlocks UI ships a canonical slider pattern; otherwise keep custom | custom only | P3 custom/fallback |
 | `video` | fallback-only | weak | compact media card with semantic player or external embed plus copy | align | P2 later |
 | `audio` | fallback-only | weak | compact media card with semantic audio player plus copy | align | P2 later |
@@ -76,7 +76,7 @@ Baseline:
 | `feature-grid` | fallback-only | weak | feature cards through `columns` cards variant unless a separate pattern proves necessary | merge into another block | P1 next |
 | `comparison` | fallback-only | weak | comparison table or paired card pattern | align | P2 later |
 | `team` | fallback-only | weak | profile card grid | align | P2 later |
-| `faq-list` | fallback-only | weak | grouped FAQ list or accordion family block | merge into another block | P1 next |
+| `faq-list` | first-class alias | acceptable | grouped FAQ list rendered through the accordion family block | deprecate later | P2 later |
 | `container` | layout/meta | weak | internal content wrapper using stack rhythm, not a public design pattern | deprecate later | P2 later |
 | `split` | layout/meta | weak | two-column content wrapper | keep | P2 later |
 | `stack` | layout/meta | acceptable | internal stacked layout wrapper | keep | P2 later |
@@ -103,10 +103,10 @@ Baseline:
 
 ### B. Disclosure/interactivity
 
-- `accordion` should become the canonical grouped disclosure block if Phase 4 takes on expandable content.
-- `faq` should remain backward-compatible as a simple single Q/A block, but future grouped FAQ behavior should consolidate around `accordion` or a merged FAQ/accordion family.
-- `faq-list` should not become a separate long-term pattern; it should merge into the same disclosure family as `accordion`.
-- `tabs` should not receive a cosmetic patch if WebBlocks UI does not ship a real tabs pattern. Current recommendation: deprecate later unless the design system gains a canonical tabs implementation.
+- `accordion` is now the canonical grouped disclosure block and intentionally uses semantic `<details>` / `<summary>` markup without JS.
+- `faq` remains backward-compatible as a simple single Q/A block and also serves as a natural child item inside accordion-style blocks.
+- `faq-list` is now transitional and renders through the same accordion family path rather than maintaining a separate long-term pattern.
+- `tabs` should not receive a cosmetic patch if WebBlocks UI does not ship a real tabs pattern. Current recommendation: defer until the design system gains a canonical tabs implementation.
 - No shipped accordion-specific or tabs-specific WebBlocks UI classes/hooks have been confirmed in the Phase 2/3 baseline. That means Phase 4 should prefer semantic minimalism over CMS-only interactivity hacks.
 
 ### C. Media/content embeds
@@ -162,8 +162,9 @@ Baseline:
 ### Phase 4B — Disclosure blocks
 
 - `accordion`
-- `faq-list` / `faq` consolidation
-- `tabs` decision: real shipped pattern or deprecate later
+- `faq-list` -> accordion merge direction
+- `faq` stays simple and backward-compatible
+- `tabs` decision: defer until a real shipped pattern exists
 
 ### Phase 4C — Marketing pattern blocks
 
