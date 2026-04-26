@@ -344,6 +344,56 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: add explicit card/download variants instead of inferring presentation from helper text alone.
 
+### `video`
+
+- CMS block slug: `video`
+- Admin fields: `title`, `content`, `url`, `asset_id`
+- Translatable fields: none
+- Shared fields: `title`, `content`, `url`, `asset_id`
+- Intended WebBlocks UI output: semantic `<video controls>` for direct sources, or a safe provider `<iframe>` only for known YouTube/Vimeo URLs, inside a simple `wb-card` shell.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep playback native, avoid custom player JS, and fall back to a simple external link when the URL is not a safe embed provider.
+
+### `audio`
+
+- CMS block slug: `audio`
+- Admin fields: `title`, `content`, `url`, `asset_id`
+- Translatable fields: none
+- Shared fields: `title`, `content`, `url`, `asset_id`
+- Intended WebBlocks UI output: semantic `<audio controls>` inside a simple `wb-card` shell.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep playback native and dependency-free.
+
+### `file`
+
+- CMS block slug: `file`
+- Admin fields: `title`, `content`, `url`, `asset_id`
+- Translatable fields: none
+- Shared fields: `title`, `content`, `url`, `asset_id`
+- Intended WebBlocks UI output: compact file card with a `wb-btn wb-btn-secondary` download/open action.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep this distinct from the dedicated `download` CTA block, which remains more action-oriented.
+
+### `map`
+
+- CMS block slug: `map`
+- Admin fields: `title`, `content`, `url`
+- Translatable fields: none
+- Shared fields: `title`, `content`, `url`
+- Intended WebBlocks UI output: simple location summary with an external `Open map` button, not a custom map widget.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep the implementation link-first unless a real shipped map/embed pattern becomes available.
+
+### `slider`
+
+- CMS block slug: `slider`
+- Admin fields: ordered gallery assets and optional text
+- Translatable fields: none
+- Shared fields: assets and structure
+- Intended WebBlocks UI output: no promoted Phase 4 renderer; use `gallery` or other structured media blocks instead when possible.
+- Current implementation: weak
+- Notes for later renderer/admin improvements: slider remains deferred because there is no confirmed shipped WebBlocks UI carousel pattern worth standardizing on.
+
 ### `code`
 
 - CMS block slug: `code`

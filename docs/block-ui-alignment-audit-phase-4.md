@@ -45,11 +45,11 @@ Baseline:
 | `table` | first-class | aligned | `wb-table` inside `wb-table-wrap` with explicit header/body handling | keep | P3 custom/fallback |
 | `accordion` | first-class | acceptable | grouped disclosure items using semantic `<details>` and `<summary>` | keep | P3 custom/fallback |
 | `tabs` | first-class | weak | true interactive tabset only if WebBlocks UI ships a real tabs pattern | defer | P2 later |
-| `slider` | fallback-only | custom-only | carousel only if WebBlocks UI ships a canonical slider pattern; otherwise keep custom | custom only | P3 custom/fallback |
-| `video` | fallback-only | weak | compact media card with semantic player or external embed plus copy | align | P2 later |
-| `audio` | fallback-only | weak | compact media card with semantic audio player plus copy | align | P2 later |
-| `file` | fallback-only | weak | file CTA as compact card or button | align | P2 later |
-| `map` | fallback-only | weak | compact card with map summary and external/open action | align | P2 later |
+| `slider` | fallback-only | custom-only | carousel only if WebBlocks UI ships a canonical slider pattern; otherwise keep custom | defer | P3 custom/fallback |
+| `video` | first-class | aligned | semantic `<video>` or safe provider embed in a simple card shell | keep | P3 custom/fallback |
+| `audio` | first-class | aligned | semantic `<audio>` in a simple card shell | keep | P3 custom/fallback |
+| `file` | first-class | aligned | file CTA as compact card and button | keep | P3 custom/fallback |
+| `map` | first-class | acceptable | compact card with summary plus external map action | keep | P3 custom/fallback |
 | `breadcrumb` | fallback-only | weak | `nav[aria-label="Breadcrumb"]` with simple list or cluster links | defer | P2 later |
 | `pagination` | fallback-only | weak | previous/next navigation using `wb-btn` and simple layout primitives | align | P1 next |
 | `form` | fallback-only | weak | internal form wrapper around field blocks only if generic form builder becomes real product scope | keep fallback | P3 custom/fallback |
@@ -111,8 +111,8 @@ Baseline:
 
 ### C. Media/content embeds
 
-- `video`, `audio`, `file`, and `map` are reasonable first-class candidates only as lightweight media shells using existing cards, buttons, and semantic HTML.
-- `slider` should not be expanded first. Without a clearly confirmed WebBlocks UI carousel pattern, it should remain custom/fallback-oriented.
+- `video`, `audio`, `file`, and `map` are now lightweight first-class media shells using existing cards, buttons, and semantic HTML.
+- `slider` should not be expanded. Without a clearly confirmed WebBlocks UI carousel pattern, it remains deferred and custom/fallback-oriented.
 - `gallery` already covers the strongest shipped visual media pattern and should stay the baseline for image-rich content.
 
 ### D. Marketing blocks
@@ -180,7 +180,8 @@ Baseline:
 - `video`
 - `audio`
 - `file`
-- decide `map` and `slider` direction without inventing CMS-only UI patterns
+- `map` simplified to a link-first external action
+- `slider` deferred without new carousel UI
 
 ### Deferred / custom
 

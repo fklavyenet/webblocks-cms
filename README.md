@@ -225,6 +225,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Hero uses the shipped `wb-promo` pattern, Buttons use explicit supported variants, and Columns use explicit `cards`, `plain`, `stats`, and `links` variants.
 - Marketing patterns now consolidate into Columns variants and Quote variants instead of maintaining duplicate grid, stat, and testimonial systems.
 - List, Table, and Related Content now have dedicated editorial forms and public renderers instead of relying only on the generic fallback block path.
+- Media blocks now use semantic HTML (`video`, `audio`, direct file links) inside simple WebBlocks UI card wrappers.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
 - Disclosure blocks now use semantic accordion behavior via `<details>` for grouped content, while standalone FAQ blocks remain intentionally simple and stable.
 - Duplicate card and grid systems such as legacy Card Grid remain transitional and are deprecated in favor of the aligned core primitives.

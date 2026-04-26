@@ -14,6 +14,10 @@
 - Consolidated `stats` and `metric-card` into the existing stat-oriented primitives used by Columns.
 - Consolidated `feature-grid` into the `columns(cards)` direction and normalized legacy `card-grid` rendering to the same core card structure.
 - Merged `testimonial` into quote variants and exposed a testimonial option on the Quote admin form.
+- Added semantic Video and Audio block rendering.
+- Added File block alignment around a simple download/open action.
+- Simplified Map block behavior to a safe external map action.
+- Deferred Slider promotion until a shipped WebBlocks UI pattern exists.
 
 ## 1.0.6
 
