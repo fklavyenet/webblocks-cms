@@ -22,8 +22,9 @@
     $page = $block->page;
     $publishedPages = \App\Models\Page::query()
         ->where('status', 'published')
+        ->when($page?->site_id, fn ($query, $siteId) => $query->where('site_id', $siteId))
         ->with(['translations', 'site'])
-        ->orderBy('title')
+        ->orderBy('id')
         ->get();
     $relatedPages = $publishedPages
         ->reject(fn ($candidate) => $candidate->id === $page?->id)

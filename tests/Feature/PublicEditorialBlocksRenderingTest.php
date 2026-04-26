@@ -205,6 +205,56 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<a href="/p/api-reference" class="wb-link-list-title">API Reference</a>', false);
     }
 
+    #[Test]
+    public function related_content_automatic_fallback_stays_within_the_current_site(): void
+    {
+        $page = $this->pageWithMainSlot('Docs Home', 'docs-home', 'docs');
+        $this->pageWithMainSlot('Getting Started', 'getting-started', 'docs');
+
+        $otherSite = Site::query()->create([
+            'name' => 'Secondary Site',
+            'handle' => 'secondary-site',
+            'domain' => 'secondary.example.test',
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([
+            Page::defaultLocaleId() => ['is_enabled' => true],
+        ]);
+
+        $otherPage = Page::query()->create([
+            'site_id' => $otherSite->id,
+            'title' => 'Cross-site Page',
+            'slug' => 'cross-site-page',
+            'page_type' => 'docs',
+            'status' => 'published',
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $otherPage->id,
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'related-content',
+            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
+            'source_type' => 'data',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Related docs',
+            'content' => '',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'docs-home'));
+
+        $response->assertOk();
+        $response->assertSee('<a href="/p/getting-started" class="wb-link-list-title">Getting Started</a>', false);
+        $response->assertDontSee('Cross-site Page');
+    }
+
     private function pageWithMainSlot(string $title = 'About', string $slug = 'about', string $pageType = 'default'): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
