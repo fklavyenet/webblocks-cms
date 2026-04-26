@@ -6,6 +6,9 @@
 - Verified WebBlocks UI primitives against the shipped CDN assets used by the CMS and documented the current UI gap for `wb-prose`.
 - Stabilized public layout and slot wrapper structure by keeping the existing public shell and removing the forced sidebar card wrapper.
 - Added public layout and slot structure feature tests.
+- Added a public layout mode resolver.
+- Added sidebar-aware public shell composition while keeping `content` mode reserved until reliable metadata exists.
+- Added tests for public layout mode behavior.
 
 
 ## 1.0.5

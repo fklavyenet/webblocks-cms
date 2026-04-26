@@ -45,6 +45,15 @@ Verified shipped JS hooks relevant to current public rendering:
 - `data-wb-gallery-target`
 - `#wb-overlay-root`
 
+## Phase 2B Layout Modes
+
+Public pages now use explicit layout composition modes:
+
+- `stack` is the default mode.
+- `sidebar` is used when the page has a populated sidebar slot.
+- `content` is reserved for future docs/editorial pages with explicit metadata and must not be guessed from URL or title.
+- `wb-content-shell` is not a universal wrapper and should only appear when the page metadata explicitly supports a content-shell presentation.
+
 ## Matrix
 
 | CMS Block | WebBlocks UI primitive/pattern | Status | Priority | Next action |
@@ -113,7 +122,7 @@ Verified shipped JS hooks relevant to current public rendering:
 - Default shell: `wb-public-main > .wb-container > .wb-stack` for ordinary block stacks.
 - Editorial/docs shell: `wb-public-main > .wb-container > .wb-content-shell` with optional `wb-content-header`, `wb-content-body`, and `wb-content-footer` sections.
 - Nested block layout should use `wb-stack`, `wb-stack-*`, `wb-gap-*`, `wb-grid`, and `wb-grid-*` before any custom wrapper class.
-- The current implementation is acceptable because it already gives the main slot a stable public wrapper and block rhythm. Phase 2A does not force `wb-content-shell` yet.
+- The current implementation is acceptable because it already gives the main slot a stable public wrapper and block rhythm. Phase 2B adds explicit layout modes so `wb-content-shell` is reserved rather than forced onto every page.
 
 ### Sidebar slot
 

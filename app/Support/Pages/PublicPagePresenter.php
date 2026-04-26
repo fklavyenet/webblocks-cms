@@ -44,6 +44,7 @@ class PublicPagePresenter
             'mainSlot' => $slots->firstWhere('slug', 'main'),
             'sidebarSlot' => $slots->firstWhere('slug', 'sidebar'),
             'footerSlot' => $slots->firstWhere('slug', 'footer'),
+            'layoutMode' => PublicLayoutMode::forPage($page),
             'metaDescription' => $this->resolveMetaDescription($page, $translatedTopLevelBlocks),
             'homePath' => $this->pageRouteResolver->homePath(),
         ];

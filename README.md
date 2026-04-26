@@ -223,6 +223,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Public block output maps to shipped WebBlocks UI primitives and patterns.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 - New or changed block renderers must follow this contract.
+- Public layout mode selection controls whether a page renders as a default stack layout, a sidebar composition, or a future explicit content-shell mode.
 
 ## Stack
 
