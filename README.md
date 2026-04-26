@@ -216,6 +216,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - [Revisions](docs/revisions.md)
 - [Operations](docs/operations.md)
 - [Block UI Renderer Contract](docs/block-ui-renderer-contract.md)
+- [Block UI Alignment Audit — Phase 4](docs/block-ui-alignment-audit-phase-4.md)
 - [Development Workflow](DEVELOPMENT.md)
 
 ## Public Rendering

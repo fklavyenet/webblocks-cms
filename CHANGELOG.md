@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added Phase 4 block UI alignment audit for remaining public block types.
+
 ## 1.0.6
 
 ### Added
