@@ -215,7 +215,14 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - [Editorial Workflow](docs/editorial-workflow.md)
 - [Revisions](docs/revisions.md)
 - [Operations](docs/operations.md)
+- [Block UI Renderer Contract](docs/block-ui-renderer-contract.md)
 - [Development Workflow](DEVELOPMENT.md)
+
+## Block UI Renderer Contract
+
+- Public block output maps to shipped WebBlocks UI primitives and patterns.
+- The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
+- New or changed block renderers must follow this contract.
 
 ## Stack
 

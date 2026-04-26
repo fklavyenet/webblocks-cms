@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added block UI renderer contract documentation for aligning CMS public blocks with WebBlocks UI primitives and patterns.
+
 ## 1.0.5
 
 - Inline release helper scripts into the GitHub Actions release workflow.
