@@ -18,6 +18,21 @@
     </div>
 
     <div class="wb-stack wb-gap-1">
+        <label for="variant">Columns Variant</label>
+        <select id="variant" name="variant" class="wb-select">
+            @foreach ([
+                'cards' => 'Cards',
+                'plain' => 'Plain',
+                'stats' => 'Stats',
+                'links' => 'Links',
+            ] as $value => $label)
+                <option value="{{ $value }}" @selected(old('variant', $block->variant ?: 'cards') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <div class="wb-text-sm wb-text-muted">The Columns variant controls how child Column Item blocks render publicly.</div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
         <label for="content">Intro Text</label>
         <textarea id="content" name="content" class="wb-textarea" rows="5">{{ old('content', $block->content) }}</textarea>
     </div>

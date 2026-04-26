@@ -226,6 +226,8 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Public layout mode selection controls whether a page renders as a default stack layout, a sidebar composition, or a future explicit content-shell mode.
 - Hero is now a first-class WebBlocks UI-aligned marketing block using the shipped `wb-promo` pattern.
 - Buttons now use an explicit WebBlocks UI variant mapping, and hero/promo CTA rows should be modeled with child Button blocks.
+- Columns now expose explicit public variants for `cards`, `plain`, `stats`, and `links`, with child Column Item blocks rendered through shipped WebBlocks grid, stat, and link-list primitives.
+- `feature-grid` remains a fallback/custom path for now; prefer `columns` with the `cards` variant for structured feature grids.
 
 ## Stack
 

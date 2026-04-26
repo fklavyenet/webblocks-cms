@@ -15,6 +15,10 @@
 - Normalized public button variant rendering.
 - Added structured hero and promo CTA rendering through child Button blocks.
 - Added button rendering tests.
+- Aligned public `columns` rendering with shipped WebBlocks grid, card, stat, and link-list primitives through explicit parent variants.
+- Added a `Columns Variant` control in the admin block form for `cards`, `plain`, `stats`, and `links`.
+- Kept `card-grid` on the shipped card/grid primitives while deferring a first-class replacement for `feature-grid`.
+- Added public and admin coverage for columns variant rendering and persistence.
 
 
 ## 1.0.5

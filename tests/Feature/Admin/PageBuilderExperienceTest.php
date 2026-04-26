@@ -1148,6 +1148,36 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function columns_admin_form_exposes_variant_choices(): void
+    {
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $columnsType = BlockType::query()->firstOrCreate(
+            ['slug' => 'columns'],
+            ['name' => 'Columns', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 50, 'is_system' => true]
+        );
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $columnsType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Columns Variant');
+        $response->assertSee('Cards');
+        $response->assertSee('Plain');
+        $response->assertSee('Stats');
+        $response->assertSee('Links');
+    }
+
+    #[Test]
     public function slot_blocks_screen_opens_picker_and_modal_without_using_a_separate_create_page(): void
     {
         $user = User::factory()->create();
@@ -1771,6 +1801,7 @@ class PageBuilderExperienceTest extends TestCase
             'title' => 'Starter features',
             'subtitle' => 'Real child blocks',
             'content' => 'Manage each visible card below.',
+            'variant' => 'stats',
             'status' => 'published',
             'is_system' => 1,
             'column_items' => [
@@ -1802,6 +1833,7 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => (string) $columns->id]));
+        $this->assertDatabaseHas('blocks', ['id' => $columns->id, 'variant' => 'stats']);
         $this->assertTextTranslation($existingItem, $this->defaultLocale()->id, ['title' => 'Flexible content']);
         $newItem = Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->whereKeyNot($existingItem->id)->firstOrFail();
         $this->assertTextTranslation($newItem, $this->defaultLocale()->id, ['title' => 'Editor friendly']);

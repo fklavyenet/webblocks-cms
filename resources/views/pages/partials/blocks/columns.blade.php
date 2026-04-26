@@ -4,15 +4,17 @@
     $isContactColumns = $childSlugs->count() === 2
         && $childSlugs->contains('contact-info')
         && $childSlugs->contains('contact_form');
-    $layoutClass = match (true) {
-        $children->count() <= 1 => 'wb-stack wb-gap-4',
+    $columnsVariant = $block->variant ?: 'cards';
+    $gridClass = match (true) {
+        $children->count() <= 1 => 'wb-stack wb-gap-3',
         $children->count() === 2 => 'wb-grid wb-grid-2',
-        default => 'wb-grid wb-grid-3',
+        $children->count() === 3 => 'wb-grid wb-grid-3',
+        default => 'wb-grid wb-grid-4',
     };
+    $layoutClass = $columnsVariant === 'links' ? 'wb-link-list' : $gridClass;
 @endphp
 
-<section class="wb-card wb-card-muted">
-    <div class="wb-card-body wb-stack wb-gap-4">
+<section class="wb-stack wb-gap-4">
         @if ($block->title || $block->subtitle)
             <div class="wb-stack wb-gap-1">
                 @if ($block->title)
@@ -26,8 +28,8 @@
         @endif
 
         @if ($block->content)
-            <div class="wb-prose">
-                <div>{!! nl2br(e($block->content)) !!}</div>
+            <div class="wb-stack wb-gap-2">
+                <p class="wb-m-0">{!! nl2br(e($block->content)) !!}</p>
             </div>
         @endif
 
@@ -35,11 +37,7 @@
             <div class="{{ $layoutClass }}{{ $isContactColumns ? ' wb-public-contact-columns' : '' }}">
                 @foreach ($children as $child)
                     @if ($child->isColumnItem())
-                        <div class="wb-card">
-                            <div class="wb-card-body">
-                                @include('pages.partials.block', ['block' => $child])
-                            </div>
-                        </div>
+                        @include($child->publicRenderView(), ['block' => $child, 'columnsVariant' => $columnsVariant])
                     @else
                         <div>
                             @include('pages.partials.block', ['block' => $child])
@@ -48,5 +46,4 @@
                 @endforeach
             </div>
         @endif
-    </div>
 </section>

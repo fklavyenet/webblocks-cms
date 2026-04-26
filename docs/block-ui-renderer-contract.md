@@ -71,8 +71,8 @@ Public pages now use explicit layout composition modes:
 | `rich-text` | readable content, optional shipped prose wrapper | weak | P2 content quality | confirm shipped rich text primitive or document the UI gap explicitly |
 | `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage |
 | `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | keep default section stable and reserve promo semantics for explicit variants |
-| `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4` | weak | P1 public marketing/docs | remove hard-coded card framing from the container renderer |
-| `column_item` | plain cell, `wb-card`, `wb-stat`, or link-list item | weak | P1 public marketing/docs | add explicit variants instead of one generic text/link renderer |
+| `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, `wb-link-list` | acceptable | P1 public marketing/docs | keep parent-driven variants explicit and avoid reintroducing forced wrapper cards |
+| `column_item` | plain cell, `wb-card`, `wb-stat`, or link-list item | acceptable | P1 public marketing/docs | keep item rendering driven by the parent `columns.variant` mapping |
 | `callout` | `wb-alert`, optional `wb-callout` | acceptable | P2 content quality | widen variant mapping if a shipped sidebar/help callout exists |
 | `quote` | semantic `blockquote`, optional framed card | acceptable | P2 content quality | make framing conditional rather than always card-like |
 | `faq` | FAQ/accordion pattern | weak | P2 content quality | move from single-card Q/A to repeatable accordion structure |
@@ -85,14 +85,14 @@ Public pages now use explicit layout composition modes:
 | `menu` | legacy alias of `navigation-auto` | acceptable | P3 later/custom | keep for migrated data only |
 | `contact_form` | form primitives, `wb-btn`, `wb-alert` | acceptable | P1 public marketing/docs | keep structured editor fields and avoid raw HTML forms |
 | `hero` | `wb-promo` marketing shell | acceptable | P1 public marketing/docs | keep hero first-class, translated, and action-driven through child button blocks |
-| `card-grid` | card grid pattern | weak | P1 public marketing/docs | replace settings-driven custom data with first-class structured fields or leave custom |
+| `card-grid` | card grid pattern | weak | P1 public marketing/docs | keep the current structured card grid stable and revisit first-class modeling later |
 | `showcase-list` | showcase/gallery pattern | weak | P3 later/custom | either formalize as a first-class showcase block or keep custom |
 | `contact-info` | link list / contact meta card | weak | P2 content quality | promote to first-class only if editors need it beyond seeded pages |
 | `code` | code block pattern | missing | P2 content quality | add first-class renderer/admin support or keep fallback deliberately |
 | `list` | list primitive | weak | P2 content quality | add first-class list controls when editor demand is clear |
 | `table` | `wb-table` pattern | weak | P2 content quality | add a structured table editor if table content becomes common |
 | `accordion` | accordion/disclosure pattern | weak | P2 content quality | move from fallback details/card rendering to first-class behavior |
-| `feature-grid` | feature grid pattern | weak | P1 public marketing/docs | decide whether to fold into `columns` variants or keep separate |
+| `feature-grid` | feature grid pattern | weak | P1 public marketing/docs | keep fallback rendering for now and prefer `columns` with the `cards` variant for structured use cases |
 | `stats` / `metric-card` | `wb-stat` and related metric cards | weak | P1 public marketing/docs | add real stat variants instead of fallback cards |
 | `logo-cloud` | logo grid / brand strip | weak | P1 public marketing/docs | add structured media handling if it remains productized |
 | `testimonial` | quote/testimonial card | weak | P2 content quality | decide whether quote variants are sufficient or a separate block is needed |
@@ -208,12 +208,17 @@ Public pages now use explicit layout composition modes:
 ### `columns`
 
 - CMS block slug: `columns`
-- Admin fields: `title`, `subtitle`, `content`, repeatable `column_items`
+- Admin fields: `title`, `subtitle`, `content`, `variant`, repeatable `column_items`
 - Translatable fields: `title`, `subtitle`, `content`, child `column_item` text
-- Shared fields: child ordering, child links, structure
+- Shared fields: `variant`, child ordering, child links, structure
 - Intended WebBlocks UI output: layout container for repeatable children using `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, or a generic `wb-grid` when the count is dynamic.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: the container should not hard-code a muted card shell or card-wrap every `column_item`; variants should drive whether children become cards, stats, link lists, or plain cells.
+- Current implementation: acceptable
+- Variant mapping:
+  - `cards` -> grid container with each child rendered as `wb-card > .wb-card-body`
+  - `plain` -> grid container with unframed stacked child content
+  - `stats` -> grid container with child items rendered as `wb-stat`
+  - `links` -> `wb-link-list` with child items rendered as link-list rows
+- Notes for later renderer/admin improvements: keep the parent block responsible for presentation choice so existing `column_item` content can stay simple and reusable.
 
 ### `column_item`
 
@@ -222,8 +227,8 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `title`, `content`
 - Shared fields: `url`
 - Intended WebBlocks UI output: one grid cell that may render as plain content, `wb-card`, `wb-stat`, `wb-link-list-item`, or other shipped cell treatment depending on parent or item variant.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: add explicit variants or parent-driven mapping instead of one generic linked text output.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: `column_item` remains a simple content unit and now defers public presentation to its parent `columns` block. The current `stats` mapping is intentionally conservative because there is no dedicated numeric value field yet.
 
 ### `callout`
 
@@ -353,14 +358,14 @@ Public pages now use explicit layout composition modes:
 
 | CMS Block | Current state | Desired direction | Notes |
 | --- | --- | --- | --- |
-| `card-grid` | public-render-only | should become first-class | The current renderer depends on `settings.items`; move to structured fields if this remains productized. |
+| `card-grid` | public-render-only | should become first-class | The renderer now stays closer to the shipped grid/card primitives, but it still depends on `settings.items`; move to structured fields if this remains productized. |
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
 | `code` | fallback-only | should become first-class | Code examples need explicit semantics, language metadata, and a reviewed UI pattern. |
 | `list` | fallback-only | should become first-class | Lists are common editorial content and should not depend on generic fallback parsing forever. |
 | `table` | fallback-only | should become first-class | The fallback renderer is serviceable, but common table content needs structured editing. |
 | `accordion` | fallback-only | should become first-class | Interactive disclosure content should use a deliberate accordion block, not generic fallback markup. |
-| `feature-grid` | fallback-only | should become first-class | This may also be folded into `columns` variants if that proves simpler. |
+| `feature-grid` | fallback-only | should become first-class | This remains deferred for now; prefer `columns` with the `cards` variant when editors need a structured feature grid. |
 | `stats` | fallback-only | should become first-class | Stats should map cleanly to shipped stat primitives rather than generic cards. |
 | `metric-card` | fallback-only | should become first-class | The block overlaps with stats; decide whether it is its own first-class block or a `column_item`/stat variant. |
 | `logo-cloud` | fallback-only | should become first-class | Only promote if there is a repeatable need for structured logo/media rows. |

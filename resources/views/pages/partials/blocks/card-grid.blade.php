@@ -9,7 +9,7 @@
         : \App\Models\Asset::query()->whereIn('id', $assetIds)->get()->keyBy('id');
 @endphp
 
-<section class="wb-stack wb-gap-4 wb-public-card-grid">
+<section class="wb-stack wb-gap-4">
     @if ($block->title)
         <div class="wb-stack wb-gap-1">
             <h2>{{ $block->title }}</h2>
@@ -26,7 +26,7 @@
                 $assetUrl = $asset?->url();
             @endphp
 
-            <article class="wb-card wb-card-muted wb-public-card-item">
+            <article class="wb-card wb-card-muted">
                 <div class="wb-card-body wb-stack wb-gap-2">
                     @if ($assetUrl)
                         <img src="{{ $assetUrl }}" alt="{{ $asset?->alt_text ?: ($item['title'] ?? 'Card image') }}">
