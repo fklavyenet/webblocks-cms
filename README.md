@@ -221,15 +221,15 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 ## Public Rendering
 
-- Public block rendering maps to shipped WebBlocks UI primitives and patterns.
-- Hero uses the shipped `wb-promo` pattern, Buttons use explicit supported variants, and Columns use explicit `cards`, `plain`, `stats`, and `links` variants.
-- Marketing patterns now consolidate into Columns variants and Quote variants instead of maintaining duplicate grid, stat, and testimonial systems.
-- List, Table, and Related Content now have dedicated editorial forms and public renderers instead of relying only on the generic fallback block path.
-- Media blocks now use semantic HTML (`video`, `audio`, direct file links) inside simple WebBlocks UI card wrappers.
+- CMS blocks now render through shipped WebBlocks UI primitives instead of ad-hoc HTML and CSS in normal editorial flows.
+- Editors do not need to paste manual HTML for standard content patterns such as Hero, Button, Columns, List, Table, Related Content, Accordion, and the aligned media blocks.
+- Hero uses the shipped `wb-promo` pattern, Buttons use supported variants, and Columns provide the stable `plain`, `cards`, `stats`, and `links` directions.
+- List, Table, and Related Content have first-class editorial inputs and semantic public renderers.
+- Accordion provides grouped disclosure via semantic `<details>`, while FAQ remains a simple stable Q and A block.
+- Media blocks use semantic `video`, `audio`, and direct file-link rendering with a minimal external-link Map treatment.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
-- Disclosure blocks now use semantic accordion behavior via `<details>` for grouped content, while standalone FAQ blocks remain intentionally simple and stable.
-- Duplicate card and grid systems such as legacy Card Grid remain transitional and are deprecated in favor of the aligned core primitives.
-- Breadcrumb remains deferred until the public shell has a confirmed need and a verified shipped breadcrumb pattern.
+- Transitional duplicate patterns such as legacy Card Grid, Feature Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
+- Breadcrumb, Tabs, and Slider remain deferred until WebBlocks UI ships confirmed patterns or the public shell requires them.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 
 ## Stack

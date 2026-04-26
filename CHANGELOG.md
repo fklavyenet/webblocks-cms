@@ -1,23 +1,43 @@
 # Changelog
 
-## [Unreleased]
+## 1.1.0
 
-- Added Phase 4 block UI alignment audit for remaining public block types.
-- Promoted `list`, `table`, and `related-content` to dedicated admin/public renderers with focused feature coverage.
-- Preserved backward compatibility for existing fallback-style list and table settings data while introducing line-based editorial inputs.
-- Deferred `breadcrumb` until a confirmed shipped pattern or clear public-shell need is in scope.
-- Added a first-class Accordion block with semantic `<details>` disclosure rendering and focused coverage.
-- Merged `faq-list` behavior into the accordion rendering path while keeping existing content working.
-- Kept standalone FAQ rendering stable as a simple card-based question and answer block.
-- Deferred Tabs promotion until WebBlocks UI ships a real tabs pattern.
-- Added focused disclosure block rendering tests.
-- Consolidated `stats` and `metric-card` into the existing stat-oriented primitives used by Columns.
-- Consolidated `feature-grid` into the `columns(cards)` direction and normalized legacy `card-grid` rendering to the same core card structure.
-- Merged `testimonial` into quote variants and exposed a testimonial option on the Quote admin form.
-- Added semantic Video and Audio block rendering.
-- Added File block alignment around a simple download/open action.
-- Simplified Map block behavior to a safe external map action.
-- Deferred Slider promotion until a shipped WebBlocks UI pattern exists.
+### Added
+
+- First-class List block with structured editor and semantic rendering.
+- First-class Table block with header-row support.
+- First-class Related Content block using the WebBlocks link-list pattern.
+- First-class Accordion block using semantic `<details>` disclosure.
+- Semantic Video and Audio block renderers.
+- File download block alignment with WebBlocks button primitives.
+- Minimal Map block with safe external link behavior.
+
+### Changed
+
+- Hero block fully aligned with the WebBlocks promo pattern.
+- Button rendering normalized across all supported public contexts.
+- Columns and Column Item rendering unified with explicit grid, card, stat, and link-list variants.
+- Code block promoted to a safe semantic `<pre><code>` renderer.
+- TOC block promoted to minimal navigation using heading anchors.
+- FAQ and FAQ-list consolidated into a coherent disclosure system.
+- Marketing blocks (`stats`, `metric-card`, `feature-grid`, `testimonial`) consolidated into core primitives.
+- Public layout modes stabilized around `stack`, `sidebar`, and `content-ready` composition.
+- Preserved compatibility for existing fallback-style list and table settings data while moving editorial workflows to dedicated structured inputs.
+
+### Fixed
+
+- Removed usage of non-existent UI classes such as `wb-prose` and `wb-cluster-3`.
+- Eliminated duplicate card and grid rendering logic across aligned public blocks.
+- Prevented unsafe HTML output in multiple public block renderers.
+- Ensured empty wrappers are not rendered.
+
+### Deprecated / Deferred
+
+- Tabs block deferred until WebBlocks UI provides a real tabs pattern.
+- Slider block deferred; use Gallery instead of introducing a custom carousel system.
+- Feature Grid and Metric Card remain transitional and are merged into Columns-oriented primitives.
+- FAQ-list remains transitional; use Accordion for new grouped disclosure content.
+- Commerce and generic form-builder blocks remain on the fallback/custom path.
 
 ## 1.0.6
 
