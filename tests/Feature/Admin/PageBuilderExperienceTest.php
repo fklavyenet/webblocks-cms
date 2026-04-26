@@ -1243,6 +1243,52 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function list_table_and_related_content_admin_forms_are_available(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $listResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'list')->value('id')]));
+
+        $listResponse->assertOk();
+        $listResponse->assertSee('Add Block: List (About / Main)');
+        $listResponse->assertSee('List Title');
+        $listResponse->assertSee('List Style');
+        $listResponse->assertSee('Enter one item per line.');
+        $listResponse->assertDontSee('Generic Block Form');
+
+        $tableResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'table')->value('id')]));
+
+        $tableResponse->assertOk();
+        $tableResponse->assertSee('Add Block: Table (About / Main)');
+        $tableResponse->assertSee('Table Title');
+        $tableResponse->assertSee('Table Style');
+        $tableResponse->assertSee('Separate cells with a vertical bar');
+        $tableResponse->assertDontSee('Generic Block Form');
+
+        $relatedContentResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'related-content')->value('id')]));
+
+        $relatedContentResponse->assertOk();
+        $relatedContentResponse->assertSee('Add Block: Related Content (About / Main)');
+        $relatedContentResponse->assertSee('Section Title');
+        $relatedContentResponse->assertSee('Related Links');
+        $relatedContentResponse->assertSee('Leave blank to fall back to automatic related pages.');
+        $relatedContentResponse->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
     public function storing_a_block_from_slot_screen_redirects_back_to_the_same_slot_screen(): void
     {
         $user = User::factory()->create();

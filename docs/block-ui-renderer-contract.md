@@ -89,8 +89,8 @@ Public pages now use explicit layout composition modes:
 | `showcase-list` | showcase/gallery pattern | weak | P3 later/custom | either formalize as a first-class showcase block or keep custom |
 | `contact-info` | link list / contact meta card | weak | P2 content quality | promote to first-class only if editors need it beyond seeded pages |
 | `code` | code block pattern | missing | P2 content quality | add first-class renderer/admin support or keep fallback deliberately |
-| `list` | list primitive | weak | P2 content quality | add first-class list controls when editor demand is clear |
-| `table` | `wb-table` pattern | weak | P2 content quality | add a structured table editor if table content becomes common |
+| `list` | list primitive | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings compatibility |
+| `table` | `wb-table` pattern | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings rows |
 | `accordion` | accordion/disclosure pattern | weak | P2 content quality | move from fallback details/card rendering to first-class behavior |
 | `feature-grid` | feature grid pattern | weak | P1 public marketing/docs | keep fallback rendering for now and prefer `columns` with the `cards` variant for structured use cases |
 | `stats` / `metric-card` | `wb-stat` and related metric cards | weak | P1 public marketing/docs | add real stat variants instead of fallback cards |
@@ -99,7 +99,7 @@ Public pages now use explicit layout composition modes:
 | `timeline` | timeline pattern | weak | P2 content quality | promote only if timeline content is a real recurring use case |
 | `pricing` | pricing card/grid pattern | weak | P1 public marketing/docs | make first-class only with structured plans/features |
 | `toc` | table-of-contents navigation | missing | P1 public marketing/docs | add first-class docs navigation support |
-| `breadcrumb` | breadcrumb navigation | missing | P2 content quality | add only if the public page shell truly needs it |
+| `breadcrumb` | breadcrumb navigation | missing | P2 content quality | defer until the public page shell truly needs it and a shipped pattern is confirmed |
 | `cookie-notice` | shared privacy banner/modal pattern | missing | P3 later/custom | keep consent UI in the public layout rather than block renderers |
 
 ## Public Shell And Slots

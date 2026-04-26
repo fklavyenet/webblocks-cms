@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 - Added Phase 4 block UI alignment audit for remaining public block types.
+- Promoted `list`, `table`, and `related-content` to dedicated admin/public renderers with focused feature coverage.
+- Preserved backward compatibility for existing fallback-style list and table settings data while introducing line-based editorial inputs.
+- Deferred `breadcrumb` until a confirmed shipped pattern or clear public-shell need is in scope.
 
 ## 1.0.6
 

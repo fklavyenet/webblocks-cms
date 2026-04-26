@@ -41,8 +41,8 @@ Baseline:
 | `menu` | legacy alias | acceptable | same output as `navigation-auto` | deprecate later | P3 custom/fallback |
 | `contact_form` | first-class | aligned | structured form primitives with `wb-btn` and `wb-alert` | keep | P3 custom/fallback |
 | `card-grid` | public-renderer-only | acceptable | `wb-grid` of `wb-card` items | merge into another block | P1 next |
-| `list` | fallback-only | weak | semantic `ul` or `ol` in `wb-stack` rhythm | promote | P0 do now |
-| `table` | fallback-only | weak | `wb-table` inside `wb-table-wrap` with explicit header/body handling | promote | P0 do now |
+| `list` | first-class | aligned | semantic `ul` or `ol` in `wb-stack` rhythm | keep | P3 custom/fallback |
+| `table` | first-class | aligned | `wb-table` inside `wb-table-wrap` with explicit header/body handling | keep | P3 custom/fallback |
 | `accordion` | fallback-only | weak | grouped disclosure items using shipped primitives if available, otherwise minimal semantic details/cards | promote | P1 next |
 | `tabs` | first-class | weak | true interactive tabset only if WebBlocks UI ships a real tabs pattern | deprecate later | P1 next |
 | `slider` | fallback-only | custom-only | carousel only if WebBlocks UI ships a canonical slider pattern; otherwise keep custom | custom only | P3 custom/fallback |
@@ -50,7 +50,7 @@ Baseline:
 | `audio` | fallback-only | weak | compact media card with semantic audio player plus copy | align | P2 later |
 | `file` | fallback-only | weak | file CTA as compact card or button | align | P2 later |
 | `map` | fallback-only | weak | compact card with map summary and external/open action | align | P2 later |
-| `breadcrumb` | fallback-only | weak | `nav[aria-label="Breadcrumb"]` with simple list or cluster links | promote | P0 do now |
+| `breadcrumb` | fallback-only | weak | `nav[aria-label="Breadcrumb"]` with simple list or cluster links | defer | P2 later |
 | `pagination` | fallback-only | weak | previous/next navigation using `wb-btn` and simple layout primitives | align | P1 next |
 | `form` | fallback-only | weak | internal form wrapper around field blocks only if generic form builder becomes real product scope | keep fallback | P3 custom/fallback |
 | `input` | fallback-only | acceptable | `label` plus `wb-input` | keep fallback | P3 custom/fallback |
@@ -85,7 +85,7 @@ Baseline:
 | `page-title` | layout/meta | acceptable | resolved page title heading | keep | P3 custom/fallback |
 | `page-content` | layout/meta | weak | resolved page summary/content shell only if system metadata blocks remain productized | deprecate later | P2 later |
 | `page-meta` | layout/meta | acceptable | system metadata card/list | keep | P3 custom/fallback |
-| `related-content` | fallback-only | weak | `wb-link-list` of related pages | promote | P0 do now |
+| `related-content` | first-class | aligned | `wb-link-list` of editorial links or related pages | keep | P3 custom/fallback |
 | `auth-form` | fallback-only | weak | app/auth shell, not ordinary page content | custom only | P3 custom/fallback |
 | `cookie-notice` | layout/meta | missing | privacy UI belongs in shared public layout and modal partials, not editorial content blocks | deprecate later | P3 custom/fallback |
 | `showcase-list` | custom/site-specific | custom-only | showcase cards with gallery sections | custom only | P3 custom/fallback |
@@ -95,11 +95,11 @@ Baseline:
 
 ### A. Editorial basics
 
-- `list` should become first-class. It is common editorial content and should not remain a fallback parser forever.
-- `table` should become first-class. The current fallback proves the need, but the UI should standardize on `wb-table` plus wrapper semantics.
-- `breadcrumb` should become a small first-class navigation/meta block only if the public shell actually uses breadcrumb navigation in real pages.
+- `list` is now first-class with a small line-based editor and compatibility for legacy fallback-style settings data.
+- `table` is now first-class with line-based row entry, explicit header-row behavior, and compatibility for legacy fallback-style settings rows.
+- `breadcrumb` stays deferred until the public shell actually uses breadcrumb navigation in real pages and a shipped breadcrumb pattern is confirmed.
 - `pagination` should stay small and simple if promoted: previous/next only, using existing button primitives.
-- `related-content` is a good P0 candidate because it can become a clean `wb-link-list` block without new frontend complexity.
+- `related-content` is now first-class and can render either editorial links or automatic related pages through the same `wb-link-list` pattern.
 
 ### B. Disclosure/interactivity
 
@@ -157,7 +157,7 @@ Baseline:
 - `list`
 - `table`
 - `related-content`
-- optionally `breadcrumb` if docs-style navigation becomes immediately useful
+- `breadcrumb` deferred pending verified UI support and real shell need
 
 ### Phase 4B — Disclosure blocks
 
