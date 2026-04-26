@@ -9,6 +9,9 @@
 - Added a public layout mode resolver.
 - Added sidebar-aware public shell composition while keeping `content` mode reserved until reliable metadata exists.
 - Added tests for public layout mode behavior.
+- Promoted Hero to a first-class WebBlocks UI-aligned block.
+- Added Hero admin form and translation support.
+- Added Hero public rendering tests.
 
 
 ## 1.0.5

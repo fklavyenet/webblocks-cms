@@ -1183,6 +1183,36 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function hero_admin_form_is_available(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $heroType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Hero (About / Main)');
+        $response->assertSee('Eyebrow / Label');
+        $response->assertSee('Headline');
+        $response->assertSee('Supporting Copy');
+        $response->assertSee('Use child Button blocks for actions. Do not paste button HTML into the copy field.');
+        $response->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
     public function storing_a_block_from_slot_screen_redirects_back_to_the_same_slot_screen(): void
     {
         $user = User::factory()->create();

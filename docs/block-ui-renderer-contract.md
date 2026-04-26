@@ -67,7 +67,7 @@ Public pages now use explicit layout composition modes:
 | `text` | body copy in `wb-stack` rhythm | acceptable | P2 content quality | keep simple output and avoid bespoke typography wrappers |
 | `rich-text` | readable content, optional shipped prose wrapper | weak | P2 content quality | confirm shipped rich text primitive or document the UI gap explicitly |
 | `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage |
-| `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | align marketing variants with explicit promo semantics later |
+| `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | keep default section stable and reserve promo semantics for explicit variants |
 | `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4` | weak | P1 public marketing/docs | remove hard-coded card framing from the container renderer |
 | `column_item` | plain cell, `wb-card`, `wb-stat`, or link-list item | weak | P1 public marketing/docs | add explicit variants instead of one generic text/link renderer |
 | `callout` | `wb-alert`, optional `wb-callout` | acceptable | P2 content quality | widen variant mapping if a shipped sidebar/help callout exists |
@@ -81,7 +81,7 @@ Public pages now use explicit layout composition modes:
 | `navigation-auto` | nav/list primitives, optional `wb-link-list` | acceptable | P1 public marketing/docs | keep simple menus simple and reserve docs sidebars for real docs shells |
 | `menu` | legacy alias of `navigation-auto` | acceptable | P3 later/custom | keep for migrated data only |
 | `contact_form` | form primitives, `wb-btn`, `wb-alert` | acceptable | P1 public marketing/docs | keep structured editor fields and avoid raw HTML forms |
-| `hero` | promo/banner shell | weak | P1 public marketing/docs | decide whether to make first-class or deliberately keep public-only |
+| `hero` | `wb-promo` marketing shell | acceptable | P1 public marketing/docs | keep hero first-class, translated, and action-driven through child button blocks |
 | `card-grid` | card grid pattern | weak | P1 public marketing/docs | replace settings-driven custom data with first-class structured fields or leave custom |
 | `showcase-list` | showcase/gallery pattern | weak | P3 later/custom | either formalize as a first-class showcase block or keep custom |
 | `contact-info` | link list / contact meta card | weak | P2 content quality | promote to first-class only if editors need it beyond seeded pages |
@@ -186,9 +186,19 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`, `variant`, `content`
 - Translatable fields: `title`, `content`
 - Shared fields: `variant`
-- Intended WebBlocks UI output: default wrapper uses `wb-section`; marketing or hero-like variants may map to `wb-promo` when the shipped pattern fits; CTA actions should come from child blocks, not raw HTML.
+- Intended WebBlocks UI output: default wrapper uses `wb-section`; explicit `promo` variants may map to `wb-promo` when the shipped pattern fits; CTA actions should come from child blocks, not raw HTML.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: map `accent` or promo-like variants to explicit shipped promo classes and treat child buttons/button groups as structured content.
+- Notes for later renderer/admin improvements: keep default sections stable, treat `promo` as an explicit marketing variant, and keep child buttons/button groups structured.
+
+### `hero`
+
+- CMS block slug: `hero`
+- Admin fields: `subtitle`, `title`, `content`, `variant`
+- Translatable fields: `subtitle` as eyebrow, `title` as headline, `content` as supporting copy
+- Shared fields: `variant`, child block structure
+- Intended WebBlocks UI output: `wb-promo > .wb-promo-copy` with optional `wb-eyebrow`, `wb-promo-title`, `wb-promo-text`, and `wb-promo-actions`
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: hero CTA actions should come from child `button` blocks, raw HTML should not be used for normal hero content, and legacy imported hero settings should only act as a fallback when canonical translated fields are empty.
 
 ### `columns`
 
@@ -324,7 +334,6 @@ Public pages now use explicit layout composition modes:
 
 | CMS Block | Current state | Desired direction | Notes |
 | --- | --- | --- | --- |
-| `hero` | public-render-only | should become first-class | Current public renderer uses custom hero chrome and should either map to a shipped promo/banner pattern or stay explicitly custom. |
 | `card-grid` | public-render-only | should become first-class | The current renderer depends on `settings.items`; move to structured fields if this remains productized. |
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
