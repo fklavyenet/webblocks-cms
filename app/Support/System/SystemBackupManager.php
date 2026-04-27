@@ -35,6 +35,11 @@ class SystemBackupManager
         return $this->createBackup(self::TYPE_RESTORE_SAFETY, $triggeredByUserId, $label);
     }
 
+    public function createPreUpdateBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+    {
+        return $this->createBackup(SystemBackup::TYPE_PRE_UPDATE, $triggeredByUserId, $label);
+    }
+
     public function assertValidArchiveRelativePath(string $path): void
     {
         if ($this->hasInvalidRelativePath($path)) {

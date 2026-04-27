@@ -16,6 +16,10 @@ class SystemUpdateRun extends Model
 
     public const STATUS_FAILED = 'failed';
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
         'from_version',
         'to_version',
@@ -49,6 +53,7 @@ class SystemUpdateRun extends Model
         return match ($this->status) {
             self::STATUS_SUCCESS => 'wb-status-active',
             self::STATUS_SUCCESS_WITH_WARNINGS => 'wb-status-pending',
+            self::STATUS_PENDING => 'wb-status-pending',
             default => 'wb-status-danger',
         };
     }

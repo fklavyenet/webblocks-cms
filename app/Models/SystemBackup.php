@@ -14,6 +14,8 @@ class SystemBackup extends Model
 
     public const TYPE_RESTORE_SAFETY = 'restore_safety';
 
+    public const TYPE_PRE_UPDATE = 'pre_update';
+
     public const STATUS_RUNNING = 'running';
 
     public const STATUS_COMPLETED = 'completed';

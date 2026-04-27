@@ -3,7 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\SystemUpdateRun;
+use App\Models\SystemBackup;
 use App\Models\User;
+use App\Support\System\SystemBackupManager;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\Updates\UpdateCheckResult;
 use App\Support\System\Updates\UpdateCommandRunner;
@@ -14,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -84,6 +87,8 @@ class SystemUpdatesTest extends TestCase
         $followUp->assertDontSee('Download package');
         $followUp->assertSee('Check again');
         $followUp->assertSee('Latest version');
+        $followUp->assertSee('A pre-update backup will be created automatically before installation.');
+        $followUp->assertDontSee('Automatic backup is not created before update in this version.');
     }
 
     #[Test]
@@ -105,6 +110,7 @@ class SystemUpdatesTest extends TestCase
     {
         $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
 
         [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
 
@@ -116,9 +122,7 @@ class SystemUpdatesTest extends TestCase
             'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
         ]);
 
-        $response = $this->actingAs($user)->post(route('admin.system.updates.store'), [
-            'acknowledge_backup_risk' => '1',
-        ]);
+        $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
@@ -138,6 +142,12 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
+        $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
+
+        $backup = SystemBackup::query()->latest()->first();
+        $this->assertNotNull($backup);
+        $this->assertSame(SystemBackup::TYPE_PRE_UPDATE, $backup->type);
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
 
         $sidebar = $this->actingAs($user)->get(route('admin.system.updates.index'));
         $sidebar->assertSee('WebBlocks CMS v0.2.0');
@@ -149,6 +159,7 @@ class SystemUpdatesTest extends TestCase
     {
         $user = User::factory()->superAdmin()->create();
         app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
 
         [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
 
@@ -162,9 +173,7 @@ class SystemUpdatesTest extends TestCase
             'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
         ]);
 
-        $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'), [
-            'acknowledge_backup_risk' => '1',
-        ]);
+        $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHasErrors(['system_update']);
@@ -189,9 +198,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertTrue($lock->get());
 
         try {
-            $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'), [
-                'acknowledge_backup_risk' => '1',
-            ]);
+            $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
 
             $response->assertRedirect(route('admin.system.updates.index'));
             $response->assertSessionHasErrors(['system_update']);
@@ -202,15 +209,137 @@ class SystemUpdatesTest extends TestCase
     }
 
     #[Test]
-    public function update_requires_backup_acknowledgement(): void
+    public function update_page_renders_backup_guarantee_and_not_old_warning_text(): void
     {
         $user = User::factory()->superAdmin()->create();
         $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
 
-        $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
+        $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+        $response->assertOk();
+        $response->assertSee('A pre-update backup will be created automatically before installation.');
+        $response->assertSee('Download backup before update');
+        $response->assertSee('A pre-update backup is always created. Enable this option if you also want to download the backup file before installation starts.');
+        $response->assertDontSee('Automatic backup is not created before update in this version.');
+    }
+
+    #[Test]
+    public function update_does_not_install_if_pre_update_backup_creation_fails(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+        $backupManager = Mockery::mock(SystemBackupManager::class);
+        $backupManager->shouldReceive('createPreUpdateBackup')->once()->andThrow(new \RuntimeException('backup disk unavailable'));
+        $this->app->instance(SystemBackupManager::class, $backupManager);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.updates.index'))
+            ->post(route('admin.system.updates.store'));
 
         $response->assertRedirect(route('admin.system.updates.index'));
-        $response->assertSessionHasErrors(['acknowledge_backup_risk']);
+        $response->assertSessionHasErrors(['system_update' => 'Update was not installed because the pre-update backup could not be created.']);
+        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertDatabaseCount('system_update_runs', 0);
+    }
+
+    #[Test]
+    public function checked_download_checkbox_creates_backup_and_shows_pending_continue_screen(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+        $response = $this->actingAs($user)->post(route('admin.system.updates.store'), [
+            'download_pre_update_backup' => '1',
+        ]);
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+
+        $run = SystemUpdateRun::query()->latest()->firstOrFail();
+        $backup = SystemBackup::query()->latest()->firstOrFail();
+
+        $this->assertSame(SystemUpdateRun::STATUS_PENDING, $run->status);
+        $this->assertSame(SystemBackup::TYPE_PRE_UPDATE, $backup->type);
+
+        $followUp = $this->actingAs($user)->get(route('admin.system.updates.index'));
+        $followUp->assertSee('Pre-update backup created.');
+        $followUp->assertSee('Download backup');
+        $followUp->assertSee('Continue update');
+        $followUp->assertSee('Cancel');
+        $followUp->assertSee((string) $backup->archive_filename);
+    }
+
+    #[Test]
+    public function continue_update_installs_the_original_pending_target_version(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
+
+        [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+
+        config()->set('webblocks-updates.installer.target_path', $targetRoot);
+        $this->bindFakeCommandRunner();
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
+
+        Http::fake([
+            'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+        ]);
+
+        $this->actingAs($user)->post(route('admin.system.updates.store'), [
+            'download_pre_update_backup' => '1',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.system.updates.continue'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
+        $this->assertSame('0.2.0', app(InstalledVersionStore::class)->currentVersion());
+    }
+
+    #[Test]
+    public function stale_pending_update_cannot_be_continued(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        Cache::put('system-updates:pending', [
+            'run_id' => 99999,
+            'from_version' => '0.1.0',
+            'to_version' => '0.2.0',
+            'backup_id' => 99999,
+            'release' => ['version' => '0.2.0'],
+            'download_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+        ], now()->addHour());
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.updates.index'))
+            ->post(route('admin.system.updates.continue'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHasErrors(['system_update']);
+    }
+
+    #[Test]
+    public function pending_update_can_be_cancelled_without_installing(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+        $this->actingAs($user)->post(route('admin.system.updates.store'), [
+            'download_pre_update_backup' => '1',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.system.updates.cancel'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHas('status', 'Pending update cancelled. The pre-update backup was kept.');
+        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(SystemUpdateRun::STATUS_CANCELLED, SystemUpdateRun::query()->latest()->firstOrFail()->status);
     }
 
     private function mockClientResult(

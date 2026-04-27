@@ -8,6 +8,8 @@
         $release = $updateStatus['release'] ?? null;
         $installedVersion = $report['installed_version'] ?? $updateStatus['installed_version'];
         $latestUpdateRun = $latestUpdateRun ?? null;
+        $pendingUpdate = $pendingUpdate ?? null;
+        $pendingBackup = $pendingBackup ?? null;
         $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
@@ -121,35 +123,93 @@
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-3" data-wb-update-form>
-                        @csrf
+                    @if ($pendingUpdate && $pendingBackup)
+                        <div class="wb-alert wb-alert-info">
+                            <div>
+                                <div class="wb-alert-title">Pre-update backup created.</div>
+                                <div>Download the backup if needed, then continue the update to install version <strong>{{ $pendingUpdate['to_version'] }}</strong>.</div>
+                            </div>
+                        </div>
+
+                        <div class="wb-grid wb-grid-2">
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Backup name</div>
+                                <strong>{{ $pendingBackup->archive_filename ?? ('Backup #'.$pendingBackup->id) }}</strong>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Backup size</div>
+                                <strong>{{ $pendingBackup->humanArchiveSize() }}</strong>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Target version</div>
+                                <strong>{{ $pendingUpdate['to_version'] }}</strong>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Backup guarantee</div>
+                                <strong>A pre-update backup was created automatically.</strong>
+                            </div>
+                        </div>
 
                         <div class="wb-cluster wb-cluster-2">
-                            <button
-                                type="submit"
-                                class="wb-btn wb-btn-primary"
-                                data-wb-update-submit
-                                data-default-label="Update now"
-                                data-busy-label="Updating..."
-                                @disabled(! $autoUpdate['allowed'])
-                            >
-                                {{ $autoUpdate['busy'] ? 'Updating...' : 'Update now' }}
-                            </button>
+                            <a href="{{ route('admin.system.backups.download', $pendingBackup) }}" class="wb-btn wb-btn-secondary">Download backup</a>
+
+                            <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
+                                @csrf
+                                <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="Continue update" data-busy-label="Updating...">Continue update</button>
+                            </form>
+
+                            <form method="POST" action="{{ route('admin.system.updates.cancel') }}">
+                                @csrf
+                                <button type="submit" class="wb-btn wb-btn-secondary">Cancel</button>
+                            </form>
                         </div>
+                    @else
+                        <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-3" data-wb-update-form>
+                            @csrf
 
-                        <label class="wb-checkbox">
-                            <input type="checkbox" name="acknowledge_backup_risk" value="1" @checked(old('acknowledge_backup_risk'))>
-                            <span>Automatic backup is not created before update in this version.</span>
-                        </label>
+                            <div class="wb-alert wb-alert-info">
+                                <div>
+                                    <div class="wb-alert-title">Pre-update backup protection</div>
+                                    <div>A pre-update backup will be created automatically before installation.</div>
+                                </div>
+                            </div>
 
-                        <div class="wb-text-sm wb-text-muted">
-                            @if ($autoUpdate['allowed'])
-                                The system will download, verify, install, migrate, clear runtime caches, and bring the site back online automatically.
-                            @else
-                                {{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}
+                            @if ($showLatestVersion)
+                                <div class="wb-text-sm wb-text-muted">Target version: <strong>{{ $updateStatus['latest_version'] }}</strong></div>
                             @endif
-                        </div>
-                    </form>
+
+                            <label class="wb-checkbox">
+                                <input type="checkbox" name="download_pre_update_backup" value="1" @checked(old('download_pre_update_backup'))>
+                                <span>Download backup before update</span>
+                            </label>
+
+                            <div class="wb-text-sm wb-text-muted">A pre-update backup is always created. Enable this option if you also want to download the backup file before installation starts.</div>
+
+                            <div class="wb-cluster wb-cluster-2">
+                                <button
+                                    type="submit"
+                                    class="wb-btn wb-btn-primary"
+                                    data-wb-update-submit
+                                    data-default-label="Update now"
+                                    data-busy-label="Updating..."
+                                    @disabled(! $autoUpdate['allowed'])
+                                >
+                                    {{ $autoUpdate['busy'] ? 'Updating...' : 'Update now' }}
+                                </button>
+                            </div>
+
+                            <div class="wb-text-sm wb-text-muted">
+                                @if ($autoUpdate['allowed'])
+                                    If download is not selected, the CMS will create the pre-update backup, then download, verify, install, migrate, clear runtime caches, and bring the site back online automatically.
+                                @else
+                                    {{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}
+                                @endif
+                            </div>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

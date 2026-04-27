@@ -4,6 +4,8 @@ namespace App\Support\System\Updates;
 
 use Carbon\CarbonImmutable;
 
+use App\Models\SystemBackup;
+
 class UpdateResult
 {
     public function __construct(
@@ -16,5 +18,6 @@ class UpdateResult
         public readonly CarbonImmutable $startedAt,
         public readonly CarbonImmutable $finishedAt,
         public readonly int $durationMs,
+        public readonly ?SystemBackup $preUpdateBackup = null,
     ) {}
 }

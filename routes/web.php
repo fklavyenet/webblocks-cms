@@ -117,6 +117,8 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
         Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
         Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
+        Route::post('system/updates/continue', [SystemUpdateController::class, 'continue'])->name('system.updates.continue');
+        Route::post('system/updates/cancel', [SystemUpdateController::class, 'cancel'])->name('system.updates.cancel');
     });
 });
 

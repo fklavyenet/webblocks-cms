@@ -260,6 +260,15 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists.
 - These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 
+## System Updates
+
+- Every in-app system update now creates a mandatory pre-update backup before installation begins.
+- If pre-update backup creation fails, the update is stopped and the site stays online.
+- The System Updates screen includes an optional `Download backup before update` checkbox.
+- When the checkbox is left unchecked, the CMS creates the backup and continues the update immediately.
+- When the checkbox is enabled, the CMS creates the backup first, then shows a two-step flow with `Download backup`, `Continue update`, and `Cancel` actions.
+- Cancelling the pending flow keeps the created backup but does not install the update.
+
 ## Stack
 
 - Laravel application

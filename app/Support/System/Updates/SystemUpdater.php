@@ -4,6 +4,7 @@ namespace App\Support\System\Updates;
 
 use App\Models\SystemUpdateRun;
 use App\Models\User;
+use App\Support\System\SystemBackupManager;
 use App\Support\System\InstalledVersionStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Cache\Lock;
@@ -21,24 +22,23 @@ class SystemUpdater
         private readonly UpdatePackageDownloader $packageDownloader,
         private readonly UpdatePackageExtractor $packageExtractor,
         private readonly UpdateInstaller $updateInstaller,
+        private readonly SystemBackupManager $systemBackupManager,
     ) {}
 
     public function run(User $user): UpdateResult
+    {
+        $prepared = $this->prepareForUpdate($user, false);
+
+        return $this->runPreparedUpdate($user, $prepared);
+    }
+
+    public function prepareForUpdate(User $user, bool $downloadBeforeInstall = false): array
     {
         $lock = Cache::lock($this->lockName(), (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
 
         if (! $lock->get()) {
             throw new UpdateException('Another update is already running. Wait for it to finish before starting a new run.');
         }
-
-        $workspace = null;
-        $maintenanceEnabled = false;
-        $run = null;
-        $output = [];
-        $warningCount = 0;
-        $startedAt = CarbonImmutable::now();
-        $fromVersion = $this->installedVersionStore->currentVersion();
-        $toVersion = $fromVersion;
 
         try {
             if (! Schema::hasTable('system_update_runs')) {
@@ -62,23 +62,147 @@ class SystemUpdater
                 throw new UpdateException('The latest release does not provide a downloadable package.');
             }
 
+            $fromVersion = $this->installedVersionStore->currentVersion();
             $toVersion = trim((string) ($release['version'] ?? $checkResult->latestVersion ?? ''));
 
             if ($toVersion === '') {
                 throw new UpdateException('The latest release metadata is incomplete and cannot be installed.');
             }
 
+            $backupLabel = sprintf(
+                'Pre-update backup before %s -> %s at %s',
+                $fromVersion,
+                $toVersion,
+                CarbonImmutable::now()->format('Y-m-d H:i:s')
+            );
+
+            try {
+                $backup = $this->systemBackupManager->createPreUpdateBackup($user->getKey(), $backupLabel);
+            } catch (Throwable $throwable) {
+                throw new UpdateException(
+                    'Update was not installed because the pre-update backup could not be created.',
+                    $throwable->getMessage(),
+                    previous: $throwable,
+                );
+            }
+
             $run = new SystemUpdateRun([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
+                'status' => $downloadBeforeInstall ? SystemUpdateRun::STATUS_PENDING : SystemUpdateRun::STATUS_FAILED,
+                'summary' => $downloadBeforeInstall ? 'Waiting for backup download confirmation.' : 'Update started.',
+                'started_at' => CarbonImmutable::now(),
+                'triggered_by_user_id' => $user->getKey(),
+                'output' => implode(PHP_EOL, [
+                    'Pre-update backup created.',
+                    'Backup #'.$backup->id.' '.$backup->archive_filename,
+                ]),
+            ]);
+            $run->save();
+
+            return [
+                'run_id' => $run->id,
+                'from_version' => $fromVersion,
+                'to_version' => $toVersion,
+                'download_url' => $downloadUrl,
+                'checksum_sha256' => (string) ($release['checksum_sha256'] ?? ''),
+                'release' => $release,
+                'backup_id' => $backup->id,
+                'download_before_install' => $downloadBeforeInstall,
+                'prepared_at' => CarbonImmutable::now()->toIso8601String(),
+            ];
+        } finally {
+            $this->releaseLock($lock);
+        }
+    }
+
+    public function continuePreparedUpdate(User $user, array $prepared): UpdateResult
+    {
+        return $this->runPreparedUpdate($user, $prepared, true);
+    }
+
+    public function cancelPreparedUpdate(User $user, array $prepared): void
+    {
+        $run = SystemUpdateRun::query()->find($prepared['run_id'] ?? null);
+
+        if (! $run) {
+            return;
+        }
+
+        $output = trim((string) $run->output);
+        $lines = $output === '' ? [] : [$output];
+        $lines[] = 'Pending update cancelled before installation.';
+
+        $run->forceFill([
+            'status' => SystemUpdateRun::STATUS_CANCELLED,
+            'summary' => 'Pending update cancelled.',
+            'output' => implode(PHP_EOL, $lines),
+            'finished_at' => CarbonImmutable::now(),
+            'duration_ms' => $run->started_at ? $run->started_at->diffInMilliseconds(CarbonImmutable::now()) : null,
+        ])->save();
+    }
+
+    private function runPreparedUpdate(User $user, array $prepared, bool $expectPreparedState = false): UpdateResult
+    {
+        $lock = Cache::lock($this->lockName(), (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
+
+        if (! $lock->get()) {
+            throw new UpdateException('Another update is already running. Wait for it to finish before starting a new run.');
+        }
+
+        $workspace = null;
+        $maintenanceEnabled = false;
+        $run = null;
+        $output = [];
+        $warningCount = 0;
+        $startedAt = CarbonImmutable::now();
+        $fromVersion = (string) ($prepared['from_version'] ?? $this->installedVersionStore->currentVersion());
+        $toVersion = (string) ($prepared['to_version'] ?? $fromVersion);
+
+        try {
+            $release = $prepared['release'] ?? null;
+
+            if (! is_array($release)) {
+                throw new UpdateException('The pending update is no longer valid. Start the update again.');
+            }
+
+            $run = SystemUpdateRun::query()->find($prepared['run_id'] ?? null);
+
+            if (! $run instanceof SystemUpdateRun) {
+                throw new UpdateException('The pending update is no longer valid. Start the update again.');
+            }
+
+            if ($expectPreparedState && $run->status !== SystemUpdateRun::STATUS_PENDING) {
+                throw new UpdateException('The pending update no longer matches the selected target version. Start the update again.');
+            }
+
+            if ($run->to_version !== $toVersion) {
+                throw new UpdateException('The pending update no longer matches the selected target version. Start the update again.');
+            }
+
+            $downloadUrl = trim((string) ($prepared['download_url'] ?? ''));
+
+            if ($downloadUrl === '') {
+                throw new UpdateException('The pending update is missing its package URL. Start the update again.');
+            }
+
+            $run->forceFill([
                 'status' => SystemUpdateRun::STATUS_FAILED,
                 'summary' => 'Update started.',
                 'started_at' => $startedAt,
                 'triggered_by_user_id' => $user->getKey(),
-            ]);
-            $run->save();
+            ])->save();
 
             $output[] = 'Starting update from '.$fromVersion.' to '.$toVersion.'.';
+            $backupId = $prepared['backup_id'] ?? null;
+
+            if ($backupId) {
+                $backup = $this->systemBackupManager->latestSuccessful()?->newQuery()->find($backupId);
+                if ($backup) {
+                    $output[] = 'Pre-update backup created: #'.$backup->id.' '.$backup->archive_filename;
+                }
+            }
+
             $workspace = $this->workspaceManager->create();
             $output[] = 'Workspace ready at '.$workspace['root'];
 
@@ -127,6 +251,7 @@ class SystemUpdater
                 startedAt: $startedAt,
                 finishedAt: $finishedAt,
                 durationMs: $durationMs,
+                preUpdateBackup: isset($backup) ? $backup : null,
             );
         } catch (Throwable $throwable) {
             if ($maintenanceEnabled) {

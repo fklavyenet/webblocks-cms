@@ -15,6 +15,7 @@ return [
     'connect_timeout_seconds' => 3,
     'retry_times' => 0,
     'retry_sleep_milliseconds' => 150,
+    'pending_cache_ttl_seconds' => 3600,
     'installer' => [
         'target_path' => base_path(),
         'workspace_root' => 'app/system-updates',
