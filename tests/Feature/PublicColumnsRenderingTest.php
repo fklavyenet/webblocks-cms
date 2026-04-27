@@ -88,10 +88,10 @@ class PublicColumnsRenderingTest extends TestCase
     }
 
     #[Test]
-    public function columns_links_variant_renders_webblocks_link_list_markup(): void
+    public function columns_plain_variant_keeps_column_rendering_without_link_list_markup(): void
     {
         $page = $this->pageWithMainSlot();
-        $columns = $this->columnsBlock($page, 'links');
+        $columns = $this->columnsBlock($page, 'plain');
 
         $this->columnItem($page, $columns, 'Documentation', 'Implementation notes and usage guidance.', '/docs');
         $this->columnItem($page, $columns, 'Support', 'Talk to the team.', '/support');
@@ -99,12 +99,10 @@ class PublicColumnsRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('wb-link-list', false);
-        $response->assertSee('wb-link-list-item', false);
-        $response->assertSee('wb-link-list-title', false);
-        $response->assertSee('wb-link-list-desc', false);
-        $response->assertSee('<a href="/docs" class="wb-link-list-title">Documentation</a>', false);
-        $response->assertDontSee('wb-grid wb-grid-2', false);
+        $response->assertSee('wb-grid wb-grid-2', false);
+        $response->assertDontSee('wb-link-list', false);
+        $response->assertSee('Documentation');
+        $response->assertSee('Implementation notes and usage guidance.');
     }
 
     private function pageWithMainSlot(): Page

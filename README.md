@@ -255,8 +255,9 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 - `hero` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields. Shared presentation stays in shared fields such as `variant`, `settings.layout`, `settings.title_tag`, and CTA URLs.
 - `code` is a first-class docs block with translated `title`, `subtitle`, and `content` fields. Shared syntax metadata stays in `settings.language`.
-- `related-content` is a first-class editorial/docs block with translated container fields `title`, `subtitle`, and optional `content` intro text.
-- `related-content` prefers child `button` or `column_item` blocks for reusable link structures. Existing legacy line-delimited link content remains supported as a compatibility path.
+- `link-list` is a first-class editorial/docs block with translated container fields `subtitle` (eyebrow), `title` (heading), and optional `content` intro text.
+- `link-list-item` is the managed child block for `link-list`, with translated `title`, `subtitle` (meta), and `content` (description) plus a shared `url`.
+- `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists.
 - These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 
 ## Stack

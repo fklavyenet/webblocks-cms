@@ -174,7 +174,9 @@ class SyncUiDocsPilotCommandTest extends TestCase
             ->assertSee('wb-section', false)
             ->assertSee('wb-grid', false)
             ->assertSee('wb-alert', false)
-            ->assertSee('wb-link-list', false);
+            ->assertSee('wb-link-list', false)
+            ->assertSee('Continue with the pilot')
+            ->assertSee('Getting Started');
 
         $this->get('http://ui.docs.webblocksui.com/p/getting-started')
             ->assertOk()
@@ -186,7 +188,8 @@ class SyncUiDocsPilotCommandTest extends TestCase
             ->assertOk()
             ->assertSee('Cookie Consent')
             ->assertSee('Implementation notes')
-            ->assertSee('wb-link-list', false);
+            ->assertSee('wb-link-list', false)
+            ->assertSee('Related links');
     }
 
     #[Test]

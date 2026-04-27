@@ -430,19 +430,6 @@
         </div>
         @break
 
-    @case('related-content')
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>{{ $block->title ?: 'Related Content' }}</strong></div>
-            <div class="wb-card-body">
-                <ul class="wb-stack wb-gap-1">
-                    @foreach ($relatedPages as $relatedPage)
-                        <li><a href="{{ $relatedPage->publicPath() }}" class="wb-link">{{ $relatedPage->title }}</a></li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-        @break
-
     @case('auth-form')
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-2">

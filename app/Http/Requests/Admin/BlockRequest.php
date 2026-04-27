@@ -28,8 +28,12 @@ class BlockRequest extends FormRequest
         $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $block?->block_type_id ?: 0);
         $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
         $translationRegistry = app(BlockTranslationRegistry::class);
-        $isTranslatedColumnItem = $selectedBlockType?->slug === 'column_item' && $translationRegistry->isTranslatable($selectedBlockType?->slug) && $this->filled('locale');
-        $isColumnItem = $selectedBlockType?->slug === 'column_item';
+        $isTranslatedBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'link-list-item'], true)
+            && $translationRegistry->isTranslatable($selectedBlockType?->slug)
+            && $this->filled('locale');
+        $isBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'link-list-item'], true);
+        $isColumns = $selectedBlockType?->slug === 'columns';
+        $isLinkList = $selectedBlockType?->slug === 'link-list';
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
         $isHero = $selectedBlockType?->slug === 'hero';
@@ -49,9 +53,9 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string', 'max:255'],
+            'title' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'content' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string'],
+            'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -74,6 +78,17 @@ class BlockRequest extends FormRequest
             'column_items.*.is_system' => ['nullable', 'boolean'],
             'column_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'column_items.*._delete' => ['nullable', 'boolean'],
+            'link_list_items' => ['nullable', 'array'],
+            'link_list_items.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
+            'link_list_items.*.block_type_id' => ['nullable', 'integer', 'exists:block_types,id'],
+            'link_list_items.*.title' => ['nullable', 'string', 'max:255'],
+            'link_list_items.*.subtitle' => ['nullable', 'string', 'max:255'],
+            'link_list_items.*.content' => ['nullable', 'string'],
+            'link_list_items.*.url' => ['nullable', 'string', 'max:2048'],
+            'link_list_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
+            'link_list_items.*.is_system' => ['nullable', 'boolean'],
+            'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'link_list_items.*._delete' => ['nullable', 'boolean'],
             'variant' => ['nullable', 'string', 'max:255'],
             'meta' => ['nullable', 'string'],
             'settings' => ['nullable', 'string'],
@@ -102,14 +117,16 @@ class BlockRequest extends FormRequest
             $parentId = $this->integer('parent_id');
             $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
             $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+            $isColumns = $selectedBlockType?->slug === 'columns';
+            $isLinkList = $selectedBlockType?->slug === 'link-list';
 
             if (! $parentId) {
-                if ($selectedBlockType?->slug !== 'columns') {
+                if (! in_array($selectedBlockType?->slug, ['columns', 'link-list'], true)) {
                     return;
                 }
             }
 
-            if ($selectedBlockType?->slug === 'columns') {
+            if ($isColumns) {
                 foreach ($this->input('column_items', []) as $index => $columnItem) {
                     if ((bool) ($columnItem['_delete'] ?? false)) {
                         continue;
@@ -121,6 +138,30 @@ class BlockRequest extends FormRequest
 
                     if (blank($columnItem['content'] ?? null)) {
                         $validator->errors()->add("column_items.{$index}.content", 'Column item text is required.');
+                    }
+                }
+            }
+
+            if ($isLinkList) {
+                foreach ($this->input('link_list_items', []) as $index => $item) {
+                    if ((bool) ($item['_delete'] ?? false)) {
+                        continue;
+                    }
+
+                    if (blank($item['title'] ?? null)) {
+                        $validator->errors()->add("link_list_items.{$index}.title", 'Link list item title is required.');
+                    }
+
+                    if (blank($item['subtitle'] ?? null)) {
+                        $validator->errors()->add("link_list_items.{$index}.subtitle", 'Link list item meta is required.');
+                    }
+
+                    if (blank($item['content'] ?? null)) {
+                        $validator->errors()->add("link_list_items.{$index}.content", 'Link list item description is required.');
+                    }
+
+                    if (blank($item['url'] ?? null)) {
+                        $validator->errors()->add("link_list_items.{$index}.url", 'Link list item URL is required.');
                     }
                 }
             }

@@ -361,10 +361,25 @@ class SyncUiDocsPilotCommand extends Command
                 'content' => 'The docs home page currently uses section composition instead of a dedicated docs-focused hero block.',
             ],
             [
-                'type' => 'related-content',
+                'type' => 'link-list',
                 'title' => 'Continue with the pilot',
                 'subtitle' => 'Use the rebuilt docs pages as the CMS migration baseline.',
-                'content' => "Getting Started | /p/getting-started | Guide | Load the CDN assets and build the first aligned docs page.\nCookie Consent | /p/cookie-consent | Pattern | Review a pattern page rebuilt without custom preview systems.",
+                'children' => [
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'Getting Started',
+                        'subtitle' => 'Guide',
+                        'content' => 'Load the CDN assets and build the first aligned docs page.',
+                        'url' => '/p/getting-started',
+                    ],
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'Cookie Consent',
+                        'subtitle' => 'Pattern',
+                        'content' => 'Review a pattern page rebuilt without custom preview systems.',
+                        'url' => '/p/cookie-consent',
+                    ],
+                ],
             ],
         ];
     }
@@ -432,9 +447,24 @@ class SyncUiDocsPilotCommand extends Command
                 'content' => "<section class=\"wb-section\">\n  <div class=\"wb-stack wb-gap-3\">\n    <h1>Ship the first docs page</h1>\n    <p>Start with stable primitives, then add richer patterns only when the content needs them.</p>\n    <a href=\"/p/cookie-consent\" class=\"wb-btn wb-btn-primary\">Review Cookie Consent</a>\n  </div>\n</section>",
             ],
             [
-                'type' => 'related-content',
+                'type' => 'link-list',
                 'title' => 'Next docs pages',
-                'content' => "WebBlocks UI Home | / | Overview | Return to the docs landing page.\nCookie Consent | /p/cookie-consent | Pattern | Inspect a real pattern page built with aligned blocks.",
+                'children' => [
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'WebBlocks UI Home',
+                        'subtitle' => 'Overview',
+                        'content' => 'Return to the docs landing page.',
+                        'url' => '/',
+                    ],
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'Cookie Consent',
+                        'subtitle' => 'Pattern',
+                        'content' => 'Inspect a real pattern page built with aligned blocks.',
+                        'url' => '/p/cookie-consent',
+                    ],
+                ],
             ],
         ];
     }
@@ -518,9 +548,24 @@ class SyncUiDocsPilotCommand extends Command
                 'content' => "localStorage: wb-cookie-consent\nlocalStorage: wb-cookie-consent-preferences\npattern event: wb:cookie-consent:change",
             ],
             [
-                'type' => 'related-content',
+                'type' => 'link-list',
                 'title' => 'Related links',
-                'content' => "Getting Started | /p/getting-started | Guide | Load the assets and compose the first page.\nWebBlocks UI Home | / | Overview | Return to the migration pilot landing page.",
+                'children' => [
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'Getting Started',
+                        'subtitle' => 'Guide',
+                        'content' => 'Load the assets and compose the first page.',
+                        'url' => '/p/getting-started',
+                    ],
+                    [
+                        'type' => 'link-list-item',
+                        'title' => 'WebBlocks UI Home',
+                        'subtitle' => 'Overview',
+                        'content' => 'Return to the migration pilot landing page.',
+                        'url' => '/',
+                    ],
+                ],
             ],
         ];
     }

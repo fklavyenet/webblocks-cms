@@ -18,7 +18,7 @@
     };
 
     $matchingBlockTypes = $blockTypes
-        ->reject(fn ($blockType) => in_array($blockType->slug, ['column_item', 'menu'], true))
+        ->reject(fn ($blockType) => in_array($blockType->slug, ['column_item', 'link-list-item', 'menu'], true))
         ->filter(function ($blockType) use ($pickerSearchTerm) {
             if ($pickerSearchTerm === '') {
                 return true;

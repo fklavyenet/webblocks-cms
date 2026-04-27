@@ -143,23 +143,57 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function related_content_block_renders_editorial_links_as_webblocks_link_list(): void
+    public function link_list_block_renders_editorial_links_as_webblocks_link_list(): void
     {
         $page = $this->pageWithMainSlot();
 
-        Block::query()->create([
+        $linkList = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'related-content',
-            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
-            'source_type' => 'data',
+            'type' => 'link-list',
+            'block_type_id' => $this->blockType('link-list', 'Link List', 3)->id,
+            'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
             'title' => 'Keep reading',
             'subtitle' => 'Browse the next resources.',
-            'content' => "Getting Started | /docs/start | Guide | Basics and setup\nAPI Reference | /docs/api | Docs | Endpoints and payloads",
+            'content' => 'Choose the next useful references.',
             'status' => 'published',
-            'is_system' => true,
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $this->blockType('link-list-item', 'Link List Item', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Getting Started',
+            'subtitle' => 'Guide',
+            'content' => 'Basics and setup',
+            'url' => '/docs/start',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $this->blockType('link-list-item', 'Link List Item', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'title' => 'API Reference',
+            'subtitle' => 'Docs',
+            'content' => 'Endpoints and payloads',
+            'url' => '/docs/api',
+            'status' => 'published',
+            'is_system' => false,
         ]);
 
         $response = $this->get(route('pages.show', 'about'));
@@ -167,6 +201,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('Keep reading');
         $response->assertSee('Browse the next resources.');
+        $response->assertSee('Choose the next useful references.');
         $response->assertSee('wb-link-list', false);
         $response->assertSee('wb-link-list-item', false);
         $response->assertSee('<a href="/docs/start" class="wb-link-list-title">Getting Started</a>', false);
@@ -177,14 +212,15 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function related_content_block_prefers_child_based_items(): void
+    public function link_list_block_does_not_render_empty_wrapper_without_items(): void
     {
         $page = $this->pageWithMainSlot();
-        $relatedContent = Block::query()->create([
+
+        Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'related-content',
-            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
-            'source_type' => 'data',
+            'type' => 'link-list',
+            'block_type_id' => $this->blockType('link-list', 'Link List', 3)->id,
+            'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
@@ -192,131 +228,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'subtitle' => 'Recommended next steps',
             'content' => 'Browse the next useful references.',
             'status' => 'published',
-            'is_system' => true,
-        ]);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $relatedContent->id,
-            'type' => 'button',
-            'block_type_id' => $this->blockType('button', 'Button', 4)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Getting Started',
-            'subtitle' => 'Guide',
-            'url' => '/p/getting-started',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $relatedContent->id,
-            'type' => 'column_item',
-            'block_type_id' => $this->blockType('column_item', 'Column Item', 5)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 1,
-            'title' => 'API Reference',
-            'subtitle' => 'Docs',
-            'content' => 'Endpoints and payloads',
-            'url' => '/p/api-reference',
-            'status' => 'published',
             'is_system' => false,
         ]);
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('Continue reading');
-        $response->assertSee('Recommended next steps');
-        $response->assertSee('Browse the next useful references.');
-        $response->assertSee('<a href="/p/getting-started" class="wb-link-list-title">Getting Started</a>', false);
-        $response->assertSee('<a href="/p/api-reference" class="wb-link-list-title">API Reference</a>', false);
-        $response->assertSee('Guide');
-        $response->assertSee('Endpoints and payloads');
-    }
-
-    #[Test]
-    public function related_content_block_falls_back_to_automatic_related_pages_when_editorial_links_are_blank(): void
-    {
-        $page = $this->pageWithMainSlot('Docs Home', 'docs-home', 'docs');
-        $this->pageWithMainSlot('Getting Started', 'getting-started', 'docs');
-        $this->pageWithMainSlot('API Reference', 'api-reference', 'docs');
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'related-content',
-            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
-            'source_type' => 'data',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Related docs',
-            'content' => '',
-            'status' => 'published',
-            'is_system' => true,
-        ]);
-
-        $response = $this->get(route('pages.show', 'docs-home'));
-
-        $response->assertOk();
-        $response->assertSee('Related docs');
-        $response->assertSee('<a href="/p/getting-started" class="wb-link-list-title">Getting Started</a>', false);
-        $response->assertSee('<a href="/p/api-reference" class="wb-link-list-title">API Reference</a>', false);
-    }
-
-    #[Test]
-    public function related_content_automatic_fallback_stays_within_the_current_site(): void
-    {
-        $page = $this->pageWithMainSlot('Docs Home', 'docs-home', 'docs');
-        $this->pageWithMainSlot('Getting Started', 'getting-started', 'docs');
-
-        $otherSite = Site::query()->create([
-            'name' => 'Secondary Site',
-            'handle' => 'secondary-site',
-            'domain' => 'secondary.example.test',
-            'is_primary' => false,
-        ]);
-        $otherSite->locales()->syncWithoutDetaching([
-            Page::defaultLocaleId() => ['is_enabled' => true],
-        ]);
-
-        $otherPage = Page::query()->create([
-            'site_id' => $otherSite->id,
-            'title' => 'Cross-site Page',
-            'slug' => 'cross-site-page',
-            'page_type' => 'docs',
-            'status' => 'published',
-        ]);
-        PageSlot::query()->create([
-            'page_id' => $otherPage->id,
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-        ]);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'related-content',
-            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
-            'source_type' => 'data',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Related docs',
-            'content' => '',
-            'status' => 'published',
-            'is_system' => true,
-        ]);
-
-        $response = $this->get(route('pages.show', 'docs-home'));
-
-        $response->assertOk();
-        $response->assertSee('<a href="/p/getting-started" class="wb-link-list-title">Getting Started</a>', false);
-        $response->assertDontSee('Cross-site Page');
+        $response->assertDontSee('wb-link-list', false);
+        $response->assertDontSee('wb-link-list-item', false);
     }
 
     private function pageWithMainSlot(string $title = 'About', string $slug = 'about', string $pageType = 'default'): Page

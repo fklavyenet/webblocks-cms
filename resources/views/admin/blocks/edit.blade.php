@@ -46,6 +46,7 @@
                     'assetPickerAssets' => $assetPickerAssets ?? collect(),
                     'assetPickerFolders' => $assetPickerFolders ?? collect(),
                     'columnItemBlockType' => $columnItemBlockType ?? null,
+                    'linkListItemBlockType' => $linkListItemBlockType ?? null,
                     'selectedAsset' => $selectedAsset ?? null,
                     'selectedGalleryAssets' => $selectedGalleryAssets ?? collect(),
                     'selectedAttachmentAsset' => $selectedAttachmentAsset ?? null,

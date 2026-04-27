@@ -371,7 +371,7 @@ class PageRevisionManager
         $rawSettings = $snapshotBlock['settings'] ?? null;
 
         return match ($block->type) {
-            'column_item', 'section', 'text', 'rich-text', 'heading', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
+            'column_item', 'link-list', 'link-list-item', 'section', 'text', 'rich-text', 'heading', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
             'button' => $this->seedLegacyButtonSnapshotFallback($block, $defaultLocaleId, $rawTitle),
             'image' => $this->seedLegacyImageSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle),
             'contact_form' => $this->seedLegacyContactFormSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawContent, $rawSettings),

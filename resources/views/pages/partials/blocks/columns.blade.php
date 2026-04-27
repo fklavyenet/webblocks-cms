@@ -11,7 +11,7 @@
         $children->count() === 3 => 'wb-grid wb-grid-3',
         default => 'wb-grid wb-grid-4',
     };
-    $layoutClass = $columnsVariant === 'links' ? 'wb-link-list' : $gridClass;
+    $layoutClass = $gridClass;
 @endphp
 
 <section class="wb-stack wb-gap-4">

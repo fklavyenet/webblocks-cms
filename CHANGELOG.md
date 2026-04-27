@@ -2,36 +2,36 @@
 
 ## [Unreleased]
 
+## 1.3.0
+
 ### Added
 
-- UI docs migration pilot command: `php artisan webblocks:sync-ui-docs-pilot`.
-- Controlled rebuild coverage for the existing `ui.docs.webblocksui.com` site inside the multisite CMS install.
-- Rebuilt pilot pages for Home, Getting Started, and Cookie Consent using aligned CMS block composition.
+- First-class `link-list` and `link-list-item` blocks with translated container copy plus editable item metadata for title, meta, description, and URL.
+- Reusable inline admin item management for link-list children aligned with the existing structured builder patterns.
 
 ### Changed
 
-- UI docs pilot content now writes pages and blocks through `BlockPayloadWriter` with translation-backed block storage where supported.
-- Related Content automatic fallback is now scoped to the current site instead of pulling published pages across multisite boundaries.
-- CMS documentation now clarifies the product boundary between reusable core features and project-specific migration scripts.
+- Replaced the legacy editorial link block with first-class `link-list` and `link-list-item` blocks.
+- Aligned CMS editorial link rendering directly to the WebBlocks UI link-list pattern.
+- Updated the admin editor, docs pilot rebuild content, seeded showcase content, and public renderer to use the new link-list model.
+- UI docs pilot content continues to write pages and blocks through `BlockPayloadWriter` with translation-backed block storage where supported.
+- CMS documentation continues to clarify the product boundary between reusable core features and project-specific migration scripts.
 
 ### Fixed
 
-- Removed pilot-page drift by making the docs migration command idempotent and block-tree based instead of appending content on reruns.
-
-### Notes
-
-- Current pilot gaps remain documented instead of being solved with custom systems: docs home still uses section composition instead of a dedicated docs hero, Cookie Consent preview remains static, and a richer Code Example Block is still needed.
+- Removed pilot-page drift by keeping the docs migration command idempotent and block-tree based instead of appending content on reruns.
+- Prevented columns from doubling as semantic link-list content by keeping `column_item` dedicated to columns-only rendering.
 
 ## 1.2.0
 
 ### Added
 
-- First-class CMS support for `hero`, `code`, and `related-content` blocks with dedicated admin editors and stable public renderers aligned to WebBlocks UI primitives.
+- First-class CMS support for `hero`, `code`, and the editorial link block later replaced by `link-list`, with dedicated admin editors and stable public renderers aligned to WebBlocks UI primitives.
 
 ### Changed
 
-- Improved translation support for docs and marketing blocks so `hero`, `code`, and `related-content` consistently store translated copy in block translation rows.
-- `related-content` now prefers child-based link structures while preserving compatibility with existing legacy link-list content.
+- Improved translation support for docs and marketing blocks so `hero`, `code`, and the editorial link block later replaced by `link-list` consistently store translated copy in block translation rows.
+- The earlier editorial link block moved toward child-based link structures before being fully replaced by `link-list` and `link-list-item`.
 
 ### Fixed
 
@@ -60,7 +60,7 @@
 
 - First-class List block with structured editor and semantic rendering.
 - First-class Table block with header-row support.
-- First-class Related Content block using the WebBlocks link-list pattern.
+- First-class editorial link block using the WebBlocks link-list pattern, later replaced by `link-list`.
 - First-class Accordion block using semantic `<details>` disclosure.
 - Semantic Video and Audio block renderers.
 - File download block alignment with WebBlocks button primitives.

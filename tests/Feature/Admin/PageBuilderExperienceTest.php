@@ -1174,7 +1174,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Cards');
         $response->assertSee('Plain');
         $response->assertSee('Stats');
-        $response->assertSee('Links');
+        $response->assertDontSee('Links');
     }
 
     #[Test]
@@ -1481,14 +1481,14 @@ class PageBuilderExperienceTest extends TestCase
         $tableResponse->assertSee('Separate cells with a vertical bar');
         $tableResponse->assertDontSee('Generic Block Form');
 
-        $relatedContentResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'related-content')->value('id')]));
+        $relatedContentResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'link-list')->value('id')]));
 
         $relatedContentResponse->assertOk();
-        $relatedContentResponse->assertSee('Add Block: Related Content (About / Main)');
-        $relatedContentResponse->assertSee('Section Title');
-        $relatedContentResponse->assertSee('Section Subtitle');
-        $relatedContentResponse->assertSee('Section Intro');
-        $relatedContentResponse->assertSee('Preferred structure: add child');
+        $relatedContentResponse->assertSee('Add Block: Link List (About / Main)');
+        $relatedContentResponse->assertSee('Eyebrow');
+        $relatedContentResponse->assertSee('Heading');
+        $relatedContentResponse->assertSee('Intro Text');
+        $relatedContentResponse->assertSee('Link List Items');
         $relatedContentResponse->assertDontSee('Generic Block Form');
 
         $codeResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'code')->value('id')]));

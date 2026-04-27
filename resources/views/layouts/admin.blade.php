@@ -954,23 +954,24 @@
                 }
             });
 
-            function syncColumnItems(editor) {
+            function syncBuilderItems(editor) {
                 if (!editor) {
                     return;
                 }
 
-                var list = editor.querySelector('[data-wb-column-item-list]');
+                var editorKey = editor.getAttribute('data-wb-builder-items-editor');
+                var list = editor.querySelector('[data-wb-builder-item-list="' + editorKey + '"]');
 
                 if (!list) {
                     return;
                 }
 
-                var rows = Array.prototype.slice.call(list.querySelectorAll('[data-wb-column-item-row]'));
+                var rows = Array.prototype.slice.call(list.querySelectorAll('[data-wb-builder-item-row="' + editorKey + '"]'));
 
                 rows.forEach(function (row, index) {
-                    var sortInput = row.querySelector('[data-wb-column-item-sort]');
-                    var up = row.querySelector('[data-wb-column-item-move="up"]');
-                    var down = row.querySelector('[data-wb-column-item-move="down"]');
+                    var sortInput = row.querySelector('[data-wb-builder-item-sort="' + editorKey + '"]');
+                    var up = row.querySelector('[data-wb-builder-item-move="up"]');
+                    var down = row.querySelector('[data-wb-builder-item-move="down"]');
 
                     if (sortInput) {
                         sortInput.value = index;
@@ -985,34 +986,37 @@
                     }
                 });
 
-                var emptyState = list.querySelector('[data-wb-column-item-empty]');
+                var emptyState = list.querySelector('[data-wb-builder-item-empty="' + editorKey + '"]');
 
                 if (rows.length === 0 && !emptyState) {
+                    var template = editor.querySelector('[data-wb-builder-item-template="' + editorKey + '"]');
                     var empty = document.createElement('div');
                     empty.className = 'wb-empty';
-                    empty.setAttribute('data-wb-column-item-empty', '');
-                    empty.innerHTML = '<div class="wb-empty-title">No column items yet</div><div class="wb-empty-text">Add the first item to build the visible columns for this section.</div>';
+                    empty.setAttribute('data-wb-builder-item-empty', editorKey);
+                    empty.innerHTML = '<div class="wb-empty-title">' + escapeHtml(template ? template.getAttribute('data-empty-title') : 'No items yet') + '</div><div class="wb-empty-text">' + escapeHtml(template ? template.getAttribute('data-empty-description') : 'Add the first item to continue.') + '</div>';
                     list.appendChild(empty);
                 }
             }
 
-            function updateColumnItemLabel(row) {
+            function updateBuilderItemLabel(row) {
                 if (!row) {
                     return;
                 }
 
-                var label = row.querySelector('[data-wb-column-item-label]');
-                var titleInput = row.querySelector('[data-wb-column-item-title]');
+                var editorKey = row.getAttribute('data-wb-builder-item-row');
+                var label = row.querySelector('[data-wb-builder-item-label="' + editorKey + '"]');
+                var titleInput = row.querySelector('[data-wb-builder-item-title="' + editorKey + '"]');
 
                 if (label && titleInput) {
-                    label.textContent = titleInput.value.trim() || 'New Column Item';
+                    label.textContent = titleInput.value.trim() || 'New Item';
                 }
             }
 
-            function addColumnItem(editor) {
-                var template = editor.querySelector('[data-wb-column-item-template]');
-                var list = editor.querySelector('[data-wb-column-item-list]');
-                var nextIndexInput = editor.querySelector('[data-wb-column-item-next-index]');
+            function addBuilderItem(editor) {
+                var editorKey = editor.getAttribute('data-wb-builder-items-editor');
+                var template = editor.querySelector('[data-wb-builder-item-template="' + editorKey + '"]');
+                var list = editor.querySelector('[data-wb-builder-item-list="' + editorKey + '"]');
+                var nextIndexInput = editor.querySelector('[data-wb-builder-item-next-index="' + editorKey + '"]');
 
                 if (!template || !list || !nextIndexInput) {
                     return;
@@ -1022,7 +1026,7 @@
                 var wrapper = document.createElement('div');
                 wrapper.innerHTML = template.innerHTML.replaceAll('__INDEX__', String(index)).trim();
                 var row = wrapper.firstElementChild;
-                var emptyState = list.querySelector('[data-wb-column-item-empty]');
+                var emptyState = list.querySelector('[data-wb-builder-item-empty="' + editorKey + '"]');
 
                 if (emptyState) {
                     emptyState.remove();
@@ -1030,39 +1034,40 @@
 
                 list.appendChild(row);
                 nextIndexInput.value = String(index + 1);
-                syncColumnItems(editor);
+                syncBuilderItems(editor);
             }
 
-            document.querySelectorAll('[data-wb-column-items-editor]').forEach(function (editor) {
-                syncColumnItems(editor);
+            document.querySelectorAll('[data-wb-builder-items-editor]').forEach(function (editor) {
+                syncBuilderItems(editor);
             });
 
             document.addEventListener('click', function (event) {
-                var addColumnItemButton = event.target.closest('[data-wb-column-item-add]');
-                var moveColumnItemButton = event.target.closest('[data-wb-column-item-move]');
-                var toggleColumnItemButton = event.target.closest('[data-wb-column-item-toggle]');
-                var removeColumnItemButton = event.target.closest('[data-wb-column-item-remove]');
+                var addColumnItemButton = event.target.closest('[data-wb-builder-item-add]');
+                var moveColumnItemButton = event.target.closest('[data-wb-builder-item-move]');
+                var toggleColumnItemButton = event.target.closest('[data-wb-builder-item-toggle]');
+                var removeColumnItemButton = event.target.closest('[data-wb-builder-item-remove]');
                 var addSlotButton = event.target.closest('[data-wb-slot-add]');
                 var moveSlotButton = event.target.closest('[data-wb-slot-move]');
                 var removeSlotButton = event.target.closest('[data-wb-slot-remove]');
 
                 if (addColumnItemButton) {
-                    addColumnItem(addColumnItemButton.closest('[data-wb-column-items-editor]'));
+                    addBuilderItem(addColumnItemButton.closest('[data-wb-builder-items-editor]'));
                     return;
                 }
 
                 if (moveColumnItemButton) {
-                    var row = moveColumnItemButton.closest('[data-wb-column-item-row]');
-                    var editor = moveColumnItemButton.closest('[data-wb-column-items-editor]');
+                    var row = moveColumnItemButton.closest('[data-wb-builder-item-row]');
+                    var editor = moveColumnItemButton.closest('[data-wb-builder-items-editor]');
 
                     if (!row || !editor) {
                         return;
                     }
 
-                    var direction = moveColumnItemButton.getAttribute('data-wb-column-item-move');
+                    var direction = moveColumnItemButton.getAttribute('data-wb-builder-item-move');
+                    var editorKey = editor.getAttribute('data-wb-builder-items-editor');
                     var sibling = direction === 'up' ? row.previousElementSibling : row.nextElementSibling;
 
-                    while (sibling && !sibling.matches('[data-wb-column-item-row]')) {
+                    while (sibling && !sibling.matches('[data-wb-builder-item-row="' + editorKey + '"]')) {
                         sibling = direction === 'up' ? sibling.previousElementSibling : sibling.nextElementSibling;
                     }
 
@@ -1076,12 +1081,13 @@
                         row.parentNode.insertBefore(sibling, row);
                     }
 
-                    syncColumnItems(editor);
+                    syncBuilderItems(editor);
                     return;
                 }
 
                 if (toggleColumnItemButton) {
-                    var body = toggleColumnItemButton.closest('[data-wb-column-item-row]').querySelector('[data-wb-column-item-body]');
+                    var itemRow = toggleColumnItemButton.closest('[data-wb-builder-item-row]');
+                    var body = itemRow ? itemRow.querySelector('[data-wb-builder-item-body]') : null;
 
                     if (body) {
                         body.hidden = !body.hidden;
@@ -1091,14 +1097,15 @@
                 }
 
                 if (removeColumnItemButton) {
-                    var removableRow = removeColumnItemButton.closest('[data-wb-column-item-row]');
-                    var removableEditor = removeColumnItemButton.closest('[data-wb-column-items-editor]');
+                    var removableRow = removeColumnItemButton.closest('[data-wb-builder-item-row]');
+                    var removableEditor = removeColumnItemButton.closest('[data-wb-builder-items-editor]');
 
                     if (!removableRow || !removableEditor) {
                         return;
                     }
 
-                    var deleteInput = removableRow.querySelector('[data-wb-column-item-delete]');
+                    var editorKey = removableEditor.getAttribute('data-wb-builder-items-editor');
+                    var deleteInput = removableRow.querySelector('[data-wb-builder-item-delete="' + editorKey + '"]');
                     var idInput = removableRow.querySelector('input[name$="[id]"]');
 
                     if (deleteInput && idInput && idInput.value) {
@@ -1108,7 +1115,7 @@
                         removableRow.remove();
                     }
 
-                    syncColumnItems(removableEditor);
+                    syncBuilderItems(removableEditor);
                     return;
                 }
 
@@ -1176,8 +1183,8 @@
             });
 
             document.addEventListener('input', function (event) {
-                if (event.target.matches('[data-wb-column-item-title]')) {
-                    updateColumnItemLabel(event.target.closest('[data-wb-column-item-row]'));
+                if (event.target.matches('[data-wb-builder-item-title]')) {
+                    updateBuilderItemLabel(event.target.closest('[data-wb-builder-item-row]'));
                 }
             });
 

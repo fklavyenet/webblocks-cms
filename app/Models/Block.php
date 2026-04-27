@@ -163,11 +163,13 @@ class Block extends Model
             return 'Location: '.str($this->navigationLocation())->headline();
         }
 
-        if ($this->typeSlug() === 'columns') {
+        if (in_array($this->typeSlug(), ['columns', 'link-list'], true)) {
             $childCount = $this->children->count();
 
             if ($childCount > 0) {
-                return $childCount.' column item'.($childCount === 1 ? '' : 's');
+                $itemLabel = $this->typeSlug() === 'link-list' ? 'link list item' : 'column item';
+
+                return $childCount.' '.$itemLabel.($childCount === 1 ? '' : 's');
             }
         }
 
@@ -206,6 +208,21 @@ class Block extends Model
     public function isColumnItem(): bool
     {
         return $this->typeSlug() === 'column_item';
+    }
+
+    public function isLinkList(): bool
+    {
+        return $this->typeSlug() === 'link-list';
+    }
+
+    public function isLinkListItem(): bool
+    {
+        return $this->typeSlug() === 'link-list-item';
+    }
+
+    public function isBuilderManagedChild(): bool
+    {
+        return $this->isColumnItem() || $this->isLinkListItem();
     }
 
     public function adminFormView(): string

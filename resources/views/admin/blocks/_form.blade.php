@@ -13,6 +13,7 @@
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
     $columnItemBlockType = $columnItemBlockType ?? null;
+    $linkListItemBlockType = $linkListItemBlockType ?? null;
     $activeLocale = $activeLocale ?? null;
     $translationStatus = $activeLocale ? $block->translationStatus($activeLocale) : null;
     $isDefaultLocale = $activeLocale?->is_default ?? false;
@@ -180,6 +181,7 @@
                                 'assetPickerAssets' => $assetPickerAssets,
                                 'assetPickerFolders' => $assetPickerFolders,
                                 'columnItemBlockType' => $columnItemBlockType,
+                                'linkListItemBlockType' => $linkListItemBlockType,
                             ])
                         </div>
                     </div>

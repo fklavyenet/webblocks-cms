@@ -105,6 +105,7 @@ class BlockController extends Controller
             'pages' => $pages,
             'parentBlocks' => $this->parentBlocksFor($block->page_id),
             'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+            'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
             'blockTypes' => $blockTypes,
             'slotTypes' => $slotTypes,
             'assetPickerAssets' => $assetPickerAssets,
@@ -120,14 +121,16 @@ class BlockController extends Controller
     {
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
-        $columnItems = $this->columnItemsFrom($request);
+        $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+        $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $heroCtas = $this->heroCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        $block = DB::transaction(function () use ($page, $columnItems, $heroCtas, $data, $localeCode) {
+        $block = DB::transaction(function () use ($page, $columnItems, $linkListItems, $heroCtas, $data, $localeCode) {
             $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncHeroCtas($block, $heroCtas, $localeCode);
 
             $this->revisionManager->capture(
@@ -206,6 +209,7 @@ class BlockController extends Controller
             'pages' => $pages,
             'parentBlocks' => $this->parentBlocksFor($block->page_id, $block->id),
             'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+            'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
             'blockTypes' => $blockTypes,
             'slotTypes' => $slotTypes,
             'assetPickerAssets' => $assetPickerAssets,
@@ -222,14 +226,16 @@ class BlockController extends Controller
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
-        $columnItems = $this->columnItemsFrom($request);
+        $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+        $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $heroCtas = $this->heroCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        DB::transaction(function () use ($block, $page, $columnItems, $heroCtas, $data, $localeCode): void {
+        DB::transaction(function () use ($block, $page, $columnItems, $linkListItems, $heroCtas, $data, $localeCode): void {
             $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncHeroCtas($block, $heroCtas, $localeCode);
 
             $this->revisionManager->capture(
@@ -356,7 +362,7 @@ class BlockController extends Controller
     private function flattenBlockOptions($blocks, string $prefix = '')
     {
         return $blocks->flatMap(function ($block) use ($prefix) {
-            if ($block->isColumnItem()) {
+            if ($block->isBuilderManagedChild()) {
                 return collect();
             }
 
@@ -381,14 +387,15 @@ class BlockController extends Controller
         return $blockTypes->firstWhere('id', $selectedId);
     }
 
-    private function columnItemsFrom(Request $request): array
+    private function builderChildItemsFrom(Request $request, string $inputKey, bool $includeSubtitle = false): array
     {
-        return collect($request->input('column_items', []))
+        return collect($request->input($inputKey, []))
             ->map(function ($item, int $index) {
                 return [
                     'id' => ! empty($item['id']) ? (int) $item['id'] : null,
                     'block_type_id' => ! empty($item['block_type_id']) ? (int) $item['block_type_id'] : null,
                     'title' => trim((string) ($item['title'] ?? '')) ?: null,
+                    'subtitle' => trim((string) ($item['subtitle'] ?? '')) ?: null,
                     'content' => trim((string) ($item['content'] ?? '')) ?: null,
                     'url' => trim((string) ($item['url'] ?? '')) ?: null,
                     'status' => in_array(($item['status'] ?? 'published'), ['draft', 'published'], true) ? $item['status'] : 'published',
@@ -399,6 +406,13 @@ class BlockController extends Controller
             })
             ->sortBy('sort_order')
             ->values()
+            ->map(function (array $item) use ($includeSubtitle): array {
+                if (! $includeSubtitle) {
+                    unset($item['subtitle']);
+                }
+
+                return $item;
+            })
             ->all();
     }
 
@@ -482,6 +496,68 @@ class BlockController extends Controller
         }
 
         $staleItems = $block->children()->where('type', 'column_item');
+
+        if ($keptIds !== []) {
+            $staleItems->whereNotIn('id', $keptIds);
+        }
+
+        $staleItems->delete();
+    }
+
+    private function syncLinkListItems(Block $block, array $linkListItems, ?string $localeCode = null): void
+    {
+        if (! $block->isLinkList()) {
+            return;
+        }
+
+        $existingItems = $block->children()->where('type', 'link-list-item')->get()->keyBy('id');
+        $keptIds = [];
+
+        foreach (array_values($linkListItems) as $index => $itemData) {
+            $itemId = $itemData['id'] ?? null;
+            $delete = (bool) ($itemData['_delete'] ?? false);
+            $blockTypeId = $itemData['block_type_id'] ?? null;
+            unset($itemData['id'], $itemData['_delete'], $itemData['block_type_id']);
+
+            if ($delete) {
+                if ($itemId && $existingItems->has($itemId)) {
+                    $existingItems[$itemId]->delete();
+                }
+
+                continue;
+            }
+
+            if (! $blockTypeId || blank($itemData['title']) || blank($itemData['subtitle']) || blank($itemData['content']) || blank($itemData['url'])) {
+                continue;
+            }
+
+            $blockType = BlockType::query()->find($blockTypeId);
+
+            if (! $blockType || $blockType->slug !== 'link-list-item') {
+                continue;
+            }
+
+            $payload = $itemData + [
+                'page_id' => $block->page_id,
+                'parent_id' => $block->id,
+                'block_type_id' => $blockType->id,
+                'type' => $blockType->slug,
+                'source_type' => $blockType->source_type ?? 'static',
+                'slot_type_id' => $block->slot_type_id,
+                'slot' => $block->slot,
+                'sort_order' => $index,
+            ];
+
+            $linkListItem = $itemId && $existingItems->has($itemId)
+                ? $existingItems[$itemId]
+                : new Block;
+
+            $linkListItem = $this->blockPayloadWriter->save($linkListItem, $block->page, $payload, $localeCode);
+
+            $keptIds[] = $linkListItem->id;
+        }
+
+        $staleItems = $block->children()->where('type', 'link-list-item');
 
         if ($keptIds !== []) {
             $staleItems->whereNotIn('id', $keptIds);

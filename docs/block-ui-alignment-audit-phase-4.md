@@ -85,7 +85,7 @@ Baseline:
 | `page-title` | layout/meta | acceptable | resolved page title heading | keep | P3 custom/fallback |
 | `page-content` | layout/meta | weak | resolved page summary/content shell only if system metadata blocks remain productized | deprecate later | P2 later |
 | `page-meta` | layout/meta | acceptable | system metadata card/list | keep | P3 custom/fallback |
-| `related-content` | first-class | aligned | `wb-link-list` of editorial links or related pages | keep | P3 custom/fallback |
+| `link-list` | first-class | aligned | `wb-link-list` of editorial links managed through dedicated `link-list-item` children | keep | P3 custom/fallback |
 | `auth-form` | fallback-only | weak | app/auth shell, not ordinary page content | custom only | P3 custom/fallback |
 | `cookie-notice` | layout/meta | missing | privacy UI belongs in shared public layout and modal partials, not editorial content blocks | deprecate later | P3 custom/fallback |
 | `showcase-list` | custom/site-specific | custom-only | showcase cards with gallery sections | custom only | P3 custom/fallback |
@@ -99,7 +99,7 @@ Baseline:
 - `table` is now first-class with line-based row entry, explicit header-row behavior, and compatibility for legacy fallback-style settings rows.
 - `breadcrumb` stays deferred until the public shell actually uses breadcrumb navigation in real pages and a shipped breadcrumb pattern is confirmed.
 - `pagination` should stay small and simple if promoted: previous/next only, using existing button primitives.
-- `related-content` is now first-class and can render either editorial links or automatic related pages through the same `wb-link-list` pattern.
+- `link-list` is now the first-class editorial link block and renders directly through the same `wb-link-list` pattern as WebBlocks UI.
 
 ### B. Disclosure/interactivity
 
@@ -156,7 +156,7 @@ Baseline:
 
 - `list`
 - `table`
-- `related-content`
+- `link-list`
 - `breadcrumb` deferred pending verified UI support and real shell need
 
 ### Phase 4B — Disclosure blocks
