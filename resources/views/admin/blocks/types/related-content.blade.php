@@ -1,7 +1,7 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Section title, intro, and editorial links are translated per locale.</div>
+            <div>Section title, subtitle, and intro are translated per locale. Add child <code>button</code> or <code>column_item</code> blocks for reusable related links.</div>
         </div>
     @endif
 
@@ -12,14 +12,14 @@
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="subtitle">Intro</label>
+            <label for="subtitle">Section Subtitle</label>
             <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
-        <label for="content">Related Links</label>
-        <textarea id="content" name="content" class="wb-textarea" rows="8" placeholder="Getting Started | /docs/start | Guide | Basics and setup&#10;API Reference | /docs/api | Docs | Endpoints and payloads">{{ old('content', $block->content) }}</textarea>
-        <div class="wb-text-sm wb-text-muted">Enter one link per line as <code>Title | URL | Optional meta | Optional description</code>. Leave blank to fall back to automatic related pages.</div>
+        <label for="content">Section Intro</label>
+        <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="Point readers to the next useful pages, guides, or references.">{{ old('content', $block->content) }}</textarea>
+        <div class="wb-text-sm wb-text-muted">Preferred structure: add child <code>button</code> or <code>column_item</code> blocks beneath this block. Legacy line-delimited link content still renders for compatibility.</div>
     </div>
 </div>

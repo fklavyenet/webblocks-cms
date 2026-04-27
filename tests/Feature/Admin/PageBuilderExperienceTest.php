@@ -1242,6 +1242,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Primary CTA URL');
         $response->assertSee('Secondary CTA Label');
         $response->assertSee('Secondary CTA URL');
+        $response->assertSee('Title Tag');
         $response->assertSee('Shared Fields');
         $response->assertSee('Translated Fields');
         $response->assertDontSee('Generic Block Form');
@@ -1282,6 +1283,7 @@ class PageBuilderExperienceTest extends TestCase
             'secondary_cta_url' => '/p/docs',
             'variant' => 'soft',
             'layout' => 'centered',
+            'title_tag' => 'h2',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -1316,6 +1318,7 @@ class PageBuilderExperienceTest extends TestCase
             'title' => 'Read docs',
         ]);
         $this->assertSame('centered', $hero->setting('layout'));
+        $this->assertSame('h2', $hero->setting('title_tag'));
     }
 
     #[Test]
@@ -1483,9 +1486,19 @@ class PageBuilderExperienceTest extends TestCase
         $relatedContentResponse->assertOk();
         $relatedContentResponse->assertSee('Add Block: Related Content (About / Main)');
         $relatedContentResponse->assertSee('Section Title');
-        $relatedContentResponse->assertSee('Related Links');
-        $relatedContentResponse->assertSee('Leave blank to fall back to automatic related pages.');
+        $relatedContentResponse->assertSee('Section Subtitle');
+        $relatedContentResponse->assertSee('Section Intro');
+        $relatedContentResponse->assertSee('Preferred structure: add child');
         $relatedContentResponse->assertDontSee('Generic Block Form');
+
+        $codeResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => BlockType::query()->where('slug', 'code')->value('id')]));
+
+        $codeResponse->assertOk();
+        $codeResponse->assertSee('Add Block: Code (About / Main)');
+        $codeResponse->assertSee('Filename / Language Label');
+        $codeResponse->assertSee('Syntax Language');
+        $relatedContentResponse->assertDontSee('Generic Block Form');
+        $codeResponse->assertDontSee('Generic Block Form');
     }
 
     #[Test]

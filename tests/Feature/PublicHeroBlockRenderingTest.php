@@ -77,6 +77,33 @@ class PublicHeroBlockRenderingTest extends TestCase
     }
 
     #[Test]
+    public function hero_block_respects_title_tag_setting(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Nested hero title',
+            'content' => 'Nested hero content',
+            'settings' => json_encode(['title_tag' => 'h2'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<h2 class="wb-promo-title">Nested hero title</h2>', false);
+        $response->assertDontSee('<h1 class="wb-promo-title">Nested hero title</h1>', false);
+    }
+
+    #[Test]
     public function hero_block_uses_translated_content(): void
     {
         $site = Site::query()->firstOrFail();

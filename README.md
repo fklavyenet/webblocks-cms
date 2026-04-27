@@ -245,10 +245,19 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Translated hero fields live in `block_text_translations`: `title`, `subtitle` (used as eyebrow), and `content` (used as intro text).
 - Hero CTA labels are translated through the managed child `button` blocks owned by the hero editor.
 - Shared hero fields stay on the block record: `variant`, CTA URLs, and `settings.layout`.
+- Shared hero heading semantics live in `settings.title_tag`, so the same block can render safely as `h1`, `h2`, or `h3` depending on context.
 - The admin form exposes up to two inline CTAs: primary and secondary.
 - Public hero CTA output is always inline inside the hero action row. Empty labels or empty URLs do not render buttons.
 - Legacy hero content stored in `settings` keys such as `label`, `headline`, and `body` still renders as a compatibility fallback.
 - Current limitation: the first-class hero editor manages the first two child button CTAs only. Additional child buttons remain compatibility content and are not surfaced as separate structured hero fields.
+
+## Docs/Marketing Block Support
+
+- `hero` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields. Shared presentation stays in shared fields such as `variant`, `settings.layout`, `settings.title_tag`, and CTA URLs.
+- `code` is a first-class docs block with translated `title`, `subtitle`, and `content` fields. Shared syntax metadata stays in `settings.language`.
+- `related-content` is a first-class editorial/docs block with translated container fields `title`, `subtitle`, and optional `content` intro text.
+- `related-content` prefers child `button` or `column_item` blocks for reusable link structures. Existing legacy line-delimited link content remains supported as a compatibility path.
+- These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 
 ## UI Docs Migration Pilot
 

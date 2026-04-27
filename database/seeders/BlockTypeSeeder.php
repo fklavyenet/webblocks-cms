@@ -15,7 +15,7 @@ class BlockTypeSeeder extends Seeder
             ['name' => 'Rich Text', 'slug' => 'rich-text', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 3, 'status' => 'published'],
             ['name' => 'Quote', 'slug' => 'quote', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 4, 'status' => 'published'],
             ['name' => 'Callout', 'slug' => 'callout', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 5, 'status' => 'published'],
-            ['name' => 'Code', 'slug' => 'code', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 6, 'status' => 'published'],
+            ['name' => 'Code', 'slug' => 'code', 'category' => 'content', 'source_type' => 'static', 'is_system' => true, 'is_container' => false, 'sort_order' => 6, 'status' => 'published'],
             ['name' => 'List', 'slug' => 'list', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 7, 'status' => 'published'],
             ['name' => 'Table', 'slug' => 'table', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => false, 'sort_order' => 8, 'status' => 'published'],
             ['name' => 'Accordion', 'slug' => 'accordion', 'category' => 'content', 'source_type' => 'static', 'is_system' => false, 'is_container' => true, 'sort_order' => 9, 'status' => 'published'],

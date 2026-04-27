@@ -33,6 +33,7 @@ class BlockRequest extends FormRequest
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
         $isHero = $selectedBlockType?->slug === 'hero';
+        $isCode = $selectedBlockType?->slug === 'code';
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -53,6 +54,8 @@ class BlockRequest extends FormRequest
             'content' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string'],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
+            'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
+            'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
             'primary_cta_label' => ['nullable', 'string', 'max:255'],
             'primary_cta_url' => ['nullable', 'string', 'max:2048'],
             'secondary_cta_label' => ['nullable', 'string', 'max:255'],
@@ -228,16 +231,44 @@ class BlockRequest extends FormRequest
                 $isTranslatedHeroEdit = $data['locale'] !== null;
 
                 $layout = trim((string) ($data['layout'] ?? ''));
+                $titleTag = trim((string) ($data['title_tag'] ?? ''));
+
+                $settings = $existingSettings;
+
+                if (! $isTranslatedHeroEdit) {
+                    $settings['layout'] = $layout !== '' ? $layout : null;
+                    $settings['title_tag'] = in_array($titleTag, ['h1', 'h2', 'h3'], true) ? $titleTag : null;
+                }
 
                 $data['url'] = null;
                 $data['variant'] = $isTranslatedHeroEdit
                     ? ($this->route('block')?->getRawOriginal('variant'))
                     : (trim((string) ($data['variant'] ?? '')) ?: null);
-                $data['settings'] = json_encode(array_filter([
-                    'layout' => $isTranslatedHeroEdit
-                        ? ($existingSettings['layout'] ?? null)
-                        : ($layout !== '' ? $layout : null),
-                ], fn ($value) => $value !== null && $value !== ''), JSON_UNESCAPED_SLASHES);
+                $data['settings'] = json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+            }
+
+            if ($blockType?->slug === 'code') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedCodeEdit = $data['locale'] !== null;
+                $language = trim((string) ($data['language'] ?? ''));
+                $settings = $existingSettings;
+
+                unset($settings['lang']);
+
+                if (! $isTranslatedCodeEdit) {
+                    $settings['language'] = $language !== '' ? $language : null;
+                }
+
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['settings'] = json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
 
                 if ($data['settings'] === '[]' || $data['settings'] === '{}') {
                     $data['settings'] = null;
@@ -292,6 +323,8 @@ class BlockRequest extends FormRequest
 
         unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
         unset($data['layout']);
+        unset($data['title_tag']);
+        unset($data['language']);
         unset($data['navigation_menu_key']);
 
         return $data;

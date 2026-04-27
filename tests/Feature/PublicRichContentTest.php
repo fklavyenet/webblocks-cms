@@ -47,6 +47,37 @@ class PublicRichContentTest extends TestCase
     }
 
     #[Test]
+    public function code_block_renders_optional_header_metadata_without_executing_html(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $this->blockType('code', 'Code', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Escaped snippet',
+            'subtitle' => '<demo.js>',
+            'content' => "console.log('<b>safe</b>');",
+            'settings' => json_encode(['language' => 'js'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('Escaped snippet');
+        $response->assertSee('&lt;demo.js&gt;', false);
+        $response->assertDontSee('<demo.js>', false);
+        $response->assertSee('console.log(&#039;&lt;b&gt;safe&lt;/b&gt;&#039;);', false);
+        $response->assertDontSee('<b>safe</b>', false);
+    }
+
+    #[Test]
     public function toc_renders_link_list_when_headings_exist(): void
     {
         $page = $this->pageWithMainSlot();

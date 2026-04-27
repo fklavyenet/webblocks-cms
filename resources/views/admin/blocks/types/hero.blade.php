@@ -113,6 +113,16 @@
                 </select>
                 <div class="wb-text-sm wb-text-muted">Shared presentation controls stay stable across locales and sites.</div>
             </div>
+
+            <div class="wb-stack wb-gap-1">
+                <label for="title_tag">Title Tag</label>
+                <select id="title_tag" name="title_tag" class="wb-select" @disabled($isNonDefaultLocale)>
+                    @foreach (['h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('title_tag', $settings['title_tag'] ?? 'h1') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <div class="wb-text-sm wb-text-muted">Use <code>h1</code> for page-leading heroes and <code>h2</code> or <code>h3</code> for nested section heroes.</div>
+            </div>
         </div>
     </div>
 </div>

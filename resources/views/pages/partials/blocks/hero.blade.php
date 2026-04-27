@@ -5,6 +5,7 @@
     $content = $block->content ?: trim((string) ($settings['body'] ?? $settings['content'] ?? $settings['copy'] ?? ''));
     $variant = $block->variant ?: 'default';
     $layout = trim((string) ($settings['layout'] ?? ($variant === 'centered' ? 'centered' : 'left')));
+    $headingTag = in_array($settings['title_tag'] ?? null, ['h1', 'h2', 'h3'], true) ? $settings['title_tag'] : 'h1';
     $heroClasses = ['wb-card', 'wb-promo'];
     $copyClasses = ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
 
@@ -34,7 +35,7 @@
         @endif
 
         @if ($title !== '')
-            <h1 class="wb-promo-title">{{ $title }}</h1>
+            <{{ $headingTag }} class="wb-promo-title">{{ $title }}</{{ $headingTag }}>
         @endif
 
         @if ($content !== '')

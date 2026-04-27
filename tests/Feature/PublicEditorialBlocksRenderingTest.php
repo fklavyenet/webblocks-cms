@@ -177,6 +177,70 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function related_content_block_prefers_child_based_items(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $relatedContent = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'related-content',
+            'block_type_id' => $this->blockType('related-content', 'Related Content', 3, true, 'data')->id,
+            'source_type' => 'data',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Continue reading',
+            'subtitle' => 'Recommended next steps',
+            'content' => 'Browse the next useful references.',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $relatedContent->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Getting Started',
+            'subtitle' => 'Guide',
+            'url' => '/p/getting-started',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $relatedContent->id,
+            'type' => 'column_item',
+            'block_type_id' => $this->blockType('column_item', 'Column Item', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'title' => 'API Reference',
+            'subtitle' => 'Docs',
+            'content' => 'Endpoints and payloads',
+            'url' => '/p/api-reference',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('Continue reading');
+        $response->assertSee('Recommended next steps');
+        $response->assertSee('Browse the next useful references.');
+        $response->assertSee('<a href="/p/getting-started" class="wb-link-list-title">Getting Started</a>', false);
+        $response->assertSee('<a href="/p/api-reference" class="wb-link-list-title">API Reference</a>', false);
+        $response->assertSee('Guide');
+        $response->assertSee('Endpoints and payloads');
+    }
+
+    #[Test]
     public function related_content_block_falls_back_to_automatic_related_pages_when_editorial_links_are_blank(): void
     {
         $page = $this->pageWithMainSlot('Docs Home', 'docs-home', 'docs');
