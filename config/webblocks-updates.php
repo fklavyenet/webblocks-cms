@@ -27,6 +27,7 @@ return [
             '.git',
             '.github',
             '.ddev',
+            'project',
             'storage',
             'bootstrap/cache',
             'node_modules',

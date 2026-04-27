@@ -53,6 +53,22 @@ During local development:
 
 The updater flow must remain release-based and package-based.
 
+## Core Vs Project Layer
+
+WebBlocks CMS core and the Project Layer have different responsibilities.
+
+- Core directories such as `app/`, `routes/`, `resources/`, and `config/` are for reusable CMS engine behavior.
+- Site-specific code belongs in `project/`, database content, or instance configuration.
+- Do not place update-sensitive instance logic directly into core directories.
+- The Project Layer is install-local and update-safe, but it is not a reusable plugin packaging system.
+
+## Update-Safe Customization Rule
+
+- Core updates may change the Project Layer loader or kernel.
+- Core updates must not overwrite `.env`, `storage/`, or `project/`.
+- Site-specific behavior should be implemented through `project/Providers`, `project/Routes`, `project/config`, and `project/resources/views`.
+- If customization is instance-specific, keep it out of core `app/`, `routes/`, `resources/`, and `config/`.
+
 ## Release Synchronization Rule
 
 The development environment version must only be synchronized when an actual release is created.
@@ -129,6 +145,7 @@ Before creating a release tag, confirm:
 - the release tag matches `App\Support\WebBlocks::VERSION`
 - update metadata is compatible with the intended minimum client version
 - no local or runtime files are included in the release
+- `project/` is treated as an install-local preserved path and is not overwritten by updater package application
 
 ## Post-Release Verification
 

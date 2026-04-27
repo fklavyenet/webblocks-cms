@@ -133,6 +133,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('APP_NAME=Original', trim((string) File::get($targetRoot.'/.env')));
         $this->assertSame('runtime-data', trim((string) File::get($targetRoot.'/storage/app/public/user.txt')));
         $this->assertSame('runtime-cache', trim((string) File::get($targetRoot.'/bootstrap/cache/config.php')));
+        $this->assertSame("<?php\n\nreturn ['source' => 'runtime-project'];\n", File::get($targetRoot.'/project/config/sites.php'));
 
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
@@ -405,6 +406,8 @@ class SystemUpdatesTest extends TestCase
         File::put($targetRoot.'/.env', "APP_NAME=Original\n");
         File::put($targetRoot.'/storage/app/public/user.txt', "runtime-data\n");
         File::put($targetRoot.'/bootstrap/cache/config.php', "runtime-cache\n");
+        File::ensureDirectoryExists($targetRoot.'/project/config');
+        File::put($targetRoot.'/project/config/sites.php', "<?php\n\nreturn ['source' => 'runtime-project'];\n");
 
         $archiveDirectory = $this->makeTemporaryDirectory('release-archive');
         $archivePath = $archiveDirectory.'/webblocks-cms-0.2.0.zip';
@@ -416,6 +419,7 @@ class SystemUpdatesTest extends TestCase
         $archive->addFromString('.env', "APP_NAME=Overwritten\n");
         $archive->addFromString('storage/app/public/user.txt', "should-not-overwrite\n");
         $archive->addFromString('bootstrap/cache/config.php', "should-not-overwrite\n");
+        $archive->addFromString('project/config/sites.php', "<?php\n\nreturn ['source' => 'release-package'];\n");
         $archive->close();
 
         return [$targetRoot, $archivePath, hash_file('sha256', $archivePath)];

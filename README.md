@@ -29,9 +29,69 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 ## Product Boundary
 
 - WebBlocks CMS core contains reusable CMS engine features such as page building, multilingual content, multisite, media, navigation, workflow, backup, update, and generic site export/import.
+- Site-specific code that must survive CMS updates belongs in the Project Layer under `project/`.
 - Site-specific migration scripts, one-off legacy importers, and project-only reconstruction helpers do not belong in CMS core.
 - If a migration script is only relevant to a specific site, brand, or historical project, keep it in that project workspace instead of this repository.
 - Generic site export/import remains part of CMS core and is the supported reusable transfer path.
+
+## Project Layer
+
+- The Project Layer is WebBlocks CMS's update-safe extension boundary for one install or website instance.
+- Use `project/` for site-specific providers, routes, commands, config, and Blade views that should not be overwritten by CMS core updates.
+- Do not place instance-specific behavior in core `app/`, `routes/`, `resources/`, or `config/` if that behavior must survive updates.
+- The Project Layer is not the plugin system. V1 only supports install-local code living in `project/`.
+
+### Structure
+
+- `project/Providers/`
+- `project/Routes/`
+- `project/Console/Commands/`
+- `project/config/`
+- `project/resources/views/`
+- `project/README.md`
+
+### Init Command
+
+Create the scaffold with:
+
+```bash
+ddev artisan project:init
+```
+
+The command only creates missing directories and starter files. It never overwrites existing project files.
+
+### Loading Rules
+
+- `project/config/*.php` loads under `project.*`, for example `project/config/sites.php` becomes `config('project.sites')`.
+- `project/Routes/web.php` loads with the normal `web` middleware group when present.
+- `project/Routes/api.php` loads with the normal `api` middleware group under the `api` prefix when present.
+- `project/Routes/console.php` is optional and only loaded in console contexts.
+- `project/resources/views` is available through the `project::` namespace, for example `view('project::docs.layout')`.
+- `project/config/providers.php` may list provider classes such as `Project\Providers\ProjectServiceProvider::class`.
+
+### Example
+
+Example project route:
+
+```php
+use Illuminate\Support\Facades\Route;
+
+Route::get('/project-health', fn () => 'ok');
+```
+
+Example project config:
+
+```php
+return [
+    'default_site_handle' => 'main',
+];
+```
+
+Example project view usage:
+
+```php
+return view('project::docs.layout', ['message' => 'Hello']);
+```
 
 ## Installation
 
@@ -268,6 +328,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - When the checkbox is left unchecked, the CMS creates the backup and continues the update immediately.
 - When the checkbox is enabled, the CMS creates the backup first, then shows a two-step flow with `Download backup`, `Continue update`, and `Cancel` actions.
 - Cancelling the pending flow keeps the created backup but does not install the update.
+- Update installs preserve `.env`, `storage/`, and `project/` so instance-specific project files are not replaced by CMS package extraction.
 
 ## Stack
 

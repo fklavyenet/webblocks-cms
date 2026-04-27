@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\ImportDemoMedia;
+use App\Console\Commands\ProjectInitCommand;
 use App\Console\Commands\SiteExportCommand;
 use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         ImportDemoMedia::class,
+        ProjectInitCommand::class,
         SiteExportCommand::class,
         SiteImportCommand::class,
         SiteCloneCommand::class,
