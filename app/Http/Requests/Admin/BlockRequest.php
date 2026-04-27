@@ -32,6 +32,7 @@ class BlockRequest extends FormRequest
         $isColumnItem = $selectedBlockType?->slug === 'column_item';
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
+        $isHero = $selectedBlockType?->slug === 'hero';
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -51,6 +52,11 @@ class BlockRequest extends FormRequest
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isColumnItem || ($isLocaleRequest && $isTranslatedColumnItem)) ? 'required' : 'nullable', 'string'],
             'url' => ['nullable', 'string', 'max:2048'],
+            'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
+            'primary_cta_label' => ['nullable', 'string', 'max:255'],
+            'primary_cta_url' => ['nullable', 'string', 'max:2048'],
+            'secondary_cta_label' => ['nullable', 'string', 'max:255'],
+            'secondary_cta_url' => ['nullable', 'string', 'max:2048'],
             'asset_id' => ['nullable', 'integer', 'exists:assets,id'],
             'gallery_asset_ids' => ['nullable', 'array'],
             'gallery_asset_ids.*' => ['integer', 'exists:assets,id'],
@@ -214,6 +220,30 @@ class BlockRequest extends FormRequest
             $data['source_type'] = $blockType?->source_type ?? 'static';
             $data['is_system'] = (bool) ($blockType?->is_system ?? false);
 
+            if ($blockType?->slug === 'hero') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedHeroEdit = $data['locale'] !== null;
+
+                $layout = trim((string) ($data['layout'] ?? ''));
+
+                $data['url'] = null;
+                $data['variant'] = $isTranslatedHeroEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (trim((string) ($data['variant'] ?? '')) ?: null);
+                $data['settings'] = json_encode(array_filter([
+                    'layout' => $isTranslatedHeroEdit
+                        ? ($existingSettings['layout'] ?? null)
+                        : ($layout !== '' ? $layout : null),
+                ], fn ($value) => $value !== null && $value !== ''), JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+            }
+
             if (in_array($blockType?->slug, ['navigation-auto', 'menu'], true)) {
                 $data['title'] = null;
                 $data['subtitle'] = null;
@@ -261,6 +291,7 @@ class BlockRequest extends FormRequest
         }
 
         unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions']);
+        unset($data['layout']);
         unset($data['navigation_menu_key']);
 
         return $data;

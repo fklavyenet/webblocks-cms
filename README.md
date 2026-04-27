@@ -232,6 +232,17 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Breadcrumb, Tabs, and Slider remain deferred until WebBlocks UI ships confirmed patterns or the public shell requires them.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 
+## Hero Block
+
+- `hero` is a first-class marketing block intended for page-leading intros, docs landings, and public-site campaigns.
+- Translated hero fields live in `block_text_translations`: `title`, `subtitle` (used as eyebrow), and `content` (used as intro text).
+- Hero CTA labels are translated through the managed child `button` blocks owned by the hero editor.
+- Shared hero fields stay on the block record: `variant`, CTA URLs, and `settings.layout`.
+- The admin form exposes up to two inline CTAs: primary and secondary.
+- Public hero CTA output is always inline inside the hero action row. Empty labels or empty URLs do not render buttons.
+- Legacy hero content stored in `settings` keys such as `label`, `headline`, and `body` still renders as a compatibility fallback.
+- Current limitation: the first-class hero editor manages the first two child button CTAs only. Additional child buttons remain compatibility content and are not surfaced as separate structured hero fields.
+
 ## UI Docs Migration Pilot
 
 - The live WebBlocks UI documentation migration target inside this CMS install is the existing site record with domain `ui.docs.webblocksui.com`.

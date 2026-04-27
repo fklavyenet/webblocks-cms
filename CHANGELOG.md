@@ -7,15 +7,18 @@
 - UI docs migration pilot command: `php artisan webblocks:sync-ui-docs-pilot`.
 - Controlled rebuild coverage for the existing `ui.docs.webblocksui.com` site inside the multisite CMS install.
 - Rebuilt pilot pages for Home, Getting Started, and Cookie Consent using aligned CMS block composition.
+- Hero block tests covering renderer behavior, translation handling, multisite context, and managed admin CTA persistence.
 
 ### Changed
 
 - UI docs pilot content now writes pages and blocks through `BlockPayloadWriter` with translation-backed block storage where supported.
 - Related Content automatic fallback is now scoped to the current site instead of pulling published pages across multisite boundaries.
+- Hero block strengthened into a first-class editorial block with a dedicated admin form, clearer translation ownership, managed CTA fields, and WebBlocks UI-aligned renderer structure.
 
 ### Fixed
 
 - Removed pilot-page drift by making the docs migration command idempotent and block-tree based instead of appending content on reruns.
+- Hero CTA rendering now skips empty buttons, keeps actions inline, and avoids leaking local environment-specific values into content handling.
 
 ### Notes
 

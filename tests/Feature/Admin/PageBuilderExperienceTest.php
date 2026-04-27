@@ -1236,10 +1236,210 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Add Block: Hero (About / Main)');
         $response->assertSee('Eyebrow / Label');
-        $response->assertSee('Headline');
-        $response->assertSee('Supporting Copy');
-        $response->assertSee('Use child Button blocks for actions. Do not paste button HTML into the copy field.');
+        $response->assertSee('Title');
+        $response->assertSee('Subtitle / Intro');
+        $response->assertSee('Primary CTA Label');
+        $response->assertSee('Primary CTA URL');
+        $response->assertSee('Secondary CTA Label');
+        $response->assertSee('Secondary CTA URL');
+        $response->assertSee('Shared Fields');
+        $response->assertSee('Translated Fields');
         $response->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
+    public function hero_block_store_creates_translation_backed_copy_and_managed_ctas(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $main = $this->slotType('main', 'Main', 2);
+        $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $heroType->id,
+            'sort_order' => 0,
+            'subtitle' => 'Eyebrow',
+            'title' => 'Hero title',
+            'content' => 'Hero intro',
+            'primary_cta_label' => 'Get started',
+            'primary_cta_url' => '/p/contact',
+            'secondary_cta_label' => 'Read docs',
+            'secondary_cta_url' => '/p/docs',
+            'variant' => 'soft',
+            'layout' => 'centered',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $hero = Block::query()->where('page_id', $page->id)->where('type', 'hero')->firstOrFail();
+        $buttons = Block::query()->where('parent_id', $hero->id)->where('type', 'button')->orderBy('sort_order')->get();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => $hero->id]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $hero->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'variant' => 'soft',
+        ]);
+        $this->assertTextTranslation($hero, $this->defaultLocale()->id, [
+            'title' => 'Hero title',
+            'subtitle' => 'Eyebrow',
+            'content' => 'Hero intro',
+        ]);
+        $this->assertCount(2, $buttons);
+        $this->assertSame('/p/contact', $buttons[0]->url);
+        $this->assertSame('/p/docs', $buttons[1]->url);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $buttons[0]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Get started',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $buttons[1]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Read docs',
+        ]);
+        $this->assertSame('centered', $hero->setting('layout'));
+    }
+
+    #[Test]
+    public function hero_block_locale_update_only_changes_translated_fields_and_keeps_shared_settings(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $heroType = BlockType::query()->where('slug', 'hero')->firstOrFail();
+        $buttonType = BlockType::query()->where('slug', 'button')->firstOrFail();
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+            'path' => '/p/hakkinda',
+        ]);
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+        $hero = Block::create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $heroType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Hero title',
+            'subtitle' => 'Eyebrow',
+            'content' => 'Hero intro',
+            'variant' => 'soft',
+            'settings' => json_encode(['layout' => 'centered'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+        $hero->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Hero title',
+            'subtitle' => 'Eyebrow',
+            'content' => 'Hero intro',
+        ]);
+
+        $primary = Block::create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Get started',
+            'url' => '/p/contact',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $primary->buttonTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Get started',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $hero), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $heroType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'subtitle' => 'Yerel etiket',
+            'title' => 'Turkce kahraman',
+            'content' => 'Turkce giris',
+            'primary_cta_label' => 'Baslayin',
+            'primary_cta_url' => '/should-not-change',
+            'secondary_cta_label' => '',
+            'secondary_cta_url' => '',
+            'variant' => 'accent',
+            'layout' => 'left',
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $hero->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot, 'expanded' => $hero->id, 'locale' => 'tr']));
+        $this->assertTextTranslation($hero, $turkish->id, [
+            'title' => 'Turkce kahraman',
+            'subtitle' => 'Yerel etiket',
+            'content' => 'Turkce giris',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $primary->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Baslayin',
+        ]);
+        $this->assertDatabaseHas('blocks', [
+            'id' => $primary->id,
+            'url' => '/p/contact',
+            'variant' => 'primary',
+        ]);
+        $this->assertDatabaseHas('blocks', [
+            'id' => $hero->id,
+            'variant' => 'soft',
+        ]);
+        $this->assertSame('centered', $hero->fresh()->setting('layout'));
     }
 
     #[Test]

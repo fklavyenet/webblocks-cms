@@ -34,7 +34,8 @@ class PublicHeroBlockRenderingTest extends TestCase
             'title' => 'Ship your content model faster',
             'subtitle' => 'Structured publishing',
             'content' => 'Build editorial pages from reusable blocks and predictable layout rules.',
-            'variant' => 'centered',
+            'variant' => 'soft',
+            'settings' => json_encode(['layout' => 'centered'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => true,
         ]);
@@ -64,6 +65,8 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('wb-promo-title', false);
         $response->assertSee('wb-promo-text', false);
         $response->assertSee('wb-promo-actions', false);
+        $response->assertSee('wb-card', false);
+        $response->assertSee('wb-card-muted', false);
         $response->assertSee('wb-text-center', false);
         $response->assertSee('Ship your content model faster');
         $response->assertSee('Structured publishing');
@@ -123,14 +126,185 @@ class PublicHeroBlockRenderingTest extends TestCase
             'content' => 'Turkce destekleyici metin',
         ]);
 
+        $cta = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Default CTA',
+            'url' => '/p/contact',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $cta->buttonTranslations()->create([
+            'locale_id' => Locale::query()->where('is_default', true)->value('id'),
+            'title' => 'Default CTA',
+        ]);
+        $cta->buttonTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Turkce CTA',
+        ]);
+
         $response = $this->get('/tr/p/hakkinda');
 
         $response->assertOk();
         $response->assertSee('Turkce kahraman');
         $response->assertSee('Yerel etiket');
         $response->assertSee('Turkce destekleyici metin');
+        $response->assertSee('Turkce CTA');
         $response->assertDontSee('Default hero');
         $response->assertDontSee('Default content');
+        $response->assertDontSee('Default CTA');
+    }
+
+    #[Test]
+    public function hero_block_renders_a_single_cta_when_only_one_button_is_complete(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $hero = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Hero title',
+            'content' => 'Hero content',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Primary action',
+            'url' => '/p/contact',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('Primary action');
+        $response->assertDontSee('Secondary action');
+    }
+
+    #[Test]
+    public function hero_block_renders_two_ctas_inline(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $hero = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Hero title',
+            'content' => 'Hero content',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        foreach ([
+            ['label' => 'Primary action', 'url' => '/cta-0', 'variant' => 'primary', 'sort_order' => 0],
+            ['label' => 'Secondary action', 'url' => '/cta-1', 'variant' => 'secondary', 'sort_order' => 1],
+        ] as $button) {
+            Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $hero->id,
+                'type' => 'button',
+                'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $button['sort_order'],
+                'title' => $button['label'],
+                'url' => $button['url'],
+                'variant' => $button['variant'],
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-promo-actions wb-cluster wb-cluster-2', false);
+        $response->assertSee('Primary action');
+        $response->assertSee('Secondary action');
+    }
+
+    #[Test]
+    public function hero_block_does_not_render_empty_buttons(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $hero = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Hero title',
+            'content' => 'Hero content',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Missing URL',
+            'url' => null,
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'title' => null,
+            'url' => '/cta-2',
+            'variant' => 'secondary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('Missing URL');
+        $response->assertDontSee('wb-promo-actions', false);
     }
 
     #[Test]
@@ -164,6 +338,60 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('Legacy eyebrow');
         $response->assertSee('Legacy hero title');
         $response->assertSee('Legacy hero copy');
+    }
+
+    #[Test]
+    public function hero_block_works_in_multisite_context_without_environment_specific_content(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->create([
+            'name' => 'Campaign',
+            'handle' => 'campaign',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+        $site->locales()->syncWithoutDetaching([
+            Page::defaultLocaleId() => ['is_enabled' => true],
+        ]);
+
+        $page = $this->pageWithMainSlot($site, 'Landing', 'landing');
+        $hero = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'hero',
+            'block_type_id' => $this->blockType('hero', 'Hero', 1, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Campaign hero',
+            'content' => 'No local environment values are embedded here.',
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $hero->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Explore',
+            'url' => '/p/contact',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get('http://campaign.example.test/p/landing');
+
+        $response->assertOk();
+        $response->assertSee('Campaign hero');
+        $response->assertSee('Explore');
+        $response->assertDontSee('.ddev.site');
     }
 
     #[Test]
@@ -352,15 +580,15 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('Reusable');
     }
 
-    private function pageWithMainSlot(?Site $site = null): Page
+    private function pageWithMainSlot(?Site $site = null, string $title = 'About', string $slug = 'about'): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $site ??= Site::query()->firstOrFail();
 
         $page = Page::query()->create([
             'site_id' => $site->id,
-            'title' => 'About',
-            'slug' => 'about',
+            'title' => $title,
+            'slug' => $slug,
             'status' => 'published',
         ]);
 

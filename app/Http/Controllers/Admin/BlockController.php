@@ -8,6 +8,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
@@ -120,12 +121,14 @@ class BlockController extends Controller
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $columnItems = $this->columnItemsFrom($request);
+        $heroCtas = $this->heroCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        $block = DB::transaction(function () use ($page, $columnItems, $data, $localeCode) {
+        $block = DB::transaction(function () use ($page, $columnItems, $heroCtas, $data, $localeCode) {
             $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncHeroCtas($block, $heroCtas, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -220,12 +223,14 @@ class BlockController extends Controller
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $columnItems = $this->columnItemsFrom($request);
+        $heroCtas = $this->heroCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        DB::transaction(function () use ($block, $page, $columnItems, $data, $localeCode): void {
+        DB::transaction(function () use ($block, $page, $columnItems, $heroCtas, $data, $localeCode): void {
             $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncHeroCtas($block, $heroCtas, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -397,6 +402,32 @@ class BlockController extends Controller
             ->all();
     }
 
+    private function heroCtasFrom(Request $request): array
+    {
+        return collect([
+            [
+                'key' => 'primary',
+                'label' => $request->input('primary_cta_label'),
+                'url' => $request->input('primary_cta_url'),
+                'variant' => 'primary',
+            ],
+            [
+                'key' => 'secondary',
+                'label' => $request->input('secondary_cta_label'),
+                'url' => $request->input('secondary_cta_url'),
+                'variant' => 'secondary',
+            ],
+        ])->map(function (array $cta, int $index): array {
+            return [
+                'key' => $cta['key'],
+                'label' => trim((string) ($cta['label'] ?? '')) ?: null,
+                'url' => trim((string) ($cta['url'] ?? '')) ?: null,
+                'variant' => $cta['variant'],
+                'sort_order' => $index,
+            ];
+        })->all();
+    }
+
     private function syncColumnItems(Block $block, array $columnItems, ?string $localeCode = null): void
     {
         if (! $block->isColumnContainer()) {
@@ -457,6 +488,74 @@ class BlockController extends Controller
         }
 
         $staleItems->delete();
+    }
+
+    private function syncHeroCtas(Block $block, array $heroCtas, ?string $localeCode = null): void
+    {
+        if ($block->typeSlug() !== 'hero') {
+            return;
+        }
+
+        $buttonType = BlockType::query()->where('slug', 'button')->first();
+
+        if (! $buttonType) {
+            return;
+        }
+
+        $resolvedLocale = $localeCode
+            ? Locale::query()->whereRaw('LOWER(code) = ?', [strtolower($localeCode)])->first()
+            : null;
+        $isDefaultLocaleEdit = ! $resolvedLocale || $resolvedLocale->is_default;
+
+        $managedButtons = $block->children()
+            ->where('type', 'button')
+            ->orderBy('sort_order')
+            ->limit(2)
+            ->get()
+            ->values();
+
+        foreach ($heroCtas as $index => $cta) {
+            $existing = $managedButtons->get($index);
+            $hasSharedPayload = filled($cta['url']) || ($isDefaultLocaleEdit && filled($cta['label']));
+            $hasTranslatedPayload = ! $isDefaultLocaleEdit && filled($cta['label']);
+
+            if (! $existing && ! $hasSharedPayload && ! $hasTranslatedPayload) {
+                continue;
+            }
+
+            if (! $existing && ! $isDefaultLocaleEdit) {
+                continue;
+            }
+
+            if ($existing && blank($cta['label']) && blank($cta['url']) && $isDefaultLocaleEdit) {
+                $existing->delete();
+
+                continue;
+            }
+
+            if ($existing && blank($cta['label']) && ! $isDefaultLocaleEdit) {
+                continue;
+            }
+
+            $payload = [
+                'page_id' => $block->page_id,
+                'parent_id' => $block->id,
+                'block_type_id' => $buttonType->id,
+                'type' => $buttonType->slug,
+                'source_type' => $buttonType->source_type ?? 'static',
+                'slot_type_id' => $block->slot_type_id,
+                'slot' => $block->slot,
+                'sort_order' => $cta['sort_order'],
+                'title' => $cta['label'],
+                'url' => $isDefaultLocaleEdit ? $cta['url'] : ($existing?->url),
+                'subtitle' => $existing?->subtitle ?: '_self',
+                'variant' => $cta['variant'],
+                'status' => $existing?->status ?: 'published',
+                'is_system' => false,
+            ];
+
+            $this->blockPayloadWriter->save($existing ?? new Block, $block->page, $payload, $localeCode);
+        }
     }
 
     private function pageSlotRouteId(?int $pageId, ?int $slotTypeId): ?int

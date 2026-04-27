@@ -4,23 +4,37 @@
     $title = $block->title ?: trim((string) ($settings['headline'] ?? $settings['title'] ?? ''));
     $content = $block->content ?: trim((string) ($settings['body'] ?? $settings['content'] ?? $settings['copy'] ?? ''));
     $variant = $block->variant ?: 'default';
-    $promoClasses = ['wb-promo'];
+    $layout = trim((string) ($settings['layout'] ?? ($variant === 'centered' ? 'centered' : 'left')));
+    $heroClasses = ['wb-card', 'wb-promo'];
+    $copyClasses = ['wb-card-body', 'wb-promo-copy', 'wb-stack', 'wb-gap-3'];
 
-    if ($variant === 'centered') {
-        $promoClasses[] = 'wb-text-center';
+    if (in_array($variant, ['muted', 'soft'], true)) {
+        $heroClasses[] = 'wb-card-muted';
     }
 
-    $actionBlocks = $block->children->filter(fn ($child) => $child->typeSlug() === 'button')->values();
+    if ($variant === 'accent') {
+        $heroClasses[] = 'wb-card-accent';
+    }
+
+    if ($layout === 'centered') {
+        $copyClasses[] = 'wb-text-center';
+    }
+
+    $actionBlocks = $block->children
+        ->filter(fn ($child) => $child->typeSlug() === 'button')
+        ->filter(fn ($child) => filled($child->url) && filled($child->title))
+        ->take(2)
+        ->values();
 @endphp
 
-<div class="{{ implode(' ', $promoClasses) }}">
-    <div class="wb-promo-copy">
+<section class="{{ implode(' ', $heroClasses) }}">
+    <div class="{{ implode(' ', $copyClasses) }}">
         @if ($eyebrow !== '')
             <p class="wb-eyebrow">{{ $eyebrow }}</p>
         @endif
 
         @if ($title !== '')
-            <h2 class="wb-promo-title">{{ $title }}</h2>
+            <h1 class="wb-promo-title">{{ $title }}</h1>
         @endif
 
         @if ($content !== '')
@@ -29,7 +43,7 @@
 
         @include('pages.partials.blocks._actions', [
             'buttons' => $actionBlocks,
-            'wrapperClass' => 'wb-promo-actions',
+            'wrapperClass' => 'wb-promo-actions wb-cluster wb-cluster-2',
         ])
     </div>
-</div>
+</section>
