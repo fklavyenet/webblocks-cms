@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## 1.4.0
+
+### Added
+
+- Project Layer V1 with support for update-safe instance-specific providers, routes, config, views, and scaffold generation under `project/`.
+- New `ddev artisan project:init` scaffold command for creating the initial `project/` structure without overwriting existing files.
+
+### Changed
+
+- Composer autoload now includes the `Project\\` namespace for install-local project classes.
+- CMS documentation now defines the boundary between reusable core code and update-safe project-specific code.
+
+### Fixed
+
+- System update package installation now preserves `project/` alongside `.env` and `storage/` so CMS updates do not overwrite existing project-layer files.
+
 ## 1.3.0
 
 ### Added
