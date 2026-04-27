@@ -259,37 +259,6 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - `related-content` prefers child `button` or `column_item` blocks for reusable link structures. Existing legacy line-delimited link content remains supported as a compatibility path.
 - These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 
-## UI Docs Migration Pilot
-
-- The live WebBlocks UI documentation migration target inside this CMS install is the existing site record with domain `ui.docs.webblocksui.com`.
-- Do not create, clone, or repurpose another site for the pilot. The command is intentionally scoped to that existing target only.
-- Run `php artisan webblocks:sync-ui-docs-pilot` to rebuild the pilot pages with aligned CMS blocks.
-- The command is idempotent: it removes only the target pilot pages' block trees, recreates them cleanly, and leaves other sites and unrelated content untouched.
-
-### Rebuilt Pilot Pages
-
-- Home
-- Getting Started
-- Cookie Consent
-
-### Primary Block Usage
-
-- `section`
-- `heading`
-- `rich-text`
-- `callout`
-- `columns`
-- `column_item`
-- `button`
-- `code`
-- `related-content`
-
-### Known Gaps
-
-- Docs home still uses section composition instead of a dedicated docs-focused hero block.
-- Pattern preview stays static rather than introducing a custom preview system inside page content.
-- A richer Code Example Block is still needed for preview-plus-source documentation patterns.
-
 ## Stack
 
 - Laravel application

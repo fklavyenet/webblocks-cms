@@ -13,16 +13,29 @@
 - UI docs pilot content now writes pages and blocks through `BlockPayloadWriter` with translation-backed block storage where supported.
 - Related Content automatic fallback is now scoped to the current site instead of pulling published pages across multisite boundaries.
 - CMS documentation now clarifies the product boundary between reusable core features and project-specific migration scripts.
-- Promoted `hero`, `code`, and `related-content` to stable first-class CMS blocks with aligned admin editors, WebBlocks UI-oriented public renderers, and clearer translation versus shared-field boundaries.
 
 ### Fixed
 
 - Removed pilot-page drift by making the docs migration command idempotent and block-tree based instead of appending content on reruns.
-- Improved translation support for `hero`, `code`, and `related-content` while keeping shared settings in canonical block storage.
 
 ### Notes
 
 - Current pilot gaps remain documented instead of being solved with custom systems: docs home still uses section composition instead of a dedicated docs hero, Cookie Consent preview remains static, and a richer Code Example Block is still needed.
+
+## 1.2.0
+
+### Added
+
+- First-class CMS support for `hero`, `code`, and `related-content` blocks with dedicated admin editors and stable public renderers aligned to WebBlocks UI primitives.
+
+### Changed
+
+- Improved translation support for docs and marketing blocks so `hero`, `code`, and `related-content` consistently store translated copy in block translation rows.
+- `related-content` now prefers child-based link structures while preserving compatibility with existing legacy link-list content.
+
+### Fixed
+
+- Improved shared-settings handling in `BlockRequest` so shared hero and code configuration stays stable during translated edits.
 
 ## 1.1.1
 
