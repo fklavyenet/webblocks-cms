@@ -26,6 +26,13 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - contact form `submit_label` and `success_message` live in translation rows; block `settings` is reserved for shared operational config
 - no JSON storage is used for user-facing page or block content
 
+## Product Boundary
+
+- WebBlocks CMS core contains reusable CMS engine features such as page building, multilingual content, multisite, media, navigation, workflow, backup, update, and generic site export/import.
+- Site-specific migration scripts, one-off legacy importers, and project-only reconstruction helpers do not belong in CMS core.
+- If a migration script is only relevant to a specific site, brand, or historical project, keep it in that project workspace instead of this repository.
+- Generic site export/import remains part of CMS core and is the supported reusable transfer path.
+
 ## Installation
 
 For a fresh install, first get the source code locally:
