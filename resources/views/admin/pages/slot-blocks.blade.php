@@ -68,18 +68,6 @@
             </div>
         </div>
 
-        @if ($isPickerOpen)
-            <div class="wb-card-body wb-border-b">
-                @include('admin.pages.partials.slot-block-picker', [
-                    'page' => $page,
-                    'slot' => $slot,
-                    'blockTypes' => $blockTypes,
-                    'pickerSearch' => $pickerSearch,
-                    'isPickerOpen' => $isPickerOpen,
-                ])
-            </div>
-        @endif
-
         @if ($blocks->isEmpty())
             <div class="wb-card-body">
                 <div class="wb-empty">
@@ -263,6 +251,15 @@
 @endsection
 
 @push('overlays')
+    @include('admin.pages.partials.slot-block-picker', [
+        'page' => $page,
+        'slot' => $slot,
+        'blockTypes' => $blockTypes,
+        'pickerSearch' => $pickerSearch,
+        'isPickerOpen' => $isPickerOpen,
+        'slotModalMode' => $slotModalMode,
+    ])
+
     @include('admin.pages.partials.slot-block-modal', [
         'page' => $page,
         'slot' => $slot,

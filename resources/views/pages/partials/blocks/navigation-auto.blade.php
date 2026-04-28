@@ -1,7 +1,8 @@
 @php
     $menuKey = $block->navigationMenuKey();
+    $siteScope = $block->page?->site_id;
     $items = app(\App\Support\Navigation\NavigationTree::class)
-        ->buildMenuTree($menuKey)
+        ->buildMenuTree($menuKey, $siteScope)
         ->filter(fn ($item) => $item->isVisible());
 
     $renderNavigationBranch = function ($branch, bool $buttonRoot = false) use (&$renderNavigationBranch) {

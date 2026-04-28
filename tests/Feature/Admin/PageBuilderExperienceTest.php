@@ -1074,6 +1074,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Sidebar block');
         $response->assertSee('Add Block');
         $response->assertSee(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1]), false);
+        $response->assertDontSee('id="slot-block-picker-modal"', false);
+        $response->assertDontSee('Search block types');
         $response->assertDontSee('View Page');
         $response->assertDontSee('Manage the blocks assigned to this slot');
     }
@@ -1197,12 +1199,27 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
         ]);
 
+        $pickerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1]));
+
+        $pickerResponse->assertOk();
+        $pickerResponse->assertSee('Block Types');
+        $pickerResponse->assertSee('Search block types');
+        $pickerResponse->assertSee('Recommended');
+        $pickerResponse->assertSee('All block types');
+        $pickerResponse->assertSee('id="slot-block-picker-modal"', false);
+        $pickerResponse->assertSee('role="dialog"', false);
+        $pickerResponse->assertSee('aria-modal="true"', false);
+        $pickerResponse->assertSee('wb-list-item wb-list-item-action', false);
+        $pickerResponse->assertDontSee('Choose a block type, then complete its form in a modal.');
+        $pickerResponse->assertDontSee('Keep building in this slot without leaving the page.');
+        $pickerResponse->assertDontSee('id="slot-block-editor-modal"', false);
+
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
 
         $response->assertOk();
-        $response->assertSee('Search block types');
-        $response->assertSee('Recommended');
+        $response->assertDontSee('id="slot-block-picker-modal"', false);
         $response->assertSee('Add Block: Section (About / Main)');
+        $response->assertSee('id="slot-block-editor-modal"', false);
         $response->assertSee('wb-overlay-root', false);
         $response->assertSee('wb-modal-header', false);
         $response->assertSee('Block Info');
