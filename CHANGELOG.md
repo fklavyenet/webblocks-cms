@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## 1.4.7
+
+### Changed
+
+- Extracted the large inline admin JavaScript block from the admin layout into named admin assets under `public/assets/webblocks-cms/js/admin/`.
+- Organized Edit Slot and related admin behavior into page-safe modules covering core admin state reset, password fields, asset picking, inline block building, structured builder items, slot building, slot block expanded-state syncing, and page-builder modal handling.
+- Updated admin layout loading so WebBlocks UI is followed by versioned named admin JavaScript assets instead of injecting a monolithic inline script block into page HTML.
+- Updated admin-facing tests to validate named asset loading and current pages index behavior rather than the previous inline-script markup assumptions.
+
+### Documentation
+
+- Documented the admin JavaScript asset convention in `README.md` so new admin behavior is added through named assets instead of large Blade inline scripts.
+
+### Verification
+
+- Verified with `ddev artisan test` passing: 431 tests.
+
 ## 1.4.4
 
 ### Changed
