@@ -91,7 +91,6 @@
                         <a
                             href="{{ $item['full_url'] }}"
                             class="wb-gallery-trigger"
-                            data-wb-gallery-target="#wb-gallery-viewer"
                             data-wb-gallery-full="{{ $item['full_url'] }}"
                             data-wb-gallery-alt="{{ $item['alt'] }}"
                             @if ($item['caption'] !== '') data-wb-gallery-caption="{{ $item['caption'] }}" @endif

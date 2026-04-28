@@ -1,1 +1,3 @@
-@include($slot['view'], ['slot' => $slot, 'page' => $page])
+@foreach ($slot['blocks'] as $block)
+    @include('pages.partials.block', ['block' => $block])
+@endforeach

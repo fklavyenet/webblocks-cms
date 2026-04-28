@@ -888,17 +888,17 @@ class MediaManagementTest extends TestCase
         ])->render();
 
         $response->assertOk();
-        $this->assertStringContainsString('id="wb-overlay-root"', $html);
-        $this->assertStringContainsString('id="wb-gallery-viewer"', $html);
         $this->assertStringContainsString('wb-gallery', $galleryHtml);
         $this->assertStringContainsString('wb-gallery-trigger', $galleryHtml);
-        $this->assertStringContainsString('data-wb-gallery-target="#wb-gallery-viewer"', $galleryHtml);
+        $this->assertStringNotContainsString('id="wb-overlay-root"', $html);
+        $this->assertStringNotContainsString('id="wb-gallery-viewer"', $html);
+        $this->assertStringNotContainsString('data-wb-gallery-target="#wb-gallery-viewer"', $galleryHtml);
         $this->assertStringContainsString('/storage/media/images/gallery-public-1.jpg', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-alt="Gallery image one alt"', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-caption="First gallery caption"', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-meta="First gallery meta"', $galleryHtml);
-        $this->assertStringContainsString('wb-gallery-viewer-prev', $html);
-        $this->assertStringContainsString('wb-gallery-viewer-next', $html);
+        $this->assertStringNotContainsString('wb-gallery-viewer-prev', $html);
+        $this->assertStringNotContainsString('wb-gallery-viewer-next', $html);
     }
 
     #[Test]

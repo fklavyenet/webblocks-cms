@@ -27,9 +27,9 @@ class PublicLayoutModeTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<main class="wb-public-main" id="main-content">', false);
-        $response->assertSee('class="wb-container wb-container-lg"', false);
-        $response->assertSee('<div class="wb-stack wb-gap-6">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertDontSee('class="wb-container wb-container-lg"', false);
+        $response->assertDontSee('<div class="wb-stack wb-gap-6">', false);
         $response->assertDontSee('wb-content-shell', false);
         $this->assertSame(PublicLayoutMode::STACK, PublicLayoutMode::forPage($page->fresh()->load(['slots.slotType', 'blocks'])));
     }
@@ -42,11 +42,11 @@ class PublicLayoutModeTest extends TestCase
         $response = $this->get(route('pages.show', 'contact'));
 
         $response->assertOk();
-        $response->assertSee('<aside class="wb-public-sidebar" aria-label="Sidebar">', false);
+        $response->assertSee('<aside data-wb-slot="sidebar">', false);
         $response->assertSee('Sidebar supporting content');
-        $response->assertSee('<div class="wb-stack wb-gap-4">', false);
-        $response->assertSee('wb-grid wb-grid-4 wb-gap-6', false);
-        $response->assertDontSee('<aside class="wb-public-sidebar" aria-label="Sidebar">' . PHP_EOL . '                                    <div class="wb-card wb-card-muted">', false);
+        $response->assertDontSee('<div class="wb-stack wb-gap-4">', false);
+        $response->assertDontSee('wb-grid wb-grid-4 wb-gap-6', false);
+        $response->assertDontSee('wb-public-sidebar', false);
         $this->assertSame(PublicLayoutMode::SIDEBAR, PublicLayoutMode::forPage($page->fresh()->load(['slots.slotType', 'blocks'])));
     }
 

@@ -243,13 +243,10 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - With consent, WebBlocks keeps the richer Visitor Reports model, including sessions, unique visitor estimation, referrers, optional UTM campaign fields, and browser or device summaries.
 - Accept enables optional analytics tracking for sessions, unique visitors, referrers, UTM campaigns, browser summaries, device summaries, and OS summaries.
 - Decline still allows anonymous aggregate page view counting for Visitor Reports.
-- Public pages use the WebBlocks UI Cookie Consent pattern: one `wb-cookie-consent` bottom banner plus one shared `wb-modal` preference center mounted inside `#wb-overlay-root`.
-- The public footer legal area includes a persistent `Cookie settings` control that reopens the shared preference modal after consent has already been saved.
-- The browser-facing source of truth follows the WebBlocks UI pattern storage model: `localStorage` stores `wb-cookie-consent` plus `wb-cookie-consent-preferences`.
-- CMS also syncs the Visitor Reports consent cookie from the pattern state so backend tracking can continue to distinguish anonymous basic tracking from consented analytics tracking.
-- `Accept all`, `Reject`, and `Save preferences` persist consent. Closing the banner or modal with `X` only dismisses the UI for the current page view and does not save a choice.
+- Public shell-free rendering does not inject cookie consent banners, preference modals, reopen controls, or overlay roots into page HTML.
+- CMS can still sync Visitor Reports consent through the backend consent endpoint when an external site shell manages consent state.
 - Necessary Laravel cookies and sessions used for CSRF protection, admin authentication, forms, and general application security are separate from optional analytics consent.
-- Cookie consent UI only renders in the public layout. Admin and auth shells keep the shared WebBlocks UI CDN assets but do not render the consent banner.
+- Admin and auth shells keep their own CMS UI and are not affected by the shell-free public rendering mode.
 - The admin `Settings` screen includes a dedicated `Cookie settings` card for consent-banner controls and future privacy options.
 
 ### Visitor Report Config
@@ -265,10 +262,8 @@ See `docs/revisions.md` and `docs/operations.md` for details.
   `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css`
   `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css`
   `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js`
-- The consent banner markup lives in `resources/views/partials/public-privacy-consent.blade.php`.
-- The shared preference modal is mounted by `resources/views/layouts/public.blade.php` inside `#wb-overlay-root`.
-- The public footer reopen control lives in `resources/views/pages/partials/slots/footer.blade.php`.
-- When the WebBlocks UI pattern emits `wb:cookie-consent:change`, CMS posts the updated state to `public.privacy-consent.sync` so Visitor Reports backend consent stays aligned with the browser-side pattern state.
+- Public shell-free pages do not emit consent markup or overlay containers.
+- When an external consent implementation emits state changes, CMS can still receive updates through `public.privacy-consent.sync` so Visitor Reports backend consent stays aligned with the site shell.
 
 ### Report Semantics
 
@@ -297,6 +292,16 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Accordion provides grouped disclosure via semantic `<details>`, while FAQ remains a simple stable Q and A block.
 - Media blocks use semantic `video`, `audio`, and direct file-link rendering with a minimal external-link Map treatment.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
+
+## Public Rendering Mode
+
+WebBlocks CMS now supports a shell-free rendering mode where:
+
+- Only slots and blocks are rendered
+- No default UI (footer, consent, overlays) is injected
+- Blocks fully control the layout
+
+This enables building pure WebBlocks UI sites directly from CMS.
 - Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.
 - Deferred legacy blocks may still keep slug-matched compatibility renderers where needed to preserve existing public output, but that does not promote them to first-class WebBlocks UI patterns.
 - Transitional duplicate patterns such as legacy Card Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.

@@ -47,7 +47,6 @@
                                         <a
                                             href="{{ $imageUrl }}"
                                             class="wb-gallery-trigger"
-                                            data-wb-gallery-target="#wb-gallery-viewer"
                                             data-wb-gallery-full="{{ $imageUrl }}"
                                             data-wb-gallery-alt="{{ $asset?->alt_text ?: ($image['title'] ?? ($item['title'] ?? 'Project image')) }}"
                                             @if (! empty($image['title'])) data-wb-gallery-caption="{{ $image['title'] }}" @endif

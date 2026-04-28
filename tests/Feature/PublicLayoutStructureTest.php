@@ -19,7 +19,7 @@ class PublicLayoutStructureTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function public_layout_has_expected_shell_classes(): void
+    public function public_layout_renders_ordered_slot_wrappers(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
 
@@ -27,58 +27,125 @@ class PublicLayoutStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('class="wb-public-body"', false);
-        $response->assertSee('<main class="wb-public-main" id="main-content">', false);
-        $response->assertSee('class="wb-container wb-container-lg"', false);
+        $response->assertSeeInOrder([
+            '<header data-wb-slot="header">',
+            '<main data-wb-slot="main" id="main-content">',
+            '<aside data-wb-slot="sidebar">',
+            '<footer data-wb-slot="footer">',
+        ], false);
     }
 
     #[Test]
-    public function main_slot_uses_stack_layout(): void
+    public function main_slot_renders_direct_block_output(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
 
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<main class="wb-public-main" id="main-content">', false);
-        $response->assertSee('<div class="wb-stack wb-gap-6">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertSee('Main slot content');
+        $response->assertDontSee('wb-container wb-container-lg', false);
+        $response->assertDontSee('wb-stack wb-gap-6', false);
     }
 
     #[Test]
-    public function header_slot_uses_section_and_container(): void
+    public function header_slot_uses_semantic_wrapper_only(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
 
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<header class="wb-section wb-public-header" data-wb-public-header>', false);
-        $response->assertSee('<div class="wb-container wb-container-lg">', false);
+        $response->assertSee('<header data-wb-slot="header">', false);
+        $response->assertDontSee('wb-public-header', false);
     }
 
     #[Test]
-    public function sidebar_not_forced_card(): void
+    public function sidebar_slot_renders_without_shell_wrappers(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
 
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<aside class="wb-public-sidebar" aria-label="Sidebar">', false);
-        $response->assertSee('<div class="wb-stack wb-gap-4">', false);
-        $response->assertDontSee('<aside class="wb-public-sidebar" aria-label="Sidebar">' . PHP_EOL . '    <div class="wb-container wb-container-lg">' . PHP_EOL . '        <div class="wb-card wb-card-muted">', false);
+        $response->assertSee('<aside data-wb-slot="sidebar">', false);
+        $response->assertSee('Sidebar supporting content');
+        $response->assertDontSee('wb-public-sidebar', false);
     }
 
     #[Test]
-    public function footer_uses_section_and_grid(): void
+    public function footer_slot_renders_without_fallback_chrome(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
 
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<footer class="wb-section wb-section-muted wb-public-footer">', false);
-        $response->assertSee('<div class="wb-container wb-container-lg">', false);
-        $response->assertSee('<div class="wb-grid wb-grid-3 wb-gap-6">', false);
+        $response->assertSee('<footer data-wb-slot="footer">', false);
+        $response->assertSee('Footer supporting content');
+        $response->assertDontSee('wb-public-footer', false);
+        $response->assertDontSee('Cookie settings', false);
+    }
+
+    #[Test]
+    public function empty_slots_are_still_rendered(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $footer = $this->slotType('footer', 'Footer', 3);
+        $textType = $this->blockType('text', 'Text', 1);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Home',
+            'slug' => 'home',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            [
+                'page_id' => $page->id,
+                'locale_id' => Page::defaultLocaleId(),
+            ],
+            [
+                'site_id' => $site->id,
+                'name' => 'Home',
+                'slug' => 'home',
+                'path' => '/',
+            ]
+        );
+
+        foreach ([[$header, 0], [$main, 1], [$footer, 2]] as [$slotType, $sortOrder]) {
+            PageSlot::query()->create([
+                'page_id' => $page->id,
+                'slot_type_id' => $slotType->id,
+                'sort_order' => $sortOrder,
+            ]);
+        }
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'text',
+            'block_type_id' => $textType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Main slot content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header">', false);
+        $response->assertSee('<footer data-wb-slot="footer">', false);
+        $response->assertDontSee('This page has no published content yet');
     }
 
     private function buildHomepageWithHeaderSidebarAndFooter(): Page
