@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.4.1
+
+### Fixed
+
+- Preserved numeric zero values in `column_item` public rendering so stats and similar blocks do not treat `0`, `"0"`, or `0.0` as empty fallback content.
+
 ## 1.4.0
 
 ### Added
