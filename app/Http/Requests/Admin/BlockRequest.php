@@ -207,6 +207,12 @@ class BlockRequest extends FormRequest
                 return;
             }
 
+            if ($selectedBlockType?->slug === 'link-list-item' && ! $parent->isLinkList()) {
+                $validator->errors()->add('parent_id', 'Link list items can only be placed under a link-list block.');
+
+                return;
+            }
+
             if (! $block) {
                 return;
             }

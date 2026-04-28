@@ -18,14 +18,16 @@
 
         <div class="wb-link-list">
             @foreach ($headingBlocks as $headingBlock)
-                <div class="wb-link-list-item">
+                <a class="wb-link-list-item" href="#{{ $headingBlock->url }}">
                     <div class="wb-link-list-main">
-                        <a href="#{{ $headingBlock->url }}" class="wb-link-list-title">{{ $headingBlock->title ?: $headingBlock->content }}</a>
+                        <span class="wb-link-list-title">{{ $headingBlock->title ?: $headingBlock->content }}</span>
                         @if ($headingBlock->variant === 'h3')
-                            <div class="wb-link-list-meta">Section detail</div>
+                            <span class="wb-link-list-meta">Section detail</span>
                         @endif
                     </div>
-                </div>
+
+                    <div class="wb-link-list-desc">{{ $headingBlock->variant === 'h3' ? 'Jump to subsection' : 'Jump to section' }}</div>
+                </a>
             @endforeach
         </div>
     </div>

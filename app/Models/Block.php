@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 
@@ -251,7 +252,13 @@ class Block extends Model
     {
         $view = 'pages.partials.blocks.'.$this->typeSlug();
 
-        return View::exists($view) ? $view : 'pages.partials.blocks.fallback';
+        if (View::exists($view)) {
+            return $view;
+        }
+
+        return App::environment('production')
+            ? 'pages.partials.blocks.fallback'
+            : 'pages.partials.blocks.missing-renderer';
     }
 
     public function adminFormSupported(): bool

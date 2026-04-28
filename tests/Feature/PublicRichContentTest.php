@@ -130,8 +130,10 @@ class PublicRichContentTest extends TestCase
         $response->assertOk();
         $response->assertSee('wb-link-list', false);
         $response->assertSee('wb-link-list-item', false);
-        $response->assertSee('<a href="#overview" class="wb-link-list-title">Overview</a>', false);
-        $response->assertSee('<a href="#details" class="wb-link-list-title">Details</a>', false);
+        $response->assertSee('<a class="wb-link-list-item" href="#overview">', false);
+        $response->assertSee('<span class="wb-link-list-title">Overview</span>', false);
+        $response->assertSee('<a class="wb-link-list-item" href="#details">', false);
+        $response->assertSee('<span class="wb-link-list-title">Details</span>', false);
     }
 
     #[Test]

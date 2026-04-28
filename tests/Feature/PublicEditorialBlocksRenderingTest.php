@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
+use Illuminate\Support\Facades\View;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,6 +17,17 @@ use Tests\TestCase;
 class PublicEditorialBlocksRenderingTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function canonical_public_block_renderers_exist_for_slug_named_editorial_blocks(): void
+    {
+        foreach (['link-list', 'link-list-item', 'feature-grid', 'cta'] as $slug) {
+            $this->assertTrue(
+                View::exists('pages.partials.blocks.'.$slug),
+                'Expected public renderer for slug ['.$slug.'] to exist at pages.partials.blocks.'.$slug
+            );
+        }
+    }
 
     #[Test]
     public function list_block_renders_ordered_items_from_line_delimited_content(): void
@@ -202,13 +214,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('Keep reading');
         $response->assertSee('Browse the next resources.');
         $response->assertSee('Choose the next useful references.');
+        $response->assertSee('<div class="wb-link-list">', false);
         $response->assertSee('wb-link-list', false);
-        $response->assertSee('wb-link-list-item', false);
-        $response->assertSee('<a href="/docs/start" class="wb-link-list-title">Getting Started</a>', false);
+        $response->assertSee('<a class="wb-link-list-item" href="/docs/start">', false);
+        $response->assertSee('<div class="wb-link-list-main">', false);
+        $response->assertSee('<div class="wb-link-list-desc">Basics and setup</div>', false);
+        $response->assertSee('<span class="wb-link-list-title">Getting Started</span>', false);
         $response->assertSee('wb-link-list-meta', false);
         $response->assertSee('Guide');
         $response->assertSee('wb-link-list-desc', false);
         $response->assertSee('Endpoints and payloads');
+        $response->assertDontSee('pages.partials.blocks.section', false);
+        $response->assertDontSee('pages.partials.blocks.text', false);
     }
 
     #[Test]
@@ -236,6 +253,29 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('wb-link-list', false);
         $response->assertDontSee('wb-link-list-item', false);
+    }
+
+    #[Test]
+    public function link_list_item_public_view_matches_its_slug_named_renderer(): void
+    {
+        $item = new Block([
+            'type' => 'link-list-item',
+            'title' => 'Renderer check',
+            'content' => 'Slug named renderer',
+            'url' => '/docs/check',
+        ]);
+
+        $this->assertSame('pages.partials.blocks.link-list-item', $item->publicRenderView());
+    }
+
+    #[Test]
+    public function missing_public_renderer_uses_non_production_diagnostic_view(): void
+    {
+        $block = new Block([
+            'type' => 'missing-link-list-demo',
+        ]);
+
+        $this->assertSame('pages.partials.blocks.missing-renderer', $block->publicRenderView());
     }
 
     private function pageWithMainSlot(string $title = 'About', string $slug = 'about', string $pageType = 'default'): Page

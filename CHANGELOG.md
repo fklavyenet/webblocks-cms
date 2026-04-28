@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## 1.4.3
+
+### Added
+
+- Added a non-production missing-renderer diagnostic view so missing public block renderers fail clearly during development instead of silently delegating to unrelated renderers.
+
+### Changed
+
+- Enforced the public renderer convention that a block slug resolves to the matching Blade renderer filename under `resources/views/pages/partials/blocks/{slug}.blade.php`.
+- Kept `link-list` and `link-list-item` as first-class core block types with slug-matched public and admin renderer files.
+- Aligned public `link-list`, `link-list-item`, and TOC link-list output to the canonical WebBlocks UI link-list DOM contract using `wb-link-list`, anchor-level `wb-link-list-item`, direct `wb-link-list-main`, and direct `wb-link-list-desc` elements.
+
+### Fixed
+
+- Prevented `link-list-item` blocks from being created under unrelated parent blocks by enforcing `link-list` as the canonical managed container parent.
+- Preserved legacy `slider` public output under the slug-to-renderer rule by adding a dedicated `slider` renderer instead of relying on fallback delegation.
+
 ## 1.4.2
 
 ### Added

@@ -295,6 +295,8 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Accordion provides grouped disclosure via semantic `<details>`, while FAQ remains a simple stable Q and A block.
 - Media blocks use semantic `video`, `audio`, and direct file-link rendering with a minimal external-link Map treatment.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
+- Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.
+- Deferred legacy blocks may still keep slug-matched compatibility renderers where needed to preserve existing public output, but that does not promote them to first-class WebBlocks UI patterns.
 - Transitional duplicate patterns such as legacy Card Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
 - Breadcrumb, Tabs, and Slider remain deferred until WebBlocks UI ships confirmed patterns or the public shell requires them.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
@@ -319,7 +321,9 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - `feature-grid` is a first-class marketing/data-display block with translated container copy and managed child `feature-item` cards.
 - `feature-item` is the managed child block for `feature-grid`, with translated `title` and `content` plus an optional shared `url`.
 - `link-list` is a first-class editorial/docs block with translated container fields `subtitle` (eyebrow), `title` (heading), and optional `content` intro text.
+- `link-list` renders through `resources/views/pages/partials/blocks/link-list.blade.php` and owns the canonical `wb-link-list` container markup.
 - `link-list-item` is the managed child block for `link-list`, with translated `title`, `subtitle` (meta), and `content` (description) plus a shared `url`.
+- `link-list-item` renders through `resources/views/pages/partials/blocks/link-list-item.blade.php` using canonical WebBlocks UI markup: anchor-level `wb-link-list-item` with direct child `div.wb-link-list-main` and direct child `div.wb-link-list-desc`.
 - `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists. `feature-grid` still renders legacy `column_item` children as a compatibility fallback for existing data.
 - These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 

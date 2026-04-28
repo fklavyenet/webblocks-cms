@@ -1690,6 +1690,64 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function link_list_item_block_is_rejected_when_parent_is_not_link_list(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+        $section = Block::create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Section',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $mainSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => $section->id,
+                'block_type_id' => $linkListItemType->id,
+                'slot_type_id' => $main->id,
+                'sort_order' => 1,
+                'title' => 'Getting Started',
+                'subtitle' => 'Guide',
+                'content' => 'Basics and setup',
+                'url' => '/docs/start',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot]));
+        $response->assertSessionHasErrors('parent_id');
+        $this->assertDatabaseMissing('blocks', [
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'link-list-item',
+            'url' => '/docs/start',
+        ]);
+    }
+
+    #[Test]
     public function accordion_admin_form_is_available(): void
     {
         $this->seed(BlockTypeSeeder::class);

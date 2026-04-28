@@ -1,17 +1,18 @@
-<div class="wb-link-list-item">
+@php
+    $href = $block->url ?: '#';
+    $title = $block->title ?: $block->url ?: 'Open link';
+    $meta = trim((string) $block->subtitle);
+    $description = trim((string) $block->content);
+@endphp
+
+<a class="wb-link-list-item" href="{{ $href }}">
     <div class="wb-link-list-main">
-        @if ($block->url)
-            <a href="{{ $block->url }}" class="wb-link-list-title">{{ $block->title ?: $block->url }}</a>
-        @elseif ($block->title)
-            <div class="wb-link-list-title">{{ $block->title }}</div>
-        @endif
+        <span class="wb-link-list-title">{{ $title }}</span>
 
-        @if ($block->subtitle)
-            <div class="wb-link-list-meta">{{ $block->subtitle }}</div>
-        @endif
-
-        @if ($block->content)
-            <div class="wb-link-list-desc">{{ $block->content }}</div>
+        @if ($meta !== '')
+            <span class="wb-link-list-meta">{{ $meta }}</span>
         @endif
     </div>
-</div>
+
+    <div class="wb-link-list-desc">{{ $description !== '' ? $description : $title }}</div>
+</a>
