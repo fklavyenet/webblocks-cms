@@ -1,6 +1,6 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
-    $recommendedSlugs = collect(['section', 'heading', 'rich-text', 'callout', 'button']);
+    $recommendedSlugs = collect(['header', 'plain_text']);
     $excludedSlugs = collect(['column_item', 'feature-item', 'link-list-item', 'menu']);
     $expandedBlockQuery = trim((string) request('expanded'));
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';

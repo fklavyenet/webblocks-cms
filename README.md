@@ -26,6 +26,16 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - contact form `submit_label` and `success_message` live in translation rows; block `settings` is reserved for shared operational config
 - no JSON storage is used for user-facing page or block content
 
+## Block Foundation
+
+- The active CMS block foundation is intentionally minimal: `header` and `plain_text`.
+- These are primitive content blocks only. They are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
+- `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
+- `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
+- The default locale must always have a translation row for translatable blocks.
+- Public rendering reads user-facing text from translation rows, not canonical fallback columns.
+- Primitive blocks do not carry WebBlocks UI pattern classes. Pattern and layout styling belongs to future higher-level blocks added deliberately later.
+
 ## Product Boundary
 
 - WebBlocks CMS core contains reusable CMS engine features such as page building, multilingual content, multisite, media, navigation, workflow, backup, update, and generic site export/import.
@@ -162,7 +172,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Add blocks, save your edits, and submit the page for review when ready.
+5. Add `Header` and `Plain Text` blocks, save your edits, and submit the page for review when ready.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 
@@ -287,13 +297,10 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 ## Public Rendering
 
-- CMS blocks now render through shipped WebBlocks UI primitives instead of ad-hoc HTML and CSS in normal editorial flows.
-- Editors do not need to paste manual HTML for standard content patterns such as Hero, Button, Columns, List, Table, Related Content, Accordion, and the aligned media blocks.
-- Hero uses the shipped `wb-promo` pattern, Buttons use supported variants, and Columns provide the stable `plain`, `cards`, `stats`, and `links` directions.
-- List, Table, and Related Content have first-class editorial inputs and semantic public renderers.
-- Accordion provides grouped disclosure via semantic `<details>`, while FAQ remains a simple stable Q and A block.
-- Media blocks use semantic `video`, `audio`, and direct file-link rendering with a minimal external-link Map treatment.
-- Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
+- `header` renders only the selected semantic heading element, for example `<h1>Text</h1>`.
+- `plain_text` renders only a semantic paragraph element, for example `<p>Text</p>`.
+- Both primitive blocks escape output safely.
+- No WebBlocks UI pattern classes are applied to primitive content blocks.
 
 ## Public Rendering Mode
 
@@ -314,31 +321,14 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Breadcrumb, Tabs, and Slider remain deferred until WebBlocks UI ships confirmed patterns or the public shell requires them.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 
-## Hero Block
+## Foundation Reset
 
-- `hero` is a first-class marketing block intended for page-leading intros, docs landings, and public-site campaigns.
-- Translated hero fields live in `block_text_translations`: `title`, `subtitle` (used as eyebrow), and `content` (used as intro text).
-- Hero CTA labels are translated through the managed child `button` blocks owned by the hero editor.
-- Shared hero fields stay on the block record: `variant`, CTA URLs, and `settings.layout`.
-- Shared hero heading semantics live in `settings.title_tag`, so the same block can render safely as `h1`, `h2`, or `h3` depending on context.
-- The admin form exposes up to two inline CTAs: primary and secondary.
-- Public hero CTA output is always inline inside the hero action row. Empty labels or empty URLs do not render buttons.
-- Legacy hero content stored in `settings` keys such as `label`, `headline`, and `body` still renders as a compatibility fallback.
-- Current limitation: the first-class hero editor manages the first two child button CTAs only. Additional child buttons remain compatibility content and are not surfaced as separate structured hero fields.
-
-## Docs/Marketing Block Support
-
-- `hero` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields. Shared presentation stays in shared fields such as `variant`, `settings.layout`, `settings.title_tag`, and CTA URLs.
-- `cta` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields plus up to two managed child CTA buttons. Shared presentation stays on the block record via `variant`, while CTA URLs remain shared on the child buttons.
-- `code` is a first-class docs block with translated `title`, `subtitle`, and `content` fields. Shared syntax metadata stays in `settings.language`.
-- `feature-grid` is a first-class marketing/data-display block with translated container copy and managed child `feature-item` cards.
-- `feature-item` is the managed child block for `feature-grid`, with translated `title` and `content` plus an optional shared `url`.
-- `link-list` is a first-class editorial/docs block with translated container fields `subtitle` (eyebrow), `title` (heading), and optional `content` intro text.
-- `link-list` renders through `resources/views/pages/partials/blocks/link-list.blade.php` and owns the canonical `wb-link-list` container markup.
-- `link-list-item` is the managed child block for `link-list`, with translated `title`, `subtitle` (meta), and `content` (description) plus a shared `url`.
-- `link-list-item` renders through `resources/views/pages/partials/blocks/link-list-item.blade.php` using canonical WebBlocks UI markup: anchor-level `wb-link-list-item` with direct child `div.wb-link-list-main` and direct child `div.wb-link-list-desc`.
-- `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists. `feature-grid` still renders legacy `column_item` children as a compatibility fallback for existing data.
-- These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
+- The previous broad and experimental block catalog is no longer active in the CMS picker. Only `header` and `plain_text` are published foundation block types.
+- Legacy block type records may remain in the database as draft compatibility records for existing data and imports, but they are not part of the active foundation.
+- `StarterContentSeeder`, `FullShowcaseSeeder`, `StarterInstallSeeder`, and `ShowcaseInstallSeeder` are intentionally quarantined until their content is rebuilt for the primitive foundation.
+- For local development resets after changing the foundation, reseed block types with `ddev artisan db:seed` and remove old non-primitive page blocks with `ddev artisan cms:reset-primitive-blocks`.
+- Use `ddev artisan cms:reset-primitive-blocks --dry-run` first if you want to inspect the impact.
+- Future WebBlocks UI pattern blocks such as Section, Container, Hero, Promo, Card, and similar higher-level patterns will be added later, one by one.
 
 ## System Updates
 

@@ -64,6 +64,14 @@ class PageRevisionTest extends TestCase
         );
     }
 
+    private function plainTextBlockType(): BlockType
+    {
+        return BlockType::query()->firstOrCreate(
+            ['slug' => 'plain_text'],
+            ['name' => 'Plain Text', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1],
+        );
+    }
+
     private function columnsBlockType(): BlockType
     {
         return BlockType::query()->firstOrCreate(
@@ -416,7 +424,7 @@ class PageRevisionTest extends TestCase
         $site = $this->defaultSite();
         $user = $this->siteAdminFor($site);
         $main = $this->slotType('main', 'Main', 1);
-        $sectionType = $this->sectionBlockType();
+        $plainTextType = $this->plainTextBlockType();
         $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
 
         $slot = PageSlot::create([
@@ -427,13 +435,12 @@ class PageRevisionTest extends TestCase
 
         $block = Block::create([
             'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $sectionType->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $main->id,
             'sort_order' => 0,
-            'title' => 'Hero',
             'content' => 'Original content',
             'status' => 'published',
             'is_system' => false,
@@ -441,7 +448,6 @@ class PageRevisionTest extends TestCase
 
         $block->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
-            'title' => 'Hero',
             'content' => 'Original content',
         ]);
 
@@ -450,11 +456,10 @@ class PageRevisionTest extends TestCase
         $this->actingAs($user)->put(route('admin.blocks.update', $block), [
             'page_id' => $page->id,
             'parent_id' => null,
-            'block_type_id' => $sectionType->id,
+            'block_type_id' => $plainTextType->id,
             'slot_type_id' => $main->id,
             'sort_order' => 0,
-            'title' => 'Hero updated',
-            'content' => 'Updated content',
+            'text' => 'Updated content',
             'status' => 'published',
             '_slot_block_mode' => 'edit',
             '_slot_block_id' => $block->id,
@@ -465,11 +470,10 @@ class PageRevisionTest extends TestCase
         $this->actingAs($user)->put(route('admin.blocks.update', $block), [
             'page_id' => $page->id,
             'parent_id' => null,
-            'block_type_id' => $sectionType->id,
+            'block_type_id' => $plainTextType->id,
             'slot_type_id' => $main->id,
             'sort_order' => 0,
-            'title' => 'Second update',
-            'content' => 'Second content',
+            'text' => 'Second content',
             'status' => 'published',
             '_slot_block_mode' => 'edit',
             '_slot_block_id' => $block->id,
@@ -482,13 +486,10 @@ class PageRevisionTest extends TestCase
         $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
         $resolvedBlock = app(BlockTranslationResolver::class)->resolve($restoredBlock, $this->defaultLocale());
 
-        $this->assertNull($restoredBlock->getRawOriginal('title'));
         $this->assertNull($restoredBlock->getRawOriginal('content'));
-        $this->assertSame('Hero updated', $resolvedBlock->title);
         $this->assertSame('Updated content', $resolvedBlock->content);
         $this->get(route('pages.show', 'about'))
             ->assertOk()
-            ->assertSee('Hero updated')
             ->assertSee('Updated content');
     }
 }

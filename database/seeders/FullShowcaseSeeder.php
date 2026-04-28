@@ -40,21 +40,7 @@ class FullShowcaseSeeder extends Seeder
 
     public function run(): void
     {
-        $this->blockTypes = BlockType::query()->get()->keyBy('slug');
-        $this->slotTypes = SlotType::query()->whereIn('slug', ['header', 'main', 'sidebar', 'footer'])->get()->keyBy('slug');
-        $this->pages = collect();
-        $this->folders = collect();
-        $this->assets = collect();
-        $this->defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
-        $this->uploaderId = User::query()->where('email', 'admin@example.com')->value('id')
-            ?? User::query()->where('email', 'test@example.com')->value('id')
-            ?? User::query()->value('id');
-
-        $this->seedFolders();
-        $this->seedAssets();
-        $this->seedPages();
-        $this->seedNavigation();
-        $this->seedPageContent();
+        throw new \RuntimeException('FullShowcaseSeeder is quarantined while the CMS foundation is limited to header and plain_text blocks. Rebuild showcase content deliberately before re-enabling this seeder.');
     }
 
     private function seedFolders(): void

@@ -6,11 +6,13 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
-use Illuminate\Support\Facades\View;
+use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -19,266 +21,73 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function canonical_public_block_renderers_exist_for_slug_named_editorial_blocks(): void
+    public function canonical_public_block_renderers_exist_for_primitive_blocks(): void
     {
-        foreach (['link-list', 'link-list-item', 'feature-grid', 'cta'] as $slug) {
-            $this->assertTrue(
-                View::exists('pages.partials.blocks.'.$slug),
-                'Expected public renderer for slug ['.$slug.'] to exist at pages.partials.blocks.'.$slug
-            );
+        foreach (['header', 'plain_text'] as $slug) {
+            $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
     }
 
     #[Test]
-    public function list_block_renders_ordered_items_from_line_delimited_content(): void
+    public function header_block_renders_selected_heading_level_with_escaped_translated_text(): void
     {
         $page = $this->pageWithMainSlot();
-
-        Block::query()->create([
+        $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'list',
-            'block_type_id' => $this->blockType('list', 'List', 1)->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 1)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'title' => 'Launch checklist',
-            'content' => "Provision site\nSeed content\nPublish page",
-            'variant' => 'ordered',
+            'variant' => 'h3',
             'status' => 'published',
             'is_system' => false,
         ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Title <script>alert(1)</script>',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('Launch checklist');
-        $response->assertSee('<ol class="wb-stack wb-gap-1">', false);
-        $response->assertSee('<li>Provision site</li>', false);
-        $response->assertSee('<li>Seed content</li>', false);
-        $response->assertSee('<li>Publish page</li>', false);
+        $response->assertSee('<h3>Title &lt;script&gt;alert(1)&lt;/script&gt;</h3>', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
     }
 
     #[Test]
-    public function list_block_preserves_legacy_settings_items(): void
+    public function plain_text_block_renders_plain_paragraph_with_escaped_translated_text(): void
     {
         $page = $this->pageWithMainSlot();
-
-        Block::query()->create([
+        $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'list',
-            'block_type_id' => $this->blockType('list', 'List', 1)->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'title' => 'Migrated list',
-            'content' => 'This should not render',
-            'settings' => json_encode([
-                'items' => [
-                    ['label' => 'Existing setting item'],
-                    ['title' => 'Second setting item'],
-                ],
-            ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Paragraph <strong>copy</strong>',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('Existing setting item');
-        $response->assertSee('Second setting item');
+        $response->assertSee('<p>Paragraph &lt;strong&gt;copy&lt;/strong&gt;</p>', false);
+        $response->assertDontSee('<strong>copy</strong>', false);
     }
 
-    #[Test]
-    public function table_block_renders_header_row_from_line_delimited_content(): void
-    {
-        $page = $this->pageWithMainSlot();
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'table',
-            'block_type_id' => $this->blockType('table', 'Table', 2)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Plan matrix',
-            'content' => "Plan | Seats | Support\nStarter | 3 | Email\nScale | 10 | Priority",
-            'variant' => 'header-row',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('wb-table-wrap', false);
-        $response->assertSee('<table class="wb-table">', false);
-        $response->assertSee('<th>Plan</th>', false);
-        $response->assertSee('<th>Seats</th>', false);
-        $response->assertSee('<td>Starter</td>', false);
-        $response->assertSee('<td>Priority</td>', false);
-    }
-
-    #[Test]
-    public function table_block_preserves_legacy_settings_rows(): void
-    {
-        $page = $this->pageWithMainSlot();
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'table',
-            'block_type_id' => $this->blockType('table', 'Table', 2)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'content' => 'Legacy content should not render',
-            'settings' => json_encode([
-                'rows' => [
-                    ['columns' => [['label' => 'Name'], ['label' => 'Role']]],
-                    ['columns' => [['label' => 'Ava'], ['label' => 'Editor']]],
-                ],
-            ], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<th>Name</th>', false);
-        $response->assertSee('<td>Ava</td>', false);
-        $response->assertSee('<td>Editor</td>', false);
-    }
-
-    #[Test]
-    public function link_list_block_renders_editorial_links_as_webblocks_link_list(): void
-    {
-        $page = $this->pageWithMainSlot();
-
-        $linkList = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'link-list',
-            'block_type_id' => $this->blockType('link-list', 'Link List', 3)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Keep reading',
-            'subtitle' => 'Browse the next resources.',
-            'content' => 'Choose the next useful references.',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $linkList->id,
-            'type' => 'link-list-item',
-            'block_type_id' => $this->blockType('link-list-item', 'Link List Item', 4)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Getting Started',
-            'subtitle' => 'Guide',
-            'content' => 'Basics and setup',
-            'url' => '/docs/start',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $linkList->id,
-            'type' => 'link-list-item',
-            'block_type_id' => $this->blockType('link-list-item', 'Link List Item', 5)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 1,
-            'title' => 'API Reference',
-            'subtitle' => 'Docs',
-            'content' => 'Endpoints and payloads',
-            'url' => '/docs/api',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('Keep reading');
-        $response->assertSee('Browse the next resources.');
-        $response->assertSee('Choose the next useful references.');
-        $response->assertSee('<div class="wb-link-list">', false);
-        $response->assertSee('wb-link-list', false);
-        $response->assertSee('<a class="wb-link-list-item" href="/docs/start">', false);
-        $response->assertSee('<div class="wb-link-list-main">', false);
-        $response->assertSee('<div class="wb-link-list-desc">Basics and setup</div>', false);
-        $response->assertSee('<span class="wb-link-list-title">Getting Started</span>', false);
-        $response->assertSee('wb-link-list-meta', false);
-        $response->assertSee('Guide');
-        $response->assertSee('wb-link-list-desc', false);
-        $response->assertSee('Endpoints and payloads');
-        $response->assertDontSee('pages.partials.blocks.section', false);
-        $response->assertDontSee('pages.partials.blocks.text', false);
-    }
-
-    #[Test]
-    public function link_list_block_does_not_render_empty_wrapper_without_items(): void
-    {
-        $page = $this->pageWithMainSlot();
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'link-list',
-            'block_type_id' => $this->blockType('link-list', 'Link List', 3)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'title' => 'Continue reading',
-            'subtitle' => 'Recommended next steps',
-            'content' => 'Browse the next useful references.',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertDontSee('wb-link-list', false);
-        $response->assertDontSee('wb-link-list-item', false);
-    }
-
-    #[Test]
-    public function link_list_item_public_view_matches_its_slug_named_renderer(): void
-    {
-        $item = new Block([
-            'type' => 'link-list-item',
-            'title' => 'Renderer check',
-            'content' => 'Slug named renderer',
-            'url' => '/docs/check',
-        ]);
-
-        $this->assertSame('pages.partials.blocks.link-list-item', $item->publicRenderView());
-    }
-
-    #[Test]
-    public function missing_public_renderer_uses_non_production_diagnostic_view(): void
-    {
-        $block = new Block([
-            'type' => 'missing-link-list-demo',
-        ]);
-
-        $this->assertSame('pages.partials.blocks.missing-renderer', $block->publicRenderView());
-    }
-
-    private function pageWithMainSlot(string $title = 'About', string $slug = 'about', string $pageType = 'default'): Page
+    private function pageWithMainSlot(string $title = 'About', string $slug = 'about'): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $site = Site::query()->firstOrFail();
@@ -287,9 +96,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'site_id' => $site->id,
             'title' => $title,
             'slug' => $slug,
-            'page_type' => $pageType,
+            'page_type' => 'default',
             'status' => 'published',
         ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => $title, 'slug' => $slug, 'path' => '/p/'.$slug],
+        );
 
         PageSlot::query()->create([
             'page_id' => $page->id,
@@ -308,11 +122,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         );
     }
 
-    private function blockType(string $slug, string $name, int $sortOrder, bool $isSystem = false, string $sourceType = 'static'): BlockType
+    private function blockType(string $slug, string $name, int $sortOrder): BlockType
     {
         return BlockType::query()->updateOrCreate(
             ['slug' => $slug],
-            ['name' => $name, 'source_type' => $sourceType, 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => $isSystem],
+            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => false],
         );
     }
 }

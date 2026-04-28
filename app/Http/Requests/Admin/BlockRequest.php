@@ -39,6 +39,8 @@ class BlockRequest extends FormRequest
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
         $isHero = $selectedBlockType?->slug === 'hero';
         $isCode = $selectedBlockType?->slug === 'code';
+        $isHeader = $selectedBlockType?->slug === 'header';
+        $isPlainText = $selectedBlockType?->slug === 'plain_text';
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -57,6 +59,8 @@ class BlockRequest extends FormRequest
             'title' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
+            'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
+            'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -399,6 +403,32 @@ class BlockRequest extends FormRequest
                         : (bool) ($data['store_submissions'] ?? true),
                 ], JSON_UNESCAPED_SLASHES);
             }
+
+            if ($blockType?->slug === 'header') {
+                $isTranslatedHeaderEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['text'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+                $data['variant'] = $isTranslatedHeaderEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (trim((string) ($data['level'] ?? '')) ?: 'h2');
+            }
+
+            if ($blockType?->slug === 'plain_text') {
+                $data['content'] = trim((string) ($data['text'] ?? '')) ?: null;
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
         }
 
         if (! empty($data['slot_type_id'])) {
@@ -411,6 +441,7 @@ class BlockRequest extends FormRequest
         unset($data['title_tag']);
         unset($data['language']);
         unset($data['navigation_menu_key']);
+        unset($data['text'], $data['level']);
 
         return $data;
     }

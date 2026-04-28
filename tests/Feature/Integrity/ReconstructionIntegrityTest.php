@@ -59,11 +59,19 @@ class ReconstructionIntegrityTest extends TestCase
         );
     }
 
-    private function sectionType(): BlockType
+    private function headerType(): BlockType
     {
         return BlockType::query()->updateOrCreate(
-            ['slug' => 'section'],
-            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published'],
+            ['slug' => 'header'],
+            ['name' => 'Header', 'source_type' => 'static', 'status' => 'published'],
+        );
+    }
+
+    private function plainTextType(): BlockType
+    {
+        return BlockType::query()->updateOrCreate(
+            ['slug' => 'plain_text'],
+            ['name' => 'Plain Text', 'source_type' => 'static', 'status' => 'published'],
         );
     }
 
@@ -97,14 +105,13 @@ class ReconstructionIntegrityTest extends TestCase
 
         $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $this->sectionType()->id,
+            'type' => 'header',
+            'block_type_id' => $this->headerType()->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'title' => 'Hero',
-            'content' => 'Original content',
+            'variant' => 'h1',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -112,12 +119,10 @@ class ReconstructionIntegrityTest extends TestCase
         $block->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Hero',
-            'content' => 'Original content',
         ]);
         $block->textTranslations()->create([
             'locale_id' => $turkish->id,
             'title' => 'Kahraman',
-            'content' => 'Orijinal icerik',
         ]);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -131,7 +136,6 @@ class ReconstructionIntegrityTest extends TestCase
         ]);
         $block->textTranslations()->where('locale_id', $this->defaultLocale()->id)->update([
             'title' => 'Changed hero',
-            'content' => 'Changed content',
         ]);
 
         $manager->restore($page->fresh(), $revision, $user);
@@ -144,7 +148,7 @@ class ReconstructionIntegrityTest extends TestCase
         $this->assertNull($restoredBlock->getRawOriginal('title'));
         $this->assertNull($restoredBlock->getRawOriginal('content'));
         $this->assertSame('Hero', $resolvedBlock->title);
-        $this->assertSame('Original content', $resolvedBlock->content);
+        $this->assertNull($resolvedBlock->content);
     }
 
     #[Test]
@@ -169,12 +173,11 @@ class ReconstructionIntegrityTest extends TestCase
             ->where('site_id', $targetSite->id)
             ->whereHas('translations', fn ($query) => $query->where('slug', 'about'))
             ->firstOrFail();
-        $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('type', 'column_item')->firstOrFail();
+        $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
 
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
-        $this->assertDatabaseHas('block_text_translations', ['block_id' => $columnItem->id, 'title' => 'Hizli kurulum']);
-        $this->assertNull($columnItem->getRawOriginal('title'));
-        $this->assertNull($columnItem->getRawOriginal('content'));
+        $this->assertDatabaseHas('block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
+        $this->assertNull($header->getRawOriginal('title'));
         $this->assertSame(['en', 'tr'], $targetSite->fresh()->enabledLocales()->orderBy('code')->pluck('code')->all());
     }
 
@@ -204,8 +207,8 @@ class ReconstructionIntegrityTest extends TestCase
 
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
         $this->assertSame(['en', 'tr'], $site->enabledLocales()->orderBy('code')->pluck('code')->all());
-        $this->get('http://imported.example.test/p/about')->assertOk()->assertSee('Fast setup');
-        $this->get('http://imported.example.test/tr/p/hakkinda')->assertOk()->assertSee('Hizli kurulum');
+        $this->get('http://imported.example.test/p/about')->assertOk()->assertSee('English paragraph content');
+        $this->get('http://imported.example.test/tr/p/hakkinda')->assertOk()->assertSee('Turkce paragraf icerigi');
     }
 
     #[Test]
@@ -256,18 +259,18 @@ class ReconstructionIntegrityTest extends TestCase
                 'blocks' => [[
                     'snapshot_id' => 100,
                     'parent_snapshot_id' => null,
-                    'type' => 'section',
-                    'block_type_id' => $this->sectionType()->id,
+                    'type' => 'header',
+                    'block_type_id' => $this->headerType()->id,
                     'source_type' => 'static',
                     'slot' => 'main',
                     'slot_type_id' => $slotType->id,
                     'sort_order' => 0,
                     'title' => 'Legacy hero',
                     'subtitle' => null,
-                    'content' => 'Legacy content',
+                    'content' => null,
                     'url' => null,
                     'asset_id' => null,
-                    'variant' => null,
+                    'variant' => 'h2',
                     'meta' => null,
                     'settings' => null,
                     'status' => 'published',
@@ -289,11 +292,11 @@ class ReconstructionIntegrityTest extends TestCase
             'block_id' => $restoredBlock->id,
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Legacy hero',
-            'content' => 'Legacy content',
+            'content' => null,
         ]);
         $this->assertNull($restoredBlock->getRawOriginal('title'));
         $this->assertNull($restoredBlock->getRawOriginal('content'));
-        $this->get('/p/about')->assertOk()->assertSee('Legacy hero')->assertSee('Legacy content');
+        $this->get('/p/about')->assertOk()->assertSee('<h2>Legacy hero</h2>', false);
     }
 
     #[Test]
@@ -319,9 +322,13 @@ class ReconstructionIntegrityTest extends TestCase
 
         $blocks = json_decode((string) $archive->getFromName('data/blocks.json'), true);
         $blocks = collect($blocks)->map(function (array $block) {
-            if ($block['type'] === 'column_item') {
-                $block['title'] = 'Fast setup';
-                $block['content'] = 'English child content';
+            if ($block['type'] === 'plain_text') {
+                $block['title'] = null;
+                $block['content'] = 'English paragraph content';
+            }
+
+            if ($block['type'] === 'header') {
+                $block['title'] = 'About';
             }
 
             return $block;
@@ -346,16 +353,16 @@ class ReconstructionIntegrityTest extends TestCase
             ->whereHas('translations', fn ($query) => $query->where('slug', 'about'))
             ->firstOrFail();
 
-        $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('type', 'column_item')->firstOrFail();
+        $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
 
         $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $columnItem->id,
+            'block_id' => $plainText->id,
             'locale_id' => $this->defaultLocale()->id,
-            'title' => 'Fast setup',
-            'content' => 'English child content',
+            'title' => null,
+            'content' => 'English paragraph content',
         ]);
-        $this->assertNull($columnItem->fresh()->getRawOriginal('title'));
-        $this->assertNull($columnItem->fresh()->getRawOriginal('content'));
-        $this->get('http://legacy-compatible.example.test/p/about')->assertOk()->assertSee('Fast setup')->assertSee('English child content');
+        $this->assertNull($plainText->fresh()->getRawOriginal('title'));
+        $this->assertNull($plainText->fresh()->getRawOriginal('content'));
+        $this->get('http://legacy-compatible.example.test/p/about')->assertOk()->assertSee('English paragraph content');
     }
 }

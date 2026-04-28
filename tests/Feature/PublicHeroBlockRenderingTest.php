@@ -104,7 +104,7 @@ class PublicHeroBlockRenderingTest extends TestCase
     }
 
     #[Test]
-    public function hero_block_uses_translated_content(): void
+    public function hero_block_falls_back_to_default_content_when_legacy_block_type_is_not_translatable(): void
     {
         $site = Site::query()->firstOrFail();
         $turkish = Locale::query()->create([
@@ -180,12 +180,13 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get('/tr/p/hakkinda');
 
         $response->assertOk();
-        $response->assertSee('Turkce kahraman');
-        $response->assertSee('Yerel etiket');
-        $response->assertSee('Turkce destekleyici metin');
+        $response->assertSee('Default hero');
+        $response->assertSee('Default eyebrow');
+        $response->assertSee('Default content');
         $response->assertSee('Turkce CTA');
-        $response->assertDontSee('Default hero');
-        $response->assertDontSee('Default content');
+        $response->assertDontSee('Turkce kahraman');
+        $response->assertDontSee('Yerel etiket');
+        $response->assertDontSee('Turkce destekleyici metin');
         $response->assertDontSee('Default CTA');
     }
 

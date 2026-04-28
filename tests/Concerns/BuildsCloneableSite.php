@@ -46,14 +46,18 @@ trait BuildsCloneableSite
             ['slug' => 'main'],
             ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
         );
-
-        $columnsType = BlockType::query()->firstOrCreate(
-            ['slug' => 'columns'],
-            ['name' => 'Columns', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        $headerSlotType = SlotType::query()->firstOrCreate(
+            ['slug' => 'header'],
+            ['name' => 'Header', 'status' => 'published', 'sort_order' => 0, 'is_system' => true],
         );
-        $columnItemType = BlockType::query()->firstOrCreate(
-            ['slug' => 'column_item'],
-            ['name' => 'Column Item', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2, 'is_system' => true],
+
+        $headerType = BlockType::query()->firstOrCreate(
+            ['slug' => 'header'],
+            ['name' => 'Header', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1, 'is_system' => false],
+        );
+        $plainTextType = BlockType::query()->firstOrCreate(
+            ['slug' => 'plain_text'],
+            ['name' => 'Plain Text', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2, 'is_system' => false],
         );
         $imageType = BlockType::query()->firstOrCreate(
             ['slug' => 'image'],
@@ -82,11 +86,25 @@ trait BuildsCloneableSite
             'path' => '/p/hakkinda',
         ]);
 
-        foreach ([$homePage, $aboutPage] as $index => $page) {
+        PageTranslation::query()->create([
+            'page_id' => $homePage->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Ana Sayfa',
+            'slug' => 'anasayfa',
+            'path' => '/p/anasayfa',
+        ]);
+
+        foreach ([$homePage, $aboutPage] as $page) {
+            PageSlot::query()->create([
+                'page_id' => $page->id,
+                'slot_type_id' => $headerSlotType->id,
+                'sort_order' => 0,
+            ]);
+
             PageSlot::query()->create([
                 'page_id' => $page->id,
                 'slot_type_id' => $mainSlotType->id,
-                'sort_order' => $index,
+                'sort_order' => 1,
             ]);
         }
 
@@ -109,44 +127,55 @@ trait BuildsCloneableSite
             'title' => 'Hero',
         ]);
 
-        $columns = Block::query()->create([
+        $header = Block::query()->create([
             'page_id' => $aboutPage->id,
-            'type' => 'columns',
-            'block_type_id' => $columnsType->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
             'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $mainSlotType->id,
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
             'sort_order' => 0,
-            'title' => 'Starter features',
-            'content' => 'English features',
-            'status' => 'published',
-            'is_system' => true,
-        ]);
-
-        $columnItem = Block::query()->create([
-            'page_id' => $aboutPage->id,
-            'parent_id' => $columns->id,
-            'type' => 'column_item',
-            'block_type_id' => $columnItemType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $mainSlotType->id,
-            'sort_order' => 0,
-            'title' => 'Fast setup',
-            'content' => 'English child content',
+            'variant' => 'h1',
             'status' => 'published',
             'is_system' => false,
         ]);
 
-        $columnItem->textTranslations()->create([
+        $header->textTranslations()->create([
             'locale_id' => $defaultLocale->id,
-            'title' => 'Fast setup',
-            'content' => 'English child content',
+            'title' => 'About',
+            'subtitle' => null,
+            'content' => null,
         ]);
-        $columnItem->textTranslations()->create([
+        $header->textTranslations()->create([
             'locale_id' => $turkish->id,
-            'title' => 'Hizli kurulum',
-            'content' => 'Turkce alt icerik',
+            'title' => 'Hakkinda',
+            'subtitle' => null,
+            'content' => null,
+        ]);
+
+        $plainText = Block::query()->create([
+            'page_id' => $aboutPage->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $plainText->textTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => 'English paragraph content',
+        ]);
+        $plainText->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => 'Turkce paragraf icerigi',
         ]);
 
         $imageBlock = Block::query()->create([
@@ -175,8 +204,8 @@ trait BuildsCloneableSite
             'alt_text' => 'Kahraman alternatif',
         ]);
 
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($columns->fresh(['textTranslations']));
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($columnItem->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($plainText->fresh(['textTranslations']));
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($imageBlock->fresh(['imageTranslations']));
 
         NavigationItem::query()->create([

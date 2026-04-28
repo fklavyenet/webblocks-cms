@@ -133,10 +133,11 @@ class SiteExportImportTest extends TestCase
 
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
 
-        $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('type', 'column_item')->firstOrFail();
-        $this->assertDatabaseHas('block_text_translations', ['block_id' => $columnItem->id, 'title' => 'Hizli kurulum']);
-        $this->assertNull($columnItem->getRawOriginal('title'));
-        $this->assertNull($columnItem->getRawOriginal('content'));
+        $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
+        $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
+        $this->assertDatabaseHas('block_text_translations', ['block_id' => $header->id, 'title' => 'Hakkinda']);
+        $this->assertNull($header->getRawOriginal('title'));
+        $this->assertNull($plainText->getRawOriginal('content'));
 
         $imageBlock = Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->firstOrFail();
         $this->assertNotNull($imageBlock->asset_id);
@@ -154,10 +155,8 @@ class SiteExportImportTest extends TestCase
             'blocks.blockAssets.asset',
         ]));
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
-        $columnsBlock = $mainSlot['blocks']->firstWhere('type', 'columns');
-        $presentedChild = $columnsBlock->children->firstWhere('type', 'column_item');
-        $this->assertSame('Fast setup', $presentedChild->title);
-        $this->assertSame('English child content', $presentedChild->content);
+        $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
+        $this->assertSame('English paragraph content', $presentedBlock->content);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
     }
 

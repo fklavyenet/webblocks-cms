@@ -13,9 +13,6 @@ class ShowcaseInstallSeeder extends Seeder
     {
         $this->ensureSiteIsNotInitialized(self::class);
 
-        $this->call([
-            CoreCatalogSeeder::class,
-            FullShowcaseSeeder::class,
-        ]);
+        throw new \RuntimeException('ShowcaseInstallSeeder is quarantined while the CMS foundation is limited to header and plain_text blocks. Rebuild showcase install content deliberately before re-enabling this seeder.');
     }
 }

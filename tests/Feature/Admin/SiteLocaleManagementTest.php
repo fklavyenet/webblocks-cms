@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Block;
+use App\Models\BlockType;
 use App\Models\BlockTextTranslation;
 use App\Models\Locale;
 use App\Models\Page;
@@ -363,27 +364,25 @@ class SiteLocaleManagementTest extends TestCase
 
         $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'text',
-            'block_type_id' => 1,
+            'type' => 'header',
+            'block_type_id' => BlockType::query()->where('slug', 'header')->value('id'),
             'slot' => 'main',
             'sort_order' => 0,
             'status' => 'published',
             'title' => 'About',
-            'content' => 'Default copy',
+            'variant' => 'h2',
         ]);
 
         BlockTextTranslation::query()->create([
             'block_id' => $block->id,
             'locale_id' => $defaultLocale->id,
             'title' => 'About',
-            'content' => 'Default copy',
         ]);
 
         DB::table('block_text_translations')->insert([
             'block_id' => $block->id,
             'locale_id' => $locale->id,
             'title' => 'Acerca de',
-            'content' => 'Copia traducida',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

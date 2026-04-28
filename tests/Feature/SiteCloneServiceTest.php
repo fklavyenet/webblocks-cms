@@ -64,13 +64,14 @@ class SiteCloneServiceTest extends TestCase
             'slug' => 'hakkinda',
         ]);
 
-        $columns = Block::query()->where('page_id', $aboutPage->id)->where('type', 'columns')->firstOrFail();
-        $columnItem = Block::query()->where('page_id', $aboutPage->id)->where('parent_id', $columns->id)->where('type', 'column_item')->firstOrFail();
+        $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
+        $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();
         $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $columnItem->id,
-            'title' => 'Hizli kurulum',
+            'block_id' => $header->id,
+            'title' => 'Hakkinda',
         ]);
-        $this->assertNull($columnItem->getRawOriginal('title'));
+        $this->assertNull($header->getRawOriginal('title'));
+        $this->assertNull($plainText->getRawOriginal('content'));
 
         $imageBlock = Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->firstOrFail();
         $this->assertSame($heroAsset->id, $imageBlock->asset_id);
@@ -88,10 +89,8 @@ class SiteCloneServiceTest extends TestCase
             'blocks.blockAssets.asset',
         ]));
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
-        $columnsBlock = $mainSlot['blocks']->firstWhere('type', 'columns');
-        $presentedChild = $columnsBlock->children->firstWhere('type', 'column_item');
-        $this->assertSame('Fast setup', $presentedChild->title);
-        $this->assertSame('English child content', $presentedChild->content);
+        $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
+        $this->assertSame('English paragraph content', $presentedBlock->content);
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,
             'menu_key' => NavigationItem::MENU_PRIMARY,
@@ -105,7 +104,7 @@ class SiteCloneServiceTest extends TestCase
                 ->where('locale_id', $defaultLocaleId)
                 ->where('slug', 'about'))
             ->firstOrFail();
-        $this->assertSame(1, Block::query()->where('page_id', $sourceAbout->id)->where('type', 'columns')->count());
+        $this->assertSame(1, Block::query()->where('page_id', $sourceAbout->id)->where('type', 'header')->count());
         $this->assertSame(2, Page::query()->where('site_id', $sourceSite->id)->count());
     }
 

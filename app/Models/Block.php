@@ -155,6 +155,10 @@ class Block extends Model
 
     public function editorLabel(): string
     {
+        if ($this->typeSlug() === 'plain_text') {
+            return $this->content ?: $this->typeName();
+        }
+
         return $this->title ?: $this->typeName();
     }
 
@@ -180,6 +184,7 @@ class Block extends Model
         }
 
         $summary = collect([
+            $this->typeSlug() === 'header' ? $this->variant : null,
             $this->subtitle,
             filled($this->content) ? str(strip_tags((string) $this->content))->squish()->limit(88)->toString() : null,
             $this->url,

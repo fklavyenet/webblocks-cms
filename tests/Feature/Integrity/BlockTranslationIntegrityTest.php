@@ -81,14 +81,13 @@ class BlockTranslationIntegrityTest extends TestCase
         $page = $this->pageWithMainSlot($this->defaultSite());
         $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $this->blockType('section')->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header')->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'title' => 'Hero heading',
-            'content' => 'Hero content',
+            'variant' => 'h1',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -96,7 +95,6 @@ class BlockTranslationIntegrityTest extends TestCase
         $block->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Hero heading',
-            'content' => 'Hero content',
         ]);
 
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
@@ -105,7 +103,7 @@ class BlockTranslationIntegrityTest extends TestCase
 
         $this->assertNull($freshBlock->getRawOriginal('title'));
         $this->assertNull($freshBlock->getRawOriginal('content'));
-        $this->get('/p/about')->assertOk()->assertSee('Hero heading')->assertSee('Hero content');
+        $this->get('/p/about')->assertOk()->assertSee('<h1>Hero heading</h1>', false);
     }
 
     #[Test]
@@ -125,13 +123,12 @@ class BlockTranslationIntegrityTest extends TestCase
 
         $block = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $this->blockType('section')->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text')->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'title' => 'Canonical should not render',
             'content' => 'Canonical should not render',
             'status' => 'published',
             'is_system' => false,
@@ -139,7 +136,6 @@ class BlockTranslationIntegrityTest extends TestCase
 
         $block->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
-            'title' => 'Default hero',
             'content' => 'Default content',
         ]);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
@@ -148,8 +144,8 @@ class BlockTranslationIntegrityTest extends TestCase
 
         $this->assertSame('fallback', $resolved->translation_state);
         $this->assertSame('en', $resolved->resolved_locale_code);
-        $this->assertSame('Default hero', $resolved->title);
-        $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('Default hero')->assertSee('Default content');
+        $this->assertSame('Default content', $resolved->content);
+        $this->get('http://primary.example.test/tr/p/hakkinda')->assertOk()->assertSee('<p>Default content</p>', false);
     }
 
     #[Test]
@@ -278,7 +274,7 @@ class BlockTranslationIntegrityTest extends TestCase
         $site = $this->defaultSite();
         $german = $this->createLocale('de');
         $page = $this->pageWithMainSlot($site);
-        $blockType = $this->blockType('section');
+        $blockType = $this->blockType('header');
 
         $response = $this->actingAs($user)
             ->from(route('admin.blocks.create', ['page_id' => $page->id, 'slot_type_id' => $this->slotType()->id]))
@@ -288,8 +284,8 @@ class BlockTranslationIntegrityTest extends TestCase
                 'block_type_id' => $blockType->id,
                 'slot_type_id' => $this->slotType()->id,
                 'sort_order' => 0,
-                'title' => 'Titel',
-                'content' => 'Inhalt',
+                'text' => 'Titel',
+                'level' => 'h2',
                 'status' => 'published',
                 'locale' => $german->code,
             ]);

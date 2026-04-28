@@ -11,7 +11,7 @@ class BlockTranslationRegistry
         $slug = $block instanceof Block ? $block->typeSlug() : $block;
 
         return match ($slug) {
-            'heading', 'text', 'rich-text', 'html', 'section', 'hero', 'cta', 'code', 'columns', 'column_item', 'feature-grid', 'feature-item', 'callout', 'quote', 'faq', 'accordion', 'tabs', 'list', 'table', 'link-list', 'link-list-item' => 'text',
+            'header', 'plain_text' => 'text',
             'button' => 'button',
             'image' => 'image',
             'contact_form' => 'contact_form',
@@ -22,27 +22,8 @@ class BlockTranslationRegistry
     public function supportedTypes(): array
     {
         return [
-            'heading',
-            'text',
-            'rich-text',
-            'html',
-            'section',
-            'hero',
-            'cta',
-            'code',
-            'columns',
-            'column_item',
-            'feature-grid',
-            'feature-item',
-            'callout',
-            'quote',
-            'faq',
-            'accordion',
-            'tabs',
-            'list',
-            'table',
-            'link-list',
-            'link-list-item',
+            'header',
+            'plain_text',
             'button',
             'image',
             'contact_form',
