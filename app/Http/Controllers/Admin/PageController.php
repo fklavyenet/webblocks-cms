@@ -308,6 +308,7 @@ class PageController extends Controller
             'slotModalBlock' => $modalState['block'],
             'slotModalSelectedBlockType' => $modalState['selectedBlockType'],
             'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+            'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
             'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
             'slotModalSelectedAsset' => $modalState['selectedAsset'],
             'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],

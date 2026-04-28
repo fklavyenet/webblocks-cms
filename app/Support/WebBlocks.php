@@ -10,7 +10,7 @@ final class WebBlocks
 
     public const HANDLE = 'webblocks-cms';
 
-    public const VERSION = '1.4.1';
+    public const VERSION = '1.4.2';
 
     public static function name(): string
     {

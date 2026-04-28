@@ -28,11 +28,12 @@ class BlockRequest extends FormRequest
         $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $block?->block_type_id ?: 0);
         $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
         $translationRegistry = app(BlockTranslationRegistry::class);
-        $isTranslatedBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'link-list-item'], true)
+        $isTranslatedBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item', 'link-list-item'], true)
             && $translationRegistry->isTranslatable($selectedBlockType?->slug)
             && $this->filled('locale');
-        $isBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'link-list-item'], true);
+        $isBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item', 'link-list-item'], true);
         $isColumns = $selectedBlockType?->slug === 'columns';
+        $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
         $isLinkList = $selectedBlockType?->slug === 'link-list';
         $isNavigationAuto = in_array($selectedBlockType?->slug, ['navigation-auto', 'menu'], true);
         $isContactForm = $selectedBlockType?->slug === 'contact_form';
@@ -78,6 +79,16 @@ class BlockRequest extends FormRequest
             'column_items.*.is_system' => ['nullable', 'boolean'],
             'column_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'column_items.*._delete' => ['nullable', 'boolean'],
+            'feature_items' => ['nullable', 'array'],
+            'feature_items.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
+            'feature_items.*.block_type_id' => ['nullable', 'integer', 'exists:block_types,id'],
+            'feature_items.*.title' => ['nullable', 'string', 'max:255'],
+            'feature_items.*.content' => ['nullable', 'string'],
+            'feature_items.*.url' => ['nullable', 'string', 'max:2048'],
+            'feature_items.*.status' => ['nullable', Rule::in(['draft', 'published'])],
+            'feature_items.*.is_system' => ['nullable', 'boolean'],
+            'feature_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'feature_items.*._delete' => ['nullable', 'boolean'],
             'link_list_items' => ['nullable', 'array'],
             'link_list_items.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
             'link_list_items.*.block_type_id' => ['nullable', 'integer', 'exists:block_types,id'],
@@ -118,10 +129,11 @@ class BlockRequest extends FormRequest
             $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
             $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
             $isColumns = $selectedBlockType?->slug === 'columns';
+            $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
             $isLinkList = $selectedBlockType?->slug === 'link-list';
 
             if (! $parentId) {
-                if (! in_array($selectedBlockType?->slug, ['columns', 'link-list'], true)) {
+                if (! in_array($selectedBlockType?->slug, ['columns', 'feature-grid', 'link-list'], true)) {
                     return;
                 }
             }
@@ -138,6 +150,22 @@ class BlockRequest extends FormRequest
 
                     if (blank($columnItem['content'] ?? null)) {
                         $validator->errors()->add("column_items.{$index}.content", 'Column item text is required.');
+                    }
+                }
+            }
+
+            if ($isFeatureGrid) {
+                foreach ($this->input('feature_items', []) as $index => $featureItem) {
+                    if ((bool) ($featureItem['_delete'] ?? false)) {
+                        continue;
+                    }
+
+                    if (blank($featureItem['title'] ?? null)) {
+                        $validator->errors()->add("feature_items.{$index}.title", 'Feature item title is required.');
+                    }
+
+                    if (blank($featureItem['content'] ?? null)) {
+                        $validator->errors()->add("feature_items.{$index}.content", 'Feature item text is required.');
                     }
                 }
             }
@@ -290,6 +318,16 @@ class BlockRequest extends FormRequest
                 if ($data['settings'] === '[]' || $data['settings'] === '{}') {
                     $data['settings'] = null;
                 }
+            }
+
+            if ($blockType?->slug === 'cta') {
+                $isTranslatedCtaEdit = $data['locale'] !== null;
+
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = $isTranslatedCtaEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (trim((string) ($data['variant'] ?? '')) ?: null);
             }
 
             if ($blockType?->slug === 'code') {

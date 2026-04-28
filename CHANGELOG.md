@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## 1.4.2
+
+### Added
+
+- First-class `feature-grid` block support with dedicated admin editing, translation-backed container copy, and stable public rendering.
+- First-class `feature-item` block support as the managed child block for `feature-grid`, with translated title and content plus an optional shared URL.
+- First-class `cta` block support with dedicated admin editing, translation-backed marketing copy, and managed child CTA buttons.
+- Dedicated admin and public renderer partials for `feature-grid`, `feature-item`, and `cta`.
+
+### Changed
+
+- Registered `feature-grid`, `feature-item`, and `cta` in the translation registry so their editorial copy is stored authoritatively in block translation rows.
+- Extended builder-managed child handling so `feature-grid` owns structured `feature-item` children and `cta` manages up to two child `button` CTAs.
+- `feature-grid` now keeps backward compatibility for existing legacy `column_item` children while treating `feature-item` as the canonical child block slug.
+
+### Fixed
+
+- Preserved shared CTA fields during locale-specific `cta` edits so translated updates cannot overwrite the canonical shared `variant` or shared button URL data.
+
 ## 1.4.1
 
 ### Fixed

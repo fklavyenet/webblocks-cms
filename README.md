@@ -295,7 +295,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - Accordion provides grouped disclosure via semantic `<details>`, while FAQ remains a simple stable Q and A block.
 - Media blocks use semantic `video`, `audio`, and direct file-link rendering with a minimal external-link Map treatment.
 - Code blocks render safely with escaped `<pre><code>` output, and TOC blocks provide minimal anchor navigation when explicit heading IDs already exist.
-- Transitional duplicate patterns such as legacy Card Grid, Feature Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
+- Transitional duplicate patterns such as legacy Card Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
 - Breadcrumb, Tabs, and Slider remain deferred until WebBlocks UI ships confirmed patterns or the public shell requires them.
 - The detailed renderer contract lives in `docs/block-ui-renderer-contract.md`.
 
@@ -314,10 +314,13 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 ## Docs/Marketing Block Support
 
 - `hero` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields. Shared presentation stays in shared fields such as `variant`, `settings.layout`, `settings.title_tag`, and CTA URLs.
+- `cta` is a first-class marketing block with translated `title`, `subtitle`, and `content` fields plus up to two managed child CTA buttons. Shared presentation stays on the block record via `variant`, while CTA URLs remain shared on the child buttons.
 - `code` is a first-class docs block with translated `title`, `subtitle`, and `content` fields. Shared syntax metadata stays in `settings.language`.
+- `feature-grid` is a first-class marketing/data-display block with translated container copy and managed child `feature-item` cards.
+- `feature-item` is the managed child block for `feature-grid`, with translated `title` and `content` plus an optional shared `url`.
 - `link-list` is a first-class editorial/docs block with translated container fields `subtitle` (eyebrow), `title` (heading), and optional `content` intro text.
 - `link-list-item` is the managed child block for `link-list`, with translated `title`, `subtitle` (meta), and `content` (description) plus a shared `url`.
-- `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists.
+- `columns` and `column_item` remain dedicated to columns layouts and are no longer used as a semantic fallback for editorial link lists. `feature-grid` still renders legacy `column_item` children as a compatibility fallback for existing data.
 - These blocks are CMS capabilities only. They do not assume any site-specific domain, route pattern, navigation structure, or seeded content.
 
 ## System Updates

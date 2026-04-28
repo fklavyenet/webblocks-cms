@@ -54,6 +54,7 @@
                             'parentBlocks' => $slotParentBlocks,
                             'blockTypes' => $blockTypes,
                             'columnItemBlockType' => $columnItemBlockType,
+                            'featureItemBlockType' => $featureItemBlockType,
                             'linkListItemBlockType' => $linkListItemBlockType,
                             'slotTypes' => collect([$slot->slotType])->filter(),
                             'assetPickerAssets' => $assetPickerAssets,

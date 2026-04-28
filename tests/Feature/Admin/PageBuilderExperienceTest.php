@@ -1249,6 +1249,42 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function feature_grid_and_cta_admin_forms_are_available(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $featureGridType = BlockType::query()->where('slug', 'feature-grid')->firstOrFail();
+        $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $featureResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $featureGridType->id]));
+        $featureResponse->assertOk();
+        $featureResponse->assertSee('Add Block: Feature Grid (About / Main)');
+        $featureResponse->assertSee('Feature Items');
+        $featureResponse->assertSee('Add Feature');
+        $featureResponse->assertDontSee('Generic Block Form');
+
+        $ctaResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $mainSlot, 'picker' => 1, 'block_type_id' => $ctaType->id]));
+        $ctaResponse->assertOk();
+        $ctaResponse->assertSee('Add Block: CTA (About / Main)');
+        $ctaResponse->assertSee('Primary CTA Label');
+        $ctaResponse->assertSee('Secondary CTA URL');
+        $ctaResponse->assertSee('Shared Fields');
+        $ctaResponse->assertDontSee('Generic Block Form');
+    }
+
+    #[Test]
     public function hero_block_store_creates_translation_backed_copy_and_managed_ctas(): void
     {
         $this->seed(BlockTypeSeeder::class);
@@ -1319,6 +1355,158 @@ class PageBuilderExperienceTest extends TestCase
         ]);
         $this->assertSame('centered', $hero->setting('layout'));
         $this->assertSame('h2', $hero->setting('title_tag'));
+    }
+
+    #[Test]
+    public function feature_grid_store_creates_translation_backed_copy_and_managed_feature_items(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $main = $this->slotType('main', 'Main', 2);
+        $featureGridType = BlockType::query()->where('slug', 'feature-grid')->firstOrFail();
+        $featureItemType = BlockType::query()->where('slug', 'feature-item')->firstOrFail();
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $featureGridType->id,
+            'sort_order' => 0,
+            'subtitle' => 'Highlights',
+            'title' => 'Core features',
+            'content' => 'Use child feature items for each card.',
+            'feature_items' => [
+                [
+                    'block_type_id' => $featureItemType->id,
+                    'title' => 'Fast setup',
+                    'content' => 'Publish reusable marketing cards.',
+                    'url' => '/p/setup',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 0,
+                    '_delete' => 0,
+                ],
+                [
+                    'block_type_id' => $featureItemType->id,
+                    'title' => 'Editorial control',
+                    'content' => 'Each card is translation-backed content.',
+                    'url' => null,
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 1,
+                    '_delete' => 0,
+                ],
+            ],
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $featureGrid = Block::query()->where('page_id', $page->id)->where('type', 'feature-grid')->firstOrFail();
+        $items = Block::query()->where('parent_id', $featureGrid->id)->where('type', 'feature-item')->orderBy('sort_order')->get();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => $featureGrid->id]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $featureGrid->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+        ]);
+        $this->assertTextTranslation($featureGrid, $this->defaultLocale()->id, [
+            'title' => 'Core features',
+            'subtitle' => 'Highlights',
+            'content' => 'Use child feature items for each card.',
+        ]);
+        $this->assertCount(2, $items);
+        $this->assertSame('/p/setup', $items[0]->url);
+        $this->assertTextTranslation($items[0], $this->defaultLocale()->id, [
+            'title' => 'Fast setup',
+            'content' => 'Publish reusable marketing cards.',
+        ]);
+        $this->assertTextTranslation($items[1], $this->defaultLocale()->id, [
+            'title' => 'Editorial control',
+            'content' => 'Each card is translation-backed content.',
+        ]);
+    }
+
+    #[Test]
+    public function cta_block_store_creates_translation_backed_copy_and_managed_buttons(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $main = $this->slotType('main', 'Main', 2);
+        $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $ctaType->id,
+            'sort_order' => 0,
+            'subtitle' => 'Ready to ship',
+            'title' => 'Try WebBlocks CMS',
+            'content' => 'Launch a reusable marketing section with managed actions.',
+            'primary_cta_label' => 'Get started',
+            'primary_cta_url' => '/p/contact',
+            'secondary_cta_label' => 'Read docs',
+            'secondary_cta_url' => '/p/docs',
+            'variant' => 'accent',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $cta = Block::query()->where('page_id', $page->id)->where('type', 'cta')->firstOrFail();
+        $buttons = Block::query()->where('parent_id', $cta->id)->where('type', 'button')->orderBy('sort_order')->get();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => $cta->id]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $cta->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'variant' => 'accent',
+        ]);
+        $this->assertTextTranslation($cta, $this->defaultLocale()->id, [
+            'title' => 'Try WebBlocks CMS',
+            'subtitle' => 'Ready to ship',
+            'content' => 'Launch a reusable marketing section with managed actions.',
+        ]);
+        $this->assertCount(2, $buttons);
+        $this->assertSame('/p/contact', $buttons[0]->url);
+        $this->assertSame('/p/docs', $buttons[1]->url);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $buttons[0]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Get started',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $buttons[1]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Read docs',
+        ]);
     }
 
     #[Test]
@@ -2154,6 +2342,219 @@ class PageBuilderExperienceTest extends TestCase
         $newItem = Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->whereKeyNot($existingItem->id)->firstOrFail();
         $this->assertTextTranslation($newItem, $this->defaultLocale()->id, ['title' => 'Editor friendly']);
         $this->assertSame(2, Block::query()->where('parent_id', $columns->id)->where('type', 'column_item')->count());
+    }
+
+    #[Test]
+    public function updating_feature_grid_can_create_update_and_delete_feature_items(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->create();
+        $main = $this->slotType('main', 'Main', 2);
+        $featureGridType = BlockType::query()->where('slug', 'feature-grid')->firstOrFail();
+        $featureItemType = BlockType::query()->where('slug', 'feature-item')->firstOrFail();
+        $page = Page::create([
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'draft',
+        ]);
+        $mainSlot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+        $featureGrid = Block::create([
+            'page_id' => $page->id,
+            'type' => 'feature-grid',
+            'block_type_id' => $featureGridType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Starter features',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $existingItem = Block::create([
+            'page_id' => $page->id,
+            'parent_id' => $featureGrid->id,
+            'type' => 'feature-item',
+            'block_type_id' => $featureItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Fast setup',
+            'content' => 'Start with meaningful defaults.',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $featureGrid), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $featureGridType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Starter features',
+            'subtitle' => 'Real child blocks',
+            'content' => 'Manage each visible feature below.',
+            'status' => 'published',
+            'feature_items' => [
+                [
+                    'id' => $existingItem->id,
+                    'block_type_id' => $featureItemType->id,
+                    'title' => 'Flexible content',
+                    'content' => 'Update structure and content with child blocks.',
+                    'url' => null,
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 0,
+                    '_delete' => 0,
+                ],
+                [
+                    'id' => null,
+                    'block_type_id' => $featureItemType->id,
+                    'title' => 'Editor friendly',
+                    'content' => 'Editors can add, remove, and reorder feature items.',
+                    'url' => '/p/editor',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 1,
+                    '_delete' => 0,
+                ],
+            ],
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $featureGrid->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $mainSlot, 'expanded' => (string) $featureGrid->id]));
+        $this->assertTextTranslation($existingItem, $this->defaultLocale()->id, ['title' => 'Flexible content']);
+        $newItem = Block::query()->where('parent_id', $featureGrid->id)->where('type', 'feature-item')->whereKeyNot($existingItem->id)->firstOrFail();
+        $this->assertTextTranslation($newItem, $this->defaultLocale()->id, ['title' => 'Editor friendly']);
+        $this->assertSame('/p/editor', $newItem->url);
+        $this->assertSame(2, Block::query()->where('parent_id', $featureGrid->id)->where('type', 'feature-item')->count());
+    }
+
+    #[Test]
+    public function cta_block_locale_update_only_changes_translated_fields_and_keeps_shared_buttons(): void
+    {
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 2);
+        $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
+        $buttonType = BlockType::query()->where('slug', 'button')->firstOrFail();
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+        PageTranslation::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Hakkinda',
+            'slug' => 'hakkinda',
+            'path' => '/p/hakkinda',
+        ]);
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+        $cta = Block::create([
+            'page_id' => $page->id,
+            'type' => 'cta',
+            'block_type_id' => $ctaType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Try WebBlocks CMS',
+            'subtitle' => 'Ready to ship',
+            'content' => 'Launch a reusable marketing section with managed actions.',
+            'variant' => 'accent',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $cta->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Try WebBlocks CMS',
+            'subtitle' => 'Ready to ship',
+            'content' => 'Launch a reusable marketing section with managed actions.',
+        ]);
+
+        $primary = Block::create([
+            'page_id' => $page->id,
+            'parent_id' => $cta->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Get started',
+            'url' => '/p/contact',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $primary->buttonTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Get started',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $cta), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $ctaType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'subtitle' => 'Yerel etiket',
+            'title' => 'WebBlocks CMS deneyin',
+            'content' => 'Yerel tanitim metni',
+            'primary_cta_label' => 'Baslayin',
+            'primary_cta_url' => '/should-not-change',
+            'secondary_cta_label' => '',
+            'secondary_cta_url' => '',
+            'variant' => 'soft',
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $cta->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot, 'expanded' => $cta->id, 'locale' => 'tr']));
+        $this->assertTextTranslation($cta, $turkish->id, [
+            'title' => 'WebBlocks CMS deneyin',
+            'subtitle' => 'Yerel etiket',
+            'content' => 'Yerel tanitim metni',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $primary->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Baslayin',
+        ]);
+        $this->assertDatabaseHas('blocks', [
+            'id' => $primary->id,
+            'url' => '/p/contact',
+            'variant' => 'primary',
+        ]);
+        $this->assertDatabaseHas('blocks', [
+            'id' => $cta->id,
+            'variant' => 'accent',
+        ]);
     }
 
     #[Test]

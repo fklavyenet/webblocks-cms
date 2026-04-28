@@ -1,7 +1,7 @@
 @php
     $search = strtolower(trim((string) request('block_type_search')));
     $recommendedSlugs = collect(['section', 'heading', 'rich-text', 'callout', 'button']);
-    $excludedSlugs = collect(['column_item', 'link-list-item', 'menu']);
+    $excludedSlugs = collect(['column_item', 'feature-item', 'link-list-item', 'menu']);
 
     $availableBlockTypes = $blockTypes
         ->reject(fn ($blockType) => $excludedSlugs->contains($blockType->slug) && $block->parent_id === null)

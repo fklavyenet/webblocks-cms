@@ -30,7 +30,13 @@
             return $columnItem;
         })
         : $block->children
-            ->filter(fn ($child) => $itemBlockType?->slug === 'link-list-item' ? $child->isLinkListItem() : $child->isColumnItem())
+            ->filter(function ($child) use ($itemBlockType) {
+                return match ($itemBlockType?->slug) {
+                    'link-list-item' => $child->isLinkListItem(),
+                    'feature-item' => $child->isFeatureItem(),
+                    default => $child->isColumnItem(),
+                };
+            })
             ->sortBy('sort_order')
             ->values();
 @endphp

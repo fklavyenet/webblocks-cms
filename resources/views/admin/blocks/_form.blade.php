@@ -13,6 +13,7 @@
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
     $columnItemBlockType = $columnItemBlockType ?? null;
+    $featureItemBlockType = $featureItemBlockType ?? null;
     $linkListItemBlockType = $linkListItemBlockType ?? null;
     $activeLocale = $activeLocale ?? null;
     $translationStatus = $activeLocale ? $block->translationStatus($activeLocale) : null;
@@ -181,6 +182,7 @@
                                 'assetPickerAssets' => $assetPickerAssets,
                                 'assetPickerFolders' => $assetPickerFolders,
                                 'columnItemBlockType' => $columnItemBlockType,
+                                'featureItemBlockType' => $featureItemBlockType,
                                 'linkListItemBlockType' => $linkListItemBlockType,
                             ])
                         </div>

@@ -163,11 +163,16 @@ class Block extends Model
             return 'Location: '.str($this->navigationLocation())->headline();
         }
 
-        if (in_array($this->typeSlug(), ['columns', 'link-list'], true)) {
+        if (in_array($this->typeSlug(), ['columns', 'feature-grid', 'link-list', 'cta'], true)) {
             $childCount = $this->children->count();
 
             if ($childCount > 0) {
-                $itemLabel = $this->typeSlug() === 'link-list' ? 'link list item' : 'column item';
+                $itemLabel = match ($this->typeSlug()) {
+                    'link-list' => 'link list item',
+                    'cta' => 'action',
+                    'feature-grid' => 'feature item',
+                    default => 'column item',
+                };
 
                 return $childCount.' '.$itemLabel.($childCount === 1 ? '' : 's');
             }
@@ -220,9 +225,19 @@ class Block extends Model
         return $this->typeSlug() === 'link-list-item';
     }
 
+    public function isFeatureGrid(): bool
+    {
+        return $this->typeSlug() === 'feature-grid';
+    }
+
+    public function isFeatureItem(): bool
+    {
+        return $this->typeSlug() === 'feature-item';
+    }
+
     public function isBuilderManagedChild(): bool
     {
-        return $this->isColumnItem() || $this->isLinkListItem();
+        return $this->isColumnItem() || $this->isLinkListItem() || $this->isFeatureItem();
     }
 
     public function adminFormView(): string

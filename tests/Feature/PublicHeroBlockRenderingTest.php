@@ -575,6 +575,100 @@ class PublicHeroBlockRenderingTest extends TestCase
     }
 
     #[Test]
+    public function feature_grid_renders_feature_item_children_with_the_columns_cards_pattern(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $featureGrid = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'feature-grid',
+            'block_type_id' => $this->blockType('feature-grid', 'Feature Grid', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Core features',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $featureGrid->id,
+            'type' => 'feature-item',
+            'block_type_id' => $this->blockType('feature-item', 'Feature Item', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Editorial control',
+            'content' => 'Feature items use the same card shell.',
+            'url' => '/p/features',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('Editorial control');
+        $response->assertSee('Feature items use the same card shell.');
+        $response->assertSee('href="/p/features"', false);
+    }
+
+    #[Test]
+    public function cta_block_renders_promo_markup_with_managed_buttons(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $cta = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cta',
+            'block_type_id' => $this->blockType('cta', 'CTA', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Try WebBlocks CMS',
+            'subtitle' => 'Ready to ship',
+            'content' => 'Launch a reusable marketing section with managed actions.',
+            'variant' => 'accent',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            ['label' => 'Get started', 'url' => '/cta-0', 'variant' => 'primary', 'sort_order' => 0],
+            ['label' => 'Read docs', 'url' => '/cta-1', 'variant' => 'secondary', 'sort_order' => 1],
+        ] as $button) {
+            Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $cta->id,
+                'type' => 'button',
+                'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $button['sort_order'],
+                'title' => $button['label'],
+                'url' => $button['url'],
+                'variant' => $button['variant'],
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-promo', false);
+        $response->assertSee('wb-card-accent', false);
+        $response->assertSee('Ready to ship');
+        $response->assertSee('Try WebBlocks CMS');
+        $response->assertSee('Launch a reusable marketing section with managed actions.');
+        $response->assertSee('Get started');
+        $response->assertSee('Read docs');
+    }
+
+    #[Test]
     public function card_grid_matches_the_columns_cards_structure(): void
     {
         $page = $this->pageWithMainSlot();

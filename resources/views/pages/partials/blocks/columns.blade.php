@@ -36,7 +36,7 @@
         @if ($children->isNotEmpty())
             <div class="{{ $layoutClass }}{{ $isContactColumns ? ' wb-public-contact-columns' : '' }}">
                 @foreach ($children as $child)
-                    @if ($child->isColumnItem())
+                    @if ($child->isColumnItem() || $child->isFeatureItem())
                         @include($child->publicRenderView(), ['block' => $child, 'columnsVariant' => $columnsVariant])
                     @else
                         <div>

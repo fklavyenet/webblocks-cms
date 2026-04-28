@@ -105,6 +105,7 @@ class BlockController extends Controller
             'pages' => $pages,
             'parentBlocks' => $this->parentBlocksFor($block->page_id),
             'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+            'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
             'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
             'blockTypes' => $blockTypes,
             'slotTypes' => $slotTypes,
@@ -122,16 +123,18 @@ class BlockController extends Controller
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+        $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
-        $heroCtas = $this->heroCtasFrom($request);
+        $managedCtas = $this->managedCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        $block = DB::transaction(function () use ($page, $columnItems, $linkListItems, $heroCtas, $data, $localeCode) {
+        $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode) {
             $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncFeatureItems($block, $featureItems, $localeCode);
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
-            $this->syncHeroCtas($block, $heroCtas, $localeCode);
+            $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -209,6 +212,7 @@ class BlockController extends Controller
             'pages' => $pages,
             'parentBlocks' => $this->parentBlocksFor($block->page_id, $block->id),
             'columnItemBlockType' => $blockTypes->firstWhere('slug', 'column_item'),
+            'featureItemBlockType' => $blockTypes->firstWhere('slug', 'feature-item'),
             'linkListItemBlockType' => $blockTypes->firstWhere('slug', 'link-list-item'),
             'blockTypes' => $blockTypes,
             'slotTypes' => $slotTypes,
@@ -227,16 +231,18 @@ class BlockController extends Controller
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $columnItems = $this->builderChildItemsFrom($request, 'column_items');
+        $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
-        $heroCtas = $this->heroCtasFrom($request);
+        $managedCtas = $this->managedCtasFrom($request);
         $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        DB::transaction(function () use ($block, $page, $columnItems, $linkListItems, $heroCtas, $data, $localeCode): void {
+        DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode): void {
             $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
+            $this->syncFeatureItems($block, $featureItems, $localeCode);
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
-            $this->syncHeroCtas($block, $heroCtas, $localeCode);
+            $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -416,7 +422,7 @@ class BlockController extends Controller
             ->all();
     }
 
-    private function heroCtasFrom(Request $request): array
+    private function managedCtasFrom(Request $request): array
     {
         return collect([
             [
@@ -440,6 +446,68 @@ class BlockController extends Controller
                 'sort_order' => $index,
             ];
         })->all();
+    }
+
+    private function syncFeatureItems(Block $block, array $featureItems, ?string $localeCode = null): void
+    {
+        if (! $block->isFeatureGrid()) {
+            return;
+        }
+
+        $existingItems = $block->children()->where('type', 'feature-item')->get()->keyBy('id');
+        $keptIds = [];
+
+        foreach (array_values($featureItems) as $index => $itemData) {
+            $itemId = $itemData['id'] ?? null;
+            $delete = (bool) ($itemData['_delete'] ?? false);
+            $blockTypeId = $itemData['block_type_id'] ?? null;
+            unset($itemData['id'], $itemData['_delete'], $itemData['block_type_id']);
+
+            if ($delete) {
+                if ($itemId && $existingItems->has($itemId)) {
+                    $existingItems[$itemId]->delete();
+                }
+
+                continue;
+            }
+
+            if (! $blockTypeId || blank($itemData['title']) || blank($itemData['content'])) {
+                continue;
+            }
+
+            $blockType = BlockType::query()->find($blockTypeId);
+
+            if (! $blockType || $blockType->slug !== 'feature-item') {
+                continue;
+            }
+
+            $payload = $itemData + [
+                'page_id' => $block->page_id,
+                'parent_id' => $block->id,
+                'block_type_id' => $blockType->id,
+                'type' => $blockType->slug,
+                'source_type' => $blockType->source_type ?? 'static',
+                'slot_type_id' => $block->slot_type_id,
+                'slot' => $block->slot,
+                'sort_order' => $index,
+            ];
+
+            $featureItem = $itemId && $existingItems->has($itemId)
+                ? $existingItems[$itemId]
+                : new Block;
+
+            $featureItem = $this->blockPayloadWriter->save($featureItem, $block->page, $payload, $localeCode);
+
+            $keptIds[] = $featureItem->id;
+        }
+
+        $staleItems = $block->children()->where('type', 'feature-item');
+
+        if ($keptIds !== []) {
+            $staleItems->whereNotIn('id', $keptIds);
+        }
+
+        $staleItems->delete();
     }
 
     private function syncColumnItems(Block $block, array $columnItems, ?string $localeCode = null): void
@@ -566,9 +634,9 @@ class BlockController extends Controller
         $staleItems->delete();
     }
 
-    private function syncHeroCtas(Block $block, array $heroCtas, ?string $localeCode = null): void
+    private function syncManagedCtas(Block $block, array $managedCtas, ?string $localeCode = null): void
     {
-        if ($block->typeSlug() !== 'hero') {
+        if (! in_array($block->typeSlug(), ['hero', 'cta'], true)) {
             return;
         }
 
@@ -590,7 +658,7 @@ class BlockController extends Controller
             ->get()
             ->values();
 
-        foreach ($heroCtas as $index => $cta) {
+        foreach ($managedCtas as $index => $cta) {
             $existing = $managedButtons->get($index);
             $hasSharedPayload = filled($cta['url']) || ($isDefaultLocaleEdit && filled($cta['label']));
             $hasTranslatedPayload = ! $isDefaultLocaleEdit && filled($cta['label']);
