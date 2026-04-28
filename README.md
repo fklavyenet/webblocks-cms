@@ -215,6 +215,8 @@ See `docs/editorial-workflow.md` for status and role details.
 
 Admin session expiry is handled defensively: after re-authentication, the original admin tab now resets transient overlay, drawer, and body-lock state so it does not stay dimmed or non-interactive.
 
+Admin JavaScript is organized under `public/assets/webblocks-cms/js/admin/`. Blade templates should not contain large inline scripts; admin behavior should be added to named JS modules and loaded through the admin layout.
+
 These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.

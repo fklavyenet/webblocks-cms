@@ -367,7 +367,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function pages_list_shows_slots_and_page_centered_actions(): void
+    public function pages_list_shows_translation_statuses_and_page_centered_actions(): void
     {
         $user = User::factory()->create();
         $main = $this->slotType('main', 'Main', 2);
@@ -401,7 +401,6 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.index'));
 
         $response->assertOk();
-        $response->assertSee('Main');
         $response->assertSee($site->name);
         $response->assertSee('Default');
         $response->assertSee('tr');
@@ -409,6 +408,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee(route('admin.pages.edit', $page), false);
         $response->assertDontSee('<th>Slug</th>', false);
         $response->assertDontSee('<th>Slots</th>', false);
+        $response->assertDontSee('Main');
         $response->assertDontSee(route('admin.blocks.index', ['page_id' => $page->id]), false);
     }
 

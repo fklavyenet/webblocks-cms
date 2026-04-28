@@ -80,11 +80,12 @@ class AdminDashboardRouteTest extends TestCase
         $response = $this->actingAs($user)->get('/admin');
 
         $response->assertOk();
-        $response->assertSee('function resetAdminTransientUiState()', false);
-        $response->assertSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
-        $response->assertSee("window.addEventListener('pageshow'", false);
-        $response->assertSee("document.querySelectorAll('[data-wb-sidebar-backdrop]')", false);
-        $response->assertSee("overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop')", false);
+        $response->assertSee('assets/webblocks-cms/js/admin/core.js', false);
+        $response->assertDontSee('function resetAdminTransientUiState()', false);
+        $response->assertDontSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
+        $response->assertDontSee("window.addEventListener('pageshow'", false);
+        $response->assertDontSee("document.querySelectorAll('[data-wb-sidebar-backdrop]')", false);
+        $response->assertDontSee("overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop')", false);
         $response->assertDontSee("overlayRoot.querySelectorAll('[data-wb-overlay-runtime=\"true\"]')", false);
     }
 
