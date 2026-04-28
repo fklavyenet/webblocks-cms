@@ -31,8 +31,10 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - WebBlocks CMS core contains reusable CMS engine features such as page building, multilingual content, multisite, media, navigation, workflow, backup, update, and generic site export/import.
 - Site-specific code that must survive CMS updates belongs in the Project Layer under `project/`.
 - Site-specific migration scripts, one-off legacy importers, and project-only reconstruction helpers do not belong in CMS core.
+- CMS core does not ship website-specific UI docs or demo content generator commands.
 - If a migration script is only relevant to a specific site, brand, or historical project, keep it in that project workspace instead of this repository.
 - Generic site export/import remains part of CMS core and is the supported reusable transfer path.
+- Website and demo content should be distributed as native CMS export/import snapshots instead of hard-coded PHP page builder commands in core.
 
 ## Project Layer
 

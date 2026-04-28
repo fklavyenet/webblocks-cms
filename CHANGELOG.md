@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## 1.4.4
+
+### Changed
+
+- Clarified that CMS core keeps generic site export/import only, while website or demo content should ship as native CMS export/import snapshots.
+
+### Removed
+
+- Removed the hard-coded `webblocks:sync-ui-docs-pilot` website content generator from CMS core.
+- Removed the remaining core registration path for website-specific UI docs rebuild tooling so those commands no longer ship in the core command list.
+
 ## 1.4.3
 
 ### Added
