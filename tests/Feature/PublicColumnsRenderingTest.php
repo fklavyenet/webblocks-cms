@@ -105,6 +105,44 @@ class PublicColumnsRenderingTest extends TestCase
         $response->assertSee('Implementation notes and usage guidance.');
     }
 
+    #[Test]
+    public function column_item_stats_variant_preserves_zero_values_in_public_rendering(): void
+    {
+        $block = new Block([
+            'title' => 'Active sites',
+            'subtitle' => 0,
+            'content' => '0.0',
+        ]);
+
+        $html = view('pages.partials.blocks.column_item', [
+            'block' => $block,
+            'columnsVariant' => 'stats',
+        ])->render();
+
+        $this->assertStringContainsString('<div class="wb-stat-label">Active sites</div>', $html);
+        $this->assertStringContainsString('<div class="wb-stat-value">0</div>', $html);
+        $this->assertStringContainsString('<div class="wb-stat-delta">0.0</div>', $html);
+        $this->assertStringNotContainsString('<div class="wb-stat-value">Active sites</div>', $html);
+    }
+
+    #[Test]
+    public function column_item_stats_variant_still_falls_back_for_empty_or_null_values(): void
+    {
+        $block = new Block([
+            'title' => 'Active sites',
+            'subtitle' => "   ",
+            'content' => null,
+        ]);
+
+        $html = view('pages.partials.blocks.column_item', [
+            'block' => $block,
+            'columnsVariant' => 'stats',
+        ])->render();
+
+        $this->assertStringContainsString('<div class="wb-stat-value">Active sites</div>', $html);
+        $this->assertStringNotContainsString('wb-stat-delta', $html);
+    }
+
     private function pageWithMainSlot(): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

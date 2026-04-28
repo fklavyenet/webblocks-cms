@@ -1,30 +1,37 @@
 @php
     $columnsVariant = $columnsVariant ?? null;
+    $hasRenderableText = static fn ($value): bool => $value !== null && trim((string) $value) !== '';
+    $title = $hasRenderableText($block->title) ? (string) $block->title : null;
+    $subtitle = $hasRenderableText($block->subtitle) ? (string) $block->subtitle : null;
+    $content = $hasRenderableText($block->content) ? (string) $block->content : null;
+    $statValue = $subtitle ?? $title;
 @endphp
 
 @switch($columnsVariant)
     @case('plain')
         <div class="wb-stack wb-gap-2">
-            @if ($block->title)
-                <strong>{{ $block->title }}</strong>
+            @if ($title !== null)
+                <strong>{{ $title }}</strong>
             @endif
 
-            @if ($block->content)
-                <p class="wb-m-0">{{ $block->content }}</p>
+            @if ($content !== null)
+                <p class="wb-m-0">{{ $content }}</p>
             @endif
         </div>
         @break
 
     @case('stats')
         <div class="wb-stat">
-            @if ($block->title)
-                <div class="wb-stat-label">{{ $block->title }}</div>
+            @if ($title !== null)
+                <div class="wb-stat-label">{{ $title }}</div>
             @endif
 
-            <div class="wb-stat-value">{{ $block->subtitle ?: $block->title }}</div>
+            @if ($statValue !== null)
+                <div class="wb-stat-value">{{ $statValue }}</div>
+            @endif
 
-            @if ($block->content)
-                <div class="wb-stat-delta">{{ $block->content }}</div>
+            @if ($content !== null)
+                <div class="wb-stat-delta">{{ $content }}</div>
             @endif
         </div>
         @break
@@ -36,23 +43,23 @@
                 @if ($block->url)
                     <a href="{{ $block->url }}" class="wb-no-decoration">
                         <div class="wb-stack wb-gap-2">
-                            @if ($block->title)
-                                <strong>{{ $block->title }}</strong>
+                            @if ($title !== null)
+                                <strong>{{ $title }}</strong>
                             @endif
 
-                            @if ($block->content)
-                                <p class="wb-m-0">{{ $block->content }}</p>
+                            @if ($content !== null)
+                                <p class="wb-m-0">{{ $content }}</p>
                             @endif
                         </div>
                     </a>
                 @else
                     <div class="wb-stack wb-gap-2">
-                        @if ($block->title)
-                            <strong>{{ $block->title }}</strong>
+                        @if ($title !== null)
+                            <strong>{{ $title }}</strong>
                         @endif
 
-                        @if ($block->content)
-                            <p class="wb-m-0">{{ $block->content }}</p>
+                        @if ($content !== null)
+                            <p class="wb-m-0">{{ $content }}</p>
                         @endif
                     </div>
                 @endif
