@@ -1,6 +1,6 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
-    $recommendedSlugs = collect(['header', 'plain_text', 'section', 'container']);
+    $recommendedSlugs = collect(['header', 'plain_text', 'content_header', 'section', 'container']);
     $excludedSlugs = collect(['column_item', 'feature-item', 'link-list-item', 'menu']);
     $expandedBlockQuery = trim((string) request('expanded'));
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';
@@ -97,7 +97,7 @@
                 </div>
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
-                    <form method="GET" action="{{ route('admin.pages.slots.blocks', [$page, $slot]) }}" class="wb-stack wb-gap-3">
+                    <form method="GET" action="{{ route('admin.pages.slots.blocks', [$page, $slot]) }}" class="wb-cluster wb-cluster-between wb-cluster-2">
                         <input type="hidden" name="picker" value="1">
                         @unless ($activeLocale->is_default)
                             <input type="hidden" name="locale" value="{{ $activeLocale->code }}">

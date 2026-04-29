@@ -131,6 +131,48 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_picker_recommends_content_header_and_uses_compact_filter_row_markup(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Recommended');
+        $response->assertSee('All block types');
+        $response->assertSeeInOrder(['Recommended', 'Content Header', 'All block types'], false);
+        $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
+        $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
+        $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
+    }
+
+    #[Test]
+    public function slot_block_picker_search_matches_content_header_by_slug_name_and_description_terms(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        foreach (['content header', 'header', 'intro', 'meta', 'content_header'] as $term) {
+            $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+                $page,
+                $pageSlot,
+                'picker' => 1,
+                'block_type_search' => $term,
+            ]));
+
+            $response->assertOk();
+            $response->assertSee('Content Header');
+        }
+    }
+
+    #[Test]
     public function header_admin_form_uses_text_and_level_fields(): void
     {
         $this->seedFoundation();
