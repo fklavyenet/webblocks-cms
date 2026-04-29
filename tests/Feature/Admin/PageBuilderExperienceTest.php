@@ -163,6 +163,8 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Block Info');
+        $response->assertSee('Block Fields');
+        $response->assertSee('Settings');
         $response->assertSee('Parent Block');
         $response->assertSee('Sort Order');
         $response->assertSee('Status');
@@ -193,7 +195,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function layout_block_admin_forms_show_no_settings_message(): void
+    public function layout_block_admin_forms_show_expected_fields_and_settings_controls(): void
     {
         $this->seedFoundation();
 
@@ -206,8 +208,26 @@ class PageBuilderExperienceTest extends TestCase
         $sectionResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
         $containerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $containerType->id]));
 
-        $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public settings or content.')->assertDontSee('name="text"', false);
-        $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public settings or content.')->assertDontSee('name="text"', false);
+        $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="spacing"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+        $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="width"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+    }
+
+    #[Test]
+    public function header_and_plain_text_settings_controls_render_in_the_settings_tab(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $headerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $headerType->id]));
+        $plainTextResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $plainTextType->id]));
+
+        $headerResponse->assertOk()->assertSee('Settings')->assertSee('name="alignment"', false)->assertSee('Applies shipped WebBlocks UI text alignment classes only.');
+        $plainTextResponse->assertOk()->assertSee('Settings')->assertSee('name="alignment"', false)->assertSee('Applies shipped WebBlocks UI text alignment classes only.');
     }
 
     #[Test]
@@ -378,6 +398,7 @@ class PageBuilderExperienceTest extends TestCase
             'subtitle' => null,
             'content' => null,
         ]);
+        $this->assertNull($block->fresh()->setting('alignment'));
     }
 
     #[Test]
@@ -415,6 +436,110 @@ class PageBuilderExperienceTest extends TestCase
             'subtitle' => null,
             'content' => 'Plain paragraph copy',
         ]);
+        $this->assertNull($block->fresh()->setting('alignment'));
+    }
+
+    #[Test]
+    public function block_settings_are_saved_as_shared_non_translatable_settings(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'text' => 'Aligned heading',
+            'level' => 'h2',
+            'alignment' => 'center',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $plainTextType->id,
+            'sort_order' => 1,
+            'text' => 'Aligned paragraph',
+            'alignment' => 'right',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $sectionType->id,
+            'sort_order' => 2,
+            'name' => 'Feature zone',
+            'spacing' => 'lg',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $containerType->id,
+            'sort_order' => 3,
+            'width' => 'xl',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $header = Block::query()->where('page_id', $page->id)->where('type', 'header')->firstOrFail();
+        $plainText = Block::query()->where('page_id', $page->id)->where('type', 'plain_text')->firstOrFail();
+        $section = Block::query()->where('page_id', $page->id)->where('type', 'section')->firstOrFail();
+        $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
+
+        $this->assertSame('center', $header->fresh()->setting('alignment'));
+        $this->assertSame('right', $plainText->fresh()->setting('alignment'));
+        $this->assertSame('Feature zone', $section->fresh()->setting('layout_name'));
+        $this->assertSame('lg', $section->fresh()->setting('spacing'));
+        $this->assertSame('xl', $container->fresh()->setting('width'));
+    }
+
+    #[Test]
+    public function invalid_block_settings_are_rejected(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'text' => 'Heading',
+            'level' => 'h2',
+            'alignment' => 'diagonal',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors('alignment');
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $sectionType->id,
+            'sort_order' => 0,
+            'spacing' => 'xl',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors('spacing');
     }
 
     #[Test]

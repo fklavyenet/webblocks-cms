@@ -38,6 +38,14 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
+- The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
+- The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
+- Currently available settings:
+- `header`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
+- `plain_text`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
+- `section`: `spacing` -> `wb-section-sm`, `wb-section-lg`
+- `container`: `width` -> `wb-container-sm`, `wb-container-md`, `wb-container-lg`, `wb-container-xl`, `wb-container-full`
+- Arbitrary class entry is not supported.
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
 - Layout and primitive content blocks do not carry higher-level WebBlocks UI pattern markup. UI patterns will be introduced later, one by one, on top of this layout layer.
@@ -305,11 +313,13 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 - `section` renders only `<section class="wb-section">...</section>`.
 - `container` renders only `<div class="wb-container">...</div>`.
-- `header` renders only the selected semantic heading element, for example `<h1>Text</h1>`.
-- `plain_text` renders only a semantic paragraph element, for example `<p>Text</p>`.
+- `section` may append only whitelisted spacing classes such as `wb-section-sm` or `wb-section-lg`.
+- `container` may append only whitelisted width classes such as `wb-container-lg` or `wb-container-xl`.
+- `header` renders only the selected semantic heading element and may append a whitelisted alignment class, for example `<h1 class="wb-text-center">Text</h1>`.
+- `plain_text` renders only a semantic paragraph element and may append a whitelisted alignment class, for example `<p class="wb-text-right">Text</p>`.
 - Nested rendering supports `section -> container -> header/plain_text` without extra wrappers.
 - All current foundation blocks escape user-facing output safely.
-- No WebBlocks UI pattern classes are applied to primitive content blocks.
+- Primitive block rendering remains whitelist-based. Unverified or arbitrary classes are ignored.
 
 ## Public Rendering Mode
 

@@ -226,6 +226,54 @@ class Block extends Model
         return (bool) ($this->blockType?->is_container ?? false);
     }
 
+    public function appearanceSetting(string $key): ?string
+    {
+        $value = trim((string) $this->setting($key, ''));
+
+        return $value !== '' ? $value : null;
+    }
+
+    public function headerAlignmentClass(): ?string
+    {
+        return match ($this->appearanceSetting('alignment')) {
+            'left' => 'wb-text-left',
+            'center' => 'wb-text-center',
+            'right' => 'wb-text-right',
+            default => null,
+        };
+    }
+
+    public function plainTextAlignmentClass(): ?string
+    {
+        return match ($this->appearanceSetting('alignment')) {
+            'left' => 'wb-text-left',
+            'center' => 'wb-text-center',
+            'right' => 'wb-text-right',
+            default => null,
+        };
+    }
+
+    public function sectionSpacingClass(): ?string
+    {
+        return match ($this->appearanceSetting('spacing')) {
+            'sm' => 'wb-section-sm',
+            'lg' => 'wb-section-lg',
+            default => null,
+        };
+    }
+
+    public function containerWidthClass(): ?string
+    {
+        return match ($this->appearanceSetting('width')) {
+            'sm' => 'wb-container-sm',
+            'md' => 'wb-container-md',
+            'lg' => 'wb-container-lg',
+            'xl' => 'wb-container-xl',
+            'full' => 'wb-container-full',
+            default => null,
+        };
+    }
+
     public function slotPreviewLabel(): string
     {
         $label = $this->typeName();

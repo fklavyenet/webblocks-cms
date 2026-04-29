@@ -5,7 +5,5 @@
         <div class="wb-text-sm wb-text-muted">Admin-only label used in the block tree and parent selector.</div>
     </div>
 
-    <div class="wb-text-sm wb-text-muted">
-        This layout block has no public settings or content.
-    </div>
+    <div class="wb-text-sm wb-text-muted">This layout block has no public content fields.</div>
 </div>

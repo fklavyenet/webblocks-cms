@@ -41,6 +41,9 @@ class BlockRequest extends FormRequest
         $isCode = $selectedBlockType?->slug === 'code';
         $isHeader = $selectedBlockType?->slug === 'header';
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
+        $supportsAlignment = $isHeader || $isPlainText;
+        $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
+        $supportsContainerWidth = $selectedBlockType?->slug === 'container';
         $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container'], true);
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
@@ -63,6 +66,9 @@ class BlockRequest extends FormRequest
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'name' => [$isLayoutPrimitive ? 'nullable' : 'prohibited', 'string', 'max:100'],
+            'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
+            'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
+            'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -408,6 +414,20 @@ class BlockRequest extends FormRequest
 
             if ($blockType?->slug === 'header') {
                 $isTranslatedHeaderEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+                $alignment = trim((string) ($data['alignment'] ?? ''));
+
+                if (! $isTranslatedHeaderEdit) {
+                    if (in_array($alignment, ['left', 'center', 'right'], true)) {
+                        $settings['alignment'] = $alignment;
+                    } else {
+                        unset($settings['alignment']);
+                    }
+                }
 
                 $data['title'] = trim((string) ($data['text'] ?? '')) ?: null;
                 $data['subtitle'] = null;
@@ -415,13 +435,28 @@ class BlockRequest extends FormRequest
                 $data['url'] = null;
                 $data['asset_id'] = null;
                 $data['meta'] = null;
-                $data['settings'] = null;
+                $data['settings'] = $settings === []
+                    ? null
+                    : json_encode($settings, JSON_UNESCAPED_SLASHES);
                 $data['variant'] = $isTranslatedHeaderEdit
                     ? ($this->route('block')?->getRawOriginal('variant'))
                     : (trim((string) ($data['level'] ?? '')) ?: 'h2');
             }
 
             if ($blockType?->slug === 'plain_text') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+                $alignment = trim((string) ($data['alignment'] ?? ''));
+
+                if (in_array($alignment, ['left', 'center', 'right'], true)) {
+                    $settings['alignment'] = $alignment;
+                } else {
+                    unset($settings['alignment']);
+                }
+
                 $data['content'] = trim((string) ($data['text'] ?? '')) ?: null;
                 $data['title'] = null;
                 $data['subtitle'] = null;
@@ -429,7 +464,9 @@ class BlockRequest extends FormRequest
                 $data['asset_id'] = null;
                 $data['variant'] = null;
                 $data['meta'] = null;
-                $data['settings'] = null;
+                $data['settings'] = $settings === []
+                    ? null
+                    : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
             if (in_array($blockType?->slug, ['section', 'container'], true)) {
@@ -439,11 +476,33 @@ class BlockRequest extends FormRequest
                 $existingSettings = is_array($existingSettings) ? $existingSettings : [];
                 $layoutName = trim((string) ($data['name'] ?? ''));
                 $settings = $existingSettings;
+                $spacing = trim((string) ($data['spacing'] ?? ''));
+                $width = trim((string) ($data['width'] ?? ''));
 
                 if ($layoutName !== '') {
                     $settings['layout_name'] = $layoutName;
                 } else {
                     unset($settings['layout_name']);
+                }
+
+                if ($blockType->slug === 'section') {
+                    if (in_array($spacing, ['sm', 'lg'], true)) {
+                        $settings['spacing'] = $spacing;
+                    } else {
+                        unset($settings['spacing']);
+                    }
+
+                    unset($settings['width']);
+                }
+
+                if ($blockType->slug === 'container') {
+                    if (in_array($width, ['sm', 'md', 'lg', 'xl', 'full'], true)) {
+                        $settings['width'] = $width;
+                    } else {
+                        unset($settings['width']);
+                    }
+
+                    unset($settings['spacing']);
                 }
 
                 $data['title'] = null;
@@ -470,7 +529,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
-        unset($data['name']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width']);
 
         return $data;
     }

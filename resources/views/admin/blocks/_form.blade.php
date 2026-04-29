@@ -28,6 +28,7 @@
         <div class="wb-tabs-nav" role="tablist" aria-label="Block editor sections">
             <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-info' ? 'is-active' : '' }}" data-wb-tab="slot-block-info-panel" aria-selected="{{ $activeTab === 'block-info' ? 'true' : 'false' }}" @if ($activeTab !== 'block-info') tabindex="-1" @endif>Block Info</button>
             <button type="button" class="wb-tabs-btn {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" data-wb-tab="slot-block-fields-panel" aria-selected="{{ $activeTab === 'block-fields' ? 'true' : 'false' }}" @if ($activeTab !== 'block-fields') tabindex="-1" @endif>Block Fields</button>
+            <button type="button" class="wb-tabs-btn {{ $activeTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="slot-block-settings-panel" aria-selected="{{ $activeTab === 'settings' ? 'true' : 'false' }}" @if ($activeTab !== 'settings') tabindex="-1" @endif>Settings</button>
         </div>
 
         <div class="wb-tabs-panels">
@@ -78,6 +79,24 @@
                             'featureItemBlockType' => $featureItemBlockType,
                             'linkListItemBlockType' => $linkListItemBlockType,
                         ])
+                    </div>
+                </div>
+            </div>
+
+            <div class="wb-tabs-panel {{ $activeTab === 'settings' ? 'is-active' : '' }}" id="slot-block-settings-panel">
+                <div class="wb-card wb-card-accent">
+                    <div class="wb-card-header">
+                        <strong>Settings for {{ $selectedBlockType?->name ?? $block->typeName() }}</strong>
+                    </div>
+                    <div class="wb-card-body">
+                        @includeIf('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
+                            'block' => $block,
+                            'selectedBlockType' => $selectedBlockType,
+                        ])
+
+                        @unless (view()->exists('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug())))
+                            @include('admin.blocks.settings.fallback')
+                        @endunless
                     </div>
                 </div>
             </div>
