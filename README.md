@@ -28,13 +28,18 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 ## Block Foundation
 
-- The active CMS block foundation is intentionally minimal: `header` and `plain_text`.
-- These are primitive content blocks only. They are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
+- The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
+- Current layout blocks are `section` and `container`.
+- Current content blocks are `header` and `plain_text`.
+- All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
+- `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
+- `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
+- `section` and `container` have no translatable fields and no user-facing JSON content.
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
-- Primitive blocks do not carry WebBlocks UI pattern classes. Pattern and layout styling belongs to future higher-level blocks added deliberately later.
+- Layout and primitive content blocks do not carry higher-level WebBlocks UI pattern markup. UI patterns will be introduced later, one by one, on top of this layout layer.
 
 ## Product Boundary
 
@@ -172,7 +177,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Add `Header` and `Plain Text` blocks, save your edits, and submit the page for review when ready.
+5. Build page structure with `Section` and `Container`, then add `Header` and `Plain Text` blocks inside that layout tree.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 
@@ -297,9 +302,12 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 
 ## Public Rendering
 
+- `section` renders only `<section class="wb-section">...</section>`.
+- `container` renders only `<div class="wb-container">...</div>`.
 - `header` renders only the selected semantic heading element, for example `<h1>Text</h1>`.
 - `plain_text` renders only a semantic paragraph element, for example `<p>Text</p>`.
-- Both primitive blocks escape output safely.
+- Nested rendering supports `section -> container -> header/plain_text` without extra wrappers.
+- All current foundation blocks escape user-facing output safely.
 - No WebBlocks UI pattern classes are applied to primitive content blocks.
 
 ## Public Rendering Mode
@@ -323,12 +331,12 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 
 ## Foundation Reset
 
-- The previous broad and experimental block catalog is no longer active in the CMS picker. Only `header` and `plain_text` are published foundation block types.
+- The previous broad and experimental block catalog is no longer active in the CMS picker. Only `section`, `container`, `header`, and `plain_text` are published foundation block types.
 - Legacy block type records may remain in the database as draft compatibility records for existing data and imports, but they are not part of the active foundation.
 - `StarterContentSeeder`, `FullShowcaseSeeder`, `StarterInstallSeeder`, and `ShowcaseInstallSeeder` are intentionally quarantined until their content is rebuilt for the primitive foundation.
 - For local development resets after changing the foundation, reseed block types with `ddev artisan db:seed` and remove old non-primitive page blocks with `ddev artisan cms:reset-primitive-blocks`.
 - Use `ddev artisan cms:reset-primitive-blocks --dry-run` first if you want to inspect the impact.
-- Future WebBlocks UI pattern blocks such as Section, Container, Hero, Promo, Card, and similar higher-level patterns will be added later, one by one.
+- Future WebBlocks UI pattern blocks such as Hero, Promo, Card, and similar higher-level patterns will be added later, one by one, on top of the current layout layer.
 
 ## System Updates
 

@@ -427,7 +427,7 @@ class PublicHeroBlockRenderingTest extends TestCase
     {
         $page = $this->pageWithMainSlot();
 
-        Block::query()->create([
+        $section = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'section',
             'block_type_id' => $this->blockType('section', 'Section', 1)->id,
@@ -435,9 +435,19 @@ class PublicHeroBlockRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'title' => 'Standard section',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
             'content' => 'Section copy',
-            'variant' => 'default',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -445,18 +455,17 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-section ">', false);
-        $response->assertSee('Standard section');
+        $response->assertSee('<section class="wb-section">', false);
         $response->assertSee('Section copy');
         $response->assertDontSee('wb-promo', false);
     }
 
     #[Test]
-    public function section_promo_variant_renders_promo_only_if_implemented(): void
+    public function section_renders_only_layout_wrapper_without_legacy_promo_markup(): void
     {
         $page = $this->pageWithMainSlot();
 
-        Block::query()->create([
+        $section = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'section',
             'block_type_id' => $this->blockType('section', 'Section', 1)->id,
@@ -464,9 +473,21 @@ class PublicHeroBlockRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'title' => 'Promo section',
-            'content' => 'Section promo copy',
-            'variant' => 'promo',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'button',
+            'block_type_id' => $this->blockType('button', 'Button', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Section CTA',
+            'url' => '/section-cta',
+            'variant' => 'primary',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -474,9 +495,11 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('wb-promo', false);
-        $response->assertSee('wb-promo-title', false);
-        $response->assertSee('wb-promo-text', false);
+        $response->assertSee('<section class="wb-section">', false);
+        $response->assertSee('Section CTA');
+        $response->assertDontSee('wb-promo', false);
+        $response->assertDontSee('wb-promo-title', false);
+        $response->assertDontSee('wb-promo-text', false);
     }
 
     #[Test]

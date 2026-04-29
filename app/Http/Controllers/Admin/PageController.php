@@ -268,18 +268,7 @@ class PageController extends Controller
 
         $blocks = Block::query()
             ->with([
-                'blockType',
-                'slotType',
-                'blockAssets.asset',
-                'textTranslations',
-                'buttonTranslations',
-                'imageTranslations',
-                'contactFormTranslations',
-                'children.blockType',
-                'children.textTranslations',
-                'children.buttonTranslations',
-                'children.imageTranslations',
-                'children.contactFormTranslations',
+                ...$this->slotBlockRelations(),
             ])
             ->where('page_id', $page->id)
             ->where('slot_type_id', $slot->slot_type_id)
@@ -601,6 +590,22 @@ class PageController extends Controller
                 'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
             ])
             ->values();
+    }
+
+    private function slotBlockRelations(): array
+    {
+        return [
+            'blockType',
+            'slotType',
+            'blockAssets.asset',
+            'textTranslations',
+            'buttonTranslations',
+            'imageTranslations',
+            'contactFormTranslations',
+            'children' => fn ($query) => $query
+                ->with($this->slotBlockRelations())
+                ->orderBy('sort_order'),
+        ];
     }
 
     private function slotExpandedBlockIds($blocks, ?Block $modalBlock = null)

@@ -110,7 +110,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_lists_only_header_and_plain_text(): void
+    public function slot_block_picker_lists_header_plain_text_section_and_container(): void
     {
         $this->seedFoundation();
 
@@ -123,8 +123,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Header');
         $response->assertSee('Plain Text');
+        $response->assertSee('Section');
+        $response->assertSee('Container');
         $response->assertDontSee('Hero');
-        $response->assertDontSee('Section');
         $response->assertDontSee('Rich Text');
     }
 
@@ -164,6 +165,24 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Add Block: Plain Text');
         $response->assertSee('name="text"', false);
         $response->assertDontSee('Rich Text');
+    }
+
+    #[Test]
+    public function layout_block_admin_forms_show_no_settings_message(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+
+        $sectionResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
+        $containerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $containerType->id]));
+
+        $sectionResponse->assertOk()->assertSee('Section is a layout wrapper')->assertDontSee('name="text"', false);
+        $containerResponse->assertOk()->assertSee('Container is a layout wrapper')->assertDontSee('name="text"', false);
     }
 
     #[Test]
@@ -280,6 +299,82 @@ class PageBuilderExperienceTest extends TestCase
 
         $plainTextResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $plainTextResponse->assertSessionHasErrors(['text']);
+    }
+
+    #[Test]
+    public function nested_layout_blocks_can_be_created_in_admin_slot_editor(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $sectionType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $section = Block::query()->where('page_id', $page->id)->where('type', 'section')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $containerType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+
+        $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'text' => 'Nested title',
+            'level' => 'h1',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $plainTextType->id,
+            'sort_order' => 1,
+            'text' => 'Nested paragraph',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $section->refresh();
+        $container->refresh();
+
+        $this->assertNull($section->parent_id);
+        $this->assertSame($section->id, $container->parent_id);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $container->id]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'plain_text', 'parent_id' => $container->id]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id]));
+
+        $response->assertOk();
+        $response->assertSee('Section');
+        $response->assertSee('Container');
+        $response->assertSee('Nested title');
+        $response->assertSee('Nested paragraph');
     }
 
     #[Test]

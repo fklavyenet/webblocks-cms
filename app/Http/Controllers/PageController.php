@@ -51,16 +51,30 @@ class PageController extends Controller
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
-                ->orderBy('sort_order'),
-            'blocks.children' => fn ($query) => $query
-                ->where('status', 'published')
-                ->with(['blockType', 'slotType', 'asset', 'blockAssets.asset', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+                ->with($this->publishedBlockRelations())
                 ->orderBy('sort_order'),
         ]);
 
         $this->visitorEventLogger->logPageView($request, $page);
 
         return view('pages.show', $this->presenter->present($page));
+    }
+
+    private function publishedBlockRelations(): array
+    {
+        return [
+            'blockType',
+            'slotType',
+            'asset',
+            'blockAssets.asset',
+            'textTranslations',
+            'buttonTranslations',
+            'imageTranslations',
+            'contactFormTranslations',
+            'children' => fn ($query) => $query
+                ->where('status', 'published')
+                ->with($this->publishedBlockRelations())
+                ->orderBy('sort_order'),
+        ];
     }
 }

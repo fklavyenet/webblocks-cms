@@ -155,6 +155,10 @@ class Block extends Model
 
     public function editorLabel(): string
     {
+        if (in_array($this->typeSlug(), ['section', 'container'], true)) {
+            return $this->typeName();
+        }
+
         if ($this->typeSlug() === 'plain_text') {
             return $this->content ?: $this->typeName();
         }
@@ -164,6 +168,14 @@ class Block extends Model
 
     public function editorSummary(): ?string
     {
+        if (in_array($this->typeSlug(), ['section', 'container'], true)) {
+            $childCount = $this->children->count();
+
+            return $childCount > 0
+                ? $childCount.' '.Str::plural('child block', $childCount)
+                : 'Layout wrapper';
+        }
+
         if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
             return 'Location: '.str($this->navigationLocation())->headline();
         }

@@ -21,11 +21,88 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function canonical_public_block_renderers_exist_for_primitive_blocks(): void
+    public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function section_and_container_render_nested_header_and_plain_text_structure(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $this->blockType('section', 'Section', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $this->blockType('container', 'Container', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $header->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Nested heading',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+
+        $plainText = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $plainText->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Nested paragraph',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($plainText->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<section class="wb-section">',
+            '<div class="wb-container">',
+            '<h1>Nested heading</h1>',
+            '<p>Nested paragraph</p>',
+            '</div>',
+            '</section>',
+        ], false);
     }
 
     #[Test]

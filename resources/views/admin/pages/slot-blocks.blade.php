@@ -90,153 +90,18 @@
                         </thead>
 
                         @foreach ($blocks as $block)
-                            @php
-                                $childCount = $block->children->count();
-                                $isExpanded = $expandedBlockIds->contains($block->id);
-                                $groupId = 'slot-block-children-'.$block->id;
-                                $blockExpandedQuery = collect([$block->id])->merge($expandedBlockIds)->unique()->implode(',');
-                            @endphp
-
-                            <tbody>
-                                <tr>
-                                    <td>{{ $block->sort_order }}</td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <div class="wb-cluster wb-cluster-2">
-                                                @if ($childCount > 0)
-                                                    <button
-                                                        type="button"
-                                                        class="wb-action-btn wb-slot-block-toggle"
-                                                        data-wb-slot-block-toggle
-                                                        data-wb-target="{{ $groupId }}"
-                                                        aria-controls="{{ $groupId }}"
-                                                        aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
-                                                        aria-label="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
-                                                        title="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
-                                                    >
-                                                        <i class="wb-icon wb-icon-chevron-down wb-slot-block-toggle-icon" aria-hidden="true"></i>
-                                                    </button>
-                                                @endif
-
-                                                <strong>{{ $block->typeName() }}</strong>
-                                            </div>
-
-                                            <span class="wb-text-sm wb-text-muted">
-                                                {{ $block->is_system ? 'System block' : 'Visitor-facing block' }}
-                                                @if ($childCount > 0)
-                                                    | Children: {{ $childCount }} {{ \Illuminate\Support\Str::plural('item', $childCount) }}
-                                                @endif
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong>{{ $block->editorLabel() }}</strong></a>
-                                            @if ($block->editorSummary())
-                                                <span class="wb-text-sm wb-text-muted">{{ $block->editorSummary() }}</span>
-                                            @endif
-                                            @php($translationStatus = $block->translationStatus($activeLocale))
-                                            <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ $block->status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="wb-action-group">
-                                            <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
-                                                @csrf
-                                                <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
-                                                @unless ($activeLocale->is_default)
-                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                @endunless
-                                                <button type="submit" class="wb-action-btn" title="Move block up" aria-label="Move block up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                                            </form>
-                                            <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
-                                                @csrf
-                                                <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
-                                                @unless ($activeLocale->is_default)
-                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                @endunless
-                                                <button type="submit" class="wb-action-btn" title="Move block down" aria-label="Move block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                                            </form>
-                                            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                            <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
-                                                @unless ($activeLocale->is_default)
-                                                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                @endunless
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                            @if ($childCount > 0)
-                                <tbody id="{{ $groupId }}" data-wb-slot-block-children="{{ $groupId }}" @if (! $isExpanded) hidden @endif>
-                                    @foreach ($block->children as $child)
-                                        <tr>
-                                            <td>{{ $block->sort_order }}.{{ $child->sort_order + 1 }}</td>
-                                            <td>
-                                                <div class="wb-stack wb-gap-1 wb-slot-block-child-meta">
-                                                    <strong>{{ $child->typeName() }}</strong>
-                                                    <span class="wb-text-sm wb-text-muted">Child of {{ $block->editorLabel() }}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="wb-stack wb-gap-1 wb-slot-block-child-summary">
-                                                    <a href="{{ $slotBlockRoute(['edit' => $child->id, 'expanded' => $blockExpandedQuery]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $child->id]) }}"><strong>{{ $child->editorLabel() }}</strong></a>
-                                                    @if ($child->editorSummary())
-                                                        <span class="wb-text-sm wb-text-muted">{{ $child->editorSummary() }}</span>
-                                                    @endif
-                                                    @php($childTranslationStatus = $child->translationStatus($activeLocale))
-                                                    <span class="wb-text-sm wb-text-muted">{{ $childTranslationStatus['label'] }}{{ $childTranslationStatus['state'] === 'fallback' ? ' from '.strtoupper($childTranslationStatus['resolved_locale']->code) : '' }}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="wb-status-pill {{ $child->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                                    {{ $child->status }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="wb-action-group">
-                                                    <form method="POST" action="{{ route('admin.blocks.move-up', $child) }}">
-                                                        @csrf
-                                                        <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
-                                                        @unless ($activeLocale->is_default)
-                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                        @endunless
-                                                        <button type="submit" class="wb-action-btn" title="Move child block up" aria-label="Move child block up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('admin.blocks.move-down', $child) }}">
-                                                        @csrf
-                                                        <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
-                                                        @unless ($activeLocale->is_default)
-                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                        @endunless
-                                                        <button type="submit" class="wb-action-btn" title="Move child block down" aria-label="Move child block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                                                    </form>
-                                                    <a href="{{ $slotBlockRoute(['edit' => $child->id, 'expanded' => $blockExpandedQuery]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit child block" aria-label="Edit child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $child->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                                    <form method="POST" action="{{ route('admin.blocks.destroy', $child) }}" onsubmit="return confirm('Delete this child block?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <input type="hidden" name="expanded" value="{{ $blockExpandedQuery }}" data-wb-slot-block-expanded-input>
-                                                        @unless ($activeLocale->is_default)
-                                                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                                                        @endunless
-                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete child block" aria-label="Delete child block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            @endif
+                            @include('admin.pages.partials.slot-block-row', [
+                                'block' => $block,
+                                'depth' => 0,
+                                'parentBlock' => null,
+                                'page' => $page,
+                                'slot' => $slot,
+                                'slotBlockRoute' => $slotBlockRoute,
+                                'slotBlockBaseRoute' => $slotBlockBaseRoute,
+                                'activeLocale' => $activeLocale,
+                                'expandedBlockIds' => $expandedBlockIds,
+                                'expandedBlockQuery' => $expandedBlockQuery,
+                            ])
                         @endforeach
                     </table>
                 </div>

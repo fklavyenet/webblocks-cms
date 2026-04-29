@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -36,6 +36,28 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => false,
                 'sort_order' => 2,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Section',
+                'slug' => 'section',
+                'category' => 'layout',
+                'description' => 'Top-level layout wrapper for nested page blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 3,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Container',
+                'slug' => 'container',
+                'category' => 'layout',
+                'description' => 'Width-constrained layout wrapper for nested page blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 4,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));
@@ -92,10 +114,8 @@ class BlockTypeSeeder extends Seeder
             'team' => 'Team',
             'faq-list' => 'FAQ List',
             'html' => 'HTML',
-            'section' => 'Section',
             'hero' => 'Hero',
             'cta' => 'CTA',
-            'container' => 'Container',
             'columns' => 'Columns',
             'column_item' => 'Column Item',
             'link-list' => 'Link List',

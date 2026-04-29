@@ -53,6 +53,114 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function nested_layout_blocks_render_without_extra_wrappers(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $main = $this->slotType('main', 'Main', 1);
+        $sectionType = $this->blockType('section', 'Section', 1);
+        $containerType = $this->blockType('container', 'Container', 2);
+        $headerType = $this->blockType('header', 'Header', 3);
+        $plainTextType = $this->blockType('plain_text', 'Plain Text', 4);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $containerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $header->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'WebBlocks CMS',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+
+        $plainText = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $plainText->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Main slot content',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($plainText->fresh(['textTranslations']));
+
+        $response = $this->get('/p/about');
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<main data-wb-slot="main" id="main-content">',
+            '<section class="wb-section">',
+            '<div class="wb-container">',
+            '<h1>WebBlocks CMS</h1>',
+            '<p>Main slot content</p>',
+            '</div>',
+            '</section>',
+            '</main>',
+        ], false);
+        $response->assertDontSee('wb-stack wb-gap-3', false);
+    }
+
+    #[Test]
     public function empty_slots_are_still_rendered(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

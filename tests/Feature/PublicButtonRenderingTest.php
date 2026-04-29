@@ -150,7 +150,7 @@ class PublicButtonRenderingTest extends TestCase
     }
 
     #[Test]
-    public function promo_section_child_buttons_render_inside_promo_actions(): void
+    public function section_child_buttons_render_inside_layout_wrapper(): void
     {
         $page = $this->pageWithMainSlot();
         $section = Block::query()->create([
@@ -161,9 +161,6 @@ class PublicButtonRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'title' => 'Promo section',
-            'content' => 'Section copy',
-            'variant' => 'promo',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -187,9 +184,10 @@ class PublicButtonRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('wb-promo-actions', false);
+        $response->assertSee('<section class="wb-section">', false);
         $response->assertSee('Section CTA');
         $response->assertSee('wb-btn-outline', false);
+        $response->assertDontSee('wb-promo-actions', false);
     }
 
     private function pageWithMainSlot(): Page

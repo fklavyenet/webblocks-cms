@@ -1,35 +1,5 @@
-<div class="wb-stack wb-gap-4">
-    @if (isset($activeLocale) && $block->supportsTranslations())
-        <div class="wb-alert wb-alert-info">
-            <div>Section title and intro are translated per locale. Section variant stays shared across locales.</div>
-        </div>
-    @endif
-
-    <div class="wb-grid wb-grid-2">
-        <div class="wb-stack wb-gap-1">
-            <label for="title">Section Title</label>
-            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
-        </div>
-
-        <div class="wb-stack wb-gap-1">
-            <label for="variant">Section Variant</label>
-            <select id="variant" name="variant" class="wb-select">
-                @foreach ([
-                    'default' => 'default',
-                    'muted' => 'muted',
-                    'accent' => 'accent',
-                    'wide' => 'wide',
-                    'promo' => 'Promo',
-                ] as $value => $label)
-                    <option value="{{ $value }}" @selected(old('variant', $block->variant ?: 'default') === $value)>{{ $label }}</option>
-                @endforeach
-            </select>
-            <div class="wb-text-sm wb-text-muted">Use Promo only for section-level callouts. Page-leading marketing intros should use the Hero block.</div>
-        </div>
-    </div>
-
-    <div class="wb-stack wb-gap-1">
-        <label for="content">Section Intro</label>
-        <textarea id="content" name="content" class="wb-textarea" rows="6">{{ old('content', $block->content) }}</textarea>
+<div class="wb-stack wb-gap-3">
+    <div class="wb-alert wb-alert-info">
+        <div>Section is a layout wrapper. It has no editable fields yet and only renders its nested child blocks.</div>
     </div>
 </div>

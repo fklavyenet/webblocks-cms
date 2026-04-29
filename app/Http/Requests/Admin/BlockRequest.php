@@ -41,6 +41,7 @@ class BlockRequest extends FormRequest
         $isCode = $selectedBlockType?->slug === 'code';
         $isHeader = $selectedBlockType?->slug === 'header';
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
+        $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container'], true);
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -104,9 +105,9 @@ class BlockRequest extends FormRequest
             'link_list_items.*.is_system' => ['nullable', 'boolean'],
             'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'link_list_items.*._delete' => ['nullable', 'boolean'],
-            'variant' => ['nullable', 'string', 'max:255'],
-            'meta' => ['nullable', 'string'],
-            'settings' => ['nullable', 'string'],
+            'variant' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string', 'max:255'],
+            'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
+            'settings' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
             'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
             'submit_label' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:255'],
@@ -423,6 +424,17 @@ class BlockRequest extends FormRequest
                 $data['content'] = trim((string) ($data['text'] ?? '')) ?: null;
                 $data['title'] = null;
                 $data['subtitle'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if (in_array($blockType?->slug, ['section', 'container'], true)) {
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
                 $data['url'] = null;
                 $data['asset_id'] = null;
                 $data['variant'] = null;
