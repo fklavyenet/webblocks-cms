@@ -116,6 +116,187 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function promo_card_renders_webblocks_promo_markup_with_optional_eyebrow(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'promo'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'eyebrow' => 'Source-visible UI system',
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'subtitle' => 'Docs entry card',
+            'content' => 'Use promo cards when the docs entry point should look like a shipped marketing pattern.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<section class="wb-card wb-promo">', false);
+        $response->assertSee('<div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">', false);
+        $response->assertSee('<p class="wb-eyebrow">Source-visible UI system</p>', false);
+        $response->assertSee('<h2 class="wb-promo-title">WebBlocks UI - UI building blocks for humans and AI.</h2>', false);
+        $response->assertSee('<p class="wb-promo-text">Use promo cards when the docs entry point should look like a shipped marketing pattern.</p>', false);
+        $response->assertDontSee('<article class="wb-card">', false);
+    }
+
+    #[Test]
+    public function promo_card_renders_child_cluster_inside_promo_actions(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'promo', 'url' => '/legacy-action', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'eyebrow' => 'Source-visible UI system',
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'content' => 'Card promo actions should stay nested.',
+            'meta' => 'Legacy action',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['alignment' => 'end'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            ['label' => 'Start Here', 'url' => '/start-here', 'variant' => 'primary', 'sort' => 0],
+            ['label' => 'See primitives', 'url' => '/see-primitives', 'variant' => 'secondary', 'sort' => 1],
+        ] as $button) {
+            $child = Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $cluster->id,
+                'type' => 'button_link',
+                'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $button['sort'],
+                'variant' => $button['variant'],
+                'settings' => json_encode(['url' => $button['url'], 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $child->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => $button['label'],
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-promo-actions wb-cluster wb-cluster-2">', false);
+        $response->assertSee('wb-cluster-end', false);
+        $response->assertSee('<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>', false);
+        $response->assertSee('<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>', false);
+        $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
+    }
+
+    #[Test]
+    public function promo_card_uses_legacy_action_inside_promo_actions_when_no_children_exist(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'promo', 'url' => '/getting-started', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'eyebrow' => 'Source-visible UI system',
+            'title' => 'Pattern-first workflow',
+            'content' => 'Use the nearest shipped pattern first.',
+            'meta' => 'Read more',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-promo-actions wb-cluster wb-cluster-2">', false);
+        $response->assertSee('<a href="/getting-started" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Read more</a>', false);
+        $response->assertDontSee('<div class="wb-card-footer">', false);
+    }
+
+    #[Test]
+    public function invalid_or_missing_card_variant_falls_back_to_default_card_rendering(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        foreach ([null, 'ghost'] as $index => $variant) {
+            $card = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => 'card',
+                'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $index,
+                'settings' => json_encode(array_filter(['variant' => $variant], fn ($value) => $value !== null), JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $card->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => 'Default card '.$index,
+                'content' => 'Fallback rendering should stay on wb-card.',
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $this->assertSame(2, substr_count($response->getContent(), '<article class="wb-card">'));
+        $response->assertDontSee('<section class="wb-card wb-promo">', false);
+    }
+
+    #[Test]
     public function card_renders_child_cluster_inside_footer(): void
     {
         $page = $this->pageWithMainSlot();

@@ -184,7 +184,7 @@ class Block extends Model
         if ($this->typeSlug() === 'card' && $this->children->isNotEmpty()) {
             $childCount = $this->children->count();
 
-            return $childCount.' '.Str::plural('child block', $childCount);
+            return trim($this->cardVariant().' '.$childCount.' '.Str::plural('child block', $childCount));
         }
 
         if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
@@ -443,6 +443,19 @@ class Block extends Model
     public function cardTarget(): string
     {
         return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
+    public function cardVariant(): string
+    {
+        return match ($this->setting('variant')) {
+            'promo' => 'promo',
+            default => 'default',
+        };
+    }
+
+    public function isPromoCard(): bool
+    {
+        return $this->cardVariant() === 'promo';
     }
 
     public function slotPreviewLabel(): string

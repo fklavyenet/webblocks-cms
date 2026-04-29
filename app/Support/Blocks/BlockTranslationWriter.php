@@ -126,6 +126,7 @@ class BlockTranslationWriter
         return match ($family) {
             'text' => [
                 'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'title', $block->getRawOriginal('title')),
+                'eyebrow' => array_key_exists('eyebrow', $data) ? $data['eyebrow'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'eyebrow'),
                 'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
                 'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'content', $block->getRawOriginal('content')),
                 'meta' => array_key_exists('meta', $data) ? $data['meta'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'meta', $block->getRawOriginal('meta')),

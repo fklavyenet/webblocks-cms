@@ -964,6 +964,8 @@ class FullShowcaseSeeder extends Seeder
                                         ],
                                         [
                                             'type' => 'card',
+                                            'settings' => ['variant' => 'promo'],
+                                            'eyebrow' => 'Source-visible UI system',
                                             'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
                                             'content' => 'Use the card footer for grouped actions so docs entry points stay compact and reusable.',
                                             'children' => [

@@ -181,8 +181,10 @@ class PageRevisionManager
                         ->map(fn ($translation) => [
                             'locale_id' => $translation->locale_id,
                             'title' => $translation->title,
+                            'eyebrow' => $translation->eyebrow,
                             'subtitle' => $translation->subtitle,
                             'content' => $translation->content,
+                            'meta' => $translation->meta,
                         ])
                         ->all(),
                     'button_translations' => $block->buttonTranslations
@@ -350,7 +352,7 @@ class PageRevisionManager
 
     private function ensureLegacySnapshotFallbackTranslations(Block $block, array $snapshotBlock): bool
     {
-        if (
+            if (
             ($snapshotBlock['text_translations'] ?? []) !== []
             || ($snapshotBlock['button_translations'] ?? []) !== []
             || ($snapshotBlock['image_translations'] ?? []) !== []
@@ -371,7 +373,7 @@ class PageRevisionManager
         $rawSettings = $snapshotBlock['settings'] ?? null;
 
         return match ($block->type) {
-            'header', 'plain_text', 'content_header', 'button_link', 'column_item', 'feature-grid', 'feature-item', 'link-list', 'link-list-item', 'section', 'cta', 'text', 'rich-text', 'heading', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
+            'header', 'plain_text', 'content_header', 'button_link', 'card', 'column_item', 'feature-grid', 'feature-item', 'link-list', 'link-list-item', 'section', 'cta', 'text', 'rich-text', 'heading', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
             'button' => $this->seedLegacyButtonSnapshotFallback($block, $defaultLocaleId, $rawTitle),
             'image' => $this->seedLegacyImageSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle),
             'contact_form' => $this->seedLegacyContactFormSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawContent, $rawSettings),

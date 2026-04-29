@@ -115,6 +115,7 @@ class BlockTranslationResolver
         match ($family) {
             'text' => $this->applyAttributes($block, [
                 'title' => $translation->title,
+                'eyebrow' => $translation->eyebrow,
                 'subtitle' => $translation->subtitle,
                 'content' => $translation->content,
                 'meta' => $translation->meta,

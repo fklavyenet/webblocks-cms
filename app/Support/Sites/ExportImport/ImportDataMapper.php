@@ -394,6 +394,7 @@ class ImportDataMapper
                     'block_id' => $blockId,
                     'locale_id' => $localeId,
                     'title' => $translationData['title'] ?? null,
+                    'eyebrow' => $translationData['eyebrow'] ?? null,
                     'subtitle' => $translationData['subtitle'] ?? null,
                     'content' => $translationData['content'] ?? null,
                     'meta' => $translationData['meta'] ?? null,

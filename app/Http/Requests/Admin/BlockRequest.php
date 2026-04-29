@@ -70,6 +70,7 @@ class BlockRequest extends FormRequest
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
             'title' => [($isContentHeader || $isCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
@@ -92,6 +93,7 @@ class BlockRequest extends FormRequest
             'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
             'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
+            'card_variant' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['default', 'promo'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
             'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -573,9 +575,13 @@ class BlockRequest extends FormRequest
                 if (! $isTranslatedCardEdit) {
                     $settings['url'] = trim((string) ($data['card_url'] ?? '')) ?: null;
                     $settings['target'] = ($data['card_target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                    $settings['variant'] = in_array(trim((string) ($data['card_variant'] ?? 'default')), ['default', 'promo'], true)
+                        ? trim((string) ($data['card_variant'] ?? 'default'))
+                        : 'default';
                 }
 
                 $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['eyebrow'] = trim((string) ($data['eyebrow'] ?? '')) ?: null;
                 $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
                 $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
                 $data['meta'] = trim((string) ($data['action_label'] ?? '')) ?: null;
@@ -712,7 +718,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
-        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target']);
+        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;

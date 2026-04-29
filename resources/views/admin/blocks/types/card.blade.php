@@ -1,9 +1,15 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Card title, subtitle, description, and action label are translated per locale. URL and target stay shared across locales. Nested child blocks render in the footer before the legacy single-action fallback.</div>
+            <div>Card eyebrow or label, title, subtitle, description, and action label are translated per locale. URL, target, and variant stay shared across locales. Nested child blocks render before the legacy single-action fallback.</div>
         </div>
     @endif
+
+    <div class="wb-stack wb-gap-1">
+        <label for="eyebrow">Eyebrow / Label</label>
+        <input id="eyebrow" name="eyebrow" class="wb-input" type="text" value="{{ old('eyebrow', $block->eyebrow) }}">
+        <div class="wb-text-sm wb-text-muted">Optional translated promo label shown above the title for promo cards.</div>
+    </div>
 
     <div class="wb-stack wb-gap-1">
         <label for="title">Title</label>

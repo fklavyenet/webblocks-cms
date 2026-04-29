@@ -1246,6 +1246,80 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function card_store_creates_translated_eyebrow_and_shared_variant_url_and_target(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $cardType->id,
+            'sort_order' => 0,
+            'eyebrow' => 'Source-visible UI system',
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'subtitle' => 'Optional support line',
+            'content' => 'Promo cards should map cleanly to the docs pattern.',
+            'action_label' => 'Read more',
+            'card_url' => '/getting-started',
+            'card_target' => '_blank',
+            'card_variant' => 'promo',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'card')->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'card',
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'variant' => null,
+        ]);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'eyebrow' => 'Source-visible UI system',
+            'subtitle' => 'Optional support line',
+            'content' => 'Promo cards should map cleanly to the docs pattern.',
+            'meta' => 'Read more',
+        ]);
+        $this->assertSame('promo', $block->fresh()->cardVariant());
+        $this->assertSame('/getting-started', $block->fresh()->cardUrl());
+        $this->assertSame('_blank', $block->fresh()->cardTarget());
+    }
+
+    #[Test]
+    public function invalid_card_variant_is_rejected(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $cardType->id,
+            'sort_order' => 0,
+            'title' => 'Promo card',
+            'card_variant' => 'hero',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors('card_variant');
+    }
+
+    #[Test]
     public function content_header_store_creates_translation_backed_fields_and_shared_settings(): void
     {
         $this->seedFoundation();

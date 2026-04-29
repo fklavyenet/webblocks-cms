@@ -41,7 +41,7 @@ class BlockTranslationRegistry
     public function translatedFieldMap(string $family): array
     {
         return match ($family) {
-            'text' => ['title', 'subtitle', 'content', 'meta'],
+            'text' => ['title', 'eyebrow', 'subtitle', 'content', 'meta'],
             'button' => ['title'],
             'image' => ['caption', 'alt_text'],
             'contact_form' => ['title', 'content', 'submit_label', 'success_message'],

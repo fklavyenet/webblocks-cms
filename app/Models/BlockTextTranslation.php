@@ -16,6 +16,7 @@ class BlockTextTranslation extends Model
         'block_id',
         'locale_id',
         'title',
+        'eyebrow',
         'subtitle',
         'content',
         'meta',

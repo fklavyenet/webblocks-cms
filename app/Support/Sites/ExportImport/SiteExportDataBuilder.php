@@ -158,6 +158,7 @@ class SiteExportDataBuilder
                 'block_id' => $translation->block_id,
                 'locale_id' => $translation->locale_id,
                 'title' => $translation->title,
+                'eyebrow' => $translation->eyebrow,
                 'subtitle' => $translation->subtitle,
                 'content' => $translation->content,
                 'meta' => $translation->meta,

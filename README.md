@@ -40,7 +40,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
-- `card` stores translated `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the optional shared URL and target in `blocks.settings`, and now accepts nested footer/action child blocks.
+- `card` stores translated optional eyebrow or label, `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the shared `variant`, optional shared URL, and target in `blocks.settings`, and accepts nested footer or action child blocks.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `cluster` has no translatable fields and no user-facing JSON content.
@@ -49,7 +49,9 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `cluster` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `grid` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `card` now supports nested footer content. Preferred action structure is `Card > Cluster > Button Link`.
+- `card` supports `default` and `promo` variants. Promo maps to the shipped WebBlocks UI promo pattern and is intended for docs or CTA-style entry blocks.
 - Card child footer blocks render inside `div.wb-card-footer`. The legacy single `action_label` and `url` fields continue to work as a fallback when no child footer blocks are present.
+- Promo cards render optional eyebrow or label text above the title and prefer nested action structure such as `Card promo > Cluster > Button Link`.
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
 - Existing eligible blocks can also be moved under card parents from the `Edit Block` modal when the card accepts that child type.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
@@ -394,6 +396,7 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - WebBlocks UI assets loaded via CDN
 - CMS core public and admin assets live under `public/assets/webblocks-cms/`
 - `public/assets/webblocks-cms/css/public.css` is reserved for CMS public render and fallback styles.
+- The public page layout loads `public/assets/webblocks-cms/css/public.css` before optional site-level `public/site/css/site.css` overrides.
 - `public/assets/webblocks-cms/css/admin.css` is reserved for small CMS admin UI companion styles.
 - optional install-level public overrides live under `public/site/css/site.css` and `public/site/js/site.js`
 - site-specific hooks under `public/site/css/*` should not be used for core CMS admin assets.
