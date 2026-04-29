@@ -23,9 +23,109 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'content_header'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'content_header', 'button_link'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function button_link_renders_expected_anchor_markup_and_blank_target_attributes(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 6)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'secondary',
+            'settings' => json_encode(['url' => '/primitives', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'See primitives',
+        ]);
+        app(\App\Support\Blocks\BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a href="/primitives" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">See primitives</a>', false);
+        $response->assertDontSee('<div class="wb-btn', false);
+    }
+
+    #[Test]
+    public function button_link_uses_shared_settings_and_translated_label_per_locale(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $turkish = \App\Models\Locale::query()->updateOrCreate(
+            ['code' => 'tr'],
+            ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
+        );
+        $site->locales()->syncWithoutDetaching([$turkish->id]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 6)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/start-here', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Start here',
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Buradan basla',
+        ]);
+        app(\App\Support\Blocks\BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $defaultResponse = $this->get('/p/about');
+        $turkishResponse = $this->get('/tr/p/hakkinda');
+
+        $defaultResponse->assertOk();
+        $defaultResponse->assertSee('<a href="/start-here" class="wb-btn wb-btn-primary">Start here</a>', false);
+
+        $turkishResponse->assertOk();
+        $turkishResponse->assertSee('<a href="/start-here" class="wb-btn wb-btn-primary">Buradan basla</a>', false);
     }
 
     #[Test]

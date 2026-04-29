@@ -42,6 +42,7 @@ class BlockRequest extends FormRequest
         $isHeader = $selectedBlockType?->slug === 'header';
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
+        $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
         $supportsContainerWidth = $selectedBlockType?->slug === 'container';
@@ -75,7 +76,9 @@ class BlockRequest extends FormRequest
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
-            'url' => ['nullable', 'string', 'max:2048'],
+            'url' => [$isButtonLink ? 'required' : 'nullable', 'string', 'max:2048'],
+            'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
+            'target' => [$isButtonLink ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
             'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -118,7 +121,7 @@ class BlockRequest extends FormRequest
             'link_list_items.*.is_system' => ['nullable', 'boolean'],
             'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'link_list_items.*._delete' => ['nullable', 'boolean'],
-            'variant' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string', 'max:255'],
+            'variant' => [($isLayoutPrimitive || $isContentHeader) ? 'prohibited' : 'nullable', $isButtonLink ? Rule::in(['primary', 'secondary']) : 'string', 'max:255'],
             'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'settings' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -149,6 +152,14 @@ class BlockRequest extends FormRequest
             $isColumns = $selectedBlockType?->slug === 'columns';
             $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
             $isLinkList = $selectedBlockType?->slug === 'link-list';
+
+            if ($selectedBlockType?->slug === 'button_link') {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
+                    $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
 
             if (! $parentId) {
                 if (! in_array($selectedBlockType?->slug, ['columns', 'feature-grid', 'link-list'], true)) {
@@ -487,6 +498,37 @@ class BlockRequest extends FormRequest
                     : (trim((string) ($data['title_level'] ?? '')) ?: 'h1');
             }
 
+            if ($blockType?->slug === 'button_link') {
+                $isTranslatedButtonLinkEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedButtonLinkEdit) {
+                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                }
+
+                $data['title'] = trim((string) ($data['label'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['meta'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+
+                $data['variant'] = $isTranslatedButtonLinkEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (in_array(trim((string) ($data['variant'] ?? 'primary')), ['primary', 'secondary'], true) ? trim((string) ($data['variant'] ?? 'primary')) : 'primary');
+            }
+
             if ($blockType?->slug === 'plain_text') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -573,6 +615,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
+        unset($data['label'], $data['target']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;

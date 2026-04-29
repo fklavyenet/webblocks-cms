@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'content_header'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'content_header', 'button_link'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -69,6 +69,17 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => false,
                 'sort_order' => 5,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Button Link',
+                'slug' => 'button_link',
+                'category' => 'content',
+                'description' => 'Translated CTA label with a shared URL, target, and WebBlocks button variant.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 6,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));

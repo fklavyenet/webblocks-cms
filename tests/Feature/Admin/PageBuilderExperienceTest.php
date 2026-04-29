@@ -126,6 +126,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Section');
         $response->assertSee('Container');
         $response->assertSee('Content Header');
+        $response->assertSee('Button Link');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -293,6 +294,28 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('name="title_level"', false);
         $response->assertSee('name="alignment"', false);
         $response->assertSee('Title, intro text, and meta items are translated per locale. Title level and alignment stay shared across locales.');
+    }
+
+    #[Test]
+    public function button_link_form_renders_translated_label_and_shared_link_settings(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $buttonLinkType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Button Link');
+        $response->assertSee('name="label"', false);
+        $response->assertSee('name="url"', false);
+        $response->assertSee('name="target"', false);
+        $response->assertSee('name="variant"', false);
+        $response->assertSee('Button label is translated per locale. URL, target, and variant stay shared across locales.');
+        $response->assertSee('Applies shipped WebBlocks UI button classes only.');
     }
 
     #[Test]
@@ -620,6 +643,51 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function button_link_store_creates_translated_label_and_shared_url_target_and_variant(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $buttonLinkType->id,
+            'sort_order' => 0,
+            'label' => 'Start here',
+            'url' => '/start-here',
+            'target' => '_blank',
+            'variant' => 'secondary',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'button_link')->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'button_link',
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'variant' => 'secondary',
+        ]);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Start here',
+            'subtitle' => null,
+            'content' => null,
+        ]);
+        $this->assertSame('/start-here', $block->fresh()->setting('url'));
+        $this->assertSame('_blank', $block->fresh()->setting('target'));
+    }
+
+    #[Test]
     public function invalid_block_settings_are_rejected(): void
     {
         $this->seedFoundation();
@@ -666,6 +734,21 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ])->assertSessionHasErrors(['title_level', 'alignment', 'meta_items.1']);
+
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $buttonLinkType->id,
+            'sort_order' => 0,
+            'label' => '',
+            'url' => 'not-a-link',
+            'target' => '_parent',
+            'variant' => 'ghost',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors(['label', 'url', 'target', 'variant']);
     }
 
     #[Test]

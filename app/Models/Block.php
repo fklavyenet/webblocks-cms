@@ -280,6 +280,26 @@ class Block extends Model
         };
     }
 
+    public function buttonLinkVariantClass(): string
+    {
+        return match ($this->variant) {
+            'secondary' => 'wb-btn wb-btn-secondary',
+            default => 'wb-btn wb-btn-primary',
+        };
+    }
+
+    public function buttonLinkUrl(): ?string
+    {
+        $url = trim((string) $this->setting('url', ''));
+
+        return $url !== '' ? $url : null;
+    }
+
+    public function buttonLinkTarget(): string
+    {
+        return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
     public function plainTextAlignmentClass(): ?string
     {
         return match ($this->appearanceSetting('alignment')) {
