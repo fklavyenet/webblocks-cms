@@ -6,3 +6,7 @@
     padding-inline: 0;
     min-height: auto;
 }
+
+.wb-card-footer > .wb-cluster {
+    width: 100%;
+}

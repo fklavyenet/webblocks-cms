@@ -149,6 +149,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
+            'settings' => json_encode(['alignment' => 'end'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -187,15 +188,16 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             '<div class="wb-card-body wb-stack wb-gap-2">',
             '<strong>WebBlocks UI - UI building blocks for humans and AI.</strong>',
             '<div class="wb-card-footer">',
-            '<div class="wb-cluster">',
             '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
             '<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>',
             '</div>',
-            '</div>',
             '</article>',
         ], false);
+        $response->assertSee('wb-cluster-end', false);
         $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
         $this->assertSame(1, substr_count($response->getContent(), '<div class="wb-card-footer">'));
+        $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('assets/webblocks-cms/css/public.css')));
+        $this->assertStringContainsString('width: 100%;', file_get_contents(public_path('assets/webblocks-cms/css/public.css')));
     }
 
     #[Test]
