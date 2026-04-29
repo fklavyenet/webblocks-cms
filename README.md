@@ -350,6 +350,9 @@ This enables building pure WebBlocks UI sites directly from CMS.
 ### Block Picker UX
 
 The slot editor uses a modal block type picker. Editors can click Add Block, search or select a block type, and immediately configure the new block without leaving the slot editor.
+- `All block types` is database-driven and shows published `block_types` records.
+- `Recommended` is database-driven through the `block_types.is_recommended` flag and ordered by `sort_order`.
+- Picker search matches block type name, slug, description, and category so editors can find blocks by handle and intent terms such as `button`, `cluster`, `intro`, or `layout`.
 - Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.
 - Deferred legacy blocks may still keep slug-matched compatibility renderers where needed to preserve existing public output, but that does not promote them to first-class WebBlocks UI patterns.
 - Transitional duplicate patterns such as legacy Card Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
@@ -358,10 +361,10 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 
 ## Foundation Reset
 
-- The previous broad and experimental block catalog is no longer active in the CMS picker. Only `section`, `container`, `header`, and `plain_text` are published foundation block types.
+- The active published foundation picker now includes `content_header`, `section`, `container`, `cluster`, `header`, `plain_text`, and `button_link`.
 - Legacy block type records may remain in the database as draft compatibility records for existing data and imports, but they are not part of the active foundation.
 - `StarterContentSeeder`, `FullShowcaseSeeder`, `StarterInstallSeeder`, and `ShowcaseInstallSeeder` are intentionally quarantined until their content is rebuilt for the primitive foundation.
-- For local development resets after changing the foundation, reseed block types with `ddev artisan db:seed` and remove old non-primitive page blocks with `ddev artisan cms:reset-primitive-blocks`.
+- For local development resets after changing the foundation, reseed block type metadata with `ddev artisan db:seed --class=BlockTypeSeeder` and remove old non-primitive page blocks with `ddev artisan cms:reset-primitive-blocks`.
 - Use `ddev artisan cms:reset-primitive-blocks --dry-run` first if you want to inspect the impact.
 - Future WebBlocks UI pattern blocks such as Hero, Promo, Card, and similar higher-level patterns will be added later, one by one, on top of the current layout layer.
 

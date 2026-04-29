@@ -1,10 +1,6 @@
 @php
     $search = strtolower(trim((string) request('block_type_search')));
-    $recommendedSlugs = collect(['section', 'heading', 'rich-text', 'callout', 'button']);
-    $excludedSlugs = collect(['column_item', 'feature-item', 'link-list-item', 'menu']);
-
     $availableBlockTypes = $blockTypes
-        ->reject(fn ($blockType) => $excludedSlugs->contains($blockType->slug) && $block->parent_id === null)
         ->filter(function ($blockType) use ($search) {
             if ($search === '') {
                 return true;
@@ -12,6 +8,7 @@
 
             return str_contains(strtolower($blockType->name), $search)
                 || str_contains(strtolower((string) $blockType->description), $search)
+                || str_contains(strtolower((string) $blockType->category), $search)
                 || str_contains(strtolower($blockType->slug), $search);
         })
         ->sortBy([fn ($blockType) => $blockType->sort_order, fn ($blockType) => $blockType->name])
@@ -51,7 +48,7 @@
             <div class="wb-stack wb-gap-1">
                 <label>Recommended</label>
                 <div class="wb-cluster wb-cluster-2">
-                    @foreach ($availableBlockTypes->whereIn('slug', $recommendedSlugs)->sortBy('name') as $blockType)
+                    @foreach ($availableBlockTypes->filter(fn ($blockType) => $blockType->is_recommended) as $blockType)
                         <a href="{{ $action }}?{{ http_build_query(array_filter(['page_id' => $block->page_id, 'parent_id' => $block->parent_id, 'block_type_id' => $blockType->id])) }}" class="wb-btn {{ (string) ($selectedBlockType?->id) === (string) $blockType->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $labelMap[$blockType->slug] ?? $blockType->name }}
                         </a>

@@ -18,6 +18,7 @@ class BlockType extends Model
         'source_type',
         'is_system',
         'is_container',
+        'is_recommended',
         'sort_order',
         'status',
     ];
@@ -27,6 +28,7 @@ class BlockType extends Model
         return [
             'is_system' => 'boolean',
             'is_container' => 'boolean',
+            'is_recommended' => 'boolean',
         ];
     }
 

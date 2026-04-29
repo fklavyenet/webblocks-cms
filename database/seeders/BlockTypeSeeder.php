@@ -24,7 +24,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 1,
+                'is_recommended' => true,
+                'sort_order' => 5,
                 'status' => 'published',
             ],
             [
@@ -35,7 +36,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 2,
+                'is_recommended' => true,
+                'sort_order' => 6,
                 'status' => 'published',
             ],
             [
@@ -46,7 +48,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 3,
+                'is_recommended' => true,
+                'sort_order' => 2,
                 'status' => 'published',
             ],
             [
@@ -57,7 +60,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 4,
+                'is_recommended' => true,
+                'sort_order' => 3,
                 'status' => 'published',
             ],
             [
@@ -68,7 +72,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 5,
+                'is_recommended' => true,
+                'sort_order' => 4,
                 'status' => 'published',
             ],
             [
@@ -79,7 +84,8 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 6,
+                'is_recommended' => true,
+                'sort_order' => 1,
                 'status' => 'published',
             ],
             [
@@ -91,6 +97,7 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => false,
                 'sort_order' => 7,
+                'is_recommended' => true,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));
@@ -172,6 +179,7 @@ class BlockTypeSeeder extends Seeder
                     'source_type' => 'static',
                     'is_system' => false,
                     'is_container' => false,
+                    'is_recommended' => false,
                     'sort_order' => 100,
                     'status' => 'draft',
                 ],

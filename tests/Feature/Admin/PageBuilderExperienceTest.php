@@ -110,7 +110,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_lists_header_plain_text_section_and_container(): void
+    public function slot_block_picker_lists_all_published_foundation_block_types(): void
     {
         $this->seedFoundation();
 
@@ -133,7 +133,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_recommends_content_header_and_uses_compact_filter_row_markup(): void
+    public function slot_block_picker_uses_db_driven_recommendations_and_compact_filter_row_markup(): void
     {
         $this->seedFoundation();
 
@@ -141,19 +141,30 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
 
+        BlockType::query()->where('slug', 'plain_text')->update(['is_recommended' => false]);
+
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+        $content = $response->getContent();
 
         $response->assertOk();
         $response->assertSee('Recommended');
         $response->assertSee('All block types');
         $response->assertSeeInOrder(['Recommended', 'Content Header', 'All block types'], false);
+        $response->assertSee('Button Link');
         $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
         $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
+        $this->assertNotFalse($content);
+        $this->assertNotFalse(strpos($content, 'id="slot-block-picker-recommended-title"'));
+        $this->assertNotFalse(strpos($content, 'id="slot-block-picker-all-title"'));
+        $this->assertNotFalse(strpos($content, 'wb-list-item-title">Plain Text</span>'));
+        $this->assertTrue(
+            strpos($content, 'wb-list-item-title">Plain Text</span>') > strpos($content, 'id="slot-block-picker-all-title"')
+        );
     }
 
     #[Test]
-    public function slot_block_picker_search_matches_content_header_by_slug_name_and_description_terms(): void
+    public function slot_block_picker_search_matches_slug_name_description_and_category_terms(): void
     {
         $this->seedFoundation();
 
@@ -161,17 +172,50 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
 
-        foreach (['content header', 'header', 'intro', 'meta', 'content_header'] as $term) {
+        foreach ([
+            ['term' => 'content header', 'expected' => 'Content Header'],
+            ['term' => 'intro', 'expected' => 'Content Header'],
+            ['term' => 'meta', 'expected' => 'Content Header'],
+            ['term' => 'content_header', 'expected' => 'Content Header'],
+            ['term' => 'button', 'expected' => 'Button Link'],
+            ['term' => 'button link', 'expected' => 'Button Link'],
+            ['term' => 'cluster', 'expected' => 'Cluster'],
+            ['term' => 'section', 'expected' => 'Section'],
+            ['term' => 'container', 'expected' => 'Container'],
+            ['term' => 'layout', 'expected' => 'Cluster'],
+        ] as $search) {
             $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
                 $page,
                 $pageSlot,
                 'picker' => 1,
-                'block_type_search' => $term,
+                'block_type_search' => $search['term'],
             ]));
 
             $response->assertOk();
-            $response->assertSee('Content Header');
+            $response->assertSee($search['expected']);
         }
+    }
+
+    #[Test]
+    public function block_type_seeder_marks_recommended_picker_blocks_explicitly(): void
+    {
+        $this->seedFoundation();
+
+        $recommendedSlugs = BlockType::query()
+            ->where('is_recommended', true)
+            ->orderBy('sort_order')
+            ->pluck('slug')
+            ->all();
+
+        $this->assertSame([
+            'content_header',
+            'section',
+            'container',
+            'cluster',
+            'header',
+            'plain_text',
+            'button_link',
+        ], $recommendedSlugs);
     }
 
     #[Test]

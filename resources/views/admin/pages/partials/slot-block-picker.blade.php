@@ -1,7 +1,5 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
-    $recommendedSlugs = collect(['header', 'plain_text', 'button_link', 'content_header', 'section', 'container', 'cluster']);
-    $excludedSlugs = collect(['column_item', 'feature-item', 'link-list-item', 'menu']);
     $expandedBlockQuery = trim((string) request('expanded'));
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';
 
@@ -33,7 +31,6 @@
     $resetUrl = $slotBlockRoute(['picker' => 1]);
 
     $matchingBlockTypes = $blockTypes
-        ->reject(fn ($blockType) => $excludedSlugs->contains($blockType->slug))
         ->filter(function ($blockType) use ($pickerSearchTerm) {
             if ($pickerSearchTerm === '') {
                 return true;
@@ -41,18 +38,19 @@
 
             return str_contains(strtolower($blockType->name), $pickerSearchTerm)
                 || str_contains(strtolower((string) $blockType->description), $pickerSearchTerm)
+                || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
                 || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
         })
         ->sortBy([
             fn ($blockType) => $blockType->is_system ? 0 : 1,
-            fn ($blockType) => $recommendedSlugs->search($blockType->slug) === false ? 1 : 0,
+            fn ($blockType) => $blockType->is_recommended ? 0 : 1,
             fn ($blockType) => $blockType->sort_order,
             fn ($blockType) => $blockType->name,
         ])
         ->values();
 
     $recommendedBlockTypes = $matchingBlockTypes
-        ->filter(fn ($blockType) => $recommendedSlugs->contains($blockType->slug))
+        ->filter(fn ($blockType) => $blockType->is_recommended)
         ->values();
 
     $kindLabel = function ($blockType) {
