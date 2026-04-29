@@ -23,9 +23,171 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'content_header'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function content_header_renders_expected_webblocks_markup_without_extra_wrappers(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'content_header',
+            'block_type_id' => $this->blockType('content_header', 'Content Header', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'settings' => json_encode(['alignment' => 'center'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Docs title',
+            'subtitle' => 'Short intro',
+            'meta' => json_encode(['Updated today', '5 min read', 'API'], JSON_UNESCAPED_SLASHES),
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<header class="wb-content-header wb-text-center">',
+            '<h1 class="wb-content-title">Docs title</h1>',
+            '<p class="wb-content-subtitle">Short intro</p>',
+            '<div class="wb-content-meta">',
+            '<span>Updated today</span>',
+            '<span class="wb-content-meta-divider"></span>',
+            '<span>5 min read</span>',
+            '<span class="wb-content-meta-divider"></span>',
+            '<span>API</span>',
+            '</div>',
+            '</header>',
+        ], false);
+        $response->assertDontSee('<section class="wb-content-header', false);
+        $response->assertDontSee('<div class="wb-content-header', false);
+    }
+
+    #[Test]
+    public function content_header_skips_optional_intro_and_meta_sections_when_empty(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'content_header',
+            'block_type_id' => $this->blockType('content_header', 'Content Header', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Only title',
+            'subtitle' => null,
+            'meta' => null,
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<header class="wb-content-header">', false);
+        $response->assertSee('<h2 class="wb-content-title">Only title</h2>', false);
+        $response->assertDontSee('wb-content-subtitle', false);
+        $response->assertDontSee('wb-content-meta', false);
+        $response->assertDontSee('wb-content-meta-divider', false);
+    }
+
+    #[Test]
+    public function content_header_uses_shared_alignment_and_translated_fields_per_locale(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $turkish = \App\Models\Locale::query()->updateOrCreate(
+            ['code' => 'tr'],
+            ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
+        );
+        $site->locales()->syncWithoutDetaching([$turkish->id]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'content_header',
+            'block_type_id' => $this->blockType('content_header', 'Content Header', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h3',
+            'settings' => json_encode(['alignment' => 'right'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'English docs title',
+            'subtitle' => 'English intro',
+            'meta' => json_encode(['Updated', 'Guide'], JSON_UNESCAPED_SLASHES),
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Turkce baslik',
+            'subtitle' => 'Turkce giris',
+            'meta' => json_encode(['Guncel', 'Rehber'], JSON_UNESCAPED_SLASHES),
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $defaultResponse = $this->get('/p/about');
+        $turkishResponse = $this->get('/tr/p/hakkinda');
+
+        $defaultResponse->assertOk();
+        $defaultResponse->assertSee('<header class="wb-content-header wb-text-right">', false);
+        $defaultResponse->assertSee('<h3 class="wb-content-title">English docs title</h3>', false);
+        $defaultResponse->assertSee('<p class="wb-content-subtitle">English intro</p>', false);
+        $defaultResponse->assertSee('<span>Updated</span>', false);
+        $defaultResponse->assertSee('<span>Guide</span>', false);
+
+        $turkishResponse->assertOk();
+        $turkishResponse->assertSee('<header class="wb-content-header wb-text-right">', false);
+        $turkishResponse->assertSee('<h3 class="wb-content-title">Turkce baslik</h3>', false);
+        $turkishResponse->assertSee('<p class="wb-content-subtitle">Turkce giris</p>', false);
+        $turkishResponse->assertSee('<span>Guncel</span>', false);
+        $turkishResponse->assertSee('<span>Rehber</span>', false);
     }
 
     #[Test]

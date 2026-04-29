@@ -221,6 +221,33 @@ class Block extends Model
         return $name !== '' ? $name : null;
     }
 
+    public function metaItems(): Collection
+    {
+        $raw = $this->meta;
+
+        if (is_array($raw)) {
+            return collect($raw)
+                ->map(fn ($item) => trim((string) $item))
+                ->filter()
+                ->values();
+        }
+
+        if (! is_string($raw) || trim($raw) === '') {
+            return collect();
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            return collect();
+        }
+
+        return collect($decoded)
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->values();
+    }
+
     public function canAcceptChildren(): bool
     {
         return (bool) ($this->blockType?->is_container ?? false);
@@ -234,6 +261,16 @@ class Block extends Model
     }
 
     public function headerAlignmentClass(): ?string
+    {
+        return match ($this->appearanceSetting('alignment')) {
+            'left' => 'wb-text-left',
+            'center' => 'wb-text-center',
+            'right' => 'wb-text-right',
+            default => null,
+        };
+    }
+
+    public function contentHeaderAlignmentClass(): ?string
     {
         return match ($this->appearanceSetting('alignment')) {
             'left' => 'wb-text-left',

@@ -396,6 +396,7 @@ class ImportDataMapper
                     'title' => $translationData['title'] ?? null,
                     'subtitle' => $translationData['subtitle'] ?? null,
                     'content' => $translationData['content'] ?? null,
+                    'meta' => $translationData['meta'] ?? null,
                     'created_at' => $translationData['created_at'] ?? null,
                     'updated_at' => $translationData['updated_at'] ?? null,
                 ]);

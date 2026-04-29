@@ -18,6 +18,7 @@ class BlockTextTranslation extends Model
         'title',
         'subtitle',
         'content',
+        'meta',
     ];
 
     public function block(): BelongsTo

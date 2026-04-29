@@ -379,6 +379,7 @@ class SiteCloneService
                 'title' => $translation->title,
                 'subtitle' => $translation->subtitle,
                 'content' => $translation->content,
+                'meta' => $translation->meta,
                 'created_at' => $translation->created_at,
                 'updated_at' => $translation->updated_at,
             ]);

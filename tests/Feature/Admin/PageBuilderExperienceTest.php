@@ -125,6 +125,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Plain Text');
         $response->assertSee('Section');
         $response->assertSee('Container');
+        $response->assertSee('Content Header');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -228,6 +229,28 @@ class PageBuilderExperienceTest extends TestCase
 
         $headerResponse->assertOk()->assertSee('Settings')->assertSee('name="alignment"', false)->assertSee('Applies shipped WebBlocks UI text alignment classes only.');
         $plainTextResponse->assertOk()->assertSee('Settings')->assertSee('name="alignment"', false)->assertSee('Applies shipped WebBlocks UI text alignment classes only.');
+    }
+
+    #[Test]
+    public function content_header_form_renders_editor_friendly_fields_and_settings(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $contentHeaderType = BlockType::query()->where('slug', 'content_header')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $contentHeaderType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Content Header');
+        $response->assertSee('name="title"', false);
+        $response->assertSee('name="intro_text"', false);
+        $response->assertSee('name="meta_items[]"', false);
+        $response->assertSee('name="title_level"', false);
+        $response->assertSee('name="alignment"', false);
+        $response->assertSee('Title, intro text, and meta items are translated per locale. Title level and alignment stay shared across locales.');
     }
 
     #[Test]
@@ -509,6 +532,52 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function content_header_store_creates_translation_backed_fields_and_shared_settings(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $contentHeaderType = BlockType::query()->where('slug', 'content_header')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $contentHeaderType->id,
+            'sort_order' => 0,
+            'title' => 'Docs heading',
+            'intro_text' => 'Intro copy',
+            'meta_items' => ['Updated today', '5 min read', 'API'],
+            'title_level' => 'h2',
+            'alignment' => 'center',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'content_header')->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'content_header',
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'variant' => 'h2',
+        ]);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Docs heading',
+            'subtitle' => 'Intro copy',
+            'content' => null,
+            'meta' => json_encode(['Updated today', '5 min read', 'API'], JSON_UNESCAPED_SLASHES),
+        ]);
+        $this->assertSame('center', $block->fresh()->setting('alignment'));
+    }
+
+    #[Test]
     public function invalid_block_settings_are_rejected(): void
     {
         $this->seedFoundation();
@@ -540,6 +609,21 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ])->assertSessionHasErrors('spacing');
+
+        $contentHeaderType = BlockType::query()->where('slug', 'content_header')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $contentHeaderType->id,
+            'sort_order' => 0,
+            'title' => 'Docs heading',
+            'meta_items' => ['ok', 123],
+            'title_level' => 'hero',
+            'alignment' => 'diagonal',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors(['title_level', 'alignment', 'meta_items.1']);
     }
 
     #[Test]

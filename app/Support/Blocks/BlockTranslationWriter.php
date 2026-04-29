@@ -128,6 +128,7 @@ class BlockTranslationWriter
                 'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'title', $block->getRawOriginal('title')),
                 'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
                 'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'content', $block->getRawOriginal('content')),
+                'meta' => array_key_exists('meta', $data) ? $data['meta'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'meta', $block->getRawOriginal('meta')),
             ],
             'button' => [
                 'title' => $this->submittedString($data, 'title')
@@ -210,7 +211,7 @@ class BlockTranslationWriter
     private function canonicalBlockFieldsForFamily(string $family): array
     {
         return match ($family) {
-            'text' => ['title', 'subtitle', 'content'],
+            'text' => ['title', 'subtitle', 'content', 'meta'],
             'button' => ['title'],
             'image' => ['title', 'subtitle'],
             'contact_form' => ['title', 'content'],

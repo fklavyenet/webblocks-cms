@@ -11,7 +11,7 @@ class BlockTranslationRegistry
         $slug = $block instanceof Block ? $block->typeSlug() : $block;
 
         return match ($slug) {
-            'header', 'plain_text' => 'text',
+            'header', 'plain_text', 'content_header' => 'text',
             'button' => 'button',
             'image' => 'image',
             'contact_form' => 'contact_form',
@@ -24,6 +24,7 @@ class BlockTranslationRegistry
         return [
             'header',
             'plain_text',
+            'content_header',
             'button',
             'image',
             'contact_form',
@@ -38,7 +39,7 @@ class BlockTranslationRegistry
     public function translatedFieldMap(string $family): array
     {
         return match ($family) {
-            'text' => ['title', 'subtitle', 'content'],
+            'text' => ['title', 'subtitle', 'content', 'meta'],
             'button' => ['title'],
             'image' => ['caption', 'alt_text'],
             'contact_form' => ['title', 'content', 'submit_label', 'success_message'],

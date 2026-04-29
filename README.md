@@ -31,11 +31,13 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
 - Current layout blocks are `section` and `container`.
 - Current content blocks are `header` and `plain_text`.
+- Current pattern blocks are `content_header`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
+- `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
@@ -43,6 +45,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Currently available settings:
 - `header`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
 - `plain_text`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
+- `content_header`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
 - `section`: `spacing` -> `wb-section-sm`, `wb-section-lg`
 - `container`: `width` -> `wb-container-sm`, `wb-container-md`, `wb-container-lg`, `wb-container-xl`, `wb-container-full`
 - Arbitrary class entry is not supported.
@@ -317,6 +320,9 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - `container` may append only whitelisted width classes such as `wb-container-lg` or `wb-container-xl`.
 - `header` renders only the selected semantic heading element and may append a whitelisted alignment class, for example `<h1 class="wb-text-center">Text</h1>`.
 - `plain_text` renders only a semantic paragraph element and may append a whitelisted alignment class, for example `<p class="wb-text-right">Text</p>`.
+- `content_header` renders the WebBlocks UI docs header pattern as `<header class="wb-content-header">` with `wb-content-title`, optional `wb-content-subtitle`, and optional `wb-content-meta` rows.
+- In the CMS UI, `intro_text` maps to the rendered `wb-content-subtitle` paragraph.
+- `content_header.meta_items` are stored as translated list data and render as ordered `<span>` items with `wb-content-meta-divider` inserted only between items.
 - Nested rendering supports `section -> container -> header/plain_text` without extra wrappers.
 - All current foundation blocks escape user-facing output safely.
 - Primitive block rendering remains whitelist-based. Unverified or arbitrary classes are ignored.

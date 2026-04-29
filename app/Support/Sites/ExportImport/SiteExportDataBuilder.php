@@ -160,6 +160,7 @@ class SiteExportDataBuilder
                 'title' => $translation->title,
                 'subtitle' => $translation->subtitle,
                 'content' => $translation->content,
+                'meta' => $translation->meta,
                 'created_at' => $translation->created_at?->toDateTimeString(),
                 'updated_at' => $translation->updated_at?->toDateTimeString(),
             ]))->values()->all(),

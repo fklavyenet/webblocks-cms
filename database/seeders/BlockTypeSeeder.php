@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'content_header'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -58,6 +58,17 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => true,
                 'sort_order' => 4,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Content Header',
+                'slug' => 'content_header',
+                'category' => 'pattern',
+                'description' => 'Docs-style content header with title, intro text, and optional metadata items.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 5,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));

@@ -41,7 +41,8 @@ class BlockRequest extends FormRequest
         $isCode = $selectedBlockType?->slug === 'code';
         $isHeader = $selectedBlockType?->slug === 'header';
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
-        $supportsAlignment = $isHeader || $isPlainText;
+        $isContentHeader = $selectedBlockType?->slug === 'content_header';
+        $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
         $supportsContainerWidth = $selectedBlockType?->slug === 'container';
         $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container'], true);
@@ -69,6 +70,11 @@ class BlockRequest extends FormRequest
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
+            'title' => [$isContentHeader ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
+            'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
+            'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -443,6 +449,44 @@ class BlockRequest extends FormRequest
                     : (trim((string) ($data['level'] ?? '')) ?: 'h2');
             }
 
+            if ($blockType?->slug === 'content_header') {
+                $isTranslatedContentHeaderEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+                $alignment = trim((string) ($data['alignment'] ?? ''));
+                $metaItems = collect($data['meta_items'] ?? [])
+                    ->map(fn ($item) => trim((string) $item))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (! $isTranslatedContentHeaderEdit) {
+                    if (in_array($alignment, ['left', 'center', 'right'], true)) {
+                        $settings['alignment'] = $alignment;
+                    } else {
+                        unset($settings['alignment']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['intro_text'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['meta'] = $metaItems === []
+                    ? null
+                    : json_encode($metaItems, JSON_UNESCAPED_SLASHES);
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['settings'] = $settings === []
+                    ? null
+                    : json_encode($settings, JSON_UNESCAPED_SLASHES);
+                $data['variant'] = $isTranslatedContentHeaderEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (trim((string) ($data['title_level'] ?? '')) ?: 'h1');
+            }
+
             if ($blockType?->slug === 'plain_text') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -529,7 +573,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
-        unset($data['name'], $data['alignment'], $data['spacing'], $data['width']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;
     }

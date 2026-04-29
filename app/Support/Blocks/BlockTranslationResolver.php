@@ -117,6 +117,7 @@ class BlockTranslationResolver
                 'title' => $translation->title,
                 'subtitle' => $translation->subtitle,
                 'content' => $translation->content,
+                'meta' => $translation->meta,
             ]),
             'button' => $this->applyAttributes($block, [
                 'title' => $translation->title,
