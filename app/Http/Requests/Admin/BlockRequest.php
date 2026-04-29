@@ -43,10 +43,13 @@ class BlockRequest extends FormRequest
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
+        $isCluster = $selectedBlockType?->slug === 'cluster';
         $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
         $supportsContainerWidth = $selectedBlockType?->slug === 'container';
-        $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container'], true);
+        $supportsClusterAlignment = $isCluster;
+        $supportsClusterGap = $isCluster;
+        $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster'], true);
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -71,6 +74,8 @@ class BlockRequest extends FormRequest
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
+            'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', '2', '4', '6'])],
+            'cluster_alignment' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end'])],
             'title' => [$isContentHeader ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
@@ -555,7 +560,7 @@ class BlockRequest extends FormRequest
                     : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
-            if (in_array($blockType?->slug, ['section', 'container'], true)) {
+            if (in_array($blockType?->slug, ['section', 'container', 'cluster'], true)) {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
                     : [];
@@ -564,6 +569,8 @@ class BlockRequest extends FormRequest
                 $settings = $existingSettings;
                 $spacing = trim((string) ($data['spacing'] ?? ''));
                 $width = trim((string) ($data['width'] ?? ''));
+                $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
+                $clusterAlignment = trim((string) ($data['cluster_alignment'] ?? ''));
 
                 if ($layoutName !== '') {
                     $settings['layout_name'] = $layoutName;
@@ -591,6 +598,22 @@ class BlockRequest extends FormRequest
                     unset($settings['spacing']);
                 }
 
+                if ($blockType->slug === 'cluster') {
+                    if (in_array($clusterGap, ['2', '4', '6'], true)) {
+                        $settings['gap'] = $clusterGap;
+                    } else {
+                        unset($settings['gap']);
+                    }
+
+                    if (in_array($clusterAlignment, ['center', 'end'], true)) {
+                        $settings['alignment'] = $clusterAlignment;
+                    } else {
+                        unset($settings['alignment']);
+                    }
+
+                    unset($settings['spacing'], $settings['width']);
+                }
+
                 $data['title'] = null;
                 $data['subtitle'] = null;
                 $data['content'] = null;
@@ -616,7 +639,7 @@ class BlockRequest extends FormRequest
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
         unset($data['label'], $data['target']);
-        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;
     }

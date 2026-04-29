@@ -155,11 +155,11 @@ class Block extends Model
 
     public function editorLabel(): string
     {
-        if (in_array($this->typeSlug(), ['section', 'container'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
             $layoutName = $this->layoutAdminName();
 
             return $layoutName !== null
-                ? $this->typeName().' -- '.$layoutName
+                ? $this->typeName().($this->typeSlug() === 'cluster' ? ' — ' : ' -- ').$layoutName
                 : $this->typeName();
         }
 
@@ -172,7 +172,7 @@ class Block extends Model
 
     public function editorSummary(): ?string
     {
-        if (in_array($this->typeSlug(), ['section', 'container'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
             $childCount = $this->children->count();
 
             return $childCount > 0
@@ -212,7 +212,7 @@ class Block extends Model
 
     public function layoutAdminName(): ?string
     {
-        if (! in_array($this->typeSlug(), ['section', 'container'], true)) {
+        if (! in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
             return null;
         }
 
@@ -327,6 +327,25 @@ class Block extends Model
             'lg' => 'wb-container-lg',
             'xl' => 'wb-container-xl',
             'full' => 'wb-container-full',
+            default => null,
+        };
+    }
+
+    public function clusterGapClass(): ?string
+    {
+        return match ($this->appearanceSetting('gap')) {
+            '2' => 'wb-cluster-2',
+            '4' => 'wb-cluster-4',
+            '6' => 'wb-cluster-6',
+            default => null,
+        };
+    }
+
+    public function clusterAlignmentClass(): ?string
+    {
+        return match ($this->appearanceSetting('alignment')) {
+            'center' => 'wb-cluster-center',
+            'end' => 'wb-cluster-end',
             default => null,
         };
     }

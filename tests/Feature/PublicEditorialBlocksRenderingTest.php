@@ -23,9 +23,110 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'content_header', 'button_link'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'content_header', 'button_link'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function cluster_renders_button_link_children_without_admin_name_output(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Action Row'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            ['label' => 'Start here', 'url' => '/start-here', 'variant' => 'primary', 'sort' => 0],
+            ['label' => 'See primitives', 'url' => '/see-primitives', 'variant' => 'secondary', 'sort' => 1],
+        ] as $button) {
+            $child = Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $cluster->id,
+                'type' => 'button_link',
+                'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $button['sort'],
+                'variant' => $button['variant'],
+                'settings' => json_encode(['url' => $button['url'], 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $child->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => $button['label'],
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<div class="wb-cluster">',
+            '<a href="/start-here" class="wb-btn wb-btn-primary">Start here</a>',
+            '<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>',
+            '</div>',
+        ], false);
+        $response->assertDontSee('Action Row');
+    }
+
+    #[Test]
+    public function cluster_appends_only_verified_gap_and_alignment_classes(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['gap' => '4', 'alignment' => 'center'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/start-here', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Start here',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-cluster wb-cluster-4 wb-cluster-center">', false);
+        $response->assertDontSee('wb-cluster-3', false);
+        $response->assertDontSee('wb-cluster-between', false);
     }
 
     #[Test]

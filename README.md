@@ -29,19 +29,22 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 ## Block Foundation
 
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
-- Current layout blocks are `section` and `container`.
+- Current layout blocks are `section`, `container`, and `cluster`.
 - Current content blocks are `header` and `plain_text`.
 - Current content blocks are `header`, `plain_text`, and `button_link`.
 - Current pattern blocks are `content_header`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
+- `cluster` is a layout wrapper that renders only `<div class="wb-cluster">{children}</div>` and is intended for inline child grouping such as button link rows.
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
+- `cluster` has no translatable fields and no user-facing JSON content.
 - `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
+- `cluster` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
 - The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
 - Currently available settings:
@@ -51,6 +54,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `button_link`: `variant` -> `wb-btn wb-btn-primary`, `wb-btn wb-btn-secondary`
 - `section`: `spacing` -> `wb-section-sm`, `wb-section-lg`
 - `container`: `width` -> `wb-container-sm`, `wb-container-md`, `wb-container-lg`, `wb-container-xl`, `wb-container-full`
+- `cluster`: `gap` -> `wb-cluster-2`, `wb-cluster-4`, `wb-cluster-6`; `alignment` -> `wb-cluster-center`, `wb-cluster-end`
 - Arbitrary class entry is not supported.
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
@@ -324,6 +328,7 @@ See `docs/revisions.md` and `docs/operations.md` for details.
 - `header` renders only the selected semantic heading element and may append a whitelisted alignment class, for example `<h1 class="wb-text-center">Text</h1>`.
 - `plain_text` renders only a semantic paragraph element and may append a whitelisted alignment class, for example `<p class="wb-text-right">Text</p>`.
 - `button_link` renders only a direct anchor element such as `<a href="/start" class="wb-btn wb-btn-primary">Start here</a>` with optional `_blank` target plus `rel="noopener noreferrer"`.
+- `cluster` renders only a semantic wrapper such as `<div class="wb-cluster wb-cluster-2">...</div>` and is intended for inline child grouping without adding extra wrappers around its children.
 - `content_header` renders the WebBlocks UI docs header pattern as `<header class="wb-content-header">` with `wb-content-title`, optional `wb-content-subtitle`, and optional `wb-content-meta` rows.
 - `button_link` label is translated per locale, while `url`, `target`, and `variant` remain shared across locales.
 - In the CMS UI, `intro_text` maps to the rendered `wb-content-subtitle` paragraph.

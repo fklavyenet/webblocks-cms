@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'content_header', 'button_link'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'content_header', 'button_link'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -61,6 +61,17 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Cluster',
+                'slug' => 'cluster',
+                'category' => 'layout',
+                'description' => 'Inline layout wrapper for grouping child blocks such as button links.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 5,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Content Header',
                 'slug' => 'content_header',
                 'category' => 'pattern',
@@ -68,7 +79,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 5,
+                'sort_order' => 6,
                 'status' => 'published',
             ],
             [
@@ -79,7 +90,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 6,
+                'sort_order' => 7,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));

@@ -125,6 +125,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Plain Text');
         $response->assertSee('Section');
         $response->assertSee('Container');
+        $response->assertSee('Cluster');
         $response->assertSee('Content Header');
         $response->assertSee('Button Link');
         $response->assertDontSee('Hero');
@@ -248,12 +249,15 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
 
         $sectionResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
         $containerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $containerType->id]));
+        $clusterResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $clusterType->id]));
 
         $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="spacing"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
         $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="width"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+        $clusterResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="cluster_gap"', false)->assertSee('name="cluster_alignment"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
     }
 
     #[Test]
@@ -328,6 +332,7 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -354,14 +359,29 @@ class PageBuilderExperienceTest extends TestCase
 
         $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
 
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $clusterType->id,
+            'sort_order' => 0,
+            'name' => 'Action row',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
+
         $this->assertSame('Hero area', $section->fresh()->setting('layout_name'));
         $this->assertSame('Hero content', $container->fresh()->setting('layout_name'));
+        $this->assertSame('Action row', $cluster->fresh()->setting('layout_name'));
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id]));
 
         $response->assertOk();
         $response->assertSee('Section -- Hero area');
         $response->assertSee('Container -- Hero content');
+        $response->assertSee('Cluster — Action row');
     }
 
     #[Test]
@@ -374,6 +394,7 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
         $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
 
@@ -400,6 +421,20 @@ class PageBuilderExperienceTest extends TestCase
             'slot_type_id' => $main->id,
             'sort_order' => 0,
             'settings' => json_encode(['layout_name' => 'Hero content'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'cluster',
+            'block_type_id' => $clusterType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['layout_name' => 'Actions'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -446,8 +481,11 @@ class PageBuilderExperienceTest extends TestCase
         $headerResponse->assertOk();
         $headerResponse->assertSee('Section: Hero area');
         $headerResponse->assertSee('— Container: Hero content');
+        $headerResponse->assertSee('— — Cluster: Actions');
         $headerResponse->assertDontSee('>Header</option>', false);
         $headerResponse->assertDontSee('>Plain Text</option>', false);
+        $headerResponse->assertDontSee('<option value="'.$header->id.'">', false);
+        $headerResponse->assertDontSee('<option value="'.$plainTextType->id.'">', false);
     }
 
     #[Test]
@@ -688,6 +726,18 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function cluster_is_seeded_as_published_container_block(): void
+    {
+        $this->seedFoundation();
+
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+
+        $this->assertSame('published', $clusterType->status);
+        $this->assertTrue($clusterType->is_container);
+        $this->assertSame('layout', $clusterType->category);
+    }
+
+    #[Test]
     public function invalid_block_settings_are_rejected(): void
     {
         $this->seedFoundation();
@@ -749,6 +799,20 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ])->assertSessionHasErrors(['label', 'url', 'target', 'variant']);
+
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $clusterType->id,
+            'sort_order' => 0,
+            'name' => 'Actions',
+            'cluster_gap' => '3',
+            'cluster_alignment' => 'between',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors(['cluster_gap', 'cluster_alignment']);
     }
 
     #[Test]
@@ -802,8 +866,10 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
         $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -827,6 +893,31 @@ class PageBuilderExperienceTest extends TestCase
         ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
 
         $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $clusterType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $cluster->id,
+            'block_type_id' => $buttonLinkType->id,
+            'sort_order' => 0,
+            'label' => 'Primary action',
+            'url' => '/primary-action',
+            'variant' => 'primary',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -858,20 +949,26 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame($section->id, $container->parent_id);
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $container->id]);
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'plain_text', 'parent_id' => $container->id]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id]);
+        $this->assertTrue($cluster->fresh()->canAcceptChildren());
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$cluster->id]));
 
         $response->assertOk();
         $response->assertSee('Section');
         $response->assertSee('Container');
+        $response->assertSee('Cluster');
         $response->assertSee('Nested title');
         $response->assertSee('Nested paragraph');
+        $response->assertSee('Primary action');
         $response->assertSee('data-wb-slot-block-row', false);
         $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
+        $response->assertSee('data-wb-slot-block-id="'.$cluster->id.'"', false);
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
+        $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
     }
 
     #[Test]
