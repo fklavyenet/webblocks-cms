@@ -23,9 +23,133 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function alert_renders_title_content_and_variant_class(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $alert = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'alert',
+            'block_type_id' => $this->blockType('alert', 'Alert', 9)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'success'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $alert->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'What this page is proving',
+            'content' => 'This page proves docs callouts can ship as first-class blocks.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($alert->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-alert wb-alert-success">', false);
+        $response->assertSee('<h3 class="wb-alert-title">What this page is proving</h3>', false);
+        $response->assertSee('<p>This page proves docs callouts can ship as first-class blocks.</p>', false);
+        $response->assertDontSee('<strong>', false);
+        $response->assertDontSee('<div class="wb-alert-title">', false);
+    }
+
+    #[Test]
+    public function alert_skips_empty_title_and_content_markup(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $titleOnlyAlert = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'alert',
+            'block_type_id' => $this->blockType('alert', 'Alert', 9)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'warning'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $titleOnlyAlert->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Title only alert',
+            'content' => '   ',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($titleOnlyAlert->fresh(['textTranslations']));
+
+        $contentOnlyAlert = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'alert',
+            'block_type_id' => $this->blockType('alert', 'Alert', 9)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['variant' => 'info'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $contentOnlyAlert->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => '   ',
+            'content' => 'Content only alert.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($contentOnlyAlert->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-alert wb-alert-warning">', false);
+        $response->assertSee('<h3 class="wb-alert-title">Title only alert</h3>', false);
+        $response->assertDontSee('<p></p>', false);
+        $response->assertSee('<div class="wb-alert wb-alert-info">', false);
+        $response->assertSee('<p>Content only alert.</p>', false);
+        $response->assertDontSee('<h3 class="wb-alert-title"></h3>', false);
+    }
+
+    #[Test]
+    public function alert_defaults_to_info_variant_and_invalid_variant_falls_back_to_info(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        foreach ([null, 'ghost'] as $index => $variant) {
+            $alert = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => 'alert',
+                'block_type_id' => $this->blockType('alert', 'Alert', 9)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $index,
+                'settings' => json_encode(array_filter(['variant' => $variant], fn ($value) => $value !== null), JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $alert->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => 'Alert '.$index,
+                'content' => 'Fallback variant should stay info.',
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($alert->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $this->assertSame(2, substr_count($response->getContent(), 'wb-alert wb-alert-info'));
+        $response->assertDontSee('wb-alert-success', false);
     }
 
     #[Test]

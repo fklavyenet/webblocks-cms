@@ -11,7 +11,7 @@ class BlockTranslationRegistry
         $slug = $block instanceof Block ? $block->typeSlug() : $block;
 
         return match ($slug) {
-            'header', 'plain_text', 'content_header', 'button_link', 'card' => 'text',
+            'header', 'plain_text', 'content_header', 'button_link', 'card', 'alert' => 'text',
             'button' => 'button',
             'image' => 'image',
             'contact_form' => 'contact_form',
@@ -27,6 +27,7 @@ class BlockTranslationRegistry
             'content_header',
             'button_link',
             'card',
+            'alert',
             'button',
             'image',
             'contact_form',

@@ -30,7 +30,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
 - Current layout blocks are `section`, `container`, `cluster`, and `grid`.
-- Current content blocks are `header`, `plain_text`, `button_link`, and `card`.
+- Current content blocks are `header`, `plain_text`, `button_link`, `card`, and `alert`.
 - Current pattern blocks are `content_header`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
@@ -41,6 +41,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
 - `card` stores translated optional eyebrow or label, `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the shared `variant`, optional shared URL, and target in `blocks.settings`, and accepts nested footer or action child blocks.
+- `alert` stores translated optional `title` and required body text in `block_text_translations` and stores the shared alert variant in `blocks.settings`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `cluster` has no translatable fields and no user-facing JSON content.
@@ -52,6 +53,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `card` supports `default` and `promo` variants. Promo maps to the shipped WebBlocks UI promo pattern and is intended for docs or CTA-style entry blocks.
 - Card child footer blocks render inside `div.wb-card-footer`. The legacy single `action_label` and `url` fields continue to work as a fallback when no child footer blocks are present.
 - Promo cards render optional eyebrow or label text above the title and prefer nested action structure such as `Card promo > Cluster > Button Link`.
+- `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
+- Example docs structure: `Section > Container > Content Header + Card promo + Alert`.
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
 - Existing eligible blocks can also be moved under card parents from the `Edit Block` modal when the card accepts that child type.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.

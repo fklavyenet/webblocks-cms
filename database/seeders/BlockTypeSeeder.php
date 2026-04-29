@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -113,6 +113,17 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => true,
                 'sort_order' => 8,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Alert',
+                'slug' => 'alert',
+                'category' => 'pattern',
+                'description' => 'Translated alert or callout content with a shared WebBlocks UI alert variant.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 9,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));

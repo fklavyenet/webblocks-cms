@@ -43,6 +43,7 @@ class BlockRequest extends FormRequest
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
+        $isAlert = $selectedBlockType?->slug === 'alert';
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
@@ -72,7 +73,7 @@ class BlockRequest extends FormRequest
             'title' => [($isContentHeader || $isCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
+            'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'name' => [$isLayoutPrimitive ? 'nullable' : 'prohibited', 'string', 'max:100'],
@@ -94,6 +95,7 @@ class BlockRequest extends FormRequest
             'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
             'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'card_variant' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['default', 'promo'])],
+            'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
             'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -596,6 +598,35 @@ class BlockRequest extends FormRequest
                 }
             }
 
+            if ($blockType?->slug === 'alert') {
+                $isTranslatedAlertEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedAlertEdit) {
+                    $settings['variant'] = in_array(trim((string) ($data['alert_variant'] ?? 'info')), ['info', 'success', 'warning', 'danger'], true)
+                        ? trim((string) ($data['alert_variant'] ?? 'info'))
+                        : 'info';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+            }
+
             if ($blockType?->slug === 'plain_text') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -718,7 +749,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
-        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant']);
+        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;

@@ -458,6 +458,21 @@ class Block extends Model
         return $this->cardVariant() === 'promo';
     }
 
+    public function alertVariant(): string
+    {
+        return match ($this->setting('variant')) {
+            'success' => 'success',
+            'warning' => 'warning',
+            'danger' => 'danger',
+            default => 'info',
+        };
+    }
+
+    public function alertVariantClass(): string
+    {
+        return 'wb-alert-'. $this->alertVariant();
+    }
+
     public function slotPreviewLabel(): string
     {
         $label = $this->typeName();

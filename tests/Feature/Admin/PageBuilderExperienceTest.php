@@ -130,6 +130,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Content Header');
         $response->assertSee('Button Link');
         $response->assertSee('Card');
+        $response->assertSee('Alert');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -192,6 +193,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Plain Text</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Button Link</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Card</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Alert</span>'));
         $response->assertSeeInOrder([
             'wb-list-item-title">Content Header</span>',
             'wb-list-item-title">Section</span>',
@@ -202,7 +204,62 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
             'wb-list-item-title">Card</span>',
+            'wb-list-item-title">Alert</span>',
         ], false);
+    }
+
+    #[Test]
+    public function alert_form_renders_translated_fields_and_shared_variant_settings(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $alertType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Alert');
+        $response->assertSee('name="title"', false);
+        $response->assertSee('name="content"', false);
+        $response->assertSee('name="alert_variant"', false);
+        $response->assertSee('Alert title and body copy are translated per locale. Alert variant stays shared across locales.');
+    }
+
+    #[Test]
+    public function alert_store_creates_translated_copy_and_shared_variant(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $alertType->id,
+            'sort_order' => 0,
+            'title' => 'What this page is proving',
+            'content' => 'This page proves docs callouts can ship as first-class blocks.',
+            'alert_variant' => 'success',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'alert')->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'What this page is proving',
+            'content' => 'This page proves docs callouts can ship as first-class blocks.',
+        ]);
+        $this->assertSame('success', $block->fresh()->alertVariant());
     }
 
     #[Test]
@@ -224,6 +281,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $response->assertSeeInOrder([
+            'wb-list-item-title">Alert</span>',
             'wb-list-item-title">Button Link</span>',
             'wb-list-item-title">Card</span>',
             'wb-list-item-title">Cluster</span>',
@@ -264,6 +322,7 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Cluster</span>',
             'wb-list-item-title">Grid</span>',
             'wb-list-item-title">Content Header</span>',
+            'wb-list-item-title">Alert</span>',
         ], false);
     }
 
@@ -281,6 +340,9 @@ class PageBuilderExperienceTest extends TestCase
             ['term' => 'intro', 'expected' => 'Content Header'],
             ['term' => 'meta', 'expected' => 'Content Header'],
             ['term' => 'content_header', 'expected' => 'Content Header'],
+            ['term' => 'alert', 'expected' => 'Alert'],
+            ['term' => 'callout', 'expected' => 'Alert'],
+            ['term' => 'pattern', 'expected' => 'Alert'],
             ['term' => 'button', 'expected' => 'Button Link'],
             ['term' => 'button link', 'expected' => 'Button Link'],
             ['term' => 'cluster', 'expected' => 'Cluster'],

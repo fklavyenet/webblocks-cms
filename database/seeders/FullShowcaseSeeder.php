@@ -978,6 +978,12 @@ class FullShowcaseSeeder extends Seeder
                                                 ],
                                             ],
                                         ],
+                                        [
+                                            'type' => 'alert',
+                                            'title' => 'What this page is proving',
+                                            'content' => 'This docs page shows that foundational page structure, promo entry points, and supporting callout content can all be composed from shipped WebBlocks UI patterns without custom wrapper markup.',
+                                            'settings' => ['variant' => 'info'],
+                                        ],
                                     ],
                                 ],
                             ],
