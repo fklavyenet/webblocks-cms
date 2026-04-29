@@ -150,6 +150,31 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function new_block_modal_defaults_status_to_published_and_shows_compact_block_info_fields(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $headerType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Block Info');
+        $response->assertSee('Parent Block');
+        $response->assertSee('Sort Order');
+        $response->assertSee('Status');
+        $response->assertSee('<option value="published" selected>published</option>', false);
+        $response->assertDontSee('Translation Status');
+        $response->assertDontSee('Selected page');
+        $response->assertDontSee('This block type defines the current builder behavior.');
+        $response->assertDontSee('Runtime output comes from editorial fields authored on this block.');
+        $response->assertDontSee('Runtime output comes from application data and compact block config.');
+    }
+
+    #[Test]
     public function plain_text_admin_form_uses_text_field(): void
     {
         $this->seedFoundation();
@@ -181,8 +206,8 @@ class PageBuilderExperienceTest extends TestCase
         $sectionResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
         $containerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $containerType->id]));
 
-        $sectionResponse->assertOk()->assertSee('Section is a layout wrapper')->assertDontSee('name="text"', false);
-        $containerResponse->assertOk()->assertSee('Container is a layout wrapper')->assertDontSee('name="text"', false);
+        $sectionResponse->assertOk()->assertSee('This layout block has no settings.')->assertDontSee('name="text"', false);
+        $containerResponse->assertOk()->assertSee('This layout block has no settings.')->assertDontSee('name="text"', false);
     }
 
     #[Test]

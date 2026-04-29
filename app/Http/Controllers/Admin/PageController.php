@@ -528,7 +528,7 @@ class PageController extends Controller
         $block->page_id = $page->id;
         $block->slot_type_id = $slot->slot_type_id;
         $block->sort_order = $blocks->count();
-        $block->status = 'draft';
+        $block->status = 'published';
         $block->is_system = $selectedBlockType->is_system;
         $block->block_type_id = $selectedBlockType->id;
         $block->type = $selectedBlockType->slug;
