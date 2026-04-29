@@ -133,7 +133,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_uses_db_driven_recommendations_and_compact_filter_row_markup(): void
+    public function slot_block_picker_renders_a_single_sorted_block_list_and_compact_filter_row_markup(): void
     {
         $this->seedFoundation();
 
@@ -141,26 +141,42 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
 
-        BlockType::query()->where('slug', 'plain_text')->update(['is_recommended' => false]);
-
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
         $content = $response->getContent();
 
         $response->assertOk();
-        $response->assertSee('Recommended');
-        $response->assertSee('All block types');
-        $response->assertSeeInOrder(['Recommended', 'Content Header', 'All block types'], false);
-        $response->assertSee('Button Link');
+        $response->assertDontSee('Recommended');
         $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
         $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
         $this->assertNotFalse($content);
-        $this->assertNotFalse(strpos($content, 'id="slot-block-picker-recommended-title"'));
-        $this->assertNotFalse(strpos($content, 'id="slot-block-picker-all-title"'));
-        $this->assertNotFalse(strpos($content, 'wb-list-item-title">Plain Text</span>'));
-        $this->assertTrue(
-            strpos($content, 'wb-list-item-title">Plain Text</span>') > strpos($content, 'id="slot-block-picker-all-title"')
-        );
+        $this->assertFalse(strpos($content, 'slot-block-picker-recommended-title'));
+        $this->assertFalse(strpos($content, 'slot-block-picker-all-title'));
+
+        $listStart = strpos($content, '<div class="wb-list wb-list-sm">');
+        $footerStart = strpos($content, '<div class="wb-modal-footer');
+
+        $this->assertNotFalse($listStart);
+        $this->assertNotFalse($footerStart);
+
+        $listMarkup = substr($content, $listStart, $footerStart - $listStart);
+
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Content Header</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Section</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Container</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Cluster</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Header</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Plain Text</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Button Link</span>'));
+        $response->assertSeeInOrder([
+            'wb-list-item-title">Content Header</span>',
+            'wb-list-item-title">Section</span>',
+            'wb-list-item-title">Container</span>',
+            'wb-list-item-title">Cluster</span>',
+            'wb-list-item-title">Header</span>',
+            'wb-list-item-title">Plain Text</span>',
+            'wb-list-item-title">Button Link</span>',
+        ], false);
     }
 
     #[Test]
@@ -194,28 +210,6 @@ class PageBuilderExperienceTest extends TestCase
             $response->assertOk();
             $response->assertSee($search['expected']);
         }
-    }
-
-    #[Test]
-    public function block_type_seeder_marks_recommended_picker_blocks_explicitly(): void
-    {
-        $this->seedFoundation();
-
-        $recommendedSlugs = BlockType::query()
-            ->where('is_recommended', true)
-            ->orderBy('sort_order')
-            ->pluck('slug')
-            ->all();
-
-        $this->assertSame([
-            'content_header',
-            'section',
-            'container',
-            'cluster',
-            'header',
-            'plain_text',
-            'button_link',
-        ], $recommendedSlugs);
     }
 
     #[Test]

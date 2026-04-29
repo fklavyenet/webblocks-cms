@@ -350,8 +350,7 @@ This enables building pure WebBlocks UI sites directly from CMS.
 ### Block Picker UX
 
 The slot editor uses a modal block type picker. Editors can click Add Block, search or select a block type, and immediately configure the new block without leaving the slot editor.
-- `All block types` is database-driven and shows published `block_types` records.
-- `Recommended` is database-driven through the `block_types.is_recommended` flag and ordered by `sort_order`.
+- The picker uses one database-driven block list ordered by `block_types.sort_order`, then by block name.
 - Picker search matches block type name, slug, description, and category so editors can find blocks by handle and intent terms such as `button`, `cluster`, `intro`, or `layout`.
 - Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.
 - Deferred legacy blocks may still keep slug-matched compatibility renderers where needed to preserve existing public output, but that does not promote them to first-class WebBlocks UI patterns.

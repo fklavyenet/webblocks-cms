@@ -41,16 +41,6 @@
                 || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
                 || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
         })
-        ->sortBy([
-            fn ($blockType) => $blockType->is_system ? 0 : 1,
-            fn ($blockType) => $blockType->is_recommended ? 0 : 1,
-            fn ($blockType) => $blockType->sort_order,
-            fn ($blockType) => $blockType->name,
-        ])
-        ->values();
-
-    $recommendedBlockTypes = $matchingBlockTypes
-        ->filter(fn ($blockType) => $blockType->is_recommended)
         ->values();
 
     $kindLabel = function ($blockType) {
@@ -115,55 +105,29 @@
                         </div>
                     </form>
 
-                    @if ($recommendedBlockTypes->isNotEmpty())
-                        <section class="wb-stack wb-gap-2" aria-labelledby="slot-block-picker-recommended-title">
-                            <div class="wb-text-sm wb-text-muted" id="slot-block-picker-recommended-title">Recommended</div>
-                            <div class="wb-list wb-list-sm">
-                                @foreach ($recommendedBlockTypes as $blockType)
-                                    <a
-                                        href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
-                                        class="wb-list-item wb-list-item-action"
-                                        data-wb-slot-block-link
-                                        data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
-                                    >
-                                        <div class="wb-list-item-text">
-                                            <span class="wb-list-item-title">{{ $blockType->name }}</span>
-                                            <span class="wb-list-item-sub">{{ $descriptionFor($blockType) }}</span>
-                                        </div>
-                                        <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
-                                    </a>
-                                @endforeach
-                            </div>
-                        </section>
+                    @if ($matchingBlockTypes->isNotEmpty())
+                        <div class="wb-list wb-list-sm">
+                            @foreach ($matchingBlockTypes as $blockType)
+                                <a
+                                    href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
+                                    class="wb-list-item wb-list-item-action"
+                                    data-wb-slot-block-link
+                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
+                                >
+                                    <div class="wb-list-item-text">
+                                        <span class="wb-list-item-title">{{ $blockType->name }}</span>
+                                        <span class="wb-list-item-sub">{{ $descriptionFor($blockType) }}</span>
+                                    </div>
+                                    <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="wb-empty">
+                            <div class="wb-empty-title">No matching block types</div>
+                            <div class="wb-empty-text">Try a different search term.</div>
+                        </div>
                     @endif
-
-                    <section class="wb-stack wb-gap-2" aria-labelledby="slot-block-picker-all-title">
-                        <div class="wb-text-sm wb-text-muted" id="slot-block-picker-all-title">All block types</div>
-
-                        @if ($matchingBlockTypes->isNotEmpty())
-                            <div class="wb-list wb-list-sm">
-                                @foreach ($matchingBlockTypes as $blockType)
-                                    <a
-                                        href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
-                                        class="wb-list-item wb-list-item-action"
-                                        data-wb-slot-block-link
-                                        data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
-                                    >
-                                        <div class="wb-list-item-text">
-                                            <span class="wb-list-item-title">{{ $blockType->name }}</span>
-                                            <span class="wb-list-item-sub">{{ $descriptionFor($blockType) }}</span>
-                                        </div>
-                                        <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
-                                    </a>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="wb-empty">
-                                <div class="wb-empty-title">No matching block types</div>
-                                <div class="wb-empty-text">Try a different search term.</div>
-                            </div>
-                        @endif
-                    </section>
                 </div>
 
                 <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">

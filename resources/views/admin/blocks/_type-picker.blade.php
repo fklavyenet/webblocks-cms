@@ -45,17 +45,6 @@
                 <input id="block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ request('block_type_search') }}" placeholder="Search by name or intent">
             </div>
 
-            <div class="wb-stack wb-gap-1">
-                <label>Recommended</label>
-                <div class="wb-cluster wb-cluster-2">
-                    @foreach ($availableBlockTypes->filter(fn ($blockType) => $blockType->is_recommended) as $blockType)
-                        <a href="{{ $action }}?{{ http_build_query(array_filter(['page_id' => $block->page_id, 'parent_id' => $block->parent_id, 'block_type_id' => $blockType->id])) }}" class="wb-btn {{ (string) ($selectedBlockType?->id) === (string) $blockType->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
-                            {{ $labelMap[$blockType->slug] ?? $blockType->name }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
                     <label for="block_type_id_picker">Choose Block Type</label>
