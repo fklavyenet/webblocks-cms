@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'content_header', 'button_link'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -72,6 +72,17 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Grid',
+                'slug' => 'grid',
+                'category' => 'layout',
+                'description' => 'Responsive grid wrapper for nested card and content blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 5,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Content Header',
                 'slug' => 'content_header',
                 'category' => 'pattern',
@@ -91,6 +102,17 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => false,
                 'is_container' => false,
                 'sort_order' => 7,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Card',
+                'slug' => 'card',
+                'category' => 'content',
+                'description' => 'Translated card content with optional shared link settings for grid-based feature sections.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 8,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));
@@ -155,7 +177,6 @@ class BlockTypeSeeder extends Seeder
             'link-list-item' => 'Link List Item',
             'split' => 'Split',
             'stack' => 'Stack',
-            'grid' => 'Grid',
             'card-group' => 'Card Group',
             'page-title' => 'Page Title',
             'page-content' => 'Page Content',

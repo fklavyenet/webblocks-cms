@@ -155,7 +155,7 @@ class Block extends Model
 
     public function editorLabel(): string
     {
-        if (in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
             $layoutName = $this->layoutAdminName();
 
             return $layoutName !== null
@@ -172,7 +172,7 @@ class Block extends Model
 
     public function editorSummary(): ?string
     {
-        if (in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
             $childCount = $this->children->count();
 
             return $childCount > 0
@@ -212,7 +212,7 @@ class Block extends Model
 
     public function layoutAdminName(): ?string
     {
-        if (! in_array($this->typeSlug(), ['section', 'container', 'cluster'], true)) {
+        if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
             return null;
         }
 
@@ -348,6 +348,37 @@ class Block extends Model
             'end' => 'wb-cluster-end',
             default => null,
         };
+    }
+
+    public function gridColumnsClass(): string
+    {
+        return match ($this->appearanceSetting('columns')) {
+            '2' => 'wb-grid-2',
+            '4' => 'wb-grid-4',
+            default => 'wb-grid-3',
+        };
+    }
+
+    public function gridGapClass(): ?string
+    {
+        return match ($this->appearanceSetting('gap')) {
+            '3' => 'wb-gap-3',
+            '4' => 'wb-gap-4',
+            '6' => 'wb-gap-6',
+            default => null,
+        };
+    }
+
+    public function cardUrl(): ?string
+    {
+        $url = trim((string) $this->setting('url', ''));
+
+        return $url !== '' ? $url : null;
+    }
+
+    public function cardTarget(): string
+    {
+        return $this->setting('target') === '_blank' ? '_blank' : '_self';
     }
 
     public function slotPreviewLabel(): string

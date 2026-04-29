@@ -29,22 +29,25 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 ## Block Foundation
 
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
-- Current layout blocks are `section`, `container`, and `cluster`.
-- Current content blocks are `header` and `plain_text`.
-- Current content blocks are `header`, `plain_text`, and `button_link`.
+- Current layout blocks are `section`, `container`, `cluster`, and `grid`.
+- Current content blocks are `header`, `plain_text`, `button_link`, and `card`.
 - Current pattern blocks are `content_header`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
 - `cluster` is a layout wrapper that renders only `<div class="wb-cluster">{children}</div>` and is intended for inline child grouping such as button link rows.
+- `grid` is a layout wrapper that renders only `<div class="wb-grid wb-grid-*">{children}</div>` and is intended for responsive card and feature sections.
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
+- `card` stores translated `title`, `subtitle`, `description`, and optional action label in `block_text_translations` and stores the optional shared URL and target in `blocks.settings`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `cluster` has no translatable fields and no user-facing JSON content.
+- `grid` has no translatable fields and no user-facing JSON content.
 - `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `cluster` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
+- `grid` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
 - The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
 - Currently available settings:
@@ -55,6 +58,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `section`: `spacing` -> `wb-section-sm`, `wb-section-lg`
 - `container`: `width` -> `wb-container-sm`, `wb-container-md`, `wb-container-lg`, `wb-container-xl`, `wb-container-full`
 - `cluster`: `gap` -> `wb-cluster-2`, `wb-cluster-4`, `wb-cluster-6`; `alignment` -> `wb-cluster-center`, `wb-cluster-end`
+- `grid`: `columns` -> `wb-grid-2`, `wb-grid-3`, `wb-grid-4`; `gap` -> `wb-gap-3`, `wb-gap-4`, `wb-gap-6`
 - Arbitrary class entry is not supported.
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
@@ -196,7 +200,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section` and `Container`, then add `Header` and `Plain Text` blocks inside that layout tree.
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, and `Card` blocks inside that layout tree.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 
@@ -360,12 +364,12 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 
 ## Foundation Reset
 
-- The active published foundation picker now includes `content_header`, `section`, `container`, `cluster`, `header`, `plain_text`, and `button_link`.
+- The active published foundation picker now includes `content_header`, `section`, `container`, `cluster`, `grid`, `header`, `plain_text`, `button_link`, and `card`.
 - Legacy block type records may remain in the database as draft compatibility records for existing data and imports, but they are not part of the active foundation.
 - `StarterContentSeeder`, `FullShowcaseSeeder`, `StarterInstallSeeder`, and `ShowcaseInstallSeeder` are intentionally quarantined until their content is rebuilt for the primitive foundation.
 - For local development resets after changing the foundation, reseed block type metadata with `ddev artisan db:seed --class=BlockTypeSeeder` and remove old non-primitive page blocks with `ddev artisan cms:reset-primitive-blocks`.
 - Use `ddev artisan cms:reset-primitive-blocks --dry-run` first if you want to inspect the impact.
-- Future WebBlocks UI pattern blocks such as Hero, Promo, Card, and similar higher-level patterns will be added later, one by one, on top of the current layout layer.
+- Future WebBlocks UI pattern blocks such as Hero, Promo, and similar higher-level patterns will be added later, one by one, on top of the current layout layer.
 
 ## System Updates
 

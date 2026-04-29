@@ -44,12 +44,16 @@ class BlockRequest extends FormRequest
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $isCluster = $selectedBlockType?->slug === 'cluster';
+        $isGrid = $selectedBlockType?->slug === 'grid';
+        $isCard = $selectedBlockType?->slug === 'card';
         $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
         $supportsContainerWidth = $selectedBlockType?->slug === 'container';
         $supportsClusterAlignment = $isCluster;
         $supportsClusterGap = $isCluster;
-        $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster'], true);
+        $supportsGridColumns = $isGrid;
+        $supportsGridGap = $isGrid;
+        $isLayoutPrimitive = in_array($selectedBlockType?->slug, ['section', 'container', 'cluster', 'grid'], true);
         $isLocaleRequest = $this->filled('locale');
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
@@ -65,7 +69,7 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
@@ -76,7 +80,8 @@ class BlockRequest extends FormRequest
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
             'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', '2', '4', '6'])],
             'cluster_alignment' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end'])],
-            'title' => [$isContentHeader ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
+            'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
             'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -84,6 +89,9 @@ class BlockRequest extends FormRequest
             'url' => [$isButtonLink ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
             'target' => [$isButtonLink ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
+            'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
+            'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
             'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -163,6 +171,14 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'card') {
+                $url = trim((string) $this->input('card_url', ''));
+
+                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
+                    $validator->errors()->add('card_url', 'Card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
                 }
             }
 
@@ -534,6 +550,34 @@ class BlockRequest extends FormRequest
                     : (in_array(trim((string) ($data['variant'] ?? 'primary')), ['primary', 'secondary'], true) ? trim((string) ($data['variant'] ?? 'primary')) : 'primary');
             }
 
+            if ($blockType?->slug === 'card') {
+                $isTranslatedCardEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedCardEdit) {
+                    $settings['url'] = trim((string) ($data['card_url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['card_target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['meta'] = trim((string) ($data['action_label'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+            }
+
             if ($blockType?->slug === 'plain_text') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -560,7 +604,7 @@ class BlockRequest extends FormRequest
                     : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
-            if (in_array($blockType?->slug, ['section', 'container', 'cluster'], true)) {
+            if (in_array($blockType?->slug, ['section', 'container', 'cluster', 'grid'], true)) {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
                     : [];
@@ -571,6 +615,8 @@ class BlockRequest extends FormRequest
                 $width = trim((string) ($data['width'] ?? ''));
                 $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
                 $clusterAlignment = trim((string) ($data['cluster_alignment'] ?? ''));
+                $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
+                $gridGap = trim((string) ($data['grid_gap'] ?? ''));
 
                 if ($layoutName !== '') {
                     $settings['layout_name'] = $layoutName;
@@ -614,6 +660,22 @@ class BlockRequest extends FormRequest
                     unset($settings['spacing'], $settings['width']);
                 }
 
+                if ($blockType->slug === 'grid') {
+                    if (in_array($gridColumns, ['2', '3', '4'], true)) {
+                        $settings['columns'] = $gridColumns;
+                    } else {
+                        unset($settings['columns']);
+                    }
+
+                    if (in_array($gridGap, ['3', '4', '6'], true)) {
+                        $settings['gap'] = $gridGap;
+                    } else {
+                        unset($settings['gap']);
+                    }
+
+                    unset($settings['spacing'], $settings['width'], $settings['alignment']);
+                }
+
                 $data['title'] = null;
                 $data['subtitle'] = null;
                 $data['content'] = null;
@@ -638,8 +700,8 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
-        unset($data['label'], $data['target']);
-        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;
     }

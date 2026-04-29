@@ -126,8 +126,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Section');
         $response->assertSee('Container');
         $response->assertSee('Cluster');
+        $response->assertSee('Grid');
         $response->assertSee('Content Header');
         $response->assertSee('Button Link');
+        $response->assertSee('Card');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -167,17 +169,21 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Section</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Container</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Cluster</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Grid</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Header</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Plain Text</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Button Link</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Card</span>'));
         $response->assertSeeInOrder([
             'wb-list-item-title">Content Header</span>',
             'wb-list-item-title">Section</span>',
             'wb-list-item-title">Container</span>',
             'wb-list-item-title">Cluster</span>',
+            'wb-list-item-title">Grid</span>',
             'wb-list-item-title">Header</span>',
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
+            'wb-list-item-title">Card</span>',
         ], false);
     }
 
@@ -201,9 +207,11 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $response->assertSeeInOrder([
             'wb-list-item-title">Button Link</span>',
+            'wb-list-item-title">Card</span>',
             'wb-list-item-title">Cluster</span>',
             'wb-list-item-title">Container</span>',
             'wb-list-item-title">Content Header</span>',
+            'wb-list-item-title">Grid</span>',
             'wb-list-item-title">Header</span>',
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Section</span>',
@@ -232,9 +240,11 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Header</span>',
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
+            'wb-list-item-title">Card</span>',
             'wb-list-item-title">Section</span>',
             'wb-list-item-title">Container</span>',
             'wb-list-item-title">Cluster</span>',
+            'wb-list-item-title">Grid</span>',
             'wb-list-item-title">Content Header</span>',
         ], false);
     }

@@ -23,9 +23,96 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'content_header', 'button_link'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function grid_renders_child_cards_with_webblocks_grid_and_card_markup(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $grid = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'grid',
+            'block_type_id' => $this->blockType('grid', 'Grid', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['columns' => '3', 'gap' => '4'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $grid->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/getting-started', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Pattern-first workflow',
+            'subtitle' => 'How to build',
+            'content' => 'Start from the nearest shipped pattern and trim it to fit the page job.',
+            'meta' => 'Read more',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<div class="wb-grid wb-grid-3 wb-gap-4">',
+            '<article class="wb-card">',
+            '<div class="wb-card-header">How to build</div>',
+            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<strong>Pattern-first workflow</strong>',
+            '<p class="wb-m-0">Start from the nearest shipped pattern and trim it to fit the page job.</p>',
+            '<div class="wb-card-footer">',
+            '<a href="/getting-started" class="wb-btn wb-btn-secondary">Read more</a>',
+        ], false);
+    }
+
+    #[Test]
+    public function card_renders_translation_backed_title_and_description(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'HTML stays HTML',
+            'content' => 'You write explicit markup and attach shipped WebBlocks classes.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<article class="wb-card">', false);
+        $response->assertSee('<div class="wb-card-body wb-stack wb-gap-2">', false);
+        $response->assertSee('<strong>HTML stays HTML</strong>', false);
+        $response->assertSee('<p class="wb-m-0">You write explicit markup and attach shipped WebBlocks classes.</p>', false);
     }
 
     #[Test]
