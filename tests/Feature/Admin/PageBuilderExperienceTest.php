@@ -148,6 +148,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Recommended');
         $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
         $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
+        $response->assertSee('id="slot_block_type_sort" name="block_type_sort" class="wb-select"', false);
+        $response->assertSee('<option value="default" selected>Default order</option>', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
         $this->assertNotFalse($content);
         $this->assertFalse(strpos($content, 'slot-block-picker-recommended-title'));
@@ -176,6 +178,64 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Header</span>',
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
+        ], false);
+    }
+
+    #[Test]
+    public function slot_block_picker_can_sort_by_name(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_sort' => 'name',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
+        $response->assertSeeInOrder([
+            'wb-list-item-title">Button Link</span>',
+            'wb-list-item-title">Cluster</span>',
+            'wb-list-item-title">Container</span>',
+            'wb-list-item-title">Content Header</span>',
+            'wb-list-item-title">Header</span>',
+            'wb-list-item-title">Plain Text</span>',
+            'wb-list-item-title">Section</span>',
+        ], false);
+    }
+
+    #[Test]
+    public function slot_block_picker_can_sort_by_category(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_sort' => 'category',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('<option value="category" selected>Category</option>', false);
+        $response->assertSeeInOrder([
+            'wb-list-item-title">Header</span>',
+            'wb-list-item-title">Plain Text</span>',
+            'wb-list-item-title">Button Link</span>',
+            'wb-list-item-title">Section</span>',
+            'wb-list-item-title">Container</span>',
+            'wb-list-item-title">Cluster</span>',
+            'wb-list-item-title">Content Header</span>',
         ], false);
     }
 
@@ -210,6 +270,18 @@ class PageBuilderExperienceTest extends TestCase
             $response->assertOk();
             $response->assertSee($search['expected']);
         }
+
+        $sortedSearchResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_sort' => 'name',
+            'block_type_search' => 'button',
+        ]));
+
+        $sortedSearchResponse->assertOk();
+        $sortedSearchResponse->assertSee('Button Link');
+        $sortedSearchResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
     }
 
     #[Test]

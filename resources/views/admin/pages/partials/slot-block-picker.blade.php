@@ -1,5 +1,10 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
+    $pickerSort = trim((string) request('block_type_sort', 'default'));
+    $allowedPickerSorts = ['default', 'name', 'category'];
+    if (! in_array($pickerSort, $allowedPickerSorts, true)) {
+        $pickerSort = 'default';
+    }
     $expandedBlockQuery = trim((string) request('expanded'));
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';
 
@@ -28,7 +33,7 @@
     };
 
     $closeUrl = $slotBlockRoute();
-    $resetUrl = $slotBlockRoute(['picker' => 1]);
+    $resetUrl = $slotBlockRoute(['picker' => 1, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]);
 
     $matchingBlockTypes = $blockTypes
         ->filter(function ($blockType) use ($pickerSearchTerm) {
@@ -40,6 +45,19 @@
                 || str_contains(strtolower((string) $blockType->description), $pickerSearchTerm)
                 || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
                 || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
+        })
+        ->sort(function ($left, $right) use ($pickerSort) {
+            $compare = static fn ($a, $b) => $a <=> $b;
+
+            return match ($pickerSort) {
+                'name' => $compare(strtolower($left->name), strtolower($right->name))
+                    ?: $compare($left->sort_order, $right->sort_order),
+                'category' => $compare(strtolower((string) ($left->category ?? '')), strtolower((string) ($right->category ?? '')))
+                    ?: $compare($left->sort_order, $right->sort_order)
+                    ?: $compare(strtolower($left->name), strtolower($right->name)),
+                default => $compare($left->sort_order, $right->sort_order)
+                    ?: $compare(strtolower($left->name), strtolower($right->name)),
+            };
         })
         ->values();
 
@@ -99,6 +117,15 @@
                             <input id="slot_block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ $pickerSearch }}" placeholder="Search by name, intent, or slug">
                         </div>
 
+                        <div class="wb-stack wb-gap-1">
+                            <label for="slot_block_type_sort">Sort</label>
+                            <select id="slot_block_type_sort" name="block_type_sort" class="wb-select">
+                                <option value="default" @selected($pickerSort === 'default')>Default order</option>
+                                <option value="name" @selected($pickerSort === 'name')>Name A-Z</option>
+                                <option value="category" @selected($pickerSort === 'category')>Category</option>
+                            </select>
+                        </div>
+
                         <div class="wb-cluster wb-cluster-end wb-cluster-2">
                             <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">Reset</a>
                             <button type="submit" class="wb-btn wb-btn-primary">Search</button>
@@ -109,10 +136,10 @@
                         <div class="wb-list wb-list-sm">
                             @foreach ($matchingBlockTypes as $blockType)
                                 <a
-                                    href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
+                                    href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
                                     class="wb-list-item wb-list-item-action"
                                     data-wb-slot-block-link
-                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null]) }}"
+                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
                                 >
                                     <div class="wb-list-item-text">
                                         <span class="wb-list-item-title">{{ $blockType->name }}</span>
