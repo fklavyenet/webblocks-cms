@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
-        $adminCssPath = public_path('site/css/admin.css');
+        $adminCssPath = public_path('assets/webblocks-cms/css/admin.css');
         $adminJsAssets = [
             'core' => public_path('assets/webblocks-cms/js/admin/core.js'),
             'password-fields' => public_path('assets/webblocks-cms/js/admin/password-fields.js'),
@@ -26,7 +26,7 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
         @if (is_file($adminCssPath))
-            <link rel="stylesheet" href="{{ asset('site/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
+            <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
         @endif
         @stack('styles')
     </head>

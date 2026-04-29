@@ -388,8 +388,11 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Laravel application
 - server-rendered Blade views
 - WebBlocks UI assets loaded via CDN
-- CMS core public assets live under `public/assets/webblocks-cms/`
-- optional install-level public overrides in `public/site/css/site.css` and `public/site/js/site.js`
+- CMS core public and admin assets live under `public/assets/webblocks-cms/`
+- `public/assets/webblocks-cms/css/public.css` is reserved for CMS public render and fallback styles.
+- `public/assets/webblocks-cms/css/admin.css` is reserved for small CMS admin UI companion styles.
+- optional install-level public overrides live under `public/site/css/site.css` and `public/site/js/site.js`
+- site-specific hooks under `public/site/css/*` should not be used for core CMS admin assets.
 
 ## License
 

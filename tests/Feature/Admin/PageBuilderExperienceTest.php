@@ -1099,6 +1099,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('style="--wb-cms-block-level: 0;"', false);
         $response->assertSee('style="--wb-cms-block-level: 1;"', false);
         $response->assertSee('style="--wb-cms-block-level: 2;"', false);
+        $response->assertSee('assets/webblocks-cms/css/admin.css', false);
+        $response->assertDontSee('site/css/admin.css', false);
         $response->assertSee('assets/webblocks-cms/js/admin/slot-block-tree.js', false);
         $response->assertDontSee('assets/webblocks-cms/js/admin/slot-blocks.js', false);
         $response->assertDontSee('— Cluster', false);
