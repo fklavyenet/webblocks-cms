@@ -290,7 +290,11 @@ class Block extends Model
 
     public function canAcceptChildren(): bool
     {
-        return (bool) ($this->blockType?->is_container ?? false);
+        if ((bool) ($this->blockType?->is_container ?? false)) {
+            return true;
+        }
+
+        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
