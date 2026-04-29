@@ -1,6 +1,7 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
     $pickerSort = trim((string) request('block_type_sort', 'default'));
+    $pickerParentId = request()->integer('parent_id') ?: null;
     $allowedPickerSorts = ['default', 'name', 'category'];
     if (! in_array($pickerSort, $allowedPickerSorts, true)) {
         $pickerSort = 'default';
@@ -33,9 +34,9 @@
     };
 
     $closeUrl = $slotBlockRoute();
-    $resetUrl = $slotBlockRoute(['picker' => 1, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]);
+    $resetUrl = $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]);
 
-    $matchingBlockTypes = $blockTypes
+    $matchingBlockTypes = ($pickerBlockTypes ?? $blockTypes)
         ->filter(function ($blockType) use ($pickerSearchTerm) {
             if ($pickerSearchTerm === '') {
                 return true;
@@ -94,7 +95,7 @@
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
                         <h2 class="wb-modal-title" id="slot-block-picker-title">Block Types</h2>
-                        <span class="wb-text-sm wb-text-muted">Choose a block type, then configure it without leaving the slot editor.</span>
+                        <span class="wb-text-sm wb-text-muted">Choose a block type, then configure it without leaving the slot editor.@if ($pickerParentBlock) Showing block types allowed inside {{ $pickerParentBlock->typeName() }}.@endif</span>
                     </div>
 
                     <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close block types modal">
@@ -110,6 +111,9 @@
                         @endunless
                         @if ($expandedBlockQuery !== '')
                             <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}">
+                        @endif
+                        @if ($pickerParentId)
+                            <input type="hidden" name="parent_id" value="{{ $pickerParentId }}">
                         @endif
 
                         <div class="wb-stack wb-gap-1">
@@ -136,10 +140,10 @@
                         <div class="wb-list wb-list-sm">
                             @foreach ($matchingBlockTypes as $blockType)
                                 <a
-                                    href="{{ $slotBlockRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                    href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
                                     class="wb-list-item wb-list-item-action"
                                     data-wb-slot-block-link
-                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
                                 >
                                     <div class="wb-list-item-text">
                                         <span class="wb-list-item-title">{{ $blockType->name }}</span>

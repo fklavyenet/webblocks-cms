@@ -135,6 +135,24 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function card_is_seeded_as_published_container_block_with_limited_child_support(): void
+    {
+        $this->seedFoundation();
+
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $card = new Block(['type' => 'card', 'block_type_id' => $cardType->id]);
+        $card->setRelation('blockType', $cardType);
+
+        $this->assertSame('published', $cardType->status);
+        $this->assertTrue($cardType->is_container);
+        $this->assertTrue($card->canAcceptChildren());
+        $this->assertSame(['cluster', 'button_link'], $card->allowedChildTypeSlugs());
+        $this->assertTrue($card->canAcceptChildType('cluster'));
+        $this->assertTrue($card->canAcceptChildType('button_link'));
+        $this->assertFalse($card->canAcceptChildType('plain_text'));
+    }
+
+    #[Test]
     public function slot_block_picker_renders_a_single_sorted_block_list_and_compact_filter_row_markup(): void
     {
         $this->seedFoundation();
@@ -608,6 +626,208 @@ class PageBuilderExperienceTest extends TestCase
         $headerResponse->assertDontSee('>Plain Text</option>', false);
         $headerResponse->assertDontSee('<option value="'.$header->id.'">', false);
         $headerResponse->assertDontSee('<option value="'.$plainTextType->id.'">', false);
+    }
+
+    #[Test]
+    public function slot_block_picker_filters_child_block_types_for_card_context(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id]));
+
+        $response->assertOk();
+        $response->assertSee('Showing block types allowed inside Card.');
+        $response->assertSee('wb-list-item-title">Cluster</span>', false);
+        $response->assertSee('wb-list-item-title">Button Link</span>', false);
+        $response->assertDontSee('wb-list-item-title">Header</span>', false);
+        $response->assertDontSee('wb-list-item-title">Plain Text</span>', false);
+        $response->assertDontSee('wb-list-item-title">Content Header</span>', false);
+        $response->assertDontSee('wb-list-item-title">Grid</span>', false);
+    }
+
+    #[Test]
+    public function card_nested_blocks_can_be_created_and_are_visible_in_admin_tree(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $contentHeaderType = BlockType::query()->where('slug', 'content_header')->firstOrFail();
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $sectionType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $section = Block::query()->where('page_id', $page->id)->where('type', 'section')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $containerType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+
+        $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $contentHeaderType->id,
+            'sort_order' => 0,
+            'title' => 'Documentation',
+            'intro_text' => 'Intro',
+            'title_level' => 'h1',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $cardType->id,
+            'sort_order' => 1,
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'content' => 'Footer actions should be nested.',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+
+        $card = Block::query()->where('page_id', $page->id)->where('type', 'card')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $card->id,
+            'block_type_id' => $clusterType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $card->id]));
+
+        $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $cluster->id,
+            'block_type_id' => $buttonLinkType->id,
+            'sort_order' => 0,
+            'label' => 'Start Here',
+            'url' => '/start-here',
+            'variant' => 'primary',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $cluster->id,
+            'block_type_id' => $buttonLinkType->id,
+            'sort_order' => 1,
+            'label' => 'See primitives',
+            'url' => '/see-primitives',
+            'variant' => 'secondary',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
+
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $card->id]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 0]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 1]);
+        $this->assertTrue($card->fresh()->canAcceptChildren());
+        $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('cluster'));
+        $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('button_link'));
+        $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('plain_text'));
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$card->id.','.$cluster->id]));
+
+        $response->assertOk();
+        $response->assertSee('Children: 1 item');
+        $response->assertSee('Children: 2 items');
+        $response->assertSee('data-wb-slot-toggle="'.$card->id.'"', false);
+        $response->assertSee('data-wb-slot-block-id="'.$card->id.'"', false);
+        $response->assertSee('data-wb-slot-parent-id="'.$card->id.'"', false);
+        $response->assertSee('data-base-url="', false);
+        $response->assertSee('picker=1', false);
+        $response->assertSee('parent_id='.$card->id, false);
+        $response->assertSee('Start Here');
+        $response->assertSee('See primitives');
+    }
+
+    #[Test]
+    public function card_rejects_unsupported_child_block_types(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'block_type_id' => $headerType->id]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'slot_type_id' => $main->id,
+                'parent_id' => $card->id,
+                'block_type_id' => $headerType->id,
+                'sort_order' => 0,
+                'text' => 'Invalid child',
+                'level' => 'h2',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'block_type_id' => $headerType->id]));
+        $response->assertSessionHasErrors('parent_id');
+        $this->assertDatabaseMissing('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $card->id]);
     }
 
     #[Test]

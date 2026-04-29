@@ -950,7 +950,36 @@ class FullShowcaseSeeder extends Seeder
                 'slots' => [
                     'main' => [
                         ['type' => 'breadcrumb'],
-                        ['type' => 'page-title'],
+                        [
+                            'type' => 'section',
+                            'children' => [
+                                [
+                                    'type' => 'container',
+                                    'children' => [
+                                        [
+                                            'type' => 'content_header',
+                                            'title' => 'Documentation',
+                                            'subtitle' => 'Start with the shipped WebBlocks primitives, then inspect how they compose into reusable page structure.',
+                                            'variant' => 'h1',
+                                        ],
+                                        [
+                                            'type' => 'card',
+                                            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+                                            'content' => 'Use the card footer for grouped actions so docs entry points stay compact and reusable.',
+                                            'children' => [
+                                                [
+                                                    'type' => 'cluster',
+                                                    'children' => [
+                                                        ['type' => 'button_link', 'title' => 'Start Here', 'settings' => ['url' => '/docs/getting-started', 'target' => '_self'], 'variant' => 'primary'],
+                                                        ['type' => 'button_link', 'title' => 'See primitives', 'settings' => ['url' => '/docs/blocks', 'target' => '_self'], 'variant' => 'secondary'],
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
                         ['type' => 'rich-text', 'content' => "Use this page to inspect long-form guidance patterns. It combines a breadcrumb, page metadata, table of contents, code sample, HTML fragment, and practical reference tables.\n\nThis makes the documentation page one of the most inspection-friendly parts of the demo site."],
                         ['type' => 'code', 'title' => 'Seeder pattern', 'content' => "return [\n    'slug' => 'documentation-guide',\n    'title' => 'Documentation Guide',\n    'page_type' => 'page',\n];"],
                         ['type' => 'html', 'content' => '<div class="wb-alert wb-alert-info"><div><div class="wb-alert-title">Documentation note</div><div>This HTML block is used sparingly for curated callouts and embedded markup that should not be escaped.</div></div></div>'],

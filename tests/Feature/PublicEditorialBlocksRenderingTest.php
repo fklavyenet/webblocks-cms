@@ -116,6 +116,122 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function card_renders_child_cluster_inside_footer(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/legacy-action', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+            'content' => 'Card footer actions should be nested content.',
+            'meta' => 'Legacy action',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            ['label' => 'Start Here', 'url' => '/start-here', 'variant' => 'primary', 'sort' => 0],
+            ['label' => 'See primitives', 'url' => '/see-primitives', 'variant' => 'secondary', 'sort' => 1],
+        ] as $button) {
+            $child = Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $cluster->id,
+                'type' => 'button_link',
+                'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $button['sort'],
+                'variant' => $button['variant'],
+                'settings' => json_encode(['url' => $button['url'], 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $child->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => $button['label'],
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<article class="wb-card">',
+            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<strong>WebBlocks UI - UI building blocks for humans and AI.</strong>',
+            '<div class="wb-card-footer">',
+            '<div class="wb-cluster">',
+            '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
+            '<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>',
+            '</div>',
+            '</div>',
+            '</article>',
+        ], false);
+        $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
+        $this->assertSame(1, substr_count($response->getContent(), '<div class="wb-card-footer">'));
+    }
+
+    #[Test]
+    public function card_uses_legacy_action_footer_when_no_child_blocks_exist(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/getting-started', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Pattern-first workflow',
+            'content' => 'Use the nearest shipped pattern first.',
+            'meta' => 'Read more',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-card-footer">', false);
+        $response->assertSee('<a href="/getting-started" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Read more</a>', false);
+        $response->assertDontSee('<div class="wb-cluster">', false);
+    }
+
+    #[Test]
     public function cluster_renders_button_link_children_without_admin_name_output(): void
     {
         $page = $this->pageWithMainSlot();
@@ -806,7 +922,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     {
         return BlockType::query()->updateOrCreate(
             ['slug' => $slug],
-            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => false],
+            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => false, 'is_container' => $slug === 'card' || in_array($slug, ['section', 'container', 'cluster', 'grid'], true)],
         );
     }
 }

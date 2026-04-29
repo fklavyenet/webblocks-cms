@@ -180,6 +180,12 @@ class Block extends Model
                 : 'Layout wrapper';
         }
 
+        if ($this->typeSlug() === 'card' && $this->children->isNotEmpty()) {
+            $childCount = $this->children->count();
+
+            return $childCount.' '.Str::plural('child block', $childCount);
+        }
+
         if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
             return 'Location: '.str($this->navigationLocation())->headline();
         }
@@ -251,6 +257,26 @@ class Block extends Model
     public function canAcceptChildren(): bool
     {
         return (bool) ($this->blockType?->is_container ?? false);
+    }
+
+    public function allowedChildTypeSlugs(): ?array
+    {
+        return match ($this->typeSlug()) {
+            'card' => ['cluster', 'button_link'],
+            default => null,
+        };
+    }
+
+    public function canAcceptChildType(?string $childTypeSlug): bool
+    {
+        if (! $this->canAcceptChildren() || ! is_string($childTypeSlug) || $childTypeSlug === '') {
+            return false;
+        }
+
+        $allowedChildTypeSlugs = $this->allowedChildTypeSlugs();
+
+        return $allowedChildTypeSlugs === null
+            || in_array($childTypeSlug, $allowedChildTypeSlugs, true);
     }
 
     public function appearanceSetting(string $key): ?string

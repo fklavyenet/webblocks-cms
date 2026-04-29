@@ -248,11 +248,23 @@ class BlockRequest extends FormRequest
                 return;
             }
 
-            $parent = Block::query()->with('parent')->find($parentId);
+            $parent = Block::query()->with(['parent', 'blockType'])->find($parentId);
             $block = $this->route('block');
 
             if (! $parent || $parent->page_id !== $this->integer('page_id')) {
                 $validator->errors()->add('parent_id', 'Parent block must belong to the same page.');
+
+                return;
+            }
+
+            if (! $parent->canAcceptChildren()) {
+                $validator->errors()->add('parent_id', 'Selected parent block cannot accept child blocks.');
+
+                return;
+            }
+
+            if ($selectedBlockType && ! $parent->canAcceptChildType($selectedBlockType->slug)) {
+                $validator->errors()->add('parent_id', $selectedBlockType->name.' blocks cannot be placed inside '.$parent->typeName().'.');
 
                 return;
             }

@@ -111,7 +111,7 @@ class BlockTypeSeeder extends Seeder
                 'description' => 'Translated card content with optional shared link settings for grid-based feature sections.',
                 'source_type' => 'static',
                 'is_system' => false,
-                'is_container' => false,
+                'is_container' => true,
                 'sort_order' => 8,
                 'status' => 'published',
             ],

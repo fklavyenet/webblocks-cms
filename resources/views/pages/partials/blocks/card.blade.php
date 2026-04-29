@@ -5,6 +5,9 @@
     $actionLabel = trim((string) ($block->meta ?? ''));
     $url = $block->cardUrl();
     $target = $block->cardTarget();
+    $footerBlocks = $block->children;
+    $hasFooterBlocks = $footerBlocks->isNotEmpty();
+    $showsLegacyAction = ! $hasFooterBlocks && $url !== null && $actionLabel !== '';
 @endphp
 
 <article class="wb-card">
@@ -20,9 +23,15 @@
         @endif
     </div>
 
-    @if ($url !== null && $actionLabel !== '')
+    @if ($hasFooterBlocks || $showsLegacyAction)
         <div class="wb-card-footer">
-            <a href="{{ $url }}" class="wb-btn wb-btn-secondary"@if ($target === '_blank') target="_blank" rel="noopener noreferrer"@endif>{{ $actionLabel }}</a>
+            @if ($hasFooterBlocks)
+                @foreach ($footerBlocks as $child)
+                    @include('pages.partials.block', ['block' => $child])
+                @endforeach
+            @else
+                <a href="{{ $url }}" class="wb-btn wb-btn-secondary"@if ($target === '_blank') target="_blank" rel="noopener noreferrer"@endif>{{ $actionLabel }}</a>
+            @endif
         </div>
     @endif
 </article>

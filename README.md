@@ -40,7 +40,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
-- `card` stores translated `title`, `subtitle`, `description`, and optional action label in `block_text_translations` and stores the optional shared URL and target in `blocks.settings`.
+- `card` stores translated `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the optional shared URL and target in `blocks.settings`, and now accepts nested footer/action child blocks.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `cluster` has no translatable fields and no user-facing JSON content.
@@ -48,6 +48,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `cluster` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `grid` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
+- `card` now supports nested footer content. Preferred action structure is `Card > Cluster > Button Link`.
+- Card child footer blocks render inside `div.wb-card-footer`. The legacy single `action_label` and `url` fields continue to work as a fallback when no child footer blocks are present.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
 - The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
 - Currently available settings:
@@ -200,7 +202,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, and `Card` blocks inside that layout tree.
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, and `Card` blocks inside that layout tree. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 

@@ -1,7 +1,7 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Card title, subtitle, description, and action label are translated per locale. URL and target stay shared across locales.</div>
+            <div>Card title, subtitle, description, and action label are translated per locale. URL and target stay shared across locales. Nested child blocks render in the footer before the legacy single-action fallback.</div>
         </div>
     @endif
 
@@ -23,5 +23,6 @@
     <div class="wb-stack wb-gap-1">
         <label for="action_label">Action label</label>
         <input id="action_label" name="action_label" class="wb-input" type="text" value="{{ old('action_label', $block->meta) }}">
+        <div class="wb-text-sm wb-text-muted">Legacy fallback action used only when the card has no child footer blocks. Preferred nested structure: Card &gt; Cluster &gt; Button Link.</div>
     </div>
 </div>

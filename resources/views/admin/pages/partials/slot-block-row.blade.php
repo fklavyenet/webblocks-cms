@@ -2,6 +2,7 @@
     $depth = $depth ?? 0;
     $parentBlock = $parentBlock ?? null;
     $hasChildren = $block->children->isNotEmpty();
+    $canAddChildren = $block->canAcceptChildren();
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
@@ -85,6 +86,9 @@
                     <button type="submit" class="wb-action-btn" title="Move block down" aria-label="Move block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                 </form>
                 <a href="{{ $slotBlockRoute(['edit' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                @if ($canAddChildren)
+                    <a href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" class="wb-action-btn" title="Add child block" aria-label="Add child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $block->id]) }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
+                @endif
                 <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">
                     @csrf
                     @method('DELETE')

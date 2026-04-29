@@ -13,7 +13,7 @@
         ? 'Configure the new block, then save it back into the list.'
         : 'Update this block without leaving the slot management screen.';
     $expandedBlockQuery = trim((string) request('expanded'));
-    $closeUrl = route('admin.pages.slots.blocks', [$page, $slot, 'picker' => $isCreateMode ? 1 : null, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
+    $closeUrl = route('admin.pages.slots.blocks', [$page, $slot, 'picker' => $isCreateMode ? 1 : null, 'parent_id' => $isCreateMode ? (request()->integer('parent_id') ?: null) : null, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
     $activeTab = old('_slot_block_tab', 'block-fields');
 @endphp
 

@@ -276,7 +276,10 @@ class PageController extends Controller
             ->get();
 
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
-        $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes);
+        $pickerParentId = request()->integer('parent_id') ?: null;
+        $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($blocks, $activeLocale)->values();
+        $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
+        $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes, $pickerBlockTypes, $pickerParentId);
         $rootBlocks = $this->blockTranslationResolver
             ->resolveCollection($blocks->whereNull('parent_id')->values(), $activeLocale)
             ->values();
@@ -287,6 +290,8 @@ class PageController extends Controller
             'slot' => $slot,
             'blocks' => $rootBlocks,
             'blockTypes' => $blockTypes,
+            'pickerBlockTypes' => $pickerBlockTypes,
+            'pickerParentBlock' => $pickerParentId ? $resolvedBlocks->firstWhere('id', $pickerParentId) : null,
             'activeLocale' => $activeLocale,
             'availableLocales' => $page->translationStatusForSite(),
             'assetPickerAssets' => $this->assetPickerAssets(),
@@ -303,7 +308,7 @@ class PageController extends Controller
             'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
             'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
             'expandedBlockIds' => $expandedBlockIds,
-            'slotParentBlocks' => $this->slotParentBlocks($this->blockTranslationResolver->resolveCollection($blocks, $activeLocale), $modalState['block']?->id),
+            'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']?->id),
         ]);
     }
 
@@ -478,7 +483,7 @@ class PageController extends Controller
         $page->setRelation('currentTranslation', $page->defaultTranslation());
     }
 
-    private function slotBlockModalState(Page $page, PageSlot $slot, $blocks, $blockTypes): array
+    private function slotBlockModalState(Page $page, PageSlot $slot, $blocks, $blockTypes, $pickerBlockTypes, ?int $pickerParentId = null): array
     {
         $activeLocale = $this->slotEditorLocale($page);
         $editingBlockId = old('_slot_block_mode') === 'edit'
@@ -511,7 +516,7 @@ class PageController extends Controller
         }
 
         $selectedBlockTypeId = (int) old('block_type_id', request()->integer('block_type_id'));
-        $selectedBlockType = $selectedBlockTypeId > 0 ? $blockTypes->firstWhere('id', $selectedBlockTypeId) : null;
+        $selectedBlockType = $selectedBlockTypeId > 0 ? $pickerBlockTypes->firstWhere('id', $selectedBlockTypeId) : null;
 
         if (! $selectedBlockType) {
             return [
@@ -526,8 +531,9 @@ class PageController extends Controller
 
         $block = new Block;
         $block->page_id = $page->id;
+        $block->parent_id = $pickerParentId;
         $block->slot_type_id = $slot->slot_type_id;
-        $block->sort_order = $blocks->count();
+        $block->sort_order = $blocks->where('parent_id', $pickerParentId)->count();
         $block->status = 'published';
         $block->is_system = $selectedBlockType->is_system;
         $block->block_type_id = $selectedBlockType->id;
@@ -596,6 +602,23 @@ class PageController extends Controller
                 'label' => str_repeat('— ', $this->blockDepth($block)).$block->typeName().($block->layoutAdminName() ? ': '.$block->layoutAdminName() : ''),
                 'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
             ])
+            ->values();
+    }
+
+    private function pickerBlockTypes($blocks, $blockTypes, ?int $parentId = null)
+    {
+        if (! $parentId) {
+            return $blockTypes->values();
+        }
+
+        $parentBlock = $blocks->firstWhere('id', $parentId);
+
+        if (! $parentBlock || ! $parentBlock->canAcceptChildren()) {
+            return collect();
+        }
+
+        return $blockTypes
+            ->filter(fn (BlockType $blockType) => $parentBlock->canAcceptChildType($blockType->slug))
             ->values();
     }
 
