@@ -62,6 +62,7 @@ class BlockRequest extends FormRequest
             'content' => [($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
+            'name' => [$isLayoutPrimitive ? 'nullable' : 'prohibited', 'string', 'max:100'],
             'url' => ['nullable', 'string', 'max:2048'],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -432,6 +433,19 @@ class BlockRequest extends FormRequest
             }
 
             if (in_array($blockType?->slug, ['section', 'container'], true)) {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $layoutName = trim((string) ($data['name'] ?? ''));
+                $settings = $existingSettings;
+
+                if ($layoutName !== '') {
+                    $settings['layout_name'] = $layoutName;
+                } else {
+                    unset($settings['layout_name']);
+                }
+
                 $data['title'] = null;
                 $data['subtitle'] = null;
                 $data['content'] = null;
@@ -439,7 +453,9 @@ class BlockRequest extends FormRequest
                 $data['asset_id'] = null;
                 $data['variant'] = null;
                 $data['meta'] = null;
-                $data['settings'] = null;
+                $data['settings'] = $settings === []
+                    ? null
+                    : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
         }
 
@@ -454,6 +470,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
+        unset($data['name']);
 
         return $data;
     }

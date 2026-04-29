@@ -40,6 +40,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Hero area'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -52,6 +53,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Hero content'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -103,6 +105,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             '</div>',
             '</section>',
         ], false);
+        $response->assertDontSee('Hero area');
+        $response->assertDontSee('Hero content');
     }
 
     #[Test]

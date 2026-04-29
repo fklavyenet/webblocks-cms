@@ -206,8 +206,140 @@ class PageBuilderExperienceTest extends TestCase
         $sectionResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $sectionType->id]));
         $containerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $containerType->id]));
 
-        $sectionResponse->assertOk()->assertSee('This layout block has no settings.')->assertDontSee('name="text"', false);
-        $containerResponse->assertOk()->assertSee('This layout block has no settings.')->assertDontSee('name="text"', false);
+        $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public settings or content.')->assertDontSee('name="text"', false);
+        $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public settings or content.')->assertDontSee('name="text"', false);
+    }
+
+    #[Test]
+    public function layout_block_name_is_saved_and_rendered_in_admin_tree(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $sectionType->id,
+            'sort_order' => 0,
+            'name' => 'Hero area',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $section = Block::query()->where('page_id', $page->id)->where('type', 'section')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $containerType->id,
+            'parent_id' => $section->id,
+            'sort_order' => 0,
+            'name' => 'Hero content',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+
+        $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
+
+        $this->assertSame('Hero area', $section->fresh()->setting('layout_name'));
+        $this->assertSame('Hero content', $container->fresh()->setting('layout_name'));
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+
+        $response->assertOk();
+        $response->assertSee('Section -- Hero area');
+        $response->assertSee('Container -- Hero content');
+    }
+
+    #[Test]
+    public function parent_dropdown_lists_only_container_blocks_and_excludes_current_block_and_descendants(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Hero area'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $containerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Hero content'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $container->id, 'expanded' => $section->id.','.$container->id]));
+
+        $response->assertOk();
+        $response->assertSee('<option value="">No parent</option>', false);
+        $response->assertSee('Section: Hero area');
+        $response->assertDontSee('<option value="'.$header->id.'">', false);
+        $response->assertDontSee('>Header</option>', false);
+        $response->assertDontSee('>Plain Text</option>', false);
+        $response->assertDontSee('<option value="'.$container->id.'"', false);
+
+        $headerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id, 'expanded' => $section->id.','.$container->id]));
+
+        $headerResponse->assertOk();
+        $headerResponse->assertSee('Section: Hero area');
+        $headerResponse->assertSee('— Container: Hero content');
+        $headerResponse->assertDontSee('>Header</option>', false);
+        $headerResponse->assertDontSee('>Plain Text</option>', false);
     }
 
     #[Test]

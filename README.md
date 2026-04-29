@@ -37,6 +37,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `header` stores user-facing text in `block_text_translations.title` and stores the selected heading level as shared non-translatable block data in `blocks.variant`.
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
+- `section` and `container` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
 - Layout and primitive content blocks do not carry higher-level WebBlocks UI pattern markup. UI patterns will be introduced later, one by one, on top of this layout layer.

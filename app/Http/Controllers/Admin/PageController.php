@@ -581,15 +581,58 @@ class PageController extends Controller
 
     private function slotParentBlocks($blocks, ?int $ignoreId = null)
     {
+        $ignoredIds = collect();
+
+        if ($ignoreId) {
+            $ignoredIds = $this->descendantIdsFor($blocks, $ignoreId)->prepend($ignoreId);
+        }
+
         return $blocks
-            ->when($ignoreId, fn ($collection) => $collection->where('id', '!=', $ignoreId))
             ->reject(fn (Block $block) => $block->isColumnItem())
+            ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
+            ->filter(fn (Block $block) => $block->canAcceptChildren())
             ->map(fn (Block $block) => [
                 'id' => $block->id,
-                'label' => $block->editorLabel(),
+                'label' => str_repeat('— ', $this->blockDepth($block)).$block->typeName().($block->layoutAdminName() ? ': '.$block->layoutAdminName() : ''),
                 'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
             ])
             ->values();
+    }
+
+    private function descendantIdsFor($blocks, int $blockId)
+    {
+        $childrenByParent = $blocks->groupBy('parent_id');
+        $ids = collect();
+        $stack = collect([$blockId]);
+
+        while ($stack->isNotEmpty()) {
+            $currentId = $stack->pop();
+            $children = $childrenByParent->get($currentId, collect());
+
+            foreach ($children as $child) {
+                if ($ids->contains($child->id)) {
+                    continue;
+                }
+
+                $ids->push($child->id);
+                $stack->push($child->id);
+            }
+        }
+
+        return $ids->values();
+    }
+
+    private function blockDepth(Block $block): int
+    {
+        $depth = 0;
+        $cursor = $block->parent;
+
+        while ($cursor) {
+            $depth++;
+            $cursor = $cursor->parent;
+        }
+
+        return $depth;
     }
 
     private function slotBlockRelations(): array

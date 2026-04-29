@@ -156,7 +156,11 @@ class Block extends Model
     public function editorLabel(): string
     {
         if (in_array($this->typeSlug(), ['section', 'container'], true)) {
-            return $this->typeName();
+            $layoutName = $this->layoutAdminName();
+
+            return $layoutName !== null
+                ? $this->typeName().' -- '.$layoutName
+                : $this->typeName();
         }
 
         if ($this->typeSlug() === 'plain_text') {
@@ -204,6 +208,22 @@ class Block extends Model
         ])->first(fn ($value) => filled($value));
 
         return $summary ? (string) $summary : null;
+    }
+
+    public function layoutAdminName(): ?string
+    {
+        if (! in_array($this->typeSlug(), ['section', 'container'], true)) {
+            return null;
+        }
+
+        $name = trim((string) $this->setting('layout_name', ''));
+
+        return $name !== '' ? $name : null;
+    }
+
+    public function canAcceptChildren(): bool
+    {
+        return (bool) ($this->blockType?->is_container ?? false);
     }
 
     public function slotPreviewLabel(): string
