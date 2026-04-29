@@ -3,6 +3,7 @@
     $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $siteName = $page->site?->name ?? 'Site';
+    $slotBlockTreeScriptPath = public_path('assets/webblocks-cms/js/admin/slot-block-tree.js');
 @endphp
 
 @extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -42,7 +43,7 @@
 
     @include('admin.partials.flash')
 
-    <div class="wb-card">
+    <div class="wb-card" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <div class="wb-stack wb-gap-1">
                 <strong>Blocks</strong>
@@ -139,4 +140,10 @@
         'slotModalSelectedAttachmentAsset' => $slotModalSelectedAttachmentAsset,
         'slotParentBlocks' => $slotParentBlocks,
     ])
+@endpush
+
+@push('scripts')
+    @if (is_file($slotBlockTreeScriptPath))
+        <script src="{{ asset('assets/webblocks-cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
+    @endif
 @endpush

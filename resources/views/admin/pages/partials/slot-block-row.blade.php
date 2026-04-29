@@ -3,13 +3,14 @@
     $parentBlock = $parentBlock ?? null;
     $hasChildren = $block->children->isNotEmpty();
     $isExpanded = $expandedBlockIds->contains($block->id);
-    $groupId = 'slot-block-children-'.$block->id;
+    $rowId = 'slot-block-row-'.$block->id;
+    $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
     $rowExpandedQuery = collect([$block->id])->merge($expandedBlockIds)->unique()->implode(',');
-    $indent = str_repeat('— ', $depth);
 @endphp
 
 <tbody>
     <tr
+        id="{{ $rowId }}"
         data-wb-slot-block-row
         data-wb-slot-block-id="{{ $block->id }}"
         @if ($parentBlock)
@@ -20,23 +21,23 @@
         <td>{{ $depth === 0 ? $block->sort_order : (($parentBlock?->sort_order ?? 0).'.'.($block->sort_order + 1)) }}</td>
         <td>
             <div class="wb-stack wb-gap-1">
-                <div class="wb-cluster wb-cluster-2">
+                <div class="wb-cms-block-tree-item" data-wb-cms-block-level="{{ $depth }}" style="--wb-cms-block-level: {{ $depth }};">
                     @if ($hasChildren)
                         <button
                             type="button"
-                            class="wb-action-btn wb-slot-block-toggle"
+                            class="wb-action-btn wb-cms-block-tree-toggle"
                             data-wb-slot-block-toggle
                             data-wb-slot-toggle="{{ $block->id }}"
-                            aria-controls="{{ $groupId }}"
+                            @if ($controlledRowIds !== '') aria-controls="{{ $controlledRowIds }}" @endif
                             aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
                             aria-label="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
                             title="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
                         >
-                            <i class="wb-icon wb-icon-chevron-down wb-slot-block-toggle-icon" aria-hidden="true"></i>
+                            <i class="wb-icon wb-icon-chevron-down wb-cms-block-tree-toggle-icon" aria-hidden="true"></i>
                         </button>
                     @endif
 
-                    <strong>{{ $indent }}{{ $block->typeName() }}</strong>
+                    <span class="wb-cms-block-tree-label"><strong>{{ $block->typeName() }}</strong></span>
                 </div>
 
                 <span class="wb-text-sm wb-text-muted">

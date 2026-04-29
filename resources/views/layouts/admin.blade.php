@@ -9,7 +9,6 @@
             'inline-block-builder' => public_path('assets/webblocks-cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('assets/webblocks-cms/js/admin/builder-items.js'),
             'slot-builder' => public_path('assets/webblocks-cms/js/admin/slot-builder.js'),
-            'slot-blocks' => public_path('assets/webblocks-cms/js/admin/slot-blocks.js'),
             'page-builder-modals' => public_path('assets/webblocks-cms/js/admin/page-builder-modals.js'),
         ];
     @endphp
@@ -237,9 +236,6 @@
         @endif
         @if (is_file($adminJsAssets['slot-builder']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/slot-builder.js') }}?v={{ filemtime($adminJsAssets['slot-builder']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['slot-blocks']))
-            <script src="{{ asset('assets/webblocks-cms/js/admin/slot-blocks.js') }}?v={{ filemtime($adminJsAssets['slot-blocks']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['page-builder-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>

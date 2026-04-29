@@ -502,6 +502,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Section -- Hero area');
         $response->assertSee('Container -- Hero content');
         $response->assertSee('Cluster — Action row');
+        $response->assertDontSee('— Section');
+        $response->assertDontSee('— Container');
     }
 
     #[Test]
@@ -1082,6 +1084,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Nested paragraph');
         $response->assertSee('Primary action');
         $response->assertSee('data-wb-slot-block-row', false);
+        $response->assertSee('data-wb-cms-slot-block-tree', false);
+        $response->assertSee('data-wb-slot-id="'.$pageSlot->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$cluster->id.'"', false);
@@ -1089,6 +1093,15 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
+        $response->assertSee('data-wb-cms-block-level="0"', false);
+        $response->assertSee('data-wb-cms-block-level="1"', false);
+        $response->assertSee('data-wb-cms-block-level="2"', false);
+        $response->assertSee('style="--wb-cms-block-level: 0;"', false);
+        $response->assertSee('style="--wb-cms-block-level: 1;"', false);
+        $response->assertSee('style="--wb-cms-block-level: 2;"', false);
+        $response->assertSee('assets/webblocks-cms/js/admin/slot-block-tree.js', false);
+        $response->assertDontSee('assets/webblocks-cms/js/admin/slot-blocks.js', false);
+        $response->assertDontSee('— Cluster', false);
     }
 
     #[Test]
