@@ -9,7 +9,14 @@
 @endphp
 
 <tbody>
-    <tr>
+    <tr
+        data-wb-slot-block-row
+        data-wb-slot-block-id="{{ $block->id }}"
+        @if ($parentBlock)
+            data-wb-slot-parent-id="{{ $parentBlock->id }}"
+        @endif
+        data-wb-slot-depth="{{ $depth }}"
+    >
         <td>{{ $depth === 0 ? $block->sort_order : (($parentBlock?->sort_order ?? 0).'.'.($block->sort_order + 1)) }}</td>
         <td>
             <div class="wb-stack wb-gap-1">
@@ -19,7 +26,7 @@
                             type="button"
                             class="wb-action-btn wb-slot-block-toggle"
                             data-wb-slot-block-toggle
-                            data-wb-target="{{ $groupId }}"
+                            data-wb-slot-toggle="{{ $block->id }}"
                             aria-controls="{{ $groupId }}"
                             aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
                             aria-label="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
@@ -91,21 +98,17 @@
     </tr>
 </tbody>
 
-@if ($hasChildren)
-    <tbody id="{{ $groupId }}" data-wb-slot-block-children="{{ $groupId }}" @if (! $isExpanded) hidden @endif>
-        @foreach ($block->children as $child)
-            @include('admin.pages.partials.slot-block-row', [
-                'block' => $child,
-                'parentBlock' => $block,
-                'depth' => $depth + 1,
-                'page' => $page,
-                'slot' => $slot,
-                'slotBlockRoute' => $slotBlockRoute,
-                'slotBlockBaseRoute' => $slotBlockBaseRoute,
-                'activeLocale' => $activeLocale,
-                'expandedBlockIds' => $expandedBlockIds,
-                'expandedBlockQuery' => $rowExpandedQuery,
-            ])
-        @endforeach
-    </tbody>
-@endif
+@foreach ($block->children as $child)
+    @include('admin.pages.partials.slot-block-row', [
+        'block' => $child,
+        'parentBlock' => $block,
+        'depth' => $depth + 1,
+        'page' => $page,
+        'slot' => $slot,
+        'slotBlockRoute' => $slotBlockRoute,
+        'slotBlockBaseRoute' => $slotBlockBaseRoute,
+        'activeLocale' => $activeLocale,
+        'expandedBlockIds' => $expandedBlockIds,
+        'expandedBlockQuery' => $rowExpandedQuery,
+    ])
+@endforeach

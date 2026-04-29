@@ -400,6 +400,12 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Container');
         $response->assertSee('Nested title');
         $response->assertSee('Nested paragraph');
+        $response->assertSee('data-wb-slot-block-row', false);
+        $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
+        $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
+        $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
+        $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
+        $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
     }
 
     #[Test]
