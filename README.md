@@ -50,6 +50,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `grid` may optionally store an admin-only shared name in block settings for editor tree labels and parent selection. That name is not rendered publicly and is not translated.
 - `card` now supports nested footer content. Preferred action structure is `Card > Cluster > Button Link`.
 - Card child footer blocks render inside `div.wb-card-footer`. The legacy single `action_label` and `url` fields continue to work as a fallback when no child footer blocks are present.
+- Existing eligible blocks can also be moved under card parents from the `Edit Block` modal when the card accepts that child type.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
 - The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
 - Currently available settings:

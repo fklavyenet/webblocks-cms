@@ -629,6 +629,211 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function cluster_edit_modal_lists_eligible_card_parent_candidates_and_allows_move_under_card(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+        $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Page Header'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $containerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Page Header'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $card->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+        ]);
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'cluster',
+            'block_type_id' => $clusterType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['layout_name' => 'Actions'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $button = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'button_link',
+            'block_type_id' => $buttonLinkType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/start-here', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $button->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Start Here',
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 2,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id, 'expanded' => $section->id.','.$container->id.','.$card->id.','.$cluster->id]));
+
+        $response->assertOk();
+        $response->assertSee('Section: Page Header');
+        $response->assertSee('— Container: Page Header');
+        $response->assertSee('— — Card: WebBlocks UI - UI building blocks for humans and AI.', false);
+        $response->assertDontSee('Cluster: Actions</option>', false);
+        $response->assertDontSee('Button Link: Start Here</option>', false);
+
+        $updateResponse = $this->actingAs($user)->put(route('admin.blocks.update', $cluster), [
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'block_type_id' => $clusterType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'name' => 'Actions',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $cluster->id,
+            'expanded' => $section->id.','.$container->id.','.$card->id,
+        ]);
+
+        $updateResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$card->id]));
+        $this->assertSame($card->id, $cluster->fresh()->parent_id);
+
+        $movedResponse = $this->get(route('pages.show', 'about'));
+
+        $movedResponse->assertOk();
+        $movedResponse->assertSeeInOrder([
+            '<article class="wb-card">',
+            '<div class="wb-card-footer">',
+            '<div class="wb-cluster">',
+            '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
+        ], false);
+    }
+
+    #[Test]
+    public function parent_dropdown_excludes_card_when_it_cannot_accept_the_edited_block_type(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'container',
+            'block_type_id' => $containerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['layout_name' => 'Page Header'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $card->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id, 'expanded' => $container->id.','.$card->id]));
+
+        $response->assertOk();
+        $response->assertSee('Container: Page Header');
+        $response->assertDontSee('Card: WebBlocks UI - UI building blocks for humans and AI.');
+    }
+
+    #[Test]
     public function slot_block_picker_filters_child_block_types_for_card_context(): void
     {
         $this->seedFoundation();

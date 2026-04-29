@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Stringable;
 use Illuminate\Support\Str;
 
 class Block extends Model
@@ -216,6 +217,19 @@ class Block extends Model
         return $summary ? (string) $summary : null;
     }
 
+    public function parentCandidateLabel(): string
+    {
+        $detail = match ($this->typeSlug()) {
+            'card' => $this->parentCandidateDetail($this->title),
+            'section', 'container', 'cluster', 'grid' => $this->parentCandidateDetail($this->layoutAdminName()),
+            default => $this->parentCandidateDetail($this->editorLabel()),
+        };
+
+        return $detail !== null
+            ? $this->typeName().': '.$detail
+            : $this->typeName();
+    }
+
     public function layoutAdminName(): ?string
     {
         if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
@@ -225,6 +239,26 @@ class Block extends Model
         $name = trim((string) $this->setting('layout_name', ''));
 
         return $name !== '' ? $name : null;
+    }
+
+    private function parentCandidateDetail(?string $value): ?string
+    {
+        $resolved = str((string) ($value ?? ''))
+            ->squish()
+            ->trim();
+
+        if ($resolved->isEmpty()) {
+            return null;
+        }
+
+        return $this->truncateParentCandidateDetail($resolved)->toString();
+    }
+
+    private function truncateParentCandidateDetail(Stringable $value): Stringable
+    {
+        return $value->length() > 80
+            ? $value->limit(80)
+            : $value;
     }
 
     public function metaItems(): Collection

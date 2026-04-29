@@ -308,7 +308,7 @@ class PageController extends Controller
             'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
             'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
             'expandedBlockIds' => $expandedBlockIds,
-            'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']?->id),
+            'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
         ]);
     }
 
@@ -585,21 +585,22 @@ class PageController extends Controller
             ->values();
     }
 
-    private function slotParentBlocks($blocks, ?int $ignoreId = null)
+    private function slotParentBlocks($blocks, ?Block $editedBlock = null)
     {
         $ignoredIds = collect();
 
-        if ($ignoreId) {
-            $ignoredIds = $this->descendantIdsFor($blocks, $ignoreId)->prepend($ignoreId);
+        if ($editedBlock?->id) {
+            $ignoredIds = $this->descendantIdsFor($blocks, $editedBlock->id)->prepend($editedBlock->id);
         }
 
         return $blocks
             ->reject(fn (Block $block) => $block->isColumnItem())
             ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
             ->filter(fn (Block $block) => $block->canAcceptChildren())
+            ->filter(fn (Block $block) => ! $editedBlock || $block->canAcceptChildType($editedBlock->typeSlug()))
             ->map(fn (Block $block) => [
                 'id' => $block->id,
-                'label' => str_repeat('— ', $this->blockDepth($block)).$block->typeName().($block->layoutAdminName() ? ': '.$block->layoutAdminName() : ''),
+                'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
                 'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
             ])
             ->values();
