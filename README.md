@@ -42,6 +42,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
 - `card` stores translated optional eyebrow or label, `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the shared `variant`, optional shared URL, and target in `blocks.settings`, and accepts nested footer or action child blocks.
 - `stat-card` stores the translated eyebrow or label in `block_text_translations.subtitle`, the translated metric value in `block_text_translations.title`, and the translated description in `block_text_translations.content`. Optional shared URL remains on `blocks.url`.
+- `stat-card` now uses `wb-stat` pattern instead of `wb-card` for full UI alignment.
 - `alert` stores translated optional `title` and required body text in `block_text_translations` and stores the shared alert variant in `blocks.settings`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.

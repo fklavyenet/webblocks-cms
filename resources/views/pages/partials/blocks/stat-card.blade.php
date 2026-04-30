@@ -1,31 +1,20 @@
 @php
-    $label = $block->subtitle;
-    $value = $block->title;
-    $description = $block->content;
-    $url = $block->url;
-    $hasLabel = $label !== null && trim((string) $label) !== '';
-    $hasValue = $value !== null && trim((string) $value) !== '';
-    $hasDescription = $description !== null && trim((string) $description) !== '';
+$label = $block->subtitle;
+$value = $block->title;
+$detail = $block->content;
+
+$hasValue = $value !== null && trim((string) $value) !== '';
 @endphp
 
-<article class="wb-card">
-    <div class="wb-card-body wb-stack wb-gap-2">
-        @if ($hasLabel)
-            <p class="wb-eyebrow">{{ $label }}</p>
-        @endif
+<div class="wb-stat">
+  @if(!blank($label))
+    <div class="wb-stat-label">{{ $label }}</div>
+  @endif
 
-        @if ($hasValue)
-            @if ($url)
-                <a href="{{ $url }}" class="wb-no-decoration">
-                    <strong class="wb-stat-value">{{ $value }}</strong>
-                </a>
-            @else
-                <strong class="wb-stat-value">{{ $value }}</strong>
-            @endif
-        @endif
+@if($hasValue) <div class="wb-stat-value">{{ $value }}</div>
+@endif
 
-        @if ($hasDescription)
-            <p class="wb-m-0">{{ $description }}</p>
-        @endif
-    </div>
-</article>
+@if(!blank($detail)) <div class="wb-stat-detail">{{ $detail }}</div>
+@endif
+
+</div>
