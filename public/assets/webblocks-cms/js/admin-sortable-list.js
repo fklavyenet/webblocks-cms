@@ -4,8 +4,10 @@
     var handleSelector = '[data-admin-sortable-handle]';
     var orderSelector = '[data-admin-sortable-order]';
     var draggingClass = 'is-dragging';
+    var invalidTargetClass = 'is-sortable-invalid-target';
     var activeHandle = null;
     var activeItem = null;
+    var originalOrder = [];
 
     function sortableItems(root) {
         if (!root) {
@@ -17,7 +19,60 @@
         });
     }
 
+    function rootMode(root) {
+        return root ? String(root.getAttribute('data-admin-sortable-mode') || '').trim() : '';
+    }
+
+    function itemGroup(item) {
+        return [
+            String(item.getAttribute('data-parent-id') || ''),
+            String(item.getAttribute('data-slot-type-id') || ''),
+            String(item.getAttribute('data-depth') || ''),
+        ].join('|');
+    }
+
+    function groupItems(root, item) {
+        var groupKey = itemGroup(item);
+
+        return sortableItems(root).filter(function (candidate) {
+            return itemGroup(candidate) === groupKey;
+        });
+    }
+
+    function segmentFor(item) {
+        var segment = [];
+        var current = item;
+        var baseDepth = Number(item.getAttribute('data-depth') || '0');
+
+        while (current && current.matches(itemSelector)) {
+            var currentDepth = Number(current.getAttribute('data-depth') || '0');
+
+            if (segment.length > 0 && currentDepth <= baseDepth) {
+                break;
+            }
+
+            segment.push(current);
+            current = current.nextElementSibling;
+        }
+
+        return segment;
+    }
+
     function updateOrderInputs(root) {
+        if (rootMode(root) === 'slot-blocks') {
+            sortableItems(root).forEach(function (item) {
+                var group = groupItems(root, item);
+                var index = group.indexOf(item);
+                var input = item.querySelector(orderSelector);
+
+                if (input && index >= 0) {
+                    input.value = String(index);
+                }
+            });
+
+            return;
+        }
+
         sortableItems(root).forEach(function (item, index) {
             var input = item.querySelector(orderSelector);
 
@@ -27,43 +82,130 @@
         });
     }
 
-    function dispatchReordered(root) {
+    function dispatchReordered(root, detail) {
         if (!root) {
             return;
         }
 
         root.dispatchEvent(new CustomEvent('admin-sortable-list:reordered', {
             bubbles: true,
-            detail: {
+            detail: detail || {
                 itemCount: sortableItems(root).length,
             },
         }));
     }
 
-    function clearDraggingState() {
+    function restoreOriginalOrder(root) {
+        if (!root || originalOrder.length === 0) {
+            return;
+        }
+
+        originalOrder.forEach(function (item) {
+            if (item && item.parentElement === root) {
+                root.appendChild(item);
+            }
+        });
+
+        updateOrderInputs(root);
+    }
+
+    function clearInvalidTargets(root) {
+        sortableItems(root).forEach(function (item) {
+            item.classList.remove(invalidTargetClass);
+        });
+    }
+
+    function clearDraggingState(root) {
         if (activeItem) {
             activeItem.classList.remove(draggingClass);
         }
 
+        if (root) {
+            clearInvalidTargets(root);
+        }
+
         activeItem = null;
         activeHandle = null;
+        originalOrder = [];
     }
 
-    function reorderOnPointer(root, targetItem, clientY) {
-        if (!root || !targetItem || !activeItem || targetItem === activeItem) {
-            return;
+    function canReorderTogether(root, targetItem) {
+        if (!activeItem || !targetItem || targetItem === activeItem) {
+            return false;
         }
 
+        if (rootMode(root) !== 'slot-blocks') {
+            return true;
+        }
+
+        return itemGroup(activeItem) === itemGroup(targetItem);
+    }
+
+    function moveSegment(root, targetItem, clientY) {
         var rect = targetItem.getBoundingClientRect();
         var insertAfter = clientY > rect.top + (rect.height / 2);
-        var nextSibling = insertAfter ? targetItem.nextElementSibling : targetItem;
+        var activeSegment = segmentFor(activeItem);
+        var targetSegment = segmentFor(targetItem);
+        var referenceNode = insertAfter ? targetSegment[targetSegment.length - 1].nextElementSibling : targetItem;
 
-        if (nextSibling === activeItem || targetItem === activeItem.previousElementSibling && !insertAfter) {
-            return;
+        if (referenceNode === activeItem || targetSegment.indexOf(activeItem) !== -1) {
+            return false;
         }
 
-        root.insertBefore(activeItem, nextSibling);
+        activeSegment.forEach(function (segmentItem) {
+            root.insertBefore(segmentItem, referenceNode);
+        });
+
         updateOrderInputs(root);
+
+        return true;
+    }
+
+    function csrfToken() {
+        var token = document.querySelector('meta[name="csrf-token"]');
+
+        return token ? token.getAttribute('content') : '';
+    }
+
+    function persistSlotBlockReorder(root) {
+        var reorderUrl = root.getAttribute('data-admin-sortable-reorder-url');
+
+        if (!reorderUrl || !activeItem) {
+            return Promise.resolve();
+        }
+
+        var ids = groupItems(root, activeItem).map(function (item) {
+            return Number(item.getAttribute('data-block-id') || '0');
+        }).filter(function (id) {
+            return id > 0;
+        });
+
+        return window.fetch(reorderUrl, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+            },
+            body: JSON.stringify({ blocks: ids }),
+            credentials: 'same-origin',
+        }).then(function (response) {
+            if (!response.ok) {
+                throw new Error('Slot block reorder request failed with status ' + response.status + '.');
+            }
+
+            return response.json();
+        }).then(function () {
+            dispatchReordered(root, {
+                itemCount: ids.length,
+                blockIds: ids,
+                mode: 'slot-blocks',
+            });
+        }).catch(function (error) {
+            console.warn('[WebBlocks CMS] Slot block reorder failed.', error);
+            restoreOriginalOrder(root);
+            window.location.reload();
+        });
     }
 
     function bindRoot(root) {
@@ -88,11 +230,12 @@
             }
 
             activeItem = item;
+            originalOrder = sortableItems(root).slice();
             item.classList.add(draggingClass);
 
             if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = 'move';
-                event.dataTransfer.setData('text/plain', item.getAttribute('data-wb-builder-item-row') || 'sortable-item');
+                event.dataTransfer.setData('text/plain', item.getAttribute('data-block-id') || item.getAttribute('data-wb-builder-item-row') || 'sortable-item');
             }
         });
 
@@ -103,8 +246,16 @@
                 return;
             }
 
+            clearInvalidTargets(root);
+
+            if (!canReorderTogether(root, targetItem)) {
+                targetItem.classList.add(invalidTargetClass);
+
+                return;
+            }
+
             event.preventDefault();
-            reorderOnPointer(root, targetItem, event.clientY);
+            moveSegment(root, targetItem, event.clientY);
         });
 
         root.addEventListener('drop', function (event) {
@@ -114,18 +265,27 @@
 
             event.preventDefault();
             updateOrderInputs(root);
-            dispatchReordered(root);
+
+            if (rootMode(root) === 'slot-blocks') {
+                persistSlotBlockReorder(root);
+
+                return;
+            }
+
+            dispatchReordered(root, {
+                itemCount: sortableItems(root).length,
+            });
         });
 
         root.addEventListener('dragend', function () {
             if (!activeItem) {
-                clearDraggingState();
+                clearDraggingState(root);
 
                 return;
             }
 
             updateOrderInputs(root);
-            clearDraggingState();
+            clearDraggingState(root);
         });
     }
 
@@ -144,7 +304,7 @@
     });
 
     document.addEventListener('dragend', function () {
-        clearDraggingState();
+        clearDraggingState(activeItem ? activeItem.parentElement : null);
     });
 
     window.WebBlocksAdminSortableList = window.WebBlocksAdminSortableList || {};

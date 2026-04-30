@@ -9,7 +9,14 @@
     $rowExpandedQuery = collect([$block->id])->merge($expandedBlockIds)->unique()->implode(',');
 @endphp
 
-<tbody>
+<tbody
+    data-admin-sortable-item
+    data-block-id="{{ $block->id }}"
+    data-parent-id="{{ $block->parent_id ?? '' }}"
+    data-slot-type-id="{{ $block->slot_type_id }}"
+    data-depth="{{ $depth }}"
+    draggable="true"
+>
     <tr
         id="{{ $rowId }}"
         class="wb-block-row wb-block-row-depth-{{ min($depth, 6) }}"
@@ -25,6 +32,9 @@
         <td class="wb-block-hierarchy-cell">
             <div class="wb-block-hierarchy wb-stack wb-gap-1">
                 <div class="wb-cms-block-tree-item">
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder block" title="Drag to reorder block">
+                        <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
+                    </button>
                     @if ($hasChildren)
                         <button
                             type="button"

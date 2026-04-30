@@ -20,6 +20,7 @@ use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -345,6 +346,101 @@ class PageController extends Controller
         }
 
         return $redirect;
+    }
+
+    public function reorderSlotBlocks(Request $request, Page $page, PageSlot $slot): JsonResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        abort_unless($slot->page_id === $page->id, 404);
+
+        $validated = $request->validate([
+            'blocks' => ['required', 'array', 'min:1'],
+            'blocks.*' => ['required', 'integer', 'distinct'],
+        ]);
+
+        $blockIds = collect($validated['blocks'])
+            ->map(fn (mixed $id) => (int) $id)
+            ->values();
+
+        $blocks = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
+            ->whereIn('id', $blockIds)
+            ->where('page_id', $page->id)
+            ->where('slot_type_id', $slot->slot_type_id)
+            ->get(['id', 'page_id', 'slot_type_id', 'parent_id', 'sort_order']);
+
+        if ($blocks->count() !== $blockIds->count()) {
+            return response()->json([
+                'message' => 'Submitted blocks must belong to the current page and slot.',
+                'errors' => ['blocks' => ['Submitted blocks must belong to the current page and slot.']],
+            ], 422);
+        }
+
+        $parentIds = $blocks
+            ->map(fn (Block $block) => $block->parent_id)
+            ->uniqueStrict();
+
+        if ($parentIds->count() !== 1) {
+            return response()->json([
+                'message' => 'Submitted blocks must belong to the same parent group.',
+                'errors' => ['blocks' => ['Submitted blocks must belong to the same parent group.']],
+            ], 422);
+        }
+
+        $parentId = $parentIds->first();
+
+        $siblings = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
+            ->where('page_id', $page->id)
+            ->where('slot_type_id', $slot->slot_type_id)
+            ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+            ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'sort_order']);
+
+        if ($siblings->count() !== $blockIds->count() || $siblings->pluck('id')->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
+            return response()->json([
+                'message' => 'Submitted blocks must contain the full sibling group for one parent.',
+                'errors' => ['blocks' => ['Submitted blocks must contain the full sibling group for one parent.']],
+            ], 422);
+        }
+
+        DB::transaction(function () use ($page, $slot, $blockIds, $parentId, $request): void {
+            $siblings = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
+                ->where('page_id', $page->id)
+                ->where('slot_type_id', $slot->slot_type_id)
+                ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
+                ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id', 'sort_order']);
+
+            $positionMap = $blockIds->flip();
+
+            $siblings
+                ->sortBy(fn (Block $block) => $positionMap->get($block->id))
+                ->values()
+                ->each(function (Block $block, int $index): void {
+                    if ($block->sort_order === $index) {
+                        return;
+                    }
+
+                    $block->update(['sort_order' => $index]);
+                });
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Block order updated',
+                'Page block order was changed.',
+            );
+        });
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Saved',
+        ]);
     }
 
     private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array

@@ -231,6 +231,238 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function edit_slot_blocks_list_renders_native_sortable_markup_and_fallback_move_controls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $alertType->id,
+            'type' => 'alert',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-sortable-list', false);
+        $response->assertSee('data-admin-sortable-mode="slot-blocks"', false);
+        $response->assertSee('data-admin-sortable-reorder-url', false);
+        $response->assertSee('data-admin-sortable-item', false);
+        $response->assertSee('data-block-id="'.$section->id.'"', false);
+        $response->assertSee('data-parent-id=""', false);
+        $response->assertSee('data-slot-type-id="'.$main->id.'"', false);
+        $response->assertSee('draggable="true"', false);
+        $response->assertSee('data-admin-sortable-handle', false);
+        $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertSee('title="Move block up"', false);
+        $response->assertSee('title="Move block down"', false);
+    }
+
+    #[Test]
+    public function slot_block_reorder_endpoint_updates_sort_order_for_valid_same_parent_group(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $first = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $second = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.pages.slots.blocks.reorder', [$page, $pageSlot]), [
+            'blocks' => [$second->id, $first->id],
+        ]);
+
+        $response->assertOk();
+        $response->assertJson(['ok' => true, 'message' => 'Saved']);
+        $this->assertSame(0, $second->fresh()->sort_order);
+        $this->assertSame(1, $first->fresh()->sort_order);
+    }
+
+    #[Test]
+    public function slot_block_reorder_endpoint_rejects_mixed_parent_groups(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $alertType->id,
+            'type' => 'alert',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.pages.slots.blocks.reorder', [$page, $pageSlot]), [
+            'blocks' => [$section->id, $child->id],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['blocks']);
+    }
+
+    #[Test]
+    public function slot_block_reorder_endpoint_rejects_blocks_from_another_page(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        [$otherPage] = $this->pageWithSlot($main, 'Docs', 'docs');
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $local = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $foreign = Block::query()->create([
+            'page_id' => $otherPage->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.pages.slots.blocks.reorder', [$page, $pageSlot]), [
+            'blocks' => [$local->id, $foreign->id],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['blocks']);
+    }
+
+    #[Test]
+    public function slot_block_reorder_endpoint_rejects_blocks_from_another_slot(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 1,
+        ]);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $mainBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $sidebarBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.pages.slots.blocks.reorder', [$page, $pageSlot]), [
+            'blocks' => [$mainBlock->id, $sidebarBlock->id],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['blocks']);
+    }
+
+    #[Test]
     public function stat_card_form_and_store_preserve_zero_value_in_translation_and_admin_summary(): void
     {
         $this->seedFoundation();

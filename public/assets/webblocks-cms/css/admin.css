@@ -195,6 +195,10 @@
     cursor: grabbing;
 }
 
+.is-sortable-invalid-target {
+    cursor: not-allowed;
+}
+
 .wb-slot-block-picker-span-all {
     grid-column: 1 / -1;
 }

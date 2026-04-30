@@ -79,7 +79,7 @@
         @else
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover" data-wb-slot-block-table>
+                    <table class="wb-table wb-table-striped wb-table-hover" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.pages.slots.blocks.reorder', [$page, $slot]) }}">
                         <thead>
                             <tr>
                                 <th>Block Type</th>

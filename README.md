@@ -61,6 +61,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
 - `link-list-item.title` renders as `wb-link-list-title`, `link-list-item.subtitle` renders as `wb-link-list-meta`, `link-list-item.content` renders as `wb-link-list-desc`, and `link-list-item.url` becomes the item `href`.
 - Link List Items support native drag-and-drop reorder in the admin editor through a small CMS admin JavaScript module and do not require any external drag-and-drop dependency.
+- Edit Slot Blocks lists support native drag-and-drop sibling reordering in the admin editor without external dependencies. Drag-and-drop currently reorders only within the same parent group and does not change nesting.
 - Intended docs structure: `Section > Content Header or Heading > Link List > Link List Item` rows such as Getting Started, Architecture, Foundation, Layout, Primitives, Icons, Patterns, Utilities, and JavaScript.
 - Example docs structure: `Section > Container > Content Header + Card promo + Alert`.
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
@@ -89,6 +90,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Core block catalog updates are DB-backed. When a new first-class block type is added in code, refresh the local catalog with `ddev artisan db:seed --class=Database\\Seeders\\BlockTypeSeeder`.
 - `BlockTypeSeeder` updates block type records in place by slug and is the approved non-destructive sync path for block catalog additions such as `stat-card`.
 - Admin block editor behavior uses versioned plain JavaScript assets under `public/assets/webblocks-cms/js/admin/` instead of npm, Vite, or third-party drag-and-drop packages.
+- The Edit Slot Blocks drag-and-drop flow persists sibling order through a CMS admin endpoint and keeps the existing move up and move down controls as fallback actions.
 
 ## Product Boundary
 
