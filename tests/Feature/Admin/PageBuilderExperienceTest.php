@@ -1714,6 +1714,13 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$cluster->id.'"', false);
+        $response->assertSee('class="wb-block-row"', false);
+        $response->assertSee('data-depth="0"', false);
+        $response->assertSee('data-depth="1"', false);
+        $response->assertSee('data-depth="2"', false);
+        $response->assertSee('style="--depth: 0;"', false);
+        $response->assertSee('style="--depth: 1;"', false);
+        $response->assertSee('style="--depth: 2;"', false);
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);

@@ -12,12 +12,15 @@
 <tbody>
     <tr
         id="{{ $rowId }}"
+        class="wb-block-row"
         data-wb-slot-block-row
         data-wb-slot-block-id="{{ $block->id }}"
+        data-depth="{{ $depth }}"
         @if ($parentBlock)
             data-wb-slot-parent-id="{{ $parentBlock->id }}"
         @endif
         data-wb-slot-depth="{{ $depth }}"
+        style="--depth: {{ $depth }};"
     >
         <td>{{ $depth === 0 ? $block->sort_order : (($parentBlock?->sort_order ?? 0).'.'.($block->sort_order + 1)) }}</td>
         <td>

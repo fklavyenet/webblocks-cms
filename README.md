@@ -369,6 +369,7 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Picker search matches block type name, slug, description, and category so editors can find blocks by handle and intent terms such as `button`, `cluster`, `intro`, or `layout`.
 - The Edit Slot block tree now preserves expanded nested block state per slot in the browser with `localStorage` key format `webblocks.cms.slotBlocks.expanded.{slotId}`.
 - Nested block rows in Edit Slot now render with level-based table-cell indentation instead of visible character prefixes such as `—`.
+- Blocks list now uses visual indent guides similar to code editors for better hierarchy readability.
 - Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.
 - Deferred legacy blocks may still keep slug-matched compatibility renderers where needed to preserve existing public output, but that does not promote them to first-class WebBlocks UI patterns.
 - Transitional duplicate patterns such as legacy Card Grid, Metric Card, and FAQ-list are retained only for compatibility and should be replaced by the aligned core primitives over time.
