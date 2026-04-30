@@ -372,7 +372,7 @@ class BlockController extends Controller
                 return collect();
             }
 
-            $current = $block->title ?: $block->typeName();
+            $current = $block->stringValueOrNull($block->title) ?? $block->typeName();
             $label = $prefix === '' ? $current : $prefix.' > '.$current;
             $item = collect([['id' => $block->id, 'label' => $label]]);
 

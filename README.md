@@ -30,7 +30,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
 - Current layout blocks are `section`, `container`, `cluster`, and `grid`.
-- Current content blocks are `header`, `plain_text`, `button_link`, `card`, and `alert`.
+- Current content blocks are `header`, `plain_text`, `button_link`, `card`, `stat-card`, and `alert`.
 - Current pattern blocks are `content_header`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
@@ -41,6 +41,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `plain_text` stores user-facing text in `block_text_translations.content` and does not use shared user-facing content fields.
 - `button_link` stores the translated label in `block_text_translations.title` and stores the shared URL and target in `blocks.settings` while keeping the shared button variant in `blocks.variant`.
 - `card` stores translated optional eyebrow or label, `title`, `subtitle`, `description`, and optional action label in `block_text_translations`, stores the shared `variant`, optional shared URL, and target in `blocks.settings`, and accepts nested footer or action child blocks.
+- `stat-card` stores the translated eyebrow or label in `block_text_translations.subtitle`, the translated metric value in `block_text_translations.title`, and the translated description in `block_text_translations.content`. Optional shared URL remains on `blocks.url`.
 - `alert` stores translated optional `title` and required body text in `block_text_translations` and stores the shared alert variant in `blocks.settings`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
@@ -53,6 +54,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `card` supports `default` and `promo` variants. Promo maps to the shipped WebBlocks UI promo pattern and is intended for docs or CTA-style entry blocks.
 - Card child footer blocks render inside `div.wb-card-footer`. The legacy single `action_label` and `url` fields continue to work as a fallback when no child footer blocks are present.
 - Promo cards render optional eyebrow or label text above the title and prefer nested action structure such as `Card promo > Cluster > Button Link`.
+- `stat-card` is the first-class metric card block for WebBlocks UI stats. Metric values like `0`, `6`, `14+`, and `173` are valid translated strings and must render in admin and public output.
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
 - Example docs structure: `Section > Container > Content Header + Card promo + Alert`.
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
@@ -211,7 +213,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, and `Card` blocks inside that layout tree. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, and `Stat Card` blocks inside that layout tree. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 

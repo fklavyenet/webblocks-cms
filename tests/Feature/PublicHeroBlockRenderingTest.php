@@ -725,6 +725,37 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('Reusable');
     }
 
+    #[Test]
+    public function stat_card_renders_label_zero_value_and_description(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'stat-card',
+            'block_type_id' => $this->blockType('stat-card', 'Stat Card', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => '0',
+            'subtitle' => 'Dependencies',
+            'content' => 'No framework requirement for the package itself',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('wb-card', false);
+        $response->assertSee('wb-eyebrow', false);
+        $response->assertSee('wb-stat-value', false);
+        $response->assertSee('Dependencies');
+        $response->assertSee('>0<', false);
+        $response->assertSee('No framework requirement for the package itself');
+    }
+
     private function pageWithMainSlot(?Site $site = null, string $title = 'About', string $slug = 'about'): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add first-class Stat Card block for WebBlocks UI metric cards and preserve zero values in admin/public rendering.
+
 ## 1.4.7
 
 ### Changed

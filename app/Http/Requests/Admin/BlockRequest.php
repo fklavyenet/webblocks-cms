@@ -47,6 +47,7 @@ class BlockRequest extends FormRequest
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
+        $isStatCard = $selectedBlockType?->slug === 'stat-card';
         $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
         $supportsContainerWidth = $selectedBlockType?->slug === 'container';
@@ -70,7 +71,7 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],

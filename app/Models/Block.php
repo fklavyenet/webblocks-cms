@@ -156,6 +156,9 @@ class Block extends Model
 
     public function editorLabel(): string
     {
+        $title = $this->stringValueOrNull($this->title) ?? $this->translatedTextFieldValue('title');
+        $content = $this->stringValueOrNull($this->content) ?? $this->translatedTextFieldValue('content');
+
         if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
             $layoutName = $this->layoutAdminName();
 
@@ -165,10 +168,10 @@ class Block extends Model
         }
 
         if ($this->typeSlug() === 'plain_text') {
-            return $this->content ?: $this->typeName();
+            return $content ?? $this->typeName();
         }
 
-        return $this->title ?: $this->typeName();
+        return $title ?? $this->typeName();
     }
 
     public function editorSummary(): ?string
@@ -191,6 +194,15 @@ class Block extends Model
             return 'Location: '.str($this->navigationLocation())->headline();
         }
 
+        if ($this->typeSlug() === 'stat-card') {
+            return $this->stringValueOrNull($this->title)
+                ?? $this->translatedTextFieldValue('title')
+                ?? $this->stringValueOrNull($this->subtitle)
+                ?? $this->translatedTextFieldValue('subtitle')
+                ?? $this->stringValueOrNull($this->content, true)
+                ?? $this->translatedTextFieldValue('content', true);
+        }
+
         if (in_array($this->typeSlug(), ['columns', 'feature-grid', 'link-list', 'cta'], true)) {
             $childCount = $this->children->count();
 
@@ -207,14 +219,14 @@ class Block extends Model
         }
 
         $summary = collect([
-            $this->typeSlug() === 'header' ? $this->variant : null,
-            $this->subtitle,
-            filled($this->content) ? str(strip_tags((string) $this->content))->squish()->limit(88)->toString() : null,
-            $this->url,
-            $this->variant,
-        ])->first(fn ($value) => filled($value));
+            $this->typeSlug() === 'header' ? $this->stringValueOrNull($this->variant) : null,
+            $this->stringValueOrNull($this->subtitle) ?? $this->translatedTextFieldValue('subtitle'),
+            $this->stringValueOrNull($this->content, true) ?? $this->translatedTextFieldValue('content', true),
+            $this->stringValueOrNull($this->url),
+            $this->stringValueOrNull($this->variant),
+        ])->first(fn ($value) => $value !== null);
 
-        return $summary ? (string) $summary : null;
+        return $summary !== null ? (string) $summary : null;
     }
 
     public function parentCandidateLabel(): string
@@ -259,6 +271,33 @@ class Block extends Model
         return $value->length() > 80
             ? $value->limit(80)
             : $value;
+    }
+
+    public function stringValueOrNull(mixed $value, bool $stripTags = false): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $resolved = $stripTags ? strip_tags((string) $value) : (string) $value;
+        $resolved = str($resolved)->squish()->toString();
+
+        return $resolved !== '' ? $resolved : null;
+    }
+
+    public function translatedTextFieldValue(string $field, bool $stripTags = false): ?string
+    {
+        if ($this->translationFamily() !== 'text') {
+            return null;
+        }
+
+        $translations = $this->relationLoaded('textTranslations')
+            ? $this->getRelation('textTranslations')
+            : $this->textTranslations()->get();
+        $defaultLocaleId = app(\App\Support\Locales\LocaleResolver::class)->default()->id;
+        $translation = $translations->firstWhere('locale_id', $defaultLocaleId) ?? $translations->first();
+
+        return $this->stringValueOrNull($translation?->{$field}, $stripTags);
     }
 
     public function metaItems(): Collection

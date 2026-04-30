@@ -130,6 +130,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Content Header');
         $response->assertSee('Button Link');
         $response->assertSee('Card');
+        $response->assertSee('Stat Card');
         $response->assertSee('Alert');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
@@ -151,6 +152,19 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertTrue($card->canAcceptChildType('cluster'));
         $this->assertTrue($card->canAcceptChildType('button_link'));
         $this->assertFalse($card->canAcceptChildType('plain_text'));
+    }
+
+    #[Test]
+    public function stat_card_is_seeded_as_published_content_block(): void
+    {
+        $this->seedFoundation();
+
+        $statCardType = BlockType::query()->where('slug', 'stat-card')->firstOrFail();
+
+        $this->assertSame('Stat Card', $statCardType->name);
+        $this->assertSame('published', $statCardType->status);
+        $this->assertSame('content', $statCardType->category);
+        $this->assertFalse($statCardType->is_container);
     }
 
     #[Test]
@@ -193,6 +207,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Plain Text</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Button Link</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Card</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Stat Card</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Alert</span>'));
         $response->assertSeeInOrder([
             'wb-list-item-title">Content Header</span>',
@@ -204,8 +219,69 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
             'wb-list-item-title">Card</span>',
+            'wb-list-item-title">Stat Card</span>',
             'wb-list-item-title">Alert</span>',
         ], false);
+    }
+
+    #[Test]
+    public function stat_card_form_and_store_preserve_zero_value_in_translation_and_admin_summary(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $statCardType = BlockType::query()->where('slug', 'stat-card')->firstOrFail();
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $statCardType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: Stat Card');
+        $formResponse->assertSee('name="subtitle"', false);
+        $formResponse->assertSee('name="title"', false);
+        $formResponse->assertSee('name="content"', false);
+        $formResponse->assertSee('name="url"', false);
+        $formResponse->assertSee('This may be 0, 6, 14+, 173');
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $statCardType->id,
+            'sort_order' => 0,
+            'subtitle' => 'Dependencies',
+            'title' => '0',
+            'content' => 'No framework requirement for the package itself',
+            'url' => '/package',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'stat-card')->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'stat-card',
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'url' => '/package',
+        ]);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => '0',
+            'subtitle' => 'Dependencies',
+            'content' => 'No framework requirement for the package itself',
+        ]);
+        $this->assertSame('0', $block->fresh()->editorLabel());
+        $this->assertSame('0', $block->fresh()->editorSummary());
+
+        $treeResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $treeResponse->assertOk();
+        $treeResponse->assertSee('>0<', false);
     }
 
     #[Test]

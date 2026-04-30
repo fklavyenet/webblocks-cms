@@ -294,4 +294,41 @@ class BlockTranslationIntegrityTest extends TestCase
         $response->assertSessionHasErrors(['locale' => 'Selected locale must be enabled for the page site.']);
         $this->assertSame(0, Block::query()->where('page_id', $page->id)->count());
     }
+
+    #[Test]
+    public function stat_card_translation_payload_keeps_zero_as_string(): void
+    {
+        $page = $this->pageWithMainSlot($this->defaultSite());
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'stat-card',
+            'block_type_id' => $this->blockType('stat-card')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'url' => '/package',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        app(BlockTranslationWriter::class)->sync($block, [
+            'type' => 'stat-card',
+            'title' => '0',
+            'subtitle' => 'Dependencies',
+            'content' => 'No framework requirement for the package itself',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $translation = DB::table('block_text_translations')
+            ->where('block_id', $block->id)
+            ->where('locale_id', $this->defaultLocale()->id)
+            ->first();
+
+        $this->assertNotNull($translation);
+        $this->assertSame('0', $translation->title);
+        $this->assertSame('Dependencies', $translation->subtitle);
+        $this->assertSame('No framework requirement for the package itself', $translation->content);
+        $this->assertNull($block->fresh()->getRawOriginal('title'));
+    }
 }

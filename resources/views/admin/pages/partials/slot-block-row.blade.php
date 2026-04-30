@@ -58,8 +58,9 @@
         <td>
             <div class="wb-stack wb-gap-1">
                 <a href="{{ $slotBlockRoute(['edit' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong>{{ $block->editorLabel() }}</strong></a>
-                @if ($block->editorSummary())
-                    <span class="wb-text-sm wb-text-muted">{{ $block->editorSummary() }}</span>
+                @php($editorSummary = $block->editorSummary())
+                @if ($editorSummary !== null)
+                    <span class="wb-text-sm wb-text-muted">{{ $editorSummary }}</span>
                 @endif
                 @php($translationStatus = $block->translationStatus($activeLocale))
                 <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>
