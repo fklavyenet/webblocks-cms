@@ -6,6 +6,10 @@
 
 - Add first-class Stat Card block for WebBlocks UI metric cards and preserve zero values in admin/public rendering.
 
+### Fixed
+
+- Fix Stat Card visibility in the admin block type picker.
+
 ## 1.4.7
 
 ### Changed

@@ -77,6 +77,11 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Public block flow spacing is managed at the parent renderer level with the WebBlocks UI `wb-stack` primitive for slot, `section`, and `container` block flows.
 - Individual public block components should stay spacing-neutral and should not carry their own margin utilities for ordinary vertical rhythm.
 
+### Catalog Sync
+
+- Core block catalog updates are DB-backed. When a new first-class block type is added in code, refresh the local catalog with `ddev artisan db:seed --class=Database\\Seeders\\BlockTypeSeeder`.
+- `BlockTypeSeeder` updates block type records in place by slug and is the approved non-destructive sync path for block catalog additions such as `stat-card`.
+
 ## Product Boundary
 
 - WebBlocks CMS core contains reusable CMS engine features such as page building, multilingual content, multisite, media, navigation, workflow, backup, update, and generic site export/import.

@@ -85,6 +85,32 @@ class StatCardTest extends TestCase
     }
 
     #[Test]
+    public function block_type_seeder_adds_stat_card_to_existing_catalog_without_destructive_reseed(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        BlockType::query()->create([
+            'name' => 'Card',
+            'slug' => 'card',
+            'category' => 'content',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => true,
+            'sort_order' => 8,
+            'status' => 'published',
+        ]);
+
+        $this->assertNull(BlockType::query()->where('slug', 'stat-card')->first());
+
+        $this->seed(BlockTypeSeeder::class);
+
+        $type = BlockType::query()->where('slug', 'stat-card')->firstOrFail();
+
+        $this->assertSame('Stat Card', $type->name);
+        $this->assertSame('published', $type->status);
+    }
+
+    #[Test]
     public function admin_form_can_save_stat_card_with_zero_value_and_summary_displays_zero(): void
     {
         $this->seedFoundation();
