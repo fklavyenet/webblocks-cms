@@ -72,6 +72,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - The default locale must always have a translation row for translatable blocks.
 - Public rendering reads user-facing text from translation rows, not canonical fallback columns.
 - Layout and primitive content blocks do not carry higher-level WebBlocks UI pattern markup. UI patterns will be introduced later, one by one, on top of this layout layer.
+- Public block flow spacing is managed at the parent renderer level with the WebBlocks UI `wb-stack` primitive for slot, `section`, and `container` block flows.
+- Individual public block components should stay spacing-neutral and should not carry their own margin utilities for ordinary vertical rhythm.
 
 ## Product Boundary
 

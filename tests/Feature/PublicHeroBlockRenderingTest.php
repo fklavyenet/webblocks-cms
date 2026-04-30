@@ -455,7 +455,7 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-section">', false);
+        $response->assertSee('<section class="wb-section wb-stack">', false);
         $response->assertSee('Section copy');
         $response->assertDontSee('wb-promo', false);
     }
@@ -495,7 +495,7 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-section">', false);
+        $response->assertSee('<section class="wb-section wb-stack">', false);
         $response->assertSee('Section CTA');
         $response->assertDontSee('wb-promo', false);
         $response->assertDontSee('wb-promo-title', false);

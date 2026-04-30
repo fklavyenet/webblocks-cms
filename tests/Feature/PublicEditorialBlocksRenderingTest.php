@@ -971,8 +971,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<section class="wb-section">',
-            '<div class="wb-container">',
+            '<section class="wb-section wb-stack">',
+            '<div class="wb-container wb-stack">',
             '<h1>Nested heading</h1>',
             '<p>Nested paragraph</p>',
             '</div>',
@@ -1053,14 +1053,15 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-section wb-section-lg">', false);
-        $response->assertSee('<div class="wb-container wb-container-xl">', false);
+        $response->assertSee('<section class="wb-section wb-section-lg wb-stack">', false);
+        $response->assertSee('<div class="wb-container wb-container-xl wb-stack">', false);
         $response->assertSee('<h2 class="wb-text-center">Centered heading</h2>', false);
         $response->assertSee('<p class="wb-text-right">Aligned paragraph</p>', false);
         $response->assertDontSee('wb-bg-muted', false);
         $response->assertDontSee('wb-content-title', false);
         $response->assertDontSee('wb-content-subtitle', false);
         $response->assertDontSee('wb-made-up', false);
+        $response->assertDontSee('wb-grid wb-stack', false);
     }
 
     #[Test]

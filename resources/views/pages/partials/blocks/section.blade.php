@@ -1,4 +1,4 @@
-@php($class = trim('wb-section '.($block->sectionSpacingClass() ?? '')))
+@php($class = collect(['wb-section', $block->sectionSpacingClass(), 'wb-stack'])->filter()->implode(' '))
 <section class="{{ $class }}">
     @foreach ($block->children as $child)
         @include('pages.partials.block', ['block' => $child])

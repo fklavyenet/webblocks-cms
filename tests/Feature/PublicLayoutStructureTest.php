@@ -36,6 +36,17 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function public_layout_loads_cms_public_stylesheet_in_head(): void
+    {
+        $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('assets/webblocks-cms/css/public.css', false);
+    }
+
+    #[Test]
     public function slots_render_direct_primitive_block_output_without_extra_shell_wrappers(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();
@@ -61,8 +72,10 @@ class PublicLayoutStructureTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         $sectionType = $this->blockType('section', 'Section', 1);
         $containerType = $this->blockType('container', 'Container', 2);
-        $headerType = $this->blockType('header', 'Header', 3);
-        $plainTextType = $this->blockType('plain_text', 'Plain Text', 4);
+        $cardType = $this->blockType('card', 'Card', 3);
+        $alertType = $this->blockType('alert', 'Alert', 4);
+        $gridType = $this->blockType('grid', 'Grid', 5);
+        $headerType = $this->blockType('header', 'Header', 6);
 
         $page = Page::query()->create([
             'site_id' => $site->id,
@@ -107,56 +120,102 @@ class PublicLayoutStructureTest extends TestCase
             'is_system' => false,
         ]);
 
-        $header = Block::query()->create([
+        $card = Block::query()->create([
             'page_id' => $page->id,
             'parent_id' => $container->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Feature card',
+            'content' => 'Card content rendered before the alert.',
+        ]);
+
+        $alert = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'alert',
+            'block_type_id' => $alertType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['variant' => 'info'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $alert->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Spacing proof',
+            'content' => 'Alert content follows the card inside the same container flow.',
+        ]);
+
+        $grid = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'grid',
+            'block_type_id' => $gridType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['columns' => '2'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $gridHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $grid->id,
             'type' => 'header',
             'block_type_id' => $headerType->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $main->id,
             'sort_order' => 0,
-            'variant' => 'h1',
+            'variant' => 'h2',
             'status' => 'published',
             'is_system' => false,
         ]);
-        $header->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'WebBlocks CMS',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
 
-        $plainText = Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $container->id,
-            'type' => 'plain_text',
-            'block_type_id' => $plainTextType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $main->id,
-            'sort_order' => 1,
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-        $plainText->textTranslations()->create([
+        $gridHeader->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
-            'content' => 'Main slot content',
+            'title' => 'Grid child heading',
         ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($plainText->fresh(['textTranslations']));
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($alert->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($gridHeader->fresh(['textTranslations']));
 
         $response = $this->get('/p/about');
 
         $response->assertOk();
         $response->assertSeeInOrder([
             '<main data-wb-slot="main" id="main-content">',
-            '<section class="wb-section">',
-            '<div class="wb-container">',
-            '<h1>WebBlocks CMS</h1>',
-            '<p>Main slot content</p>',
+            '<div class="wb-stack">',
+            '<section class="wb-section wb-stack">',
+            '<div class="wb-container wb-stack">',
+            '<article class="wb-card">',
+            '<div class="wb-alert wb-alert-info">',
+            '<h3 class="wb-alert-title">Spacing proof</h3>',
+            '<p>Alert content follows the card inside the same container flow.</p>',
             '</div>',
+            '<div class="wb-grid wb-grid-2">',
+            '<h2>Grid child heading</h2>',
             '</section>',
             '</main>',
         ], false);
+        $response->assertDontSee('wb-alert wb-alert-info wb-stack', false);
+        $response->assertDontSee('wb-grid wb-stack', false);
         $response->assertDontSee('wb-stack wb-gap-3', false);
     }
 
