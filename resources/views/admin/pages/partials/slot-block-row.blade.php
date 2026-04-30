@@ -12,7 +12,7 @@
 <tbody>
     <tr
         id="{{ $rowId }}"
-        class="wb-block-row"
+        class="wb-block-row wb-block-row-depth-{{ min($depth, 6) }}"
         data-wb-slot-block-row
         data-wb-slot-block-id="{{ $block->id }}"
         data-depth="{{ $depth }}"
@@ -20,12 +20,11 @@
             data-wb-slot-parent-id="{{ $parentBlock->id }}"
         @endif
         data-wb-slot-depth="{{ $depth }}"
-        style="--depth: {{ $depth }};"
+        style="--block-depth: {{ $depth }};"
     >
-        <td>{{ $depth === 0 ? $block->sort_order : (($parentBlock?->sort_order ?? 0).'.'.($block->sort_order + 1)) }}</td>
-        <td>
-            <div class="wb-stack wb-gap-1">
-                <div class="wb-cms-block-tree-item" data-wb-cms-block-level="{{ $depth }}" style="--wb-cms-block-level: {{ $depth }};">
+        <td class="wb-block-hierarchy-cell">
+            <div class="wb-block-hierarchy wb-stack wb-gap-1">
+                <div class="wb-cms-block-tree-item">
                     @if ($hasChildren)
                         <button
                             type="button"

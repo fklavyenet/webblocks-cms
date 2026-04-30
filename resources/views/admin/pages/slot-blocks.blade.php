@@ -82,7 +82,6 @@
                     <table class="wb-table wb-table-striped wb-table-hover" data-wb-slot-block-table>
                         <thead>
                             <tr>
-                                <th>Order</th>
                                 <th>Block Type</th>
                                 <th>Summary</th>
                                 <th>Status</th>

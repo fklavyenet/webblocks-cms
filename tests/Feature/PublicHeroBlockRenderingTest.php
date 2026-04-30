@@ -748,8 +748,8 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('wb-card', false);
-        $response->assertSee('wb-eyebrow', false);
+        $response->assertSee('wb-stat', false);
+        $response->assertSee('wb-stat-label', false);
         $response->assertSee('wb-stat-value', false);
         $response->assertSee('Dependencies');
         $response->assertSee('>0<', false);

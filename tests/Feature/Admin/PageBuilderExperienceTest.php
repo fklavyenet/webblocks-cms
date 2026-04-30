@@ -1784,34 +1784,36 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Nested title');
         $response->assertSee('Nested paragraph');
         $response->assertSee('Primary action');
+        $response->assertDontSee('<th>Order</th>', false);
         $response->assertSee('data-wb-slot-block-row', false);
         $response->assertSee('data-wb-cms-slot-block-tree', false);
         $response->assertSee('data-wb-slot-id="'.$pageSlot->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$cluster->id.'"', false);
-        $response->assertSee('class="wb-block-row"', false);
+        $response->assertSee('title="Move block up"', false);
+        $response->assertSee('title="Move block down"', false);
+        $response->assertSee('class="wb-block-row wb-block-row-depth-0"', false);
+        $response->assertSee('wb-block-row-depth-1', false);
+        $response->assertSee('wb-block-row-depth-2', false);
         $response->assertSee('data-depth="0"', false);
         $response->assertSee('data-depth="1"', false);
         $response->assertSee('data-depth="2"', false);
-        $response->assertSee('style="--depth: 0;"', false);
-        $response->assertSee('style="--depth: 1;"', false);
-        $response->assertSee('style="--depth: 2;"', false);
+        $response->assertSee('style="--block-depth: 0;"', false);
+        $response->assertSee('style="--block-depth: 1;"', false);
+        $response->assertSee('style="--block-depth: 2;"', false);
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
-        $response->assertSee('data-wb-cms-block-level="0"', false);
-        $response->assertSee('data-wb-cms-block-level="1"', false);
-        $response->assertSee('data-wb-cms-block-level="2"', false);
-        $response->assertSee('style="--wb-cms-block-level: 0;"', false);
-        $response->assertSee('style="--wb-cms-block-level: 1;"', false);
-        $response->assertSee('style="--wb-cms-block-level: 2;"', false);
+        $response->assertSee('class="wb-block-hierarchy-cell"', false);
+        $response->assertSee('class="wb-block-hierarchy wb-stack wb-gap-1"', false);
         $response->assertSee('assets/webblocks-cms/css/admin.css', false);
         $response->assertDontSee('site/css/admin.css', false);
         $response->assertSee('assets/webblocks-cms/js/admin/slot-block-tree.js', false);
         $response->assertDontSee('assets/webblocks-cms/js/admin/slot-blocks.js', false);
         $response->assertDontSee('— Cluster', false);
+        $response->assertDontSee('>0.1<', false);
     }
 
     #[Test]

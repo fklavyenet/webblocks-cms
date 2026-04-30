@@ -9,6 +9,7 @@
 ### Fixed
 
 - Fix Stat Card visibility in the admin block type picker.
+- Improve Edit Slot Blocks list hierarchy display by hiding internal order numbers and replacing whitespace indentation with CSS guide lines.
 
 ## 1.4.7
 

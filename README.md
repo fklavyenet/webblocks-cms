@@ -61,6 +61,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
 - Existing eligible blocks can also be moved under card parents from the `Edit Block` modal when the card accepts that child type.
 - The block modal now exposes three tabs: `Block Info`, `Block Fields`, and `Settings`.
+- Edit Slot block lists hide internal order numbers and use CSS-based hierarchy guide lines for nested block readability.
 - The `Settings` tab is shared and non-translatable. It stores whitelist-based public appearance settings in `blocks.settings` and maps only to confirmed shipped WebBlocks UI classes.
 - Currently available settings:
 - `header`: `alignment` -> `wb-text-left`, `wb-text-center`, `wb-text-right`
