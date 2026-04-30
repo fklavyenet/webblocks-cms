@@ -10,6 +10,7 @@
 
 - Fix Stat Card visibility in the admin block type picker.
 - Improve Edit Slot Blocks list hierarchy display by hiding internal order numbers and replacing whitespace indentation with CSS guide lines.
+- Improve block hierarchy readability with subtle level-based indent guide colors.
 
 ## 1.4.7
 

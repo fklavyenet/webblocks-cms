@@ -110,10 +110,6 @@
     transform: rotate(-90deg);
 }
 
-.wb-block-row {
-    --wb-block-indent-size: 1rem;
-}
-
 .wb-block-hierarchy-cell {
     position: relative;
 }
@@ -121,7 +117,7 @@
 .wb-block-hierarchy {
     position: absolute;
     position: relative;
-    padding-inline-start: calc(var(--block-depth, 0) * var(--wb-block-indent-size));
+    padding-inline-start: calc(var(--block-depth, 0) * 1rem);
 }
 
 .wb-block-hierarchy::before {
@@ -129,44 +125,58 @@
     position: absolute;
     inset-block: -0.75rem;
     inset-inline-start: 0;
-    width: calc(var(--block-depth, 0) * var(--wb-block-indent-size));
+    width: calc(var(--block-depth, 0) * 1rem);
     pointer-events: none;
     background-repeat: repeat-x;
-    background-size: var(--wb-block-indent-size) 100%;
-    background-image: linear-gradient(
+    background-size: 1rem 100%;
+    background-image: repeating-linear-gradient(
         to right,
-        transparent calc(var(--wb-block-indent-size) - 1px),
-        rgba(14, 137, 179, 0.22) calc(var(--wb-block-indent-size) - 1px),
-        rgba(14, 137, 179, 0.22) var(--wb-block-indent-size)
+        transparent 0,
+        transparent calc(1rem - 1px),
+        rgba(14, 137, 179, 0.22) calc(1rem - 1px),
+        rgba(14, 137, 179, 0.22) 1rem
+    );
+}
+
+.wb-block-row-depth-1 .wb-block-hierarchy::before {
+    background-image: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(1rem - 1px),
+        rgba(14, 137, 179, 0.22) calc(1rem - 1px),
+        rgba(14, 137, 179, 0.22) 1rem
     );
 }
 
 .wb-block-row-depth-2 .wb-block-hierarchy::before {
-    background-image: linear-gradient(
+    background-image: repeating-linear-gradient(
         to right,
-        transparent calc(var(--wb-block-indent-size) - 1px),
-        rgba(99, 102, 241, 0.22) calc(var(--wb-block-indent-size) - 1px),
-        rgba(99, 102, 241, 0.22) var(--wb-block-indent-size)
+        transparent 0,
+        transparent calc(1rem - 1px),
+        rgba(99, 102, 241, 0.22),
+        rgba(99, 102, 241, 0.22) 1rem
     );
 }
 
 .wb-block-row-depth-3 .wb-block-hierarchy::before {
-    background-image: linear-gradient(
+    background-image: repeating-linear-gradient(
         to right,
-        transparent calc(var(--wb-block-indent-size) - 1px),
-        rgba(16, 185, 129, 0.22) calc(var(--wb-block-indent-size) - 1px),
-        rgba(16, 185, 129, 0.22) var(--wb-block-indent-size)
+        transparent 0,
+        transparent calc(1rem - 1px),
+        rgba(16, 185, 129, 0.22),
+        rgba(16, 185, 129, 0.22) 1rem
     );
 }
 
 .wb-block-row-depth-4 .wb-block-hierarchy::before,
 .wb-block-row-depth-5 .wb-block-hierarchy::before,
 .wb-block-row-depth-6 .wb-block-hierarchy::before {
-    background-image: linear-gradient(
+    background-image: repeating-linear-gradient(
         to right,
-        transparent calc(var(--wb-block-indent-size) - 1px),
-        rgba(100, 116, 139, 0.2) calc(var(--wb-block-indent-size) - 1px),
-        rgba(100, 116, 139, 0.2) var(--wb-block-indent-size)
+        transparent 0,
+        transparent calc(1rem - 1px),
+        rgba(100, 116, 139, 0.2),
+        rgba(100, 116, 139, 0.2) 1rem
     );
 }
 
