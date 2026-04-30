@@ -115,10 +115,22 @@
         list.appendChild(row);
         nextIndexInput.value = String(index + 1);
         syncBuilderItems(editor);
+
+        if (window.WebBlocksAdminSortableList && typeof window.WebBlocksAdminSortableList.init === 'function') {
+            window.WebBlocksAdminSortableList.init(editor);
+        }
     }
 
     document.querySelectorAll('[data-wb-builder-items-editor]').forEach(function (editor) {
         syncBuilderItems(editor);
+    });
+
+    document.addEventListener('admin-sortable-list:reordered', function (event) {
+        var editor = event.target.closest('[data-wb-builder-items-editor]');
+
+        if (editor) {
+            syncBuilderItems(editor);
+        }
     });
 
     document.addEventListener('click', function (event) {

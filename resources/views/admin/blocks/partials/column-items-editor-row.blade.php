@@ -11,6 +11,7 @@
     $urlLabel = $urlLabel ?? 'URL';
     $contentLabel = $contentLabel ?? 'Content';
     $contentPlaceholder = $contentPlaceholder ?? 'Add content.';
+    $enableAdminSortable = $enableAdminSortable ?? false;
     $rowPrefix = is_numeric($index) ? "{$inputName}[{$index}]" : "{$inputName}[__INDEX__]";
     $rowSortOrder = is_numeric($index) ? ($columnItem->sort_order ?? $index) : '__INDEX__';
     $summaryText = $showSubtitle
@@ -18,10 +19,17 @@
         : ($columnItem->content ? str(strip_tags((string) $columnItem->content))->squish()->limit(88) : $contentPlaceholder);
 @endphp
 
-<div class="wb-card" data-wb-builder-item-row="{{ $editorKey }}">
+<div class="wb-card" data-wb-builder-item-row="{{ $editorKey }}" @if ($enableAdminSortable) data-admin-sortable-item draggable="true" @endif>
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
         <div class="wb-stack wb-gap-1">
-            <strong data-wb-builder-item-label="{{ $editorKey }}">{{ $columnItem->title ?: $newItemLabel }}</strong>
+            <div class="wb-cluster wb-cluster-2">
+                @if ($enableAdminSortable)
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder" title="Drag to reorder">
+                        <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
+                    </button>
+                @endif
+                <strong data-wb-builder-item-label="{{ $editorKey }}">{{ $columnItem->title ?: $newItemLabel }}</strong>
+            </div>
             <span class="wb-text-sm wb-text-muted">{{ $summaryText }}</span>
         </div>
 
@@ -36,7 +44,7 @@
     <div class="wb-card-body wb-stack wb-gap-3" data-wb-builder-item-body="{{ $editorKey }}">
         <input type="hidden" name="{{ $rowPrefix }}[id]" value="{{ is_numeric($index) ? $columnItem->id : '' }}">
         <input type="hidden" name="{{ $rowPrefix }}[block_type_id]" value="{{ $itemBlockType?->id }}">
-        <input type="hidden" name="{{ $rowPrefix }}[sort_order]" value="{{ $rowSortOrder }}" data-wb-builder-item-sort="{{ $editorKey }}">
+        <input type="hidden" name="{{ $rowPrefix }}[sort_order]" value="{{ $rowSortOrder }}" data-wb-builder-item-sort="{{ $editorKey }}" @if ($enableAdminSortable) data-admin-sortable-order @endif>
         <input type="hidden" name="{{ $rowPrefix }}[_delete]" value="0" data-wb-builder-item-delete="{{ $editorKey }}">
 
         <div class="wb-grid wb-grid-2">

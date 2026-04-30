@@ -16,6 +16,7 @@
     $urlLabel = $urlLabel ?? 'URL';
     $contentLabel = $contentLabel ?? 'Content';
     $contentPlaceholder = $contentPlaceholder ?? 'Add content.';
+    $enableAdminSortable = $enableAdminSortable ?? false;
 
     $columnItems = old($inputName)
         ? collect(old($inputName))->map(function (array $submittedItem, int $index) use ($block, $itemBlockType) {
@@ -52,8 +53,8 @@
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-builder-item-add="{{ $editorKey }}">{{ $addButtonLabel }}</button>
         </div>
 
-        <div class="wb-card-body">
-            <div class="wb-stack wb-gap-3" data-wb-builder-item-list="{{ $editorKey }}">
+            <div class="wb-card-body">
+            <div class="wb-stack wb-gap-3" data-wb-builder-item-list="{{ $editorKey }}" @if ($enableAdminSortable) data-admin-sortable-list @endif>
                 @forelse ($columnItems as $index => $columnItem)
                     @include('admin.blocks.partials.column-items-editor-row', [
                         'columnItem' => $columnItem,
@@ -70,6 +71,7 @@
                         'urlLabel' => $urlLabel,
                         'contentLabel' => $contentLabel,
                         'contentPlaceholder' => $contentPlaceholder,
+                        'enableAdminSortable' => $enableAdminSortable,
                     ])
                 @empty
                     <div class="wb-empty" data-wb-builder-item-empty="{{ $editorKey }}">
@@ -107,6 +109,7 @@
                 'urlLabel' => $urlLabel,
                 'contentLabel' => $contentLabel,
                 'contentPlaceholder' => $contentPlaceholder,
+                'enableAdminSortable' => $enableAdminSortable,
             ])
         </template>
 

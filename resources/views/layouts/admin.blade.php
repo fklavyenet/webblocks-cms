@@ -6,6 +6,7 @@
             'core' => public_path('assets/webblocks-cms/js/admin/core.js'),
             'password-fields' => public_path('assets/webblocks-cms/js/admin/password-fields.js'),
             'asset-picker' => public_path('assets/webblocks-cms/js/admin/asset-picker.js'),
+            'admin-sortable-list' => public_path('assets/webblocks-cms/js/admin-sortable-list.js'),
             'inline-block-builder' => public_path('assets/webblocks-cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('assets/webblocks-cms/js/admin/builder-items.js'),
             'slot-builder' => public_path('assets/webblocks-cms/js/admin/slot-builder.js'),
@@ -227,6 +228,9 @@
         @endif
         @if (is_file($adminJsAssets['asset-picker']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/asset-picker.js') }}?v={{ filemtime($adminJsAssets['asset-picker']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['admin-sortable-list']))
+            <script src="{{ asset('assets/webblocks-cms/js/admin-sortable-list.js') }}?v={{ filemtime($adminJsAssets['admin-sortable-list']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['inline-block-builder']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/inline-block-builder.js') }}?v={{ filemtime($adminJsAssets['inline-block-builder']) }}" defer></script>

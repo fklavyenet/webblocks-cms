@@ -183,6 +183,18 @@
     align-self: end;
 }
 
+[data-admin-sortable-item].is-dragging {
+    opacity: 0.55;
+}
+
+[data-admin-sortable-handle] {
+    cursor: grab;
+}
+
+[data-admin-sortable-handle]:active {
+    cursor: grabbing;
+}
+
 .wb-slot-block-picker-span-all {
     grid-column: 1 / -1;
 }

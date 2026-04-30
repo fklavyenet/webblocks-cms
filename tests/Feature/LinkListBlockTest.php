@@ -149,6 +149,180 @@ class LinkListBlockTest extends TestCase
     }
 
     #[Test]
+    public function link_list_edit_form_renders_native_sortable_markup_and_fallback_controls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        [$page, $pageSlot, $slotType] = $this->pageWithSlot();
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $linkListItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Getting Started',
+            'subtitle' => 'Guide',
+            'content' => 'First item',
+            'url' => 'getting-started.html',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $linkList->id]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-sortable-list', false);
+        $response->assertSee('data-admin-sortable-item', false);
+        $response->assertSee('draggable="true"', false);
+        $response->assertSee('data-admin-sortable-handle', false);
+        $response->assertSee('data-admin-sortable-order', false);
+        $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertSee('data-wb-builder-item-move="up"', false);
+        $response->assertSee('data-wb-builder-item-move="down"', false);
+    }
+
+    #[Test]
+    public function submitted_link_list_item_order_updates_child_sort_order_and_public_render_order(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        [$page, $pageSlot, $slotType] = $this->pageWithSlot();
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $first = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $linkListItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Getting Started',
+            'subtitle' => 'Guide',
+            'content' => 'First item',
+            'url' => 'getting-started.html',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $second = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $linkListItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 1,
+            'title' => 'Architecture',
+            'subtitle' => 'Reference',
+            'content' => 'Second item',
+            'url' => 'architecture.html',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $linkList), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'slot_type_id' => $slotType->id,
+            'block_type_id' => $linkListType->id,
+            'sort_order' => 0,
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'status' => 'published',
+            'link_list_items' => [
+                [
+                    'id' => $second->id,
+                    'block_type_id' => $linkListItemType->id,
+                    'title' => 'Architecture',
+                    'subtitle' => 'Reference',
+                    'content' => 'Second item',
+                    'url' => 'architecture.html',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 0,
+                    '_delete' => 0,
+                ],
+                [
+                    'id' => $first->id,
+                    'block_type_id' => $linkListItemType->id,
+                    'title' => 'Getting Started',
+                    'subtitle' => 'Guide',
+                    'content' => 'First item',
+                    'url' => 'getting-started.html',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 1,
+                    '_delete' => 0,
+                ],
+            ],
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $linkList->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $linkList->id]));
+
+        $this->assertSame(0, $second->fresh()->sort_order);
+        $this->assertSame(1, $first->fresh()->sort_order);
+
+        $orderedIds = Block::query()
+            ->where('parent_id', $linkList->id)
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([$second->id, $first->id], $orderedIds);
+
+        $publicResponse = $this->get(route('pages.show', 'about'));
+
+        $publicResponse->assertOk();
+        $publicResponse->assertSeeInOrder([
+            'Architecture',
+            'Getting Started',
+        ]);
+        $publicResponse->assertSeeInOrder([
+            'href="architecture.html"',
+            'href="getting-started.html"',
+        ], false);
+    }
+
+    #[Test]
     public function public_rendering_matches_wb_link_list_pattern(): void
     {
         $this->seedFoundation();

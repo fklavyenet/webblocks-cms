@@ -45,5 +45,6 @@
         'urlLabel' => 'URL',
         'contentLabel' => 'Description',
         'contentPlaceholder' => 'Use this page first if you need the shortest correct setup path for a real project.',
+        'enableAdminSortable' => true,
     ])
 </div>

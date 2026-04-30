@@ -6,6 +6,7 @@
 
 - Add first-class Stat Card block for WebBlocks UI metric cards and preserve zero values in admin/public rendering.
 - Add first-class Link List and Link List Item blocks aligned with the WebBlocks UI `wb-link-list` pattern.
+- Add native drag-and-drop reorder support for Link List Items in the admin editor.
 
 ### Fixed
 
