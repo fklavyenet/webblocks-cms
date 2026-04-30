@@ -28,7 +28,7 @@
         <div class="wb-action-group">
             <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="Move up" aria-label="Move up"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
             <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="Move down" aria-label="Move down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle title="Collapse item" aria-label="Collapse item"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle title="Collapse item" aria-label="Collapse item" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
             <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="Remove item" aria-label="Remove item"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
         </div>
     </div>
