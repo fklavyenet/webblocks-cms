@@ -328,6 +328,82 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_reorder_endpoint_updates_public_render_order_for_reordered_top_level_blocks(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $first = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Alpha block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $second = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'content' => 'Beta block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $third = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 2,
+            'content' => 'Gamma block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.pages.slots.blocks.reorder', [$page, $pageSlot]), [
+            'blocks' => [$third->id, $first->id, $second->id],
+        ]);
+
+        $response->assertOk();
+
+        $orderedIds = Block::query()
+            ->where('page_id', $page->id)
+            ->whereNull('parent_id')
+            ->where('slot_type_id', $main->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([$third->id, $first->id, $second->id], $orderedIds);
+
+        $publicResponse = $this->get(route('pages.show', 'about'));
+
+        $publicResponse->assertOk();
+        $publicResponse->assertSeeInOrder([
+            'Gamma block',
+            'Alpha block',
+            'Beta block',
+        ]);
+    }
+
+    #[Test]
     public function slot_block_reorder_endpoint_rejects_mixed_parent_groups(): void
     {
         $this->seedFoundation();

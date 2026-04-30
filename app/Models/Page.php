@@ -189,7 +189,7 @@ class Page extends Model
 
     public function blocks(): HasMany
     {
-        return $this->hasMany(Block::class)->orderBy('sort_order');
+        return $this->hasMany(Block::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function slots(): HasMany

@@ -19,7 +19,7 @@ class PublicPagePresenter
         $topLevelBlocks = $page->blocks
             ->whereNull('parent_id')
             ->where('status', 'published')
-            ->sortBy('sort_order')
+            ->sortBy(fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id))
             ->values();
 
         $translatedTopLevelBlocks = $this->blockTranslationResolver
@@ -27,7 +27,7 @@ class PublicPagePresenter
             ->values();
 
         $slots = $page->slots
-            ->sortBy('sort_order')
+            ->sortBy(fn (PageSlot $slot) => sprintf('%010d-%010d', (int) $slot->sort_order, (int) $slot->id))
             ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks))
             ->values();
 

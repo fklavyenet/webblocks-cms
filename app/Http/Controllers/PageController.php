@@ -52,7 +52,8 @@ class PageController extends Controller
             'blocks' => fn ($query) => $query
                 ->where('status', 'published')
                 ->with($this->publishedBlockRelations())
-                ->orderBy('sort_order'),
+                ->orderBy('sort_order')
+                ->orderBy('id'),
         ]);
 
         $this->visitorEventLogger->logPageView($request, $page);
@@ -74,7 +75,8 @@ class PageController extends Controller
             'children' => fn ($query) => $query
                 ->where('status', 'published')
                 ->with($this->publishedBlockRelations())
-                ->orderBy('sort_order'),
+                ->orderBy('sort_order')
+                ->orderBy('id'),
         ];
     }
 }
