@@ -298,24 +298,43 @@ class BlockController extends Controller
 
     private function move(Block $block, string $direction): RedirectResponse
     {
-        $sibling = Block::query()
-            ->where('page_id', $block->page_id)
-            ->where('parent_id', $block->parent_id)
-            ->whereKeyNot($block->id)
-            ->where('sort_order', $direction === 'up' ? '<' : '>', $block->sort_order)
-            ->orderBy('sort_order', $direction === 'up' ? 'desc' : 'asc')
-            ->first();
+        $moved = DB::transaction(function () use ($block, $direction): bool {
+            $siblings = Block::query()
+                ->where('page_id', $block->page_id)
+                ->where('slot_type_id', $block->slot_type_id)
+                ->where('parent_id', $block->parent_id)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->values();
 
-        if (! $sibling) {
-            return redirect()
-                ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block, $this->expandedStateFor(request(), $block)))
-                ->with('status', 'Block is already at the edge of its group.');
-        }
+            $currentIndex = $siblings->search(fn (Block $candidate) => $candidate->id === $block->id);
 
-        DB::transaction(function () use ($block, $sibling): void {
-            $currentOrder = $block->sort_order;
-            $block->update(['sort_order' => $sibling->sort_order]);
-            $sibling->update(['sort_order' => $currentOrder]);
+            if (! is_int($currentIndex)) {
+                return false;
+            }
+
+            $swapIndex = $direction === 'up'
+                ? $currentIndex - 1
+                : $currentIndex + 1;
+
+            if ($swapIndex < 0 || $swapIndex >= $siblings->count()) {
+                return false;
+            }
+
+            $orderedSiblings = $siblings->all();
+            $currentSibling = $orderedSiblings[$currentIndex];
+            $orderedSiblings[$currentIndex] = $orderedSiblings[$swapIndex];
+            $orderedSiblings[$swapIndex] = $currentSibling;
+
+            foreach ($orderedSiblings as $index => $sibling) {
+                if ($sibling->sort_order === $index) {
+                    continue;
+                }
+
+                $sibling->update(['sort_order' => $index]);
+            }
 
             $this->revisionManager->capture(
                 $block->page()->firstOrFail(),
@@ -323,7 +342,15 @@ class BlockController extends Controller
                 'Block order updated',
                 'Page block order was changed.',
             );
+
+            return true;
         });
+
+        if (! $moved) {
+            return redirect()
+                ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block, $this->expandedStateFor(request(), $block)))
+                ->with('status', 'Block is already at the edge of its group.');
+        }
 
         return redirect()
             ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block, $this->expandedStateFor(request(), $block)))

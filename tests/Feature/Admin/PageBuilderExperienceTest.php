@@ -1464,6 +1464,135 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function moving_a_nested_section_up_only_swaps_with_the_previous_sibling_under_the_same_parent(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $containerType->id,
+            'type' => 'container',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $sections = collect(range(0, 4))->map(function (int $index) use ($page, $main, $container, $sectionType) {
+            return Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $container->id,
+                'block_type_id' => $sectionType->id,
+                'type' => 'section',
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $main->id,
+                'sort_order' => $index,
+                'status' => 'published',
+                'is_system' => false,
+                'settings' => json_encode(['layout_name' => 'Section '.($index + 1)], JSON_UNESCAPED_SLASHES),
+            ]);
+        });
+
+        $target = $sections[3];
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $target), [
+            'expanded' => $container->id,
+        ]);
+
+        $response->assertRedirect();
+
+        $orderedIds = Block::query()
+            ->where('parent_id', $container->id)
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([
+            $sections[0]->id,
+            $sections[1]->id,
+            $sections[3]->id,
+            $sections[2]->id,
+            $sections[4]->id,
+        ], $orderedIds);
+    }
+
+    #[Test]
+    public function moving_a_nested_card_up_swaps_with_the_previous_sibling_inside_the_same_section(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $alert = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $alertType->id,
+            'type' => 'alert',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+            'settings' => json_encode(['alert_variant' => 'info'], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $cardType->id,
+            'type' => 'card',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+            'settings' => json_encode(['card_variant' => 'default'], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $card), [
+            'expanded' => $section->id,
+        ]);
+
+        $response->assertRedirect();
+
+        $orderedIds = Block::query()
+            ->where('parent_id', $section->id)
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([$card->id, $alert->id], $orderedIds);
+    }
+
+    #[Test]
     public function content_header_store_creates_translation_backed_fields_and_shared_settings(): void
     {
         $this->seedFoundation();
