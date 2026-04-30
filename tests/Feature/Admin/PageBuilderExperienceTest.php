@@ -132,6 +132,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Card');
         $response->assertSee('Stat Card');
         $response->assertSee('Alert');
+        $response->assertSee('Link List');
+        $response->assertSee('Link List Item');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -209,6 +211,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Card</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Stat Card</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Alert</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List Item</span>'));
         $response->assertSeeInOrder([
             'wb-list-item-title">Content Header</span>',
             'wb-list-item-title">Section</span>',
@@ -221,6 +225,8 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Card</span>',
             'wb-list-item-title">Stat Card</span>',
             'wb-list-item-title">Alert</span>',
+            'wb-list-item-title">Link List</span>',
+            'wb-list-item-title">Link List Item</span>',
         ], false);
     }
 

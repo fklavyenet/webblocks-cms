@@ -31,7 +31,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.
 - Current layout blocks are `section`, `container`, `cluster`, and `grid`.
 - Current content blocks are `header`, `plain_text`, `button_link`, `card`, `stat-card`, and `alert`.
-- Current pattern blocks are `content_header`.
+- Current pattern blocks are `content_header`, `link-list`, and `link-list-item`.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
@@ -44,6 +44,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `stat-card` stores the translated eyebrow or label in `block_text_translations.subtitle`, the translated metric value in `block_text_translations.title`, and the translated description in `block_text_translations.content`. Optional shared URL remains on `blocks.url`.
 - `stat-card` now uses `wb-stat` pattern instead of `wb-card` for full UI alignment.
 - `alert` stores translated optional `title` and required body text in `block_text_translations` and stores the shared alert variant in `blocks.settings`.
+- `link-list` is a first-class container block for docs-style structured navigation rows and renders the WebBlocks UI `wb-link-list` wrapper.
+- `link-list-item` stores translated `title`, `subtitle`, and `content` in `block_text_translations`, stores the shared URL on `blocks.url`, and renders one WebBlocks UI link row inside `wb-link-list`.
 - `content_header` stores user-facing `title`, `intro_text`, and `meta_items` in `block_text_translations` and stores the shared title level in `blocks.variant`.
 - `section` and `container` have no translatable fields and no user-facing JSON content.
 - `cluster` has no translatable fields and no user-facing JSON content.
@@ -57,6 +59,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Promo cards render optional eyebrow or label text above the title and prefer nested action structure such as `Card promo > Cluster > Button Link`.
 - `stat-card` is the first-class metric card block for WebBlocks UI stats. Metric values like `0`, `6`, `14+`, and `173` are valid translated strings and must render in admin and public output.
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
+- `link-list-item.title` renders as `wb-link-list-title`, `link-list-item.subtitle` renders as `wb-link-list-meta`, `link-list-item.content` renders as `wb-link-list-desc`, and `link-list-item.url` becomes the item `href`.
+- Intended docs structure: `Section > Content Header or Heading > Link List > Link List Item` rows such as Getting Started, Architecture, Foundation, Layout, Primitives, Icons, Patterns, Utilities, and JavaScript.
 - Example docs structure: `Section > Container > Content Header + Card promo + Alert`.
 - CMS public CSS makes direct `wb-card-footer > .wb-cluster` children full width so cluster alignment options like `wb-cluster-end` work inside card footers.
 - Existing eligible blocks can also be moved under card parents from the `Edit Block` modal when the card accepts that child type.

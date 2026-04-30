@@ -1,18 +1,22 @@
 @php
-    $href = $block->url ?: '#';
-    $title = $block->title ?: $block->url ?: 'Open link';
-    $meta = trim((string) $block->subtitle);
-    $description = trim((string) $block->content);
+    $href = $block->linkListItemUrl();
+    $title = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
+    $meta = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
+    $description = $block->stringValueOrNull($block->content) ?? $block->translatedTextFieldValue('content');
 @endphp
 
-<a class="wb-link-list-item" href="{{ $href }}">
-    <div class="wb-link-list-main">
-        <span class="wb-link-list-title">{{ $title }}</span>
+@if ($href !== null && $title !== null)
+    <a href="{{ $href }}" class="wb-link-list-item">
+        <div class="wb-link-list-main">
+            <span class="wb-link-list-title">{{ $title }}</span>
 
-        @if ($meta !== '')
-            <span class="wb-link-list-meta">{{ $meta }}</span>
+            @if ($meta !== null)
+                <span class="wb-link-list-meta">{{ $meta }}</span>
+            @endif
+        </div>
+
+        @if ($description !== null)
+            <span class="wb-link-list-desc">{{ $description }}</span>
         @endif
-    </div>
-
-    <div class="wb-link-list-desc">{{ $description !== '' ? $description : $title }}</div>
-</a>
+    </a>
+@endif

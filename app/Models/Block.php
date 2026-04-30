@@ -340,8 +340,16 @@ class Block extends Model
     {
         return match ($this->typeSlug()) {
             'card' => ['cluster', 'button_link'],
+            'link-list' => ['link-list-item'],
             default => null,
         };
+    }
+
+    public function linkListItemUrl(): ?string
+    {
+        $url = trim((string) $this->url);
+
+        return $url !== '' ? $url : null;
     }
 
     public function canAcceptChildType(?string $childTypeSlug): bool

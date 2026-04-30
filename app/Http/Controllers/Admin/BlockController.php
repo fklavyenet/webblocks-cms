@@ -397,13 +397,18 @@ class BlockController extends Controller
     {
         return collect($request->input($inputKey, []))
             ->map(function ($item, int $index) {
+                $title = trim((string) ($item['title'] ?? ''));
+                $subtitle = trim((string) ($item['subtitle'] ?? ''));
+                $content = trim((string) ($item['content'] ?? ''));
+                $url = trim((string) ($item['url'] ?? ''));
+
                 return [
                     'id' => ! empty($item['id']) ? (int) $item['id'] : null,
                     'block_type_id' => ! empty($item['block_type_id']) ? (int) $item['block_type_id'] : null,
-                    'title' => trim((string) ($item['title'] ?? '')) ?: null,
-                    'subtitle' => trim((string) ($item['subtitle'] ?? '')) ?: null,
-                    'content' => trim((string) ($item['content'] ?? '')) ?: null,
-                    'url' => trim((string) ($item['url'] ?? '')) ?: null,
+                    'title' => $title !== '' ? $title : null,
+                    'subtitle' => $subtitle !== '' ? $subtitle : null,
+                    'content' => $content !== '' ? $content : null,
+                    'url' => $url !== '' ? $url : null,
                     'status' => in_array(($item['status'] ?? 'published'), ['draft', 'published'], true) ? $item['status'] : 'published',
                     'is_system' => (bool) ($item['is_system'] ?? false),
                     'sort_order' => is_numeric($item['sort_order'] ?? null) ? (int) $item['sort_order'] : $index,
@@ -595,7 +600,7 @@ class BlockController extends Controller
                 continue;
             }
 
-            if (! $blockTypeId || blank($itemData['title']) || blank($itemData['subtitle']) || blank($itemData['content']) || blank($itemData['url'])) {
+            if (! $blockTypeId || $itemData['title'] === null || $itemData['subtitle'] === null || $itemData['content'] === null || $itemData['url'] === null) {
                 continue;
             }
 

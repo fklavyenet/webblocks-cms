@@ -5,6 +5,10 @@
         </div>
     @endif
 
+    <div class="wb-alert wb-alert-info">
+        <div>Title renders as <code>wb-link-list-title</code>, Meta renders as <code>wb-link-list-meta</code>, Description renders as <code>wb-link-list-desc</code>, and URL becomes the item href.</div>
+    </div>
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="title">Link Title</label>
@@ -13,7 +17,7 @@
 
         <div class="wb-stack wb-gap-1">
             <label for="url">URL</label>
-            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" required>
+            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" placeholder="getting-started.html" required>
         </div>
     </div>
 

@@ -89,7 +89,7 @@ class BlockRequest extends FormRequest
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
-            'url' => [$isButtonLink ? 'required' : 'nullable', 'string', 'max:2048'],
+            'url' => [($isButtonLink || $selectedBlockType?->slug === 'link-list-item') ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
             'target' => [$isButtonLink ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -176,6 +176,14 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'link-list-item') {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:|[A-Za-z0-9._\/-]+(?:\?[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?(?:#[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?)$/i', $url)) {
+                    $validator->errors()->add('url', 'Link list item URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
                 }
             }
 

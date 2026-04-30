@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -127,6 +127,28 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Link List',
+                'slug' => 'link-list',
+                'category' => 'navigation',
+                'description' => 'WebBlocks UI link list container for structured navigation rows.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 11,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Link List Item',
+                'slug' => 'link-list-item',
+                'category' => 'navigation',
+                'description' => 'One row in a WebBlocks UI link list with title, meta, description, and URL.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 12,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Alert',
                 'slug' => 'alert',
                 'category' => 'pattern',
@@ -195,8 +217,6 @@ class BlockTypeSeeder extends Seeder
             'cta' => 'CTA',
             'columns' => 'Columns',
             'column_item' => 'Column Item',
-            'link-list' => 'Link List',
-            'link-list-item' => 'Link List Item',
             'split' => 'Split',
             'stack' => 'Stack',
             'card-group' => 'Card Group',
