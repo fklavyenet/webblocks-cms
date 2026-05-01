@@ -52,9 +52,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-header-actions', false);
         $response->assertSee('data-wb-header-actions-mode-toggle', false);
         $response->assertSee('data-wb-header-actions-accent-toggle', false);
+        $response->assertSee('data-wb-toggle="dropdown"', false);
+        $response->assertSee('data-wb-accent-set="ocean"', false);
         $response->assertSee('type="button"', false);
+        $response->assertSee('aria-pressed="false"', false);
         $response->assertSee('aria-label="Toggle color mode"', false);
         $response->assertSee('aria-label="Change accent color"', false);
+        $response->assertSee('aria-expanded="false"', false);
+        $response->assertSee('aria-haspopup="menu"', false);
         $response->assertDontSee('onclick=', false);
         $response->assertDontSee('onchange=', false);
         $response->assertDontSee('javascript:', false);
@@ -299,6 +304,19 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'is_system' => true,
         ]);
 
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 14, true)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerType->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['show_mode_toggle' => true, 'show_accent_toggle' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
         $mainBlock = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'plain_text',
@@ -352,6 +370,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<div class="wb-docs-shell">', false);
         $response->assertSee('<div class="wb-docs-content">', false);
+        $response->assertSee('<div class="wb-cluster wb-justify-between wb-items-center wb-w-full">', false);
+        $response->assertDontSee('wb-navbar-spacer', false);
         $response->assertSeeInOrder([
             '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">',
             '<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">',
@@ -359,9 +379,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             '<footer data-wb-slot="footer">',
         ], false);
         $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
+        $response->assertSeeInOrder([
+            '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
+            'data-wb-header-actions',
+        ], false);
         $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">', false);
         $response->assertSee('<aside data-wb-slot="sidebar" class="wb-sidebar">', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
+        $response->assertSee('assets/webblocks-cms/js/public/header-actions.js', false);
     }
 
     #[Test]

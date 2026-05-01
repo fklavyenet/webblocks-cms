@@ -75,6 +75,7 @@ class PublicPagePresenter
                 'class' => $class,
                 'preset' => $preset,
                 'settings' => $settings,
+                'body_class' => $preset === 'docs-navbar' ? 'wb-cluster wb-justify-between wb-items-center wb-w-full' : '',
             ],
         ];
     }

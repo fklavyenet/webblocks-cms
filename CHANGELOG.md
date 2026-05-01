@@ -9,6 +9,8 @@
 - Introduce the `docs` public shell preset and normalize legacy `dashboard` values to the docs shell.
 - Ensure public layout structure is controlled by page and slot shell settings instead of block markup.
 - Add first-class Header Actions block support for compact header utility controls such as color mode and accent actions.
+- Fix docs header alignment so `Docs Navbar` uses WebBlocks UI cluster/justify utilities instead of spacer divs.
+- Fix Header Actions behavior so mode icon state stays in sync and accent selection works through a compact dropdown control.
 
 ## 1.5.0
 
