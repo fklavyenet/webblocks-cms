@@ -234,6 +234,19 @@
     color: var(--wb-accent-contrast, #fff);
 }
 
+.wb-action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--wb-s1);
+    white-space: nowrap;
+}
+
+.wb-action-group form {
+    display: inline-flex;
+    margin: 0;
+}
+
 .wb-media-preview-box {
     width: 88px;
     height: 64px;

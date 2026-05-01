@@ -220,8 +220,12 @@ class SystemBackupsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Restore History');
-        $response->assertSee('Actions');
+        $response->assertSee('<th>Actions</th>', false);
+        $response->assertSee('<div class="wb-action-group">', false);
+        $response->assertDontSee('wb-backup-actions', false);
+        $response->assertDontSee('wb-justify-end', false);
         $response->assertSee('action="'.route('admin.system.backups.restores.destroy', [$backup, $restore]).'"', false);
+        $response->assertSee('name="_method" value="DELETE"', false);
         $response->assertSee('Delete this restore history entry? This will not delete any backup archive.');
     }
 
@@ -420,11 +424,13 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('action="'.route('admin.system.backups.destroy', $runningBackup).'"', false);
         $response->assertSee('Delete stuck running backup');
         $response->assertSee('name="force_running" value="1"', false);
+        $response->assertSee('name="_method" value="DELETE"', false);
         $response->assertSee('This backup is marked as running. Delete this stuck backup record anyway? Only do this if no backup process is still active.');
         $response->assertSee('Delete this backup record and archive file? This cannot be undone.');
         $response->assertSee('<th>Actions</th>', false);
-        $response->assertSee('wb-cluster wb-gap-1 wb-items-center wb-nowrap', false);
+        $response->assertSee('<div class="wb-action-group">', false);
         $response->assertDontSee('wb-justify-end', false);
+        $response->assertDontSee('wb-backup-actions', false);
         $response->assertDontSee('<th>Type</th>', false);
         $response->assertDontSee('<th>Duration</th>', false);
     }

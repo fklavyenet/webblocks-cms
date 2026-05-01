@@ -96,6 +96,7 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $page = Page::query()->where('site_id', $site->id)->latest('id')->firstOrFail();
+        $pageSlot = PageSlot::query()->where('page_id', $page->id)->orderBy('sort_order')->firstOrFail();
 
         $response->assertRedirect(route('admin.pages.edit', $page));
         $this->assertSame(0, Block::query()->where('page_id', $page->id)->count());
@@ -107,6 +108,16 @@ class PageBuilderExperienceTest extends TestCase
             'name' => 'About',
             'slug' => 'about',
         ]);
+
+        $editResponse = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $editResponse->assertOk();
+        $editResponse->assertSee('<th>Actions</th>', false);
+        $editResponse->assertDontSee('<th class="wb-text-end">Actions</th>', false);
+        $editResponse->assertSee('<div class="wb-action-group">', false);
+        $editResponse->assertDontSee('<td class="wb-text-end">', false);
+        $editResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'"', false);
+        $editResponse->assertSee('data-wb-slot-remove', false);
     }
 
     #[Test]
@@ -283,8 +294,14 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('draggable="true"', false);
         $response->assertSee('data-admin-sortable-handle', false);
         $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertSee('<th>Actions</th>', false);
+        $response->assertSee('<div class="wb-action-group">', false);
         $response->assertSee('title="Move block up"', false);
         $response->assertSee('title="Move block down"', false);
+        $response->assertSee('title="Edit block"', false);
+        $response->assertSee('title="Add child block"', false);
+        $response->assertSee('action="'.route('admin.blocks.destroy', $section).'"', false);
+        $response->assertSee('name="_method" value="DELETE"', false);
         $response->assertDontSee('name="expanded"', false);
         $response->assertDontSee('?expanded=', false);
         $response->assertDontSee('&expanded=', false);

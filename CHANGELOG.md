@@ -14,6 +14,8 @@
 ### Changed
 
 - Continue CMS-managed WebBlocks UI docs home content migration for remaining main narrative sections.
+- Standardize admin table action columns and destructive action markup.
+- Align action icons with Actions headers across page, slot, block, and backup admin tables.
 
 ### Fixed
 

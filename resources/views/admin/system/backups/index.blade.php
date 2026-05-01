@@ -132,13 +132,13 @@
                                         <td>{{ $backup->humanArchiveSize() }}</td>
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
                                         <td>
-                                            <div class="wb-cluster wb-gap-1 wb-items-center wb-nowrap">
+                                            <div class="wb-action-group">
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="Backup details" aria-label="Backup details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 @if ($backup->isSuccessful() && $backup->archive_path)
-                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-edit" title="Download backup" aria-label="Download backup">
+                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-download" title="Download backup" aria-label="Download backup">
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </a>
                                                 @endif

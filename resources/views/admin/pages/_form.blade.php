@@ -98,7 +98,7 @@
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th class="wb-text-end">Actions</th>
+							<th>Actions</th>
 						</tr>
 					</thead>
 					<tbody data-wb-slot-list>
@@ -134,7 +134,7 @@
 								<input type="hidden" value="{{ $pageSlot->slotType?->slug ?? 'main' }}" data-wb-slot-slug>
 								<input type="hidden" value="{{ $pageSlot->slotType?->name ?? 'Slot' }}" data-wb-slot-name>
 							</td>
-							<td class="wb-text-end">
+							<td>
 								<div class="wb-action-group">
 									@if ($canEditContent && $page->exists && $pageSlot->id)
 									<a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-action-btn wb-action-btn-view" title="Edit slot blocks" aria-label="Edit slot blocks"><i class="wb-icon wb-icon-layers" aria-hidden="true"></i></a>
