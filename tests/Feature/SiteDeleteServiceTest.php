@@ -8,6 +8,7 @@ use App\Models\ContactMessage;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageRevision;
 use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
@@ -31,6 +32,7 @@ class SiteDeleteServiceTest extends TestCase
         $this->assertDatabaseMissing('sites', ['id' => $site->id]);
         $this->assertDatabaseMissing('pages', ['id' => $page->id]);
         $this->assertDatabaseMissing('blocks', ['id' => $block->id]);
+        $this->assertDatabaseMissing('page_revisions', ['site_id' => $site->id]);
         $this->assertDatabaseMissing('navigation_items', ['site_id' => $site->id]);
         $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
         $this->assertSame(2, Site::query()->count());
@@ -99,6 +101,29 @@ class SiteDeleteServiceTest extends TestCase
         $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
     }
 
+    #[Test]
+    public function it_deletes_site_revisions_before_pages_and_site(): void
+    {
+        [$site, $otherSite, $page] = $this->seedDeletableSite();
+
+        $revision = PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'label' => 'Initial import',
+            'reason' => 'Regression coverage',
+            'snapshot' => ['page' => ['id' => $page->id, 'site_id' => $site->id]],
+        ]);
+
+        $report = app(SiteDeleteService::class)->delete($site);
+
+        $this->assertTrue($report->deleted);
+        $this->assertSame(1, $report->count('page_revisions'));
+        $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+        $this->assertDatabaseMissing('page_revisions', ['id' => $revision->id]);
+        $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
+    }
+
+    #[Test]
     private function seedDeletableSite(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();

@@ -3,6 +3,7 @@
 namespace App\Support\Sites;
 
 use App\Models\Block;
+use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
 use App\Models\BlockContactFormTranslation;
 use App\Models\BlockImageTranslation;
@@ -10,6 +11,7 @@ use App\Models\BlockTextTranslation;
 use App\Models\ContactMessage;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageRevision;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
@@ -63,6 +65,7 @@ class SiteDeleteService
                 );
             }
 
+            $this->deleteSiteScopedContent($site);
             $site->delete();
 
             return new SiteDeleteResult(
@@ -120,9 +123,11 @@ class SiteDeleteService
         return [
             'site_locales' => SiteLocale::query()->where('site_id', $site->id)->count(),
             'pages' => $pageIds->count(),
+            'page_revisions' => PageRevision::query()->where('site_id', $site->id)->count(),
             'page_translations' => $pageIds->isEmpty() ? 0 : PageTranslation::query()->whereIn('page_id', $pageIds)->count(),
             'page_slots' => $pageIds->isEmpty() ? 0 : PageSlot::query()->whereIn('page_id', $pageIds)->count(),
             'blocks' => $blockIds->count(),
+            'block_assets' => $blockIds->isEmpty() ? 0 : BlockAsset::query()->whereIn('block_id', $blockIds)->count(),
             'block_translation_rows' => $this->blockTranslationCount($blockIds),
             'navigation_items' => NavigationItem::query()->where('site_id', $site->id)->count(),
             'contact_messages' => $this->contactMessageCount($pageIds, $blockIds),
@@ -178,5 +183,36 @@ class SiteDeleteService
                 }
             })
             ->count();
+    }
+
+    private function deleteSiteScopedContent(Site $site): void
+    {
+        $pageIds = Page::query()
+            ->where('site_id', $site->id)
+            ->pluck('id');
+
+        $blockIds = $pageIds->isEmpty()
+            ? collect()
+            : Block::query()->whereIn('page_id', $pageIds)->pluck('id');
+
+        PageRevision::query()->where('site_id', $site->id)->delete();
+
+        if ($blockIds->isNotEmpty()) {
+            BlockAsset::query()->whereIn('block_id', $blockIds)->delete();
+            BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->delete();
+            BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->delete();
+            BlockImageTranslation::query()->whereIn('block_id', $blockIds)->delete();
+            BlockTextTranslation::query()->whereIn('block_id', $blockIds)->delete();
+            Block::query()->whereIn('id', $blockIds)->delete();
+        }
+
+        if ($pageIds->isNotEmpty()) {
+            PageSlot::query()->whereIn('page_id', $pageIds)->delete();
+            PageTranslation::query()->whereIn('page_id', $pageIds)->delete();
+            Page::query()->whereIn('id', $pageIds)->delete();
+        }
+
+        NavigationItem::query()->where('site_id', $site->id)->delete();
+        SiteLocale::query()->where('site_id', $site->id)->delete();
     }
 }

@@ -18,6 +18,8 @@
 ### Fixed
 
 - Add UI structure contract tests to ensure CMS HTML matches WebBlocks UI semantics.
+- Fix site deletion failing when page revisions still reference the site through `page_revisions.site_id`.
+- Include `page_revisions` in explicit site deletion scope so site-scoped editorial history is removed safely before the site row.
 - Fix DDEV MySQL and MariaDB backup dump capture so backup archives store SQL stdout instead of command wrapper text.
 - Reject invalid backup SQL dump contents before destructive restore steps and skip creating safety backups for invalid source archives.
 - Simplify admin restore failures so invalid backup SQL surfaces as one clear restore error instead of duplicate top-level alerts.

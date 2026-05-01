@@ -3,6 +3,8 @@
 namespace Tests\Feature\Console;
 
 use App\Models\Locale;
+use App\Models\Page;
+use App\Models\PageRevision;
 use App\Models\Site;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -56,6 +58,36 @@ class SiteDeleteCommandTest extends TestCase
             ->assertExitCode(0);
 
         $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+    }
+
+    #[Test]
+    public function site_delete_command_deletes_site_with_page_revisions_when_forced(): void
+    {
+        $site = $this->createSecondarySite();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Campaign Page',
+            'slug' => 'campaign-page',
+            'status' => 'published',
+        ]);
+
+        $revision = PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'label' => 'Imported revision',
+            'reason' => 'CLI delete regression',
+            'snapshot' => ['page' => ['id' => $page->id, 'site_id' => $site->id]],
+        ]);
+
+        $this->artisan('site:delete', [
+            'site' => $site->id,
+            '--force' => true,
+        ])
+            ->expectsOutputToContain('Site deleted successfully.')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('sites', ['id' => $site->id]);
+        $this->assertDatabaseMissing('page_revisions', ['id' => $revision->id]);
     }
 
     private function createSecondarySite(): Site

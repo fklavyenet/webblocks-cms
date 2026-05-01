@@ -287,6 +287,14 @@ These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
 
+### Site Deletion Rules
+
+- Site deletion is explicit and removes site-scoped CMS content before deleting the site record.
+- Deleted site-scoped data includes page revisions, pages, page translations, page slots, blocks, block translation rows, block asset links, navigation items, and locale assignments for that site.
+- All site-scoped editorial history for the deleted site is removed with the site, including `page_revisions` rows.
+- Shared assets and physical files are left intact.
+- Primary site protection and last-site protection rules are unchanged.
+
 ## Multisite & Multilingual
 
 - each site can have its own domain
