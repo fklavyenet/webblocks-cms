@@ -421,7 +421,10 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('Backup is currently running and cannot be deleted.');
         $response->assertSee('disabled', false);
         $response->assertSee('Delete this backup record and archive file? This cannot be undone.');
-        $response->assertSee('wb-backup-actions', false);
+        $response->assertSee('<th>Actions</th>', false);
+        $response->assertSee('wb-cluster wb-gap-1 wb-items-center wb-nowrap', false);
+        $response->assertDontSee('<th>Type</th>', false);
+        $response->assertDontSee('<th>Duration</th>', false);
     }
 
     #[Test]

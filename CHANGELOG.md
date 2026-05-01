@@ -18,6 +18,8 @@
 ### Fixed
 
 - Add delete action for backup restore history entries.
+- Refine backups table layout by removing Type and Duration columns.
+- Align backup action icons with the Actions header.
 - Fix backup list actions so the delete button stays visible for every backup row and running backups show a disabled state instead of disappearing.
 - Auto-mark stale running backups as failed after the configured timeout so stuck test backups can be cleaned up safely.
 - Allow failed backups to be deleted through the normal backup cleanup flow.

@@ -111,11 +111,9 @@
                                     <th>Created at</th>
                                     <th>Archive</th>
                                     <th>Status</th>
-                                    <th>Type</th>
                                     <th>Contents</th>
                                     <th>Size</th>
                                     <th>Triggered by</th>
-                                    <th>Duration</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -130,13 +128,11 @@
                                             @endif
                                         </td>
                                         <td><span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backup->statusLabel() }}</span></td>
-                                        <td>{{ $backup->type }}</td>
                                         <td>{{ $backup->contentsLabel() ?: '-' }}</td>
                                         <td>{{ $backup->humanArchiveSize() }}</td>
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
-                                        <td>{{ $backup->durationLabel() }}</td>
                                         <td>
-                                            <div class="wb-backup-actions wb-cluster wb-gap-1 wb-items-center wb-justify-end wb-nowrap">
+                                            <div class="wb-cluster wb-gap-1 wb-items-center wb-nowrap">
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="Backup details" aria-label="Backup details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
