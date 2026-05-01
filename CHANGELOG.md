@@ -2,46 +2,38 @@
 
 ## [Unreleased]
 
-### Added
+## 1.5.0
 
-- Add first-class Stat Card block for WebBlocks UI metric cards and preserve zero values in admin/public rendering.
-- Add first-class Link List and Link List Item blocks aligned with the WebBlocks UI `wb-link-list` pattern.
-- Add native drag-and-drop reorder support for Link List Items in the admin editor.
-- Add native drag-and-drop sibling reordering to the Edit Slot Blocks list.
-- Add uploaded backup archive validation and restore support.
-- Add backup delete action and keep backup list actions on one line.
+### Backup & Restore
 
-### Changed
+- Fix invalid SQL dump handling and prevent command output from being treated as SQL.
+- Add SQL dump validation before restore and during archive inspection.
+- Allow cleanup of stuck running backups with explicit confirmation.
+- Improve backup delete behavior and guard conditions.
+- Fix safety backup foreign key issue during restore.
+- Improve restore error messaging and avoid duplicate validation alerts.
 
-- Continue CMS-managed WebBlocks UI docs home content migration for remaining main narrative sections.
-- Standardize admin table action columns and destructive action markup.
-- Align action icons with Actions headers across page, slot, block, and backup admin tables.
+### Site Management
 
-### Fixed
+- Fix site deletion failing when page revisions exist.
+- Include page_revisions in deletion scope.
 
-- Allow explicit cleanup of stuck running backup records from the Backups admin list.
-- Keep running backup deletion guarded by confirmation.
-- Add delete action for backup restore history entries.
-- Refine backups table layout by removing Type and Duration columns.
-- Align backup action icons with the Actions header.
-- Fix backup list actions so the delete button stays visible for every backup row and running backups show a disabled state instead of disappearing.
-- Auto-mark stale running backups as failed after the configured timeout so stuck test backups can be cleaned up safely.
-- Allow failed backups to be deleted through the normal backup cleanup flow.
-- Add UI structure contract tests to ensure CMS HTML matches WebBlocks UI semantics.
-- Fix site deletion failing when page revisions still reference the site through `page_revisions.site_id`.
-- Include `page_revisions` in explicit site deletion scope so site-scoped editorial history is removed safely before the site row.
-- Fix DDEV MySQL and MariaDB backup dump capture so backup archives store SQL stdout instead of command wrapper text.
-- Reject invalid backup SQL dump contents before destructive restore steps and skip creating safety backups for invalid source archives.
-- Simplify admin restore failures so invalid backup SQL surfaces as one clear restore error instead of duplicate top-level alerts.
-- Fix link list item description element to match WebBlocks UI semantics (span -> div).
-- Fix Stat Card visibility in the admin block type picker.
-- Fix Edit Slot drag-and-drop reorder persistence so reordered blocks stay ordered after refresh and in public rendering.
-- Fix Edit Slot drag-and-drop so the frontend sends the slot block reorder request after drop.
-- Move Edit Slot expanded block state from query parameters to `localStorage` and keep admin URLs clean.
-- Fix Link List Item URL validation so valid full URLs and relative docs paths are accepted.
-- Improve Edit Slot Blocks list hierarchy display by hiding internal order numbers and replacing whitespace indentation with CSS guide lines.
-- Improve block hierarchy readability with subtle level-based indent guide colors.
-- Improve Link List Item controls by replacing collapse chevron with clearer toggle icons.
+### Admin UI
+
+- Standardize all admin table Actions columns:
+  - consistent left-aligned action groups
+  - unified markup using wb-action-group
+  - consistent DELETE form usage for destructive actions
+- Improve backups list layout:
+  - remove unnecessary columns (Type, Duration)
+  - align actions with header
+- Improve restore history table actions
+
+### Internal
+
+- Add SqlDumpContentValidator for backup safety
+- Improve backup and restore service layering
+- Strengthen test coverage for backup/restore and admin UI consistency
 
 ## 1.4.7
 
