@@ -63,10 +63,9 @@ class AdminDashboardRouteTest extends TestCase
         $content = $response->getContent();
 
         $this->assertNotFalse($content);
-        $this->assertLessThan(
-            strpos($content, 'Visitor Summary'),
-            strpos($content, 'Actions and Shortcuts')
-        );
+        $this->assertLessThan(strpos($content, 'Recent Pages'), strpos($content, 'Actions and Shortcuts'));
+        $this->assertLessThan(strpos($content, 'Recent Media'), strpos($content, 'Overview'));
+        $this->assertLessThan(strpos($content, 'Visitor Summary'), strpos($content, 'Recent Pages'));
     }
 
     #[Test]

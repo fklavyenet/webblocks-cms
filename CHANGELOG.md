@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Improve admin dashboard shortcuts and add System Updates quick action.
+- Fix the admin Media sidebar icon and move visitor reporting below the primary dashboard overview cards.
 
 ## 1.5.0
 
