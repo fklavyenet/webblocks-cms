@@ -480,7 +480,8 @@ class LinkListBlockTest extends TestCase
         $response->assertSee('class="wb-link-list-main"', false);
         $response->assertSee('class="wb-link-list-title"', false);
         $response->assertSee('class="wb-link-list-meta"', false);
-        $response->assertSee('class="wb-link-list-desc"', false);
+        $response->assertSee('<div class="wb-link-list-desc">', false);
+        $response->assertDontSee('<span class="wb-link-list-desc">', false);
         $response->assertSee('href="getting-started.html"', false);
         $response->assertSee('Getting Started');
         $response->assertSee('Includes, root attributes, first workflow');
@@ -540,6 +541,7 @@ class LinkListBlockTest extends TestCase
         $response->assertSee('href="foundation.html"', false);
         $response->assertSee('<span class="wb-link-list-title">0</span>', false);
         $response->assertSee('<span class="wb-link-list-meta">0</span>', false);
-        $response->assertSee('<span class="wb-link-list-desc">0</span>', false);
+        $response->assertSee('<div class="wb-link-list-desc">0</div>', false);
+        $response->assertDontSee('<span class="wb-link-list-desc">0</span>', false);
     }
 }

@@ -16,7 +16,7 @@
         </div>
 
         @if ($description !== null)
-            <span class="wb-link-list-desc">{{ $description }}</span>
+            <div class="wb-link-list-desc">{{ $description }}</div>
         @endif
     </a>
 @endif
