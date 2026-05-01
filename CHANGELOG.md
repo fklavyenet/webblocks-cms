@@ -5,7 +5,9 @@
 - Improve admin dashboard shortcuts and add System Updates quick action.
 - Fix the admin Media sidebar icon and move visitor reporting below the primary dashboard overview cards.
 - Add first-class breadcrumb block support with a dedicated admin editor and semantic public breadcrumb rendering for header or context bar usage.
-- Add controlled public page shell and slot wrapper settings so CMS pages can render WebBlocks UI dashboard/docs structure with safe layout presets instead of block-level shell classes.
+- Replace dashboard-first public layout rendering with a semantic docs shell using Holy Grail DOM order.
+- Introduce the `docs` public shell preset and normalize legacy `dashboard` values to the docs shell.
+- Ensure public layout structure is controlled by page and slot shell settings instead of block markup.
 
 ## 1.5.0
 

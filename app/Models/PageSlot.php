@@ -50,7 +50,12 @@ class PageSlot extends Model
 
     public static function allowedWrapperPresets(): array
     {
-        return ['default', 'dashboard-navbar', 'dashboard-sidebar', 'dashboard-main', 'plain'];
+        return ['default', 'docs-navbar', 'docs-sidebar', 'docs-main', 'plain'];
+    }
+
+    public static function acceptedWrapperPresets(): array
+    {
+        return array_merge(self::allowedWrapperPresets(), ['dashboard-navbar', 'dashboard-sidebar', 'dashboard-main']);
     }
 
     public static function defaultWrapperElementForSlug(?string $slug): string
@@ -73,8 +78,17 @@ class PageSlot extends Model
 
     public function wrapperPreset(): string
     {
-        $preset = strtolower((string) ($this->settings['wrapper_preset'] ?? 'default'));
+        return self::normalizeWrapperPreset($this->settings['wrapper_preset'] ?? 'default');
+    }
 
-        return in_array($preset, self::allowedWrapperPresets(), true) ? $preset : 'default';
+    public static function normalizeWrapperPreset(mixed $preset): string
+    {
+        return match (strtolower(trim((string) $preset))) {
+            'docs-navbar', 'dashboard-navbar' => 'docs-navbar',
+            'docs-sidebar', 'dashboard-sidebar' => 'docs-sidebar',
+            'docs-main', 'dashboard-main' => 'docs-main',
+            'plain' => 'plain',
+            default => 'default',
+        };
     }
 }

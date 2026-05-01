@@ -29,17 +29,29 @@
             $publicShell = $publicShell ?? ['preset' => 'default', 'slots' => $slots ?? collect()];
         @endphp
 
-        @if (($publicShell['preset'] ?? 'default') === 'dashboard')
-            <div class="wb-dashboard-shell">
-                @if (! empty($publicShell['sidebar']))
-                    @include('pages.partials.slot', ['slot' => $publicShell['sidebar'], 'page' => $page])
+        @if (($publicShell['preset'] ?? 'default') === 'docs')
+            <div class="wb-docs-shell">
+                @if (! empty($publicShell['header']))
+                    @include('pages.partials.slot', ['slot' => $publicShell['header'], 'page' => $page])
                 @endif
 
-                <div class="wb-dashboard-body">
-                    @foreach ($publicShell['body_slots'] ?? collect() as $slot)
+                <div class="wb-docs-content">
+                    @if (! empty($publicShell['main']))
+                        @include('pages.partials.slot', ['slot' => $publicShell['main'], 'page' => $page])
+                    @endif
+
+                    @if (! empty($publicShell['sidebar']))
+                        @include('pages.partials.slot', ['slot' => $publicShell['sidebar'], 'page' => $page])
+                    @endif
+
+                    @foreach (($publicShell['content_slots'] ?? collect())->reject(fn ($slot) => in_array($slot['slug'], ['main', 'sidebar'], true)) as $slot)
                         @include('pages.partials.slot', ['slot' => $slot, 'page' => $page])
                     @endforeach
                 </div>
+
+                @if (! empty($publicShell['footer']))
+                    @include('pages.partials.slot', ['slot' => $publicShell['footer'], 'page' => $page])
+                @endif
             </div>
         @else
             @foreach ($slots ?? collect() as $slot)

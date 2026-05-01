@@ -58,7 +58,7 @@ class PageRequest extends FormRequest
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
             ],
-            'public_shell' => ['nullable', Rule::in(['default', 'dashboard'])],
+            'public_shell' => ['nullable', Rule::in(array_merge(Page::allowedPublicShellPresets(), ['dashboard']))],
             'slots' => ['nullable', 'array'],
             'slots.*.id' => ['nullable', 'integer', 'exists:page_slots,id'],
             'slots.*.slot_type_id' => ['required', 'integer', 'exists:slot_types,id', 'distinct:strict'],
@@ -98,9 +98,7 @@ class PageRequest extends FormRequest
         $existingSettings = $page?->settings;
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $data['settings'] = [
-            'public_shell' => in_array((string) ($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')), ['default', 'dashboard'], true)
-                ? (string) ($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default'))
-                : 'default',
+            'public_shell' => Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
         ];
         $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
         $data['translation'] = [

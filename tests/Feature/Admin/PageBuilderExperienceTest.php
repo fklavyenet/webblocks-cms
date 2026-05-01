@@ -135,21 +135,21 @@ class PageBuilderExperienceTest extends TestCase
             ->assertOk()
             ->assertSee('Public Shell')
             ->assertSee('name="public_shell"', false)
-            ->assertSee('value="dashboard"', false)
-            ->assertSee('>Dashboard</option>', false);
+            ->assertSee('value="docs"', false)
+            ->assertSee('>Docs</option>', false);
 
         $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
             'site_id' => $page->site_id,
             'title' => 'About',
             'slug' => 'about',
-            'public_shell' => 'dashboard',
+            'public_shell' => 'docs',
             'slots' => [
                 ['id' => $page->slots()->firstOrFail()->id, 'slot_type_id' => $main->id],
             ],
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertSame('dashboard', $page->fresh()->publicShellPreset());
+        $this->assertSame('docs', $page->fresh()->publicShellPreset());
     }
 
     #[Test]
@@ -352,16 +352,16 @@ class PageBuilderExperienceTest extends TestCase
             ->assertSee('Slot Settings')
             ->assertSee('name="wrapper_element"', false)
             ->assertSee('name="wrapper_preset"', false)
-            ->assertSee('Dashboard Navbar');
+            ->assertSee('Docs Navbar');
 
         $response = $this->actingAs($user)->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
             'wrapper_element' => 'div',
-            'wrapper_preset' => 'dashboard-navbar',
+            'wrapper_preset' => 'docs-navbar',
         ]);
 
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $pageSlot->refresh();
-        $this->assertSame('dashboard-navbar', $pageSlot->settings['wrapper_preset'] ?? null);
+        $this->assertSame('docs-navbar', $pageSlot->settings['wrapper_preset'] ?? null);
         $this->assertSame('header', $pageSlot->settings['wrapper_element'] ?? null);
     }
 

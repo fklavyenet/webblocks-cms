@@ -133,7 +133,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function default_shell_preserves_plain_slot_wrappers_without_dashboard_classes(): void
+    public function default_shell_preserves_plain_slot_wrappers_without_docs_shell_classes(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -156,12 +156,12 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
-        $response->assertDontSee('wb-dashboard-shell', false);
-        $response->assertDontSee('wb-dashboard-body', false);
+        $response->assertDontSee('wb-docs-shell', false);
+        $response->assertDontSee('wb-docs-content', false);
     }
 
     #[Test]
-    public function dashboard_shell_renders_shell_body_and_safe_slot_presets(): void
+    public function docs_shell_renders_semantic_slot_order_and_safe_slot_presets(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $site = Site::query()->firstOrFail();
@@ -175,7 +175,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slug' => 'home',
             'page_type' => 'default',
             'status' => 'published',
-            'settings' => ['public_shell' => 'dashboard'],
+            'settings' => ['public_shell' => 'docs'],
         ]);
 
         PageTranslation::query()->updateOrCreate(
@@ -187,19 +187,24 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'page_id' => $page->id,
             'slot_type_id' => $sidebarType->id,
             'sort_order' => 0,
-            'settings' => ['wrapper_preset' => 'dashboard-sidebar', 'wrapper_element' => 'aside'],
+            'settings' => ['wrapper_preset' => 'docs-sidebar', 'wrapper_element' => 'aside'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $headerType->id,
             'sort_order' => 1,
-            'settings' => ['wrapper_preset' => 'dashboard-navbar', 'wrapper_element' => 'header'],
+            'settings' => ['wrapper_preset' => 'docs-navbar', 'wrapper_element' => 'header'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $mainType->id,
             'sort_order' => 2,
-            'settings' => ['wrapper_preset' => 'dashboard-main', 'wrapper_element' => 'main'],
+            'settings' => ['wrapper_preset' => 'docs-main', 'wrapper_element' => 'main'],
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => SlotType::query()->updateOrCreate(['slug' => 'footer'], ['name' => 'Footer', 'status' => 'published', 'sort_order' => 4, 'is_system' => true])->id,
+            'sort_order' => 3,
         ]);
 
         Block::query()->create([
@@ -228,7 +233,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         ]);
         $mainBlock->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
-            'content' => 'Dashboard main content',
+            'content' => 'Docs main content',
         ]);
 
         $sidebarBlock = Block::query()->create([
@@ -244,16 +249,38 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         ]);
         $sidebarBlock->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
-            'content' => 'Dashboard sidebar content',
+            'content' => 'Docs sidebar content',
+        ]);
+
+        $footerBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'footer',
+            'slot_type_id' => SlotType::query()->where('slug', 'footer')->value('id'),
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $footerBlock->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Footer support content',
         ]);
 
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-dashboard-shell">', false);
-        $response->assertSee('<div class="wb-dashboard-body">', false);
+        $response->assertSee('<div class="wb-docs-shell">', false);
+        $response->assertSee('<div class="wb-docs-content">', false);
+        $response->assertSeeInOrder([
+            '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">',
+            '<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">',
+            '<aside data-wb-slot="sidebar" class="wb-sidebar">',
+            '<footer data-wb-slot="footer">',
+        ], false);
         $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
-        $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">', false);
         $response->assertSee('<aside data-wb-slot="sidebar" class="wb-sidebar">', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
     }

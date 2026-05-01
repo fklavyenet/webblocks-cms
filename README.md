@@ -61,9 +61,10 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `stat-card` is the first-class metric card block for WebBlocks UI stats. Metric values like `0`, `6`, `14+`, and `173` are valid translated strings and must render in admin and public output.
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
 - `breadcrumb` is a first-class system navigation block for header or context bars. It renders the current page breadcrumb trail from the active site and page translation context, stores only shared operational options in `blocks.settings`, and should not be used as a substitute for full navigation menus.
-- Public page structure is now configurable with controlled shared settings on pages and slots. `Public Shell` supports `default` and `dashboard`, and slot wrapper settings support controlled wrapper elements plus presets for `dashboard navbar`, `dashboard sidebar`, `dashboard main`, `default`, and `plain`.
-- Dashboard shell rendering is layout-level, not block-level. Use page `Public Shell = Dashboard` with slot presets such as `Dashboard Navbar`, `Dashboard Sidebar`, and `Dashboard Main` to render `.wb-dashboard-shell`, `.wb-dashboard-body`, `.wb-navbar.wb-navbar-glass`, `.wb-sidebar`, and `.wb-dashboard-main` without pushing shell classes into blocks.
+- Public page structure is now configurable with controlled shared settings on pages and slots. `Public Shell` supports `default` and `docs`, and slot wrapper settings support controlled wrapper elements plus presets for `docs navbar`, `docs sidebar`, `docs main`, `default`, and `plain`.
+- Docs shell rendering is layout-level, not block-level. Use page `Public Shell = Docs` with slot presets such as `Docs Navbar`, `Docs Sidebar`, and `Docs Main` to render `.wb-docs-shell`, `.wb-docs-content`, `.wb-navbar.wb-navbar-glass`, `.wb-sidebar`, and `.wb-content-shell.wb-docs-main` without pushing shell classes into blocks.
 - Slot wrapper classes are controlled presets, not arbitrary editor-provided class strings. The CMS validates allowed wrapper elements and wrapper presets server-side and falls back safely for unknown values.
+- Existing saved `dashboard` shell values and `dashboard-*` slot presets are normalized to the `docs` shell equivalents during rendering and admin saves.
 - `link-list-item.title` renders as `wb-link-list-title`, `link-list-item.subtitle` renders as `wb-link-list-meta`, `link-list-item.content` renders as `wb-link-list-desc`, and `link-list-item.url` becomes the item `href`.
 - Link List Items support native drag-and-drop reorder in the admin editor through a small CMS admin JavaScript module and do not require any external drag-and-drop dependency.
 - Edit Slot Blocks lists support native drag-and-drop sibling reordering in the admin editor without external dependencies. Drag-and-drop persists sibling order immediately, reorders only within the same parent group, and does not change nesting.
@@ -233,7 +234,22 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For dashboard or docs layouts, set the page `Public Shell` to `Dashboard` and configure safe slot wrapper presets on the Header, Sidebar, and Main slots instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
+## Public Layout Shells
+
+### Docs Shell (Holy Grail)
+
+- Semantic DOM order: `header -> main -> sidebar -> footer`
+- Visual layout is handled by WebBlocks UI CSS, not by sidebar-first DOM hacks
+- Suitable for docs and other content-heavy pages
+- Page shell controls layout structure; blocks remain responsible only for content
+
+### Why not sidebar-first?
+
+- Better accessibility and landmark flow
+- Cleaner SEO-facing HTML
+- Simpler, shell-driven layout composition without block-level layout responsibility
+
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For docs layouts, set the page `Public Shell` to `Docs` and configure safe slot wrapper presets on the Header, Sidebar, and Main slots instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 

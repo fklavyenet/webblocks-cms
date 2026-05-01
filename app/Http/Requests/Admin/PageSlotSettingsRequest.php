@@ -17,27 +17,27 @@ class PageSlotSettingsRequest extends FormRequest
     {
         return [
             'wrapper_element' => ['required', Rule::in(PageSlot::allowedWrapperElements())],
-            'wrapper_preset' => ['required', Rule::in(PageSlot::allowedWrapperPresets())],
+            'wrapper_preset' => ['required', Rule::in(PageSlot::acceptedWrapperPresets())],
         ];
     }
 
     public function validatedSettings(): array
     {
         $data = $this->validated();
-        $preset = (string) $data['wrapper_preset'];
+        $preset = PageSlot::normalizeWrapperPreset($data['wrapper_preset'] ?? 'default');
         $element = (string) $data['wrapper_element'];
 
         return match ($preset) {
-            'dashboard-navbar' => [
-                'wrapper_preset' => 'dashboard-navbar',
+            'docs-navbar' => [
+                'wrapper_preset' => 'docs-navbar',
                 'wrapper_element' => 'header',
             ],
-            'dashboard-sidebar' => [
-                'wrapper_preset' => 'dashboard-sidebar',
+            'docs-sidebar' => [
+                'wrapper_preset' => 'docs-sidebar',
                 'wrapper_element' => 'aside',
             ],
-            'dashboard-main' => [
-                'wrapper_preset' => 'dashboard-main',
+            'docs-main' => [
+                'wrapper_preset' => 'docs-main',
                 'wrapper_element' => 'main',
             ],
             'plain' => [

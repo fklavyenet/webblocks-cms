@@ -109,11 +109,22 @@ class Page extends Model
         ];
     }
 
+    public static function allowedPublicShellPresets(): array
+    {
+        return ['default', 'docs'];
+    }
+
     public function publicShellPreset(): string
     {
-        $preset = strtolower((string) ($this->settings['public_shell'] ?? 'default'));
+        return self::normalizePublicShellPreset($this->settings['public_shell'] ?? 'default');
+    }
 
-        return in_array($preset, ['default', 'dashboard'], true) ? $preset : 'default';
+    public static function normalizePublicShellPreset(mixed $preset): string
+    {
+        return match (strtolower(trim((string) $preset))) {
+            'docs', 'dashboard' => 'docs',
+            default => 'default',
+        };
     }
 
     public static function workflowStatuses(): array

@@ -46,7 +46,7 @@
 				<label for="public_shell">Public Shell</label>
 				<select id="public_shell" name="public_shell" class="wb-select">
 					<option value="default" @selected(old('public_shell', $page->publicShellPreset()) === 'default')>Default</option>
-					<option value="dashboard" @selected(old('public_shell', $page->publicShellPreset()) === 'dashboard')>Dashboard</option>
+					<option value="docs" @selected(old('public_shell', $page->publicShellPreset()) === 'docs')>Docs</option>
 				</select>
 			</div>
 			<div class="wb-stack-2 wb-field">

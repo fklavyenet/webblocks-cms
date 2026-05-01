@@ -11,7 +11,7 @@
 @section('content')
     @php
         $slotSettings = is_array($slot->settings) ? $slot->settings : [];
-        $wrapperPreset = old('wrapper_preset', $slotSettings['wrapper_preset'] ?? 'default');
+        $wrapperPreset = old('wrapper_preset', $slot->wrapperPreset());
         $wrapperElement = old('wrapper_element', $slotSettings['wrapper_element'] ?? \App\Models\PageSlot::defaultWrapperElementForSlug($slot->slotType?->slug));
         $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
             $resolved = $parameters;
@@ -64,9 +64,9 @@
                     <label for="wrapper_preset">Wrapper preset</label>
                     <select id="wrapper_preset" name="wrapper_preset" class="wb-select">
                         <option value="default" @selected($wrapperPreset === 'default')>Default</option>
-                        <option value="dashboard-navbar" @selected($wrapperPreset === 'dashboard-navbar')>Dashboard Navbar</option>
-                        <option value="dashboard-sidebar" @selected($wrapperPreset === 'dashboard-sidebar')>Dashboard Sidebar</option>
-                        <option value="dashboard-main" @selected($wrapperPreset === 'dashboard-main')>Dashboard Main</option>
+                        <option value="docs-navbar" @selected($wrapperPreset === 'docs-navbar')>Docs Navbar</option>
+                        <option value="docs-sidebar" @selected($wrapperPreset === 'docs-sidebar')>Docs Sidebar</option>
+                        <option value="docs-main" @selected($wrapperPreset === 'docs-main')>Docs Main</option>
                         <option value="plain" @selected($wrapperPreset === 'plain')>Plain</option>
                     </select>
                 </div>
