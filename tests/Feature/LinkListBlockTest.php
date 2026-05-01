@@ -149,6 +149,118 @@ class LinkListBlockTest extends TestCase
     }
 
     #[Test]
+    public function link_list_item_accepts_supported_url_formats(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        [$page, $pageSlot, $slotType] = $this->pageWithSlot();
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            'https://webblocksui.com/docs/foundation.html',
+            'http://example.com/path',
+            '/docs/foundation.html',
+            '/p/about',
+            'foundation.html',
+            'docs/foundation.html',
+            'getting-started.html',
+            '#foundation',
+            'mailto:hello@example.com',
+            'tel:+49123456789',
+        ] as $index => $url) {
+            $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => $linkList->id,
+                'slot_type_id' => $slotType->id,
+                'block_type_id' => $linkListItemType->id,
+                'sort_order' => $index,
+                'title' => 'Item '.($index + 1),
+                'subtitle' => 'Meta '.($index + 1),
+                'content' => 'Description '.($index + 1),
+                'url' => $url,
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+            $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+            $this->assertDatabaseHas('blocks', [
+                'page_id' => $page->id,
+                'parent_id' => $linkList->id,
+                'type' => 'link-list-item',
+                'url' => $url,
+            ]);
+        }
+    }
+
+    #[Test]
+    public function link_list_item_rejects_dangerous_or_malformed_urls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        [$page, $pageSlot, $slotType] = $this->pageWithSlot();
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            'javascript:alert(1)',
+            'data:text/html,test',
+            'https;//webblocksui.com/docs/foundation.html',
+        ] as $url) {
+            $response = $this->actingAs($user)
+                ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+                ->post(route('admin.blocks.store'), [
+                    'page_id' => $page->id,
+                    'parent_id' => $linkList->id,
+                    'slot_type_id' => $slotType->id,
+                    'block_type_id' => $linkListItemType->id,
+                    'sort_order' => 0,
+                    'title' => 'Bad item',
+                    'subtitle' => 'Bad meta',
+                    'content' => 'Bad description',
+                    'url' => $url,
+                    'status' => 'published',
+                    '_slot_block_mode' => 'create',
+                ]);
+
+            $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+            $response->assertSessionHasErrors('url');
+            $this->assertDatabaseMissing('blocks', [
+                'page_id' => $page->id,
+                'parent_id' => $linkList->id,
+                'type' => 'link-list-item',
+                'url' => $url,
+            ]);
+        }
+    }
+
+    #[Test]
     public function link_list_edit_form_renders_native_sortable_markup_and_fallback_controls(): void
     {
         $this->seedFoundation();

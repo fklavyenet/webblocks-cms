@@ -12,6 +12,7 @@ use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -182,7 +183,7 @@ class BlockRequest extends FormRequest
             if ($selectedBlockType?->slug === 'link-list-item') {
                 $url = trim((string) $this->input('url', ''));
 
-                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:|[A-Za-z0-9._\/-]+(?:\?[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?(?:#[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?)$/i', $url)) {
+                if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
                     $validator->errors()->add('url', 'Link list item URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
                 }
             }
@@ -318,6 +319,55 @@ class BlockRequest extends FormRequest
             'locale.regex' => 'Use a valid locale code.',
             'locale.exists' => 'Selected locale is invalid.',
         ];
+    }
+
+    private function isAllowedLinkListItemUrl(string $url): bool
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return false;
+        }
+
+        if (preg_match('/\s/', $url) === 1) {
+            return false;
+        }
+
+        if (preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $url) === 1) {
+            $scheme = Str::lower((string) parse_url($url, PHP_URL_SCHEME));
+
+            if (in_array($scheme, ['http', 'https'], true)) {
+                return filter_var($url, FILTER_VALIDATE_URL) !== false;
+            }
+
+            if ($scheme === 'mailto') {
+                $target = substr($url, strlen('mailto:'));
+
+                return $target !== '';
+            }
+
+            if ($scheme === 'tel') {
+                $target = substr($url, strlen('tel:'));
+
+                return $target !== '';
+            }
+
+            return false;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return true;
+        }
+
+        if (str_starts_with($url, '#')) {
+            return strlen($url) > 1;
+        }
+
+        if (preg_match('/^[A-Za-z0-9._\/-]+(?:\?[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?(?:#[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?$/', $url) !== 1) {
+            return false;
+        }
+
+        return ! str_starts_with($url, '//');
     }
 
     public function validatedData(): array
