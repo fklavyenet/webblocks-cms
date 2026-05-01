@@ -10,17 +10,11 @@
 
 @section('content')
     @php
-        $expandedBlockQuery = $expandedBlockIds->implode(',');
-
-        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery, $activeLocale) {
+        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
             $resolved = $parameters;
 
             if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
                 $resolved['locale'] = $activeLocale->code;
-            }
-
-            if ($expandedBlockQuery !== '' && ! array_key_exists('expanded', $resolved)) {
-                $resolved['expanded'] = $expandedBlockQuery;
             }
 
             return route('admin.pages.slots.blocks', [$page, $slot] + $resolved);
@@ -43,7 +37,7 @@
 
     @include('admin.partials.flash')
 
-    <div class="wb-card" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}">
+    <div class="wb-card" data-wb-cms-slot-block-tree data-wb-slot-id="{{ $slot->id }}" data-page-id="{{ $page->id }}" data-slot-type-id="{{ $slot->slot_type_id }}">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <div class="wb-stack wb-gap-1">
                 <strong>Blocks</strong>
@@ -100,7 +94,6 @@
                                 'slotBlockBaseRoute' => $slotBlockBaseRoute,
                                 'activeLocale' => $activeLocale,
                                 'expandedBlockIds' => $expandedBlockIds,
-                                'expandedBlockQuery' => $expandedBlockQuery,
                             ])
                         @endforeach
                     </table>

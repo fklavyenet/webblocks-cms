@@ -284,7 +284,7 @@ class PageController extends Controller
         $rootBlocks = $this->blockTranslationResolver
             ->resolveCollection($blocks->whereNull('parent_id')->values(), $activeLocale)
             ->values();
-        $expandedBlockIds = $this->slotExpandedBlockIds($rootBlocks, $modalState['block']);
+        $expandedBlockIds = $this->slotExpandedBlockIds($resolvedBlocks, $modalState['block']);
 
         return view('admin.pages.slot-blocks', [
             'page' => $page,
@@ -773,21 +773,26 @@ class PageController extends Controller
 
     private function slotExpandedBlockIds($blocks, ?Block $modalBlock = null)
     {
-        $expandedIds = collect(explode(',', trim((string) request('expanded'))))
-            ->map(fn (string $value) => (int) trim($value))
-            ->filter(fn (int $value) => $value > 0);
-
-        if ($modalBlock?->parent_id) {
-            $expandedIds->push($modalBlock->parent_id);
-        }
-
-        if ($modalBlock && $modalBlock->children->isNotEmpty()) {
-            $expandedIds->push($modalBlock->id);
-        }
-
         $expandableIds = $blocks
             ->filter(fn (Block $block) => $block->children->isNotEmpty())
             ->pluck('id');
+
+        $expandedIds = collect(session('slot_block_expanded', []))
+            ->map(fn (mixed $value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0);
+
+        if ($modalBlock) {
+            $ancestorId = $modalBlock->parent_id;
+
+            while ($ancestorId) {
+                $expandedIds->push($ancestorId);
+                $ancestorId = $blocks->firstWhere('id', $ancestorId)?->parent_id;
+            }
+
+            if ($modalBlock->id && $expandableIds->contains($modalBlock->id)) {
+                $expandedIds->push($modalBlock->id);
+            }
+        }
 
         return $expandedIds
             ->unique()

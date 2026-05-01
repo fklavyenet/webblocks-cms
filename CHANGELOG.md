@@ -14,6 +14,7 @@
 - Fix Stat Card visibility in the admin block type picker.
 - Fix Edit Slot drag-and-drop reorder persistence so reordered blocks stay ordered after refresh and in public rendering.
 - Fix Edit Slot drag-and-drop so the frontend sends the slot block reorder request after drop.
+- Move Edit Slot expanded block state from query parameters to `localStorage` and keep admin URLs clean.
 - Improve Edit Slot Blocks list hierarchy display by hiding internal order numbers and replacing whitespace indentation with CSS guide lines.
 - Improve block hierarchy readability with subtle level-based indent guide colors.
 - Improve Link List Item controls by replacing collapse chevron with clearer toggle icons.

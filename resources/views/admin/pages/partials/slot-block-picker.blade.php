@@ -6,18 +6,13 @@
     if (! in_array($pickerSort, $allowedPickerSorts, true)) {
         $pickerSort = 'default';
     }
-    $expandedBlockQuery = trim((string) request('expanded'));
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';
 
-    $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $expandedBlockQuery, $activeLocale) {
+    $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
         $resolved = $parameters;
 
         if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
             $resolved['locale'] = $activeLocale->code;
-        }
-
-        if ($expandedBlockQuery !== '' && ! array_key_exists('expanded', $resolved)) {
-            $resolved['expanded'] = $expandedBlockQuery;
         }
 
         return route('admin.pages.slots.blocks', [$page, $slot] + $resolved);
@@ -109,9 +104,6 @@
                         @unless ($activeLocale->is_default)
                             <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                         @endunless
-                        @if ($expandedBlockQuery !== '')
-                            <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}">
-                        @endif
                         @if ($pickerParentId)
                             <input type="hidden" name="parent_id" value="{{ $pickerParentId }}">
                         @endif

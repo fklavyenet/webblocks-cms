@@ -384,7 +384,7 @@ This enables building pure WebBlocks UI sites directly from CMS.
 The slot editor uses a modal block type picker. Editors can click Add Block, search or select a block type, and immediately configure the new block without leaving the slot editor.
 - The picker uses one database-driven block list ordered by `block_types.sort_order`, then by block name.
 - Picker search matches block type name, slug, description, and category so editors can find blocks by handle and intent terms such as `button`, `cluster`, `intro`, or `layout`.
-- The Edit Slot block tree now preserves expanded nested block state per slot in the browser with `localStorage` key format `webblocks.cms.slotBlocks.expanded.{slotId}`.
+- The Edit Slot block tree now preserves expanded nested block state locally in the browser per page and slot type, using `localStorage` keys like `webblocks.cms.slotBlocks.expanded.page.{pageId}.slot.{slotTypeId}`, so admin URLs stay clean.
 - Nested block rows in Edit Slot now render with level-based table-cell indentation instead of visible character prefixes such as `—`.
 - Blocks list now uses visual indent guides similar to code editors for better hierarchy readability.
 - Public block rendering follows a slug-to-renderer convention: block slug `x` resolves to `resources/views/pages/partials/blocks/x.blade.php`. Core renderers must not silently route one unrelated block type through another block's renderer.

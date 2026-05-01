@@ -137,7 +137,7 @@ class LinkListBlockTest extends TestCase
 
         $item = Block::query()->where('page_id', $page->id)->where('type', 'link-list-item')->firstOrFail();
 
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $linkList->id]));
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $this->assertSame('getting-started.html', $item->fresh()->url);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $item->id,
@@ -296,7 +296,7 @@ class LinkListBlockTest extends TestCase
             '_slot_block_id' => $linkList->id,
         ]);
 
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $linkList->id]));
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->assertSame(0, $second->fresh()->sort_order);
         $this->assertSame(1, $first->fresh()->sort_order);
@@ -410,7 +410,7 @@ class LinkListBlockTest extends TestCase
             'url' => 'foundation.html',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $linkList->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $item = Block::query()->where('page_id', $page->id)->where('type', 'link-list-item')->firstOrFail();
 

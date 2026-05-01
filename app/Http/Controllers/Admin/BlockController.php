@@ -147,11 +147,11 @@ class BlockController extends Controller
         });
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
-        $expanded = $this->expandedStateFor($request, $block);
         $previewUrl = $block->page->publicUrl($localeCode);
 
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $localeCode])
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block created successfully.');
 
         if ($previewUrl) {
@@ -253,11 +253,11 @@ class BlockController extends Controller
         });
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
-        $expanded = $this->expandedStateFor($request, $block);
         $previewUrl = $block->page->publicUrl($localeCode);
 
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'expanded' => $expanded ?: null, 'locale' => $localeCode])
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block updated successfully.');
 
         if ($previewUrl) {
@@ -277,7 +277,6 @@ class BlockController extends Controller
         $pageId = $block->page_id;
         $slotTypeId = $block->slot_type_id;
         $pageSlotId = $this->pageSlotRouteId($pageId, $slotTypeId);
-        $expanded = $this->expandedStateFor($request, $block, false);
 
         DB::transaction(function () use ($block, $request): void {
             $page = $block->page()->firstOrFail();
@@ -292,7 +291,8 @@ class BlockController extends Controller
         });
 
         return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'expanded' => $expanded ?: null, 'locale' => $this->requestedLocaleCode(request())])
+            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request())])
+            ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
             ->with('status', 'Block deleted successfully.');
     }
 
@@ -348,12 +348,14 @@ class BlockController extends Controller
 
         if (! $moved) {
             return redirect()
-                ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block, $this->expandedStateFor(request(), $block)))
+                ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block))
+                ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
                 ->with('status', 'Block is already at the edge of its group.');
         }
 
         return redirect()
-            ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block, $this->expandedStateFor(request(), $block)))
+            ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block))
+            ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block order updated successfully.');
     }
 
@@ -763,29 +765,30 @@ class BlockController extends Controller
             ->get();
     }
 
-    private function expandedStateFor(Request $request, Block $block, bool $includeCurrent = true): string
+    private function slotExpandedBlockIds(Block $block, bool $includeCurrent = true): array
     {
-        $expanded = collect(explode(',', trim((string) $request->input('expanded', ''))))
-            ->map(fn (string $value) => (int) trim($value))
-            ->filter(fn (int $value) => $value > 0);
+        $expanded = collect();
+        $ancestorId = $block->parent_id;
 
-        $targetId = $block->parent_id ?: ($includeCurrent && $block->children()->exists() ? $block->id : null);
-
-        if ($targetId) {
-            $expanded->push($targetId);
+        while ($ancestorId) {
+            $expanded->push($ancestorId);
+            $ancestorId = Block::query()->whereKey($ancestorId)->value('parent_id');
         }
 
-        return $expanded->unique()->implode(',');
+        if ($includeCurrent && $block->children()->exists()) {
+            $expanded->push($block->id);
+        }
+
+        return $expanded->unique()->values()->all();
     }
 
-    private function slotRedirectParameters(Block $block, string $expanded = ''): array
+    private function slotRedirectParameters(Block $block): array
     {
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
 
         return [
             'page' => $block->page_id,
             'slot' => $pageSlotId ?: $block->slot_type_id,
-            'expanded' => $expanded !== '' ? $expanded : null,
             'locale' => $this->requestedLocaleCode(request()),
         ];
     }

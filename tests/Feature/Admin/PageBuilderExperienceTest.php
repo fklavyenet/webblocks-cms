@@ -273,6 +273,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-admin-sortable-mode="slot-blocks"', false);
         $response->assertSee('data-admin-sortable-reorder-url', false);
         $response->assertSee('data-admin-sortable-item', false);
+        $response->assertSee('data-page-id="'.$page->id.'"', false);
+        $response->assertSee('data-slot-type-id="'.$main->id.'"', false);
+        $response->assertSee('data-slot-block-row', false);
+        $response->assertSee('data-slot-block-toggle', false);
         $response->assertSee('data-block-id="'.$section->id.'"', false);
         $response->assertSee('data-parent-id=""', false);
         $response->assertSee('data-slot-type-id="'.$main->id.'"', false);
@@ -281,6 +285,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('wb-icon-grip-vertical', false);
         $response->assertSee('title="Move block up"', false);
         $response->assertSee('title="Move block down"', false);
+        $response->assertDontSee('name="expanded"', false);
+        $response->assertDontSee('?expanded=', false);
+        $response->assertDontSee('&expanded=', false);
     }
 
     #[Test]
@@ -945,7 +952,7 @@ class PageBuilderExperienceTest extends TestCase
             'name' => 'Hero content',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
 
@@ -958,7 +965,7 @@ class PageBuilderExperienceTest extends TestCase
             'name' => 'Action row',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
 
@@ -966,7 +973,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame('Hero content', $container->fresh()->setting('layout_name'));
         $this->assertSame('Action row', $cluster->fresh()->setting('layout_name'));
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
         $response->assertSee('Section -- Hero area');
@@ -1058,7 +1065,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $container->id, 'expanded' => $section->id.','.$container->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $container->id]));
 
         $response->assertOk();
         $response->assertSee('<option value="">No parent</option>', false);
@@ -1068,7 +1075,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('>Plain Text</option>', false);
         $response->assertDontSee('<option value="'.$container->id.'"', false);
 
-        $headerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id, 'expanded' => $section->id.','.$container->id]));
+        $headerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id]));
 
         $headerResponse->assertOk();
         $headerResponse->assertSee('Section: Hero area');
@@ -1186,7 +1193,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id, 'expanded' => $section->id.','.$container->id.','.$card->id.','.$cluster->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id]));
 
         $response->assertOk();
         $response->assertSee('Section: Page Header');
@@ -1205,10 +1212,9 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             '_slot_block_mode' => 'edit',
             '_slot_block_id' => $cluster->id,
-            'expanded' => $section->id.','.$container->id.','.$card->id,
         ]);
 
-        $updateResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$card->id]));
+        $updateResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $this->assertSame($card->id, $cluster->fresh()->parent_id);
 
         $movedResponse = $this->get(route('pages.show', 'about'));
@@ -1280,7 +1286,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id, 'expanded' => $container->id.','.$card->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id]));
 
         $response->assertOk();
         $response->assertSee('Card: WebBlocks UI - UI building blocks for humans and AI.');
@@ -1342,7 +1348,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id, 'expanded' => $container->id.','.$card->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $header->id]));
 
         $response->assertOk();
         $response->assertSee('Container: Page Header');
@@ -1417,7 +1423,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
 
@@ -1432,7 +1438,7 @@ class PageBuilderExperienceTest extends TestCase
             'title_level' => 'h1',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -1444,7 +1450,7 @@ class PageBuilderExperienceTest extends TestCase
             'content' => 'Footer actions should be nested.',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $card = Block::query()->where('page_id', $page->id)->where('type', 'card')->firstOrFail();
 
@@ -1456,7 +1462,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $card->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
 
@@ -1471,7 +1477,7 @@ class PageBuilderExperienceTest extends TestCase
             'variant' => 'primary',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -1484,7 +1490,7 @@ class PageBuilderExperienceTest extends TestCase
             'variant' => 'secondary',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $card->id]);
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 0]);
@@ -1494,7 +1500,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('button_link'));
         $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('plain_text'));
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$card->id.','.$cluster->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
         $response->assertSee('Children: 1 item');
@@ -1812,9 +1818,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $target = $sections[3];
 
-        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $target), [
-            'expanded' => $container->id,
-        ]);
+        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $target));
 
         $response->assertRedirect();
 
@@ -1885,9 +1889,7 @@ class PageBuilderExperienceTest extends TestCase
             'settings' => json_encode(['card_variant' => 'default'], JSON_UNESCAPED_SLASHES),
         ]);
 
-        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $card), [
-            'expanded' => $section->id,
-        ]);
+        $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $card));
 
         $response->assertRedirect();
 
@@ -2156,7 +2158,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $container = Block::query()->where('page_id', $page->id)->where('type', 'container')->firstOrFail();
 
@@ -2168,7 +2170,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
 
@@ -2183,7 +2185,7 @@ class PageBuilderExperienceTest extends TestCase
             'variant' => 'primary',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $cluster->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -2195,7 +2197,7 @@ class PageBuilderExperienceTest extends TestCase
             'level' => 'h1',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
@@ -2206,7 +2208,7 @@ class PageBuilderExperienceTest extends TestCase
             'text' => 'Nested paragraph',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $container->id]));
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $section->refresh();
         $container->refresh();
@@ -2218,7 +2220,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id]);
         $this->assertTrue($cluster->fresh()->canAcceptChildren());
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'expanded' => $section->id.','.$container->id.','.$cluster->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
         $response->assertSee('Section');
@@ -2231,6 +2233,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-block-row', false);
         $response->assertSee('data-wb-cms-slot-block-tree', false);
         $response->assertSee('data-wb-slot-id="'.$pageSlot->id.'"', false);
+        $response->assertSee('data-page-id="'.$page->id.'"', false);
+        $response->assertSee('data-slot-type-id="'.$main->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$cluster->id.'"', false);

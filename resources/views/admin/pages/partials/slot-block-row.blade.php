@@ -6,7 +6,6 @@
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
-    $rowExpandedQuery = collect([$block->id])->merge($expandedBlockIds)->unique()->implode(',');
 @endphp
 
 <tbody
@@ -20,12 +19,16 @@
     <tr
         id="{{ $rowId }}"
         class="wb-block-row wb-block-row-depth-{{ min($depth, 6) }}"
+        data-slot-block-row
+        data-block-id="{{ $block->id }}"
         data-wb-slot-block-row
         data-wb-slot-block-id="{{ $block->id }}"
         data-depth="{{ $depth }}"
         @if ($parentBlock)
+            data-slot-parent-id="{{ $parentBlock->id }}"
             data-wb-slot-parent-id="{{ $parentBlock->id }}"
         @endif
+        data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
         style="--block-depth: {{ $depth }};"
     >
@@ -39,6 +42,8 @@
                         <button
                             type="button"
                             class="wb-action-btn wb-cms-block-tree-toggle"
+                            data-slot-block-toggle
+                            data-slot-toggle="{{ $block->id }}"
                             data-wb-slot-block-toggle
                             data-wb-slot-toggle="{{ $block->id }}"
                             @if ($controlledRowIds !== '') aria-controls="{{ $controlledRowIds }}" @endif
@@ -66,7 +71,7 @@
         </td>
         <td>
             <div class="wb-stack wb-gap-1">
-                <a href="{{ $slotBlockRoute(['edit' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong>{{ $block->editorLabel() }}</strong></a>
+                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong>{{ $block->editorLabel() }}</strong></a>
                 @php($editorSummary = $block->editorSummary())
                 @if ($editorSummary !== null)
                     <span class="wb-text-sm wb-text-muted">{{ $editorSummary }}</span>
@@ -84,7 +89,6 @@
             <div class="wb-action-group">
                 <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
                     @csrf
-                    <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
@@ -92,20 +96,18 @@
                 </form>
                 <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
                     @csrf
-                    <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
                     <button type="submit" class="wb-action-btn" title="Move block down" aria-label="Move block down"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                 </form>
-                <a href="{{ $slotBlockRoute(['edit' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block" aria-label="Edit block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                 @if ($canAddChildren)
-                    <a href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $block->id, 'expanded' => $expandedBlockQuery !== '' ? $expandedBlockQuery : null]) }}" class="wb-action-btn" title="Add child block" aria-label="Add child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $block->id]) }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
+                    <a href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $block->id]) }}" class="wb-action-btn" title="Add child block" aria-label="Add child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $block->id]) }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
                 @endif
                 <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">
                     @csrf
                     @method('DELETE')
-                    <input type="hidden" name="expanded" value="{{ $expandedBlockQuery }}" data-wb-slot-block-expanded-input>
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
@@ -127,6 +129,5 @@
         'slotBlockBaseRoute' => $slotBlockBaseRoute,
         'activeLocale' => $activeLocale,
         'expandedBlockIds' => $expandedBlockIds,
-        'expandedBlockQuery' => $rowExpandedQuery,
     ])
 @endforeach
