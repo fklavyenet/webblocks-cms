@@ -1,8 +1,10 @@
 (function () {
   var MODE_ICON_CLASSES = ['wb-icon-sun', 'wb-icon-moon', 'wb-icon-sun-moon'];
 
-  function nextMode(current) {
-    return current === 'light' ? 'dark' : current === 'dark' ? 'auto' : 'light';
+  function labelForMode(mode) {
+    if (mode === 'light') return 'Light mode';
+    if (mode === 'dark') return 'Dark mode';
+    return 'Auto mode';
   }
 
   function iconClassForMode(mode) {
@@ -11,19 +13,13 @@
     return 'wb-icon-sun-moon';
   }
 
-  function labelForMode(mode) {
-    if (mode === 'light') return 'Switch to dark mode';
-    if (mode === 'dark') return 'Switch to auto mode';
-    return 'Switch to light mode';
-  }
-
   function syncModeButtons() {
     if (!window.WBTheme || typeof window.WBTheme.getMode !== 'function') return;
 
     var mode = window.WBTheme.getMode();
 
     document.querySelectorAll('[data-wb-header-actions-mode-toggle]').forEach(function (button) {
-      var icon = button.querySelector('.wb-icon');
+      var icon = button.querySelector('i.wb-icon');
 
       if (icon) {
         MODE_ICON_CLASSES.forEach(function (className) {
@@ -34,6 +30,7 @@
       }
 
       button.setAttribute('aria-label', labelForMode(mode));
+      button.setAttribute('title', labelForMode(mode));
       button.setAttribute('aria-pressed', mode === 'dark' ? 'true' : 'false');
     });
   }
@@ -50,7 +47,8 @@
     });
 
     document.querySelectorAll('[data-wb-header-actions-accent-toggle]').forEach(function (button) {
-      button.setAttribute('aria-label', 'Change accent color');
+      button.setAttribute('aria-label', 'Accent color: ' + accent);
+      button.setAttribute('title', 'Accent color: ' + accent);
     });
   }
 
@@ -66,6 +64,10 @@
   }
 
   function syncAll() {
+    if (window.WBTheme && typeof window.WBTheme.sync === 'function') {
+      window.WBTheme.sync();
+    }
+
     syncModeButtons();
     syncAccentMenus();
     syncAccentExpandedState();
@@ -74,20 +76,19 @@
   document.addEventListener('click', function (event) {
     var modeButton = event.target.closest('[data-wb-header-actions-mode-toggle]');
     if (modeButton) {
-      event.preventDefault();
-      if (window.WBTheme && typeof window.WBTheme.getMode === 'function' && typeof window.WBTheme.setMode === 'function') {
-        window.WBTheme.setMode(nextMode(window.WBTheme.getMode()));
-        syncAll();
-      }
+      setTimeout(syncAll, 0);
       return;
     }
 
     var accentOption = event.target.closest('[data-wb-header-actions-accent-option]');
     if (accentOption) {
-      if (window.WBTheme && typeof window.WBTheme.setAccent === 'function') {
-        window.WBTheme.setAccent(accentOption.getAttribute('data-wb-accent-set'));
-        syncAll();
-      }
+      setTimeout(syncAll, 20);
+      return;
+    }
+
+    var accentToggle = event.target.closest('[data-wb-header-actions-accent-toggle]');
+    if (accentToggle) {
+      setTimeout(syncAccentExpandedState, 0);
       return;
     }
 

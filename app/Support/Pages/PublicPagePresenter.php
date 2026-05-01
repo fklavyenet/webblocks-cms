@@ -75,7 +75,7 @@ class PublicPagePresenter
                 'class' => $class,
                 'preset' => $preset,
                 'settings' => $settings,
-                'body_class' => $preset === 'docs-navbar' ? 'wb-cluster wb-justify-between wb-items-center wb-w-full' : '',
+                'body_class' => $preset === 'docs-navbar' ? 'wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full' : '',
             ],
         ];
     }

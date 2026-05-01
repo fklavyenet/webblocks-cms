@@ -1,5 +1,6 @@
 @php
     $chrome = $slot['chrome'] ?? null;
+    $wrapperPreset = $slot['wrapper']['preset'] ?? null;
 
     if (! is_array($chrome)) {
         $chrome = [];
@@ -82,11 +83,17 @@
 
 @if ($chrome === [])
     @if ($slot['blocks']->isNotEmpty())
-        <div class="wb-stack">
+        @if ($wrapperPreset === 'docs-navbar')
             @foreach ($slot['blocks'] as $block)
                 @include('pages.partials.block', ['block' => $block])
             @endforeach
-        </div>
+        @else
+            <div class="wb-stack">
+                @foreach ($slot['blocks'] as $block)
+                    @include('pages.partials.block', ['block' => $block])
+                @endforeach
+            </div>
+        @endif
     @endif
 @else
     <header class="wb-section wb-public-header" data-wb-public-header>
