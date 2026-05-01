@@ -52,6 +52,42 @@ class AdminDashboardRouteTest extends TestCase
         $response->assertSee('WebBlocks CMS v0.1.4');
         $response->assertSee('Visitor Summary');
         $response->assertSee('/p/dashboard-landing');
+        $response->assertSee('Actions and Shortcuts');
+        $response->assertSee('href="'.route('admin.pages.create').'"', false);
+        $response->assertSee('New Page');
+        $response->assertSee('href="'.route('admin.pages.index').'"', false);
+        $response->assertSee('Pages');
+        $response->assertDontSee('href="'.route('admin.system.updates.index').'"', false);
+        $response->assertSee('Sites, backups, and system updates are available to super admins only.');
+
+        $content = $response->getContent();
+
+        $this->assertNotFalse($content);
+        $this->assertLessThan(
+            strpos($content, 'Visitor Summary'),
+            strpos($content, 'Actions and Shortcuts')
+        );
+    }
+
+    #[Test]
+    public function dashboard_shortcuts_include_system_links_for_super_admins(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Actions and Shortcuts');
+        $response->assertSee('href="'.route('admin.pages.create').'"', false);
+        $response->assertSee('New Page');
+        $response->assertSee('href="'.route('admin.pages.index').'"', false);
+        $response->assertSee('Pages');
+        $response->assertSee('href="'.route('admin.sites.index').'"', false);
+        $response->assertSee('Sites');
+        $response->assertSee('href="'.route('admin.system.backups.index').'"', false);
+        $response->assertSee('Backups');
+        $response->assertSee('href="'.route('admin.system.updates.index').'"', false);
+        $response->assertSee('Update');
     }
 
     #[Test]

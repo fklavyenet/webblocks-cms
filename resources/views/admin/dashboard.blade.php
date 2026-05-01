@@ -22,6 +22,32 @@
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-grid wb-grid-2">
+            <div class="wb-card wb-card-muted">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                    <strong>Actions and Shortcuts</strong>
+                    <span class="wb-text-sm wb-text-muted">Jump into the core admin tasks.</span>
+                </div>
+
+                <div class="wb-card-body">
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-text-sm wb-text-muted">Quick actions</div>
+                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">New Page</a>
+                            <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Pages</a>
+                            @can('access-system')
+                                <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Sites</a>
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Backups</a>
+                                <a href="{{ route('admin.system.updates.index') }}" class="wb-btn wb-btn-secondary">Update</a>
+                            @endcan
+                        </div>
+
+                        @cannot('access-system')
+                            <div class="wb-text-sm wb-text-muted">Sites, backups, and system updates are available to super admins only.</div>
+                        @endcannot
+                    </div>
+                </div>
+            </div>
+
             <div class="wb-card">
                 <div class="wb-card-header">
                     <strong>Overview</strong>
@@ -102,36 +128,6 @@
                 </div>
             </div>
 
-            <div class="wb-card wb-card-muted">
-                <div class="wb-card-header">
-                    <strong>Actions and Shortcuts</strong>
-                </div>
-
-                <div class="wb-card-body">
-                    <div class="wb-stack wb-stack-4">
-                        <div class="wb-stack wb-stack-2">
-                            <div class="wb-text-sm wb-text-muted">Start editing</div>
-                            <div class="wb-cluster wb-cluster-2">
-                                <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">Create Page</a>
-                                <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Open Pages</a>
-                                <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Open Media</a>
-                            </div>
-                        </div>
-
-                        <div class="wb-stack wb-stack-2">
-                            <div class="wb-text-sm wb-text-muted">Catalog</div>
-                            <div class="wb-cluster wb-cluster-2">
-                                @can('access-system')
-                                    <a href="{{ route('admin.slot-types.index') }}" class="wb-btn wb-btn-secondary">Slot Types</a>
-                                    <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">Block Types</a>
-                                @else
-                                    <span class="wb-text-sm wb-text-muted">System catalogs are available to super admins only.</span>
-                                @endcan
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="wb-grid wb-grid-2">

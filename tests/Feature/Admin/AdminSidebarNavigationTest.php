@@ -50,7 +50,6 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('href="'.route('admin.block-types.index').'"', false);
         $response->assertDontSee('>Reports<', false);
         $response->assertDontSee('>Access<', false);
-        $response->assertDontSee('>Sites<', false);
         $response->assertDontSee('>Structure<', false);
         $this->assertSame(1, substr_count($content, $usersHref));
         $this->assertTrue(

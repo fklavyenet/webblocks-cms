@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Improve admin dashboard shortcuts and add System Updates quick action.
+
 ## 1.5.0
 
 ### Backup & Restore
