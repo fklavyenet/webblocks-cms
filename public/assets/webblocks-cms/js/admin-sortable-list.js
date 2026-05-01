@@ -7,7 +7,10 @@
     var invalidTargetClass = 'is-sortable-invalid-target';
     var activeHandle = null;
     var activeItem = null;
+    var activeRoot = null;
     var originalOrder = [];
+    var movedDuringDrag = false;
+    var persistedOnDrop = false;
 
     function sortableItems(root) {
         if (!root) {
@@ -27,7 +30,6 @@
         return [
             String(item.getAttribute('data-parent-id') || ''),
             String(item.getAttribute('data-slot-type-id') || ''),
-            String(item.getAttribute('data-depth') || ''),
         ].join('|');
     }
 
@@ -125,8 +127,11 @@
         }
 
         activeItem = null;
+        activeRoot = null;
         activeHandle = null;
         originalOrder = [];
+        movedDuringDrag = false;
+        persistedOnDrop = false;
     }
 
     function canReorderTogether(root, targetItem) {
@@ -167,15 +172,16 @@
         return token ? token.getAttribute('content') : '';
     }
 
-    function persistSlotBlockReorder(root) {
+    function persistSlotBlockReorder(root, movedItem) {
         var reorderUrl = root.getAttribute('data-admin-sortable-reorder-url');
+        var item = movedItem || activeItem;
 
-        if (!reorderUrl || !activeItem) {
+        if (!reorderUrl || !item) {
             return Promise.resolve();
         }
 
-        var ids = groupItems(root, activeItem).map(function (item) {
-            return Number(item.getAttribute('data-block-id') || '0');
+        var ids = groupItems(root, item).map(function (groupItem) {
+            return Number(groupItem.getAttribute('data-block-id') || '0');
         }).filter(function (id) {
             return id > 0;
         });
@@ -230,7 +236,10 @@
             }
 
             activeItem = item;
+            activeRoot = root;
             originalOrder = sortableItems(root).slice();
+            movedDuringDrag = false;
+            persistedOnDrop = false;
             item.classList.add(draggingClass);
 
             if (event.dataTransfer) {
@@ -255,7 +264,9 @@
             }
 
             event.preventDefault();
-            moveSegment(root, targetItem, event.clientY);
+            if (moveSegment(root, targetItem, event.clientY)) {
+                movedDuringDrag = true;
+            }
         });
 
         root.addEventListener('drop', function (event) {
@@ -267,7 +278,8 @@
             updateOrderInputs(root);
 
             if (rootMode(root) === 'slot-blocks') {
-                persistSlotBlockReorder(root);
+                persistedOnDrop = true;
+                persistSlotBlockReorder(root, activeItem);
 
                 return;
             }
@@ -282,6 +294,10 @@
                 clearDraggingState(root);
 
                 return;
+            }
+
+            if (rootMode(root) === 'slot-blocks' && movedDuringDrag && !persistedOnDrop) {
+                persistSlotBlockReorder(root, activeItem);
             }
 
             updateOrderInputs(root);
@@ -304,7 +320,7 @@
     });
 
     document.addEventListener('dragend', function () {
-        clearDraggingState(activeItem ? activeItem.parentElement : null);
+        clearDraggingState(activeRoot || (activeItem ? activeItem.parentElement : null));
     });
 
     window.WebBlocksAdminSortableList = window.WebBlocksAdminSortableList || {};
