@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\Asset;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
@@ -449,6 +450,86 @@ class PageBuilderExperienceTest extends TestCase
             'parent_id' => $group->id,
             'type' => 'sidebar-nav-item',
         ]);
+    }
+
+    #[Test]
+    public function sidebar_brand_can_store_logo_media_and_rejects_non_image_media(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($sidebar, 'Docs', 'docs');
+        $brandType = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
+
+        $image = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/sidebar-brand-logo.png',
+            'filename' => 'sidebar-brand-logo.png',
+            'original_name' => 'sidebar-brand-logo.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 100,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'uploaded_by' => $user->id,
+        ]);
+
+        $document = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/documents/sidebar-brand.pdf',
+            'filename' => 'sidebar-brand.pdf',
+            'original_name' => 'sidebar-brand.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 100,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'uploaded_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $brandType->id]))
+            ->assertOk()
+            ->assertSee('Upload the logo in Media, then select it here.');
+
+        $valid = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'block_type_id' => $brandType->id,
+            'sort_order' => 0,
+            'title' => 'WebBlocks UI',
+            'subtitle' => 'UI building blocks for humans and AI',
+            'url' => '/',
+            'target' => '_self',
+            'asset_id' => $image->id,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $valid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'asset_id' => $image->id,
+        ]);
+
+        $invalid = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'slot_type_id' => $sidebar->id,
+                'block_type_id' => $brandType->id,
+                'sort_order' => 1,
+                'title' => 'Bad Logo',
+                'url' => '/',
+                'asset_id' => $document->id,
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalid->assertSessionHasErrors('asset_id');
     }
 
     #[Test]

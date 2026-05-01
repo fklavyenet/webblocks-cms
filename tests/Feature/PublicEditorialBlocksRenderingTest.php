@@ -78,6 +78,83 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function sidebar_brand_renders_logo_and_copy_with_webblocks_contract(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $asset = \App\Models\Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/webblocks-ui-logo.png',
+            'filename' => 'webblocks-ui-logo.png',
+            'original_name' => 'webblocks-ui-logo.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1234,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand', 'Sidebar Brand', 15)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'asset_id' => $asset->id,
+            'settings' => json_encode(['url' => 'https://example.com', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'WebBlocks UI',
+            'subtitle' => 'UI building blocks for humans and AI',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a href="https://example.com" class="wb-sidebar-brand" target="_blank" rel="noopener noreferrer">', false);
+        $response->assertSee('class="wb-sidebar-brand-logo"', false);
+        $response->assertSee('webblocks-ui-logo.png', false);
+        $response->assertSee('alt=""', false);
+        $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
+        $response->assertSee('<strong>WebBlocks UI</strong>', false);
+        $response->assertSee('<span>UI building blocks for humans and AI</span>', false);
+    }
+
+    #[Test]
+    public function sidebar_brand_does_not_render_empty_logo_image_when_logo_is_missing(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand', 'Sidebar Brand', 15)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Docs Home',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a href="/" class="wb-sidebar-brand">', false);
+        $response->assertDontSee('wb-sidebar-brand-logo', false);
+        $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
+        $response->assertSee('<strong>Docs Home</strong>', false);
+    }
+
+    #[Test]
     public function sidebar_nav_item_renders_active_link_optional_icon_and_blank_target_safely(): void
     {
         $page = $this->pageWithMainSlot();

@@ -401,4 +401,71 @@ class BlockTranslationIntegrityTest extends TestCase
             'title' => 'Baslangic',
         ]);
     }
+
+    #[Test]
+    public function translated_sidebar_brand_updates_do_not_overwrite_shared_logo_url_or_target(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+        $page = $this->pageWithMainSlot($site);
+        $asset = \App\Models\Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/sidebar-brand.png',
+            'filename' => 'sidebar-brand.png',
+            'original_name' => 'sidebar-brand.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 100,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'uploaded_by' => $user->id,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'asset_id' => $asset->id,
+            'settings' => json_encode([
+                'url' => '/p/about',
+                'target' => '_blank',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $block->block_type_id,
+            'sort_order' => 0,
+            'locale' => 'tr',
+            'title' => 'WebBlocks TR',
+            'subtitle' => 'Turkce aciklama',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $fresh = $block->fresh(['textTranslations']);
+        $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
+
+        $this->assertSame($asset->id, $fresh->asset_id);
+        $this->assertSame('/p/about', $settings['url']);
+        $this->assertSame('_blank', $settings['target']);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $turkish->id,
+            'title' => 'WebBlocks TR',
+            'subtitle' => 'Turkce aciklama',
+        ]);
+    }
 }

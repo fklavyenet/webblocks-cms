@@ -6,12 +6,27 @@
 <div class="wb-stack wb-gap-4">
     @if (isset($activeLocale) && $block->supportsTranslations())
         <div class="wb-alert wb-alert-info">
-            <div>Brand title and subtitle are translated per locale. URL and target stay shared across locales.</div>
+            <div>Brand title and subtitle are translated per locale. URL, target, and logo stay shared across locales.</div>
         </div>
     @endif
 
     <div class="wb-alert wb-alert-info">
         <div>This block renders only the inner <code>wb-sidebar-brand</code> link. The outer <code>aside.wb-sidebar</code> wrapper still belongs to the Docs Sidebar slot preset.</div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label>Logo</label>
+        @include('admin.media.asset-picker-panel', [
+            'name' => 'sidebar-brand-logo',
+            'inputId' => 'asset_id',
+            'fieldName' => 'asset_id',
+            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+            'buttonLabel' => 'Choose from Media',
+            'replaceLabel' => 'Replace Logo',
+            'clearLabel' => 'Remove',
+            'accept' => 'image',
+        ])
+        <span>Upload the logo in Media, then select it here.</span>
     </div>
 
     <div class="wb-grid wb-grid-2">

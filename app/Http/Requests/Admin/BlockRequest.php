@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
@@ -210,6 +210,14 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
                     $validator->errors()->add('url', 'Sidebar URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'sidebar-brand' && $this->filled('asset_id')) {
+                $asset = Asset::query()->find((int) $this->input('asset_id'));
+
+                if (! $asset?->isImage()) {
+                    $validator->errors()->add('asset_id', 'Sidebar brand logo must be an image from Media.');
                 }
             }
 
@@ -609,7 +617,9 @@ class BlockRequest extends FormRequest
                 $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
                 $data['content'] = null;
                 $data['url'] = null;
-                $data['asset_id'] = null;
+                $data['asset_id'] = $isTranslatedSidebarBrandEdit
+                    ? ($this->route('block')?->asset_id)
+                    : ($data['asset_id'] ?: null);
                 $data['variant'] = null;
                 $data['meta'] = null;
                 $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
