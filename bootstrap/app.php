@@ -7,6 +7,7 @@ use App\Console\Commands\SiteExportCommand;
 use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SiteDeleteCommand;
+use App\Console\Commands\SyncUiDocsHomeMainCommand;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Console\Commands\SystemBackupRestoreCommand;
@@ -56,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SiteImportCommand::class,
         SiteCloneCommand::class,
         SiteDeleteCommand::class,
+        SyncUiDocsHomeMainCommand::class,
         SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {

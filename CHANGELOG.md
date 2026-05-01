@@ -9,6 +9,10 @@
 - Add native drag-and-drop reorder support for Link List Items in the admin editor.
 - Add native drag-and-drop sibling reordering to the Edit Slot Blocks list.
 
+### Changed
+
+- Continue CMS-managed WebBlocks UI docs home content migration for remaining main narrative sections.
+
 ### Fixed
 
 - Fix Stat Card visibility in the admin block type picker.

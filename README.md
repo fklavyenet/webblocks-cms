@@ -438,3 +438,6 @@ You may use, modify, and distribute the code under the MIT license.
 However, you may not use the name "WebBlocks CMS" or its logos for derived products without permission.
 
 If you fork or redistribute this project, you must remove or replace all branding.
+## Docs Home Sync
+
+Run `ddev artisan webblocks:sync-ui-docs-home-main` to import only the remaining CMS-managed main narrative sections from the WebBlocks UI docs home page into the default Home page `main` slot. The command is idempotent for its own imported section wrappers and does not modify the existing manual sections that precede them.
