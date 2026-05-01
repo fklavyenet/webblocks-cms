@@ -17,6 +17,8 @@
 
 ### Fixed
 
+- Allow explicit cleanup of stuck running backup records from the Backups admin list.
+- Keep running backup deletion guarded by confirmation.
 - Add delete action for backup restore history entries.
 - Refine backups table layout by removing Type and Duration columns.
 - Align backup action icons with the Actions header.

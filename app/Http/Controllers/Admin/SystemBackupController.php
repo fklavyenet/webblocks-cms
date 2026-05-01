@@ -125,20 +125,24 @@ class SystemBackupController extends Controller
         }
     }
 
-    public function destroy(SystemBackup $backup): RedirectResponse
+    public function destroy(Request $request, SystemBackup $backup): RedirectResponse
     {
-        if ($backup->isRunning()) {
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->withErrors(['system_backup' => 'Running backup cannot be deleted.']);
+        $forceRunning = $request->boolean('force_running');
+
+        if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $forceRunning) {
+            return back()->withErrors([
+                'system_backup' => 'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
+            ]);
         }
 
         try {
-            $this->systemBackupManager->deleteBackupRecord($backup);
+            $this->systemBackupManager->deleteBackupRecord($backup, $forceRunning);
 
             return redirect()
                 ->route('admin.system.backups.index')
-                ->with('status', 'Backup record deleted.');
+                ->with('status', $backup->isRunning() && ! $backup->isStaleRunning() && $forceRunning
+                    ? 'Stuck running backup record deleted.'
+                    : 'Backup deleted.');
         } catch (Throwable $throwable) {
             return redirect()
                 ->route('admin.system.backups.index')

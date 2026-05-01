@@ -217,10 +217,10 @@ class SystemBackupManager
         ]);
     }
 
-    public function deleteBackupRecord(SystemBackup $backup): void
+    public function deleteBackupRecord(SystemBackup $backup, bool $allowRunning = false): void
     {
-        if ($backup->isRunning()) {
-            throw new RuntimeException('Running backup cannot be deleted.');
+        if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $allowRunning) {
+            throw new RuntimeException('Running backup cannot be deleted unless you explicitly confirm it is stuck.');
         }
 
         $archivePath = $backup->archiveRelativePath();

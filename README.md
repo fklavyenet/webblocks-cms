@@ -434,6 +434,8 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - MySQL and MariaDB backup creation uses raw SQL stdout from either direct `mysqldump` or `ddev exec --raw -- mysqldump` style execution. Restore feeds validated SQL content back through stdin instead of passing command text as SQL.
 - Running backups that never finish are automatically marked as failed when the Backups screen loads once they are older than the configured stale threshold.
 - Failed backups can be safely deleted from the Backups list, including their stored archive file when one exists.
+- Interrupted or stuck running backup records can also be deleted from the Backups list with explicit confirmation when you know no backup process is still active.
+- This running-backup cleanup path is intended for local, test, or interrupted runs and should only be used after confirming the backup job is no longer active.
 - Restore history entries can be deleted from the backup detail page to clean up failed or completed restore audit rows created during testing.
 - Deleting a restore history entry removes only the `system_backup_restores` row. It does not delete the source backup archive, safety backup archive, or related backup records.
 - Configure stale running backup detection with `CMS_BACKUP_STALE_AFTER_MINUTES` or `config('cms.backup.stale_after_minutes')`. The default timeout is `10` minutes.

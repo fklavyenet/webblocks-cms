@@ -143,15 +143,19 @@
                                                     </a>
                                                 @endif
 
-                                                <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('Delete this backup record and archive file? This cannot be undone.');">
+                                                <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('{{ $backup->isRunning() ? 'This backup is marked as running. Delete this stuck backup record anyway? Only do this if no backup process is still active.' : 'Delete this backup record and archive file? This cannot be undone.' }}');">
                                                     @csrf
                                                     @method('DELETE')
+
+                                                    @if ($backup->isRunning())
+                                                        <input type="hidden" name="force_running" value="1">
+                                                    @endif
+
                                                     <button
                                                         type="submit"
                                                         class="wb-action-btn wb-action-btn-delete"
-                                                        title="{{ $backup->isRunning() ? 'Backup is currently running and cannot be deleted.' : 'Delete backup' }}"
-                                                        aria-label="Delete backup"
-                                                        @disabled($backup->isRunning())
+                                                        title="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
+                                                        aria-label="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
                                                     >
                                                         <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                     </button>
