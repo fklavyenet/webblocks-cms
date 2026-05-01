@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item', 'breadcrumb', 'header-actions'];
+        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -179,6 +179,61 @@ class BlockTypeSeeder extends Seeder
                 'is_system' => true,
                 'is_container' => false,
                 'sort_order' => 14,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Brand',
+                'slug' => 'sidebar-brand',
+                'category' => 'navigation',
+                'description' => 'Renders the docs sidebar brand link inside the aside shell wrapper.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 15,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Navigation',
+                'slug' => 'sidebar-navigation',
+                'category' => 'navigation',
+                'description' => 'Renders docs sidebar navigation wrappers and accepts sidebar nav items or groups.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 16,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Nav Item',
+                'slug' => 'sidebar-nav-item',
+                'category' => 'navigation',
+                'description' => 'Renders one docs sidebar navigation link with optional icon and active matching.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 17,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Nav Group',
+                'slug' => 'sidebar-nav-group',
+                'category' => 'navigation',
+                'description' => 'Renders one collapsible docs sidebar navigation group with child sidebar nav items.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 18,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Footer',
+                'slug' => 'sidebar-footer',
+                'category' => 'navigation',
+                'description' => 'Renders the docs sidebar footer callout and version text inside the aside shell wrapper.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 19,
                 'status' => 'published',
             ],
         ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));

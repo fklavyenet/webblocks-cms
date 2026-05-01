@@ -331,4 +331,74 @@ class BlockTranslationIntegrityTest extends TestCase
         $this->assertSame('No framework requirement for the package itself', $translation->content);
         $this->assertNull($block->fresh()->getRawOriginal('title'));
     }
+
+    #[Test]
+    public function translated_sidebar_nav_item_updates_do_not_overwrite_shared_url_target_icon_or_active_settings(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+        $page = $this->pageWithMainSlot($site);
+
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $this->blockType('sidebar-navigation')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navigation->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'url' => '/p/about',
+                'target' => '_blank',
+                'icon' => 'code',
+                'active_mode' => 'manual',
+                'manual_active' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $block->block_type_id,
+            'sort_order' => 0,
+            'locale' => 'tr',
+            'title' => 'Baslangic',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $fresh = $block->fresh(['textTranslations']);
+        $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
+
+        $this->assertSame('/p/about', $settings['url']);
+        $this->assertSame('_blank', $settings['target']);
+        $this->assertSame('code', $settings['icon']);
+        $this->assertSame('manual', $settings['active_mode']);
+        $this->assertTrue($settings['manual_active']);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Baslangic',
+        ]);
+    }
 }

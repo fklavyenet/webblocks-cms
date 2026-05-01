@@ -23,9 +23,161 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function sidebar_navigation_renders_only_sidebar_nav_wrapper_with_section_and_children(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $nav = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $this->blockType('sidebar-navigation', 'Sidebar Navigation', 16)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $nav->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Documentation navigation',
+        ]);
+
+        $item = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $nav->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item', 'Sidebar Nav Item', 17)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/p/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $item->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Getting Started',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
+        $response->assertSee('<div class="wb-sidebar-section">', false);
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertSee('href="/p/about"', false);
+        $response->assertSee('aria-current="page"', false);
+        $response->assertDontSee('<div class="wb-sidebar-nav"', false);
+    }
+
+    #[Test]
+    public function sidebar_nav_item_renders_active_link_optional_icon_and_blank_target_safely(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $currentItem = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item', 'Sidebar Nav Item', 17)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/p/about', 'target' => '_self', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $currentItem->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Launch',
+        ]);
+
+        $blankItem = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item', 'Sidebar Nav Item', 17)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['url' => 'https://example.com/docs', 'target' => '_blank', 'active_mode' => 'manual', 'manual_active' => false], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $blankItem->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'External Docs',
+        ]);
+
+        $iconlessItem = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item', 'Sidebar Nav Item', 17)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'settings' => json_encode(['url' => '/p/about', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $iconlessItem->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Plain Link',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertSee('href="/p/about"', false);
+        $response->assertSee('aria-current="page"', false);
+        $response->assertSee('<i class="wb-icon wb-icon-rocket" aria-hidden="true"></i>', false);
+        $response->assertSee('href="https://example.com/docs"', false);
+        $response->assertSee('target="_blank"', false);
+        $response->assertSee('rel="noopener noreferrer"', false);
+        $response->assertSee('>Plain Link</span>', false);
+        $response->assertDontSee('<i class="wb-icon wb-icon-"', false);
+    }
+
+    #[Test]
+    public function sidebar_footer_renders_callout_and_version_text_from_translation_rows(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $footer = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-footer',
+            'block_type_id' => $this->blockType('sidebar-footer', 'Sidebar Footer', 19)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'info'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $footer->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Need help?',
+            'content' => 'Open the starter guide first.',
+            'subtitle' => 'WebBlocks UI v2.4.4',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-sidebar-footer">', false);
+        $response->assertSee('<div class="wb-callout wb-callout-info">', false);
+        $response->assertSee('<div class="wb-callout-title">Need help?</div>', false);
+        $response->assertSee('<p>Open the starter guide first.</p>', false);
+        $response->assertSee('<p class="wb-text-xs wb-text-muted wb-mt-3 wb-mb-0">WebBlocks UI v2.4.4</p>', false);
     }
 
     #[Test]

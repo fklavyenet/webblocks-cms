@@ -13,6 +13,7 @@
 - Fix Header Actions icon rendering by switching to the real WebBlocks UI `<i class="wb-icon ...">` contract.
 - Fix Header Actions behavior so mode icon state stays in sync with `data-wb-mode-cycle` and the accent dropdown stays anchored through the standard WebBlocks UI dropdown hooks.
 - Improve public light/dark/auto mode compatibility by replacing site-level hardcoded public colors with WebBlocks UI token-driven styling.
+- Add first-class docs sidebar blocks for aside brand, navigation, nav groups, nav items, and footer content while keeping the outer docs sidebar wrapper owned by page and slot shell presets.
 
 ## 1.5.0
 

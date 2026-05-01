@@ -32,7 +32,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Current layout blocks are `section`, `container`, `cluster`, and `grid`.
 - Current content blocks are `header`, `plain_text`, `button_link`, `card`, `stat-card`, and `alert`.
 - Current pattern blocks are `content_header`, `link-list`, and `link-list-item`.
-- Current navigation blocks include `breadcrumb` for context bars and `link-list` or `navigation-auto` for broader navigation structures.
+- Current navigation blocks include `breadcrumb`, `header-actions`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, and `sidebar-footer` for docs or shell-adjacent navigation structures.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
@@ -62,8 +62,15 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
 - `breadcrumb` is a first-class system navigation block for header or context bars. It renders the current page breadcrumb trail from the active site and page translation context, stores only shared operational options in `blocks.settings`, and should not be used as a substitute for full navigation menus.
 - `header-actions` is a first-class system navigation block for compact header utility controls such as color mode and accent actions. It pairs naturally with `breadcrumb` inside the `header` slot and is not a navigation menu.
+- `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, and `sidebar-footer` are first-class docs sidebar blocks intended for the `sidebar` slot in the `docs` shell. They render only the inner contents of the docs aside and do not own the outer `aside.wb-sidebar` wrapper.
+- `sidebar-brand` stores translated `title` and `subtitle` in `block_text_translations` and stores shared URL and target in `blocks.settings`.
+- `sidebar-navigation` is a first-class container block that renders only `nav.wb-sidebar-nav > div.wb-sidebar-section`, stores translated navigation ARIA label in `block_text_translations.title`, and accepts only `sidebar-nav-item` and `sidebar-nav-group` children.
+- `sidebar-nav-item` stores translated label text in `block_text_translations.title`, stores shared URL, target, icon, and active matching mode in `blocks.settings`, and renders the active class only on the `a.wb-sidebar-link` element.
+- `sidebar-nav-group` stores translated group label in `block_text_translations.title`, stores shared icon and initial open state in `blocks.settings`, and accepts only `sidebar-nav-item` children.
+- `sidebar-footer` stores translated callout title, body, and footer text in `block_text_translations` and stores the shared callout variant in `blocks.settings`.
 - Public page structure is now configurable with controlled shared settings on pages and slots. `Public Shell` supports `default` and `docs`, and slot wrapper settings support controlled wrapper elements plus presets for `docs navbar`, `docs sidebar`, `docs main`, `default`, and `plain`.
 - Docs shell rendering is layout-level, not block-level. Use page `Public Shell = Docs` with slot presets such as `Docs Navbar`, `Docs Sidebar`, and `Docs Main` to render `.wb-docs-shell`, `.wb-docs-content`, `.wb-navbar.wb-navbar-glass`, `.wb-sidebar`, and `.wb-content-shell.wb-docs-main` without pushing shell classes into blocks.
+- Docs sidebar shell responsibility stays at the page and slot layer. The `Docs Sidebar` slot preset owns `<aside class="wb-sidebar">`, while sidebar blocks render only the brand, navigation, nav groups or items, and footer content inside that wrapper.
 - `Docs Navbar` aligns header slot children with a full-width docs topbar row using shipped WebBlocks UI flex utilities such as `wb-flex`, `wb-items-center`, `wb-justify-between`, `wb-gap-3`, and `wb-w-full` instead of spacer divs.
 - Slot wrapper classes are controlled presets, not arbitrary editor-provided class strings. The CMS validates allowed wrapper elements and wrapper presets server-side and falls back safely for unknown values.
 - Existing saved `dashboard` shell values and `dashboard-*` slot presets are normalized to the `docs` shell equivalents during rendering and admin saves.
@@ -255,8 +262,9 @@ See `docs/installation.md` for the complete install guide.
 
 5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For docs layouts, set the page `Public Shell` to `Docs` and configure safe slot wrapper presets on the Header, Sidebar, and Main slots instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. For a docs-style context bar, add `Breadcrumb` and `Header Actions` to the `Header` slot. `Header Actions` renders system-owned theme utilities such as color mode and accent controls without requiring raw HTML blocks.
-7. Publish the page as a `site_admin` or `super_admin`.
-8. Open the public URL or preview link to confirm the live result.
+7. For a docs-style sidebar, use the `Sidebar` slot with the `Docs Sidebar` preset, then add `Sidebar Brand`, `Sidebar Navigation`, and `Sidebar Footer` as top-level sidebar blocks. Inside `Sidebar Navigation`, add `Sidebar Nav Item` and optional `Sidebar Nav Group` blocks.
+8. Publish the page as a `site_admin` or `super_admin`.
+9. Open the public URL or preview link to confirm the live result.
 
 See `docs/getting-started.md` for the first-use workflow.
 

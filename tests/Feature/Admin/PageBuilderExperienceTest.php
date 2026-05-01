@@ -178,6 +178,11 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Link List');
         $response->assertSee('Link List Item');
         $response->assertSee('Breadcrumb');
+        $response->assertSee('Sidebar Brand');
+        $response->assertSee('Sidebar Navigation');
+        $response->assertSee('Sidebar Footer');
+        $response->assertDontSee('Sidebar Nav Item');
+        $response->assertDontSee('Sidebar Nav Group');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -302,6 +307,148 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame('navigation', $headerActionsType->category);
         $this->assertTrue($headerActionsType->is_system);
         $this->assertFalse($headerActionsType->is_container);
+    }
+
+    #[Test]
+    public function docs_sidebar_block_types_are_seeded_with_expected_container_rules(): void
+    {
+        $this->seedFoundation();
+
+        $brand = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
+        $navigation = BlockType::query()->where('slug', 'sidebar-navigation')->firstOrFail();
+        $item = BlockType::query()->where('slug', 'sidebar-nav-item')->firstOrFail();
+        $group = BlockType::query()->where('slug', 'sidebar-nav-group')->firstOrFail();
+        $footer = BlockType::query()->where('slug', 'sidebar-footer')->firstOrFail();
+
+        $navigationBlock = new Block(['type' => 'sidebar-navigation', 'block_type_id' => $navigation->id]);
+        $navigationBlock->setRelation('blockType', $navigation);
+        $groupBlock = new Block(['type' => 'sidebar-nav-group', 'block_type_id' => $group->id]);
+        $groupBlock->setRelation('blockType', $group);
+
+        $this->assertSame('published', $brand->status);
+        $this->assertSame('navigation', $brand->category);
+        $this->assertFalse($brand->is_container);
+        $this->assertTrue($navigation->is_container);
+        $this->assertFalse($item->is_container);
+        $this->assertTrue($group->is_container);
+        $this->assertFalse($footer->is_container);
+        $this->assertSame(['sidebar-nav-item', 'sidebar-nav-group'], $navigationBlock->allowedChildTypeSlugs());
+        $this->assertSame(['sidebar-nav-item'], $groupBlock->allowedChildTypeSlugs());
+    }
+
+    #[Test]
+    public function sidebar_navigation_and_group_parent_child_rules_are_enforced(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($sidebar, 'Docs', 'docs');
+        $navigationType = BlockType::query()->where('slug', 'sidebar-navigation')->firstOrFail();
+        $itemType = BlockType::query()->where('slug', 'sidebar-nav-item')->firstOrFail();
+        $groupType = BlockType::query()->where('slug', 'sidebar-nav-group')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $navigationType->id,
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $group = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navigation->id,
+            'type' => 'sidebar-nav-group',
+            'block_type_id' => $groupType->id,
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $plain = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 2,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $navigation->id]))
+            ->assertOk()
+            ->assertSee('Sidebar Nav Item')
+            ->assertSee('Sidebar Nav Group');
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $group->id]))
+            ->assertOk()
+            ->assertSee('Sidebar Nav Item');
+
+        $invalidRoot = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'slot_type_id' => $sidebar->id,
+                'block_type_id' => $itemType->id,
+                'sort_order' => 0,
+                'title' => 'Root item',
+                'url' => '/p/docs',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalidRoot->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidRoot->assertSessionHasErrors('parent_id');
+
+        $invalidPlainChild = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => $plain->id,
+                'slot_type_id' => $sidebar->id,
+                'block_type_id' => $itemType->id,
+                'sort_order' => 0,
+                'title' => 'Bad item',
+                'url' => '/p/docs',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalidPlainChild->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidPlainChild->assertSessionHasErrors('parent_id');
+
+        $validGroupChild = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'parent_id' => $group->id,
+            'slot_type_id' => $sidebar->id,
+            'block_type_id' => $itemType->id,
+            'sort_order' => 0,
+            'title' => 'Group child',
+            'url' => '/p/docs',
+            'sidebar_nav_item_active_mode' => 'path',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $validGroupChild->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'page_id' => $page->id,
+            'parent_id' => $group->id,
+            'type' => 'sidebar-nav-item',
+        ]);
     }
 
     #[Test]

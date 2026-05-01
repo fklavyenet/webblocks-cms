@@ -728,7 +728,9 @@ class PageController extends Controller
     private function pickerBlockTypes($blocks, $blockTypes, ?int $parentId = null)
     {
         if (! $parentId) {
-            return $blockTypes->values();
+            return $blockTypes
+                ->reject(fn (BlockType $blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group'], true))
+                ->values();
         }
 
         $parentBlock = $blocks->firstWhere('id', $parentId);

@@ -47,6 +47,11 @@ class BlockRequest extends FormRequest
         $isAlert = $selectedBlockType?->slug === 'alert';
         $isBreadcrumb = $selectedBlockType?->slug === 'breadcrumb';
         $isHeaderActions = $selectedBlockType?->slug === 'header-actions';
+        $isSidebarBrand = $selectedBlockType?->slug === 'sidebar-brand';
+        $isSidebarNavigation = $selectedBlockType?->slug === 'sidebar-navigation';
+        $isSidebarNavItem = $selectedBlockType?->slug === 'sidebar-nav-item';
+        $isSidebarNavGroup = $selectedBlockType?->slug === 'sidebar-nav-group';
+        $isSidebarFooter = $selectedBlockType?->slug === 'sidebar-footer';
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
@@ -74,13 +79,13 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
-            'name' => [$isLayoutPrimitive ? 'nullable' : 'prohibited', 'string', 'max:100'],
+            'name' => [($isLayoutPrimitive || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
@@ -92,9 +97,9 @@ class BlockRequest extends FormRequest
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
-            'url' => [($isButtonLink || $selectedBlockType?->slug === 'link-list-item') ? 'required' : 'nullable', 'string', 'max:2048'],
+            'url' => [(($isButtonLink || $selectedBlockType?->slug === 'link-list-item' || $isSidebarBrand || $isSidebarNavItem) && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
-            'target' => [$isButtonLink ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
+            'target' => [($isButtonLink || $isSidebarBrand || $isSidebarNavItem) ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
             'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
@@ -155,6 +160,12 @@ class BlockRequest extends FormRequest
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
             'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_nav_item_icon' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
+            'sidebar_nav_item_active_mode' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['exact', 'path', 'current-page', 'manual'])],
+            'sidebar_nav_item_manual_active' => [$isSidebarNavItem ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
+            'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
     }
@@ -169,7 +180,9 @@ class BlockRequest extends FormRequest
                 $validator->errors()->add('locale', 'Selected locale must be enabled for the page site.');
             }
 
-            $parentId = $this->integer('parent_id');
+            $parentId = $this->has('parent_id')
+                ? $this->integer('parent_id')
+                : (int) ($this->route('block')?->parent_id ?: 0);
             $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
             $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
             $isColumns = $selectedBlockType?->slug === 'columns';
@@ -192,6 +205,14 @@ class BlockRequest extends FormRequest
                 }
             }
 
+            if (in_array($selectedBlockType?->slug, ['sidebar-brand', 'sidebar-nav-item'], true)) {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
+                    $validator->errors()->add('url', 'Sidebar URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
+                }
+            }
+
             if ($selectedBlockType?->slug === 'card') {
                 $url = trim((string) $this->input('card_url', ''));
 
@@ -201,6 +222,12 @@ class BlockRequest extends FormRequest
             }
 
             if (! $parentId) {
+                if (in_array($selectedBlockType?->slug, ['sidebar-nav-item', 'sidebar-nav-group'], true)) {
+                    $validator->errors()->add('parent_id', 'This block type requires a supported parent block.');
+
+                    return;
+                }
+
                 if (! in_array($selectedBlockType?->slug, ['columns', 'feature-grid', 'link-list'], true)) {
                     return;
                 }
@@ -293,6 +320,18 @@ class BlockRequest extends FormRequest
                 return;
             }
 
+            if ($selectedBlockType?->slug === 'sidebar-nav-item' && ! ($parent->isSidebarNavigation() || $parent->isSidebarNavGroup())) {
+                $validator->errors()->add('parent_id', 'Sidebar nav items can only be placed under Sidebar Navigation or Sidebar Nav Group blocks.');
+
+                return;
+            }
+
+            if ($selectedBlockType?->slug === 'sidebar-nav-group' && ! $parent->isSidebarNavigation()) {
+                $validator->errors()->add('parent_id', 'Sidebar nav groups can only be placed under Sidebar Navigation blocks.');
+
+                return;
+            }
+
             if (! $block) {
                 return;
             }
@@ -381,6 +420,10 @@ class BlockRequest extends FormRequest
         $data = $this->validated();
         $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
         $pageId = (int) $data['page_id'];
+
+        if (! $this->has('parent_id') && $this->route('block') instanceof Block) {
+            $data['parent_id'] = $this->route('block')->parent_id;
+        }
 
         if (! empty($data['parent_id'])) {
             $parentMatchesPage = Block::query()
@@ -547,6 +590,144 @@ class BlockRequest extends FormRequest
                 $data['meta'] = null;
                 $data['asset_id'] = null;
                 $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-brand') {
+                $isTranslatedSidebarBrandEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarBrandEdit) {
+                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-navigation') {
+                $isTranslatedSidebarNavigationEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+                $layoutName = trim((string) ($data['name'] ?? ''));
+
+                if (! $isTranslatedSidebarNavigationEdit) {
+                    if ($layoutName !== '') {
+                        $settings['layout_name'] = $layoutName;
+                    } else {
+                        unset($settings['layout_name']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-nav-item') {
+                $isTranslatedSidebarNavItemEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarNavItemEdit) {
+                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                    $icon = trim((string) ($data['sidebar_nav_item_icon'] ?? ''));
+                    $settings['icon'] = in_array($icon, ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'], true) ? $icon : null;
+                    $settings['active_mode'] = in_array(($data['sidebar_nav_item_active_mode'] ?? 'path'), ['exact', 'path', 'current-page', 'manual'], true) ? $data['sidebar_nav_item_active_mode'] : 'path';
+                    $manualActive = filter_var($data['sidebar_nav_item_manual_active'] ?? false, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                    $settings['manual_active'] = $manualActive === true;
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-nav-group') {
+                $isTranslatedSidebarNavGroupEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarNavGroupEdit) {
+                    $icon = trim((string) ($data['sidebar_nav_group_icon'] ?? ''));
+                    $settings['icon'] = in_array($icon, ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'], true) ? $icon : null;
+                    $initiallyOpen = filter_var($data['sidebar_nav_group_initially_open'] ?? false, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                    $settings['initially_open'] = $initiallyOpen === true;
+                    $layoutName = trim((string) ($data['name'] ?? ''));
+
+                    if ($layoutName !== '') {
+                        $settings['layout_name'] = $layoutName;
+                    } else {
+                        unset($settings['layout_name']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-footer') {
+                $isTranslatedSidebarFooterEdit = $data['locale'] !== null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarFooterEdit) {
+                    $settings['variant'] = in_array(trim((string) ($data['sidebar_footer_variant'] ?? 'info')), ['info', 'success', 'warning', 'danger'], true)
+                        ? trim((string) ($data['sidebar_footer_variant'] ?? 'info'))
+                        : 'info';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
             if ($blockType?->slug === 'contact_form') {
@@ -858,6 +1039,7 @@ class BlockRequest extends FormRequest
         unset($data['title_tag']);
         unset($data['language']);
         unset($data['navigation_menu_key'], $data['breadcrumb_home_label'], $data['breadcrumb_include_current'], $data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
+        unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active'], $data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
         unset($data['text'], $data['level']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
