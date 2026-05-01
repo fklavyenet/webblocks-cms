@@ -133,6 +133,7 @@
                                     <th>Safety backup</th>
                                     <th>Triggered by</th>
                                     <th>Duration</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -150,6 +151,17 @@
                                         </td>
                                         <td>{{ $restoreRun->triggeredBy?->name ?? '-' }}</td>
                                         <td>{{ $restoreRun->durationLabel() }}</td>
+                                        <td>
+                                            <div class="wb-backup-actions wb-cluster wb-gap-1 wb-items-center wb-justify-end wb-nowrap">
+                                                <form method="POST" action="{{ route('admin.system.backups.restores.destroy', [$backup, $restoreRun]) }}" onsubmit="return confirm('Delete this restore history entry? This will not delete any backup archive.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete restore history entry" aria-label="Delete restore history entry">
+                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

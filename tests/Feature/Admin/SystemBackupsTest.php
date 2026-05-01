@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\SystemBackup;
+use App\Models\SystemBackupRestore;
 use App\Models\User;
 use App\Support\Sites\ExportImport\SiteTransferPackage;
 use App\Support\System\DatabaseDumpWriter;
@@ -185,6 +186,43 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('disabled', false);
         $response->assertSee('required', false);
         $response->assertSee('Manifest Preview');
+    }
+
+    #[Test]
+    public function backup_detail_page_renders_restore_history_delete_action(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/demo.zip',
+            'archive_filename' => 'demo.zip',
+            'started_at' => now()->subMinutes(5),
+            'finished_at' => now()->subMinutes(4),
+            'summary' => 'Completed.',
+        ]);
+        $restore = SystemBackupRestore::query()->create([
+            'source_backup_id' => $backup->id,
+            'source_archive_disk' => 'backups',
+            'source_archive_path' => $backup->archive_path,
+            'source_archive_filename' => $backup->archive_filename,
+            'status' => SystemBackupRestore::STATUS_FAILED,
+            'restored_parts' => ['database'],
+            'started_at' => now()->subMinutes(3),
+            'finished_at' => now()->subMinutes(2),
+            'summary' => 'Restore failed.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
+
+        $response->assertOk();
+        $response->assertSee('Restore History');
+        $response->assertSee('Actions');
+        $response->assertSee('action="'.route('admin.system.backups.restores.destroy', [$backup, $restore]).'"', false);
+        $response->assertSee('Delete this restore history entry? This will not delete any backup archive.');
     }
 
     #[Test]
@@ -569,6 +607,94 @@ class SystemBackupsTest extends TestCase
         $response->assertSessionHasErrors(['system_backup' => 'Running backup cannot be deleted.']);
         $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
         $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
+    }
+
+    #[Test]
+    public function restore_history_entry_can_be_deleted_without_deleting_backup_record_or_archive(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/source.zip',
+            'archive_filename' => 'source.zip',
+            'started_at' => now()->subMinutes(10),
+            'finished_at' => now()->subMinutes(9),
+            'summary' => 'Completed.',
+        ]);
+        $restore = SystemBackupRestore::query()->create([
+            'source_backup_id' => $backup->id,
+            'source_archive_disk' => 'backups',
+            'source_archive_path' => $backup->archive_path,
+            'source_archive_filename' => $backup->archive_filename,
+            'status' => SystemBackupRestore::STATUS_FAILED,
+            'restored_parts' => ['database', 'uploads'],
+            'started_at' => now()->subMinutes(8),
+            'finished_at' => now()->subMinutes(7),
+            'summary' => 'Restore failed.',
+            'error_message' => 'Restore failed.',
+        ]);
+
+        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.restores.destroy', [$backup, $restore]));
+
+        $response->assertRedirect(route('admin.system.backups.show', $backup));
+        $response->assertSessionHas('status', 'Restore history entry deleted.');
+        $this->assertDatabaseMissing('system_backup_restores', ['id' => $restore->id]);
+        $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+        $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
+    }
+
+    #[Test]
+    public function restore_history_entry_cannot_be_deleted_through_a_different_backup_url(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/source.zip',
+            'archive_filename' => 'source.zip',
+            'started_at' => now()->subMinutes(10),
+            'finished_at' => now()->subMinutes(9),
+            'summary' => 'Completed.',
+        ]);
+        $otherBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/other.zip',
+            'archive_filename' => 'other.zip',
+            'started_at' => now()->subMinutes(6),
+            'finished_at' => now()->subMinutes(5),
+            'summary' => 'Completed.',
+        ]);
+        $restore = SystemBackupRestore::query()->create([
+            'source_backup_id' => $backup->id,
+            'source_archive_disk' => 'backups',
+            'source_archive_path' => $backup->archive_path,
+            'source_archive_filename' => $backup->archive_filename,
+            'status' => SystemBackupRestore::STATUS_COMPLETED,
+            'restored_parts' => ['database'],
+            'started_at' => now()->subMinutes(8),
+            'finished_at' => now()->subMinutes(7),
+            'summary' => 'Restore completed.',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.restores.destroy', [$otherBackup, $restore]));
+
+        $response->assertNotFound();
+        $this->assertDatabaseHas('system_backup_restores', ['id' => $restore->id]);
     }
 
     #[Test]

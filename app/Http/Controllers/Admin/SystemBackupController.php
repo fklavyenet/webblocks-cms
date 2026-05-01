@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RunSystemBackupRestoreRequest;
 use App\Http\Requests\Admin\SystemBackupUploadRequest;
 use App\Models\SystemBackup;
+use App\Models\SystemBackupRestore;
 use App\Support\System\BackupRestoreArchiveInspector;
 use App\Support\System\SystemBackupManager;
 use App\Support\System\SystemBackupRestoreManager;
@@ -148,6 +149,19 @@ class SystemBackupController extends Controller
     public function download(SystemBackup $backup): BinaryFileResponse
     {
         return $this->systemBackupManager->downloadResponse($backup);
+    }
+
+    public function destroyRestore(SystemBackup $backup, SystemBackupRestore $restore): RedirectResponse
+    {
+        if ((int) $restore->source_backup_id !== (int) $backup->id) {
+            abort(404);
+        }
+
+        $restore->delete();
+
+        return redirect()
+            ->route('admin.system.backups.show', $backup)
+            ->with('status', 'Restore history entry deleted.');
     }
 
     private function systemBackupManagerPath(SystemBackup $backup): string

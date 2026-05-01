@@ -115,6 +115,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
         Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
         Route::post('system/backups/{backup}/restore', [SystemBackupController::class, 'restore'])->name('system.backups.restore');
+        Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
         Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
         Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
         Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
