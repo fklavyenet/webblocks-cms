@@ -3,37 +3,34 @@
  | Site public styles
  |--------------------------------------------------------------------------
  |
- | Use this file for site-specific public branding and theme refinements.
- | Keep generic WebBlocks CMS core styling in shared core templates instead.
+ | Keep site branding mode-compatible by using shipped WebBlocks UI tokens.
+ | Avoid hardcoded light-only colors so public pages stay readable in
+ | light, dark, and auto mode.
  |
  */
 
-/* Brand Theme */
-
 :root {
-    --fklavye-teal-strong: #117d79;
-    --fklavye-teal-deep: #0f5c5a;
-    --fklavye-teal-soft: #d7f2ee;
-    --fklavye-gold: #b9892c;
-    --fklavye-gold-soft: #f3ead2;
-    --fklavye-ink: #203334;
+    --fklavye-header-shadow: 0 10px 30px color-mix(in srgb, var(--wb-text) 8%, transparent);
+    --fklavye-panel-shadow: 0 18px 40px color-mix(in srgb, var(--wb-text) 10%, transparent);
+    --fklavye-panel-shadow-sm: 0 16px 32px color-mix(in srgb, var(--wb-text) 9%, transparent);
 }
 
 .wb-public-body {
-    color: var(--fklavye-ink);
+    color: var(--wb-text);
     background:
-        radial-gradient(circle at top right, rgba(17, 125, 121, 0.08), transparent 24%),
-        linear-gradient(180deg, #fcfefd 0%, #f6fbfa 100%);
+        radial-gradient(circle at top right, color-mix(in srgb, var(--wb-accent) 8%, transparent), transparent 24%),
+        linear-gradient(180deg, color-mix(in srgb, var(--wb-bg) 92%, var(--wb-accent-softer) 8%) 0%, var(--wb-bg) 100%);
 }
 
 .wb-public-header {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: rgba(250, 253, 252, 0.94);
-    border-bottom: 1px solid rgba(17, 125, 121, 0.16);
-    box-shadow: 0 10px 30px rgba(15, 92, 90, 0.06);
+    background: color-mix(in srgb, var(--wb-surface) 88%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--wb-border) 82%, var(--wb-accent-border) 18%);
+    box-shadow: var(--fklavye-header-shadow);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .wb-public-header-bar {
@@ -49,11 +46,12 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-size: 0.82rem;
+    color: var(--wb-text);
 }
 
 .wb-public-header-context {
     display: block;
-    opacity: 0.72;
+    color: var(--wb-muted);
     font-size: 0.74rem;
     line-height: 1.2;
 }
@@ -100,7 +98,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: rgba(32, 51, 52, 0.78);
+    color: var(--wb-muted);
     font-weight: 700;
     font-size: 0.73rem;
     line-height: 1;
@@ -111,20 +109,20 @@
     border: 0;
     background: transparent;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color var(--wb-t);
 }
 
 .wb-public-nav-link:hover,
 .wb-public-nav-link.is-active,
 .wb-public-nav-item.is-active > .wb-public-nav-link {
-    color: var(--fklavye-teal-deep);
+    color: var(--wb-text);
 }
 
 .wb-public-nav-link.is-active,
 .wb-public-nav-item.is-active > .wb-public-nav-link {
     text-decoration: none;
     text-underline-offset: 0.35rem;
-    box-shadow: inset 0 -2px 0 var(--fklavye-gold);
+    box-shadow: inset 0 -2px 0 var(--wb-accent);
 }
 
 .wb-public-nav-link-trigger {
@@ -141,21 +139,24 @@
     justify-content: center;
     width: 2.35rem;
     height: 2.35rem;
-    border: 1px solid rgba(17, 125, 121, 0.18);
+    border: 1px solid color-mix(in srgb, var(--wb-border) 78%, var(--wb-accent-border) 22%);
     border-radius: 0.65rem;
-    background: transparent;
-    color: var(--fklavye-teal-deep);
+    background: color-mix(in srgb, var(--wb-surface) 92%, var(--wb-accent-softer) 8%);
+    color: var(--wb-text);
     cursor: pointer;
 }
 
 .wb-public-banner {
     position: relative;
     overflow: hidden;
-    color: #f9fffd;
+    color: var(--wb-text);
     background:
-        linear-gradient(135deg, rgba(15, 92, 90, 0.98) 0%, rgba(17, 125, 121, 0.96) 52%, rgba(62, 151, 137, 0.9) 100%);
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-    border-bottom: 1px solid rgba(15, 92, 90, 0.2);
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--wb-accent-softer) 86%, var(--wb-surface) 14%) 0%,
+            color-mix(in srgb, var(--wb-accent-soft) 68%, var(--wb-surface) 32%) 52%,
+            var(--wb-surface) 100%);
+    border-top: 1px solid color-mix(in srgb, var(--wb-border) 72%, var(--wb-accent-border) 28%);
+    border-bottom: 1px solid color-mix(in srgb, var(--wb-border) 82%, var(--wb-accent-border) 18%);
 }
 
 .wb-public-banner::before {
@@ -163,8 +164,8 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 22%),
-        linear-gradient(90deg, rgba(185, 137, 44, 0.18), transparent 30% 70%, rgba(255, 255, 255, 0.08));
+        radial-gradient(circle at top right, color-mix(in srgb, var(--wb-accent) 14%, transparent), transparent 22%),
+        linear-gradient(90deg, color-mix(in srgb, var(--wb-accent-soft) 32%, transparent), transparent 30% 70%, color-mix(in srgb, var(--wb-accent-border) 16%, transparent));
     pointer-events: none;
 }
 
@@ -187,11 +188,12 @@
     font-size: 1.15rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: var(--wb-text);
 }
 
 .wb-public-banner-text {
     margin: 0.2rem 0 0;
-    color: rgba(244, 255, 251, 0.9);
+    color: var(--wb-muted);
     font-size: 0.92rem;
     line-height: 1.35;
 }
@@ -200,8 +202,8 @@
     width: 5.5rem;
     height: 2px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(243, 234, 210, 0.95), rgba(185, 137, 44, 0.7));
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--wb-accent) 20%, var(--wb-surface) 80%), var(--wb-accent), color-mix(in srgb, var(--wb-accent-border) 72%, var(--wb-accent) 28%));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-accent-border) 48%, transparent);
     flex: 0 0 auto;
 }
 
@@ -226,8 +228,6 @@
     margin-top: -0.5rem;
 }
 
-/* Contact Page */
-
 .wb-public-contact-columns {
     align-items: start;
 }
@@ -238,16 +238,16 @@
 
 .wb-public-contact-card,
 .wb-public-contact-form-card {
-    border: 1px solid rgba(17, 125, 121, 0.12);
-    box-shadow: 0 18px 40px rgba(15, 92, 90, 0.08);
+    border-color: color-mix(in srgb, var(--wb-border) 78%, var(--wb-accent-border) 22%);
+    box-shadow: var(--fklavye-panel-shadow);
 }
 
 .wb-public-contact-card {
-    background: linear-gradient(180deg, rgba(215, 242, 238, 0.72) 0%, rgba(255, 255, 255, 0.98) 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--wb-accent-soft) 38%, var(--wb-surface-2) 62%) 0%, var(--wb-surface) 100%);
 }
 
 .wb-public-contact-form-card {
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--wb-surface);
 }
 
 .wb-public-contact-honeypot {
@@ -259,47 +259,43 @@
 }
 
 .wb-public-contact-meta strong {
-    color: var(--fklavye-teal-deep);
+    color: var(--wb-text);
     font-size: 0.82rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
-.wb-public-contact-form-card .wb-btn,
-.wb-public-header-actions .wb-btn {
-    background: linear-gradient(135deg, var(--fklavye-gold) 0%, #9d6f1f 100%);
-    border-color: rgba(117, 78, 11, 0.32);
-    color: #fffdf8;
-}
-
 .wb-public-main a,
 .wb-public-footer a {
-    color: var(--fklavye-teal-deep);
+    color: var(--wb-accent-text);
 }
 
 .wb-public-main a:hover,
 .wb-public-footer a:hover {
-    color: var(--fklavye-gold);
+    color: var(--wb-text);
 }
 
 .wb-public-hero,
 .wb-public-card-grid article,
 .wb-public-showcase-item,
 .wb-gallery-item {
-    border-color: rgba(17, 125, 121, 0.12);
-    box-shadow: 0 16px 32px rgba(15, 92, 90, 0.08);
+    border-color: color-mix(in srgb, var(--wb-border) 78%, var(--wb-accent-border) 22%);
+    box-shadow: var(--fklavye-panel-shadow-sm);
 }
 
 .wb-public-hero {
     background:
-        linear-gradient(145deg, rgba(214, 241, 236, 0.92) 0%, rgba(255, 255, 255, 0.98) 36%, rgba(243, 234, 210, 0.86) 100%);
-    border: 1px solid rgba(17, 125, 121, 0.14);
+        linear-gradient(145deg,
+            color-mix(in srgb, var(--wb-accent-softer) 78%, var(--wb-surface) 22%) 0%,
+            var(--wb-surface) 36%,
+            color-mix(in srgb, var(--wb-accent-soft) 42%, var(--wb-surface) 58%) 100%);
+    border: 1px solid color-mix(in srgb, var(--wb-border) 72%, var(--wb-accent-border) 28%);
 }
 
 .wb-public-hero h1,
 .wb-public-main h2,
 .wb-public-main h3 {
-    color: var(--fklavye-teal-deep);
+    color: var(--wb-text);
 }
 
 .wb-public-main h2,
@@ -314,8 +310,8 @@
 }
 
 .wb-public-footer {
-    border-top: 1px solid rgba(17, 125, 121, 0.12);
-    background: rgba(250, 253, 252, 0.8);
+    border-top: 1px solid color-mix(in srgb, var(--wb-border) 82%, var(--wb-accent-border) 18%);
+    background: color-mix(in srgb, var(--wb-surface) 78%, transparent);
 }
 
 .wb-public-footer .wb-prose {
@@ -356,15 +352,13 @@
     height: 0.75rem;
     border-radius: 999px;
     border: none;
-    background: rgba(15, 23, 42, 0.16);
+    background: color-mix(in srgb, var(--wb-muted) 28%, transparent);
     cursor: pointer;
 }
 
 .wb-slider-dot.is-active {
     background: currentColor;
 }
-
-/* Responsive Tweaks */
 
 @media (min-width: 960px) {
     .wb-public-header-nav {
