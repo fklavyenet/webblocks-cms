@@ -8,6 +8,10 @@ use ZipArchive;
 
 class BackupRestoreArchiveInspector
 {
+    public function __construct(
+        private readonly SqlDumpContentValidator $sqlDumpContentValidator,
+    ) {}
+
     public function inspect(string $archivePath): BackupRestoreInspection
     {
         $archive = new ZipArchive;
@@ -60,6 +64,8 @@ class BackupRestoreArchiveInspector
             if ($archive->locateName('database/database.sql') === false) {
                 throw new RuntimeException('Backup archive is missing database/database.sql.');
             }
+
+            $this->sqlDumpContentValidator->assertValidArchiveEntry($archive, 'database/database.sql');
 
             $manifestIncludesUploads = (bool) data_get($manifest, 'included_parts.uploads', false);
             $archiveHasUploads = $this->archiveHasPath($archive, 'uploads/public/');

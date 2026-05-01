@@ -3,8 +3,11 @@
 namespace Tests\Unit;
 
 use App\Support\System\DatabaseDumpWriter;
+use App\Support\System\DatabaseExecutionStrategyResolver;
+use App\Support\System\SqlDumpContentValidator;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class DatabaseDumpWriterTest extends TestCase
@@ -78,5 +81,86 @@ class DatabaseDumpWriterTest extends TestCase
         $this->expectExceptionMessage('Invalid cms.backup.execution value [invalid]. Supported values: auto, direct, ddev.');
 
         $writer->resolveMysqlDumpStrategy();
+    }
+
+    public function test_ddev_dump_writer_captures_only_stdout_as_sql(): void
+    {
+        $writer = new class(app(DatabaseExecutionStrategyResolver::class), app(SqlDumpContentValidator::class)) extends DatabaseDumpWriter
+        {
+            public function __construct(DatabaseExecutionStrategyResolver $resolver, SqlDumpContentValidator $validator)
+            {
+                parent::__construct($resolver, $validator);
+            }
+
+            public function captureDump(string $destinationPath): void
+            {
+                $this->runDdevDump($destinationPath);
+            }
+
+            protected function makeDumpProcess(array $command): Process
+            {
+                return new Process(['php', '-r', 'fwrite(STDOUT, "-- MySQL dump\nCREATE TABLE test (id int);\n"); fwrite(STDERR, "You executed ddev exec --raw -- mysqldump\n");']);
+            }
+
+            private function runDdevDump(string $destinationPath): void
+            {
+                $method = new \ReflectionMethod(DatabaseDumpWriter::class, 'runDdevMysqlDump');
+                $method->setAccessible(true);
+                $method->invoke($this, 'mysql', $destinationPath, ['database' => 'demo', 'host' => 'db', 'port' => 3306]);
+            }
+        };
+
+        $directory = storage_path('app/testing-system-backups/dump-writer');
+        File::ensureDirectoryExists($directory);
+        $destinationPath = $directory.'/database.sql';
+
+        $writer->captureDump($destinationPath);
+
+        $this->assertSame("-- MySQL dump\nCREATE TABLE test (id int);\n", File::get($destinationPath));
+        $this->assertStringNotContainsString('You executed', File::get($destinationPath));
+
+        File::deleteDirectory($directory);
+    }
+
+    public function test_ddev_dump_writer_rejects_command_text_stdout(): void
+    {
+        $writer = new class(app(DatabaseExecutionStrategyResolver::class), app(SqlDumpContentValidator::class)) extends DatabaseDumpWriter
+        {
+            public function __construct(DatabaseExecutionStrategyResolver $resolver, SqlDumpContentValidator $validator)
+            {
+                parent::__construct($resolver, $validator);
+            }
+
+            public function captureDump(string $destinationPath): void
+            {
+                $this->runDdevDump($destinationPath);
+            }
+
+            protected function makeDumpProcess(array $command): Process
+            {
+                return new Process(['php', '-r', 'fwrite(STDOUT, "You executed `ddev exec --raw -- mysqldump`\n");']);
+            }
+
+            private function runDdevDump(string $destinationPath): void
+            {
+                $method = new \ReflectionMethod(DatabaseDumpWriter::class, 'runDdevMysqlDump');
+                $method->setAccessible(true);
+                $method->invoke($this, 'mysql', $destinationPath, ['database' => 'demo', 'host' => 'db', 'port' => 3306]);
+            }
+        };
+
+        $directory = storage_path('app/testing-system-backups/dump-writer-invalid');
+        File::ensureDirectoryExists($directory);
+        $destinationPath = $directory.'/database.sql';
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Generated backup SQL dump contains command output instead of SQL.');
+
+        try {
+            $writer->captureDump($destinationPath);
+        } finally {
+            $this->assertFalse(File::exists($destinationPath));
+            File::deleteDirectory($directory);
+        }
     }
 }

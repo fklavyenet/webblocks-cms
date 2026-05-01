@@ -264,14 +264,16 @@ class SystemBackupRestoreManager
             return null;
         }
 
+        $resolvedSourceBackupId = $this->resolveRestoredBackupReferenceId($sourceBackup);
+        $resolvedSafetyBackupId = $this->resolveRestoredBackupReferenceId($safetyBackup);
         $finishedAt = now();
 
         return SystemBackupRestore::query()->create([
-            'source_backup_id' => $sourceBackup?->id,
+            'source_backup_id' => $resolvedSourceBackupId,
             'source_archive_disk' => $archiveDisk,
             'source_archive_path' => $archivePath,
             'source_archive_filename' => $archiveFilename,
-            'safety_backup_id' => $safetyBackup?->id,
+            'safety_backup_id' => $resolvedSafetyBackupId,
             'status' => $status,
             'restored_parts' => $inspection?->restoredParts() ?? [],
             'manifest' => $inspection?->manifest,
@@ -290,5 +292,20 @@ class SystemBackupRestoreManager
     private function hasRestoreTable(): bool
     {
         return Schema::hasTable('system_backup_restores');
+    }
+
+    private function resolveRestoredBackupReferenceId(?SystemBackup $backup): ?int
+    {
+        if (! $backup instanceof SystemBackup || ! $backup->getKey()) {
+            return null;
+        }
+
+        if (! Schema::hasTable('system_backups')) {
+            return null;
+        }
+
+        return SystemBackup::query()->whereKey($backup->getKey())->exists()
+            ? $backup->getKey()
+            : null;
     }
 }

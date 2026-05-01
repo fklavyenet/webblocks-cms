@@ -13,6 +13,7 @@ class DatabaseDumpWriter
 {
     public function __construct(
         private readonly DatabaseExecutionStrategyResolver $strategyResolver,
+        private readonly SqlDumpContentValidator $sqlDumpContentValidator,
     ) {}
 
     public function dumpTo(string $destinationPath, array &$output = []): array
@@ -126,13 +127,15 @@ class DatabaseDumpWriter
 
         try {
             $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
-            $process = new Process($command);
+            $process = $this->makeDumpProcess($command);
             $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
             $process->run();
 
             if (! $process->isSuccessful()) {
                 throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
             }
+
+            $this->assertValidDumpFile($destinationPath);
         } finally {
             File::delete($defaultsFile);
         }
@@ -165,7 +168,7 @@ class DatabaseDumpWriter
     private function runDdevMysqlDump(string $driver, string $destinationPath, array $config): void
     {
         $command = $this->buildDdevMysqlDumpCommand($driver, $config);
-        $process = new Process($command);
+        $process = $this->makeDumpProcess($command);
         $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
 
         $directory = dirname($destinationPath);
@@ -200,6 +203,8 @@ class DatabaseDumpWriter
 
             throw new RuntimeException('Database dump command completed without writing an SQL file.');
         }
+
+        $this->assertValidDumpFile($destinationPath);
     }
 
     private function buildDdevMysqlDumpCommand(string $driver, array $config): array
@@ -276,6 +281,22 @@ class DatabaseDumpWriter
         }
 
         return basename($this->findMysqlDumpBinary());
+    }
+
+    protected function makeDumpProcess(array $command): Process
+    {
+        return new Process($command);
+    }
+
+    private function assertValidDumpFile(string $destinationPath): void
+    {
+        try {
+            $this->sqlDumpContentValidator->assertValidFile($destinationPath, 'Generated backup SQL dump');
+        } catch (RuntimeException $exception) {
+            File::delete($destinationPath);
+
+            throw new RuntimeException($exception->getMessage(), previous: $exception);
+        }
     }
 
     private function quoteIdentifier(string $value): string

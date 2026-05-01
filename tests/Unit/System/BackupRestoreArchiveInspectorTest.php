@@ -62,7 +62,7 @@ class BackupRestoreArchiveInspectorTest extends TestCase
                     'uploads' => true,
                 ],
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            'database/database.sql' => 'select 1;',
+            'database/database.sql' => $this->validMysqlDump(),
             'uploads/public/media/example.txt' => 'restored',
         ]);
 
@@ -120,7 +120,63 @@ class BackupRestoreArchiveInspectorTest extends TestCase
                 ],
                 'archive_format' => 'zip',
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            'database/database.sql' => 'select 1;',
+            'database/database.sql' => $this->validMysqlDump(),
+        ]);
+
+        $inspection = app(BackupRestoreArchiveInspector::class)->inspect($archivePath);
+
+        $this->assertTrue($inspection->includesDatabase);
+        $this->assertFalse($inspection->includesUploads);
+    }
+
+    #[Test]
+    public function validation_fails_when_database_sql_starts_with_ddev_command_text(): void
+    {
+        $archivePath = $this->makeArchive([
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => "ddev exec --raw -- mysqldump --single-transaction demo\nCREATE TABLE `pages` (`id` int);\n",
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Backup archive database/database.sql contains command output instead of SQL.');
+
+        app(BackupRestoreArchiveInspector::class)->inspect($archivePath);
+    }
+
+    #[Test]
+    public function validation_fails_when_database_sql_starts_with_you_executed_helper_text(): void
+    {
+        $archivePath = $this->makeArchive([
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => "You executed `ddev exec --raw -- mysqldump --single-transaction demo`\nCREATE TABLE `pages` (`id` int);\n",
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Backup archive database/database.sql contains command output instead of SQL.');
+
+        app(BackupRestoreArchiveInspector::class)->inspect($archivePath);
+    }
+
+    #[Test]
+    public function validation_fails_when_database_sql_is_empty(): void
+    {
+        $archivePath = $this->makeArchive([
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => " \n\t\n",
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Backup archive database/database.sql is empty.');
+
+        app(BackupRestoreArchiveInspector::class)->inspect($archivePath);
+    }
+
+    #[Test]
+    public function validation_accepts_normal_mysql_dump_content(): void
+    {
+        $archivePath = $this->makeArchive([
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => $this->validMysqlDump(),
         ]);
 
         $inspection = app(BackupRestoreArchiveInspector::class)->inspect($archivePath);
@@ -144,6 +200,35 @@ class BackupRestoreArchiveInspectorTest extends TestCase
         $archive->close();
 
         return $archivePath;
+    }
+
+    private function backupManifest(): array
+    {
+        return [
+            'product' => SystemBackupArchivePackage::PRODUCT,
+            'package_type' => SystemBackupArchivePackage::PACKAGE_TYPE,
+            'feature_version' => SystemBackupArchivePackage::FEATURE_VERSION,
+            'format_version' => SystemBackupArchivePackage::FORMAT_VERSION,
+            'included_parts' => [
+                'database' => true,
+                'uploads' => false,
+            ],
+        ];
+    }
+
+    private function validMysqlDump(): string
+    {
+        return implode("\n", [
+            '-- MySQL dump 10.13  Distrib 8.0.36, for Linux (x86_64)',
+            '/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;',
+            'SET NAMES utf8mb4;',
+            'DROP TABLE IF EXISTS `pages`;',
+            'CREATE TABLE `pages` (`id` bigint unsigned NOT NULL);',
+            'LOCK TABLES `pages` WRITE;',
+            'INSERT INTO `pages` VALUES (1);',
+            'UNLOCK TABLES;',
+            '',
+        ]);
     }
 
     private function makeTemporaryDirectory(string $prefix): string

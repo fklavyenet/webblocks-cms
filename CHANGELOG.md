@@ -9,6 +9,7 @@
 - Add native drag-and-drop reorder support for Link List Items in the admin editor.
 - Add native drag-and-drop sibling reordering to the Edit Slot Blocks list.
 - Add uploaded backup archive validation and restore support.
+- Add backup delete action and keep backup list actions on one line.
 
 ### Changed
 
@@ -17,6 +18,9 @@
 ### Fixed
 
 - Add UI structure contract tests to ensure CMS HTML matches WebBlocks UI semantics.
+- Fix DDEV MySQL and MariaDB backup dump capture so backup archives store SQL stdout instead of command wrapper text.
+- Reject invalid backup SQL dump contents before destructive restore steps and skip creating safety backups for invalid source archives.
+- Simplify admin restore failures so invalid backup SQL surfaces as one clear restore error instead of duplicate top-level alerts.
 - Fix link list item description element to match WebBlocks UI semantics (span -> div).
 - Fix Stat Card visibility in the admin block type picker.
 - Fix Edit Slot drag-and-drop reorder persistence so reordered blocks stay ordered after refresh and in public rendering.

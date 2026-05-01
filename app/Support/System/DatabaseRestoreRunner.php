@@ -13,13 +13,12 @@ class DatabaseRestoreRunner
 {
     public function __construct(
         private readonly DatabaseExecutionStrategyResolver $strategyResolver,
+        private readonly SqlDumpContentValidator $sqlDumpContentValidator,
     ) {}
 
     public function restoreFrom(string $sqlPath, array &$output = []): array
     {
-        if (! File::isFile($sqlPath) || filesize($sqlPath) === 0) {
-            throw new RuntimeException('Backup database restore requires a non-empty SQL file.');
-        }
+        $this->sqlDumpContentValidator->assertValidFile($sqlPath, 'Backup database SQL file');
 
         $connection = DB::connection();
         $driver = $connection->getDriverName();

@@ -122,6 +122,56 @@ class SystemBackupRestoreManagerTest extends TestCase
         $this->assertSame('Backup archive is missing manifest.json.', $restoreRecord->error_message);
     }
 
+    #[Test]
+    public function invalid_sql_dump_aborts_before_safety_backup_and_database_restore(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('invalid-sql-restore-public-root'));
+
+        $sourceBackup = $this->createBackupRecord('2026/04/20/invalid-sql-backup.zip');
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => false,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => "You executed `ddev exec --raw -- mysqldump --single-transaction demo`\n",
+        ]);
+
+        $fakeBackupManager = new FakeSystemBackupManager;
+        $fakeDatabaseRestoreRunner = new FakeDatabaseRestoreRunner;
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        try {
+            app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup, $user->id);
+            $this->fail('Expected restore to fail for an invalid SQL dump.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Backup archive database/database.sql contains command output instead of SQL.', $exception->getMessage());
+        }
+
+        $this->assertSame(1, $fakeBackupManager->validateCalls);
+        $this->assertSame(0, $fakeBackupManager->safetyBackupCalls);
+        $this->assertCount(0, $fakeDatabaseRestoreRunner->restoredSqlPaths);
+        $this->assertSame(0, $fakeMaintenanceRunner->runCalls);
+        $this->assertTrue(Storage::disk('backups')->exists($sourceBackup->archive_path));
+
+        $restoreRecord = SystemBackupRestore::query()->latest()->first();
+
+        $this->assertNotNull($restoreRecord);
+        $this->assertSame(SystemBackupRestore::STATUS_FAILED, $restoreRecord->status);
+        $this->assertSame($sourceBackup->id, $restoreRecord->source_backup_id);
+        $this->assertNull($restoreRecord->safety_backup_id);
+        $this->assertSame('Backup archive database/database.sql contains command output instead of SQL.', $restoreRecord->error_message);
+    }
+
     private function createBackupRecord(string $archivePath, string $type = SystemBackup::TYPE_MANUAL): SystemBackup
     {
         return SystemBackup::query()->create([

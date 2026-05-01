@@ -68,7 +68,7 @@
     </div>
 @endif
 
-@if ($errors->any())
+@if ($errors->any() && ! $errors->has('system_update') && ! $errors->has('system_backup') && ! $errors->has('site_delete') && ! $errors->has('locale_lifecycle') && ! $errors->has('user_lifecycle') && ! $errors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Validation Error</div>

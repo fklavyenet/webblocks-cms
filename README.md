@@ -417,11 +417,24 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - The Backups screen supports both `Create backup` and `Upload backup` actions.
 - `Upload backup` accepts a previously downloaded WebBlocks CMS backup archive from this backup system and validates the archive before it is registered.
 - Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
-- Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, and rejects site export/import packages.
+- Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, rejects site export/import packages, and rejects empty or obvious non-SQL dump content before restore.
 - Uploaded backups are registered as normal backup records, appear in the existing Backups list and detail page, and reuse the same restore flow as locally created backups.
 - Backup restore is a full-system restore that overwrites the current database and uploaded files.
 - Backup restore is different from Export / Import, which creates a new site from a site package instead of replacing the current install.
-- When the existing restore flow runs, it creates a fresh safety backup before applying the selected archive.
+- When the existing restore flow runs, it validates the selected archive first and only creates a fresh safety backup before applying a valid archive.
+- MySQL and MariaDB backup creation uses raw SQL stdout from either direct `mysqldump` or `ddev exec --raw -- mysqldump` style execution. Restore feeds validated SQL content back through stdin instead of passing command text as SQL.
+
+### Backup Execution Modes
+
+- `CMS_BACKUP_EXECUTION=auto` selects `ddev` for local DDEV-hosted MySQL or MariaDB installs and otherwise uses direct local database binaries.
+- `CMS_BACKUP_EXECUTION=direct` forces local `mysqldump` or `mariadb-dump` plus `mysql` or `mariadb` binaries.
+- `CMS_BACKUP_EXECUTION=ddev` forces `ddev exec --raw -- ...` database dump and restore execution.
+
+### Backup Restore Troubleshooting
+
+- If restore reports invalid SQL dump content, inspect `database/database.sql` inside the backup zip.
+- The SQL file must contain SQL dump text such as `-- MySQL dump`, `SET`, `CREATE TABLE`, `INSERT INTO`, or `DROP TABLE`.
+- The SQL file must not start with shell or helper output such as `ddev exec`, `mysqldump`, or `You executed ...`.
 
 ## Stack
 
