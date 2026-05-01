@@ -25,27 +25,27 @@
         @endif
     </head>
     <body class="wb-public-body">
-        @foreach ($slots ?? collect() as $slot)
-            @php
-                $tag = match ($slot['slug']) {
-                    'header' => 'header',
-                    'sidebar' => 'aside',
-                    'main' => 'main',
-                    'footer' => 'footer',
-                    default => 'div',
-                };
+        @php
+            $publicShell = $publicShell ?? ['preset' => 'default', 'slots' => $slots ?? collect()];
+        @endphp
 
-                $attributes = 'data-wb-slot="'.$slot['slug'].'"';
+        @if (($publicShell['preset'] ?? 'default') === 'dashboard')
+            <div class="wb-dashboard-shell">
+                @if (! empty($publicShell['sidebar']))
+                    @include('pages.partials.slot', ['slot' => $publicShell['sidebar'], 'page' => $page])
+                @endif
 
-                if ($slot['slug'] === 'main') {
-                    $attributes .= ' id="main-content"';
-                }
-            @endphp
-
-            <{{ $tag }} {!! $attributes !!}>
+                <div class="wb-dashboard-body">
+                    @foreach ($publicShell['body_slots'] ?? collect() as $slot)
+                        @include('pages.partials.slot', ['slot' => $slot, 'page' => $page])
+                    @endforeach
+                </div>
+            </div>
+        @else
+            @foreach ($slots ?? collect() as $slot)
                 @include('pages.partials.slot', ['slot' => $slot, 'page' => $page])
-            </{{ $tag }}>
-        @endforeach
+            @endforeach
+        @endif
 
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
     </body>

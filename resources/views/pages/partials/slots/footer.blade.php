@@ -1,5 +1,10 @@
 @php
-    $chrome = $slot['chrome'];
+    $chrome = $slot['chrome'] ?? null;
+
+    if (! is_array($chrome)) {
+        $chrome = [];
+    }
+
     $supportingBlocks = $chrome['supporting_blocks'] ?? collect();
     $footerItems = $chrome['footer_items'] ?? collect();
     $legalItems = $chrome['legal_items'] ?? collect();
@@ -22,35 +27,45 @@
     };
 @endphp
 
-<footer class="{{ $footerClass }}">
-    <div class="wb-container wb-container-lg">
-        <div class="wb-grid wb-grid-3 wb-gap-6">
-            <div class="wb-stack wb-gap-3">
-                @foreach ($supportingBlocks as $block)
-                    @include('pages.partials.block', ['block' => $block])
-                @endforeach
-            </div>
+@if ($chrome === [])
+    @if ($slot['blocks']->isNotEmpty())
+        <div class="wb-stack">
+            @foreach ($slot['blocks'] as $block)
+                @include('pages.partials.block', ['block' => $block])
+            @endforeach
+        </div>
+    @endif
+@else
+    <footer class="{{ $footerClass }}">
+        <div class="wb-container wb-container-lg">
+            <div class="wb-grid wb-grid-3 wb-gap-6">
+                <div class="wb-stack wb-gap-3">
+                    @foreach ($supportingBlocks as $block)
+                        @include('pages.partials.block', ['block' => $block])
+                    @endforeach
+                </div>
 
-            <div class="wb-stack wb-gap-2">
-                <strong>Explore</strong>
-                <ul class="wb-stack wb-gap-1">{!! $renderFooterList($footerItems) !!}</ul>
-            </div>
+                <div class="wb-stack wb-gap-2">
+                    <strong>Explore</strong>
+                    <ul class="wb-stack wb-gap-1">{!! $renderFooterList($footerItems) !!}</ul>
+                </div>
 
-            <div class="wb-stack wb-gap-2">
-                <strong>Legal</strong>
-                <ul class="wb-stack wb-gap-1">{!! $renderFooterList($legalItems) !!}</ul>
-                @if (($visitorPrivacy['banner_enabled'] ?? false) === true)
-                    <button
-                        class="wb-btn wb-btn-ghost wb-btn-sm wb-footer-cookie-settings-link"
-                        type="button"
-                        data-wb-cookie-consent-open
-                        data-wb-target="#wb-cookie-consent-preferences"
-                    >
-                        Cookie settings
-                    </button>
-                @endif
-                <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
+                <div class="wb-stack wb-gap-2">
+                    <strong>Legal</strong>
+                    <ul class="wb-stack wb-gap-1">{!! $renderFooterList($legalItems) !!}</ul>
+                    @if (($visitorPrivacy['banner_enabled'] ?? false) === true)
+                        <button
+                            class="wb-btn wb-btn-ghost wb-btn-sm wb-footer-cookie-settings-link"
+                            type="button"
+                            data-wb-cookie-consent-open
+                            data-wb-target="#wb-cookie-consent-preferences"
+                        >
+                            Cookie settings
+                        </button>
+                    @endif
+                    <div class="wb-text-sm wb-text-muted">&copy; {{ now()->year }} {{ config('app.name') }}.</div>
+                </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
+@endif

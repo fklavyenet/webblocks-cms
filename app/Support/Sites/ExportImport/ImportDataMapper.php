@@ -263,6 +263,7 @@ class ImportDataMapper
                 'page_type_id' => $pageTypeSlug ? PageType::query()->where('slug', $pageTypeSlug)->value('id') : null,
                 'layout_id' => $layoutSlug ? Layout::query()->where('slug', $layoutSlug)->value('id') : null,
                 'status' => $pageData['status'] ?? 'draft',
+                'settings' => $pageData['settings'] ?? null,
                 'created_at' => $pageData['created_at'] ?? null,
                 'updated_at' => $pageData['updated_at'] ?? null,
             ]);
@@ -315,6 +316,7 @@ class ImportDataMapper
                 'page_id' => $pageId,
                 'slot_type_id' => $slotTypeId,
                 'sort_order' => $slotData['sort_order'] ?? 0,
+                'settings' => $slotData['settings'] ?? null,
                 'created_at' => $slotData['created_at'] ?? null,
                 'updated_at' => $slotData['updated_at'] ?? null,
             ]);

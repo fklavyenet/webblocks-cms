@@ -43,6 +43,13 @@
 				<input class="wb-input" type="text" value="{{ ($selectedSite?->name ?? 'Site') }}{{ $selectedSite?->domain ? ' | '.$selectedSite->domain : '' }}" disabled>
 			</div>
 			<div class="wb-stack-2 wb-field">
+				<label for="public_shell">Public Shell</label>
+				<select id="public_shell" name="public_shell" class="wb-select">
+					<option value="default" @selected(old('public_shell', $page->publicShellPreset()) === 'default')>Default</option>
+					<option value="dashboard" @selected(old('public_shell', $page->publicShellPreset()) === 'dashboard')>Dashboard</option>
+				</select>
+			</div>
+			<div class="wb-stack-2 wb-field">
 				<label>Locale</label>
 				<input class="wb-input" type="text" value="English (default)" disabled>
 			</div>

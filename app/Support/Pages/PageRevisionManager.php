@@ -125,6 +125,7 @@ class PageRevisionManager
                 'page_type_id' => $page->page_type_id,
                 'layout_id' => $page->layout_id,
                 'status' => $page->status,
+                'settings' => $page->getRawOriginal('settings'),
                 'published_at' => $page->published_at?->toIso8601String(),
                 'review_requested_at' => $page->review_requested_at?->toIso8601String(),
             ],
@@ -144,6 +145,7 @@ class PageRevisionManager
                 ->map(fn ($slot) => [
                     'slot_type_id' => $slot->slot_type_id,
                     'sort_order' => $slot->sort_order,
+                    'settings' => $slot->getRawOriginal('settings'),
                 ])
                 ->all(),
             'blocks' => $blocks
@@ -229,6 +231,7 @@ class PageRevisionManager
             'page_type_id' => Arr::get($pageData, 'page_type_id', $page->page_type_id),
             'layout_id' => Arr::get($pageData, 'layout_id', $page->layout_id),
             'status' => Arr::get($pageData, 'status', $page->status),
+            'settings' => Arr::get($pageData, 'settings', $page->getRawOriginal('settings')),
             'published_at' => $this->dateOrNull(Arr::get($pageData, 'published_at')),
             'review_requested_at' => $this->dateOrNull(Arr::get($pageData, 'review_requested_at')),
         ])->save();
@@ -250,6 +253,7 @@ class PageRevisionManager
             $page->slots()->create([
                 'slot_type_id' => $slot['slot_type_id'],
                 'sort_order' => $slot['sort_order'],
+                'settings' => $slot['settings'] ?? null,
             ]);
         }
 

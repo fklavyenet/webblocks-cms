@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageRequest;
+use App\Http\Requests\Admin\PageSlotSettingsRequest;
 use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
@@ -441,6 +442,28 @@ class PageController extends Controller
             'ok' => true,
             'message' => 'Saved',
         ]);
+    }
+
+    public function updateSlotSettings(PageSlotSettingsRequest $request, Page $page, PageSlot $slot): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        abort_unless($slot->page_id === $page->id, 404);
+
+        DB::transaction(function () use ($request, $page, $slot): void {
+            $slot->update(['settings' => $request->validatedSettings()]);
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Slot settings updated',
+                'Shared slot wrapper settings were updated.',
+            );
+        });
+
+        return redirect()
+            ->route('admin.pages.slots.blocks', $this->slotEditorRouteParameters($page, $slot))
+            ->with('status', 'Slot settings updated successfully.');
     }
 
     private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array
@@ -889,6 +912,19 @@ class PageController extends Controller
             'remaining' => max($blocks->count() - $visibleItems->count(), 0),
             'is_empty' => false,
         ];
+    }
+
+    private function slotEditorRouteParameters(Page $page, PageSlot $slot): array
+    {
+        $parameters = ['page' => $page, 'slot' => $slot];
+        $localeCode = Locale::normalizeCode(request('locale'));
+        $defaultLocaleCode = Locale::query()->where('is_default', true)->value('code');
+
+        if ($localeCode !== null && $localeCode !== $defaultLocaleCode) {
+            $parameters['locale'] = $localeCode;
+        }
+
+        return $parameters;
     }
 
     private function assetPickerAssets()

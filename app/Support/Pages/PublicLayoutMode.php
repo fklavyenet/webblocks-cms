@@ -14,6 +14,10 @@ class PublicLayoutMode
 
     public static function forPage(Page $page): string
     {
+        if ($page->publicShellPreset() === 'dashboard') {
+            return self::SIDEBAR;
+        }
+
         if (self::hasPopulatedSidebarSlot($page)) {
             return self::SIDEBAR;
         }

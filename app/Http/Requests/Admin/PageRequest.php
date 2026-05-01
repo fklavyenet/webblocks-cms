@@ -58,6 +58,7 @@ class PageRequest extends FormRequest
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
             ],
+            'public_shell' => ['nullable', Rule::in(['default', 'dashboard'])],
             'slots' => ['nullable', 'array'],
             'slots.*.id' => ['nullable', 'integer', 'exists:page_slots,id'],
             'slots.*.slot_type_id' => ['required', 'integer', 'exists:slot_types,id', 'distinct:strict'],
@@ -91,8 +92,17 @@ class PageRequest extends FormRequest
         $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
         $page = $this->route('page');
+        $page = $page instanceof Page ? $page : null;
         $data['page_type'] = 'default';
         $data['status'] = $page instanceof Page ? $page->status : Page::STATUS_DRAFT;
+        $existingSettings = $page?->settings;
+        $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+        $data['settings'] = [
+            'public_shell' => in_array((string) ($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')), ['default', 'dashboard'], true)
+                ? (string) ($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default'))
+                : 'default',
+        ];
+        $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
         $data['translation'] = [
             'name' => $data['title'],
             'slug' => $data['slug'],
@@ -144,6 +154,8 @@ class PageRequest extends FormRequest
             })
             ->values()
             ->all();
+
+        unset($data['public_shell']);
 
         return $data;
     }

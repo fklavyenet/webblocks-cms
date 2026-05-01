@@ -10,6 +10,10 @@ use Illuminate\Support\Collection;
 
 class PublicPagePresenter
 {
+    private const SHELL_DEFAULT = 'default';
+
+    private const SHELL_DASHBOARD = 'dashboard';
+
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
     ) {}
@@ -33,6 +37,7 @@ class PublicPagePresenter
 
         return [
             'page' => $page,
+            'publicShell' => $this->presentShell($page, $slots),
             'slots' => $slots,
             'metaDescription' => $this->resolveMetaDescription($page, $translatedTopLevelBlocks),
         ];
@@ -44,11 +49,61 @@ class PublicPagePresenter
         $blocks = $topLevelBlocks
             ->where('slot_type_id', $slot->slot_type_id)
             ->values();
+        $settings = is_array($slot->settings) ? $slot->settings : [];
+        $defaultElement = PageSlot::defaultWrapperElementForSlug($slug);
+        $preset = $slot->wrapperPreset();
+        $configuredElement = strtolower((string) ($settings['wrapper_element'] ?? ''));
+        $element = match ($preset) {
+            'dashboard-navbar' => 'header',
+            'dashboard-sidebar' => 'aside',
+            'dashboard-main' => 'main',
+            default => in_array($configuredElement, PageSlot::allowedWrapperElements(), true) ? $configuredElement : $defaultElement,
+        };
+        $class = match ($preset) {
+            'dashboard-navbar' => 'wb-navbar wb-navbar-glass',
+            'dashboard-sidebar' => 'wb-sidebar',
+            'dashboard-main' => 'wb-dashboard-main',
+            default => '',
+        };
 
         return [
             'slug' => $slug,
             'name' => $slot->slotType?->name ?? str($slug)->headline()->toString(),
             'blocks' => $blocks,
+            'wrapper' => [
+                'element' => in_array($element, PageSlot::allowedWrapperElements(), true) ? $element : $defaultElement,
+                'class' => $class,
+                'preset' => $preset,
+                'settings' => $settings,
+            ],
+        ];
+    }
+
+    private function presentShell(Page $page, Collection $slots): array
+    {
+        $preset = $page->publicShellPreset();
+
+        if ($preset !== self::SHELL_DASHBOARD) {
+            return [
+                'preset' => self::SHELL_DEFAULT,
+                'slots' => $slots->values(),
+            ];
+        }
+
+        $sidebar = $slots->firstWhere('slug', 'sidebar');
+        $header = $slots->firstWhere('slug', 'header');
+        $main = $slots->firstWhere('slug', 'main');
+        $footer = $slots->firstWhere('slug', 'footer');
+        $remaining = $slots->reject(fn (array $slot) => in_array($slot['slug'], ['sidebar', 'header', 'main', 'footer'], true))->values();
+
+        return [
+            'preset' => self::SHELL_DASHBOARD,
+            'sidebar' => $sidebar,
+            'body_slots' => collect([$header, $main, $footer])
+                ->filter()
+                ->concat($remaining)
+                ->values(),
+            'slots' => $slots->values(),
         ];
     }
 

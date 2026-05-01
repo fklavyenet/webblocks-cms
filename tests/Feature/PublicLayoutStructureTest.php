@@ -58,6 +58,7 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertSee('<p>Main slot content</p>', false);
         $response->assertSee('<p>Sidebar supporting content</p>', false);
         $response->assertSee('<p>Footer supporting content</p>', false);
+        $response->assertSee('<div class="wb-stack">', false);
         $response->assertDontSee('wb-public-header', false);
         $response->assertDontSee('wb-public-sidebar', false);
         $response->assertDontSee('wb-public-footer', false);
@@ -201,7 +202,6 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<main data-wb-slot="main" id="main-content">',
-            '<div class="wb-stack">',
             '<section class="wb-section wb-stack">',
             '<div class="wb-container wb-stack">',
             '<article class="wb-card">',

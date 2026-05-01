@@ -91,6 +91,7 @@ class Page extends Model
         'page_type_id',
         'layout_id',
         'status',
+        'settings',
         'published_at',
         'review_requested_at',
     ];
@@ -104,7 +105,15 @@ class Page extends Model
         return [
             'published_at' => 'datetime',
             'review_requested_at' => 'datetime',
+            'settings' => 'array',
         ];
+    }
+
+    public function publicShellPreset(): string
+    {
+        $preset = strtolower((string) ($this->settings['public_shell'] ?? 'default'));
+
+        return in_array($preset, ['default', 'dashboard'], true) ? $preset : 'default';
     }
 
     public static function workflowStatuses(): array

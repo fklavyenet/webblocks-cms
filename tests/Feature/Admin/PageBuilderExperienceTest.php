@@ -116,8 +116,40 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertDontSee('<th class="wb-text-end">Actions</th>', false);
         $editResponse->assertSee('<div class="wb-action-group">', false);
         $editResponse->assertDontSee('<td class="wb-text-end">', false);
+        $editResponse->assertSee('name="public_shell"', false);
         $editResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'"', false);
         $editResponse->assertSee('data-wb-slot-remove', false);
+    }
+
+    #[Test]
+    public function page_edit_screen_exposes_public_shell_selector_and_persists_safe_value(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('Public Shell')
+            ->assertSee('name="public_shell"', false)
+            ->assertSee('value="dashboard"', false)
+            ->assertSee('>Dashboard</option>', false);
+
+        $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+            'site_id' => $page->site_id,
+            'title' => 'About',
+            'slug' => 'about',
+            'public_shell' => 'dashboard',
+            'slots' => [
+                ['id' => $page->slots()->firstOrFail()->id, 'slot_type_id' => $main->id],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame('dashboard', $page->fresh()->publicShellPreset());
     }
 
     #[Test]
@@ -303,6 +335,54 @@ class PageBuilderExperienceTest extends TestCase
         ]);
         $this->assertSame('admin.blocks.types.breadcrumb', $block->adminFormView());
         $this->assertSame('pages.partials.blocks.breadcrumb', $block->publicRenderView());
+    }
+
+    #[Test]
+    public function slot_edit_screen_exposes_wrapper_preset_selector_and_persists_safe_values(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->assertOk()
+            ->assertSee('Slot Settings')
+            ->assertSee('name="wrapper_element"', false)
+            ->assertSee('name="wrapper_preset"', false)
+            ->assertSee('Dashboard Navbar');
+
+        $response = $this->actingAs($user)->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
+            'wrapper_element' => 'div',
+            'wrapper_preset' => 'dashboard-navbar',
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $pageSlot->refresh();
+        $this->assertSame('dashboard-navbar', $pageSlot->settings['wrapper_preset'] ?? null);
+        $this->assertSame('header', $pageSlot->settings['wrapper_element'] ?? null);
+    }
+
+    #[Test]
+    public function invalid_slot_wrapper_settings_are_rejected(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
+                'wrapper_element' => 'script',
+                'wrapper_preset' => 'custom-class-hack',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $response->assertSessionHasErrors(['wrapper_element', 'wrapper_preset']);
     }
 
     #[Test]
