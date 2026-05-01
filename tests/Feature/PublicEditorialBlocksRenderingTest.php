@@ -23,9 +23,113 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function breadcrumb_uses_the_dedicated_public_renderer_with_semantic_markup(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'breadcrumb',
+            'block_type_id' => $this->blockType('breadcrumb', 'Breadcrumb', 13, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['home_label' => 'Home', 'include_current' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<nav class="wb-breadcrumb" aria-label="Breadcrumb">', false);
+        $response->assertSee('<ol class="wb-breadcrumb-list">', false);
+        $response->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
+        $response->assertSee('<span class="wb-breadcrumb-current" aria-current="page">About</span>', false);
+        $response->assertDontSee('<ol class="wb-cluster wb-cluster-2 wb-text-sm">', false);
+    }
+
+    #[Test]
+    public function breadcrumb_respects_translated_page_names_for_localized_routes(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $turkish = \App\Models\Locale::query()->updateOrCreate(
+            ['code' => 'tr'],
+            ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
+        );
+        $site->locales()->syncWithoutDetaching([$turkish->id]);
+
+        $home = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Home',
+            'slug' => 'home',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+        $about = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $home->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Home', 'slug' => 'home', 'path' => '/'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $home->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Ana Sayfa', 'slug' => 'home', 'path' => '/'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $about->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $about->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $about->id,
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $about->id,
+            'type' => 'breadcrumb',
+            'block_type_id' => $this->blockType('breadcrumb', 'Breadcrumb', 13, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['include_current' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $defaultResponse = $this->get('/p/about');
+        $turkishResponse = $this->get('/tr/p/hakkinda');
+        $turkishHomePath = app(\App\Support\Pages\PageRouteResolver::class)->homePath('tr', $site);
+
+        $defaultResponse->assertOk();
+        $defaultResponse->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
+        $defaultResponse->assertSee('<span class="wb-breadcrumb-current" aria-current="page">About</span>', false);
+
+        $turkishResponse->assertOk();
+        $turkishResponse->assertSee('<a class="wb-breadcrumb-link" href="'.$turkishHomePath.'">Ana Sayfa</a>', false);
+        $turkishResponse->assertSee('<span class="wb-breadcrumb-current" aria-current="page">Hakkinda</span>', false);
     }
 
     #[Test]
@@ -1226,11 +1330,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         );
     }
 
-    private function blockType(string $slug, string $name, int $sortOrder): BlockType
+    private function blockType(string $slug, string $name, int $sortOrder, bool $isSystem = false): BlockType
     {
         return BlockType::query()->updateOrCreate(
             ['slug' => $slug],
-            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => false, 'is_container' => $slug === 'card' || in_array($slug, ['section', 'container', 'cluster', 'grid'], true)],
+            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => $isSystem, 'is_container' => $slug === 'card' || in_array($slug, ['section', 'container', 'cluster', 'grid'], true)],
         );
     }
 }

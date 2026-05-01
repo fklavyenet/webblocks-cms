@@ -32,6 +32,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Current layout blocks are `section`, `container`, `cluster`, and `grid`.
 - Current content blocks are `header`, `plain_text`, `button_link`, `card`, `stat-card`, and `alert`.
 - Current pattern blocks are `content_header`, `link-list`, and `link-list-item`.
+- Current navigation blocks include `breadcrumb` for context bars and `link-list` or `navigation-auto` for broader navigation structures.
 - All four block types are page and slot scoped, not site-global, and inherit site scope through the page and slot relationship.
 - `section` is a top-level layout wrapper that renders only `<section class="wb-section">{children}</section>`.
 - `container` is a layout wrapper that renders only `<div class="wb-container">{children}</div>`.
@@ -59,6 +60,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Promo cards render optional eyebrow or label text above the title and prefer nested action structure such as `Card promo > Cluster > Button Link`.
 - `stat-card` is the first-class metric card block for WebBlocks UI stats. Metric values like `0`, `6`, `14+`, and `173` are valid translated strings and must render in admin and public output.
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
+- `breadcrumb` is a first-class system navigation block for header or context bars. It renders the current page breadcrumb trail from the active site and page translation context, stores only shared operational options in `blocks.settings`, and should not be used as a substitute for full navigation menus.
 - `link-list-item.title` renders as `wb-link-list-title`, `link-list-item.subtitle` renders as `wb-link-list-meta`, `link-list-item.content` renders as `wb-link-list-desc`, and `link-list-item.url` becomes the item `href`.
 - Link List Items support native drag-and-drop reorder in the admin editor through a small CMS admin JavaScript module and do not require any external drag-and-drop dependency.
 - Edit Slot Blocks lists support native drag-and-drop sibling reordering in the admin editor without external dependencies. Drag-and-drop persists sibling order immediately, reorders only within the same parent group, and does not change nesting.
@@ -228,7 +230,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, and `Stat Card` blocks inside that layout tree. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. Publish the page as a `site_admin` or `super_admin`.
 7. Open the public URL or preview link to confirm the live result.
 

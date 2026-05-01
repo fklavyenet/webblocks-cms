@@ -145,6 +145,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Alert');
         $response->assertSee('Link List');
         $response->assertSee('Link List Item');
+        $response->assertSee('Breadcrumb');
         $response->assertDontSee('Hero');
         $response->assertDontSee('Rich Text');
     }
@@ -224,6 +225,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Alert</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List</span>'));
         $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List Item</span>'));
+        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Breadcrumb</span>'));
         $response->assertSeeInOrder([
             'wb-list-item-title">Content Header</span>',
             'wb-list-item-title">Section</span>',
@@ -238,7 +240,69 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Alert</span>',
             'wb-list-item-title">Link List</span>',
             'wb-list-item-title">Link List Item</span>',
+            'wb-list-item-title">Breadcrumb</span>',
         ], false);
+    }
+
+    #[Test]
+    public function breadcrumb_is_seeded_as_a_published_navigation_system_block(): void
+    {
+        $this->seedFoundation();
+
+        $breadcrumbType = BlockType::query()->where('slug', 'breadcrumb')->firstOrFail();
+
+        $this->assertSame('Breadcrumb', $breadcrumbType->name);
+        $this->assertSame('published', $breadcrumbType->status);
+        $this->assertSame('navigation', $breadcrumbType->category);
+        $this->assertTrue($breadcrumbType->is_system);
+        $this->assertFalse($breadcrumbType->is_container);
+    }
+
+    #[Test]
+    public function breadcrumb_form_is_dedicated_and_can_be_added_to_the_header_slot(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
+        $breadcrumbType = BlockType::query()->where('slug', 'breadcrumb')->firstOrFail();
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $breadcrumbType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: Breadcrumb');
+        $formResponse->assertSee('System Breadcrumb');
+        $formResponse->assertSee('name="breadcrumb_home_label"', false);
+        $formResponse->assertSee('name="breadcrumb_include_current"', false);
+        $formResponse->assertDontSee('Generic Block Form');
+        $formResponse->assertDontSee('name="title"', false);
+        $formResponse->assertDontSee('name="content"', false);
+
+        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $breadcrumbType->id,
+            'sort_order' => 0,
+            'breadcrumb_home_label' => 'Start',
+            'breadcrumb_include_current' => '1',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'breadcrumb')->firstOrFail();
+
+        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'breadcrumb',
+            'slot' => 'header',
+            'title' => null,
+            'content' => null,
+            'is_system' => true,
+        ]);
+        $this->assertSame('admin.blocks.types.breadcrumb', $block->adminFormView());
+        $this->assertSame('pages.partials.blocks.breadcrumb', $block->publicRenderView());
     }
 
     #[Test]
@@ -696,6 +760,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $response->assertSeeInOrder([
             'wb-list-item-title">Alert</span>',
+            'wb-list-item-title">Breadcrumb</span>',
             'wb-list-item-title">Button Link</span>',
             'wb-list-item-title">Card</span>',
             'wb-list-item-title">Cluster</span>',
@@ -731,10 +796,14 @@ class PageBuilderExperienceTest extends TestCase
             'wb-list-item-title">Plain Text</span>',
             'wb-list-item-title">Button Link</span>',
             'wb-list-item-title">Card</span>',
+            'wb-list-item-title">Stat Card</span>',
             'wb-list-item-title">Section</span>',
             'wb-list-item-title">Container</span>',
             'wb-list-item-title">Cluster</span>',
             'wb-list-item-title">Grid</span>',
+            'wb-list-item-title">Link List</span>',
+            'wb-list-item-title">Link List Item</span>',
+            'wb-list-item-title">Breadcrumb</span>',
             'wb-list-item-title">Content Header</span>',
             'wb-list-item-title">Alert</span>',
         ], false);

@@ -4,6 +4,7 @@
 
 - Improve admin dashboard shortcuts and add System Updates quick action.
 - Fix the admin Media sidebar icon and move visitor reporting below the primary dashboard overview cards.
+- Add first-class breadcrumb block support with a dedicated admin editor and semantic public breadcrumb rendering for header or context bar usage.
 
 ## 1.5.0
 

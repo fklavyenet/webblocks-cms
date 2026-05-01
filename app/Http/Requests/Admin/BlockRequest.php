@@ -45,6 +45,7 @@ class BlockRequest extends FormRequest
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $isAlert = $selectedBlockType?->slug === 'alert';
+        $isBreadcrumb = $selectedBlockType?->slug === 'breadcrumb';
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
@@ -140,7 +141,7 @@ class BlockRequest extends FormRequest
             'link_list_items.*.is_system' => ['nullable', 'boolean'],
             'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'link_list_items.*._delete' => ['nullable', 'boolean'],
-            'variant' => [($isLayoutPrimitive || $isContentHeader) ? 'prohibited' : 'nullable', $isButtonLink ? Rule::in(['primary', 'secondary']) : 'string', 'max:255'],
+            'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', $isButtonLink ? Rule::in(['primary', 'secondary']) : 'string', 'max:255'],
             'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'settings' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -498,6 +499,32 @@ class BlockRequest extends FormRequest
                 ], JSON_UNESCAPED_SLASHES);
             }
 
+            if ($blockType?->slug === 'breadcrumb') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $homeLabel = trim((string) ($data['breadcrumb_home_label'] ?? ''));
+                $includeCurrent = filter_var($data['breadcrumb_include_current'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                $settings = $existingSettings;
+                $settings['include_current'] = $includeCurrent !== false;
+
+                if ($homeLabel !== '') {
+                    $settings['home_label'] = $homeLabel;
+                } else {
+                    unset($settings['home_label']);
+                }
+
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['asset_id'] = null;
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
             if ($blockType?->slug === 'contact_form') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -806,7 +833,7 @@ class BlockRequest extends FormRequest
         unset($data['layout']);
         unset($data['title_tag']);
         unset($data['language']);
-        unset($data['navigation_menu_key']);
+        unset($data['navigation_menu_key'], $data['breadcrumb_home_label'], $data['breadcrumb_include_current']);
         unset($data['text'], $data['level']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
