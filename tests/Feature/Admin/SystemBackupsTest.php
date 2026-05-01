@@ -379,9 +379,50 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('action="'.route('admin.system.backups.destroy', $manualBackup).'"', false);
         $response->assertSee('action="'.route('admin.system.backups.destroy', $uploadedBackup).'"', false);
         $response->assertSee('action="'.route('admin.system.backups.destroy', $restoreSafetyBackup).'"', false);
-        $response->assertDontSee('action="'.route('admin.system.backups.destroy', $runningBackup).'"', false);
+        $response->assertSee('action="'.route('admin.system.backups.destroy', $runningBackup).'"', false);
+        $response->assertSee('Backup is currently running and cannot be deleted.');
+        $response->assertSee('disabled', false);
         $response->assertSee('Delete this backup record and archive file? This cannot be undone.');
         $response->assertSee('wb-backup-actions', false);
+    }
+
+    #[Test]
+    public function stale_running_backup_is_marked_failed_when_backups_page_loads(): void
+    {
+        config()->set('cms.backup.stale_after_minutes', 10);
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_RUNNING,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/stale-running.zip',
+            'archive_filename' => 'stale-running.zip',
+            'started_at' => now()->subMinutes(20),
+            'summary' => 'Running.',
+            'output' => 'Backup started.',
+        ]);
+
+        $backup->forceFill([
+            'created_at' => now()->subMinutes(20),
+            'updated_at' => now()->subMinutes(20),
+        ])->saveQuietly();
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+
+        $backup->refresh();
+
+        $this->assertSame(SystemBackup::STATUS_FAILED, $backup->status);
+        $this->assertNotNull($backup->finished_at);
+        $this->assertSame('Backup failed after remaining in a stale running state.', $backup->summary);
+        $this->assertSame('Backup was marked as failed because it stayed in a running state too long.', $backup->error_message);
+        $this->assertStringContainsString('Backup started.', (string) $backup->output);
+        $this->assertStringContainsString('Marked as failed due to stale running state.', (string) $backup->output);
     }
 
     #[Test]
@@ -431,6 +472,36 @@ class SystemBackupsTest extends TestCase
             'started_at' => now(),
             'finished_at' => now(),
             'summary' => 'Completed.',
+        ]);
+
+        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup record deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+    }
+
+    #[Test]
+    public function admin_can_delete_failed_backup_record_and_archive(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_FAILED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/failed.zip',
+            'archive_filename' => 'failed.zip',
+            'started_at' => now()->subMinutes(1),
+            'finished_at' => now(),
+            'summary' => 'Backup failed.',
+            'error_message' => 'Backup failed.',
         ]);
 
         Storage::disk('backups')->put($backup->archive_path, 'placeholder');
@@ -495,7 +566,7 @@ class SystemBackupsTest extends TestCase
         $response = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
 
         $response->assertRedirect(route('admin.system.backups.index'));
-        $response->assertSessionHasErrors(['system_backup' => 'Running backups cannot be deleted.']);
+        $response->assertSessionHasErrors(['system_backup' => 'Running backup cannot be deleted.']);
         $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
         $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
     }

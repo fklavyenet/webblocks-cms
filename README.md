@@ -423,6 +423,7 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 ## Backup Manager
 
 - The Backups screen supports both `Create backup` and `Upload backup` actions.
+- Backup list actions stay visible for every row. Running backups keep a visible delete action in a disabled state so the UI stays consistent and clearly shows that deletion is blocked while a backup is still active.
 - `Upload backup` accepts a previously downloaded WebBlocks CMS backup archive from this backup system and validates the archive before it is registered.
 - Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
 - Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, rejects site export/import packages, and rejects empty or obvious non-SQL dump content before restore.
@@ -431,6 +432,9 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Backup restore is different from Export / Import, which creates a new site from a site package instead of replacing the current install.
 - When the existing restore flow runs, it validates the selected archive first and only creates a fresh safety backup before applying a valid archive.
 - MySQL and MariaDB backup creation uses raw SQL stdout from either direct `mysqldump` or `ddev exec --raw -- mysqldump` style execution. Restore feeds validated SQL content back through stdin instead of passing command text as SQL.
+- Running backups that never finish are automatically marked as failed when the Backups screen loads once they are older than the configured stale threshold.
+- Failed backups can be safely deleted from the Backups list, including their stored archive file when one exists.
+- Configure stale running backup detection with `CMS_BACKUP_STALE_AFTER_MINUTES` or `config('cms.backup.stale_after_minutes')`. The default timeout is `10` minutes.
 
 ### Backup Execution Modes
 

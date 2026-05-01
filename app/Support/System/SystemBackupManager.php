@@ -153,6 +153,37 @@ class SystemBackupManager
         ];
     }
 
+    public function markStaleBackupsAsFailed(): void
+    {
+        if (! $this->hasBackupTable()) {
+            return;
+        }
+
+        $backups = SystemBackup::query()
+            ->where('status', SystemBackup::STATUS_RUNNING)
+            ->whereNull('finished_at')
+            ->get();
+
+        foreach ($backups as $backup) {
+            if (! $backup->isStaleRunning()) {
+                continue;
+            }
+
+            $output = trim(implode(PHP_EOL.PHP_EOL, array_filter([
+                $backup->output,
+                'Marked as failed due to stale running state.',
+            ])));
+
+            $backup->update([
+                'status' => SystemBackup::STATUS_FAILED,
+                'summary' => 'Backup failed after remaining in a stale running state.',
+                'finished_at' => now(),
+                'output' => $output,
+                'error_message' => $backup->error_message ?: 'Backup was marked as failed because it stayed in a running state too long.',
+            ]);
+        }
+    }
+
     public function downloadResponse(SystemBackup $backup): BinaryFileResponse
     {
         if (! $backup->isSuccessful() || $backup->archive_path === null || $backup->archive_filename === null) {
@@ -188,8 +219,8 @@ class SystemBackupManager
 
     public function deleteBackupRecord(SystemBackup $backup): void
     {
-        if (! $backup->isDeletable()) {
-            throw new RuntimeException('Only failed or running backups can be deleted.');
+        if ($backup->isRunning()) {
+            throw new RuntimeException('Running backup cannot be deleted.');
         }
 
         $archivePath = $backup->archiveRelativePath();
@@ -199,7 +230,9 @@ class SystemBackupManager
             $disk = Storage::disk($backup->archive_disk ?: self::ARCHIVE_DISK);
 
             if ($disk->exists($archivePath)) {
-                $disk->delete($archivePath);
+                if (! $disk->delete($archivePath)) {
+                    throw new RuntimeException('Backup archive file could not be deleted.');
+                }
             }
         }
 

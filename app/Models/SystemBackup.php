@@ -72,7 +72,22 @@ class SystemBackup extends Model
 
     public function isDeletable(): bool
     {
-        return $this->isFailed() || $this->isRunning();
+        return ! $this->isRunning();
+    }
+
+    public function isStaleRunning(): bool
+    {
+        if (! $this->isRunning()) {
+            return false;
+        }
+
+        if ($this->finished_at !== null || $this->created_at === null) {
+            return false;
+        }
+
+        $threshold = (int) config('cms.backup.stale_after_minutes', 10);
+
+        return $this->created_at->lt(now()->subMinutes($threshold));
     }
 
     public function archiveRelativePath(): ?string

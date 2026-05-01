@@ -17,6 +17,9 @@
 
 ### Fixed
 
+- Fix backup list actions so the delete button stays visible for every backup row and running backups show a disabled state instead of disappearing.
+- Auto-mark stale running backups as failed after the configured timeout so stuck test backups can be cleaned up safely.
+- Allow failed backups to be deleted through the normal backup cleanup flow.
 - Add UI structure contract tests to ensure CMS HTML matches WebBlocks UI semantics.
 - Fix site deletion failing when page revisions still reference the site through `page_revisions.site_id`.
 - Include `page_revisions` in explicit site deletion scope so site-scoped editorial history is removed safely before the site row.

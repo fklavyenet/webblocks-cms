@@ -14,6 +14,7 @@ return [
         'execution' => env('CMS_BACKUP_EXECUTION', 'auto'),
         'dump_timeout_seconds' => env('CMS_BACKUP_DUMP_TIMEOUT_SECONDS', 120),
         'restore_timeout_seconds' => env('CMS_BACKUP_RESTORE_TIMEOUT_SECONDS', 300),
+        'stale_after_minutes' => env('CMS_BACKUP_STALE_AFTER_MINUTES', 10),
     ],
     'visitor_reports' => [
         'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),

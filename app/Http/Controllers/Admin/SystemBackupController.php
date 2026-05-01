@@ -32,6 +32,10 @@ class SystemBackupController extends Controller
     {
         $tableExists = Schema::hasTable('system_backups');
 
+        if ($tableExists) {
+            $this->systemBackupManager->markStaleBackupsAsFailed();
+        }
+
         return view('admin.system.backups.index', [
             'backups' => $tableExists
                 ? SystemBackup::query()->with('triggeredBy')->latest()->paginate(20)
@@ -122,6 +126,12 @@ class SystemBackupController extends Controller
 
     public function destroy(SystemBackup $backup): RedirectResponse
     {
+        if ($backup->isRunning()) {
+            return redirect()
+                ->route('admin.system.backups.index')
+                ->withErrors(['system_backup' => 'Running backup cannot be deleted.']);
+        }
+
         try {
             $this->systemBackupManager->deleteBackupRecord($backup);
 

@@ -136,7 +136,7 @@
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
                                         <td>{{ $backup->durationLabel() }}</td>
                                         <td>
-                                            <div class="wb-cluster wb-cluster-2 wb-row-end">
+                                            <div class="wb-backup-actions wb-cluster wb-gap-1 wb-items-center wb-justify-end wb-nowrap">
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="Backup details" aria-label="Backup details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
@@ -147,15 +147,19 @@
                                                     </a>
                                                 @endif
 
-                                                @if ($backup->isDeletable())
-                                                    <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('Delete this backup record? This action cannot be undone.');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete backup record" aria-label="Delete backup record">
-                                                            <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                                <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('Delete this backup record and archive file? This cannot be undone.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button
+                                                        type="submit"
+                                                        class="wb-action-btn wb-action-btn-delete"
+                                                        title="{{ $backup->isRunning() ? 'Backup is currently running and cannot be deleted.' : 'Delete backup' }}"
+                                                        aria-label="Delete backup"
+                                                        @disabled($backup->isRunning())
+                                                    >
+                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
