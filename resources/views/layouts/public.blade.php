@@ -2,6 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
+        $cmsPublicHeaderActionsJsPath = public_path('assets/webblocks-cms/js/public/header-actions.js');
         $siteCssPath = public_path('site/css/site.css');
     @endphp
 
@@ -60,5 +61,8 @@
         @endif
 
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        @if (is_file($cmsPublicHeaderActionsJsPath))
+            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($cmsPublicHeaderActionsJsPath) }}" defer></script>
+        @endif
     </body>
 </html>

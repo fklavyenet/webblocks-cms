@@ -23,9 +23,88 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb'] as $slug) {
+        foreach (['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function header_actions_renders_theme_buttons_without_inline_script(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 14, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['show_mode_toggle' => true, 'show_accent_toggle' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-header-actions', false);
+        $response->assertSee('data-wb-header-actions-mode-toggle', false);
+        $response->assertSee('data-wb-header-actions-accent-toggle', false);
+        $response->assertSee('type="button"', false);
+        $response->assertSee('aria-label="Toggle color mode"', false);
+        $response->assertSee('aria-label="Change accent color"', false);
+        $response->assertDontSee('onclick=', false);
+        $response->assertDontSee('onchange=', false);
+        $response->assertDontSee('javascript:', false);
+    }
+
+    #[Test]
+    public function header_actions_hides_disabled_controls_and_renders_nothing_when_both_are_disabled(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 14, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['show_mode_toggle' => false, 'show_accent_toggle' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('data-wb-header-actions-mode-toggle', false);
+        $response->assertSee('data-wb-header-actions-accent-toggle', false);
+
+        Block::query()->where('page_id', $page->id)->where('type', 'header-actions')->delete();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 14, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['show_mode_toggle' => false, 'show_accent_toggle' => false], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('data-wb-header-actions', false);
+        $response->assertDontSee('data-wb-header-actions-mode-toggle', false);
+        $response->assertDontSee('data-wb-header-actions-accent-toggle', false);
     }
 
     #[Test]

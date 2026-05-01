@@ -46,6 +46,7 @@ class BlockRequest extends FormRequest
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $isAlert = $selectedBlockType?->slug === 'alert';
         $isBreadcrumb = $selectedBlockType?->slug === 'breadcrumb';
+        $isHeaderActions = $selectedBlockType?->slug === 'header-actions';
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
@@ -152,6 +153,8 @@ class BlockRequest extends FormRequest
             'send_email_notification' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
             'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
+            'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+            'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
     }
@@ -525,6 +528,27 @@ class BlockRequest extends FormRequest
                 $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
+            if ($blockType?->slug === 'header-actions') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $showModeToggle = filter_var($data['header_actions_show_mode_toggle'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                $showAccentToggle = filter_var($data['header_actions_show_accent_toggle'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                $settings = $existingSettings;
+                $settings['show_mode_toggle'] = $showModeToggle !== false;
+                $settings['show_accent_toggle'] = $showAccentToggle !== false;
+
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['asset_id'] = null;
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
             if ($blockType?->slug === 'contact_form') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -833,7 +857,7 @@ class BlockRequest extends FormRequest
         unset($data['layout']);
         unset($data['title_tag']);
         unset($data['language']);
-        unset($data['navigation_menu_key'], $data['breadcrumb_home_label'], $data['breadcrumb_include_current']);
+        unset($data['navigation_menu_key'], $data['breadcrumb_home_label'], $data['breadcrumb_include_current'], $data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
         unset($data['text'], $data['level']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);

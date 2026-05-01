@@ -61,6 +61,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `stat-card` is the first-class metric card block for WebBlocks UI stats. Metric values like `0`, `6`, `14+`, and `173` are valid translated strings and must render in admin and public output.
 - `alert` supports `info`, `success`, `warning`, and `danger` variants and renders WebBlocks UI alert markup for docs notes, proof points, and inline callouts.
 - `breadcrumb` is a first-class system navigation block for header or context bars. It renders the current page breadcrumb trail from the active site and page translation context, stores only shared operational options in `blocks.settings`, and should not be used as a substitute for full navigation menus.
+- `header-actions` is a first-class system navigation block for compact header utility controls such as color mode and accent actions. It pairs naturally with `breadcrumb` inside the `header` slot and is not a navigation menu.
 - Public page structure is now configurable with controlled shared settings on pages and slots. `Public Shell` supports `default` and `docs`, and slot wrapper settings support controlled wrapper elements plus presets for `docs navbar`, `docs sidebar`, `docs main`, `default`, and `plain`.
 - Docs shell rendering is layout-level, not block-level. Use page `Public Shell = Docs` with slot presets such as `Docs Navbar`, `Docs Sidebar`, and `Docs Main` to render `.wb-docs-shell`, `.wb-docs-content`, `.wb-navbar.wb-navbar-glass`, `.wb-sidebar`, and `.wb-content-shell.wb-docs-main` without pushing shell classes into blocks.
 - Slot wrapper classes are controlled presets, not arbitrary editor-provided class strings. The CMS validates allowed wrapper elements and wrapper presets server-side and falls back safely for unknown values.
@@ -250,8 +251,9 @@ See `docs/installation.md` for the complete install guide.
 - Simpler, shell-driven layout composition without block-level layout responsibility
 
 5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For docs layouts, set the page `Public Shell` to `Docs` and configure safe slot wrapper presets on the Header, Sidebar, and Main slots instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
-6. Publish the page as a `site_admin` or `super_admin`.
-7. Open the public URL or preview link to confirm the live result.
+6. For a docs-style context bar, add `Breadcrumb` and `Header Actions` to the `Header` slot. `Header Actions` renders system-owned theme utilities such as color mode and accent controls without requiring raw HTML blocks.
+7. Publish the page as a `site_admin` or `super_admin`.
+8. Open the public URL or preview link to confirm the live result.
 
 See `docs/getting-started.md` for the first-use workflow.
 

@@ -8,6 +8,7 @@
 - Replace dashboard-first public layout rendering with a semantic docs shell using Holy Grail DOM order.
 - Introduce the `docs` public shell preset and normalize legacy `dashboard` values to the docs shell.
 - Ensure public layout structure is controlled by page and slot shell settings instead of block markup.
+- Add first-class Header Actions block support for compact header utility controls such as color mode and accent actions.
 
 ## 1.5.0
 

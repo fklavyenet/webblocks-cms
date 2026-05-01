@@ -291,6 +291,20 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function header_actions_is_seeded_as_a_published_navigation_system_block(): void
+    {
+        $this->seedFoundation();
+
+        $headerActionsType = BlockType::query()->where('slug', 'header-actions')->firstOrFail();
+
+        $this->assertSame('Header Actions', $headerActionsType->name);
+        $this->assertSame('published', $headerActionsType->status);
+        $this->assertSame('navigation', $headerActionsType->category);
+        $this->assertTrue($headerActionsType->is_system);
+        $this->assertFalse($headerActionsType->is_container);
+    }
+
+    #[Test]
     public function breadcrumb_form_is_dedicated_and_can_be_added_to_the_header_slot(): void
     {
         $this->seedFoundation();
@@ -335,6 +349,54 @@ class PageBuilderExperienceTest extends TestCase
         ]);
         $this->assertSame('admin.blocks.types.breadcrumb', $block->adminFormView());
         $this->assertSame('pages.partials.blocks.breadcrumb', $block->publicRenderView());
+    }
+
+    #[Test]
+    public function header_actions_form_is_dedicated_and_can_be_added_to_the_header_slot(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
+        $headerActionsType = BlockType::query()->where('slug', 'header-actions')->firstOrFail();
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $headerActionsType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: Header Actions');
+        $formResponse->assertSee('System Header Actions');
+        $formResponse->assertSee('name="header_actions_show_mode_toggle"', false);
+        $formResponse->assertSee('name="header_actions_show_accent_toggle"', false);
+        $formResponse->assertDontSee('Generic Block Form');
+        $formResponse->assertDontSee('name="title"', false);
+        $formResponse->assertDontSee('name="content"', false);
+
+        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $headerActionsType->id,
+            'sort_order' => 0,
+            'header_actions_show_mode_toggle' => '1',
+            'header_actions_show_accent_toggle' => '0',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'header-actions')->firstOrFail();
+
+        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'id' => $block->id,
+            'type' => 'header-actions',
+            'slot' => 'header',
+            'title' => null,
+            'content' => null,
+            'is_system' => true,
+        ]);
+        $this->assertSame('admin.blocks.types.header-actions', $block->adminFormView());
+        $this->assertSame('pages.partials.blocks.header-actions', $block->publicRenderView());
+        $this->assertSame(['show_mode_toggle' => true, 'show_accent_toggle' => false], json_decode((string) $block->getRawOriginal('settings'), true));
     }
 
     #[Test]
