@@ -2,6 +2,7 @@
 
 namespace App\Support\System\Updates;
 
+use Database\Seeders\CoreCatalogSeeder;
 use Illuminate\Support\Facades\File;
 
 class UpdateInstaller
@@ -91,6 +92,7 @@ class UpdateInstaller
     {
         foreach ([
             ['migrate', '--force'],
+            ['db:seed', '--class='.CoreCatalogSeeder::class, '--force'],
             ['config:clear'],
             ['view:clear'],
             ['cache:clear'],

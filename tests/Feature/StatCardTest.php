@@ -111,6 +111,33 @@ class StatCardTest extends TestCase
     }
 
     #[Test]
+    public function block_type_seeder_promotes_existing_breadcrumb_catalog_entry_to_the_supported_system_block(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        BlockType::query()->create([
+            'name' => 'Breadcrumb',
+            'slug' => 'breadcrumb',
+            'category' => 'legacy',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 99,
+            'status' => 'draft',
+        ]);
+
+        $this->seed(BlockTypeSeeder::class);
+
+        $type = BlockType::query()->where('slug', 'breadcrumb')->firstOrFail();
+
+        $this->assertSame('Breadcrumb', $type->name);
+        $this->assertSame('published', $type->status);
+        $this->assertSame('navigation', $type->category);
+        $this->assertTrue($type->is_system);
+        $this->assertFalse($type->is_container);
+    }
+
+    #[Test]
     public function admin_form_can_save_stat_card_with_zero_value_and_summary_displays_zero(): void
     {
         $this->seedFoundation();
