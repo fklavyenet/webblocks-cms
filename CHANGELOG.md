@@ -15,6 +15,7 @@
 
 ### Fixed
 
+- Add UI structure contract tests to ensure CMS HTML matches WebBlocks UI semantics.
 - Fix link list item description element to match WebBlocks UI semantics (span -> div).
 - Fix Stat Card visibility in the admin block type picker.
 - Fix Edit Slot drag-and-drop reorder persistence so reordered blocks stay ordered after refresh and in public rendering.

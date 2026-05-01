@@ -473,20 +473,25 @@ class LinkListBlockTest extends TestCase
         ]);
 
         $response = $this->get(route('pages.show', 'about'));
+        $html = $response->getContent();
 
         $response->assertOk();
         $response->assertSee('<div class="wb-link-list">', false);
         $response->assertSee('class="wb-link-list-item"', false);
-        $response->assertSee('class="wb-link-list-main"', false);
-        $response->assertSee('class="wb-link-list-title"', false);
-        $response->assertSee('class="wb-link-list-meta"', false);
-        $response->assertSee('<div class="wb-link-list-desc">', false);
-        $response->assertDontSee('<span class="wb-link-list-desc">', false);
         $response->assertSee('href="getting-started.html"', false);
         $response->assertSee('Getting Started');
         $response->assertSee('Includes, root attributes, first workflow');
         $response->assertSee('Use this page first if you need the shortest correct setup path for a real project.');
         $response->assertDontSee('wb-card', false);
+
+        $this->assertElementTag($html, '.wb-link-list-item', 'a');
+        $this->assertElementStructure($html, [
+            '.wb-link-list-item .wb-link-list-main' => 'div',
+            '.wb-link-list-item .wb-link-list-title' => 'span',
+            '.wb-link-list-item .wb-link-list-meta' => 'span',
+            '.wb-link-list-item .wb-link-list-desc' => 'div',
+        ]);
+        $this->assertElementNotTag($html, '.wb-link-list-item .wb-link-list-desc', 'span');
     }
 
     #[Test]

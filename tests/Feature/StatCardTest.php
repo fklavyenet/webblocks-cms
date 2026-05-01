@@ -220,4 +220,39 @@ class StatCardTest extends TestCase
             ->assertSee('>0<', false)
             ->assertSee('No framework requirement for the package itself');
     }
+
+    #[Test]
+    public function public_rendering_matches_stat_card_structure_contract(): void
+    {
+        $this->seedFoundation();
+
+        [$page, , $slotType] = $this->pageWithSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'stat-card',
+            'block_type_id' => BlockType::query()->where('slug', 'stat-card')->value('id'),
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => '173',
+            'subtitle' => 'Icons',
+            'content' => 'Class-based mask-image icon usage',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+        $html = $response->getContent();
+
+        $response->assertOk();
+
+        $this->assertElementStructure($html, [
+            '.wb-stat' => 'div',
+            '.wb-stat .wb-stat-label' => 'div',
+            '.wb-stat .wb-stat-value' => 'div',
+            '.wb-stat .wb-stat-detail' => 'div',
+        ]);
+    }
 }
