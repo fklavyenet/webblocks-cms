@@ -8,6 +8,7 @@
 - Add first-class Link List and Link List Item blocks aligned with the WebBlocks UI `wb-link-list` pattern.
 - Add native drag-and-drop reorder support for Link List Items in the admin editor.
 - Add native drag-and-drop sibling reordering to the Edit Slot Blocks list.
+- Add uploaded backup archive validation and restore support.
 
 ### Changed
 

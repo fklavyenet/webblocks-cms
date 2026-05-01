@@ -43,6 +43,10 @@ class DatabaseExecutionStrategyResolver
             return false;
         }
 
+        if ($this->isRunningInsideDdev()) {
+            return false;
+        }
+
         if (! $this->isDdevProject()) {
             return false;
         }

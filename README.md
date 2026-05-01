@@ -412,6 +412,17 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Cancelling the pending flow keeps the created backup but does not install the update.
 - Update installs preserve `.env`, `storage/`, and `project/` so instance-specific project files are not replaced by CMS package extraction.
 
+## Backup Manager
+
+- The Backups screen supports both `Create backup` and `Upload backup` actions.
+- `Upload backup` accepts a previously downloaded WebBlocks CMS backup archive from this backup system and validates the archive before it is registered.
+- Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
+- Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, and rejects site export/import packages.
+- Uploaded backups are registered as normal backup records, appear in the existing Backups list and detail page, and reuse the same restore flow as locally created backups.
+- Backup restore is a full-system restore that overwrites the current database and uploaded files.
+- Backup restore is different from Export / Import, which creates a new site from a site package instead of replacing the current install.
+- When the existing restore flow runs, it creates a fresh safety backup before applying the selected archive.
+
 ## Stack
 
 - Laravel application

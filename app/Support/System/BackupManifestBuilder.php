@@ -9,6 +9,10 @@ class BackupManifestBuilder
     public function build(SystemBackup $backup, array $databaseMeta, string $archiveFilename): array
     {
         return [
+            'product' => SystemBackupArchivePackage::PRODUCT,
+            'package_type' => SystemBackupArchivePackage::PACKAGE_TYPE,
+            'feature_version' => SystemBackupArchivePackage::FEATURE_VERSION,
+            'format_version' => SystemBackupArchivePackage::FORMAT_VERSION,
             'app_name' => config('app.name'),
             'app_version' => config('app.version'),
             'backup_id' => $backup->id,

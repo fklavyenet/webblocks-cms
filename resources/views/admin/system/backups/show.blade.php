@@ -2,10 +2,11 @@
 
 @section('content')
     @php($canRestore = $backup->isSuccessful() && filled($backup->archive_path))
+    @php($manifest = $inspection?->manifest ?? [])
 
     @include('admin.partials.page-header', [
         'title' => $backup->archive_filename ?? 'Backup #'.$backup->id,
-        'description' => 'Review backup results, operational logs, and archive metadata for this run.',
+        'description' => 'Review backup results, uploaded archive metadata, operational logs, and restore history for this run.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">Back to Backups</a>'.($backup->isSuccessful() && $backup->archive_path ? '<a href="'.route('admin.system.backups.download', $backup).'" class="wb-btn wb-btn-primary">Download</a>' : '').'</div>',
     ])
 
@@ -43,13 +44,30 @@
                 <div class="wb-card-body wb-stack wb-gap-2">
                     <div><strong>Type:</strong> {{ $backup->type }}</div>
                     <div><strong>Contents:</strong> {{ $backup->contentsLabel() ?: '-' }}</div>
+                    <div><strong>Source filename:</strong> {{ $backup->label ?? $backup->archive_filename ?? '-' }}</div>
                     <div><strong>Archive disk:</strong> {{ $backup->archive_disk }}</div>
                     <div><strong>Archive file:</strong> {{ $backup->archive_filename ?? '-' }}</div>
                     <div><strong>Archive path:</strong> <code>{{ $backup->archive_path ?? '-' }}</code></div>
                     <div><strong>Archive size:</strong> {{ $backup->humanArchiveSize() }}</div>
+                    <div><strong>Manifest app:</strong> {{ $manifest['app_name'] ?? '-' }}</div>
+                    <div><strong>Manifest version:</strong> {{ $manifest['app_version'] ?? '-' }}</div>
+                    <div><strong>Manifest created at:</strong> {{ $manifest['created_at'] ?? '-' }}</div>
                 </div>
             </div>
         </div>
+
+        @if ($inspection)
+            <div class="wb-card wb-card-muted">
+                <div class="wb-card-header"><strong>Manifest Preview</strong></div>
+
+                <div class="wb-card-body wb-stack wb-gap-2">
+                    <div><strong>Product:</strong> {{ $manifest['product'] ?? 'Legacy backup manifest' }}</div>
+                    <div><strong>Package type:</strong> {{ $manifest['package_type'] ?? 'legacy_backup' }}</div>
+                    <div><strong>Format version:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
+                    <div><strong>Contents:</strong> DB{{ $inspection->includesUploads ? ' + uploads' : '' }}</div>
+                </div>
+            </div>
+        @endif
 
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>Danger Zone</strong></div>
@@ -58,7 +76,7 @@
                 <div class="wb-alert wb-alert-danger">
                     <div>
                         <div class="wb-alert-title">Restore backup</div>
-                        <div>Restoring a backup will overwrite your current database and files. WebBlocks CMS will create a fresh safety backup first and will not delete the source backup archive.</div>
+                        <div>This restores a full system backup. It will overwrite the current database and uploaded files. It is different from Export/Import, which creates a new site from a site package. WebBlocks CMS will create a fresh safety backup first and will not delete the source backup archive.</div>
                     </div>
                 </div>
 

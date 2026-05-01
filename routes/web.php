@@ -109,6 +109,8 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::delete('site-transfers/imports/{siteImport}', [SiteImportController::class, 'destroy'])->name('site-transfers.imports.destroy');
         Route::get('system/backups', [SystemBackupController::class, 'index'])->name('system.backups.index');
         Route::post('system/backups', [SystemBackupController::class, 'store'])->name('system.backups.store');
+        Route::get('system/backups/upload', [SystemBackupController::class, 'createUpload'])->name('system.backups.upload');
+        Route::post('system/backups/upload', [SystemBackupController::class, 'upload'])->name('system.backups.upload.store');
         Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
         Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
         Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');

@@ -12,6 +12,8 @@ class SystemBackup extends Model
 
     public const TYPE_MANUAL = 'manual';
 
+    public const TYPE_UPLOADED = 'uploaded';
+
     public const TYPE_RESTORE_SAFETY = 'restore_safety';
 
     public const TYPE_PRE_UPDATE = 'pre_update';
