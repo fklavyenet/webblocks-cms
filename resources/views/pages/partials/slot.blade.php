@@ -5,9 +5,22 @@
     $bodyClass = trim((string) ($wrapper['body_class'] ?? ''));
     $slotPartial = 'pages.partials.slots.'.$slot['slug'];
     $attributes = 'data-wb-slot="'.$slot['slug'].'"';
+    $extraAttributes = $wrapper['attributes'] ?? [];
 
     if ($slot['slug'] === 'main') {
         $attributes .= ' id="main-content"';
+    }
+
+    foreach ($extraAttributes as $attributeName => $attributeValue) {
+        if (! is_string($attributeName) || $attributeName === '' || $attributeValue === null) {
+            continue;
+        }
+
+        if ($attributeName === 'id' && $slot['slug'] === 'main') {
+            continue;
+        }
+
+        $attributes .= ' '.e($attributeName).'="'.e((string) $attributeValue).'"';
     }
 
     if ($class !== '') {

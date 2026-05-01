@@ -524,17 +524,22 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-docs-shell">', false);
-        $response->assertSee('<div class="wb-docs-content">', false);
+        $response->assertSee('<div class="wb-dashboard-shell">', false);
+        $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
         $response->assertSee('<div class="wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full">', false);
         $response->assertDontSee('wb-navbar-spacer', false);
         $response->assertSeeInOrder([
+            '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
+            '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
+            '<div class="wb-dashboard-body">',
             '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">',
-            '<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">',
-            '<aside data-wb-slot="sidebar" class="wb-sidebar">',
+            '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
             '<footer data-wb-slot="footer">',
         ], false);
         $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
+        $response->assertSee('data-wb-toggle="sidebar"', false);
+        $response->assertSee('data-wb-target="#docsSidebar"', false);
+        $response->assertSee('aria-controls="docsSidebar"', false);
         $response->assertSeeInOrder([
             '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
             'data-wb-header-actions',
@@ -544,8 +549,12 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
             '<div class="wb-topbar-actions" data-wb-header-actions>',
         ], false);
-        $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-content-shell wb-docs-main">', false);
-        $response->assertSee('<aside data-wb-slot="sidebar" class="wb-sidebar">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">', false);
+        $response->assertSee('<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">', false);
+        $response->assertDontSee('wb-docs-shell', false);
+        $response->assertDontSee('wb-docs-content', false);
+        $response->assertDontSee('wb-content-shell', false);
+        $response->assertDontSee('wb-docs-main', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
         $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/header-actions.js'));
     }

@@ -84,6 +84,18 @@
 @if ($chrome === [])
     @if ($slot['blocks']->isNotEmpty())
         @if ($wrapperPreset === 'docs-navbar')
+            <button
+                class="wb-navbar-toggle"
+                type="button"
+                data-wb-toggle="sidebar"
+                data-wb-target="#docsSidebar"
+                aria-expanded="false"
+                aria-controls="docsSidebar"
+                aria-label="Toggle navigation"
+            >
+                <span></span><span></span><span></span>
+            </button>
+
             @foreach ($slot['blocks'] as $block)
                 @include('pages.partials.block', ['block' => $block])
             @endforeach

@@ -62,8 +62,13 @@ class PublicPagePresenter
         $class = match ($preset) {
             'docs-navbar' => 'wb-navbar wb-navbar-glass',
             'docs-sidebar' => 'wb-sidebar',
-            'docs-main' => 'wb-content-shell wb-docs-main',
+            'docs-main' => 'wb-dashboard-main',
             default => '',
+        };
+
+        $attributes = match ($preset) {
+            'docs-sidebar' => ['id' => 'docsSidebar'],
+            default => [],
         };
 
         return [
@@ -75,6 +80,7 @@ class PublicPagePresenter
                 'class' => $class,
                 'preset' => $preset,
                 'settings' => $settings,
+                'attributes' => $attributes,
                 'body_class' => $preset === 'docs-navbar' ? 'wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full' : '',
             ],
         ];

@@ -250,8 +250,8 @@ class PublicModeCompatibilityTest extends TestCase
         $response->assertSee('<div class="wb-stat">', false);
         $response->assertSee('<div class="wb-link-list">', false);
         $response->assertSee('data-wb-header-actions', false);
-        $response->assertSee('<div class="wb-docs-shell">', false);
-        $response->assertSee('<div class="wb-docs-content">', false);
+        $response->assertSee('<div class="wb-dashboard-shell">', false);
+        $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
         $response->assertDontSee('style="color:', false);
         $response->assertDontSee('style="background:', false);
         $response->assertDontSee('style="background-color:', false);
