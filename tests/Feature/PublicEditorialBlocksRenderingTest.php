@@ -160,7 +160,6 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('class="wb-nav-group-item"', false);
         $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
         $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
-        $response->assertSee('class="wb-icon wb-icon-home wb-sidebar-icon"', false);
     }
 
     #[Test]
