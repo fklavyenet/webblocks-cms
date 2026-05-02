@@ -518,3 +518,5 @@ If you fork or redistribute this project, you must remove or replace all brandin
 ## Docs Home Sync
 
 Run `ddev artisan webblocks:sync-ui-docs-home-main` to import only the remaining CMS-managed main narrative sections from the WebBlocks UI docs home page into the default Home page `main` slot. The command is idempotent for its own imported section wrappers and does not modify the existing manual sections that precede them.
+
+Run `ddev artisan db:seed --class=Database\\Seeders\\SyncUiDocsGettingStartedSeeder` to create or refresh the CMS-managed Getting Started docs page main-slot content. The sync reuses the docs shell presets from the existing Home page, updates only the Getting Started page main-slot import group, and leaves Home page content untouched.

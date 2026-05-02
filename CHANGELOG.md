@@ -17,6 +17,7 @@
 - Align the docs public shell with the real WebBlocks UI dashboard/sidebar DOM contract, including canonical shell landmark order, `docsSidebar` targeting, and `wb-dashboard-main` output.
 - Add shared logo media support to `sidebar-brand` and align its public HTML with the real WebBlocks UI sidebar brand contract.
 - Align the Media index filters and list layout with the standard admin listing pattern.
+- Add CMS-managed Getting Started docs page content.
 
 ## 1.5.0
 
