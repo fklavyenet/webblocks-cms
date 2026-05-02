@@ -216,6 +216,14 @@ class BlockRequest extends FormRequest
                 }
             }
 
+            if ($selectedBlockType?->slug === 'sidebar-brand' && $this->filled('asset_id')) {
+                $asset = Asset::query()->find((int) $this->input('asset_id'));
+
+                if (! $asset?->isImage()) {
+                    $validator->errors()->add('asset_id', 'Sidebar brand logo must be an image from Media.');
+                }
+            }
+
             if ($selectedBlockType?->slug === 'card') {
                 $url = trim((string) $this->input('card_url', ''));
 

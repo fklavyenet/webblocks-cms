@@ -30,6 +30,22 @@ class PageSlot extends Model
         return ['default', 'plain', 'docs-navbar', 'docs-main', 'docs-sidebar'];
     }
 
+    public static function allowedWrapperElements(): array
+    {
+        return ['div', 'header', 'main', 'aside', 'footer'];
+    }
+
+    public static function defaultWrapperElementForSlug(?string $slug): string
+    {
+        return match ($slug) {
+            'header' => 'header',
+            'sidebar' => 'aside',
+            'main' => 'main',
+            'footer' => 'footer',
+            default => 'div',
+        };
+    }
+
     public static function normalizeWrapperPreset(?string $preset): string
     {
         $normalized = trim((string) $preset);
@@ -51,7 +67,7 @@ class PageSlot extends Model
     {
         $element = trim((string) $this->setting('wrapper_element', ''));
 
-        return in_array($element, ['header', 'main', 'aside', 'footer', 'div'], true) ? $element : null;
+        return in_array($element, self::allowedWrapperElements(), true) ? $element : null;
     }
 
     public function page(): BelongsTo

@@ -97,10 +97,16 @@ class PageRequest extends FormRequest
         $data['status'] = $page instanceof Page ? $page->status : Page::STATUS_DRAFT;
         $existingSettings = $page?->settings;
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-        $data['settings'] = [
-            'public_shell' => Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
-        ];
-        $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
+
+        if (Page::supportsSettingsColumn()) {
+            $data['settings'] = [
+                'public_shell' => Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
+            ];
+            $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
+        } else {
+            unset($data['settings']);
+        }
+
         $data['translation'] = [
             'name' => $data['title'],
             'slug' => $data['slug'],

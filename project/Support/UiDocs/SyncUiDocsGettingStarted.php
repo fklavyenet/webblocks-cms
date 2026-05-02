@@ -128,23 +128,33 @@ class SyncUiDocsGettingStarted
             ->first();
 
         if (! $page) {
-            $page = Page::query()->create([
+            $payload = [
                 'site_id' => $homePage->site_id,
                 'title' => 'Getting Started',
                 'slug' => 'getting-started',
                 'page_type' => 'default',
                 'status' => 'published',
-                'settings' => ['public_shell' => $homePage->publicShellPreset()],
-            ]);
+            ];
+
+            if (Page::supportsSettingsColumn()) {
+                $payload['settings'] = ['public_shell' => $homePage->publicShellPreset()];
+            }
+
+            $page = Page::query()->create($payload);
         }
 
-        $page->update([
+        $payload = [
             'title' => 'Getting Started',
             'slug' => 'getting-started',
             'page_type' => 'default',
             'status' => 'published',
-            'settings' => array_merge(is_array($page->settings) ? $page->settings : [], ['public_shell' => $homePage->publicShellPreset()]),
-        ]);
+        ];
+
+        if (Page::supportsSettingsColumn()) {
+            $payload['settings'] = array_merge(is_array($page->settings) ? $page->settings : [], ['public_shell' => $homePage->publicShellPreset()]);
+        }
+
+        $page->update($payload);
 
         PageTranslation::query()->updateOrCreate(
             ['page_id' => $page->id, 'locale_id' => $defaultLocaleId],

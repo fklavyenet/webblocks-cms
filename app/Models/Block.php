@@ -333,7 +333,7 @@ class Block extends Model
             return true;
         }
 
-        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card'], true);
+        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card', 'sidebar-navigation', 'sidebar-nav-group'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
@@ -341,6 +341,8 @@ class Block extends Model
         return match ($this->typeSlug()) {
             'card' => ['cluster', 'button_link'],
             'link-list' => ['link-list-item'],
+            'sidebar-navigation' => ['sidebar-nav-item', 'sidebar-nav-group'],
+            'sidebar-nav-group' => ['sidebar-nav-item'],
             default => null,
         };
     }

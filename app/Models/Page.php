@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class Page extends Model
@@ -114,11 +115,29 @@ class Page extends Model
         return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
     }
 
+    public static function supportsSettingsColumn(): bool
+    {
+        return Schema::hasColumn((new self)->getTable(), 'settings');
+    }
+
+    public static function allowedPublicShellPresets(): array
+    {
+        return ['default', 'docs'];
+    }
+
+    public static function normalizePublicShellPreset(mixed $preset): string
+    {
+        $normalized = strtolower(trim((string) $preset));
+
+        return match ($normalized) {
+            'docs', 'dashboard' => 'docs',
+            default => 'default',
+        };
+    }
+
     public function publicShellPreset(): string
     {
-        $preset = trim((string) $this->setting('public_shell', ''));
-
-        return in_array($preset, ['default', 'docs'], true) ? $preset : 'default';
+        return self::normalizePublicShellPreset($this->setting('public_shell', 'default'));
     }
 
     public static function workflowStatuses(): array
