@@ -1,42 +1,20 @@
 @php
 	$formSiteId = old('site_id', $page->site_id ?: ($selectedSiteId ?? $sites->first()?->id));
-	$selectedLayoutTypeId = (int) old('layout_type_id', $page->layout_type_id ?: (($layoutTypes ?? collect())->firstWhere('slug', 'default')?->id ?? 0));
-	$selectedLayoutType = ($layoutTypes ?? collect())->firstWhere('id', $selectedLayoutTypeId);
 	$selectedSite = $sites->firstWhere('id', $formSiteId);
 	$canEditContent = $canEditContent ?? true;
 	$submittedSlots = old('slots');
 	$pageSlots = $submittedSlots
 		? collect($submittedSlots)->map(function ($slot) use ($slotTypes, $page) {
 			$pageSlot = new \App\Models\PageSlot($slot);
-			$pageSlot->id = $slot['id'] ?? null;
 			$pageSlot->page_id = $page->id;
 			$pageSlot->slot_type_id = $slot['slot_type_id'] ?? null;
 			$pageSlot->setRelation('slotType', $slotTypes->firstWhere('id', $pageSlot->slot_type_id));
 
 			return $pageSlot;
 		})
-		: ($selectedLayoutType
-			? $selectedLayoutType->slots->filter(fn ($slot) => $slot->isPageOwned())->map(function ($slot) use ($page) {
-				$pageSlot = new \App\Models\PageSlot([
-					'page_id' => $page->id,
-					'slot_type_id' => $slot->slot_type_id,
-					'sort_order' => $slot->sort_order,
-					'settings' => [
-						'wrapper_preset' => $slot->wrapperPreset(),
-						'wrapper_element' => $slot->wrapperElement(),
-					],
-				]);
-				$pageSlot->id = $page->slots->firstWhere('slot_type_id', $slot->slot_type_id)?->id;
-				$pageSlot->setRelation('slotType', $slot->slotType);
-
-				return $pageSlot;
-			})
-			: ($page->exists ? $page->slots()->with('slotType')->orderBy('sort_order')->get() : collect()));
-	$layoutOwnedSlots = $selectedLayoutType?->slots?->filter(fn ($slot) => $slot->isLayoutOwned())->values() ?? collect();
-	$pageOwnedSlots = $selectedLayoutType?->slots?->filter(fn ($slot) => $slot->isPageOwned())->values() ?? collect();
+		: ($page->exists ? $page->slots()->with('slotType')->orderBy('sort_order')->get() : collect());
 	$availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
 	$slotBlockPreviews = $slotBlockPreviews ?? collect();
-	$layoutUsesManagedSlots = $selectedLayoutType !== null;
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -61,15 +39,6 @@
 		</div>
 		<div class="wb-stack wb-gap-2">
 			<div class="wb-stack-2 wb-field">
-				<label for="layout_type_id">Layout Type</label>
-				<select id="layout_type_id" name="layout_type_id" class="wb-select">
-					<option value="">No layout type</option>
-					@foreach (($layoutTypes ?? collect()) as $layoutType)
-						<option value="{{ $layoutType->id }}" @selected((string) $selectedLayoutTypeId === (string) $layoutType->id)>{{ $layoutType->name }}</option>
-					@endforeach
-				</select>
-			</div>
-			<div class="wb-stack-2 wb-field">
 				<label>Site Context</label>
 				<input class="wb-input" type="text" value="{{ ($selectedSite?->name ?? 'Site') }}{{ $selectedSite?->domain ? ' | '.$selectedSite->domain : '' }}" disabled>
 			</div>
@@ -93,65 +62,13 @@
 		</div>
 	</div>
 
-	@if ($selectedLayoutType && $layoutOwnedSlots->isNotEmpty())
-		<div class="wb-card wb-card-muted">
-			<div class="wb-card-header">
-				<strong>Layout-owned Slots</strong>
-			</div>
-			<div class="wb-card-body wb-stack wb-gap-2">
-				@foreach ($layoutOwnedSlots as $layoutOwnedSlot)
-					<div class="wb-card wb-card-muted">
-						<div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-							<div class="wb-stack wb-gap-1">
-								<strong>{{ $layoutOwnedSlot->slotType?->name ?? 'Slot' }}</strong>
-								<span class="wb-text-sm wb-text-muted">{{ $layoutOwnedSlot->slotType?->name ?? 'Slot' }} is provided by {{ $selectedLayoutType->name }}.</span>
-							</div>
-							<a href="{{ route('admin.layout-types.slots.blocks', [$selectedLayoutType, $layoutOwnedSlot]) }}" class="wb-btn wb-btn-secondary">Edit in Layout</a>
-						</div>
-					</div>
-				@endforeach
-			</div>
-		</div>
-	@endif
-
-	@if ($selectedLayoutType)
-		<div class="wb-card wb-card-accent">
-			<div class="wb-card-header">
-				<strong>Page-owned Slots</strong>
-			</div>
-			<div class="wb-card-body wb-stack wb-gap-2">
-				@if ($pageSlots->isEmpty())
-					<div class="wb-empty">
-						<div class="wb-empty-title">No page-owned slots in this layout</div>
-					</div>
-				@else
-					@foreach ($pageSlots as $pageSlot)
-						<div class="wb-card">
-							<div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-								<div class="wb-stack wb-gap-1">
-									<strong>{{ $pageSlot->slotType?->name ?? 'Slot' }}</strong>
-									<span class="wb-text-sm wb-text-muted">{{ ($pageSlot->slotType?->name ?? 'Slot') }} slot</span>
-								</div>
-								@if ($canEditContent && $page->exists && $pageSlot->id)
-									<a href="{{ route('admin.pages.slots.blocks', [$page, 'slot' => $pageSlot->id]) }}" class="wb-btn wb-btn-primary">Edit Blocks</a>
-								@else
-									<span class="wb-btn wb-btn-primary" aria-disabled="true">Edit Blocks</span>
-								@endif
-							</div>
-						</div>
-					@endforeach
-				@endif
-			</div>
-		</div>
-	@endif
-
 	@if (! $canEditContent)
 		<div class="wb-alert wb-alert-info">
 			Content editing is locked while this page is {{ strtolower($page->workflowLabel()) }}. Move it back to draft to continue editing.
 		</div>
 	@endif
 
-	<div class="wb-card wb-card-accent" data-wb-slot-builder @if($layoutUsesManagedSlots) hidden @endif>
+	<div class="wb-card wb-card-accent" data-wb-slot-builder>
 		<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
 			<strong>Slots</strong>
 

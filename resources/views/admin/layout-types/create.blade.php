@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Create Layout Type',
-        'description' => 'Create a reusable layout shell and define which slots belong to the layout or each page.',
+        'description' => 'Create a new layout type record.',
     ])
 
     @include('admin.partials.flash')

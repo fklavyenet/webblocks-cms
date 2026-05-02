@@ -9,8 +9,6 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
-use App\Models\LayoutType;
-use App\Models\LayoutTypeSlot;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -139,7 +137,6 @@ class PageController extends Controller
             'sites' => $sites,
             'selectedSiteId' => $selectedSiteId,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
-            'layoutTypes' => LayoutType::query()->with('slots.slotType')->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
             'canEditContent' => true,
         ]);
     }
@@ -157,7 +154,7 @@ class PageController extends Controller
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
-            $this->syncSlots($page, $slots, true);
+            $this->syncSlots($page, $slots);
 
             if ($blocks === []) {
                 $this->syncBlocks($page, []);
@@ -188,7 +185,6 @@ class PageController extends Controller
 
         $page->loadMissing([
             'site',
-            'layoutType.slots.slotType',
             'translations.locale',
             'slots.slotType',
             'blocks' => fn ($query) => $query
@@ -215,7 +211,6 @@ class PageController extends Controller
                 ->orderBy('name')
                 ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
-            'layoutTypes' => LayoutType::query()->with('slots.slotType')->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
@@ -239,7 +234,7 @@ class PageController extends Controller
 
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
-            $this->syncSlots($page, $slots, false);
+            $this->syncSlots($page, $slots);
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
@@ -862,14 +857,8 @@ class PageController extends Controller
             ?? Locale::query()->where('is_default', true)->firstOrFail();
     }
 
-    private function syncSlots(Page $page, array $submittedSlots, bool $isCreating = false): void
+    private function syncSlots(Page $page, array $submittedSlots): void
     {
-        if ($page->layout_type_id) {
-            $this->syncLayoutDrivenSlots($page);
-
-            return;
-        }
-
         $existingSlots = $page->slots()->get()->keyBy('id');
         $keptSlotIds = [];
 
@@ -898,44 +887,6 @@ class PageController extends Controller
         }
 
         $page->slots()->whereNotIn('id', $keptSlotIds)->delete();
-    }
-
-    private function syncLayoutDrivenSlots(Page $page): void
-    {
-        $layoutType = LayoutType::query()->with('slots.slotType')->find($page->layout_type_id);
-
-        if (! $layoutType) {
-            return;
-        }
-
-        $existingSlots = $page->slots()->get()->keyBy('slot_type_id');
-        $pageOwnedLayoutSlots = $layoutType->slots
-            ->filter(fn (LayoutTypeSlot $slot) => $slot->isPageOwned())
-            ->values();
-        $keptSlotTypeIds = [];
-
-        foreach ($pageOwnedLayoutSlots as $index => $layoutSlot) {
-            $slot = $existingSlots->get($layoutSlot->slot_type_id);
-            $payload = [
-                'page_id' => $page->id,
-                'slot_type_id' => $layoutSlot->slot_type_id,
-                'sort_order' => $index,
-                'settings' => [
-                    'wrapper_preset' => $layoutSlot->wrapperPreset(),
-                    'wrapper_element' => $layoutSlot->wrapperElement(),
-                ],
-            ];
-
-            if ($slot) {
-                $slot->update($payload);
-            } else {
-                PageSlot::query()->create($payload);
-            }
-
-            $keptSlotTypeIds[] = $layoutSlot->slot_type_id;
-        }
-
-        $page->slots()->whereNotIn('slot_type_id', $keptSlotTypeIds)->delete();
     }
 
     private function slotBlockPreviewFor(Page $page, PageSlot $slot): array

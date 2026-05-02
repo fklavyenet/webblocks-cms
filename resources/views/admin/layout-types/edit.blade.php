@@ -1,13 +1,9 @@
-@php
-    $layoutTypeTitle = 'Edit Layout Type: '.$layoutType->name;
-@endphp
-
-@extends('layouts.admin', ['title' => $layoutTypeTitle, 'heading' => $layoutTypeTitle])
+@extends('layouts.admin', ['title' => 'Edit Layout Type', 'heading' => 'Edit Layout Type'])
 
 @section('content')
     @include('admin.partials.page-header', [
-        'title' => $layoutTypeTitle,
-        'description' => 'Update slot ownership, wrappers, and shared layout structure.',
+        'title' => 'Edit Layout Type',
+        'description' => 'Update the selected layout type record.',
     ])
 
     @include('admin.partials.flash')

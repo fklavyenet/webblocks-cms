@@ -1,5 +1,5 @@
 @php
-    $settings = $block->settings ?? [];
+    $settings = is_array($block->settings) ? $block->settings : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
     $heroButtons = $block->children->filter(fn ($child) => $child->typeSlug() === 'button')->values();
     $primaryButton = $heroButtons->get(0);
     $secondaryButton = $heroButtons->get(1);

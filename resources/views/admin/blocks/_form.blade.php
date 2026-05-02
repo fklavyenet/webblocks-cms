@@ -1,6 +1,5 @@
 @php
     $selectedPageId = (int) old('page_id', $block->page_id);
-    $selectedLayoutTypeSlotId = (int) old('layout_type_slot_id', $block->layout_type_slot_id);
     $availableParents = $parentBlocks ?? collect();
     $selectedBlockTypeId = old('block_type_id', $selectedBlockType?->id ?? $block->block_type_id ?: $blockTypes->firstWhere('slug', $block->type)?->id);
     $selectedSlotTypeId = old('slot_type_id', $block->slot_type_id ?: $slotTypes->firstWhere('slug', $block->slot)?->id);
@@ -35,7 +34,6 @@
         <div class="wb-tabs-panels">
             <div class="wb-tabs-panel {{ $activeTab === 'block-info' ? 'is-active' : '' }}" id="slot-block-info-panel">
                 <input type="hidden" name="page_id" value="{{ $selectedPageId }}">
-                <input type="hidden" name="layout_type_slot_id" value="{{ $selectedLayoutTypeSlotId }}">
                 <input type="hidden" name="slot_type_id" value="{{ $selectedSlotTypeId }}">
 
                 <div class="wb-grid wb-grid-3">

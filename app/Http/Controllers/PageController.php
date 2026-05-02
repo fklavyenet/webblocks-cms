@@ -47,7 +47,6 @@ class PageController extends Controller
     {
         $page->load([
             'site',
-            'layoutType.slots.slotType',
             'translations.locale',
             'slots.slotType',
             'blocks' => fn ($query) => $query
@@ -56,16 +55,6 @@ class PageController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('id'),
         ]);
-
-        if ($page->layoutType) {
-            $page->load([
-                'layoutType.slots.blocks' => fn ($query) => $query
-                    ->where('status', 'published')
-                    ->with($this->publishedBlockRelations())
-                    ->orderBy('sort_order')
-                    ->orderBy('id'),
-            ]);
-        }
 
         $this->visitorEventLogger->logPageView($request, $page);
 

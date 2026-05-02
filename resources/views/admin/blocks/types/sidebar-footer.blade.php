@@ -1,5 +1,6 @@
 @php
-    $settings = $block->settings ?? [];
+    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+    $settings = is_array($settings) ? $settings : [];
 @endphp
 
 <div class="wb-stack wb-gap-4">

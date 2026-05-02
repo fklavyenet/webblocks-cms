@@ -1,5 +1,6 @@
 @php
-    $settings = $block->settings ?? [];
+    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+    $settings = is_array($settings) ? $settings : [];
     $allowedIcons = ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'];
 @endphp
 

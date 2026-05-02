@@ -1264,6 +1264,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Block Fields');
         $response->assertSee('Settings');
         $response->assertSee('Parent Block');
+        $response->assertSee('Sort Order');
         $response->assertSee('Status');
         $response->assertSee('<option value="published" selected>published</option>', false);
         $response->assertDontSee('Translation Status');

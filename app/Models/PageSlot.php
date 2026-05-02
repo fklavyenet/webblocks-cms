@@ -39,7 +39,6 @@ class PageSlot extends Model
     {
         return $this->hasMany(Block::class, 'slot_type_id', 'slot_type_id')
             ->where('page_id', $this->page_id)
-            ->whereNull('layout_type_slot_id')
             ->orderBy('sort_order')
             ->orderBy('id');
     }

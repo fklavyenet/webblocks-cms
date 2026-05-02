@@ -1,5 +1,6 @@
 @php
-    $settings = $block->settings ?? [];
+    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+    $settings = is_array($settings) ? $settings : [];
     $showModeToggle = old('header_actions_show_mode_toggle', ($settings['show_mode_toggle'] ?? true) ? '1' : '0');
     $showAccentToggle = old('header_actions_show_accent_toggle', ($settings['show_accent_toggle'] ?? true) ? '1' : '0');
 @endphp

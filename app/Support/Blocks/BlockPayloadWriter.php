@@ -10,7 +10,7 @@ class BlockPayloadWriter
 {
     public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
 
-    public function save(Block $block, ?Page $page, array $data, ?string $localeCode = null): Block
+    public function save(Block $block, Page $page, array $data, ?string $localeCode = null): Block
     {
         $isCreating = ! $block->exists;
         $translationSourceBlock = $isCreating ? null : clone $block;

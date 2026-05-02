@@ -17,27 +17,35 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Slug</th>
                             <th>Category</th>
-                            <th>Description</th>
+                            <th>Usage</th>
                             <th>Status</th>
-                            <th>System</th>
+                            <th>Support</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($blockTypes as $blockType)
                             <tr>
-                                    <td><strong>{{ $blockType->name }}</strong></td>
-                                    <td class="wb-nowrap"><code>{{ $blockType->slug }}</code></td>
+                                    <td>
+                                        <div class="wb-stack wb-stack-1">
+                                            <strong>{{ $blockType->name }}</strong>
+                                            <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? 'system' : 'user' }}{{ $blockType->is_container ? ' | container' : '' }}</span>
+                                        </div>
+                                    </td>
                                     <td class="wb-nowrap">{{ $blockType->category ?: '-' }}</td>
-                                    <td class="wb-text-muted">{{ $blockType->description ?: '-' }}</td>
+                                    <td class="wb-nowrap">{{ $blockType->blocks_count }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $blockType->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
                                             {{ $blockType->status }}
                                         </span>
                                     </td>
-                                    <td><span class="wb-status-pill {{ $blockType->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ $blockType->is_system ? 'system' : 'user' }}</span></td>
+                                    <td>
+                                        <div class="wb-stack wb-stack-1">
+                                            <span class="wb-text-sm wb-text-muted">Admin {!! ($supportedAdminForms[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
+                                            <span class="wb-text-sm wb-text-muted">Render {!! ($supportedPublicRenders[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
+                                        </div>
+                                    </td>
                                     <td class="wb-nowrap">
                                         <div class="wb-action-group">
                                             @if (! $blockType->is_system)
