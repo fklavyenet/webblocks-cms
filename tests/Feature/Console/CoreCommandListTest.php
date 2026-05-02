@@ -12,10 +12,12 @@ class CoreCommandListTest extends TestCase
     {
         $removedSyncCommand = 'webblocks:'.implode('-', ['sync', 'ui', 'docs', 'pilot']);
         $removedRebuildCommand = 'webblocks:'.implode('-', ['rebuild', 'ui', 'docs']);
+        $removedHomeMainCommand = 'webblocks:'.implode('-', ['sync', 'ui', 'docs', 'home', 'main']);
 
         $this->artisan('list')
             ->doesntExpectOutputToContain($removedSyncCommand)
             ->doesntExpectOutputToContain($removedRebuildCommand)
+            ->doesntExpectOutputToContain($removedHomeMainCommand)
             ->assertExitCode(0);
     }
 }

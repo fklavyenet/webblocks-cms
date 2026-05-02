@@ -32,8 +32,10 @@ class ProjectInitCommand extends Command
             'project/Providers',
             'project/Routes',
             'project/Console/Commands',
+            'project/Support',
             'project/config',
             'project/resources/views',
+            'project/tests/Feature',
         ];
     }
 
@@ -50,14 +52,17 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `Providers/`
 - `Routes/`
 - `Console/Commands/`
+- `Support/`
 - `config/`
 - `resources/views/`
+- `tests/`
 
 ## Rules
 
 - Keep instance-specific code here instead of core `app/`, `routes/`, `resources/`, or `config/`.
 - Project config loads under the `project.*` namespace.
 - Project views are available through the `project::` namespace.
+- Project console commands can be registered in `project/Routes/console.php`.
 - This layer is for one install or site instance. It is not the plugin system.
 MARKDOWN,
             'project/config/providers.php' => <<<'PHP'
@@ -89,6 +94,20 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Route::get('/project-health', fn () => 'ok');
+PHP,
+            'project/Routes/console.php' => <<<'PHP'
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Project Console Routes
+|--------------------------------------------------------------------------
+|
+| Register update-safe, instance-specific Artisan commands here.
+|
+*/
+
+// Illuminate\Support\Facades\Artisan::command('project:health', fn () => $this->info('ok'));
 PHP,
         ];
     }

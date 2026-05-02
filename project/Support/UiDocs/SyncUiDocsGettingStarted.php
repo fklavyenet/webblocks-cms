@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Project\Support\UiDocs;
 
 use App\Models\Block;
 use App\Models\BlockType;
@@ -9,12 +9,11 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
-class SyncUiDocsGettingStartedSeeder extends Seeder
+class SyncUiDocsGettingStarted
 {
     private const IMPORT_GROUP = 'webblocks-ui-docs-getting-started';
 

@@ -37,12 +37,14 @@ class ProjectInitCommandTest extends TestCase
         $this->assertDirectoryExists(base_path('project/Providers'));
         $this->assertDirectoryExists(base_path('project/Routes'));
         $this->assertDirectoryExists(base_path('project/Console/Commands'));
+        $this->assertDirectoryExists(base_path('project/Support'));
         $this->assertDirectoryExists(base_path('project/config'));
         $this->assertDirectoryExists(base_path('project/resources/views'));
         $this->assertFileExists(base_path('project/README.md'));
         $this->assertFileExists(base_path('project/config/providers.php'));
         $this->assertFileExists(base_path('project/config/sites.php'));
         $this->assertFileExists(base_path('project/Routes/web.php'));
+        $this->assertFileExists(base_path('project/Routes/console.php'));
     }
 
     #[Test]

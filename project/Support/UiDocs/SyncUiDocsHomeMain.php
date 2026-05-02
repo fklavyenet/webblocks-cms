@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Console\Commands;
+namespace Project\Support\UiDocs;
 
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Support\Blocks\BlockPayloadWriter;
-use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
-class SyncUiDocsHomeMainCommand extends Command
+class SyncUiDocsHomeMain
 {
     private const SLOT = 'main';
 
@@ -19,16 +18,9 @@ class SyncUiDocsHomeMainCommand extends Command
 
     private const ANCHOR_LAYOUT = 'Read the system';
 
-    protected $signature = 'webblocks:sync-ui-docs-home-main';
+    public function __construct(private readonly BlockPayloadWriter $blockPayloadWriter) {}
 
-    protected $description = 'Sync remaining WebBlocks UI docs home narrative sections into the Home page main slot';
-
-    public function __construct(private readonly BlockPayloadWriter $blockPayloadWriter)
-    {
-        parent::__construct();
-    }
-
-    public function handle(): int
+    public function run(): void
     {
         $page = Page::query()
             ->with(['translations', 'blocks.blockType'])
@@ -86,7 +78,7 @@ class SyncUiDocsHomeMainCommand extends Command
 
             $baseSortOrder = (int) $anchorSection->sort_order;
 
-            foreach ($existingImportedSections as $index => $section) {
+            foreach ($existingImportedSections as $section) {
                 $section->delete();
             }
 
@@ -138,10 +130,6 @@ class SyncUiDocsHomeMainCommand extends Command
                 }
             }
         });
-
-        $this->info('Synced remaining WebBlocks UI docs home main narrative sections.');
-
-        return self::SUCCESS;
     }
 
     private function createBlock(Page $page, Block $parent, int $blockTypeId, int $sortOrder, array $payload): Block
