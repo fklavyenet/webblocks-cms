@@ -714,10 +714,12 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         ]);
 
         $response = $this->get('/');
+        $html = $response->getContent();
 
         $response->assertOk();
         $response->assertSee('<div class="wb-dashboard-shell">', false);
         $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
+        $response->assertSee('<div class="wb-dashboard-body wb-w-full">', false);
         $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSee('<div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
         $response->assertDontSee('<div class="wb-container wb-container-lg wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
@@ -727,6 +729,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSeeInOrder([
             '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
             '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
+            '<div class="wb-dashboard-body wb-w-full">',
             '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">',
             '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
             '<footer data-wb-slot="footer">',
@@ -743,6 +746,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('wb-content-shell', false);
         $response->assertDontSee('wb-docs-main', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
+        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<header\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
+        $this->assertDoesNotMatchRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<header\b[^>]*data-wb-slot="header"[^>]*>/s', $html);
     }
 
     #[Test]

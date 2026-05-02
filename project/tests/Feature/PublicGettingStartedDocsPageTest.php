@@ -37,18 +37,29 @@ class PublicGettingStartedDocsPageTest extends TestCase
             ->firstOrFail();
 
         $response = $this->get('/p/getting-started');
+        $html = $response->getContent();
 
         $response->assertOk();
         $response->assertSee('Getting Started');
         $response->assertSee('<div class="wb-dashboard-shell">', false);
         $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
+        $response->assertSee('<div class="wb-dashboard-body wb-w-full">', false);
         $response->assertSee('data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full"', false);
         $response->assertSee('data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar"', false);
         $response->assertSee('data-wb-slot="main" id="main-content" class="wb-dashboard-main"', false);
+        $response->assertSeeInOrder([
+            'data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar"',
+            '<div class="wb-dashboard-body wb-w-full">',
+            'data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full"',
+            'data-wb-slot="main" id="main-content" class="wb-dashboard-main"',
+        ], false);
         $response->assertSee('<header class="wb-content-header">', false);
         $response->assertSee('<h1 class="wb-content-title">Getting Started</h1>', false);
         $response->assertSee('<pre><code data-language="html">', false);
         $response->assertSee('<div class="wb-alert wb-alert-info">', false);
+        $response->assertDontSee('wb-navbar-spacer', false);
+        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<header\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
+        $this->assertDoesNotMatchRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<header\b[^>]*data-wb-slot="header"[^>]*>/s', $html);
 
         $firstBlockCount = $page->blocks()->count();
 

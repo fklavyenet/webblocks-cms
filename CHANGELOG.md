@@ -21,6 +21,7 @@
 - Move WebBlocks UI docs navigation and Getting Started import commands out of core and into the project layer.
 - Fix Docs Navbar alignment by removing constrained container classes from the full-width flex row.
 - Fix Docs Navbar visual width by applying full-width layout to the navbar element itself, not only the inner flex row.
+- Fix docs shell layout structure so the navbar and main content share the right-side content column instead of becoming competing flex items.
 
 ## 1.5.0
 

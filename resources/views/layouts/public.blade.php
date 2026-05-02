@@ -30,6 +30,7 @@
         @else
         @php
             $publicShell = $page->publicShellPreset();
+            $slotCollection = collect($slots ?? []);
             $renderSlot = function (array $slot) use ($page) {
                 $tag = $slot['wrapper_element'] ?: match ($slot['slug']) {
                     'header' => 'header',
@@ -66,12 +67,24 @@
         @if ($publicShell === 'docs')
             <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
             <div class="wb-dashboard-shell">
-                @foreach ($slots ?? collect() as $slot)
+                @foreach ($slotCollection->where('slug', 'sidebar') as $slot)
                     {!! $renderSlot($slot) !!}
                 @endforeach
+
+                <div class="wb-dashboard-body wb-w-full">
+                    @foreach (['header', 'main', 'footer'] as $slug)
+                        @foreach ($slotCollection->where('slug', $slug) as $slot)
+                            {!! $renderSlot($slot) !!}
+                        @endforeach
+                    @endforeach
+
+                    @foreach ($slotCollection->reject(fn ($slot) => in_array($slot['slug'] ?? null, ['sidebar', 'header', 'main', 'footer'], true)) as $slot)
+                        {!! $renderSlot($slot) !!}
+                    @endforeach
+                </div>
             </div>
         @else
-            @foreach ($slots ?? collect() as $slot)
+            @foreach ($slotCollection as $slot)
                 {!! $renderSlot($slot) !!}
             @endforeach
         @endif
