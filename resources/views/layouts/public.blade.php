@@ -45,7 +45,7 @@
                 }
 
                 if (($slot['wrapper_preset'] ?? 'default') === 'docs-navbar') {
-                    $attributes[] = 'class="wb-navbar wb-navbar-glass"';
+                    $attributes[] = 'class="wb-navbar wb-navbar-glass wb-w-full"';
                 }
 
                 if (($slot['wrapper_preset'] ?? 'default') === 'docs-main') {

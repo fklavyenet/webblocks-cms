@@ -20,6 +20,7 @@
 - Add navigation-backed docs sidebar rendering with optional navigation item icons while preserving manual sidebar block fallback.
 - Move WebBlocks UI docs navigation and Getting Started import commands out of core and into the project layer.
 - Fix Docs Navbar alignment by removing constrained container classes from the full-width flex row.
+- Fix Docs Navbar visual width by applying full-width layout to the navbar element itself, not only the inner flex row.
 
 ## 1.5.0
 

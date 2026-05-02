@@ -718,19 +718,20 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<div class="wb-dashboard-shell">', false);
         $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
-        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSee('<div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
         $response->assertDontSee('<div class="wb-container wb-container-lg wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
         $response->assertDontSee('wb-container wb-container-lg', false);
+        $response->assertDontSee('wb-container-xl', false);
         $response->assertDontSee('wb-navbar-spacer', false);
         $response->assertSeeInOrder([
             '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
             '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
-            '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">',
+            '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">',
             '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
             '<footer data-wb-slot="footer">',
         ], false);
-        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSeeInOrder([
             '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
             'data-wb-header-actions',
