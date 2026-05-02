@@ -73,7 +73,9 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Docs shell rendering is layout-level, not block-level. Use page `Public Shell = Docs` with slot presets such as `Docs Navbar`, `Docs Sidebar`, and `Docs Main` to render the real WebBlocks UI docs contract: `.wb-dashboard-shell`, `.wb-sidebar-backdrop[data-wb-sidebar-backdrop]`, `<aside class="wb-sidebar" id="docsSidebar">`, `<header class="wb-navbar wb-navbar-glass">`, and `<main class="wb-dashboard-main">` without pushing shell classes into blocks.
 - Docs shell landmark order is canonical and does not follow slot management sort order. The public docs shell always renders backdrop, sidebar, and then dashboard body with header and main, while the slot order in Edit Page remains an editor-facing management order.
 - Docs sidebar shell responsibility stays at the page and slot layer. The `Docs Sidebar` slot preset owns `<aside class="wb-sidebar" id="docsSidebar">`, while sidebar blocks render only the brand, navigation, nav groups or items, and footer content inside that wrapper.
-- `Docs Navbar` aligns header slot children with a full-width docs topbar row using shipped WebBlocks UI flex utilities such as `wb-flex`, `wb-items-center`, `wb-justify-between`, `wb-gap-3`, and `wb-w-full` instead of spacer divs.
+- Docs Navbar layout uses `wb-flex wb-justify-between` for left/right alignment.
+- Breadcrumb renders on the left, Header Actions on the right.
+- `wb-navbar-spacer` is deprecated and must not be used.
 - Slot wrapper classes are controlled presets, not arbitrary editor-provided class strings. The CMS validates allowed wrapper elements and wrapper presets server-side and falls back safely for unknown values.
 - Existing saved `dashboard` shell values and `dashboard-*` slot presets are normalized to the `docs` shell equivalents during rendering and admin saves.
 - `header-actions` uses shipped WebBlocks UI hooks directly: the mode button uses `data-wb-mode-cycle`, the accent menu uses the standard `wb-dropdown wb-dropdown-end` pattern, and the CMS public JavaScript only keeps ARIA and selected-state sync aligned with `WBTheme` and the dropdown runtime.

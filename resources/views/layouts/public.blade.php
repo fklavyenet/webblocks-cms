@@ -25,6 +25,9 @@
         @endif
     </head>
     <body class="wb-public-body">
+        @if (! isset($page))
+            @yield('content')
+        @else
         @php
             $publicShell = $page->publicShellPreset();
             $renderSlot = function (array $slot) use ($page) {
@@ -71,6 +74,7 @@
             @foreach ($slots ?? collect() as $slot)
                 {!! $renderSlot($slot) !!}
             @endforeach
+        @endif
         @endif
 
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>

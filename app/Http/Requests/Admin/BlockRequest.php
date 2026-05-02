@@ -429,6 +429,8 @@ class BlockRequest extends FormRequest
         /** @var AdminAuthorization $authorization */
         $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
+        $existingBlock = $this->route('block');
+        $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
         $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
         $pageId = (int) $data['page_id'];
 
@@ -448,6 +450,10 @@ class BlockRequest extends FormRequest
         $meta = trim((string) ($data['meta'] ?? ''));
         $data['meta'] = $meta === '' ? null : $meta;
         $data['asset_id'] = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['asset_id']) ? (int) $data['asset_id'] : null);
+
+        if ($data['asset_id'] === null && $existingBlock && ! $this->has('asset_id')) {
+            $data['asset_id'] = $existingBlock->asset_id;
+        }
 
         $galleryAssetIds = $authorization->filterAllowedAssetIds($this->user(), $data['gallery_asset_ids'] ?? []);
         $attachmentAssetId = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null);

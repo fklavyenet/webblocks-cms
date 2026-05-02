@@ -154,9 +154,7 @@
                         <span class="wb-navbar-context">{{ $heading ?? config('app.slogan') }}</span>
                     </div>
 
-                    <span class="wb-navbar-spacer"></span>
-
-                    <div class="wb-navbar-end">
+                    <div class="wb-navbar-end wb-ms-auto">
                         <div class="wb-navbar-iconbar">
                             <button type="button" class="wb-navbar-icon-trigger" data-wb-mode-cycle aria-label="Color mode" title="Color mode">
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
