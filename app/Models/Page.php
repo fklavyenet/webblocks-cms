@@ -90,8 +90,8 @@ class Page extends Model
         'page_type',
         'page_type_id',
         'layout_id',
-        'status',
         'settings',
+        'status',
         'published_at',
         'review_requested_at',
     ];
@@ -103,28 +103,22 @@ class Page extends Model
     protected function casts(): array
     {
         return [
+            'settings' => 'array',
             'published_at' => 'datetime',
             'review_requested_at' => 'datetime',
-            'settings' => 'array',
         ];
     }
 
-    public static function allowedPublicShellPresets(): array
+    public function setting(string $key, mixed $default = null): mixed
     {
-        return ['default', 'docs'];
+        return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
     }
 
     public function publicShellPreset(): string
     {
-        return self::normalizePublicShellPreset($this->settings['public_shell'] ?? 'default');
-    }
+        $preset = trim((string) $this->setting('public_shell', ''));
 
-    public static function normalizePublicShellPreset(mixed $preset): string
-    {
-        return match (strtolower(trim((string) $preset))) {
-            'docs', 'dashboard' => 'docs',
-            default => 'default',
-        };
+        return in_array($preset, ['default', 'docs'], true) ? $preset : 'default';
     }
 
     public static function workflowStatuses(): array

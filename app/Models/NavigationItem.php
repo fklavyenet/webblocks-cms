@@ -32,20 +32,6 @@ class NavigationItem extends Model
 
     public const VISIBILITY_HIDDEN = 'hidden';
 
-    public const SIDEBAR_ICONS = [
-        'home',
-        'rocket',
-        'layers',
-        'palette',
-        'layout',
-        'box',
-        'star',
-        'grid',
-        'wrench',
-        'code',
-        'terminal',
-    ];
-
     protected $fillable = [
         'site_id',
         'menu_key',
@@ -55,7 +41,6 @@ class NavigationItem extends Model
         'link_type',
         'url',
         'target',
-        'icon',
         'position',
         'visibility',
         'is_system',
@@ -127,11 +112,6 @@ class NavigationItem extends Model
     public static function locations(): array
     {
         return self::menuKeys();
-    }
-
-    public static function sidebarIconKeys(): array
-    {
-        return self::SIDEBAR_ICONS;
     }
 
     public function page(): BelongsTo
@@ -216,6 +196,15 @@ class NavigationItem extends Model
         };
     }
 
+    public function sidebarIcon(): ?string
+    {
+        $icon = trim((string) ($this->icon ?? ''));
+
+        return in_array($icon, ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'], true)
+            ? $icon
+            : null;
+    }
+
     public function typeLabel(): string
     {
         return match ($this->link_type) {
@@ -254,12 +243,5 @@ class NavigationItem extends Model
     public function isVisible(): bool
     {
         return $this->visibility !== self::VISIBILITY_HIDDEN;
-    }
-
-    public function sidebarIcon(): ?string
-    {
-        return in_array($this->icon, self::sidebarIconKeys(), true)
-            ? $this->icon
-            : null;
     }
 }

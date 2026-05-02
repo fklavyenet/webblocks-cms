@@ -2,7 +2,6 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
-        $cmsPublicHeaderActionsJsPath = public_path('assets/webblocks-cms/js/public/header-actions.js');
         $siteCssPath = public_path('site/css/site.css');
     @endphp
 
@@ -27,44 +26,53 @@
     </head>
     <body class="wb-public-body">
         @php
-            $publicShell = $publicShell ?? ['preset' => 'default', 'slots' => $slots ?? collect()];
+            $publicShell = $page->publicShellPreset();
+            $renderSlot = function (array $slot) use ($page) {
+                $tag = $slot['wrapper_element'] ?: match ($slot['slug']) {
+                    'header' => 'header',
+                    'sidebar' => 'aside',
+                    'main' => 'main',
+                    'footer' => 'footer',
+                    default => 'div',
+                };
+                $attributes = ['data-wb-slot="'.$slot['slug'].'"'];
+
+                if ($slot['slug'] === 'main') {
+                    $attributes[] = 'id="main-content"';
+                }
+
+                if (($slot['wrapper_preset'] ?? 'default') === 'docs-navbar') {
+                    $attributes[] = 'class="wb-navbar wb-navbar-glass"';
+                }
+
+                if (($slot['wrapper_preset'] ?? 'default') === 'docs-main') {
+                    $attributes[] = 'class="wb-dashboard-main"';
+                }
+
+                if (($slot['wrapper_preset'] ?? 'default') === 'docs-sidebar') {
+                    $attributes[] = 'id="docsSidebar"';
+                    $attributes[] = 'class="wb-sidebar"';
+                }
+
+                return '<'.$tag.' '.implode(' ', $attributes).'>'
+                    .view('pages.partials.slot', ['slot' => $slot, 'page' => $page])->render()
+                    .'</'.$tag.'>';
+            };
         @endphp
 
-        @if (($publicShell['preset'] ?? 'default') === 'docs')
+        @if ($publicShell === 'docs')
+            <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
             <div class="wb-dashboard-shell">
-                <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
-
-                @if (! empty($publicShell['sidebar']))
-                    @include('pages.partials.slot', ['slot' => $publicShell['sidebar'], 'page' => $page])
-                @endif
-
-                <div class="wb-dashboard-body">
-                    @if (! empty($publicShell['header']))
-                        @include('pages.partials.slot', ['slot' => $publicShell['header'], 'page' => $page])
-                    @endif
-
-                    @if (! empty($publicShell['main']))
-                        @include('pages.partials.slot', ['slot' => $publicShell['main'], 'page' => $page])
-                    @endif
-
-                    @foreach (($publicShell['content_slots'] ?? collect())->reject(fn ($slot) => in_array($slot['slug'], ['main', 'sidebar'], true)) as $slot)
-                        @include('pages.partials.slot', ['slot' => $slot, 'page' => $page])
-                    @endforeach
-                </div>
-
-                @if (! empty($publicShell['footer']))
-                    @include('pages.partials.slot', ['slot' => $publicShell['footer'], 'page' => $page])
-                @endif
+                @foreach ($slots ?? collect() as $slot)
+                    {!! $renderSlot($slot) !!}
+                @endforeach
             </div>
         @else
             @foreach ($slots ?? collect() as $slot)
-                @include('pages.partials.slot', ['slot' => $slot, 'page' => $page])
+                {!! $renderSlot($slot) !!}
             @endforeach
         @endif
 
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
-        @if (is_file($cmsPublicHeaderActionsJsPath))
-            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($cmsPublicHeaderActionsJsPath) }}" defer></script>
-        @endif
     </body>
 </html>

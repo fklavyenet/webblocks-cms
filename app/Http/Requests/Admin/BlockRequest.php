@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
-use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
@@ -160,14 +160,14 @@ class BlockRequest extends FormRequest
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
             'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
+            'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'current-page', 'exact'])],
             'sidebar_nav_item_icon' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
             'sidebar_nav_item_active_mode' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['exact', 'path', 'current-page', 'manual'])],
             'sidebar_nav_item_manual_active' => [$isSidebarNavItem ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
             'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
-            'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
-            'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
-            'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['exact', 'path', 'current-page'])],
             'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
@@ -213,14 +213,6 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
                     $validator->errors()->add('url', 'Sidebar URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
-                }
-            }
-
-            if ($selectedBlockType?->slug === 'sidebar-brand' && $this->filled('asset_id')) {
-                $asset = Asset::query()->find((int) $this->input('asset_id'));
-
-                if (! $asset?->isImage()) {
-                    $validator->errors()->add('asset_id', 'Sidebar brand logo must be an image from Media.');
                 }
             }
 
@@ -432,10 +424,6 @@ class BlockRequest extends FormRequest
         $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
         $pageId = (int) $data['page_id'];
 
-        if (! $this->has('parent_id') && $this->route('block') instanceof Block) {
-            $data['parent_id'] = $this->route('block')->parent_id;
-        }
-
         if (! empty($data['parent_id'])) {
             $parentMatchesPage = Block::query()
                 ->whereKey($data['parent_id'])
@@ -554,209 +542,6 @@ class BlockRequest extends FormRequest
                 $data['settings'] = json_encode([
                     'menu_key' => $data['navigation_menu_key'] ?? NavigationItem::MENU_PRIMARY,
                 ], JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'breadcrumb') {
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $homeLabel = trim((string) ($data['breadcrumb_home_label'] ?? ''));
-                $includeCurrent = filter_var($data['breadcrumb_include_current'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                $settings = $existingSettings;
-                $settings['include_current'] = $includeCurrent !== false;
-
-                if ($homeLabel !== '') {
-                    $settings['home_label'] = $homeLabel;
-                } else {
-                    unset($settings['home_label']);
-                }
-
-                $data['title'] = null;
-                $data['subtitle'] = null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $data['asset_id'] = null;
-                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'header-actions') {
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $showModeToggle = filter_var($data['header_actions_show_mode_toggle'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                $showAccentToggle = filter_var($data['header_actions_show_accent_toggle'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                $settings = $existingSettings;
-                $settings['show_mode_toggle'] = $showModeToggle !== false;
-                $settings['show_accent_toggle'] = $showAccentToggle !== false;
-
-                $data['title'] = null;
-                $data['subtitle'] = null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $data['asset_id'] = null;
-                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'sidebar-brand') {
-                $isTranslatedSidebarBrandEdit = $data['locale'] !== null;
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $settings = $existingSettings;
-
-                if (! $isTranslatedSidebarBrandEdit) {
-                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
-                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
-                }
-
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['asset_id'] = $isTranslatedSidebarBrandEdit
-                    ? ($this->route('block')?->asset_id)
-                    : ($data['asset_id'] ?: null);
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'sidebar-navigation') {
-                $isTranslatedSidebarNavigationEdit = $data['locale'] !== null;
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $settings = $existingSettings;
-                $layoutName = trim((string) ($data['name'] ?? ''));
-
-                if (! $isTranslatedSidebarNavigationEdit) {
-                    $menuKey = trim((string) ($data['sidebar_navigation_menu_key'] ?? ''));
-                    $showIcons = filter_var($data['sidebar_navigation_show_icons'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                    $activeMatching = trim((string) ($data['sidebar_navigation_active_matching'] ?? 'path'));
-
-                    if ($layoutName !== '') {
-                        $settings['layout_name'] = $layoutName;
-                    } else {
-                        unset($settings['layout_name']);
-                    }
-
-                    if (in_array($menuKey, NavigationItem::menuKeys(), true)) {
-                        $settings['menu_key'] = $menuKey;
-                    } else {
-                        unset($settings['menu_key']);
-                    }
-
-                    $settings['show_icons'] = $showIcons !== false;
-                    $settings['active_matching'] = in_array($activeMatching, ['exact', 'path', 'current-page'], true)
-                        ? $activeMatching
-                        : 'path';
-                }
-
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['asset_id'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'sidebar-nav-item') {
-                $isTranslatedSidebarNavItemEdit = $data['locale'] !== null;
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $settings = $existingSettings;
-
-                if (! $isTranslatedSidebarNavItemEdit) {
-                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
-                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
-                    $icon = trim((string) ($data['sidebar_nav_item_icon'] ?? ''));
-                    $settings['icon'] = in_array($icon, ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'], true) ? $icon : null;
-                    $settings['active_mode'] = in_array(($data['sidebar_nav_item_active_mode'] ?? 'path'), ['exact', 'path', 'current-page', 'manual'], true) ? $data['sidebar_nav_item_active_mode'] : 'path';
-                    $manualActive = filter_var($data['sidebar_nav_item_manual_active'] ?? false, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                    $settings['manual_active'] = $manualActive === true;
-                }
-
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['asset_id'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'sidebar-nav-group') {
-                $isTranslatedSidebarNavGroupEdit = $data['locale'] !== null;
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $settings = $existingSettings;
-
-                if (! $isTranslatedSidebarNavGroupEdit) {
-                    $icon = trim((string) ($data['sidebar_nav_group_icon'] ?? ''));
-                    $settings['icon'] = in_array($icon, ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'], true) ? $icon : null;
-                    $initiallyOpen = filter_var($data['sidebar_nav_group_initially_open'] ?? false, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-                    $settings['initially_open'] = $initiallyOpen === true;
-                    $layoutName = trim((string) ($data['name'] ?? ''));
-
-                    if ($layoutName !== '') {
-                        $settings['layout_name'] = $layoutName;
-                    } else {
-                        unset($settings['layout_name']);
-                    }
-                }
-
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = null;
-                $data['content'] = null;
-                $data['url'] = null;
-                $data['asset_id'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
-            }
-
-            if ($blockType?->slug === 'sidebar-footer') {
-                $isTranslatedSidebarFooterEdit = $data['locale'] !== null;
-                $existingSettings = $this->route('block') instanceof Block
-                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
-                    : [];
-                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
-                $settings = $existingSettings;
-
-                if (! $isTranslatedSidebarFooterEdit) {
-                    $settings['variant'] = in_array(trim((string) ($data['sidebar_footer_variant'] ?? 'info')), ['info', 'success', 'warning', 'danger'], true)
-                        ? trim((string) ($data['sidebar_footer_variant'] ?? 'info'))
-                        : 'info';
-                }
-
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
-                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
-                $data['url'] = null;
-                $data['asset_id'] = null;
-                $data['variant'] = null;
-                $data['meta'] = null;
-                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
             if ($blockType?->slug === 'contact_form') {
@@ -947,6 +732,202 @@ class BlockRequest extends FormRequest
                 }
             }
 
+            if ($blockType?->slug === 'breadcrumb') {
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if ($blockType?->slug === 'header-actions') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedHeaderActionsEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedHeaderActionsEdit) {
+                    $settings['show_mode_toggle'] = (bool) ($data['header_actions_show_mode_toggle'] ?? true);
+                    $settings['show_accent_toggle'] = (bool) ($data['header_actions_show_accent_toggle'] ?? true);
+                }
+
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-brand') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSidebarBrandEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarBrandEdit) {
+                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-navigation') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSidebarNavigationEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarNavigationEdit) {
+                    $menuKey = trim((string) ($data['sidebar_navigation_menu_key'] ?? ''));
+                    $layoutName = trim((string) ($data['name'] ?? ''));
+                    $activeMatching = trim((string) ($data['sidebar_navigation_active_matching'] ?? 'path'));
+
+                    if ($menuKey !== '' && in_array($menuKey, NavigationItem::menuKeys(), true)) {
+                        $settings['menu_key'] = $menuKey;
+                    } else {
+                        unset($settings['menu_key']);
+                    }
+
+                    $settings['show_icons'] = (bool) ($data['sidebar_navigation_show_icons'] ?? true);
+                    $settings['active_matching'] = in_array($activeMatching, ['path', 'current-page', 'exact'], true)
+                        ? $activeMatching
+                        : 'path';
+
+                    if ($layoutName !== '') {
+                        $settings['layout_name'] = $layoutName;
+                    } else {
+                        unset($settings['layout_name']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-nav-item') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSidebarNavItemEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarNavItemEdit) {
+                    $icon = trim((string) ($data['sidebar_nav_item_icon'] ?? ''));
+                    $activeMode = trim((string) ($data['sidebar_nav_item_active_mode'] ?? 'path'));
+
+                    $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
+                    $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                    $settings['active_mode'] = in_array($activeMode, ['exact', 'path', 'current-page', 'manual'], true)
+                        ? $activeMode
+                        : 'path';
+                    $settings['manual_active'] = (bool) ($data['sidebar_nav_item_manual_active'] ?? false);
+
+                    if ($icon !== '') {
+                        $settings['icon'] = $icon;
+                    } else {
+                        unset($settings['icon']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-nav-group') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSidebarNavGroupEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarNavGroupEdit) {
+                    $icon = trim((string) ($data['sidebar_nav_group_icon'] ?? ''));
+                    $layoutName = trim((string) ($data['name'] ?? ''));
+
+                    $settings['initially_open'] = (bool) ($data['sidebar_nav_group_initially_open'] ?? false);
+
+                    if ($icon !== '') {
+                        $settings['icon'] = $icon;
+                    } else {
+                        unset($settings['icon']);
+                    }
+
+                    if ($layoutName !== '') {
+                        $settings['layout_name'] = $layoutName;
+                    } else {
+                        unset($settings['layout_name']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'sidebar-footer') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSidebarFooterEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSidebarFooterEdit) {
+                    $settings['variant'] = in_array(trim((string) ($data['sidebar_footer_variant'] ?? 'info')), ['info', 'success', 'warning', 'danger'], true)
+                        ? trim((string) ($data['sidebar_footer_variant'] ?? 'info'))
+                        : 'info';
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
             if ($blockType?->slug === 'plain_text') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -1067,10 +1048,13 @@ class BlockRequest extends FormRequest
         unset($data['layout']);
         unset($data['title_tag']);
         unset($data['language']);
-        unset($data['navigation_menu_key'], $data['breadcrumb_home_label'], $data['breadcrumb_include_current'], $data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
-        unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active'], $data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
+        unset($data['navigation_menu_key']);
         unset($data['text'], $data['level']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
+        unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
+        unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
+        unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
+        unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;

@@ -25,6 +25,35 @@ class PageSlot extends Model
         ];
     }
 
+    public static function acceptedWrapperPresets(): array
+    {
+        return ['default', 'plain', 'docs-navbar', 'docs-main', 'docs-sidebar'];
+    }
+
+    public static function normalizeWrapperPreset(?string $preset): string
+    {
+        $normalized = trim((string) $preset);
+
+        return in_array($normalized, self::acceptedWrapperPresets(), true) ? $normalized : 'default';
+    }
+
+    public function setting(string $key, mixed $default = null): mixed
+    {
+        return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
+    }
+
+    public function wrapperPreset(): string
+    {
+        return self::normalizeWrapperPreset((string) $this->setting('wrapper_preset', 'default'));
+    }
+
+    public function wrapperElement(): ?string
+    {
+        $element = trim((string) $this->setting('wrapper_element', ''));
+
+        return in_array($element, ['header', 'main', 'aside', 'footer', 'div'], true) ? $element : null;
+    }
+
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);
@@ -41,54 +70,5 @@ class PageSlot extends Model
             ->where('page_id', $this->page_id)
             ->orderBy('sort_order')
             ->orderBy('id');
-    }
-
-    public static function allowedWrapperElements(): array
-    {
-        return ['div', 'header', 'main', 'aside', 'footer'];
-    }
-
-    public static function allowedWrapperPresets(): array
-    {
-        return ['default', 'docs-navbar', 'docs-sidebar', 'docs-main', 'plain'];
-    }
-
-    public static function acceptedWrapperPresets(): array
-    {
-        return array_merge(self::allowedWrapperPresets(), ['dashboard-navbar', 'dashboard-sidebar', 'dashboard-main']);
-    }
-
-    public static function defaultWrapperElementForSlug(?string $slug): string
-    {
-        return match ($slug) {
-            'header' => 'header',
-            'sidebar' => 'aside',
-            'main' => 'main',
-            'footer' => 'footer',
-            default => 'div',
-        };
-    }
-
-    public function wrapperElement(): string
-    {
-        $element = strtolower((string) ($this->settings['wrapper_element'] ?? 'div'));
-
-        return in_array($element, self::allowedWrapperElements(), true) ? $element : 'div';
-    }
-
-    public function wrapperPreset(): string
-    {
-        return self::normalizeWrapperPreset($this->settings['wrapper_preset'] ?? 'default');
-    }
-
-    public static function normalizeWrapperPreset(mixed $preset): string
-    {
-        return match (strtolower(trim((string) $preset))) {
-            'docs-navbar', 'dashboard-navbar' => 'docs-navbar',
-            'docs-sidebar', 'dashboard-sidebar' => 'docs-sidebar',
-            'docs-main', 'dashboard-main' => 'docs-main',
-            'plain' => 'plain',
-            default => 'default',
-        };
     }
 }

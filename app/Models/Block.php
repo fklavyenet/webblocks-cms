@@ -333,7 +333,7 @@ class Block extends Model
             return true;
         }
 
-        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card', 'sidebar-navigation', 'sidebar-nav-group'], true);
+        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
@@ -341,99 +341,8 @@ class Block extends Model
         return match ($this->typeSlug()) {
             'card' => ['cluster', 'button_link'],
             'link-list' => ['link-list-item'],
-            'sidebar-navigation' => ['sidebar-nav-item', 'sidebar-nav-group'],
-            'sidebar-nav-group' => ['sidebar-nav-item'],
             default => null,
         };
-    }
-
-    public function sidebarLinkUrl(): ?string
-    {
-        $url = trim((string) $this->setting('url', $this->url ?? ''));
-
-        return $url !== '' ? $url : null;
-    }
-
-    public function sidebarLinkTarget(): string
-    {
-        return $this->setting('target') === '_blank' ? '_blank' : '_self';
-    }
-
-    public function sidebarNavItemIcon(): ?string
-    {
-        $icon = $this->setting('icon');
-
-        return in_array($icon, NavigationItem::sidebarIconKeys(), true)
-            ? $icon
-            : null;
-    }
-
-    public function sidebarNavigationMenuKey(): ?string
-    {
-        $configured = trim((string) ($this->setting('menu_key', $this->setting('menu_handle', '')) ?? ''));
-
-        return in_array($configured, NavigationItem::menuKeys(), true)
-            ? $configured
-            : null;
-    }
-
-    public function sidebarNavigationShowIcons(): bool
-    {
-        return (bool) $this->setting('show_icons', true);
-    }
-
-    public function sidebarNavigationActiveMatching(): string
-    {
-        return match ($this->setting('active_matching')) {
-            'exact', 'current-page' => $this->setting('active_matching'),
-            default => 'path',
-        };
-    }
-
-    public function sidebarNavItemActiveMode(): string
-    {
-        return match ($this->setting('active_mode')) {
-            'exact', 'path', 'current-page', 'manual' => $this->setting('active_mode'),
-            default => 'path',
-        };
-    }
-
-    public function sidebarNavItemManualActive(): bool
-    {
-        return (bool) $this->setting('manual_active', false);
-    }
-
-    public function sidebarNavGroupInitiallyOpen(): bool
-    {
-        return (bool) $this->setting('initially_open', false);
-    }
-
-    public function sidebarFooterVariant(): string
-    {
-        return match ($this->setting('variant')) {
-            'success', 'warning', 'danger' => $this->setting('variant'),
-            default => 'info',
-        };
-    }
-
-    public function sidebarFooterVariantClass(): string
-    {
-        return 'wb-callout-'. $this->sidebarFooterVariant();
-    }
-
-    public function isSidebarNavigation(): bool
-    {
-        return $this->typeSlug() === 'sidebar-navigation';
-    }
-
-    public function isSidebarNavItem(): bool
-    {
-        return $this->typeSlug() === 'sidebar-nav-item';
-    }
-
-    public function isSidebarNavGroup(): bool
-    {
-        return $this->typeSlug() === 'sidebar-nav-group';
     }
 
     public function linkListItemUrl(): ?string
@@ -643,6 +552,31 @@ class Block extends Model
         return $this->typeSlug() === 'link-list';
     }
 
+    public function isSidebarBrand(): bool
+    {
+        return $this->typeSlug() === 'sidebar-brand';
+    }
+
+    public function isSidebarNavigation(): bool
+    {
+        return $this->typeSlug() === 'sidebar-navigation';
+    }
+
+    public function isSidebarNavItem(): bool
+    {
+        return $this->typeSlug() === 'sidebar-nav-item';
+    }
+
+    public function isSidebarNavGroup(): bool
+    {
+        return $this->typeSlug() === 'sidebar-nav-group';
+    }
+
+    public function isSidebarFooter(): bool
+    {
+        return $this->typeSlug() === 'sidebar-footer';
+    }
+
     public function isLinkListItem(): bool
     {
         return $this->typeSlug() === 'link-list-item';
@@ -723,6 +657,71 @@ class Block extends Model
     public function navigationLocation(): string
     {
         return $this->navigationMenuKey();
+    }
+
+    public function sidebarLinkUrl(): ?string
+    {
+        $url = trim((string) $this->setting('url', ''));
+
+        return $url !== '' ? $url : $this->stringValueOrNull($this->url);
+    }
+
+    public function sidebarLinkTarget(): string
+    {
+        return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
+    public function sidebarNavigationMenuKey(): ?string
+    {
+        $menuKey = trim((string) $this->setting('menu_key', ''));
+
+        return in_array($menuKey, NavigationItem::menuKeys(), true) ? $menuKey : null;
+    }
+
+    public function sidebarNavigationShowIcons(): bool
+    {
+        return (bool) $this->setting('show_icons', true);
+    }
+
+    public function sidebarNavigationActiveMatching(): string
+    {
+        $value = trim((string) $this->setting('active_matching', 'path'));
+
+        return in_array($value, ['path', 'current-page', 'exact'], true) ? $value : 'path';
+    }
+
+    public function sidebarNavItemIcon(): ?string
+    {
+        $icon = trim((string) $this->setting('icon', ''));
+
+        return $icon !== '' ? $icon : null;
+    }
+
+    public function sidebarNavItemActiveMode(): string
+    {
+        $value = trim((string) $this->setting('active_mode', 'path'));
+
+        return in_array($value, ['exact', 'path', 'current-page', 'manual'], true) ? $value : 'path';
+    }
+
+    public function sidebarNavItemManualActive(): bool
+    {
+        return (bool) $this->setting('manual_active', false);
+    }
+
+    public function sidebarNavGroupInitiallyOpen(): bool
+    {
+        return (bool) $this->setting('initially_open', false);
+    }
+
+    public function sidebarFooterVariantClass(): string
+    {
+        return match ($this->setting('variant')) {
+            'success' => 'wb-callout-success',
+            'warning' => 'wb-callout-warning',
+            'danger' => 'wb-callout-danger',
+            default => 'wb-callout-info',
+        };
     }
 
     public function galleryAssetIds(): array
