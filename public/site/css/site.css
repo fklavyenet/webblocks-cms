@@ -10,9 +10,9 @@
  */
 
 :root {
-    --fklavye-header-shadow: 0 10px 30px color-mix(in srgb, var(--wb-text) 8%, transparent);
-    --fklavye-panel-shadow: 0 18px 40px color-mix(in srgb, var(--wb-text) 10%, transparent);
-    --fklavye-panel-shadow-sm: 0 16px 32px color-mix(in srgb, var(--wb-text) 9%, transparent);
+    --header-shadow: 0 10px 30px color-mix(in srgb, var(--wb-text) 8%, transparent);
+    --panel-shadow: 0 18px 40px color-mix(in srgb, var(--wb-text) 10%, transparent);
+    --panel-shadow-sm: 0 16px 32px color-mix(in srgb, var(--wb-text) 9%, transparent);
 }
 
 .wb-public-body {
@@ -28,7 +28,7 @@
     z-index: 40;
     background: color-mix(in srgb, var(--wb-surface) 88%, transparent);
     border-bottom: 1px solid color-mix(in srgb, var(--wb-border) 82%, var(--wb-accent-border) 18%);
-    box-shadow: var(--fklavye-header-shadow);
+    box-shadow: var(--header-shadow);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
 }
@@ -239,7 +239,7 @@
 .wb-public-contact-card,
 .wb-public-contact-form-card {
     border-color: color-mix(in srgb, var(--wb-border) 78%, var(--wb-accent-border) 22%);
-    box-shadow: var(--fklavye-panel-shadow);
+    box-shadow: var(--panel-shadow);
 }
 
 .wb-public-contact-card {
@@ -280,7 +280,7 @@
 .wb-public-showcase-item,
 .wb-gallery-item {
     border-color: color-mix(in srgb, var(--wb-border) 78%, var(--wb-accent-border) 22%);
-    box-shadow: var(--fklavye-panel-shadow-sm);
+    box-shadow: var(--panel-shadow-sm);
 }
 
 .wb-public-hero {
@@ -358,6 +358,18 @@
 
 .wb-slider-dot.is-active {
     background: currentColor;
+}
+
+.wb-sidebar-brand-subtitle {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--wb-muted);
+}
+
+.wb-dashboard-shell > .wb-sidebar {
+    --wb-sidebar-w: 320px;
 }
 
 @media (min-width: 960px) {
