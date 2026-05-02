@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
@@ -75,6 +76,123 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('href="/p/about"', false);
         $response->assertSee('aria-current="page"', false);
         $response->assertDontSee('<div class="wb-sidebar-nav"', false);
+    }
+
+    #[Test]
+    public function sidebar_navigation_can_render_a_selected_navigation_menu_with_icons_groups_and_active_links(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $this->blockType('sidebar-navigation', 'Sidebar Navigation', 16)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+                'show_icons' => true,
+                'active_matching' => 'current-page',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Documentation navigation',
+        ]);
+
+        $group = NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Guides',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'layers',
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'parent_id' => $group->id,
+            'title' => 'Getting Started',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'icon' => 'rocket',
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'parent_id' => $group->id,
+            'title' => 'External Docs',
+            'link_type' => NavigationItem::LINK_CUSTOM_URL,
+            'url' => 'https://example.com/docs',
+            'target' => '_blank',
+            'icon' => 'code',
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Overview',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'icon' => 'home',
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
+        $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
+        $response->assertSee('<i class="wb-icon wb-icon-layers wb-nav-group-icon" aria-hidden="true"></i>', false);
+        $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
+        $response->assertSee('<i class="wb-icon wb-icon-rocket" aria-hidden="true"></i>', false);
+        $response->assertSee('href="https://example.com/docs"', false);
+        $response->assertSee('class="wb-nav-group-item"', false);
+        $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
+        $response->assertSee('<i class="wb-icon wb-icon-code" aria-hidden="true"></i>', false);
+        $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
+        $response->assertSee('<i class="wb-icon wb-icon-home" aria-hidden="true"></i>', false);
+    }
+
+    #[Test]
+    public function sidebar_navigation_with_selected_empty_menu_renders_no_wrapper(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $this->blockType('sidebar-navigation', 'Sidebar Navigation', 16)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+                'show_icons' => false,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Documentation navigation',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('<nav class="wb-sidebar-nav"', false);
     }
 
     #[Test]

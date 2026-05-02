@@ -5,6 +5,7 @@
     $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]);
     $cancelType = $cancelType ?? 'link';
     $cancelAttributes = $cancelAttributes ?? [];
+    $iconOptions = \App\Models\NavigationItem::sidebarIconKeys();
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -85,6 +86,17 @@
                 <option value="hidden" @selected(old('visibility', $item->visibility) === 'hidden')>Hidden</option>
             </select>
         </div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="icon">Icon</label>
+        <select id="icon" name="icon" class="wb-select">
+            <option value="">No icon</option>
+            @foreach ($iconOptions as $icon)
+                <option value="{{ $icon }}" @selected(old('icon', $item->icon) === $icon)>{{ str($icon)->replace('-', ' ')->title() }}</option>
+            @endforeach
+        </select>
+        <div class="wb-text-sm wb-text-muted">Optional safe icon slug used by sidebar-style navigation renderers.</div>
     </div>
 
     <input type="hidden" name="position" value="{{ old('position', $item->position ?: 1) }}">

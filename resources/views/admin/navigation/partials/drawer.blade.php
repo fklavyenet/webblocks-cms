@@ -37,6 +37,7 @@
                     $draft->page_id = old('page_id', $draft->page_id);
                     $draft->url = old('url', $draft->url);
                     $draft->target = old('target', $draft->target);
+                    $draft->icon = old('icon', $draft->icon);
                     $draft->visibility = old('visibility', $draft->visibility);
                     $draft->parent_id = old('parent_id', $draft->parent_id);
                     $draft->position = old('position', $draft->position);

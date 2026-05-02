@@ -157,6 +157,9 @@ class NavigationItemController extends Controller
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
         $data['url'] = trim((string) ($data['url'] ?? '')) ?: null;
         $data['target'] = trim((string) ($data['target'] ?? '')) ?: null;
+        $data['icon'] = in_array(trim((string) ($data['icon'] ?? '')), NavigationItem::sidebarIconKeys(), true)
+            ? trim((string) ($data['icon'] ?? ''))
+            : null;
         $data['parent_id'] = $data['parent_id'] ?? null;
         $data['position'] = (int) ($data['position'] ?? 1);
         $data['visibility'] = $data['visibility'] ?? NavigationItem::VISIBILITY_VISIBLE;

@@ -64,7 +64,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `header-actions` is a first-class system navigation block for compact header utility controls such as color mode and accent actions. It pairs naturally with `breadcrumb` inside the `header` slot and is not a navigation menu.
 - `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, and `sidebar-footer` are first-class docs sidebar blocks intended for the `sidebar` slot in the `docs` shell. They render only the inner contents of the docs aside and do not own the outer `aside.wb-sidebar` wrapper.
 - `sidebar-brand` stores translated `title` and `subtitle` in `block_text_translations`, stores shared URL and target in `blocks.settings`, and can attach a shared logo image from Media through the block asset field. Its public renderer follows the WebBlocks UI `wb-sidebar-brand` contract with optional `img.wb-sidebar-brand-logo` and `span.wb-sidebar-brand-copy` output.
-- `sidebar-navigation` is a first-class container block that renders only `nav.wb-sidebar-nav > div.wb-sidebar-section`, stores translated navigation ARIA label in `block_text_translations.title`, and accepts only `sidebar-nav-item` and `sidebar-nav-group` children.
+- `sidebar-navigation` is a first-class container block that renders only `nav.wb-sidebar-nav > div.wb-sidebar-section`, stores translated navigation ARIA label in `block_text_translations.title`, and can either render a shared navigation menu by `menu_key` or fall back to manual `sidebar-nav-item` and `sidebar-nav-group` children.
+- Navigation items now support an optional shared `icon` slug for sidebar-style rendering, including docs navigation driven from CMS navigation trees.
 - `sidebar-nav-item` stores translated label text in `block_text_translations.title`, stores shared URL, target, icon, and active matching mode in `blocks.settings`, and renders the active class only on the `a.wb-sidebar-link` element.
 - `sidebar-nav-group` stores translated group label in `block_text_translations.title`, stores shared icon and initial open state in `blocks.settings`, and accepts only `sidebar-nav-item` children.
 - `sidebar-footer` stores translated callout title, body, and footer text in `block_text_translations` and stores the shared callout variant in `blocks.settings`.
@@ -116,6 +117,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Site-specific code that must survive CMS updates belongs in the Project Layer under `project/`.
 - Site-specific migration scripts, one-off legacy importers, and project-only reconstruction helpers do not belong in CMS core.
 - CMS core does not ship website-specific UI docs or demo content generator commands.
+- Site-specific docs import commands belong in the project layer, for example `project:sync-ui-docs-navigation` and `project:sync-ui-docs-getting-started`.
 - If a migration script is only relevant to a specific site, brand, or historical project, keep it in that project workspace instead of this repository.
 - Generic site export/import remains part of CMS core and is the supported reusable transfer path.
 - Website and demo content should be distributed as native CMS export/import snapshots instead of hard-coded PHP page builder commands in core.

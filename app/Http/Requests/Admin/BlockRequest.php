@@ -165,6 +165,9 @@ class BlockRequest extends FormRequest
             'sidebar_nav_item_manual_active' => [$isSidebarNavItem ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
             'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
+            'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
+            'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['exact', 'path', 'current-page'])],
             'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
@@ -636,11 +639,26 @@ class BlockRequest extends FormRequest
                 $layoutName = trim((string) ($data['name'] ?? ''));
 
                 if (! $isTranslatedSidebarNavigationEdit) {
+                    $menuKey = trim((string) ($data['sidebar_navigation_menu_key'] ?? ''));
+                    $showIcons = filter_var($data['sidebar_navigation_show_icons'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+                    $activeMatching = trim((string) ($data['sidebar_navigation_active_matching'] ?? 'path'));
+
                     if ($layoutName !== '') {
                         $settings['layout_name'] = $layoutName;
                     } else {
                         unset($settings['layout_name']);
                     }
+
+                    if (in_array($menuKey, NavigationItem::menuKeys(), true)) {
+                        $settings['menu_key'] = $menuKey;
+                    } else {
+                        unset($settings['menu_key']);
+                    }
+
+                    $settings['show_icons'] = $showIcons !== false;
+                    $settings['active_matching'] = in_array($activeMatching, ['exact', 'path', 'current-page'], true)
+                        ? $activeMatching
+                        : 'path';
                 }
 
                 $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
@@ -650,6 +668,7 @@ class BlockRequest extends FormRequest
                 $data['asset_id'] = null;
                 $data['variant'] = null;
                 $data['meta'] = null;
+                $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
                 $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 

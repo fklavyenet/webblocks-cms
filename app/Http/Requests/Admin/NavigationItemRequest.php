@@ -40,6 +40,7 @@ class NavigationItemRequest extends FormRequest
             'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
             'url' => ['nullable', 'string', 'max:2048'],
             'target' => ['nullable', 'string', Rule::in(['_self', '_blank'])],
+            'icon' => ['nullable', 'string', Rule::in(array_merge([''], NavigationItem::sidebarIconKeys()))],
             'position' => ['nullable', 'integer', 'min:1'],
             'visibility' => ['required', 'string', Rule::in(NavigationItem::visibilities())],
         ];

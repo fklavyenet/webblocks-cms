@@ -361,9 +361,32 @@ class Block extends Model
 
     public function sidebarNavItemIcon(): ?string
     {
-        return match ($this->setting('icon')) {
-            'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal' => $this->setting('icon'),
-            default => null,
+        $icon = $this->setting('icon');
+
+        return in_array($icon, NavigationItem::sidebarIconKeys(), true)
+            ? $icon
+            : null;
+    }
+
+    public function sidebarNavigationMenuKey(): ?string
+    {
+        $configured = trim((string) ($this->setting('menu_key', $this->setting('menu_handle', '')) ?? ''));
+
+        return in_array($configured, NavigationItem::menuKeys(), true)
+            ? $configured
+            : null;
+    }
+
+    public function sidebarNavigationShowIcons(): bool
+    {
+        return (bool) $this->setting('show_icons', true);
+    }
+
+    public function sidebarNavigationActiveMatching(): string
+    {
+        return match ($this->setting('active_matching')) {
+            'exact', 'current-page' => $this->setting('active_matching'),
+            default => 'path',
         };
     }
 
