@@ -14,6 +14,10 @@
         'view' => $viewMode !== 'list' ? $viewMode : null,
     ]);
     $previewBaseQuery = array_merge($baseQuery, ['page' => $assets->currentPage() > 1 ? $assets->currentPage() : null]);
+    $headerActions = '<div class="wb-cluster wb-cluster-2">'
+        .'<a href="'.route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])).'" class="wb-btn wb-btn-primary">Upload Asset</a>'
+        .'<a href="'.route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])).'" class="wb-btn wb-btn-secondary">New Folder</a>'
+        .'</div>';
 @endphp
 
 @section('content')
@@ -21,30 +25,13 @@
         'title' => 'Media',
         'description' => 'Review, filter, preview, and manage the shared media library from one compact screen.',
         'count' => $assetCount,
+        'actions' => $headerActions,
     ])
 
     @include('admin.partials.flash')
 
-    <div class="wb-card">
-        <div class="wb-card-body wb-stack wb-gap-4">
-            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
-                <div class="wb-cluster wb-cluster-2">
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">Upload Asset</a>
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])) }}" class="wb-btn wb-btn-secondary">New Folder</a>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-media-view-toggle">
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'list'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'list') aria-current="page" @endif>
-                        <i class="wb-icon wb-icon-list" aria-hidden="true"></i>
-                        <span>List</span>
-                    </a>
-                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'grid'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'grid') aria-current="page" @endif>
-                        <i class="wb-icon wb-icon-panel-left" aria-hidden="true"></i>
-                        <span>Grid</span>
-                    </a>
-                </div>
-            </div>
-
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
             <form method="GET" action="{{ route('admin.media.index') }}" class="wb-cluster wb-cluster-between wb-cluster-2">
                 <div class="wb-cluster wb-cluster-2">
                     <div class="wb-stack wb-gap-1">
@@ -74,25 +61,41 @@
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
                     @if ($selectedFolderId)
                         <input type="hidden" name="folder_id" value="{{ $selectedFolderId }}">
                     @endif
                     <input type="hidden" name="view" value="{{ $viewMode }}">
                     <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
                     @if ($selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $viewMode !== 'list')
-                        <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Reset</a>
+                        <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
                     @endif
                 </div>
             </form>
+        </div>
+    </div>
 
-            <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">
-                <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $assetCount }}</span></a>
-                @foreach ($folders as $folder)
-                    <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
-                        {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
+    <div class="wb-card">
+        <div class="wb-card-body wb-stack wb-gap-4">
+            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
+                <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">
+                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $assetCount }}</span></a>
+                    @foreach ($folders as $folder)
+                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                            {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="wb-cluster wb-cluster-2 wb-media-view-toggle">
+                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'list'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'list') aria-current="page" @endif>
+                        <i class="wb-icon wb-icon-list" aria-hidden="true"></i>
+                        <span>List</span>
                     </a>
-                @endforeach
+                    <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'grid'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'grid') aria-current="page" @endif>
+                        <i class="wb-icon wb-icon-panel-left" aria-hidden="true"></i>
+                        <span>Grid</span>
+                    </a>
+                </div>
             </div>
 
             @if ($assets->isEmpty())

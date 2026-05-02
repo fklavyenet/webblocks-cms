@@ -14,14 +14,14 @@
         @endif
 
         @if ($hasCopy)
-            <div class="wb-sidebar-brand-copy">
+            <span class="wb-sidebar-brand-copy">
                 @if ($title !== null)
-                    <strong class="wb-sidebar-brand-title">{{ $title }}</strong>
+                    <strong>{{ $title }}</strong>
                 @endif
                 @if ($subtitle !== null)
-                    <small class="wb-sidebar-brand-subtitle">{{ $subtitle }}</small>
+                    <span>{{ $subtitle }}</span>
                 @endif
-            </div>
+            </span>
         @endif
     </a>
 @endif

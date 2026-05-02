@@ -76,6 +76,41 @@ class MediaManagementTest extends TestCase
         $response->assertSee('Copy asset URL');
         $response->assertSee('List');
         $response->assertSee('Grid');
+        $response->assertSee('<div class="wb-card wb-card-muted">', false);
+        $response->assertSee('<div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">', false);
+        $response->assertSee('<div class="wb-table-wrap">', false);
+        $response->assertSee('<div class="wb-page-actions">', false);
+        $response->assertSee('name="view" value="list"', false);
+    }
+
+    #[Test]
+    public function media_index_renders_filter_and_list_layout_with_standard_admin_listing_pattern(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/layout-check.jpg',
+            'filename' => 'layout-check.jpg',
+            'original_name' => 'layout-check.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1234,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Layout check asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="media_search"', false);
+        $response->assertSee('id="media_kind"', false);
+        $response->assertSee('id="media_usage"', false);
+        $response->assertSee('<button type="submit" class="wb-btn wb-btn-primary">Apply</button>', false);
+        $response->assertSee('<div class="wb-card wb-card-muted">', false);
+        $response->assertSee('<div class="wb-table-wrap">', false);
+        $response->assertSee('wb-media-view-toggle', false);
+        $response->assertSee(route('admin.media.show', $asset), false);
     }
 
     #[Test]

@@ -318,6 +318,8 @@ Admin session expiry is handled defensively: after re-authentication, the origin
 
 Admin JavaScript is organized under `public/assets/webblocks-cms/js/admin/`. Blade templates should not contain large inline scripts; admin behavior should be added to named JS modules and loaded through the admin layout.
 
+Admin listing screens should reuse the standard pattern used by Pages: a full-width muted filter card with one responsive filter row, compact page-header actions, and a separate full-width list or table card.
+
 These tools serve different purposes and are intentionally separate.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
