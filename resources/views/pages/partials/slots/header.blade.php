@@ -1,6 +1,6 @@
 @php
     $chrome = $slot['chrome'] ?? null;
-    $wrapperPreset = $slot['wrapper']['preset'] ?? null;
+    $wrapperPreset = $slot['wrapper_preset'] ?? ($slot['wrapper']['preset'] ?? null);
 
     if (! is_array($chrome)) {
         $chrome = [];
@@ -84,19 +84,39 @@
 @if ($chrome === [])
     @if ($slot['blocks']->isNotEmpty())
         @if ($wrapperPreset === 'docs-navbar')
-            <button
-                class="wb-navbar-toggle"
-                type="button"
-                data-wb-toggle="sidebar"
-                data-wb-target="#docsSidebar"
-                aria-expanded="false"
-                aria-controls="docsSidebar"
-                aria-label="Toggle navigation"
-            >
-                <span></span><span></span><span></span>
-            </button>
+            @php
+                $breadcrumbBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'breadcrumb')->values();
+                $actionBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'header-actions')->values();
+                $otherBlocks = $slot['blocks']->reject(fn ($block) => in_array($block->typeSlug(), ['breadcrumb', 'header-actions'], true))->values();
+            @endphp
 
-            @foreach ($slot['blocks'] as $block)
+            <div class="wb-split wb-items-center wb-gap-3">
+                <div class="wb-cluster wb-cluster-2 wb-items-center">
+                    <button
+                        class="wb-navbar-toggle"
+                        type="button"
+                        data-wb-toggle="sidebar"
+                        data-wb-target="#docsSidebar"
+                        aria-expanded="false"
+                        aria-controls="docsSidebar"
+                        aria-label="Toggle navigation"
+                    >
+                        <span></span><span></span><span></span>
+                    </button>
+
+                    @foreach ($breadcrumbBlocks as $block)
+                        @include('pages.partials.block', ['block' => $block])
+                    @endforeach
+                </div>
+
+                <div class="wb-cluster wb-cluster-2 wb-cluster-end wb-items-center">
+                    @foreach ($actionBlocks as $block)
+                        @include('pages.partials.block', ['block' => $block])
+                    @endforeach
+                </div>
+            </div>
+
+            @foreach ($otherBlocks as $block)
                 @include('pages.partials.block', ['block' => $block])
             @endforeach
         @else

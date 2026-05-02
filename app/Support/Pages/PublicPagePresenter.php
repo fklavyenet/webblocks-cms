@@ -44,11 +44,21 @@ class PublicPagePresenter
         $blocks = $topLevelBlocks
             ->where('slot_type_id', $slot->slot_type_id)
             ->values();
+        $wrapperPreset = $slot->wrapperPreset();
+
+        if ($wrapperPreset === 'default' && $slot->page?->publicShellPreset() === 'docs') {
+            $wrapperPreset = match ($slug) {
+                'header' => 'docs-navbar',
+                'sidebar' => 'docs-sidebar',
+                'main' => 'docs-main',
+                default => 'default',
+            };
+        }
 
         return [
             'slug' => $slug,
             'name' => $slot->slotType?->name ?? str($slug)->headline()->toString(),
-            'wrapper_preset' => $slot->wrapperPreset(),
+            'wrapper_preset' => $wrapperPreset,
             'wrapper_element' => $slot->wrapperElement(),
             'blocks' => $blocks,
         ];
