@@ -22,7 +22,7 @@
     <div class="wb-nav-group{{ $isOpen ? ' is-open' : '' }}" data-wb-nav-group>
         <button type="button" class="wb-nav-group-toggle{{ $isOpen ? ' is-active' : '' }}" aria-expanded="{{ $isOpen ? 'true' : 'false' }}" data-wb-nav-group-toggle>
             @if ($icon !== null)
-                <i class="wb-icon wb-icon-{{ $icon }} wb-nav-group-icon" aria-hidden="true"></i>
+                <span class="wb-nav-group-icon"><i class="wb-icon wb-icon-{{ $icon }}" aria-hidden="true"></i></span>
             @endif
             <span class="wb-nav-group-label">{{ $label }}</span>
             <span class="wb-nav-group-arrow" aria-hidden="true"></span>

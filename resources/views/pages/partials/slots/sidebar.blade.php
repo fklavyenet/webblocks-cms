@@ -14,4 +14,8 @@
             </div>
         </div>
     </aside>
+@else
+    @foreach ($slot['blocks'] as $block)
+        @include('pages.partials.block', ['block' => $block])
+    @endforeach
 @endif

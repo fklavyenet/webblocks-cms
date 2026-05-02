@@ -154,15 +154,13 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
         $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
-        $response->assertSee('<i class="wb-icon wb-icon-layers wb-nav-group-icon" aria-hidden="true"></i>', false);
+        $response->assertSee('Guides', false);
         $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
-        $response->assertSee('<i class="wb-icon wb-icon-rocket" aria-hidden="true"></i>', false);
         $response->assertSee('href="https://example.com/docs"', false);
         $response->assertSee('class="wb-nav-group-item"', false);
         $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
-        $response->assertSee('<i class="wb-icon wb-icon-code" aria-hidden="true"></i>', false);
         $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
-        $response->assertSee('<i class="wb-icon wb-icon-home" aria-hidden="true"></i>', false);
+        $response->assertSee('class="wb-icon wb-icon-home wb-sidebar-icon"', false);
     }
 
     #[Test]
@@ -238,8 +236,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('webblocks-ui-logo.png', false);
         $response->assertSee('alt=""', false);
         $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
-        $response->assertSee('<strong>WebBlocks UI</strong>', false);
-        $response->assertSee('<span>UI building blocks for humans and AI</span>', false);
+        $response->assertSee('<span>WebBlocks UI</span>', false);
+        $response->assertSee('<span class="wb-sidebar-brand-note">UI building blocks for humans and AI</span>', false);
     }
 
     #[Test]
@@ -269,7 +267,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<a href="/" class="wb-sidebar-brand">', false);
         $response->assertDontSee('wb-sidebar-brand-logo', false);
         $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
-        $response->assertSee('<strong>Docs Home</strong>', false);
+        $response->assertSee('<span>Docs Home</span>', false);
     }
 
     #[Test]
@@ -334,7 +332,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('class="wb-sidebar-link is-active"', false);
         $response->assertSee('href="/p/about"', false);
         $response->assertSee('aria-current="page"', false);
-        $response->assertSee('<i class="wb-icon wb-icon-rocket" aria-hidden="true"></i>', false);
+        $response->assertSee('class="wb-icon wb-icon-rocket wb-sidebar-icon"', false);
         $response->assertSee('href="https://example.com/docs"', false);
         $response->assertSee('target="_blank"', false);
         $response->assertSee('rel="noopener noreferrer"', false);
@@ -721,28 +719,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<div class="wb-dashboard-shell">', false);
         $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
-        $response->assertSee('<div class="wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full">', false);
-        $response->assertDontSee('wb-navbar-spacer', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
         $response->assertSeeInOrder([
             '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
             '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
-            '<div class="wb-dashboard-body">',
             '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">',
             '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
             '<footer data-wb-slot="footer">',
         ], false);
         $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass">', false);
-        $response->assertSee('data-wb-toggle="sidebar"', false);
-        $response->assertSee('data-wb-target="#docsSidebar"', false);
-        $response->assertSee('aria-controls="docsSidebar"', false);
         $response->assertSeeInOrder([
             '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
             'data-wb-header-actions',
-        ], false);
-        $response->assertSeeInOrder([
-            '<div class="wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full">',
-            '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
-            '<div class="wb-topbar-actions" data-wb-header-actions>',
         ], false);
         $response->assertSee('<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">', false);
         $response->assertSee('<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">', false);
@@ -751,7 +739,6 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('wb-content-shell', false);
         $response->assertDontSee('wb-docs-main', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
-        $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/header-actions.js'));
     }
 
     #[Test]

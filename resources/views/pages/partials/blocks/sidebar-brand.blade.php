@@ -16,10 +16,10 @@
         @if ($hasCopy)
             <span class="wb-sidebar-brand-copy">
                 @if ($title !== null)
-                    <strong>{{ $title }}</strong>
+                    <span>{{ $title }}</span>
                 @endif
                 @if ($subtitle !== null)
-                    <span>{{ $subtitle }}</span>
+                    <span class="wb-sidebar-brand-note">{{ $subtitle }}</span>
                 @endif
             </span>
         @endif

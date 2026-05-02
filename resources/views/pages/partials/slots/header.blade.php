@@ -109,6 +109,20 @@
     @endif
 @else
     <header class="wb-section wb-public-header" data-wb-public-header>
+        @if ($wrapperPreset === 'docs-navbar')
+            <button
+                class="wb-navbar-toggle"
+                type="button"
+                data-wb-toggle="sidebar"
+                data-wb-target="#docsSidebar"
+                aria-expanded="false"
+                aria-controls="docsSidebar"
+                aria-label="Toggle navigation"
+            >
+                <span></span><span></span><span></span>
+            </button>
+        @endif
+
         <div class="wb-container wb-container-lg">
             <div class="wb-public-header-bar">
                 <a href="{{ $homePath }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
