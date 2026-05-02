@@ -90,7 +90,7 @@
                 $otherBlocks = $slot['blocks']->reject(fn ($block) => in_array($block->typeSlug(), ['breadcrumb', 'header-actions'], true))->values();
             @endphp
 
-            <div class="wb-container wb-container-lg wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">
+            <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-items-center">
                     <button
                         class="wb-navbar-toggle"

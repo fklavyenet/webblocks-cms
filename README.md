@@ -74,7 +74,10 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - Docs shell landmark order is canonical and does not follow slot management sort order. The public docs shell always renders backdrop, sidebar, and then dashboard body with header and main, while the slot order in Edit Page remains an editor-facing management order.
 - Docs sidebar shell responsibility stays at the page and slot layer. The `Docs Sidebar` slot preset owns `<aside class="wb-sidebar" id="docsSidebar">`, while sidebar blocks render only the brand, navigation, nav groups or items, and footer content inside that wrapper.
 - Docs Navbar layout uses `wb-flex wb-justify-between` for left/right alignment.
+- Docs Navbar uses a full-width WebBlocks UI flex row for left/right alignment.
+- The navbar alignment row must not use `wb-container*` classes because those constrain the row and prevent Header Actions from reaching the right edge.
 - Breadcrumb renders on the left, Header Actions on the right.
+- Breadcrumb and the optional sidebar toggle live in the left cluster; Header Actions live in the right cluster.
 - `wb-navbar-spacer` is deprecated and must not be used.
 - Slot wrapper classes are controlled presets, not arbitrary editor-provided class strings. The CMS validates allowed wrapper elements and wrapper presets server-side and falls back safely for unknown values.
 - Existing saved `dashboard` shell values and `dashboard-*` slot presets are normalized to the `docs` shell equivalents during rendering and admin saves.
