@@ -55,7 +55,7 @@
                 }
 
                 return '<'.$tag.' '.implode(' ', $attributes).'>'
-                    .view('pages.partials.slot', ['slot' => $slot, 'page' => $page])->render()
+                    .view('pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render()
                     .'</'.$tag.'>';
             };
         @endphp

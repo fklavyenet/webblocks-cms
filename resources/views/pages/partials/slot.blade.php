@@ -1,4 +1,5 @@
 @php
+    $renderWrapper = $renderWrapper ?? true;
     $wrapper = $slot['wrapper'] ?? [];
     $tag = $wrapper['element'] ?? 'div';
     $class = trim((string) ($wrapper['class'] ?? ''));
@@ -28,20 +29,24 @@
     }
 @endphp
 
-<{{ $tag }} {!! $attributes !!}>
-    @if ($bodyClass !== '')
-        <div class="{{ $bodyClass }}">
-    @endif
-        @if (view()->exists($slotPartial))
-            @include($slotPartial, ['slot' => $slot, 'page' => $page, 'renderShell' => false])
-        @elseif ($slot['blocks']->isNotEmpty())
-            <div class="wb-stack">
-                @foreach ($slot['blocks'] as $block)
-                    @include('pages.partials.block', ['block' => $block])
-                @endforeach
-            </div>
-        @endif
-    @if ($bodyClass !== '')
+@if ($renderWrapper)
+    <{{ $tag }} {!! $attributes !!}>
+@endif
+@if ($bodyClass !== '')
+    <div class="{{ $bodyClass }}">
+@endif
+    @if (view()->exists($slotPartial))
+        @include($slotPartial, ['slot' => $slot, 'page' => $page, 'renderShell' => false])
+    @elseif ($slot['blocks']->isNotEmpty())
+        <div class="wb-stack">
+            @foreach ($slot['blocks'] as $block)
+                @include('pages.partials.block', ['block' => $block])
+            @endforeach
         </div>
     @endif
-</{{ $tag }}>
+@if ($bodyClass !== '')
+    </div>
+@endif
+@if ($renderWrapper)
+    </{{ $tag }}>
+@endif
