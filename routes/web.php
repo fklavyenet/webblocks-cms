@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BlockTypeController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LocaleController;
+use App\Http\Controllers\Admin\LayoutTypeController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NavigationItemController;
 use App\Http\Controllers\Admin\PageController;
@@ -96,6 +97,10 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::post('locales/{locale}/disable', [LocaleController::class, 'disable'])->name('locales.disable');
         Route::delete('locales/{locale}', [LocaleController::class, 'destroy'])->name('locales.destroy');
         Route::resource('slot-types', SlotTypeController::class)->only(['index']);
+        Route::get('layout-types/{layoutType}/slots/{slot}/blocks', [LayoutTypeController::class, 'editSlotBlocks'])->name('layout-types.slots.blocks');
+        Route::put('layout-types/{layoutType}/slots/{slot}/settings', [LayoutTypeController::class, 'updateSlotSettings'])->name('layout-types.slots.settings.update');
+        Route::post('layout-types/{layoutType}/slots/{slot}/blocks/reorder', [LayoutTypeController::class, 'reorderSlotBlocks'])->name('layout-types.slots.blocks.reorder');
+        Route::resource('layout-types', LayoutTypeController::class)->except(['show']);
         Route::resource('block-types', BlockTypeController::class)->except(['show']);
         Route::get('site-transfers/exports', [SiteExportController::class, 'index'])->name('site-transfers.exports.index');
         Route::post('site-transfers/exports', [SiteExportController::class, 'store'])->name('site-transfers.exports.store');

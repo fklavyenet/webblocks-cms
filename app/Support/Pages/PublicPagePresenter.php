@@ -3,6 +3,7 @@
 namespace App\Support\Pages;
 
 use App\Models\Block;
+use App\Models\LayoutTypeSlot;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
@@ -20,6 +21,10 @@ class PublicPagePresenter
 
     public function present(Page $page): array
     {
+        if ($page->layoutType && $page->layoutType->relationLoaded('slots')) {
+            return $this->presentLayoutTypePage($page);
+        }
+
         $topLevelBlocks = $page->blocks
             ->whereNull('parent_id')
             ->where('status', 'published')
@@ -40,6 +45,79 @@ class PublicPagePresenter
             'publicShell' => $this->presentShell($page, $slots),
             'slots' => $slots,
             'metaDescription' => $this->resolveMetaDescription($page, $translatedTopLevelBlocks),
+        ];
+    }
+
+    private function presentLayoutTypePage(Page $page): array
+    {
+        $pageTopLevelBlocks = $this->blockTranslationResolver
+            ->resolveCollection(
+                $page->blocks
+                    ->whereNull('parent_id')
+                    ->where('status', 'published')
+                    ->sortBy(fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id))
+                    ->values()
+            )
+            ->values();
+
+        $layoutSlots = $page->layoutType->slots
+            ->sortBy(fn (LayoutTypeSlot $slot) => sprintf('%010d-%010d', (int) $slot->sort_order, (int) $slot->id))
+            ->map(function (LayoutTypeSlot $slot) use ($page, $pageTopLevelBlocks) {
+                $pageSlot = $page->slots->firstWhere('slot_type_id', $slot->slot_type_id);
+                $layoutBlocks = collect($slot->blocks ?? [])
+                    ->whereNull('parent_id')
+                    ->where('status', 'published')
+                    ->sortBy(fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id))
+                    ->values();
+                $resolvedLayoutBlocks = $this->blockTranslationResolver->resolveCollection($layoutBlocks)->values();
+                $resolvedPageBlocks = $pageTopLevelBlocks
+                    ->where('slot_type_id', $slot->slot_type_id)
+                    ->values();
+
+                $blocks = $slot->isLayoutOwned()
+                    ? $resolvedLayoutBlocks
+                    : $resolvedPageBlocks;
+
+                $preset = $slot->wrapperPreset();
+                $defaultElement = PageSlot::defaultWrapperElementForSlug($slot->slotType?->slug);
+                $element = match ($preset) {
+                    'docs-navbar' => 'header',
+                    'docs-sidebar' => 'aside',
+                    'docs-main' => 'main',
+                    default => $slot->wrapperElement(),
+                };
+
+                return [
+                    'slug' => $slot->slotType?->slug ?? 'main',
+                    'name' => $slot->slotType?->name ?? 'Slot',
+                    'ownership' => $slot->ownership(),
+                    'blocks' => $blocks,
+                    'page_slot_id' => $pageSlot?->id,
+                    'wrapper' => [
+                        'element' => in_array($element, PageSlot::allowedWrapperElements(), true) ? $element : $defaultElement,
+                        'class' => match ($preset) {
+                            'docs-navbar' => 'wb-navbar wb-navbar-glass',
+                            'docs-sidebar' => 'wb-sidebar',
+                            'docs-main' => 'wb-dashboard-main',
+                            default => '',
+                        },
+                        'preset' => $preset,
+                        'settings' => is_array($pageSlot?->settings) ? $pageSlot->settings : [],
+                        'attributes' => match ($preset) {
+                            'docs-sidebar' => ['id' => 'docsSidebar'],
+                            default => [],
+                        },
+                        'body_class' => $preset === 'docs-navbar' ? 'wb-docs-topbar wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full' : '',
+                    ],
+                ];
+            })
+            ->values();
+
+        return [
+            'page' => $page,
+            'publicShell' => $this->presentShell($page, $layoutSlots),
+            'slots' => $layoutSlots,
+            'metaDescription' => $this->resolveMetaDescription($page, $pageTopLevelBlocks),
         ];
     }
 

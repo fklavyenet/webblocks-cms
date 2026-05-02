@@ -104,7 +104,11 @@ class AdminAuthorization
             return $query;
         }
 
-        return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
+        return $query->where(function (Builder $blockQuery) use ($user): void {
+            $blockQuery
+                ->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
+                ->orWhereHas('layoutTypeSlot');
+        });
     }
 
     public function scopeAssetsForUser(Builder $query, User $user): Builder

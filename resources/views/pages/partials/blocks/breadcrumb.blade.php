@@ -6,8 +6,7 @@
     $currentTranslation = $page?->currentTranslation
         ?? ($page ? $routeResolver->translationFor($page, $localeCode, $site) : null);
     $localeId = $currentTranslation?->locale_id;
-    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
-    $settings = is_array($settings) ? $settings : [];
+    $settings = $block->settings ?? [];
     $includeCurrent = ($settings['include_current'] ?? true) !== false;
     $homePath = $routeResolver->homePath($localeCode, $site) ?? '/';
 

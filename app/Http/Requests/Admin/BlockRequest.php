@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Asset;
+use App\Models\LayoutTypeSlot;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
@@ -68,7 +69,8 @@ class BlockRequest extends FormRequest
         $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
 
         return [
-            'page_id' => ['required', 'integer', 'exists:pages,id'],
+            'page_id' => ['nullable', 'integer', 'required_without:layout_type_slot_id', 'exists:pages,id'],
+            'layout_type_slot_id' => ['nullable', 'integer', 'required_without:page_id', 'exists:layout_type_slots,id'],
             'parent_id' => [
                 'nullable',
                 'integer',
@@ -177,10 +179,15 @@ class BlockRequest extends FormRequest
     {
         return [function (Validator $validator): void {
             $page = Page::query()->with('site.locales')->find($this->integer('page_id'));
+            $layoutTypeSlot = LayoutTypeSlot::query()->with('layoutType')->find($this->integer('layout_type_slot_id'));
             $localeCode = Locale::normalizeCode($this->input('locale'));
 
-            if ($localeCode !== null && (! $page || ! $page->site || ! $page->site->hasEnabledLocale($localeCode))) {
+            if ($localeCode !== null && $page && (! $page->site || ! $page->site->hasEnabledLocale($localeCode))) {
                 $validator->errors()->add('locale', 'Selected locale must be enabled for the page site.');
+            }
+
+            if ($localeCode !== null && ! $page && ! $layoutTypeSlot && $this->filled('layout_type_slot_id')) {
+                $validator->errors()->add('layout_type_slot_id', 'Selected layout slot is invalid.');
             }
 
             $parentId = $this->has('parent_id')
@@ -307,8 +314,8 @@ class BlockRequest extends FormRequest
             $parent = Block::query()->with(['parent', 'blockType'])->find($parentId);
             $block = $this->route('block');
 
-            if (! $parent || $parent->page_id !== $this->integer('page_id')) {
-                $validator->errors()->add('parent_id', 'Parent block must belong to the same page.');
+            if (! $parent || (int) $parent->page_id !== (int) $this->integer('page_id') || (int) $parent->layout_type_slot_id !== (int) $this->integer('layout_type_slot_id')) {
+                $validator->errors()->add('parent_id', 'Parent block must belong to the same slot context.');
 
                 return;
             }
@@ -430,7 +437,8 @@ class BlockRequest extends FormRequest
         $authorization = app(AdminAuthorization::class);
         $data = $this->validated();
         $data['locale'] = Locale::normalizeCode($data['locale'] ?? null);
-        $pageId = (int) $data['page_id'];
+        $pageId = (int) ($data['page_id'] ?? 0);
+        $layoutTypeSlotId = (int) ($data['layout_type_slot_id'] ?? 0);
 
         if (! $this->has('parent_id') && $this->route('block') instanceof Block) {
             $data['parent_id'] = $this->route('block')->parent_id;
@@ -439,7 +447,8 @@ class BlockRequest extends FormRequest
         if (! empty($data['parent_id'])) {
             $parentMatchesPage = Block::query()
                 ->whereKey($data['parent_id'])
-                ->where('page_id', $pageId)
+                ->when($pageId > 0, fn ($query) => $query->where('page_id', $pageId))
+                ->when($layoutTypeSlotId > 0, fn ($query) => $query->where('layout_type_slot_id', $layoutTypeSlotId))
                 ->exists();
 
             if (! $parentMatchesPage) {

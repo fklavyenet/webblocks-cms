@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationResolver;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class Block extends Model
 
     protected $fillable = [
         'page_id',
+        'layout_type_slot_id',
         'parent_id',
         'type',
         'block_type_id',
@@ -46,6 +48,16 @@ class Block extends Model
         ];
     }
 
+    protected function settings(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value): ?array => $this->hasSettingsValue($value) ? $this->decodeJsonArray($value) : null,
+            set: fn (mixed $value): ?string => ($settings = $this->decodeJsonArray($value)) === []
+                ? null
+                : json_encode($settings, JSON_UNESCAPED_SLASHES),
+        );
+    }
+
     protected static function booted(): void
     {
         static::saving(function (self $block): void {
@@ -67,6 +79,11 @@ class Block extends Model
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class)->with('translations');
+    }
+
+    public function layoutTypeSlot(): BelongsTo
+    {
+        return $this->belongsTo(LayoutTypeSlot::class);
     }
 
     public function blockType(): BelongsTo
@@ -695,11 +712,13 @@ class Block extends Model
 
     public function settingsText(): ?string
     {
-        if (is_array($this->decodedSettings())) {
-            return json_encode($this->decodedSettings(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $settings = $this->decodedSettings();
+
+        if ($settings !== []) {
+            return json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }
 
-        return $this->settings;
+        return null;
     }
 
     public function setting(string $key, mixed $default = null): mixed
@@ -738,17 +757,35 @@ class Block extends Model
 
     private function decodedSettings(): array
     {
-        if (is_array($this->settings)) {
-            return $this->settings;
+        return $this->decodeJsonArray($this->getRawOriginal('settings'));
+    }
+
+    private function hasSettingsValue(mixed $value): bool
+    {
+        return is_array($value) || (is_string($value) && trim($value) !== '');
+    }
+
+    private function decodeJsonArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
         }
 
-        if (! is_string($this->settings) || trim($this->settings) === '') {
-            return [];
+        $decoded = $value;
+
+        for ($depth = 0; $depth < 3; $depth++) {
+            if (! is_string($decoded) || trim($decoded) === '') {
+                return [];
+            }
+
+            $decoded = json_decode($decoded, true);
+
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
-        $decoded = json_decode($this->settings, true);
-
-        return is_array($decoded) ? $decoded : [];
+        return [];
     }
 
     public function galleryAssets(): Collection

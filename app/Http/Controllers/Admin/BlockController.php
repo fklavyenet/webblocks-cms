@@ -8,6 +8,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\LayoutTypeSlot;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -126,8 +127,13 @@ class BlockController extends Controller
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        $page = ! empty($data['page_id'])
+            ? $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id'])
+            : null;
+
+        if ($page) {
+            abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        }
 
         $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode) {
             $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
@@ -136,25 +142,26 @@ class BlockController extends Controller
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block created',
-                'Page block structure or content was updated by adding a block.',
-            );
+            if ($block->page_id) {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block created',
+                    'Page block structure or content was updated by adding a block.',
+                );
+            }
 
             return $block;
         });
 
-        $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
-        $previewUrl = $block->page->publicUrl($localeCode);
-
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->route(...$this->slotRedirectRoute($block, $localeCode))
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block created successfully.');
 
-        if ($previewUrl) {
+        $previewUrl = $block->page?->publicUrl($localeCode);
+
+        if ($previewUrl && $block->page_id) {
             $redirect->with('status_action', [
                 'label' => 'View page',
                 'url' => $previewUrl,
@@ -234,8 +241,13 @@ class BlockController extends Controller
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        $page = ! empty($data['page_id'])
+            ? $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id'])
+            : null;
+
+        if ($page) {
+            abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        }
 
         DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode): void {
             $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
@@ -244,23 +256,24 @@ class BlockController extends Controller
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block updated',
-                'Page block structure or content was updated.',
-            );
+            if ($block->page_id) {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block updated',
+                    'Page block structure or content was updated.',
+                );
+            }
         });
 
-        $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
-        $previewUrl = $block->page->publicUrl($localeCode);
-
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->route(...$this->slotRedirectRoute($block, $localeCode))
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block updated successfully.');
 
-        if ($previewUrl) {
+        $previewUrl = $block->page?->publicUrl($localeCode);
+
+        if ($previewUrl && $block->page_id) {
             $redirect->with('status_action', [
                 'label' => 'View page',
                 'url' => $previewUrl,
@@ -273,25 +286,29 @@ class BlockController extends Controller
     public function destroy(Request $request, Block $block): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess($request->user(), $block);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
+        if ($block->page) {
+            abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
+        }
         $pageId = $block->page_id;
         $slotTypeId = $block->slot_type_id;
         $pageSlotId = $this->pageSlotRouteId($pageId, $slotTypeId);
 
         DB::transaction(function () use ($block, $request): void {
-            $page = $block->page()->firstOrFail();
+            $page = $block->page()->first();
             $block->delete();
 
-            $this->revisionManager->capture(
-                $page->fresh(),
-                $request->user(),
-                'Block deleted',
-                'Page block structure or content was updated by removing a block.',
-            );
+            if ($page) {
+                $this->revisionManager->capture(
+                    $page->fresh(),
+                    $request->user(),
+                    'Block deleted',
+                    'Page block structure or content was updated by removing a block.',
+                );
+            }
         });
 
         return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request())])
+            ->route(...$this->slotRedirectRoute($block, $this->requestedLocaleCode(request())))
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
             ->with('status', 'Block deleted successfully.');
     }
@@ -300,8 +317,8 @@ class BlockController extends Controller
     {
         $moved = DB::transaction(function () use ($block, $direction): bool {
             $siblings = Block::query()
-                ->where('page_id', $block->page_id)
-                ->where('slot_type_id', $block->slot_type_id)
+                ->when($block->page_id, fn ($query) => $query->where('page_id', $block->page_id))
+                ->when($block->layout_type_slot_id, fn ($query) => $query->where('layout_type_slot_id', $block->layout_type_slot_id))
                 ->where('parent_id', $block->parent_id)
                 ->orderBy('sort_order')
                 ->orderBy('id')
@@ -336,12 +353,14 @@ class BlockController extends Controller
                 $sibling->update(['sort_order' => $index]);
             }
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block order updated',
-                'Page block order was changed.',
-            );
+            if ($block->page_id) {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block order updated',
+                    'Page block order was changed.',
+                );
+            }
 
             return true;
         });
@@ -784,6 +803,15 @@ class BlockController extends Controller
 
     private function slotRedirectParameters(Block $block): array
     {
+        if ($block->layout_type_slot_id) {
+            $layoutTypeId = LayoutTypeSlot::query()->whereKey($block->layout_type_slot_id)->value('layout_type_id');
+
+            return [
+                'layoutType' => $layoutTypeId,
+                'slot' => $block->layout_type_slot_id,
+            ];
+        }
+
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
 
         return [
@@ -798,5 +826,18 @@ class BlockController extends Controller
         $localeCode = trim((string) $request->input('locale', $request->query('locale', '')));
 
         return $localeCode !== '' ? $localeCode : null;
+    }
+
+    private function slotRedirectRoute(Block $block, ?string $localeCode = null): array
+    {
+        if ($block->layout_type_slot_id) {
+            $layoutTypeId = LayoutTypeSlot::query()->whereKey($block->layout_type_slot_id)->value('layout_type_id');
+
+            return ['admin.layout-types.slots.blocks', ['layoutType' => $layoutTypeId, 'slot' => $block->layout_type_slot_id]];
+        }
+
+        $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
+
+        return ['admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode]];
     }
 }

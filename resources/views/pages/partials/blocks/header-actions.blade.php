@@ -1,6 +1,5 @@
 @php
-    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
-    $settings = is_array($settings) ? $settings : [];
+    $settings = $block->settings ?? [];
     $showModeToggle = ($settings['show_mode_toggle'] ?? true) !== false;
     $showAccentToggle = ($settings['show_accent_toggle'] ?? true) !== false;
     $accentMenuId = 'wb-header-actions-accent-menu-'.$block->id;

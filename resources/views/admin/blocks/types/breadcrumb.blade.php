@@ -1,6 +1,5 @@
 @php
-    $settings = json_decode((string) $block->getRawOriginal('settings'), true);
-    $settings = is_array($settings) ? $settings : [];
+    $settings = $block->settings ?? [];
     $homeLabel = old('breadcrumb_home_label', $settings['home_label'] ?? '');
     $includeCurrent = old('breadcrumb_include_current', ($settings['include_current'] ?? true) ? '1' : '0');
 @endphp

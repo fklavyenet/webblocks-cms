@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Add Layout Types V1 with reusable layout types, layout-owned slots, and page-owned slots.
+- Allow layout slots to provide shared header and sidebar content across multiple pages.
+- Allow editing page-owned slots (for example `Main`) from the page edit screen when using Layout Types.
+- Simplify the Block Types index by removing the Blocks and Sort Order columns.
 - Improve admin dashboard shortcuts and add System Updates quick action.
 - Fix the admin Media sidebar icon and move visitor reporting below the primary dashboard overview cards.
 - Add first-class breadcrumb block support with a dedicated admin editor and semantic public breadcrumb rendering for header or context bar usage.

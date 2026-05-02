@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\Site;
 
 trait ValidatesBlockTranslationLocale
@@ -19,7 +20,16 @@ trait ValidatesBlockTranslationLocale
                     : null);
 
             if (! $siteId) {
-                throw new \RuntimeException('Block translations must belong to a block page site.');
+                $localeIsEnabled = Locale::query()
+                    ->whereKey($translation->locale_id)
+                    ->where('is_enabled', true)
+                    ->exists();
+
+                if (! $localeIsEnabled) {
+                    throw new \RuntimeException('Block translation locale must be globally enabled for layout-owned blocks.');
+                }
+
+                return;
             }
 
             $localeIsEnabled = Site::query()

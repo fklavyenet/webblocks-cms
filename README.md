@@ -26,6 +26,47 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - contact form `submit_label` and `success_message` live in translation rows; block `settings` is reserved for shared operational config
 - no JSON storage is used for user-facing page or block content
 
+## Layout Types V1
+
+- `Page` is the editable page record with site, workflow, translations, and optional `layout_type_id`.
+- `Layout Type` is a reusable shell definition such as `Default Layout` or `Docs Layout`.
+- `Slot Type` is the canonical slot catalog such as `Header`, `Sidebar`, `Main`, and `Footer`.
+- `Layout Type Slot` attaches a Slot Type to a Layout Type, controls order, wrapper preset, and ownership.
+- `Page Slot` is created only for page-owned slots and stores page-level wrapper config for that page slot.
+- `Block` is still the content unit. In V1 a block can belong either to a page slot context or to a layout type slot context.
+- `layout` ownership means the slot blocks are managed once on the Layout Type and reused by all pages using that layout.
+- `page` ownership means the Layout Type defines the slot shape, order, and wrapper preset, but each page keeps its own blocks in that slot.
+- `Main` should usually be page-owned. `Header` and `Sidebar` are usually layout-owned in docs-style shells.
+- `Layout Types V1` solves shared header and sidebar composition without adding a full reusable block instance library.
+- Full reusable block libraries or shared block instances across arbitrary owners are out of scope for V1.
+
+### Docs Layout Example
+
+- `Docs Layout`
+- `Header`: layout-owned, typically `Docs Navbar`
+- `Sidebar`: layout-owned, typically `Docs Sidebar`
+- `Main`: page-owned, typically `Docs Main`
+- `Footer`: optional, usually layout-owned or omitted depending on the site shell
+
+### Public Rendering Rules
+
+- If a page has `layout_type_id`, public rendering resolves slots from the Layout Type, not from ad hoc page slot order.
+- Layout-owned slots render blocks from `layout_type_slots`.
+- Page-owned slots render blocks from `page_slots`.
+- Existing pages without `layout_type_id` keep the previous page-slot rendering path.
+- The docs shell still keeps the canonical WebBlocks UI dashboard DOM contract even if admin slot order changes.
+
+### Admin Notes
+
+- Manage reusable shells under `Admin > System > Layout Types`.
+- `Edit Blocks` on a layout slot opens the same slot-style block editor flow, but in layout context.
+- Page create and edit now include `Layout Type` selection.
+- Layout-owned slots are shown on the page form as provided by the selected layout and are not duplicated onto the page.
+- Page edit lists layout-owned slots and page-owned slots separately.
+- Only page-owned slots can be edited from the page edit screen. Layout-owned slots link back to the Layout Type slot editor.
+- `Main` is expected to remain page-owned so editors can always build page-specific content from the page screen.
+- Block Types index is intentionally simpler and now shows `Name`, `Slug`, `Category`, `Description`, `Status`, `System`, and actions.
+
 ## Block Foundation
 
 - The active CMS block foundation is intentionally small and split into layout blocks and content blocks.

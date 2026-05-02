@@ -4,7 +4,6 @@ namespace App\Support\Blocks;
 
 use App\Models\Block;
 use App\Models\Locale;
-use App\Models\Page;
 use App\Support\Locales\LocaleResolver;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +14,7 @@ class BlockTranslationWriter
         private readonly LocaleResolver $localeResolver,
     ) {}
 
-    public function canonicalPayload(array $data, ?Block $block, Page $page, ?string $localeCode, bool $isCreating = false): array
+    public function canonicalPayload(array $data, ?Block $block, ?object $page, ?string $localeCode, bool $isCreating = false): array
     {
         $blockTypeSlug = $data['type'] ?? $block?->typeSlug();
         $family = $this->registry->familyFor($blockTypeSlug);
@@ -235,12 +234,20 @@ class BlockTranslationWriter
             return $settings;
         }
 
-        if (! is_string($settings) || trim($settings) === '') {
-            return [];
+        $decoded = $settings;
+
+        for ($depth = 0; $depth < 3; $depth++) {
+            if (! is_string($decoded) || trim($decoded) === '') {
+                return [];
+            }
+
+            $decoded = json_decode($decoded, true);
+
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
-        $decoded = json_decode($settings, true);
-
-        return is_array($decoded) ? $decoded : [];
+        return [];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\BlockType;
+use App\Models\LayoutType;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
@@ -24,10 +25,12 @@ class PageRequest extends FormRequest
     {
         $title = (string) $this->input('title');
         $slug = (string) $this->input('slug');
+        $layoutTypeId = $this->input('layout_type_id') ?: LayoutType::query()->where('slug', 'default')->value('id');
 
         $this->merge([
             'site_id' => $this->input('site_id') ?: Site::primary()?->id,
             'slug' => Str::slug($slug !== '' ? $slug : $title),
+            'layout_type_id' => $layoutTypeId ?: null,
         ]);
     }
 
@@ -58,6 +61,7 @@ class PageRequest extends FormRequest
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
             ],
+            'layout_type_id' => ['nullable', 'integer', 'exists:layout_types,id'],
             'public_shell' => ['nullable', Rule::in(array_merge(Page::allowedPublicShellPresets(), ['dashboard']))],
             'slots' => ['nullable', 'array'],
             'slots.*.id' => ['nullable', 'integer', 'exists:page_slots,id'],
@@ -97,8 +101,11 @@ class PageRequest extends FormRequest
         $data['status'] = $page instanceof Page ? $page->status : Page::STATUS_DRAFT;
         $existingSettings = $page?->settings;
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+        $layoutType = ! empty($data['layout_type_id']) ? LayoutType::query()->find((int) $data['layout_type_id']) : null;
         $data['settings'] = [
-            'public_shell' => Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
+            'public_shell' => $layoutType
+                ? $layoutType->publicShellPreset()
+                : Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
         ];
         $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
         $data['translation'] = [

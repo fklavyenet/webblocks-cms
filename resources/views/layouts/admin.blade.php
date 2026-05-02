@@ -59,6 +59,7 @@
                         ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
                         ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
                         ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                        ['label' => 'Layout Types', 'route' => 'admin.layout-types.index', 'active' => 'admin.layout-types.*'],
                         ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
                     ],
                 ];

@@ -14,21 +14,37 @@ class LayoutType extends Model
         'name',
         'slug',
         'description',
-        'category',
         'is_system',
         'sort_order',
         'status',
+        'settings',
     ];
 
     protected function casts(): array
     {
         return [
             'is_system' => 'boolean',
+            'settings' => 'array',
         ];
     }
 
     public function layouts(): HasMany
     {
         return $this->hasMany(Layout::class);
+    }
+
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
+    }
+
+    public function slots(): HasMany
+    {
+        return $this->hasMany(LayoutTypeSlot::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function publicShellPreset(): string
+    {
+        return Page::normalizePublicShellPreset($this->settings['public_shell'] ?? 'default');
     }
 }

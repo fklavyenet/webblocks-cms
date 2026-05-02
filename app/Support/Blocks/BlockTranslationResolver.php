@@ -133,9 +133,7 @@ class BlockTranslationResolver
 
     private function applyContactFormFields(Block $block, mixed $translation): void
     {
-        $settings = is_array($block->settings)
-            ? $block->settings
-            : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
+        $settings = $block->settings ?? [];
 
         unset($settings['submit_label'], $settings['success_message']);
 

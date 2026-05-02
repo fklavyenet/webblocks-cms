@@ -90,6 +90,7 @@ class Page extends Model
         'page_type',
         'page_type_id',
         'layout_id',
+        'layout_type_id',
         'status',
         'settings',
         'published_at',
@@ -116,6 +117,19 @@ class Page extends Model
 
     public function publicShellPreset(): string
     {
+        if ($this->relationLoaded('layoutType') && $this->layoutType) {
+            return $this->layoutType->publicShellPreset();
+        }
+
+        if ($this->layout_type_id) {
+            $preset = LayoutType::query()->whereKey($this->layout_type_id)->value('settings');
+            $preset = is_string($preset) ? json_decode($preset, true) : $preset;
+
+            if (is_array($preset)) {
+                return self::normalizePublicShellPreset($preset['public_shell'] ?? 'default');
+            }
+        }
+
         return self::normalizePublicShellPreset($this->settings['public_shell'] ?? 'default');
     }
 
@@ -200,6 +214,11 @@ class Page extends Model
     public function layout(): BelongsTo
     {
         return $this->belongsTo(Layout::class);
+    }
+
+    public function layoutType(): BelongsTo
+    {
+        return $this->belongsTo(LayoutType::class);
     }
 
     public function translations(): HasMany

@@ -1,5 +1,5 @@
 @php
-    $settings = is_array($block->settings) ? $block->settings : (json_decode((string) $block->getRawOriginal('settings'), true) ?: []);
+    $settings = $block->settings ?? [];
     $eyebrow = $block->subtitle ?: trim((string) ($settings['eyebrow'] ?? $settings['subtitle'] ?? $settings['label'] ?? ''));
     $title = $block->title ?: trim((string) ($settings['headline'] ?? $settings['title'] ?? ''));
     $content = $block->content ?: trim((string) ($settings['body'] ?? $settings['content'] ?? $settings['copy'] ?? ''));
