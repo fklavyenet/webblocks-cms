@@ -6,6 +6,9 @@
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
+    $blockAdminSummary = app(\App\Support\Blocks\BlockAdminSummary::class);
+    $rowSummary = $blockAdminSummary->present($block);
+    $parentSummary = $parentBlock ? $blockAdminSummary->label($parentBlock, 60) : null;
 @endphp
 
 <tbody
@@ -58,10 +61,10 @@
                     <span class="wb-cms-block-tree-label"><strong>{{ $block->typeName() }}</strong></span>
                 </div>
 
-                <span class="wb-text-sm wb-text-muted">
+                <span class="wb-text-sm wb-text-muted wb-cms-block-row-meta">
                     {{ $block->is_system ? 'System block' : 'Visitor-facing block' }}
-                    @if ($parentBlock)
-                        | Child of {{ $parentBlock->editorLabel() }}
+                    @if ($parentSummary)
+                        | Child of {{ $parentSummary }}
                     @endif
                     @if ($hasChildren)
                         | Children: {{ $block->children->count() }} {{ \Illuminate\Support\Str::plural('item', $block->children->count()) }}
@@ -71,10 +74,9 @@
         </td>
         <td>
             <div class="wb-stack wb-gap-1">
-                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong>{{ $block->editorLabel() }}</strong></a>
-                @php($editorSummary = $block->editorSummary())
-                @if ($editorSummary !== null)
-                    <span class="wb-text-sm wb-text-muted">{{ $editorSummary }}</span>
+                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary['label'] }}</strong></a>
+                @if ($rowSummary['summary'] !== null)
+                    <span class="wb-text-sm wb-text-muted wb-cms-block-row-summary">{{ $rowSummary['summary'] }}</span>
                 @endif
                 @php($translationStatus = $block->translationStatus($activeLocale))
                 <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>

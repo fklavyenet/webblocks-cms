@@ -102,6 +102,24 @@
     overflow-wrap: anywhere;
 }
 
+.wb-cms-block-row-title,
+.wb-cms-block-row-summary,
+.wb-cms-block-row-meta {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.wb-cms-block-row-title {
+    -webkit-line-clamp: 1;
+}
+
+.wb-cms-block-row-summary,
+.wb-cms-block-row-meta {
+    -webkit-line-clamp: 2;
+}
+
 .wb-cms-block-tree-toggle-icon {
     transition: transform var(--wb-t);
 }

@@ -780,6 +780,48 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_list_uses_compact_plain_text_summaries_for_long_rich_text_content(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $richTextType = BlockType::query()->where('slug', 'rich-text')->firstOrFail();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $richTextType->id,
+            'type' => 'rich-text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => null,
+            'subtitle' => null,
+            'content' => '<p>Alpha &amp; Beta <strong>Gamma</strong> Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi Omicron Pi Rho Sigma Tau Upsilon Phi Chi Psi Omega.</p>',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $response->assertOk();
+        $response->assertSee('Rich Text');
+        $response->assertSee('Alpha & Beta Gamma');
+        $response->assertSee('wb-cms-block-row-title', false);
+        $response->assertDontSee('<p>Alpha &amp; Beta <strong>Gamma</strong>', false);
+        $response->assertDontSee('Rho Sigma Tau Upsilon Phi Chi Psi Omega.', false);
+        $response->assertSee('published');
+        $response->assertSee('title="Edit block"', false);
+        $response->assertSee('title="Move block up"', false);
+    }
+
+    #[Test]
     public function slot_block_reorder_endpoint_updates_sort_order_for_valid_same_parent_group(): void
     {
         $this->seedFoundation();
@@ -1470,9 +1512,12 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
-        $response->assertSee('Section -- Hero area');
-        $response->assertSee('Container -- Hero content');
-        $response->assertSee('Cluster — Action row');
+        $response->assertSee('Section');
+        $response->assertSee('Container');
+        $response->assertSee('Cluster');
+        $response->assertSee('>Hero area<', false);
+        $response->assertSee('>Hero content<', false);
+        $response->assertSee('>Action row<', false);
         $response->assertDontSee('— Section');
         $response->assertDontSee('— Container');
     }
