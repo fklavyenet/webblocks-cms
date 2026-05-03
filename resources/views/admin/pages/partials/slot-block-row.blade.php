@@ -5,10 +5,26 @@
     $canAddChildren = $block->canAcceptChildren();
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
+    $detailsRowId = 'slot-block-details-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
     $blockAdminSummary = app(\App\Support\Blocks\BlockAdminSummary::class);
     $rowSummary = $blockAdminSummary->present($block);
+    $detailSummary = $blockAdminSummary->details($block, 120, 4);
     $parentSummary = $parentBlock ? $blockAdminSummary->label($parentBlock, 60) : null;
+    $translationStatus = $block->translationStatus($activeLocale);
+    $visibilityLabel = $block->is_system ? 'System block' : 'Visitor-facing block';
+    $detailItems = array_filter([
+        ['label' => 'Block type', 'value' => $block->typeName()],
+        ['label' => 'Status', 'value' => ucfirst($block->status)],
+        ['label' => 'Visibility', 'value' => $visibilityLabel],
+        ['label' => 'Locale', 'value' => $translationStatus['label'].($translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '')],
+        ['label' => 'Parent', 'value' => $parentSummary],
+        ['label' => 'Children', 'value' => $hasChildren ? $block->children->count().' '.\Illuminate\Support\Str::plural('block', $block->children->count()) : 'No child blocks'],
+        ['label' => 'Order', 'value' => 'Sort '.($block->sort_order + 1)],
+        ['label' => 'Layout', 'value' => $block->layoutAdminName()],
+        ['label' => 'Summary', 'value' => $rowSummary['summary']],
+    ], fn ($item) => filled($item['value']));
+    $detailsAriaControls = trim($detailsRowId.' '.$controlledRowIds);
 @endphp
 
 <tbody
@@ -33,7 +49,6 @@
         @endif
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
-        style="--block-depth: {{ $depth }};"
     >
         <td class="wb-block-hierarchy-cell">
             <div class="wb-block-hierarchy wb-stack wb-gap-1">
@@ -41,22 +56,20 @@
                     <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder block" title="Drag to reorder block">
                         <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
                     </button>
-                    @if ($hasChildren)
-                        <button
-                            type="button"
-                            class="wb-action-btn wb-cms-block-tree-toggle"
-                            data-slot-block-toggle
-                            data-slot-toggle="{{ $block->id }}"
-                            data-wb-slot-block-toggle
-                            data-wb-slot-toggle="{{ $block->id }}"
-                            @if ($controlledRowIds !== '') aria-controls="{{ $controlledRowIds }}" @endif
-                            aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
-                            aria-label="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
-                            title="{{ $isExpanded ? 'Collapse child blocks' : 'Expand child blocks' }}"
-                        >
-                            <i class="wb-icon wb-icon-chevron-down wb-cms-block-tree-toggle-icon" aria-hidden="true"></i>
-                        </button>
-                    @endif
+                    <button
+                        type="button"
+                        class="wb-action-btn wb-cms-block-tree-toggle"
+                        data-slot-block-toggle
+                        data-slot-toggle="{{ $block->id }}"
+                        data-wb-slot-block-toggle
+                        data-wb-slot-toggle="{{ $block->id }}"
+                        aria-controls="{{ $detailsAriaControls }}"
+                        aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
+                        aria-label="{{ $isExpanded ? 'Collapse block details and child blocks' : 'Expand block details'.($hasChildren ? ' and child blocks' : '') }}"
+                        title="{{ $isExpanded ? 'Collapse block details'.($hasChildren ? ' and child blocks' : '') : 'Expand block details'.($hasChildren ? ' and child blocks' : '') }}"
+                    >
+                        <i class="wb-icon wb-icon-chevron-down wb-cms-block-tree-toggle-icon" aria-hidden="true"></i>
+                    </button>
 
                     <span class="wb-cms-block-tree-label"><strong>{{ $block->typeName() }}</strong></span>
                 </div>
@@ -78,7 +91,6 @@
                 @if ($rowSummary['summary'] !== null)
                     <span class="wb-text-sm wb-text-muted wb-cms-block-row-summary">{{ $rowSummary['summary'] }}</span>
                 @endif
-                @php($translationStatus = $block->translationStatus($activeLocale))
                 <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>
             </div>
         </td>
@@ -115,6 +127,49 @@
                     @endunless
                     <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                 </form>
+            </div>
+        </td>
+    </tr>
+    <tr
+        id="{{ $detailsRowId }}"
+        class="wb-block-row-details wb-block-row-depth-{{ min($depth, 6) }}"
+        data-slot-block-details-row
+        data-block-id="{{ $block->id }}"
+        data-wb-slot-block-details-row
+        data-wb-slot-block-id="{{ $block->id }}"
+        data-depth="{{ $depth }}"
+        data-slot-depth="{{ $depth }}"
+        data-wb-slot-depth="{{ $depth }}"
+        @if ($parentBlock)
+            data-slot-parent-id="{{ $parentBlock->id }}"
+            data-wb-slot-parent-id="{{ $parentBlock->id }}"
+        @endif
+        @unless ($isExpanded) hidden @endunless
+    >
+        <td colspan="4" class="wb-block-row-details-cell">
+            <div class="wb-block-row-details-body wb-stack wb-gap-2">
+                <div class="wb-block-row-details-grid">
+                    @foreach ($detailItems as $item)
+                        <div class="wb-block-row-detail-item">
+                            <span class="wb-text-sm wb-text-muted wb-block-row-detail-label">{{ $item['label'] }}</span>
+                            <span class="wb-block-row-detail-value">{{ $item['value'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                @if ($detailSummary['preview'])
+                    <div class="wb-block-row-preview wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted wb-block-row-detail-label">{{ $detailSummary['preview_format'] === 'code' ? 'Code preview' : 'Preview' }}</span>
+                        @if ($detailSummary['preview_format'] === 'code')
+                            <div class="wb-block-row-preview-meta wb-text-sm wb-text-muted">
+                                {{ $detailSummary['language'] ? 'Language: '.$detailSummary['language'] : 'Code snippet' }}
+                            </div>
+                            <pre class="wb-block-row-code-preview"><code>{!! $detailSummary['preview'] !!}</code></pre>
+                        @else
+                            <p class="wb-block-row-text-preview">{{ $detailSummary['preview'] }}</p>
+                        @endif
+                    </div>
+                @endif
             </div>
         </td>
     </tr>

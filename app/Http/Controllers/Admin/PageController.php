@@ -798,9 +798,7 @@ class PageController extends Controller
 
     private function slotExpandedBlockIds($blocks, ?Block $modalBlock = null)
     {
-        $expandableIds = $blocks
-            ->filter(fn (Block $block) => $block->children->isNotEmpty())
-            ->pluck('id');
+        $toggleableIds = $blocks->pluck('id');
 
         $expandedIds = collect(session('slot_block_expanded', []))
             ->map(fn (mixed $value) => (int) $value)
@@ -814,7 +812,7 @@ class PageController extends Controller
                 $ancestorId = $blocks->firstWhere('id', $ancestorId)?->parent_id;
             }
 
-            if ($modalBlock->id && $expandableIds->contains($modalBlock->id)) {
+            if ($modalBlock->id && $toggleableIds->contains($modalBlock->id)) {
                 $expandedIds->push($modalBlock->id);
             }
         }
@@ -822,7 +820,7 @@ class PageController extends Controller
         return $expandedIds
             ->unique()
             ->values()
-            ->intersect($expandableIds)
+            ->intersect($toggleableIds)
             ->values();
     }
 

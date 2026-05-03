@@ -128,6 +128,97 @@
     transform: rotate(-90deg);
 }
 
+.wb-block-row-details {
+    background: color-mix(in srgb, var(--wb-surface-2) 68%, transparent);
+}
+
+.wb-block-row-details-cell {
+    padding: 0;
+}
+
+.wb-block-row-details-body {
+    padding: var(--wb-s3) var(--wb-s4) var(--wb-s4);
+    margin-inline-start: 2.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--wb-border) 72%, transparent);
+}
+
+.wb-block-row-depth-1 .wb-block-row-details-body,
+.wb-block-row-depth-2 .wb-block-row-details-body,
+.wb-block-row-depth-3 .wb-block-row-details-body,
+.wb-block-row-depth-4 .wb-block-row-details-body,
+.wb-block-row-depth-5 .wb-block-row-details-body,
+.wb-block-row-depth-6 .wb-block-row-details-body {
+    margin-inline-start: calc((var(--block-depth, 0) * 1rem) + 2.75rem);
+}
+
+.wb-block-row-depth-1 {
+    --block-depth: 1;
+}
+
+.wb-block-row-depth-2 {
+    --block-depth: 2;
+}
+
+.wb-block-row-depth-3 {
+    --block-depth: 3;
+}
+
+.wb-block-row-depth-4 {
+    --block-depth: 4;
+}
+
+.wb-block-row-depth-5 {
+    --block-depth: 5;
+}
+
+.wb-block-row-depth-6 {
+    --block-depth: 6;
+}
+
+.wb-block-row-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--wb-s2) var(--wb-s3);
+}
+
+.wb-block-row-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.wb-block-row-detail-label,
+.wb-block-row-preview-meta {
+    line-height: 1.3;
+}
+
+.wb-block-row-detail-value,
+.wb-block-row-text-preview,
+.wb-block-row-code-preview {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.wb-block-row-text-preview {
+    margin: 0;
+}
+
+.wb-block-row-code-preview {
+    margin: 0;
+    padding: var(--wb-s3);
+    overflow-x: auto;
+    border-radius: var(--wb-radius-lg);
+    background: color-mix(in srgb, var(--wb-surface) 82%, #0f172a 18%);
+    border: 1px solid color-mix(in srgb, var(--wb-border) 78%, transparent);
+    white-space: pre-wrap;
+}
+
+.wb-block-row-code-preview code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 .wb-block-hierarchy-cell {
     position: relative;
 }
@@ -136,6 +227,10 @@
     position: absolute;
     position: relative;
     padding-inline-start: calc(var(--block-depth, 0) * 1rem);
+}
+
+.wb-block-row-depth-0 {
+    --block-depth: 0;
 }
 
 .wb-block-row-depth-1 .wb-block-hierarchy,

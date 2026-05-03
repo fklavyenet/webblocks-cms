@@ -775,7 +775,7 @@ class BlockController extends Controller
             $ancestorId = Block::query()->whereKey($ancestorId)->value('parent_id');
         }
 
-        if ($includeCurrent && $block->children()->exists()) {
+        if ($includeCurrent && $block->id) {
             $expanded->push($block->id);
         }
 

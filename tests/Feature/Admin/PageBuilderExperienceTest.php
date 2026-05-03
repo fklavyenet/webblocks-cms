@@ -822,6 +822,149 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function collapsed_slot_block_rows_keep_details_markup_hidden_and_compact(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'draft',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'content' => 'Compact row content that should stay in the collapsed summary only.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-details-'.$block->id.'"', false);
+        $response->assertSee('data-slot-block-details-row', false);
+        $response->assertSee('aria-controls="slot-block-details-'.$block->id.'"', false);
+        $response->assertSee('data-wb-slot-block-details-row', false);
+        $response->assertSee('hidden', false);
+        $response->assertSee('title="Expand block details"', false);
+        $response->assertSee('Compact row content that should stay in the collapsed summary only.');
+    }
+
+    #[Test]
+    public function expanded_slot_block_details_render_safe_metadata_without_raw_rich_text_html(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $richTextType = BlockType::query()->where('slug', 'rich-text')->firstOrFail();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $richTextType->id,
+            'type' => 'rich-text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'content' => '<p>Alpha <strong>Beta</strong> <em>Gamma</em>.</p>',
+        ]);
+
+        $response = $this->withSession(['slot_block_expanded' => [$block->id]])
+            ->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-details-'.$block->id.'"', false);
+        $response->assertSee('wb-block-row-details-body', false);
+        $response->assertSee('Block type');
+        $response->assertSee('Visibility');
+        $response->assertSee('Locale');
+        $response->assertSee('Preview');
+        $response->assertSee('Alpha Beta Gamma.');
+        $response->assertDontSee('<p>Alpha <strong>Beta</strong>', false);
+    }
+
+    #[Test]
+    public function expanded_slot_block_details_preserve_actions_statuses_and_nested_expand_support(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+            'settings' => json_encode(['layout_name' => 'Docs shell'], JSON_THROW_ON_ERROR),
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $codeType->id,
+            'type' => 'code',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'draft',
+            'is_system' => false,
+            'content' => "<div>Hi</div>\nconsole.log('x');",
+            'settings' => json_encode(['language' => 'html'], JSON_THROW_ON_ERROR),
+        ]);
+
+        $response = $this->withSession(['slot_block_expanded' => [$section->id, $child->id]])
+            ->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $response->assertOk();
+        $response->assertSee('title="Move block up"', false);
+        $response->assertSee('title="Move block down"', false);
+        $response->assertSee('title="Edit block"', false);
+        $response->assertSee('published');
+        $response->assertSee('draft');
+        $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
+        $response->assertSee('data-wb-slot-toggle="'.$child->id.'"', false);
+        $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
+        $response->assertSee('aria-controls="slot-block-details-'.$section->id.' slot-block-row-'.$child->id.'"', false);
+        $response->assertSee('aria-controls="slot-block-details-'.$child->id.'"', false);
+        $response->assertSee('Layout');
+        $response->assertSee('Docs shell');
+        $response->assertSee('Code preview');
+        $response->assertSee('Language: HTML');
+        $response->assertSee('&lt;div&gt;Hi&lt;/div&gt;', false);
+        $response->assertDontSee('<div>Hi</div>', false);
+    }
+
+    #[Test]
     public function slot_block_reorder_endpoint_updates_sort_order_for_valid_same_parent_group(): void
     {
         $this->seedFoundation();
@@ -2785,9 +2928,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-depth="0"', false);
         $response->assertSee('data-depth="1"', false);
         $response->assertSee('data-depth="2"', false);
-        $response->assertSee('style="--block-depth: 0;"', false);
-        $response->assertSee('style="--block-depth: 1;"', false);
-        $response->assertSee('style="--block-depth: 2;"', false);
+        $response->assertDontSee('style="--block-depth:', false);
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
