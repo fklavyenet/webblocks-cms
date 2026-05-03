@@ -184,13 +184,14 @@ class ReconstructionIntegrityTest extends TestCase
     #[Test]
     public function export_and_import_preserve_translations_locale_assignments_and_public_rendering(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$sourceSite] = $this->seedCloneableSite(withFile: true);
         $export = app(SiteExportManager::class)->export($sourceSite, true);
 
         $import = app(SiteImportManager::class)->inspectUpload(
-            new UploadedFile(Storage::disk('site-transfers')->path($export->archive_path), $export->archive_name, 'application/zip', null, true)
+            new UploadedFile(Storage::disk('site-exports')->path($export->archive_path), $export->archive_name, 'application/zip', null, true)
         );
 
         $import = app(SiteImportManager::class)->import($import, SiteImportOptions::fromArray([
@@ -302,12 +303,13 @@ class ReconstructionIntegrityTest extends TestCase
     #[Test]
     public function export_import_can_normalize_packages_missing_block_translation_arrays(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$sourceSite] = $this->seedCloneableSite(withFile: true);
         $export = app(SiteExportManager::class)->export($sourceSite, true);
 
-        $archivePath = Storage::disk('site-transfers')->path($export->archive_path);
+        $archivePath = Storage::disk('site-exports')->path($export->archive_path);
         $archive = new \ZipArchive;
         $archive->open($archivePath);
 

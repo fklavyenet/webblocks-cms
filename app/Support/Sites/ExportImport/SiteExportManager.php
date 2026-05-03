@@ -13,7 +13,9 @@ use Throwable;
 
 class SiteExportManager
 {
-    public const ARCHIVE_DISK = 'site-transfers';
+    public const ARCHIVE_DISK = 'site-exports';
+
+    private const LEGACY_ARCHIVE_DISK = 'site-transfers';
 
     public function __construct(
         private readonly SiteExportDataBuilder $dataBuilder,
@@ -38,7 +40,7 @@ class SiteExportManager
             $payload = $this->dataBuilder->build($site, $includesMedia);
             $timestamp = now();
             $archiveName = sprintf('webblocks-cms-site-export-%s-%s.zip', $site->handle, $timestamp->format('Y-m-d-His'));
-            $archivePath = $timestamp->format('exports/Y/m/d/').Str::lower(Str::random(8)).'-'.$archiveName;
+            $archivePath = 'exports/'.$timestamp->format('Y/m/d/').Str::lower(Str::random(8)).'-'.$archiveName;
             $manifest = $this->manifestFor($site, $payload, $includesMedia, $timestamp);
             $size = $this->archiveBuilder->build(Storage::disk(self::ARCHIVE_DISK)->path($archivePath), $manifest, $payload, $includesMedia, $output);
 
@@ -74,7 +76,7 @@ class SiteExportManager
         }
 
         $this->pathGuard->assertSafeRelativePath($siteExport->archive_path, 'Export archive path');
-        $disk = Storage::disk($siteExport->archive_disk ?: self::ARCHIVE_DISK);
+        $disk = $this->resolveArchiveDisk($siteExport);
         $path = $disk->path($siteExport->archive_path);
 
         if (! is_file($path)) {
@@ -88,10 +90,28 @@ class SiteExportManager
     {
         if ($siteExport->archive_path) {
             $this->pathGuard->assertSafeRelativePath($siteExport->archive_path, 'Export archive path');
-            Storage::disk($siteExport->archive_disk ?: self::ARCHIVE_DISK)->delete($siteExport->archive_path);
+            $this->resolveArchiveDisk($siteExport)->delete($siteExport->archive_path);
         }
 
         $siteExport->delete();
+    }
+
+    private function resolveArchiveDisk(SiteExport $siteExport)
+    {
+        $configuredDisk = $siteExport->archive_disk ?: self::ARCHIVE_DISK;
+        $disk = Storage::disk($configuredDisk);
+
+        if ($disk->exists((string) $siteExport->archive_path) || $configuredDisk !== self::ARCHIVE_DISK) {
+            return $disk;
+        }
+
+        $legacyDisk = Storage::disk(self::LEGACY_ARCHIVE_DISK);
+
+        if ($legacyDisk->exists((string) $siteExport->archive_path)) {
+            return $legacyDisk;
+        }
+
+        return $disk;
     }
 
     private function manifestFor(Site $site, array $payload, bool $includesMedia, $timestamp): array

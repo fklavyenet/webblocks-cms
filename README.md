@@ -313,6 +313,7 @@ See `docs/editorial-workflow.md` for status and role details.
 
 - Revisions are page-level editorial recovery snapshots. Restoring a revision first creates a fresh pre-restore safety revision.
 - Export / Import is for moving one site's content between installs.
+- New site export packages are stored under `storage/app/exports/YYYY/MM/DD/`.
 - Backup / Restore is for recovering the install environment.
 - System Updates handle installed version checks and in-app update runs.
 
@@ -331,6 +332,8 @@ Admin JavaScript is organized under `public/assets/webblocks-cms/js/admin/`. Bla
 Admin listing screens should reuse the standard pattern used by Pages: a full-width muted filter card with one responsive filter row, compact page-header actions, and a separate full-width list or table card.
 
 These tools serve different purposes and are intentionally separate.
+
+- Export / Import remains separate from backups. Site export packages live under `storage/app/exports/YYYY/MM/DD/`, while backup storage behavior stays unchanged.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
 

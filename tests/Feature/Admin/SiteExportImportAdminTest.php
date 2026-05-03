@@ -20,7 +20,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function admin_export_action_creates_downloadable_package(): void
     {
-        Storage::fake('site-transfers');
+        Storage::fake('site-exports');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
@@ -35,6 +35,8 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertNotNull($siteExport);
         $this->assertSame('completed', $siteExport->status);
+        $this->assertStringStartsWith('exports/', (string) $siteExport->archive_path);
+        Storage::disk('site-exports')->assertExists($siteExport->archive_path);
 
         $download = $this->actingAs($user)->get(route('admin.site-transfers.exports.download', $siteExport));
         $download->assertOk();
@@ -44,6 +46,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function admin_import_upload_validates_and_completes(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
@@ -56,7 +59,7 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->firstOrFail();
         $uploadResponse = $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
-            'archive' => new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+            'archive' => new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
         ]);
 
         $siteImport = \App\Models\SiteImport::query()->latest()->firstOrFail();
@@ -75,6 +78,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function imported_site_can_be_saved_after_import_when_only_domain_changes(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
@@ -87,7 +91,7 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->firstOrFail();
         $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
-            'archive' => new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+            'archive' => new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
         ]);
 
         $siteImport = SiteImport::query()->latest()->firstOrFail();

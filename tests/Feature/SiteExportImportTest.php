@@ -6,10 +6,12 @@ use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Site;
+use App\Models\SiteExport;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use App\Support\Sites\ExportImport\SiteImportManager;
 use App\Support\Sites\ExportImport\SiteImportOptions;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -26,25 +28,65 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function can_export_a_site_package_successfully(): void
     {
-        Storage::fake('site-transfers');
+        Storage::fake('site-exports');
         [$site] = $this->seedCloneableSite();
 
         $siteExport = app(SiteExportManager::class)->export($site, false);
 
         $this->assertSame('completed', $siteExport->status);
         $this->assertNotNull($siteExport->archive_path);
-        Storage::disk('site-transfers')->assertExists($siteExport->archive_path);
+        Storage::disk('site-exports')->assertExists($siteExport->archive_path);
+        $this->assertSame('site-exports', $siteExport->archive_disk);
+    }
+
+    #[Test]
+    public function new_exports_use_exports_date_path_without_legacy_site_transfers_segments(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+
+        $this->assertNotNull($siteExport->archive_path);
+        $this->assertStringStartsWith('exports/', $siteExport->archive_path);
+        $this->assertMatchesRegularExpression('#^exports/\d{4}/\d{2}/\d{2}/#', $siteExport->archive_path);
+        $this->assertStringNotContainsString('site-transfers', $siteExport->archive_path);
+        $this->assertDoesNotMatchRegularExpression('#(^|/)UTC[^/]+/#', $siteExport->archive_path);
+    }
+
+    #[Test]
+    public function same_day_exports_share_the_same_date_directory(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $now = CarbonImmutable::parse('2026-05-03 07:38:50');
+
+        $this->travelTo($now);
+
+        try {
+            $firstExport = app(SiteExportManager::class)->export($site, false);
+            $secondExport = app(SiteExportManager::class)->export($site, false);
+        } finally {
+            $this->travelBack();
+        }
+
+        $firstDirectory = dirname((string) $firstExport->archive_path);
+        $secondDirectory = dirname((string) $secondExport->archive_path);
+
+        $this->assertSame('exports/2026/05/03', $firstDirectory);
+        $this->assertSame($firstDirectory, $secondDirectory);
+        $this->assertNotSame($firstExport->archive_path, $secondExport->archive_path);
     }
 
     #[Test]
     public function export_manifest_contains_expected_metadata(): void
     {
-        Storage::fake('site-transfers');
+        Storage::fake('site-exports');
         [$site] = $this->seedCloneableSite();
 
         $siteExport = app(SiteExportManager::class)->export($site, false);
         $archive = new ZipArchive;
-        $archive->open(Storage::disk('site-transfers')->path($siteExport->archive_path));
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
         $manifest = json_decode((string) $archive->getFromName('manifest.json'), true);
         $archive->close();
 
@@ -57,13 +99,13 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function export_excludes_media_files_when_media_not_selected(): void
     {
-        Storage::fake('site-transfers');
+        Storage::fake('site-exports');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
 
         $siteExport = app(SiteExportManager::class)->export($site, false);
         $archive = new ZipArchive;
-        $archive->open(Storage::disk('site-transfers')->path($siteExport->archive_path));
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
 
         $this->assertFalse($archive->locateName('files/public/media/images/hero.jpg'));
         $archive->close();
@@ -72,13 +114,13 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function export_includes_media_files_when_selected(): void
     {
-        Storage::fake('site-transfers');
+        Storage::fake('site-exports');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
 
         $siteExport = app(SiteExportManager::class)->export($site, true);
         $archive = new ZipArchive;
-        $archive->open(Storage::disk('site-transfers')->path($siteExport->archive_path));
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
 
         $this->assertNotFalse($archive->locateName('files/public/media/images/hero.jpg'));
         $archive->close();
@@ -87,13 +129,14 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function can_import_package_into_a_new_site(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $siteExport = app(SiteExportManager::class)->export($site, true);
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
-            new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
         );
 
         $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -109,13 +152,14 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function imported_pages_belong_to_new_site_and_translations_and_blocks_are_preserved(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $siteExport = app(SiteExportManager::class)->export($site, true);
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
-            new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
         );
 
         $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -163,6 +207,7 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function handle_collision_is_resolved_safely(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
@@ -170,7 +215,7 @@ class SiteExportImportTest extends TestCase
         $siteExport = app(SiteExportManager::class)->export($site, true);
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
-            new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
         );
 
         $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
@@ -185,6 +230,7 @@ class SiteExportImportTest extends TestCase
     #[Test]
     public function domain_collision_does_not_overwrite_existing_site_domain(): void
     {
+        Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
@@ -192,7 +238,7 @@ class SiteExportImportTest extends TestCase
         $siteExport = app(SiteExportManager::class)->export($site, true);
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
-            new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
         );
 
         $this->expectExceptionMessage('Selected site domain already exists locally');
@@ -253,5 +299,34 @@ class SiteExportImportTest extends TestCase
         $this->expectExceptionMessage('Archive entry path is invalid');
 
         app(SiteImportManager::class)->inspectUpload(new UploadedFile($path, 'dangerous.zip', 'application/zip', null, true));
+    }
+
+    #[Test]
+    public function legacy_export_paths_on_site_transfers_disk_still_download_and_delete_correctly(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $legacyPath = 'site-transfers/UTC123/2026/05/03/legacy-export.zip';
+        Storage::disk('site-transfers')->put($legacyPath, 'legacy export');
+
+        $siteExport = SiteExport::query()->create([
+            'site_id' => $site->id,
+            'status' => SiteExport::STATUS_COMPLETED,
+            'archive_disk' => 'site-exports',
+            'archive_path' => $legacyPath,
+            'archive_name' => 'legacy-export.zip',
+            'archive_size_bytes' => strlen('legacy export'),
+        ]);
+
+        $response = app(SiteExportManager::class)->downloadResponse($siteExport);
+
+        $this->assertSame(Storage::disk('site-transfers')->path($legacyPath), $response->getFile()->getPathname());
+
+        app(SiteExportManager::class)->delete($siteExport->fresh());
+
+        Storage::disk('site-transfers')->assertMissing($legacyPath);
+        $this->assertDatabaseMissing('site_exports', ['id' => $siteExport->id]);
     }
 }

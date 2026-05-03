@@ -22,6 +22,7 @@
 - Fix Docs Navbar alignment by removing constrained container classes from the full-width flex row.
 - Fix Docs Navbar visual width by applying full-width layout to the navbar element itself, not only the inner flex row.
 - Fix docs shell layout structure so the navbar and main content share the right-side content column instead of becoming competing flex items.
+- Normalize new site export package storage to `storage/app/exports/YYYY/MM/DD/` without changing legacy export record compatibility or backup storage behavior.
 
 ## 1.5.0
 
