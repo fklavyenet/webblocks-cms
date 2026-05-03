@@ -6,6 +6,7 @@
 - Simplify the Backups screen actions by removing duplicate upload, cancel, and System Updates controls, and clarify failed stale backup messaging.
 - Fix backup archive lifecycle so deleting backups removes stored archive files and restoring existing backups does not duplicate the source archive while preserving mandatory safety backups.
 - Fix backup deletion path handling so UI-deleted backups remove their real stored archive files across current and legacy archive path formats.
+- Fix restore safety backup lifecycle so successful restores do not leave backup records stuck in running status.
 
 ## 1.6.0
 

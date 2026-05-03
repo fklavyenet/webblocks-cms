@@ -135,13 +135,15 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function admin_can_create_backup_record_and_download_artifact(): void
     {
-        Storage::fake('public');
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('create-backup-artifact');
+        $publicRoot = $this->makeTemporaryDirectory('create-backup-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
 
         $user = User::factory()->superAdmin()->create();
         $folder = AssetFolder::query()->create(['name' => 'Docs', 'slug' => 'docs']);
 
-        Storage::disk('public')->put('media/documents/readme.txt', 'backup me');
+        File::ensureDirectoryExists($publicRoot.'/media/documents');
+        File::put($publicRoot.'/media/documents/readme.txt', 'backup me');
 
         Asset::query()->create([
             'folder_id' => $folder->id,
@@ -160,7 +162,8 @@ class SystemBackupsTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('admin.system.backups.store'));
 
-        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertStatus(302);
+        $this->assertSame(route('admin.system.backups.index'), $response->headers->get('Location'));
 
         $backup = SystemBackup::query()->latest()->first();
 
@@ -169,9 +172,9 @@ class SystemBackupsTest extends TestCase
         $this->assertSame(SystemBackup::TYPE_MANUAL, $backup->type);
         $this->assertNotNull($backup->archive_path);
 
-        $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileExists($backupsRoot.'/'.$backup->archive_path);
 
-        $archivePath = Storage::disk('backups')->path($backup->archive_path);
+        $archivePath = $backupsRoot.'/'.$backup->archive_path;
         $archive = new ZipArchive;
 
         $this->assertTrue($archive->open($archivePath) === true);
@@ -188,6 +191,50 @@ class SystemBackupsTest extends TestCase
     }
 
     #[Test]
+    public function created_backup_archive_contains_its_own_backup_record_as_completed_instead_of_running(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('create-backup-sql-state');
+        $publicRoot = $this->makeTemporaryDirectory('create-backup-sql-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->post(route('admin.system.backups.store'));
+
+        $response->assertStatus(302);
+        $this->assertSame(route('admin.system.backups.index'), $response->headers->get('Location'));
+
+        $backup = SystemBackup::query()->latest()->first();
+
+        $this->assertNotNull($backup);
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
+
+        $archive = new ZipArchive;
+        $archivePath = $backupsRoot.'/'.(string) $backup->archive_path;
+        $this->assertTrue($archive->open($archivePath) === true);
+
+        $databaseSql = $archive->getFromName('database/database.sql');
+
+        $archive->close();
+
+        $this->assertIsString($databaseSql);
+
+        $snapshotDatabasePath = $this->makeTemporaryDirectory('snapshot-db').'/snapshot.sqlite';
+        $snapshotConnection = new \PDO('sqlite:'.$snapshotDatabasePath);
+        $snapshotConnection->exec($databaseSql);
+
+        $statement = $snapshotConnection->prepare('select status, finished_at, archive_path, archive_filename from system_backups where id = :id');
+        $statement->execute(['id' => $backup->id]);
+        $dumpedBackup = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        $this->assertIsArray($dumpedBackup);
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $dumpedBackup['status']);
+        $this->assertNotEmpty($dumpedBackup['finished_at']);
+        $this->assertSame($backup->archive_path, $dumpedBackup['archive_path']);
+        $this->assertSame($backup->archive_filename, $dumpedBackup['archive_filename']);
+    }
+
+    #[Test]
     public function failed_backup_is_recorded_as_failed(): void
     {
         Storage::fake('public');
@@ -200,7 +247,8 @@ class SystemBackupsTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('admin.system.backups.store'));
 
-        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertStatus(302);
+        $this->assertSame(route('admin.system.backups.index'), $response->headers->get('Location'));
 
         $backup = SystemBackup::query()->latest()->first();
 
@@ -333,6 +381,89 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('System restore completed successfully.');
         $response->assertDontSee('Restore Failed');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    }
+
+    #[Test]
+    public function successful_restore_creates_a_completed_safety_backup_and_leaves_no_running_backup_records(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $sourceBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/restore-source.zip',
+            'archive_filename' => 'restore-source.zip',
+            'started_at' => now()->subMinute(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+        $safetyBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_RESTORE_SAFETY,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => SystemBackupManager::ARCHIVE_DISK,
+            'archive_path' => '2026/04/20/generated-safety.zip',
+            'archive_filename' => 'generated-safety.zip',
+            'archive_size_bytes' => 1234,
+            'started_at' => now()->subSeconds(30),
+            'finished_at' => now()->subSeconds(20),
+            'summary' => 'Completed.',
+            'output' => 'Safety backup completed.',
+            'triggered_by_user_id' => $user->id,
+        ]);
+        $restoreRecord = SystemBackupRestore::query()->create([
+            'source_backup_id' => $sourceBackup->id,
+            'source_archive_disk' => 'backups',
+            'source_archive_path' => $sourceBackup->archive_path,
+            'source_archive_filename' => $sourceBackup->archive_filename,
+            'safety_backup_id' => $safetyBackup->id,
+            'status' => SystemBackupRestore::STATUS_COMPLETED,
+            'restored_parts' => ['database', 'uploads'],
+            'started_at' => now()->subSeconds(15),
+            'finished_at' => now()->subSeconds(5),
+            'summary' => 'Restore completed from '.$sourceBackup->archive_filename.'.',
+        ]);
+
+        $mock = Mockery::mock(SystemBackupRestoreManager::class);
+        $mock->shouldReceive('restoreFromBackup')
+            ->once()
+            ->withArgs(fn (SystemBackup $passedBackup, ?int $userId): bool => (int) $passedBackup->id === (int) $sourceBackup->id && $userId === $user->id)
+            ->andReturn(new BackupRestoreResult(
+                sourceBackup: $sourceBackup,
+                sourceArchivePath: (string) $sourceBackup->archive_path,
+                sourceArchiveFilename: (string) $sourceBackup->archive_filename,
+                inspection: new BackupRestoreInspection(
+                    manifest: $this->backupManifest(),
+                    includesDatabase: true,
+                    includesUploads: true,
+                    databaseSqlPath: 'database/database.sql',
+                    uploadsRootPath: 'uploads/public',
+                ),
+                safetyBackup: $safetyBackup,
+                output: ['Restore completed.'],
+                restoreRecord: $restoreRecord,
+            ));
+        $this->app->instance(SystemBackupRestoreManager::class, $mock);
+
+        $response = $this->actingAs($user)
+            ->post(route('admin.system.backups.restore', $sourceBackup->fresh()), [
+                'acknowledge_restore_risk' => '1',
+            ]);
+
+        $response->assertStatus(302);
+        $this->assertSame(route('admin.system.backups.index'), $response->headers->get('Location'));
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $safetyBackup->status);
+        $this->assertNotNull($safetyBackup->finished_at);
+        $this->assertSame(SystemBackupManager::ARCHIVE_DISK, $safetyBackup->archive_disk);
+        $this->assertNotNull($safetyBackup->archive_path);
+        $this->assertNotNull($safetyBackup->archive_filename);
+        $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $restoreRecord->status);
+        $this->assertSame($safetyBackup->id, $restoreRecord->safety_backup_id);
+        $this->assertSame('Restore completed from '.$sourceBackup->archive_filename.'.', $restoreRecord->summary);
+        $this->assertSame(0, SystemBackup::query()->where('status', SystemBackup::STATUS_RUNNING)->count());
     }
 
     #[Test]

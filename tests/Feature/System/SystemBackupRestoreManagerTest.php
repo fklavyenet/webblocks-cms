@@ -278,6 +278,130 @@ class SystemBackupRestoreManagerTest extends TestCase
         $this->assertSame($fakeBackupManager->createdSafetyBackup?->id, $result->safetyBackup?->id);
     }
 
+    #[Test]
+    public function restore_creates_a_completed_safety_backup_before_database_restore_begins(): void
+    {
+        $this->useRealBackupsDiskRoot('restore-safety-before-db');
+
+        $user = User::factory()->create();
+        $publicRoot = $this->makeTemporaryDirectory('restore-safety-before-db-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+        File::put($publicRoot.'/original.txt', 'before restore');
+
+        $sourceBackup = app(SystemBackupManager::class)->createManualBackup($user->id, 'Source backup');
+        $testCase = $this;
+        $fakeDatabaseRestoreRunner = new class($testCase) extends DatabaseRestoreRunner
+        {
+            public array $restoredSqlPaths = [];
+
+            public function __construct(
+                private readonly TestCase $testCase,
+            ) {}
+
+            public function restoreFrom(string $sqlPath, array &$output = []): array
+            {
+                $this->restoredSqlPaths[] = $sqlPath;
+
+                $runningCount = SystemBackup::query()
+                    ->where('status', SystemBackup::STATUS_RUNNING)
+                    ->count();
+                $safetyBackup = SystemBackup::query()
+                    ->where('type', SystemBackup::TYPE_RESTORE_SAFETY)
+                    ->latest()
+                    ->first();
+
+                $this->testCase->assertSame(0, $runningCount);
+                $this->testCase->assertNotNull($safetyBackup);
+                $this->testCase->assertSame(SystemBackup::STATUS_COMPLETED, $safetyBackup->status);
+                $this->testCase->assertNotNull($safetyBackup->finished_at);
+                $this->testCase->assertNotNull($safetyBackup->archive_path);
+                $this->testCase->assertNotNull($safetyBackup->archive_filename);
+                $this->testCase->assertSame(SystemBackupManager::ARCHIVE_DISK, $safetyBackup->archive_disk);
+                $this->testCase->assertNotNull($safetyBackup->output);
+                $this->testCase->assertTrue(Storage::disk(SystemBackupManager::ARCHIVE_DISK)->exists($safetyBackup->archive_path));
+
+                $output[] = 'Simulated database restore from '.basename($sqlPath).'.';
+
+                return [
+                    'driver' => 'sqlite',
+                    'strategy' => 'fake',
+                    'connection' => 'testing',
+                ];
+            }
+        };
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        $result = app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup->fresh(), $user->id);
+
+        $this->assertCount(1, $fakeDatabaseRestoreRunner->restoredSqlPaths);
+        $this->assertSame(1, $fakeMaintenanceRunner->runCalls);
+        $this->assertNotNull($result->safetyBackup);
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $result->safetyBackup->status);
+        $this->assertSame(0, SystemBackup::query()->where('status', SystemBackup::STATUS_RUNNING)->count());
+    }
+
+    #[Test]
+    public function failing_safety_backup_aborts_restore_before_database_restore_and_records_failure(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('failed-safety-restore-public-root'));
+
+        $sourceBackup = $this->createBackupRecord('2026/04/20/failing-safety-source.zip');
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => false,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+
+        $fakeBackupManager = new class extends FakeSystemBackupManager
+        {
+            public function __construct() {}
+
+            public function createRestoreSafetyBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+            {
+                $this->safetyBackupCalls++;
+
+                throw new RuntimeException('Pre-restore safety backup failed.');
+            }
+        };
+        $fakeDatabaseRestoreRunner = new FakeDatabaseRestoreRunner;
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        try {
+            app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup, $user->id);
+            $this->fail('Expected restore to fail when the safety backup cannot be created.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Pre-restore safety backup failed.', $exception->getMessage());
+        }
+
+        $this->assertSame(1, $fakeBackupManager->validateCalls);
+        $this->assertSame(1, $fakeBackupManager->safetyBackupCalls);
+        $this->assertCount(0, $fakeDatabaseRestoreRunner->restoredSqlPaths);
+        $this->assertSame(0, $fakeMaintenanceRunner->runCalls);
+
+        $restoreRecord = SystemBackupRestore::query()->latest()->first();
+
+        $this->assertNotNull($restoreRecord);
+        $this->assertSame(SystemBackupRestore::STATUS_FAILED, $restoreRecord->status);
+        $this->assertSame($sourceBackup->id, $restoreRecord->source_backup_id);
+        $this->assertNull($restoreRecord->safety_backup_id);
+        $this->assertSame('Pre-restore safety backup failed.', $restoreRecord->error_message);
+    }
+
     private function createBackupRecord(string $archivePath, string $type = SystemBackup::TYPE_MANUAL): SystemBackup
     {
         return SystemBackup::query()->create([
@@ -314,6 +438,14 @@ class SystemBackupRestoreManagerTest extends TestCase
         $path = storage_path('app/testing-system-backup-restore/'.$prefix.'-'.Str::uuid());
         File::ensureDirectoryExists($path);
         $this->temporaryDirectories[] = $path;
+
+        return $path;
+    }
+
+    private function useRealBackupsDiskRoot(string $prefix): string
+    {
+        $path = $this->makeTemporaryDirectory($prefix);
+        config()->set('filesystems.disks.backups.root', $path);
 
         return $path;
     }

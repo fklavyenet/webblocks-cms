@@ -106,34 +106,37 @@ class SystemBackupManager
 
         $temporaryDirectory = storage_path('app/temp/system-backups/'.$startedAt->format('YmdHis').'-'.Str::lower(Str::random(8)));
         $databaseDumpPath = $temporaryDirectory.'/database.sql';
-        $archiveRelativePath = null;
+        $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'.zip';
+        $archiveRelativePath = $startedAt->format('Y/m/d').'/'.$archiveFilename;
+        $archivePath = Storage::disk(self::ARCHIVE_DISK)->path($archiveRelativePath);
         $output = [];
 
         File::ensureDirectoryExists($temporaryDirectory);
         File::ensureDirectoryExists((string) config('filesystems.disks.public.root'));
 
         try {
-            $databaseMeta = $this->databaseDumpWriter->dumpTo($databaseDumpPath, $output);
+            $this->markBackupCompletedForSnapshot(
+                $backup,
+                $archiveRelativePath,
+                $archiveFilename,
+                $startedAt,
+                $output,
+            );
 
-            $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'.zip';
-            $archiveRelativePath = $startedAt->format('Y/m/d').'/'.$archiveFilename;
-            $archivePath = Storage::disk(self::ARCHIVE_DISK)->path($archiveRelativePath);
+            $databaseMeta = $this->databaseDumpWriter->dumpTo($databaseDumpPath, $output);
             $manifest = $this->backupManifestBuilder->build($backup, $databaseMeta, $archiveFilename);
             $archiveMeta = $this->backupArchiveBuilder->build($archivePath, $databaseDumpPath, $manifest, $output);
-            $finishedAt = now();
             $fileSize = filesize($archivePath);
 
-            $backup->forceFill([
-                'status' => SystemBackup::STATUS_COMPLETED,
-                'archive_path' => $archiveRelativePath,
-                'archive_filename' => $archiveFilename,
-                'archive_size_bytes' => $fileSize === false ? null : $fileSize,
-                'finished_at' => $finishedAt,
-                'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-                'summary' => 'Backup completed with database dump and '.number_format($archiveMeta['uploads_file_count']).' upload file(s).',
-                'output' => implode(PHP_EOL, $output),
-                'error_message' => null,
-            ])->save();
+            $this->finalizeCompletedBackup(
+                $backup,
+                $archiveRelativePath,
+                $archiveFilename,
+                $startedAt,
+                $fileSize === false ? null : $fileSize,
+                $archiveMeta,
+                $output,
+            );
 
             return $backup->fresh();
         } catch (Throwable $throwable) {
@@ -157,6 +160,53 @@ class SystemBackupManager
         } finally {
             File::deleteDirectory($temporaryDirectory);
         }
+    }
+
+    private function markBackupCompletedForSnapshot(
+        SystemBackup $backup,
+        string $archiveRelativePath,
+        string $archiveFilename,
+        $startedAt,
+        array &$output,
+    ): void {
+        $finishedAt = now();
+        $output[] = 'Backup record marked as completed before database snapshot.';
+
+        $backup->forceFill([
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'archive_path' => $archiveRelativePath,
+            'archive_filename' => $archiveFilename,
+            'archive_size_bytes' => null,
+            'finished_at' => $finishedAt,
+            'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
+            'summary' => 'Backup completed.',
+            'output' => implode(PHP_EOL, $output),
+            'error_message' => null,
+        ])->save();
+    }
+
+    private function finalizeCompletedBackup(
+        SystemBackup $backup,
+        string $archiveRelativePath,
+        string $archiveFilename,
+        $startedAt,
+        ?int $archiveSizeBytes,
+        array $archiveMeta,
+        array $output,
+    ): void {
+        $finishedAt = now();
+
+        $backup->forceFill([
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'archive_path' => $archiveRelativePath,
+            'archive_filename' => $archiveFilename,
+            'archive_size_bytes' => $archiveSizeBytes,
+            'finished_at' => $finishedAt,
+            'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
+            'summary' => 'Backup completed with database dump and '.number_format($archiveMeta['uploads_file_count']).' upload file(s).',
+            'output' => implode(PHP_EOL, $output),
+            'error_message' => null,
+        ])->save();
     }
 
     public function latest(): ?SystemBackup

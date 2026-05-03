@@ -486,6 +486,8 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - After a successful restore, the CMS returns to the Backups index instead of the original backup detail URL because the restored database may no longer contain that pre-restore backup record ID.
 - Judge restore success by the success flash on `/admin/system/backups` and the restored content, not by whether the old pre-restore backup record still exists after the database overwrite.
 - Restore creates a mandatory pre-restore safety backup, so seeing one new backup archive after restore is expected.
+- The mandatory pre-restore safety backup must finish and be marked completed before the database restore begins.
+- Successful restore should not leave a backup record visible as `running` unless a real backup job is still active.
 - Restoring an existing listed backup reuses its stored archive directly and should not duplicate or re-register that source archive as a new backup record.
 - Backup restore is different from Export / Import, which creates a new site from a site package instead of replacing the current install.
 - When the existing restore flow runs, it validates the selected archive first and only creates a fresh safety backup before applying a valid archive.
