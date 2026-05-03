@@ -320,8 +320,8 @@ class SystemBackupManager
         $storedArchivePath = $backup->archiveRelativePath();
 
         if ($storedArchivePath !== null) {
-            $normalizedArchivePath = $this->normalizeArchivePathForDisk($storedArchivePath, $archiveDisk);
-            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath, $normalizedArchivePath);
+            $archivePath = $this->resolveStoredArchivePath($storedArchivePath, $archiveDisk);
+            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath, $archivePath);
         }
 
         $backup->delete();
@@ -354,6 +354,27 @@ class SystemBackupManager
         }
 
         $this->pruneEmptyArchiveDirectories($diskName, $normalizedArchivePath);
+    }
+
+    private function resolveStoredArchivePath(string $storedArchivePath, string $diskName): string
+    {
+        $trimmedPath = trim($storedArchivePath);
+
+        if ($trimmedPath === '') {
+            throw new RuntimeException('Backup archive path is missing.');
+        }
+
+        if ($this->hasInvalidRelativePath($trimmedPath)) {
+            return $this->normalizeArchivePathForDisk($trimmedPath, $diskName);
+        }
+
+        $disk = Storage::disk($diskName);
+
+        if ($disk->exists($trimmedPath)) {
+            return $trimmedPath;
+        }
+
+        return $this->normalizeArchivePathForDisk($trimmedPath, $diskName);
     }
 
     private function pruneEmptyArchiveDirectories(string $diskName, string $archivePath): void

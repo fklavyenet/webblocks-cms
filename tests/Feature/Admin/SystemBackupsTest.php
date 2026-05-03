@@ -1210,6 +1210,39 @@ class SystemBackupsTest extends TestCase
     }
 
     #[Test]
+    public function ui_delete_action_for_real_created_backup_uses_the_same_real_path_format_as_backup_creation(): void
+    {
+        Storage::fake('public');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-real-created-backup-format');
+
+        $user = User::factory()->superAdmin()->create();
+
+        $createResponse = $this->actingAs($user)->post(route('admin.system.backups.store'));
+        $createResponse->assertRedirect(route('admin.system.backups.index'));
+
+        $backup = SystemBackup::query()->latest()->first();
+
+        $this->assertNotNull($backup);
+        $this->assertSame('backups', $backup->archive_disk);
+        $this->assertMatchesRegularExpression(
+            '/^\d{4}\/\d{2}\/\d{2}\/webblocks-cms-backup-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/',
+            (string) $backup->archive_path,
+        );
+
+        $absoluteArchivePath = $backupsRoot.'/'.$backup->archive_path;
+        $this->assertFileExists($absoluteArchivePath);
+
+        $deleteResponse = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $deleteResponse->assertRedirect(route('admin.system.backups.index'));
+        $deleteResponse->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFileDoesNotExist($absoluteArchivePath);
+    }
+
+    #[Test]
     public function backup_manager_logs_context_and_preserves_record_when_archive_delete_fails(): void
     {
         $backupsRoot = $this->useRealBackupsDiskRoot('delete-log-failure');
