@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Blocks\RichTextHtmlSanitizer;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -467,5 +468,110 @@ class BlockTranslationIntegrityTest extends TestCase
             'title' => 'WebBlocks TR',
             'subtitle' => 'Turkce aciklama',
         ]);
+    }
+
+    #[Test]
+    public function rich_text_block_type_exists_after_seeding(): void
+    {
+        $this->seed(\Database\Seeders\FoundationSiteLocaleSeeder::class);
+        $this->seed(\Database\Seeders\BlockTypeSeeder::class);
+
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'rich-text',
+            'name' => 'Rich Text',
+            'status' => 'published',
+            'category' => 'content',
+            'is_container' => false,
+        ]);
+    }
+
+    #[Test]
+    public function rich_text_updates_are_stored_in_translation_backed_content_and_canonical_content_is_cleared(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $page = $this->pageWithMainSlot($this->defaultSite());
+        $blockType = $this->blockType('rich-text');
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $blockType->id,
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'content' => '<p>Hello <strong>world</strong></p>',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $response->assertRedirect();
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
+
+        $this->assertNull($block->fresh()->getRawOriginal('content'));
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'content' => '<p>Hello <strong>world</strong></p>',
+        ]);
+    }
+
+    #[Test]
+    public function rich_text_unsafe_html_and_links_are_sanitized_before_persistence(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $page = $this->pageWithMainSlot($this->defaultSite());
+        $blockType = $this->blockType('rich-text');
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $blockType->id,
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'content' => '<script>alert(1)</script><p onclick="evil()">Safe <strong>copy</strong> <a href="javascript:alert(1)">bad</a> <a href="https://example.com" target="_blank">good</a></p>',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $response->assertRedirect();
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
+        $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
+
+        $this->assertSame('<p>Safe <strong>copy</strong> <a>bad</a> <a href="https://example.com" target="_blank" rel="noopener noreferrer">good</a></p>', $content);
+        $this->assertStringNotContainsString('<script', $content);
+        $this->assertStringNotContainsString('onclick=', $content);
+        $this->assertStringNotContainsString('javascript:', $content);
+    }
+
+    #[Test]
+    public function rich_text_safe_relative_and_contact_links_are_preserved(): void
+    {
+        $sanitizer = app(RichTextHtmlSanitizer::class);
+
+        $this->assertSame('<p><a href="/docs">Docs</a> <a href="#jump">Jump</a> <a href="?tab=api">API</a> <a href="mailto:team@example.com">Email</a> <a href="tel:+12025550123">Call</a></p>', $sanitizer->sanitize('<p><a href="/docs">Docs</a> <a href="#jump">Jump</a> <a href="?tab=api">API</a> <a href="mailto:team@example.com">Email</a> <a href="tel:+12025550123">Call</a></p>'));
+    }
+
+    #[Test]
+    public function whitespace_only_rich_text_normalizes_to_null_translation_content(): void
+    {
+        $page = $this->pageWithMainSlot($this->defaultSite());
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '  <p> </p>  ',
+        ], null, true);
+
+        $this->assertNull(DB::table('block_text_translations')->where('block_id', $block->id)->value('content'));
     }
 }

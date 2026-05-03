@@ -176,6 +176,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Card');
         $response->assertSee('Stat Card');
         $response->assertSee('Alert');
+        $response->assertSee('Rich Text');
         $response->assertSee('Link List');
         $response->assertSee('Link List Item');
         $response->assertSee('Breadcrumb');
@@ -185,7 +186,6 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Sidebar Nav Item');
         $response->assertDontSee('Sidebar Nav Group');
         $response->assertDontSee('Hero');
-        $response->assertDontSee('Rich Text');
     }
 
     #[Test]
@@ -2787,5 +2787,33 @@ class PageBuilderExperienceTest extends TestCase
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'English heading',
         ]);
+    }
+
+    #[Test]
+    public function rich_text_block_form_exposes_editor_controls_and_named_asset(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $richTextType = BlockType::query()->where('slug', 'rich-text')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $richTextType->id]));
+
+        $response->assertOk();
+        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-input', false);
+        $response->assertSee('data-wb-rich-text-surface', false);
+        $response->assertSee('data-wb-rich-text-command="bold"', false);
+        $response->assertSee('data-wb-rich-text-command="italic"', false);
+        $response->assertSee('data-wb-rich-text-command="code"', false);
+        $response->assertSee('data-wb-rich-text-command="unordered-list"', false);
+        $response->assertSee('data-wb-rich-text-command="ordered-list"', false);
+        $response->assertSee('data-wb-rich-text-command="blockquote"', false);
+        $response->assertSee('data-wb-rich-text-command="link"', false);
+        $response->assertSee('data-wb-rich-text-command="clear"', false);
+        $response->assertDontSee('data-wb-rich-text-command="heading"', false);
     }
 }

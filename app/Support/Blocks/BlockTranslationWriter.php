@@ -13,6 +13,7 @@ class BlockTranslationWriter
     public function __construct(
         private readonly BlockTranslationRegistry $registry,
         private readonly LocaleResolver $localeResolver,
+        private readonly RichTextHtmlSanitizer $richTextHtmlSanitizer,
     ) {}
 
     public function canonicalPayload(array $data, ?Block $block, Page $page, ?string $localeCode, bool $isCreating = false): array
@@ -125,11 +126,11 @@ class BlockTranslationWriter
     {
         return match ($family) {
             'text' => [
-                'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'title', $block->getRawOriginal('title')),
-                'eyebrow' => array_key_exists('eyebrow', $data) ? $data['eyebrow'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'eyebrow'),
-                'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
-                'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'content', $block->getRawOriginal('content')),
-                'meta' => array_key_exists('meta', $data) ? $data['meta'] : $this->existingTranslationValue($block, 'textTranslations', $localeId, 'meta', $block->getRawOriginal('meta')),
+                'title' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'title', $block->getRawOriginal('title')),
+                'eyebrow' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'eyebrow'),
+                'subtitle' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
+                'content' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'content', $block->getRawOriginal('content')),
+                'meta' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'meta', $block->getRawOriginal('meta')),
             ],
             'button' => [
                 'title' => $this->submittedString($data, 'title')
@@ -207,6 +208,19 @@ class BlockTranslationWriter
         }
 
         return $value !== '' ? $value : null;
+    }
+
+    private function resolvedTextTranslationValue(array $data, Block $block, int $localeId, string $field, mixed $fallback = null): mixed
+    {
+        $value = array_key_exists($field, $data)
+            ? $data[$field]
+            : $this->existingTranslationValue($block, 'textTranslations', $localeId, $field, $fallback);
+
+        if ($field !== 'content' || $block->typeSlug() !== 'rich-text') {
+            return $value;
+        }
+
+        return $this->richTextHtmlSanitizer->sanitize(is_string($value) ? $value : null);
     }
 
     private function canonicalBlockFieldsForFamily(string $family): array

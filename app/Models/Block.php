@@ -167,7 +167,7 @@ class Block extends Model
                 : $this->typeName();
         }
 
-        if ($this->typeSlug() === 'plain_text') {
+        if (in_array($this->typeSlug(), ['plain_text', 'rich-text'], true)) {
             return $content ?? $this->typeName();
         }
 

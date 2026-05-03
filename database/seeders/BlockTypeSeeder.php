@@ -9,7 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'];
+        $activeSlugs = ['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'];
 
         BlockType::query()
             ->whereNotIn('slug', $activeSlugs)
@@ -32,6 +32,17 @@ class BlockTypeSeeder extends Seeder
                 'slug' => 'plain_text',
                 'category' => 'content',
                 'description' => 'Primitive translated paragraph text rendered as a plain paragraph element.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 6,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Rich Text',
+                'slug' => 'rich-text',
+                'category' => 'content',
+                'description' => 'Translated body copy with a small safe HTML subset for inline editorial formatting.',
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
@@ -241,7 +252,6 @@ class BlockTypeSeeder extends Seeder
         collect([
             'heading' => 'Heading',
             'text' => 'Text',
-            'rich-text' => 'Rich Text',
             'quote' => 'Quote',
             'callout' => 'Callout',
             'code' => 'Code',

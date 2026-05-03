@@ -42,6 +42,7 @@ class BlockRequest extends FormRequest
         $isCode = $selectedBlockType?->slug === 'code';
         $isHeader = $selectedBlockType?->slug === 'header';
         $isPlainText = $selectedBlockType?->slug === 'plain_text';
+        $isRichText = $selectedBlockType?->slug === 'rich-text';
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $isAlert = $selectedBlockType?->slug === 'alert';
@@ -966,6 +967,19 @@ class BlockRequest extends FormRequest
                 $data['settings'] = $settings === []
                     ? null
                     : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'rich-text') {
+                $data['title'] = null;
+                $data['subtitle'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+                $data['content'] = is_string($data['content'] ?? null)
+                    ? $data['content']
+                    : null;
             }
 
             if (in_array($blockType?->slug, ['section', 'container', 'cluster', 'grid'], true)) {

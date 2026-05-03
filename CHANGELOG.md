@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add a first-class `Rich Text` CMS block with a small dependency-free admin editor, translation-backed storage, server-side HTML sanitization, and safe public rendering.
 - Add a project-layer `webblocks:sync-ui-docs-getting-started` command that idempotently syncs the existing Getting Started page main slot from the WebBlocks UI docs source.
 - Clean up repository structure.
 - Move internal audit documents outside repository.

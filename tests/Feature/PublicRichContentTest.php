@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -194,7 +195,7 @@ class PublicRichContentTest extends TestCase
     {
         $page = $this->pageWithMainSlot();
 
-        Block::query()->create([
+        $block = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'rich-text',
             'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
@@ -206,6 +207,10 @@ class PublicRichContentTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '<p>Rich text content</p>',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
@@ -214,6 +219,91 @@ class PublicRichContentTest extends TestCase
         $response->assertDontSee('wb-prose', false);
         $response->assertDontSee('wb-promo-muted', false);
         $response->assertDontSee('wb-promo-accent', false);
+    }
+
+    #[Test]
+    public function rich_text_renders_allowed_safe_markup_from_translation_content(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '<p>Intro <strong>bold</strong> <em>emphasis</em> <code>code</code> <a href="/docs">docs</a></p><ul><li>One</li><li>Two</li></ul><blockquote>Quoted</blockquote>',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-stack wb-gap-2"><p>Intro <strong>bold</strong> <em>emphasis</em> <code>code</code> <a href="/docs">docs</a></p><ul><li>One</li><li>Two</li></ul><blockquote>Quoted</blockquote></div>', false);
+    }
+
+    #[Test]
+    public function rich_text_public_rendering_does_not_output_stripped_or_unsafe_markup(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '<p>Safe <a href="https://example.com" target="_blank" rel="nofollow">link</a> <a href="javascript:alert(1)">bad</a></p>',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('href="https://example.com" target="_blank" rel="noopener noreferrer"', false);
+        $response->assertSee('<a>bad</a>', false);
+        $response->assertDontSee('javascript:alert', false);
+        $response->assertDontSee('alert(1)', false);
+        $response->assertDontSee('onclick=', false);
+    }
+
+    #[Test]
+    public function rich_text_does_not_render_empty_wrapper_when_translation_content_is_empty(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => null,
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('<div class="wb-stack wb-gap-2"></div>', false);
     }
 
     private function pageWithMainSlot(): Page
