@@ -12,10 +12,12 @@ use App\Support\System\BackupRestoreInspection;
 use App\Support\System\BackupRestoreResult;
 use App\Support\System\DatabaseDumpWriter;
 use App\Support\System\SystemBackupArchivePackage;
+use App\Support\System\SystemBackupManager;
 use App\Support\System\SystemBackupRestoreManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -618,7 +620,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function admin_can_delete_completed_manual_backup_record_and_archive(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-manual-relative');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -634,7 +636,8 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Completed.',
         ]);
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -643,13 +646,13 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/manual.zip');
     }
 
     #[Test]
     public function admin_can_delete_uploaded_backup_record_and_archive(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-uploaded-relative');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -666,7 +669,8 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Completed.',
         ]);
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -675,13 +679,113 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/uploaded/2026/04/20/uploaded.zip');
+    }
+
+    #[Test]
+    public function deleting_backup_with_backups_prefixed_archive_path_deletes_the_real_file(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-backups-prefix');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'backups/2026/04/20/prefixed.zip',
+            'archive_filename' => 'prefixed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
+        File::put($backupsRoot.'/2026/04/20/prefixed.zip', 'placeholder');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/prefixed.zip');
+    }
+
+    #[Test]
+    public function deleting_backup_with_storage_app_backups_prefixed_archive_path_deletes_the_real_file(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-storage-app-backups-prefix');
+
+        $user = User::factory()->superAdmin()->create();
+        $relativeArchivePath = '2026/04/20/storage-prefixed.zip';
+        $storedArchivePath = str_replace('\\', '/', storage_path('app/backups/'.$relativeArchivePath));
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => $storedArchivePath,
+            'archive_filename' => 'storage-prefixed.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
+        File::put($backupsRoot.'/'.$relativeArchivePath, 'placeholder');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFileDoesNotExist($backupsRoot.'/'.$relativeArchivePath);
+    }
+
+    #[Test]
+    public function deleting_backup_with_absolute_archive_path_inside_backups_disk_deletes_the_real_file(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-absolute-path');
+
+        $user = User::factory()->superAdmin()->create();
+        $relativeArchivePath = '2026/04/20/absolute.zip';
+        $absoluteArchivePath = $backupsRoot.'/'.$relativeArchivePath;
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => $absoluteArchivePath,
+            'archive_filename' => 'absolute.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        File::ensureDirectoryExists(dirname($absoluteArchivePath));
+        File::put($absoluteArchivePath, 'placeholder');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFileDoesNotExist($absoluteArchivePath);
     }
 
     #[Test]
     public function deleting_backup_succeeds_even_when_the_archive_file_is_already_missing(): void
     {
-        Storage::fake('backups');
+        $this->useRealBackupsDiskRoot('delete-missing-archive');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -709,7 +813,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function deleting_one_backup_does_not_delete_another_backups_archive_file(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-one-of-two');
 
         $user = User::factory()->superAdmin()->create();
         $firstBackup = SystemBackup::query()->create([
@@ -737,8 +841,9 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Completed.',
         ]);
 
-        Storage::disk('backups')->put($firstBackup->archive_path, 'first');
-        Storage::disk('backups')->put($secondBackup->archive_path, 'second');
+        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
+        File::put($backupsRoot.'/'.$firstBackup->archive_path, 'first');
+        File::put($backupsRoot.'/'.$secondBackup->archive_path, 'second');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -747,14 +852,45 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $this->assertDatabaseMissing('system_backups', ['id' => $firstBackup->id]);
         $this->assertDatabaseHas('system_backups', ['id' => $secondBackup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($firstBackup->archive_path));
-        $this->assertTrue(Storage::disk('backups')->exists($secondBackup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/'.$firstBackup->archive_path);
+        $this->assertFileExists($backupsRoot.'/'.$secondBackup->archive_path);
+    }
+
+    #[Test]
+    public function deleting_backup_with_unsafe_archive_path_preserves_record_and_reports_a_safe_error(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-unsafe-path');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '../outside.zip',
+            'archive_filename' => 'outside.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        File::put(dirname($backupsRoot).'/outside.zip', 'do not delete');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHasErrors(['system_backup' => 'Backup archive path is invalid.']);
+        $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+        $this->assertFileExists(dirname($backupsRoot).'/outside.zip');
     }
 
     #[Test]
     public function admin_can_delete_failed_backup_record_and_archive(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-failed');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -771,7 +907,8 @@ class SystemBackupsTest extends TestCase
             'error_message' => 'Backup failed.',
         ]);
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -780,13 +917,13 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/failed.zip');
     }
 
     #[Test]
     public function admin_can_delete_restore_safety_backup_record_and_archive(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-restore-safety');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -802,7 +939,8 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Completed.',
         ]);
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -811,7 +949,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/restore-safety.zip');
     }
 
     #[Test]
@@ -847,7 +985,7 @@ class SystemBackupsTest extends TestCase
     #[Test]
     public function running_backup_can_be_deleted_with_force_running(): void
     {
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-running-force');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -862,7 +1000,8 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Running.',
         ]);
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)->call('DELETE', route('admin.system.backups.destroy', $backup), [
             'force_running' => '1',
@@ -871,14 +1010,14 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Stuck running backup record deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/running.zip');
     }
 
     #[Test]
     public function stale_running_backup_can_be_deleted(): void
     {
         config()->set('cms.backup.stale_after_minutes', 10);
-        Storage::fake('backups');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-stale-running');
 
         $user = User::factory()->superAdmin()->create();
         $backup = SystemBackup::query()->create([
@@ -898,7 +1037,8 @@ class SystemBackupsTest extends TestCase
             'updated_at' => now()->subMinutes(20),
         ])->saveQuietly();
 
-        Storage::disk('backups')->put($backup->archive_path, 'placeholder');
+        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
+        File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
             ->from(route('admin.system.backups.index'))
@@ -907,7 +1047,79 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFalse(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/stale-running-delete.zip');
+    }
+
+    #[Test]
+    public function ui_delete_action_for_real_created_backup_removes_the_physical_zip_file(): void
+    {
+        Storage::fake('public');
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-real-created-backup');
+
+        $user = User::factory()->superAdmin()->create();
+
+        $createResponse = $this->actingAs($user)->post(route('admin.system.backups.store'));
+        $createResponse->assertRedirect(route('admin.system.backups.index'));
+
+        $backup = SystemBackup::query()->latest()->first();
+
+        $this->assertNotNull($backup);
+        $this->assertNotNull($backup->archive_path);
+        $absoluteArchivePath = $backupsRoot.'/'.$backup->archive_path;
+        $this->assertFileExists($absoluteArchivePath);
+
+        $deleteResponse = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $deleteResponse->assertRedirect(route('admin.system.backups.index'));
+        $deleteResponse->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+        $this->assertFileDoesNotExist($absoluteArchivePath);
+    }
+
+    #[Test]
+    public function backup_manager_logs_context_and_preserves_record_when_archive_delete_fails(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('delete-log-failure');
+
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/cannot-delete.zip',
+            'archive_filename' => 'cannot-delete.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $archivePath = $backupsRoot.'/2026/04/20/cannot-delete.zip';
+        File::ensureDirectoryExists(dirname($archivePath));
+        File::put($archivePath, 'placeholder');
+
+        Log::spy();
+        $manager = app(SystemBackupManager::class);
+        chmod(dirname($archivePath), 0555);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Backup archive file could not be deleted.');
+
+        try {
+            $manager->deleteBackupRecord($backup, true);
+        } finally {
+            chmod(dirname($archivePath), 0755);
+            $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+            Log::shouldHaveReceived('warning')
+                ->once()
+                ->withArgs(fn (string $message, array $context = []) => $message === 'Backup archive file could not be deleted.'
+                    && ($context['backup_id'] ?? null) === $backup->id
+                    && ($context['stored_archive_path'] ?? null) === '2026/04/20/cannot-delete.zip'
+                    && ($context['normalized_archive_path'] ?? null) === '2026/04/20/cannot-delete.zip'
+                    && ($context['disk_root'] ?? null) === $backupsRoot);
+        }
     }
 
     #[Test]
@@ -1125,6 +1337,14 @@ class SystemBackupsTest extends TestCase
         $path = storage_path('app/testing-system-backups/'.$prefix.'-'.Str::uuid());
         File::ensureDirectoryExists($path);
         $this->temporaryDirectories[] = $path;
+
+        return $path;
+    }
+
+    private function useRealBackupsDiskRoot(string $prefix): string
+    {
+        $path = $this->makeTemporaryDirectory($prefix);
+        config()->set('filesystems.disks.backups.root', $path);
 
         return $path;
     }

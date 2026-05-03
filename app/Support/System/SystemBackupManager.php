@@ -4,6 +4,7 @@ namespace App\Support\System;
 
 use App\Models\SystemBackup;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -45,6 +46,48 @@ class SystemBackupManager
         if ($this->hasInvalidRelativePath($path)) {
             throw new RuntimeException('Backup archive path is invalid.');
         }
+    }
+
+    public function normalizeArchivePathForDisk(string $storedPath, string $diskName = self::ARCHIVE_DISK): string
+    {
+        $trimmedPath = trim($storedPath);
+
+        if ($trimmedPath === '') {
+            throw new RuntimeException('Backup archive path is missing.');
+        }
+
+        if (str_contains($trimmedPath, '..')) {
+            throw new RuntimeException('Backup archive path is invalid.');
+        }
+
+        $diskRoot = $this->resolvedDiskRoot($diskName);
+
+        if ($diskRoot === null) {
+            throw new RuntimeException('Backup archive root could not be resolved.');
+        }
+
+        $normalizedPath = $this->normalizePathSeparators($trimmedPath);
+
+        foreach ($this->archivePathPrefixes($diskName, $diskRoot) as $prefix) {
+            if ($prefix !== '' && str_starts_with($normalizedPath, $prefix)) {
+                $normalizedPath = substr($normalizedPath, strlen($prefix));
+                break;
+            }
+        }
+
+        $normalizedPath = ltrim($normalizedPath, '/');
+
+        if ($normalizedPath === '' || $this->hasInvalidRelativePath($normalizedPath)) {
+            throw new RuntimeException('Backup archive path is invalid.');
+        }
+
+        $resolvedParent = $this->resolveArchiveParentDirectory($diskName, $normalizedPath);
+
+        if ($resolvedParent !== null && ! str_starts_with($resolvedParent, $diskRoot.DIRECTORY_SEPARATOR) && $resolvedParent !== $diskRoot) {
+            throw new RuntimeException('Backup archive path is outside the backups disk.');
+        }
+
+        return $normalizedPath;
     }
 
     private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
@@ -223,12 +266,12 @@ class SystemBackupManager
             throw new RuntimeException('Running backup cannot be deleted unless you explicitly confirm it is stuck.');
         }
 
-        $archivePath = $backup->archiveRelativePath();
         $archiveDisk = $this->resolveArchiveDiskName($backup->archive_disk);
+        $storedArchivePath = $backup->archiveRelativePath();
 
-        if ($archivePath !== null) {
-            $this->assertValidArchiveRelativePath($archivePath);
-            $this->deleteArchiveIfPresent($archiveDisk, $archivePath);
+        if ($storedArchivePath !== null) {
+            $normalizedArchivePath = $this->normalizeArchivePathForDisk($storedArchivePath, $archiveDisk);
+            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath, $normalizedArchivePath);
         }
 
         $backup->delete();
@@ -239,19 +282,28 @@ class SystemBackupManager
         return filled($archiveDisk) ? $archiveDisk : self::ARCHIVE_DISK;
     }
 
-    private function deleteArchiveIfPresent(string $diskName, string $archivePath): void
+    private function deleteArchiveIfPresent(SystemBackup $backup, string $diskName, string $storedArchivePath, string $normalizedArchivePath): void
     {
         $disk = Storage::disk($diskName);
+        $diskRoot = $this->resolvedDiskRoot($diskName);
 
-        if (! $disk->exists($archivePath)) {
+        if (! $disk->exists($normalizedArchivePath)) {
             return;
         }
 
-        if (! $disk->delete($archivePath)) {
+        if (! $disk->delete($normalizedArchivePath) || $disk->exists($normalizedArchivePath)) {
+            Log::warning('Backup archive file could not be deleted.', [
+                'backup_id' => $backup->id,
+                'archive_disk' => $diskName,
+                'stored_archive_path' => $storedArchivePath,
+                'normalized_archive_path' => $normalizedArchivePath,
+                'disk_root' => $diskRoot,
+            ]);
+
             throw new RuntimeException('Backup archive file could not be deleted.');
         }
 
-        $this->pruneEmptyArchiveDirectories($diskName, $archivePath);
+        $this->pruneEmptyArchiveDirectories($diskName, $normalizedArchivePath);
     }
 
     private function pruneEmptyArchiveDirectories(string $diskName, string $archivePath): void
@@ -279,6 +331,45 @@ class SystemBackupManager
             File::deleteDirectory($absoluteDirectory);
             $directory = dirname($directory);
         }
+    }
+
+    private function archivePathPrefixes(string $diskName, string $diskRoot): array
+    {
+        $diskPath = $this->normalizePathSeparators(Storage::disk($diskName)->path(''));
+        $storageRoot = $this->normalizePathSeparators(storage_path('app'));
+
+        return array_values(array_filter([
+            rtrim($this->normalizePathSeparators($diskRoot), '/').'/',
+            rtrim($diskPath, '/').'/',
+            rtrim($storageRoot, '/').'/'.$diskName.'/',
+            rtrim($storageRoot, '/').'/',
+            $diskName.'/',
+        ]));
+    }
+
+    private function resolvedDiskRoot(string $diskName): ?string
+    {
+        $root = realpath(Storage::disk($diskName)->path(''));
+
+        return $root === false ? null : $root;
+    }
+
+    private function resolveArchiveParentDirectory(string $diskName, string $archivePath): ?string
+    {
+        $parent = dirname($archivePath);
+
+        if ($parent === '' || $parent === '.') {
+            return $this->resolvedDiskRoot($diskName);
+        }
+
+        $resolvedParent = realpath(Storage::disk($diskName)->path($parent));
+
+        return $resolvedParent === false ? null : $resolvedParent;
+    }
+
+    private function normalizePathSeparators(string $path): string
+    {
+        return preg_replace('#/+#', '/', str_replace('\\', '/', $path)) ?? str_replace('\\', '/', $path);
     }
 
     private function hasBackupTable(): bool

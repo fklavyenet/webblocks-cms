@@ -5,6 +5,7 @@
 - Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.
 - Simplify the Backups screen actions by removing duplicate upload, cancel, and System Updates controls, and clarify failed stale backup messaging.
 - Fix backup archive lifecycle so deleting backups removes stored archive files and restoring existing backups does not duplicate the source archive while preserving mandatory safety backups.
+- Fix backup deletion path handling so UI-deleted backups remove their real stored archive files across current and legacy archive path formats.
 
 ## 1.6.0
 
