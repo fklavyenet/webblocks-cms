@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Locale;
 use App\Models\SiteExport;
 use App\Models\SiteImport;
 use App\Models\User;
@@ -35,7 +36,7 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertNotNull($siteExport);
         $this->assertSame('completed', $siteExport->status);
-        $this->assertStringStartsWith('exports/', (string) $siteExport->archive_path);
+        $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
         Storage::disk('site-exports')->assertExists($siteExport->archive_path);
 
         $download = $this->actingAs($user)->get(route('admin.site-transfers.exports.download', $siteExport));
@@ -62,7 +63,7 @@ class SiteExportImportAdminTest extends TestCase
             'archive' => new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
         ]);
 
-        $siteImport = \App\Models\SiteImport::query()->latest()->firstOrFail();
+        $siteImport = SiteImport::query()->latest()->firstOrFail();
         $uploadResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
 
         $runResponse = $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
@@ -102,7 +103,7 @@ class SiteExportImportAdminTest extends TestCase
         ]);
 
         $importedSite = $siteImport->fresh()->targetSite;
-        $defaultLocale = \App\Models\Locale::query()->where('is_default', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
 
         $updateResponse = $this->actingAs($user)->put(route('admin.sites.update', $importedSite), [
             'name' => $importedSite->name,

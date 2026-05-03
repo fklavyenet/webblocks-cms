@@ -35,8 +35,8 @@ class SystemBackupRestoreManagerTest extends TestCase
 
         File::put($publicRoot.'/old.txt', 'old');
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/source-backup.zip');
-        $safetyBackup = $this->createBackupRecord('2026/04/20/safety-backup.zip', SystemBackup::TYPE_RESTORE_SAFETY);
+        $sourceBackup = $this->createBackupRecord('source-backup.zip');
+        $safetyBackup = $this->createBackupRecord('safety-backup.zip', SystemBackup::TYPE_RESTORE_SAFETY);
 
         $this->createArchive($sourceBackup->archive_path, [
             'manifest.json' => json_encode([
@@ -86,7 +86,7 @@ class SystemBackupRestoreManagerTest extends TestCase
         $user = User::factory()->create();
         config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('invalid-restore-public-root'));
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/invalid-backup.zip');
+        $sourceBackup = $this->createBackupRecord('invalid-backup.zip');
 
         $this->createArchive($sourceBackup->archive_path, [
             'database/database.sql' => 'select 1;',
@@ -130,7 +130,7 @@ class SystemBackupRestoreManagerTest extends TestCase
         $user = User::factory()->create();
         config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('invalid-sql-restore-public-root'));
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/invalid-sql-backup.zip');
+        $sourceBackup = $this->createBackupRecord('invalid-sql-backup.zip');
 
         $this->createArchive($sourceBackup->archive_path, [
             'manifest.json' => json_encode([
@@ -181,8 +181,8 @@ class SystemBackupRestoreManagerTest extends TestCase
         $publicRoot = $this->makeTemporaryDirectory('restore-delete-source-public-root');
         config()->set('filesystems.disks.public.root', $publicRoot);
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/source-deleted-during-restore.zip');
-        $safetyBackup = $this->createBackupRecord('2026/04/20/safety-for-deleted-source.zip', SystemBackup::TYPE_RESTORE_SAFETY);
+        $sourceBackup = $this->createBackupRecord('source-deleted-during-restore.zip');
+        $safetyBackup = $this->createBackupRecord('safety-for-deleted-source.zip', SystemBackup::TYPE_RESTORE_SAFETY);
 
         $this->createArchive($sourceBackup->archive_path, [
             'manifest.json' => json_encode([
@@ -243,7 +243,7 @@ class SystemBackupRestoreManagerTest extends TestCase
         $publicRoot = $this->makeTemporaryDirectory('restore-existing-source-public-root');
         config()->set('filesystems.disks.public.root', $publicRoot);
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/source-existing.zip');
+        $sourceBackup = $this->createBackupRecord('source-existing.zip');
 
         $this->createArchive($sourceBackup->archive_path, [
             'manifest.json' => json_encode([
@@ -351,7 +351,7 @@ class SystemBackupRestoreManagerTest extends TestCase
         $user = User::factory()->create();
         config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('failed-safety-restore-public-root'));
 
-        $sourceBackup = $this->createBackupRecord('2026/04/20/failing-safety-source.zip');
+        $sourceBackup = $this->createBackupRecord('failing-safety-source.zip');
 
         $this->createArchive($sourceBackup->archive_path, [
             'manifest.json' => json_encode([
@@ -421,8 +421,6 @@ class SystemBackupRestoreManagerTest extends TestCase
     private function createArchive(string $relativePath, array $entries): void
     {
         $archivePath = Storage::disk('backups')->path($relativePath);
-        File::ensureDirectoryExists(dirname($archivePath));
-
         $archive = new ZipArchive;
         $this->assertTrue($archive->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
 
@@ -535,7 +533,7 @@ class RecordingSafetyBackupManager extends SystemBackupManager
     {
         $this->safetyBackupCalls++;
 
-        $archivePath = '2026/04/20/generated-safety-'.$this->safetyBackupCalls.'.zip';
+        $archivePath = 'generated-safety-'.$this->safetyBackupCalls.'.zip';
         Storage::disk(SystemBackupManager::ARCHIVE_DISK)->put($archivePath, 'safety archive');
 
         return $this->createdSafetyBackup = SystemBackup::query()->create([

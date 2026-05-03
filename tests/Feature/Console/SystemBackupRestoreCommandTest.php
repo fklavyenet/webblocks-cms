@@ -47,7 +47,7 @@ class SystemBackupRestoreCommandTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/safety.zip',
+            'archive_path' => 'safety.zip',
             'archive_filename' => 'safety.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -66,7 +66,7 @@ class SystemBackupRestoreCommandTest extends TestCase
             ->with('12')
             ->andReturn(new BackupRestoreResult(
                 sourceBackup: null,
-                sourceArchivePath: '2026/04/20/demo.zip',
+                sourceArchivePath: 'demo.zip',
                 sourceArchiveFilename: 'demo.zip',
                 inspection: new BackupRestoreInspection(
                     manifest: ['included_parts' => ['database' => true, 'uploads' => true]],

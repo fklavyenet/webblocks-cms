@@ -63,7 +63,7 @@ return [
 
         'site-exports' => [
             'driver' => 'local',
-            'root' => storage_path('app'),
+            'root' => storage_path('app/exports'),
             'throw' => false,
             'report' => false,
         ],

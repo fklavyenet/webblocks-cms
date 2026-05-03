@@ -37,10 +37,11 @@ class SiteExportImportTest extends TestCase
         $this->assertNotNull($siteExport->archive_path);
         Storage::disk('site-exports')->assertExists($siteExport->archive_path);
         $this->assertSame('site-exports', $siteExport->archive_disk);
+        $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
     }
 
     #[Test]
-    public function new_exports_use_exports_date_path_without_legacy_site_transfers_segments(): void
+    public function new_exports_use_flat_archive_paths(): void
     {
         Storage::fake('site-exports');
         [$site] = $this->seedCloneableSite();
@@ -48,14 +49,13 @@ class SiteExportImportTest extends TestCase
         $siteExport = app(SiteExportManager::class)->export($site, false);
 
         $this->assertNotNull($siteExport->archive_path);
-        $this->assertStringStartsWith('exports/', $siteExport->archive_path);
-        $this->assertMatchesRegularExpression('#^exports/\d{4}/\d{2}/\d{2}/#', $siteExport->archive_path);
+        $this->assertMatchesRegularExpression('#^[a-z0-9]{8}-webblocks-cms-site-export-[a-z0-9-]+-\d{4}-\d{2}-\d{2}-\d{6}\.zip$#', $siteExport->archive_path);
+        $this->assertStringNotContainsString('/', $siteExport->archive_path);
         $this->assertStringNotContainsString('site-transfers', $siteExport->archive_path);
-        $this->assertDoesNotMatchRegularExpression('#(^|/)UTC[^/]+/#', $siteExport->archive_path);
     }
 
     #[Test]
-    public function same_day_exports_share_the_same_date_directory(): void
+    public function same_day_exports_still_use_unique_flat_filenames(): void
     {
         Storage::fake('site-exports');
         [$site] = $this->seedCloneableSite();
@@ -70,11 +70,8 @@ class SiteExportImportTest extends TestCase
             $this->travelBack();
         }
 
-        $firstDirectory = dirname((string) $firstExport->archive_path);
-        $secondDirectory = dirname((string) $secondExport->archive_path);
-
-        $this->assertSame('exports/2026/05/03', $firstDirectory);
-        $this->assertSame($firstDirectory, $secondDirectory);
+        $this->assertStringNotContainsString('/', (string) $firstExport->archive_path);
+        $this->assertStringNotContainsString('/', (string) $secondExport->archive_path);
         $this->assertNotSame($firstExport->archive_path, $secondExport->archive_path);
     }
 
@@ -302,31 +299,30 @@ class SiteExportImportTest extends TestCase
     }
 
     #[Test]
-    public function legacy_export_paths_on_site_transfers_disk_still_download_and_delete_correctly(): void
+    public function export_delete_removes_the_exact_flat_archive_file(): void
     {
         Storage::fake('site-exports');
-        Storage::fake('site-transfers');
         [$site] = $this->seedCloneableSite();
 
-        $legacyPath = 'site-transfers/UTC123/2026/05/03/legacy-export.zip';
-        Storage::disk('site-transfers')->put($legacyPath, 'legacy export');
+        $archivePath = 'sl4r2si1-webblocks-cms-site-export-default-2026-05-03-130508.zip';
+        Storage::disk('site-exports')->put($archivePath, 'flat export');
 
         $siteExport = SiteExport::query()->create([
             'site_id' => $site->id,
             'status' => SiteExport::STATUS_COMPLETED,
             'archive_disk' => 'site-exports',
-            'archive_path' => $legacyPath,
-            'archive_name' => 'legacy-export.zip',
-            'archive_size_bytes' => strlen('legacy export'),
+            'archive_path' => $archivePath,
+            'archive_name' => 'webblocks-cms-site-export-default-2026-05-03-130508.zip',
+            'archive_size_bytes' => strlen('flat export'),
         ]);
 
         $response = app(SiteExportManager::class)->downloadResponse($siteExport);
 
-        $this->assertSame(Storage::disk('site-transfers')->path($legacyPath), $response->getFile()->getPathname());
+        $this->assertSame(Storage::disk('site-exports')->path($archivePath), $response->getFile()->getPathname());
 
         app(SiteExportManager::class)->delete($siteExport->fresh());
 
-        Storage::disk('site-transfers')->assertMissing($legacyPath);
+        Storage::disk('site-exports')->assertMissing($archivePath);
         $this->assertDatabaseMissing('site_exports', ['id' => $siteExport->id]);
     }
 }

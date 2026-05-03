@@ -7,6 +7,7 @@
 - Fix backup archive lifecycle so deleting backups removes stored archive files and restoring existing backups does not duplicate the source archive while preserving mandatory safety backups.
 - Fix backup delete file removal by aligning backup archive deletion with the working export delete storage behavior.
 - Fix restore safety backup lifecycle so successful restores do not leave backup records stuck in running status.
+- Simplify backup and export storage by removing nested YYYY/MM/DD directories and using flat archive paths.
 
 ## 1.6.0
 

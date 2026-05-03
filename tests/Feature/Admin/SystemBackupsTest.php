@@ -90,7 +90,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/05/03/recent.zip',
+            'archive_path' => 'recent.zip',
             'archive_filename' => 'recent.zip',
             'started_at' => now()->subMinutes(5),
             'finished_at' => now()->subMinutes(4),
@@ -172,6 +172,7 @@ class SystemBackupsTest extends TestCase
         $this->assertSame(SystemBackup::TYPE_MANUAL, $backup->type);
         $this->assertNotNull($backup->archive_path);
 
+        $this->assertStringNotContainsString('/', (string) $backup->archive_path);
         $this->assertFileExists($backupsRoot.'/'.$backup->archive_path);
 
         $archivePath = $backupsRoot.'/'.$backup->archive_path;
@@ -273,7 +274,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/demo.zip',
+            'archive_path' => 'demo.zip',
             'archive_filename' => 'demo.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -310,7 +311,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/demo.zip',
+            'archive_path' => 'demo.zip',
             'archive_filename' => 'demo.zip',
             'started_at' => now()->subMinutes(5),
             'finished_at' => now()->subMinutes(4),
@@ -351,7 +352,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/restore-source.zip',
+            'archive_path' => 'restore-source.zip',
             'archive_filename' => 'restore-source.zip',
             'started_at' => now()->subMinute(),
             'finished_at' => now(),
@@ -393,7 +394,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/restore-source.zip',
+            'archive_path' => 'restore-source.zip',
             'archive_filename' => 'restore-source.zip',
             'started_at' => now()->subMinute(),
             'finished_at' => now(),
@@ -405,7 +406,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => SystemBackupManager::ARCHIVE_DISK,
-            'archive_path' => '2026/04/20/generated-safety.zip',
+            'archive_path' => 'generated-safety.zip',
             'archive_filename' => 'generated-safety.zip',
             'archive_size_bytes' => 1234,
             'started_at' => now()->subSeconds(30),
@@ -478,7 +479,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/existing-detail.zip',
+            'archive_path' => 'existing-detail.zip',
             'archive_filename' => 'existing-detail.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -523,7 +524,7 @@ class SystemBackupsTest extends TestCase
         $this->assertSame(SystemBackup::TYPE_UPLOADED, $backup->type);
         $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
         $this->assertSame('downloaded-backup.zip', $backup->label);
-        $this->assertStringStartsWith('uploaded/', (string) $backup->archive_path);
+        $this->assertStringNotContainsString('/', (string) $backup->archive_path);
         $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
         $this->assertStringContainsString('Backup archive uploaded and validated successfully.', (string) $backup->output);
 
@@ -611,7 +612,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/17/demo.zip',
+            'archive_path' => 'demo.zip',
             'archive_filename' => 'demo.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -635,7 +636,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/manual.zip',
+            'archive_path' => 'manual.zip',
             'archive_filename' => 'manual.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -647,7 +648,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => 'uploaded/2026/04/20/uploaded.zip',
+            'archive_path' => 'uploaded.zip',
             'archive_filename' => 'uploaded.zip',
             'label' => 'source-uploaded.zip',
             'started_at' => now(),
@@ -660,7 +661,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/restore-safety.zip',
+            'archive_path' => 'restore-safety.zip',
             'archive_filename' => 'restore-safety.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -672,7 +673,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/running.zip',
+            'archive_path' => 'running.zip',
             'archive_filename' => 'running.zip',
             'started_at' => now(),
             'summary' => 'Running.',
@@ -717,7 +718,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/stale-running.zip',
+            'archive_path' => 'stale-running.zip',
             'archive_filename' => 'stale-running.zip',
             'started_at' => now()->subMinutes(20),
             'summary' => 'Running.',
@@ -760,14 +761,13 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/manual.zip',
+            'archive_path' => 'manual.zip',
             'archive_filename' => 'manual.zip',
             'started_at' => now(),
             'finished_at' => now(),
             'summary' => 'Completed.',
         ]);
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
@@ -777,7 +777,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/manual.zip');
+        $this->assertFileDoesNotExist($backupsRoot.'/manual.zip');
     }
 
     #[Test]
@@ -792,7 +792,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => 'uploaded/2026/04/20/uploaded.zip',
+            'archive_path' => 'uploaded.zip',
             'archive_filename' => 'uploaded.zip',
             'label' => 'source-uploaded.zip',
             'started_at' => now(),
@@ -800,7 +800,6 @@ class SystemBackupsTest extends TestCase
             'summary' => 'Completed.',
         ]);
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
@@ -810,107 +809,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/uploaded/2026/04/20/uploaded.zip');
-    }
-
-    #[Test]
-    public function deleting_backup_with_backups_prefixed_archive_path_deletes_the_real_file(): void
-    {
-        $backupsRoot = $this->useRealBackupsDiskRoot('delete-backups-prefix');
-
-        $user = User::factory()->superAdmin()->create();
-        $backup = SystemBackup::query()->create([
-            'type' => SystemBackup::TYPE_MANUAL,
-            'status' => SystemBackup::STATUS_COMPLETED,
-            'includes_database' => true,
-            'includes_uploads' => true,
-            'archive_disk' => 'backups',
-            'archive_path' => 'backups/2026/04/20/prefixed.zip',
-            'archive_filename' => 'prefixed.zip',
-            'started_at' => now(),
-            'finished_at' => now(),
-            'summary' => 'Completed.',
-        ]);
-
-        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
-        File::put($backupsRoot.'/2026/04/20/prefixed.zip', 'placeholder');
-
-        $response = $this->actingAs($user)
-            ->from(route('admin.system.backups.index'))
-            ->delete(route('admin.system.backups.destroy', $backup));
-
-        $response->assertRedirect(route('admin.system.backups.index'));
-        $response->assertSessionHas('status', 'Backup deleted.');
-        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/prefixed.zip');
-    }
-
-    #[Test]
-    public function deleting_backup_with_storage_app_backups_prefixed_archive_path_deletes_the_real_file(): void
-    {
-        $backupsRoot = $this->useRealBackupsDiskRoot('delete-storage-app-backups-prefix');
-
-        $user = User::factory()->superAdmin()->create();
-        $relativeArchivePath = '2026/04/20/storage-prefixed.zip';
-        $storedArchivePath = str_replace('\\', '/', storage_path('app/backups/'.$relativeArchivePath));
-        $backup = SystemBackup::query()->create([
-            'type' => SystemBackup::TYPE_MANUAL,
-            'status' => SystemBackup::STATUS_COMPLETED,
-            'includes_database' => true,
-            'includes_uploads' => true,
-            'archive_disk' => 'backups',
-            'archive_path' => $storedArchivePath,
-            'archive_filename' => 'storage-prefixed.zip',
-            'started_at' => now(),
-            'finished_at' => now(),
-            'summary' => 'Completed.',
-        ]);
-
-        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
-        File::put($backupsRoot.'/'.$relativeArchivePath, 'placeholder');
-
-        $response = $this->actingAs($user)
-            ->from(route('admin.system.backups.index'))
-            ->delete(route('admin.system.backups.destroy', $backup));
-
-        $response->assertRedirect(route('admin.system.backups.index'));
-        $response->assertSessionHas('status', 'Backup deleted.');
-        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/'.$relativeArchivePath);
-    }
-
-    #[Test]
-    public function deleting_backup_with_absolute_archive_path_inside_backups_disk_deletes_the_real_file(): void
-    {
-        $backupsRoot = $this->useRealBackupsDiskRoot('delete-absolute-path');
-
-        $user = User::factory()->superAdmin()->create();
-        $relativeArchivePath = '2026/04/20/absolute.zip';
-        $absoluteArchivePath = $backupsRoot.'/'.$relativeArchivePath;
-        $backup = SystemBackup::query()->create([
-            'type' => SystemBackup::TYPE_MANUAL,
-            'status' => SystemBackup::STATUS_COMPLETED,
-            'includes_database' => true,
-            'includes_uploads' => true,
-            'archive_disk' => 'backups',
-            'archive_path' => $absoluteArchivePath,
-            'archive_filename' => 'absolute.zip',
-            'started_at' => now(),
-            'finished_at' => now(),
-            'summary' => 'Completed.',
-        ]);
-
-        File::ensureDirectoryExists(dirname($absoluteArchivePath));
-        File::put($absoluteArchivePath, 'placeholder');
-
-        $response = $this->actingAs($user)
-            ->from(route('admin.system.backups.index'))
-            ->delete(route('admin.system.backups.destroy', $backup));
-
-        $response->assertRedirect(route('admin.system.backups.index'));
-        $response->assertSessionHas('status', 'Backup deleted.');
-        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($absoluteArchivePath);
+        $this->assertFileDoesNotExist($backupsRoot.'/uploaded.zip');
     }
 
     #[Test]
@@ -925,7 +824,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/missing.zip',
+            'archive_path' => 'missing.zip',
             'archive_filename' => 'missing.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -953,7 +852,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/first.zip',
+            'archive_path' => 'first.zip',
             'archive_filename' => 'first.zip',
             'started_at' => now(),
             'finished_at' => now(),
@@ -965,14 +864,13 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/second.zip',
+            'archive_path' => 'second.zip',
             'archive_filename' => 'second.zip',
             'started_at' => now(),
             'finished_at' => now(),
             'summary' => 'Completed.',
         ]);
 
-        File::ensureDirectoryExists($backupsRoot.'/2026/04/20');
         File::put($backupsRoot.'/'.$firstBackup->archive_path, 'first');
         File::put($backupsRoot.'/'.$secondBackup->archive_path, 'second');
 
@@ -1030,7 +928,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/failed.zip',
+            'archive_path' => 'failed.zip',
             'archive_filename' => 'failed.zip',
             'started_at' => now()->subMinutes(1),
             'finished_at' => now(),
@@ -1038,7 +936,6 @@ class SystemBackupsTest extends TestCase
             'error_message' => 'Backup failed.',
         ]);
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
@@ -1048,7 +945,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/failed.zip');
+        $this->assertFileDoesNotExist($backupsRoot.'/failed.zip');
     }
 
     #[Test]
@@ -1063,14 +960,13 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/restore-safety.zip',
+            'archive_path' => 'restore-safety.zip',
             'archive_filename' => 'restore-safety.zip',
             'started_at' => now(),
             'finished_at' => now(),
             'summary' => 'Completed.',
         ]);
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
@@ -1080,7 +976,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/restore-safety.zip');
+        $this->assertFileDoesNotExist($backupsRoot.'/restore-safety.zip');
     }
 
     #[Test]
@@ -1095,7 +991,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/running.zip',
+            'archive_path' => 'running.zip',
             'archive_filename' => 'running.zip',
             'started_at' => now(),
             'summary' => 'Running.',
@@ -1125,13 +1021,12 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/running.zip',
+            'archive_path' => 'running.zip',
             'archive_filename' => 'running.zip',
             'started_at' => now(),
             'summary' => 'Running.',
         ]);
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)->call('DELETE', route('admin.system.backups.destroy', $backup), [
@@ -1141,7 +1036,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Stuck running backup record deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/running.zip');
+        $this->assertFileDoesNotExist($backupsRoot.'/running.zip');
     }
 
     #[Test]
@@ -1157,7 +1052,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/stale-running-delete.zip',
+            'archive_path' => 'stale-running-delete.zip',
             'archive_filename' => 'stale-running-delete.zip',
             'started_at' => now()->subMinutes(20),
             'summary' => 'Running.',
@@ -1168,7 +1063,6 @@ class SystemBackupsTest extends TestCase
             'updated_at' => now()->subMinutes(20),
         ])->saveQuietly();
 
-        File::ensureDirectoryExists(dirname($backupsRoot.'/'.$backup->archive_path));
         File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
 
         $response = $this->actingAs($user)
@@ -1178,7 +1072,7 @@ class SystemBackupsTest extends TestCase
         $response->assertRedirect(route('admin.system.backups.index'));
         $response->assertSessionHas('status', 'Backup deleted.');
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
-        $this->assertFileDoesNotExist($backupsRoot.'/2026/04/20/stale-running-delete.zip');
+        $this->assertFileDoesNotExist($backupsRoot.'/stale-running-delete.zip');
     }
 
     #[Test]
@@ -1225,9 +1119,10 @@ class SystemBackupsTest extends TestCase
         $this->assertNotNull($backup);
         $this->assertSame('backups', $backup->archive_disk);
         $this->assertMatchesRegularExpression(
-            '/^\d{4}\/\d{2}\/\d{2}\/webblocks-cms-backup-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/',
+            '/^webblocks-cms-backup-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/',
             (string) $backup->archive_path,
         );
+        $this->assertStringNotContainsString('/', (string) $backup->archive_path);
 
         $absoluteArchivePath = $backupsRoot.'/'.$backup->archive_path;
         $this->assertFileExists($absoluteArchivePath);
@@ -1253,15 +1148,14 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/cannot-delete.zip',
+            'archive_path' => 'cannot-delete.zip',
             'archive_filename' => 'cannot-delete.zip',
             'started_at' => now(),
             'finished_at' => now(),
             'summary' => 'Completed.',
         ]);
 
-        $archivePath = $backupsRoot.'/2026/04/20/cannot-delete.zip';
-        File::ensureDirectoryExists(dirname($archivePath));
+        $archivePath = $backupsRoot.'/cannot-delete.zip';
         File::put($archivePath, 'placeholder');
 
         Log::spy();
@@ -1280,8 +1174,7 @@ class SystemBackupsTest extends TestCase
                 ->once()
                 ->withArgs(fn (string $message, array $context = []) => $message === 'Backup archive file could not be deleted.'
                     && ($context['backup_id'] ?? null) === $backup->id
-                    && ($context['stored_archive_path'] ?? null) === '2026/04/20/cannot-delete.zip'
-                    && ($context['normalized_archive_path'] ?? null) === '2026/04/20/cannot-delete.zip'
+                    && ($context['archive_path'] ?? null) === 'cannot-delete.zip'
                     && ($context['disk_root'] ?? null) === $backupsRoot);
         }
     }
@@ -1298,7 +1191,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/source.zip',
+            'archive_path' => 'source.zip',
             'archive_filename' => 'source.zip',
             'started_at' => now()->subMinutes(10),
             'finished_at' => now()->subMinutes(9),
@@ -1338,7 +1231,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/source.zip',
+            'archive_path' => 'source.zip',
             'archive_filename' => 'source.zip',
             'started_at' => now()->subMinutes(10),
             'finished_at' => now()->subMinutes(9),
@@ -1350,7 +1243,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => true,
             'archive_disk' => 'backups',
-            'archive_path' => '2026/04/20/other.zip',
+            'archive_path' => 'other.zip',
             'archive_filename' => 'other.zip',
             'started_at' => now()->subMinutes(6),
             'finished_at' => now()->subMinutes(5),
@@ -1386,7 +1279,7 @@ class SystemBackupsTest extends TestCase
             'includes_database' => true,
             'includes_uploads' => false,
             'archive_disk' => 'backups',
-            'archive_path' => 'uploaded/2026/05/01/invalid-sql.zip',
+            'archive_path' => 'invalid-sql.zip',
             'archive_filename' => 'invalid-sql.zip',
             'label' => 'invalid-sql.zip',
             'started_at' => now(),

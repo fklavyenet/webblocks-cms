@@ -313,7 +313,7 @@ See `docs/editorial-workflow.md` for status and role details.
 
 - Revisions are page-level editorial recovery snapshots. Restoring a revision first creates a fresh pre-restore safety revision.
 - Export / Import is for moving one site's content between installs.
-- New site export packages are stored under `storage/app/exports/YYYY/MM/DD/`.
+- New site export packages are stored directly under `storage/app/exports/`.
 - Backup / Restore is for recovering the install environment.
 - System Updates handle installed version checks and in-app update runs.
 
@@ -333,7 +333,7 @@ Admin listing screens should reuse the standard pattern used by Pages: a full-wi
 
 These tools serve different purposes and are intentionally separate.
 
-- Export / Import remains separate from backups. Site export packages live under `storage/app/exports/YYYY/MM/DD/`, while backup storage behavior stays unchanged.
+- Export / Import remains separate from backups. Site export packages live under `storage/app/exports/`, while backup archives live under `storage/app/backups/`.
 
 See `docs/revisions.md` and `docs/operations.md` for details.
 
@@ -481,8 +481,9 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
 - Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, rejects site export/import packages, and rejects empty or obvious non-SQL dump content before restore.
 - Uploaded backups are registered as normal backup records, appear in the existing Backups list and detail page, and reuse the same restore flow as locally created backups.
-- Deleting a backup removes the backup record and deletes its stored archive file from the backups disk when that file is still present, including normal UI-created archives under `storage/app/backups/YYYY/MM/DD/` and legacy records whose stored archive path still includes `backups/`, `storage/app/backups/`, or an absolute backups-disk path.
-- Existing orphan backup archive files left behind by older buggy versions are not auto-discovered by backup record deletion and may require manual cleanup until a dedicated cleanup command exists.
+- Backup and export archive storage is flat: backups are stored directly under `storage/app/backups/` and site export packages are stored directly under `storage/app/exports/`.
+- Flat archive paths simplify deletion, restore, debugging, and filesystem inspection by keeping `archive_path` equal to the stored filename.
+- Deleting a backup removes the backup record and deletes its stored archive file from the backups disk when that file is still present.
 - Backup restore is a full-system restore that overwrites the current database and uploaded files.
 - After a successful restore, the CMS returns to the Backups index instead of the original backup detail URL because the restored database may no longer contain that pre-restore backup record ID.
 - Judge restore success by the success flash on `/admin/system/backups` and the restored content, not by whether the old pre-restore backup record still exists after the database overwrite.

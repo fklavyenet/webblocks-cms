@@ -48,48 +48,6 @@ class SystemBackupManager
         }
     }
 
-    public function normalizeArchivePathForDisk(string $storedPath, string $diskName = self::ARCHIVE_DISK): string
-    {
-        $trimmedPath = trim($storedPath);
-
-        if ($trimmedPath === '') {
-            throw new RuntimeException('Backup archive path is missing.');
-        }
-
-        if (str_contains($trimmedPath, '..')) {
-            throw new RuntimeException('Backup archive path is invalid.');
-        }
-
-        $diskRoot = $this->resolvedDiskRoot($diskName);
-
-        if ($diskRoot === null) {
-            throw new RuntimeException('Backup archive root could not be resolved.');
-        }
-
-        $normalizedPath = $this->normalizePathSeparators($trimmedPath);
-
-        foreach ($this->archivePathPrefixes($diskName, $diskRoot) as $prefix) {
-            if ($prefix !== '' && str_starts_with($normalizedPath, $prefix)) {
-                $normalizedPath = substr($normalizedPath, strlen($prefix));
-                break;
-            }
-        }
-
-        $normalizedPath = ltrim($normalizedPath, '/');
-
-        if ($normalizedPath === '' || $this->hasInvalidRelativePath($normalizedPath)) {
-            throw new RuntimeException('Backup archive path is invalid.');
-        }
-
-        $resolvedParent = $this->resolveArchiveParentDirectory($diskName, $normalizedPath);
-
-        if ($resolvedParent !== null && ! str_starts_with($resolvedParent, $diskRoot.DIRECTORY_SEPARATOR) && $resolvedParent !== $diskRoot) {
-            throw new RuntimeException('Backup archive path is outside the backups disk.');
-        }
-
-        return $normalizedPath;
-    }
-
     private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
     {
         $startedAt = now();
@@ -107,7 +65,7 @@ class SystemBackupManager
         $temporaryDirectory = storage_path('app/temp/system-backups/'.$startedAt->format('YmdHis').'-'.Str::lower(Str::random(8)));
         $databaseDumpPath = $temporaryDirectory.'/database.sql';
         $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'.zip';
-        $archiveRelativePath = $startedAt->format('Y/m/d').'/'.$archiveFilename;
+        $archiveRelativePath = $archiveFilename;
         $archivePath = Storage::disk(self::ARCHIVE_DISK)->path($archiveRelativePath);
         $output = [];
 
@@ -320,8 +278,8 @@ class SystemBackupManager
         $storedArchivePath = $backup->archiveRelativePath();
 
         if ($storedArchivePath !== null) {
-            $archivePath = $this->resolveStoredArchivePath($storedArchivePath, $archiveDisk);
-            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath, $archivePath);
+            $this->assertValidArchiveRelativePath($storedArchivePath);
+            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath);
         }
 
         $backup->delete();
@@ -332,90 +290,25 @@ class SystemBackupManager
         return filled($archiveDisk) ? $archiveDisk : self::ARCHIVE_DISK;
     }
 
-    private function deleteArchiveIfPresent(SystemBackup $backup, string $diskName, string $storedArchivePath, string $normalizedArchivePath): void
+    private function deleteArchiveIfPresent(SystemBackup $backup, string $diskName, string $archivePath): void
     {
         $disk = Storage::disk($diskName);
         $diskRoot = $this->resolvedDiskRoot($diskName);
 
-        if (! $disk->exists($normalizedArchivePath)) {
+        if (! $disk->exists($archivePath)) {
             return;
         }
 
-        if (! $disk->delete($normalizedArchivePath) || $disk->exists($normalizedArchivePath)) {
+        if (! $disk->delete($archivePath) || $disk->exists($archivePath)) {
             Log::warning('Backup archive file could not be deleted.', [
                 'backup_id' => $backup->id,
                 'archive_disk' => $diskName,
-                'stored_archive_path' => $storedArchivePath,
-                'normalized_archive_path' => $normalizedArchivePath,
+                'archive_path' => $archivePath,
                 'disk_root' => $diskRoot,
             ]);
 
             throw new RuntimeException('Backup archive file could not be deleted.');
         }
-
-        $this->pruneEmptyArchiveDirectories($diskName, $normalizedArchivePath);
-    }
-
-    private function resolveStoredArchivePath(string $storedArchivePath, string $diskName): string
-    {
-        $trimmedPath = trim($storedArchivePath);
-
-        if ($trimmedPath === '') {
-            throw new RuntimeException('Backup archive path is missing.');
-        }
-
-        if ($this->hasInvalidRelativePath($trimmedPath)) {
-            return $this->normalizeArchivePathForDisk($trimmedPath, $diskName);
-        }
-
-        $disk = Storage::disk($diskName);
-
-        if ($disk->exists($trimmedPath)) {
-            return $trimmedPath;
-        }
-
-        return $this->normalizeArchivePathForDisk($trimmedPath, $diskName);
-    }
-
-    private function pruneEmptyArchiveDirectories(string $diskName, string $archivePath): void
-    {
-        $disk = Storage::disk($diskName);
-        $root = realpath($disk->path(''));
-
-        if ($root === false) {
-            return;
-        }
-
-        $directory = dirname($archivePath);
-
-        while ($directory !== '' && $directory !== '.' && $directory !== DIRECTORY_SEPARATOR) {
-            $absoluteDirectory = realpath($disk->path($directory));
-
-            if ($absoluteDirectory === false || ! str_starts_with($absoluteDirectory, $root.DIRECTORY_SEPARATOR)) {
-                break;
-            }
-
-            if (! File::isDirectory($absoluteDirectory) || count(File::files($absoluteDirectory)) > 0 || count(File::directories($absoluteDirectory)) > 0) {
-                break;
-            }
-
-            File::deleteDirectory($absoluteDirectory);
-            $directory = dirname($directory);
-        }
-    }
-
-    private function archivePathPrefixes(string $diskName, string $diskRoot): array
-    {
-        $diskPath = $this->normalizePathSeparators(Storage::disk($diskName)->path(''));
-        $storageRoot = $this->normalizePathSeparators(storage_path('app'));
-
-        return array_values(array_filter([
-            rtrim($this->normalizePathSeparators($diskRoot), '/').'/',
-            rtrim($diskPath, '/').'/',
-            rtrim($storageRoot, '/').'/'.$diskName.'/',
-            rtrim($storageRoot, '/').'/',
-            $diskName.'/',
-        ]));
     }
 
     private function resolvedDiskRoot(string $diskName): ?string
@@ -423,24 +316,6 @@ class SystemBackupManager
         $root = realpath(Storage::disk($diskName)->path(''));
 
         return $root === false ? null : $root;
-    }
-
-    private function resolveArchiveParentDirectory(string $diskName, string $archivePath): ?string
-    {
-        $parent = dirname($archivePath);
-
-        if ($parent === '' || $parent === '.') {
-            return $this->resolvedDiskRoot($diskName);
-        }
-
-        $resolvedParent = realpath(Storage::disk($diskName)->path($parent));
-
-        return $resolvedParent === false ? null : $resolvedParent;
-    }
-
-    private function normalizePathSeparators(string $path): string
-    {
-        return preg_replace('#/+#', '/', str_replace('\\', '/', $path)) ?? str_replace('\\', '/', $path);
     }
 
     private function hasBackupTable(): bool

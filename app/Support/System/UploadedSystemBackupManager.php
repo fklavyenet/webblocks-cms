@@ -20,10 +20,10 @@ class UploadedSystemBackupManager
         $startedAt = now();
         $sourceFilename = $file->getClientOriginalName();
         $safeFilename = Str::lower(Str::random(8)).'-webblocks-cms-backup-upload-'.$startedAt->format('Y-m-d-His').'.zip';
-        $archivePath = 'uploaded/'.$startedAt->format('Y/m/d').'/'.$safeFilename;
+        $archivePath = $safeFilename;
         $disk = Storage::disk(SystemBackupManager::ARCHIVE_DISK);
 
-        $storedPath = $disk->putFileAs(dirname($archivePath), $file, basename($archivePath));
+        $storedPath = $disk->putFileAs('', $file, $archivePath);
 
         if (! is_string($storedPath)) {
             throw new RuntimeException('Backup archive could not be stored on the backups disk.');
