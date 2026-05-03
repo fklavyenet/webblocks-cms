@@ -74,10 +74,15 @@ class Installer
         }
 
         try {
+            config()->set('cms.install.allow_installed_site_seed', true);
+
             Artisan::call('db:seed', ['--force' => true]);
+
+            config()->set('cms.install.allow_installed_site_seed', false);
             $this->installedVersionStore->persist((string) config('app.version', 'dev'));
             $results[] = $this->step('Core seed', 'pass', 'Core CMS data was installed successfully.');
         } catch (Throwable $throwable) {
+            config()->set('cms.install.allow_installed_site_seed', false);
             $results[] = $this->step('Core seed', 'failed', 'Core seed data could not be installed: '.$throwable->getMessage());
 
             return $results;
