@@ -43,7 +43,7 @@ class SystemBackupRestoreManager
 
         return $this->restoreTarget([
             'backup' => $backup,
-            'archive_disk' => $backup->archive_disk,
+            'archive_disk' => SystemBackupManager::ARCHIVE_DISK,
             'archive_path' => $backup->archive_path,
             'archive_filename' => $backup->archive_filename ?? basename((string) $backup->archive_path),
             'display_name' => 'backup #'.$backup->id.' ('.$backup->archive_filename.')',
@@ -172,7 +172,7 @@ class SystemBackupRestoreManager
 
                 return [
                     'backup' => $backup,
-                    'archive_disk' => $backup->archive_disk,
+                    'archive_disk' => SystemBackupManager::ARCHIVE_DISK,
                     'archive_path' => $backup->archive_path,
                     'archive_filename' => $backup->archive_filename,
                     'display_name' => 'backup #'.$backup->id.' ('.$backup->archive_filename.')',

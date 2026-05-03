@@ -481,7 +481,10 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
 - Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, rejects site export/import packages, and rejects empty or obvious non-SQL dump content before restore.
 - Uploaded backups are registered as normal backup records, appear in the existing Backups list and detail page, and reuse the same restore flow as locally created backups.
-- Backup and export archive storage is flat: backups are stored directly under `storage/app/backups/` and site export packages are stored directly under `storage/app/exports/`.
+- Backup archives always use the `backups` disk and live directly under `storage/app/backups/`, including both locally created backups and uploaded backup archives.
+- Site export packages remain separate on the `site-exports` disk and live directly under `storage/app/exports/`.
+- Backup uploads must not be mixed with site export uploads or site import package storage under `storage/app/site-transfers/`.
+- Backup and export archive storage is flat: backups and site export packages both store filename-only `archive_path` values with no `YYYY/MM/DD` nesting.
 - Flat archive paths simplify deletion, restore, debugging, and filesystem inspection by keeping `archive_path` equal to the stored filename.
 - Deleting a backup removes the backup record and deletes its stored archive file from the backups disk when that file is still present.
 - Backup restore is a full-system restore that overwrites the current database and uploaded files.

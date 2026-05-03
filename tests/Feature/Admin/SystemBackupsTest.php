@@ -136,6 +136,7 @@ class SystemBackupsTest extends TestCase
     public function admin_can_create_backup_record_and_download_artifact(): void
     {
         $backupsRoot = $this->useRealBackupsDiskRoot('create-backup-artifact');
+        $exportsRoot = $this->useRealExportsDiskRoot('create-backup-export-root');
         $publicRoot = $this->makeTemporaryDirectory('create-backup-public-root');
         config()->set('filesystems.disks.public.root', $publicRoot);
 
@@ -170,10 +171,13 @@ class SystemBackupsTest extends TestCase
         $this->assertNotNull($backup);
         $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
         $this->assertSame(SystemBackup::TYPE_MANUAL, $backup->type);
+        $this->assertSame(SystemBackupManager::ARCHIVE_DISK, $backup->archive_disk);
         $this->assertNotNull($backup->archive_path);
 
         $this->assertStringNotContainsString('/', (string) $backup->archive_path);
         $this->assertFileExists($backupsRoot.'/'.$backup->archive_path);
+        $this->assertFileDoesNotExist($exportsRoot.'/'.$backup->archive_path);
+        $this->assertFileDoesNotExist($exportsRoot.'/uploaded/'.$backup->archive_path);
 
         $archivePath = $backupsRoot.'/'.$backup->archive_path;
         $archive = new ZipArchive;
@@ -503,6 +507,8 @@ class SystemBackupsTest extends TestCase
     public function valid_backup_zip_upload_creates_backup_record_and_redirects_to_detail_page(): void
     {
         Storage::fake('backups');
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
 
         $user = User::factory()->superAdmin()->create();
         $uploadedFile = $this->makeUploadedBackupArchive('downloaded-backup.zip', [
@@ -524,8 +530,11 @@ class SystemBackupsTest extends TestCase
         $this->assertSame(SystemBackup::TYPE_UPLOADED, $backup->type);
         $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
         $this->assertSame('downloaded-backup.zip', $backup->label);
+        $this->assertSame(SystemBackupManager::ARCHIVE_DISK, $backup->archive_disk);
         $this->assertStringNotContainsString('/', (string) $backup->archive_path);
         $this->assertTrue(Storage::disk('backups')->exists($backup->archive_path));
+        $this->assertCount(0, Storage::disk('site-exports')->allFiles());
+        $this->assertCount(0, Storage::disk('site-transfers')->allFiles());
         $this->assertStringContainsString('Backup archive uploaded and validated successfully.', (string) $backup->output);
 
         $response->assertRedirect(route('admin.system.backups.show', $backup));
@@ -1311,6 +1320,82 @@ class SystemBackupsTest extends TestCase
         $page->assertDontSee('Validation Error');
     }
 
+    #[Test]
+    public function backup_download_and_delete_ignore_wrong_recorded_archive_disk_and_use_backups_disk_only(): void
+    {
+        Storage::fake('backups');
+        Storage::fake('site-exports');
+
+        $user = User::factory()->superAdmin()->create();
+        $archivePath = 'recorded-on-wrong-disk.zip';
+
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'site-exports',
+            'archive_path' => $archivePath,
+            'archive_filename' => $archivePath,
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $this->createBackupArchive($archivePath, [
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+        Storage::disk('site-exports')->put($archivePath, 'wrong-disk-copy');
+
+        $download = $this->actingAs($user)->get(route('admin.system.backups.download', $backup));
+
+        $download->assertOk();
+        $download->assertDownload($archivePath);
+        $this->assertSame(Storage::disk('backups')->path($archivePath), $download->baseResponse->getFile()->getPathname());
+
+        $deleteResponse = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
+
+        $deleteResponse->assertRedirect(route('admin.system.backups.index'));
+        Storage::disk('backups')->assertMissing($archivePath);
+        Storage::disk('site-exports')->assertExists($archivePath);
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    }
+
+    #[Test]
+    public function backup_show_uses_backups_disk_even_if_recorded_disk_is_wrong(): void
+    {
+        Storage::fake('backups');
+        Storage::fake('site-exports');
+
+        $user = User::factory()->superAdmin()->create();
+        $archivePath = 'wrong-disk-detail.zip';
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'site-exports',
+            'archive_path' => $archivePath,
+            'archive_filename' => $archivePath,
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $this->createBackupArchive($archivePath, [
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+        Storage::disk('site-exports')->put($archivePath, 'wrong-disk-copy');
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
+
+        $response->assertOk();
+        $response->assertSee((string) $backup->archive_filename);
+        $response->assertSee('Restore backup');
+    }
+
     protected function tearDown(): void
     {
         foreach ($this->temporaryDirectories as $directory) {
@@ -1394,6 +1479,14 @@ class SystemBackupsTest extends TestCase
         $path = storage_path('app/testing-system-backups/'.$prefix.'-'.Str::uuid());
         File::ensureDirectoryExists($path);
         $this->temporaryDirectories[] = $path;
+
+        return $path;
+    }
+
+    private function useRealExportsDiskRoot(string $prefix): string
+    {
+        $path = $this->makeTemporaryDirectory($prefix);
+        config()->set('filesystems.disks.site-exports.root', $path);
 
         return $path;
     }

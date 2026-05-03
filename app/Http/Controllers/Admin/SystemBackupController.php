@@ -170,6 +170,6 @@ class SystemBackupController extends Controller
 
     private function systemBackupManagerPath(SystemBackup $backup): string
     {
-        return Storage::disk($backup->archive_disk)->path($backup->archive_path);
+        return Storage::disk(SystemBackupManager::ARCHIVE_DISK)->path($backup->archive_path);
     }
 }

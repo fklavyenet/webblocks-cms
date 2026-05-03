@@ -29,6 +29,7 @@ class SiteExportImportTest extends TestCase
     public function can_export_a_site_package_successfully(): void
     {
         Storage::fake('site-exports');
+        Storage::fake('backups');
         [$site] = $this->seedCloneableSite();
 
         $siteExport = app(SiteExportManager::class)->export($site, false);
@@ -38,6 +39,7 @@ class SiteExportImportTest extends TestCase
         Storage::disk('site-exports')->assertExists($siteExport->archive_path);
         $this->assertSame('site-exports', $siteExport->archive_disk);
         $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
+        Storage::disk('backups')->assertMissing($siteExport->archive_path);
     }
 
     #[Test]
@@ -302,6 +304,7 @@ class SiteExportImportTest extends TestCase
     public function export_delete_removes_the_exact_flat_archive_file(): void
     {
         Storage::fake('site-exports');
+        Storage::fake('backups');
         [$site] = $this->seedCloneableSite();
 
         $archivePath = 'sl4r2si1-webblocks-cms-site-export-default-2026-05-03-130508.zip';
@@ -323,6 +326,28 @@ class SiteExportImportTest extends TestCase
         app(SiteExportManager::class)->delete($siteExport->fresh());
 
         Storage::disk('site-exports')->assertMissing($archivePath);
+        Storage::disk('backups')->assertMissing($archivePath);
         $this->assertDatabaseMissing('site_exports', ['id' => $siteExport->id]);
+    }
+
+    #[Test]
+    public function site_import_uploads_remain_separate_from_backup_upload_storage(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        Storage::fake('backups');
+        Storage::fake('public');
+        [$site] = $this->seedCloneableSite(withFile: true);
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $this->assertNotNull($siteImport->archive_path);
+        $this->assertStringContainsString('/', $siteImport->archive_path);
+        Storage::disk('site-transfers')->assertExists($siteImport->archive_path);
+        $this->assertCount(0, Storage::disk('backups')->allFiles());
     }
 }

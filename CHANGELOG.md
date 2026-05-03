@@ -8,6 +8,8 @@
 - Fix backup delete file removal by aligning backup archive deletion with the working export delete storage behavior.
 - Fix restore safety backup lifecycle so successful restores do not leave backup records stuck in running status.
 - Simplify backup and export storage by removing nested YYYY/MM/DD directories and using flat archive paths.
+- Fix backup archive storage so created and uploaded backups use the backups disk instead of export-related storage paths.
+- Simplify backup and export archive paths to flat filenames while keeping backup uploads separate from site transfer uploads.
 
 ## 1.6.0
 

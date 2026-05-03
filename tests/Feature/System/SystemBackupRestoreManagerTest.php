@@ -123,6 +123,47 @@ class SystemBackupRestoreManagerTest extends TestCase
     }
 
     #[Test]
+    public function restore_reads_backup_archives_from_backups_disk_even_if_recorded_disk_is_wrong(): void
+    {
+        Storage::fake('backups');
+        Storage::fake('site-exports');
+
+        $user = User::factory()->create();
+        config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('restore-wrong-disk-public-root'));
+
+        $sourceBackup = $this->createBackupRecord('wrong-disk-source.zip');
+        $sourceBackup->forceFill(['archive_disk' => 'site-exports'])->save();
+        $safetyBackup = $this->createBackupRecord('safety-backup.zip', SystemBackup::TYPE_RESTORE_SAFETY);
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => false,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+        Storage::disk('site-exports')->put($sourceBackup->archive_path, 'wrong-disk-copy');
+
+        $fakeBackupManager = new FakeSystemBackupManager($safetyBackup);
+        $fakeDatabaseRestoreRunner = new FakeDatabaseRestoreRunner;
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup->fresh(), $user->id);
+
+        $this->assertSame(1, $fakeBackupManager->validateCalls);
+        $this->assertCount(1, $fakeDatabaseRestoreRunner->restoredSqlPaths);
+        $this->assertStringContainsString('database/database.sql', $fakeDatabaseRestoreRunner->restoredSqlPaths[0]);
+        $this->assertTrue(Storage::disk('backups')->exists($sourceBackup->archive_path));
+        $this->assertTrue(Storage::disk('site-exports')->exists($sourceBackup->archive_path));
+    }
+
+    #[Test]
     public function invalid_sql_dump_aborts_before_safety_backup_and_database_restore(): void
     {
         Storage::fake('backups');

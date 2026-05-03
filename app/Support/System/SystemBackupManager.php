@@ -245,7 +245,7 @@ class SystemBackupManager
             abort(404);
         }
 
-        $disk = Storage::disk($backup->archive_disk);
+        $disk = Storage::disk(self::ARCHIVE_DISK);
 
         if (! $disk->exists($backup->archive_path)) {
             abort(404);
@@ -274,20 +274,14 @@ class SystemBackupManager
             throw new RuntimeException('Running backup cannot be deleted unless you explicitly confirm it is stuck.');
         }
 
-        $archiveDisk = $this->resolveArchiveDiskName($backup->archive_disk);
         $storedArchivePath = $backup->archiveRelativePath();
 
         if ($storedArchivePath !== null) {
             $this->assertValidArchiveRelativePath($storedArchivePath);
-            $this->deleteArchiveIfPresent($backup, $archiveDisk, $storedArchivePath);
+            $this->deleteArchiveIfPresent($backup, self::ARCHIVE_DISK, $storedArchivePath);
         }
 
         $backup->delete();
-    }
-
-    private function resolveArchiveDiskName(?string $archiveDisk): string
-    {
-        return filled($archiveDisk) ? $archiveDisk : self::ARCHIVE_DISK;
     }
 
     private function deleteArchiveIfPresent(SystemBackup $backup, string $diskName, string $archivePath): void
