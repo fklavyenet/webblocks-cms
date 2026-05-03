@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\SystemUpdateRun;
 use App\Models\SystemBackup;
 use App\Models\User;
+use App\Support\WebBlocks;
 use App\Support\System\SystemBackupManager;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\Updates\UpdateCheckResult;
@@ -44,14 +45,14 @@ class SystemUpdatesTest extends TestCase
         $response->assertSee('System Updates');
         $response->assertSee('Already up to date');
         $response->assertSee('Installed version');
-        $response->assertSee('0.1.4');
-        $response->assertDontSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
+        $response->assertSee(WebBlocks::version());
+        $response->assertSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
         $response->assertSee('Update Summary');
         $response->assertSee('Actions');
         $response->assertSee('Check again');
         $response->assertDontSee('Recent Backup');
         $response->assertSee('Technical details');
-        $response->assertSee('WebBlocks CMS v0.1.4');
+        $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
     }
 
     #[Test]
@@ -66,7 +67,7 @@ class SystemUpdatesTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Update checks disabled');
-        $response->assertSee('Not recorded yet');
+        $response->assertSee(WebBlocks::version());
         $response->assertSee('The CMS update client is disabled in configuration.');
     }
 
@@ -127,7 +128,7 @@ class SystemUpdatesTest extends TestCase
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
 
-        $this->assertSame('0.2.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
         $this->assertSame('new-artisan', trim((string) File::get($targetRoot.'/artisan')));
         $this->assertSame('new-bootstrap', trim((string) File::get($targetRoot.'/bootstrap/app.php')));
         $this->assertSame('APP_NAME=Original', trim((string) File::get($targetRoot.'/.env')));
@@ -138,7 +139,7 @@ class SystemUpdatesTest extends TestCase
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
         $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
-        $this->assertSame('0.1.0', $run->from_version);
+        $this->assertSame(WebBlocks::version(), $run->from_version);
         $this->assertSame('0.2.0', $run->to_version);
         $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
@@ -151,7 +152,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
 
         $sidebar = $this->actingAs($user)->get(route('admin.system.updates.index'));
-        $sidebar->assertSee('WebBlocks CMS v0.2.0');
+        $sidebar->assertSee('WebBlocks CMS v'.WebBlocks::version());
         $sidebar->assertDontSee('Download package');
     }
 
@@ -178,7 +179,7 @@ class SystemUpdatesTest extends TestCase
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHasErrors(['system_update']);
-        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
 
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
@@ -241,7 +242,7 @@ class SystemUpdatesTest extends TestCase
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHasErrors(['system_update' => 'Update was not installed because the pre-update backup could not be created.']);
-        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
         $this->assertDatabaseCount('system_update_runs', 0);
     }
 
@@ -298,7 +299,7 @@ class SystemUpdatesTest extends TestCase
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
-        $this->assertSame('0.2.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
     }
 
     #[Test]
@@ -339,7 +340,7 @@ class SystemUpdatesTest extends TestCase
 
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHas('status', 'Pending update cancelled. The pre-update backup was kept.');
-        $this->assertSame('0.1.0', app(InstalledVersionStore::class)->currentVersion());
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
         $this->assertSame(SystemUpdateRun::STATUS_CANCELLED, SystemUpdateRun::query()->latest()->firstOrFail()->status);
     }
 

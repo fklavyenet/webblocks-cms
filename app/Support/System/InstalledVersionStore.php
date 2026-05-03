@@ -2,6 +2,7 @@
 
 namespace App\Support\System;
 
+use App\Support\WebBlocks;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -13,21 +14,17 @@ class InstalledVersionStore
 
     public function currentVersion(): string
     {
-        return $this->storedVersion() ?? $this->fallbackVersion();
+        return WebBlocks::version();
     }
 
     public function displayVersion(): string
     {
-        return $this->storedVersion() ?? 'Not recorded yet';
+        return WebBlocks::version();
     }
 
     public function fallbackVersion(): string
     {
-        if (! Schema::hasTable('system_settings')) {
-            return (string) config('webblocks-updates.current_version', config('app.version', 'dev'));
-        }
-
-        return (string) config('webblocks-updates.current_version', config('app.version', 'dev'));
+        return WebBlocks::version();
     }
 
     public function storedVersion(): ?string

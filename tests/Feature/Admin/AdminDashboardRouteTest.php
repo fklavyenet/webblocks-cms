@@ -6,6 +6,7 @@ use App\Models\Page;
 use App\Models\Site;
 use App\Models\User;
 use App\Models\VisitorEvent;
+use App\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,7 +50,7 @@ class AdminDashboardRouteTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Dashboard');
-        $response->assertSee('WebBlocks CMS v0.1.4');
+        $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
         $response->assertSee('Visitor Summary');
         $response->assertSee('/p/dashboard-landing');
         $response->assertSee('Actions and Shortcuts');

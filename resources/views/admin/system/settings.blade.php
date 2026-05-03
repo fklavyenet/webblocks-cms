@@ -96,8 +96,8 @@
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-settings-row">
                     <div class="wb-settings-row-label">
-                        <strong>Installed version</strong>
-                        <span>Current recorded application version.</span>
+                        <strong>Application version</strong>
+                        <span>Current product version from the codebase source of truth.</span>
                     </div>
                     <div class="wb-settings-row-control">
                         <span>{{ $installedVersionDisplay }}</span>

@@ -3,6 +3,7 @@
 namespace App\Support\System;
 
 use App\Models\SystemBackup;
+use App\Support\WebBlocks;
 
 class BackupManifestBuilder
 {
@@ -14,7 +15,7 @@ class BackupManifestBuilder
             'feature_version' => SystemBackupArchivePackage::FEATURE_VERSION,
             'format_version' => SystemBackupArchivePackage::FORMAT_VERSION,
             'app_name' => config('app.name'),
-            'app_version' => config('app.version'),
+            'app_version' => WebBlocks::version(),
             'backup_id' => $backup->id,
             'backup_type' => $backup->type,
             'created_at' => $backup->started_at?->toIso8601String(),
