@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Clean up repository structure.
+- Move internal audit documents outside repository.
+- Refactor README and documentation structure.
+- Improve docs entry point (`docs/index.md`).
+
 ## 1.7.0
 
 - Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.

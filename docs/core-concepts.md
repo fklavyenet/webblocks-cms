@@ -1,51 +1,58 @@
-
 # Core Concepts
 
-WebBlocks CMS is built on a strict structural model:
+WebBlocks CMS uses an explicit relational content model built around pages, layouts, slots, and blocks.
 
-Page → Layout → Slots → Blocks
+## Content Model
 
-## Page
+The core structure is:
 
-A page is the top-level content entity. It defines routing, site ownership, and layout selection.
+`Page -> Layout -> Slots -> Blocks`
 
-Pages do not directly store content blocks.
+- A page owns routing, site context, workflow state, and layout selection.
+- A layout defines the available structural regions.
+- Slots are named placement areas inside the layout, such as `header`, `main`, `sidebar`, and `footer`.
+- Blocks are the actual content units placed into slots and, when supported, nested under other blocks.
 
-## Layout
+Pages do not store free-form page-builder JSON. Content and relationships are kept in relational tables so structure stays explicit and reviewable.
 
-A layout defines structural composition. It determines which slots exist and how they are arranged.
+## Page Builder
 
-Layouts are reusable and independent of content.
+Editing happens through slots.
 
-## Slot
+Typical flow:
 
-Slots are named placement areas inside a layout.
+1. Create a page.
+2. Assign a layout.
+3. Edit the layout's slots.
+4. Add and order blocks inside those slots.
 
-Examples:
-- header
-- main
-- sidebar
-- footer
+Blocks can have parent-child relationships, which allows grouped content structures without collapsing the model into opaque blobs.
 
-Slots define where blocks can be placed.
+## Blocks
 
-## Block
+Blocks are the reusable editorial units of the CMS.
 
-Blocks are the actual content units.
+- Shared data holds structure, placement, assets, and operational settings.
+- Translated data holds user-facing text for each locale.
+- User-facing content is not stored in arbitrary JSON blobs.
 
-Examples:
-- text
-- image
-- button
-- navigation
+This keeps content ownership clear across multisite, localization, revisions, and public rendering.
 
-Blocks are attached to slots, not directly to pages.
+## Public Shells
 
-## Philosophy
+Public page structure is controlled at the page and slot layer.
 
-- No hidden structure
-- No template magic
-- No JSON content blobs
-- Everything is relational and explicit
+- `default` is the standard public shell.
+- `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
 
-This ensures predictability and maintainability.
+For docs-style pages, use page shell and slot wrapper presets instead of pushing layout responsibility down into individual content blocks.
+
+## Project Boundary
+
+WebBlocks CMS core contains reusable CMS functionality.
+
+- Keep install-specific code that must survive CMS updates in `project/`.
+- Keep site-specific commands, views, routes, and config out of core when they are not reusable product features.
+- Treat `project/` as the update-safe extension boundary for one install.
+
+See `../DEVELOPMENT.md` for the full development and release workflow.

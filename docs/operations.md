@@ -57,6 +57,20 @@ Export / Import covers site-scoped content such as:
 
 It does not include install-global runtime data such as users, backups, update history, sessions, or contact submissions.
 
+## Site Clone
+
+Site Clone duplicates site-owned content from one site into another site inside the same install.
+
+Use Site Clone when:
+
+- you need a second site inside the current install
+- you want to duplicate page, slot, block, navigation, and locale structure without creating an export package first
+
+Site Clone is different from Export / Import:
+
+- Site Clone works inside the current install
+- Export / Import is for moving a site package between installs
+
 ## When To Use Which Tool
 
 ### Use Revisions When
@@ -73,6 +87,11 @@ It does not include install-global runtime data such as users, backups, update h
 
 - a site needs to be moved to another install
 - you need a portable package for one site
+
+### Use Site Clone When
+
+- you need to duplicate one site into another site inside the same install
+- you want to keep the work inside the current environment
 
 ### Use System Updates When
 

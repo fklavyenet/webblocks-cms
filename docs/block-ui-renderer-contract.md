@@ -501,6 +501,5 @@ Phase 3 completed: core public blocks now align with WebBlocks UI primitives.
 
 ### Phase 4
 
-- The remaining block-by-block UI mapping is documented in `docs/block-ui-alignment-audit-phase-4.md`.
 - Migrate existing seeded/demo docs content to first-class blocks.
 - Remove reliance on raw HTML or `settings.items` where a structured block exists.
