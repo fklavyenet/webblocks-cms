@@ -87,6 +87,8 @@ class SystemBackupRestoreManager
             $inspection = $this->archiveInspector->inspect($resolvedArchivePath);
             $output[] = 'Archive validation passed.';
 
+            // Restores consume the existing listed archive directly. The only new archive
+            // expected in this flow is the mandatory pre-restore safety backup.
             $safetyBackup = $this->systemBackupManager->createRestoreSafetyBackup(
                 $triggeredByUserId,
                 'Pre-restore safety backup before restoring '.$archiveFilename,

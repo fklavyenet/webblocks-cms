@@ -224,19 +224,61 @@ class SystemBackupManager
         }
 
         $archivePath = $backup->archiveRelativePath();
+        $archiveDisk = $this->resolveArchiveDiskName($backup->archive_disk);
 
         if ($archivePath !== null) {
             $this->assertValidArchiveRelativePath($archivePath);
-            $disk = Storage::disk($backup->archive_disk ?: self::ARCHIVE_DISK);
-
-            if ($disk->exists($archivePath)) {
-                if (! $disk->delete($archivePath)) {
-                    throw new RuntimeException('Backup archive file could not be deleted.');
-                }
-            }
+            $this->deleteArchiveIfPresent($archiveDisk, $archivePath);
         }
 
         $backup->delete();
+    }
+
+    private function resolveArchiveDiskName(?string $archiveDisk): string
+    {
+        return filled($archiveDisk) ? $archiveDisk : self::ARCHIVE_DISK;
+    }
+
+    private function deleteArchiveIfPresent(string $diskName, string $archivePath): void
+    {
+        $disk = Storage::disk($diskName);
+
+        if (! $disk->exists($archivePath)) {
+            return;
+        }
+
+        if (! $disk->delete($archivePath)) {
+            throw new RuntimeException('Backup archive file could not be deleted.');
+        }
+
+        $this->pruneEmptyArchiveDirectories($diskName, $archivePath);
+    }
+
+    private function pruneEmptyArchiveDirectories(string $diskName, string $archivePath): void
+    {
+        $disk = Storage::disk($diskName);
+        $root = realpath($disk->path(''));
+
+        if ($root === false) {
+            return;
+        }
+
+        $directory = dirname($archivePath);
+
+        while ($directory !== '' && $directory !== '.' && $directory !== DIRECTORY_SEPARATOR) {
+            $absoluteDirectory = realpath($disk->path($directory));
+
+            if ($absoluteDirectory === false || ! str_starts_with($absoluteDirectory, $root.DIRECTORY_SEPARATOR)) {
+                break;
+            }
+
+            if (! File::isDirectory($absoluteDirectory) || count(File::files($absoluteDirectory)) > 0 || count(File::directories($absoluteDirectory)) > 0) {
+                break;
+            }
+
+            File::deleteDirectory($absoluteDirectory);
+            $directory = dirname($directory);
+        }
     }
 
     private function hasBackupTable(): bool

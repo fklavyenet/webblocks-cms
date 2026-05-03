@@ -679,6 +679,79 @@ class SystemBackupsTest extends TestCase
     }
 
     #[Test]
+    public function deleting_backup_succeeds_even_when_the_archive_file_is_already_missing(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/missing.zip',
+            'archive_filename' => 'missing.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $backup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', 'Backup deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    }
+
+    #[Test]
+    public function deleting_one_backup_does_not_delete_another_backups_archive_file(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $firstBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/first.zip',
+            'archive_filename' => 'first.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+        $secondBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/second.zip',
+            'archive_filename' => 'second.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        Storage::disk('backups')->put($firstBackup->archive_path, 'first');
+        Storage::disk('backups')->put($secondBackup->archive_path, 'second');
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.backups.index'))
+            ->delete(route('admin.system.backups.destroy', $firstBackup));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $this->assertDatabaseMissing('system_backups', ['id' => $firstBackup->id]);
+        $this->assertDatabaseHas('system_backups', ['id' => $secondBackup->id]);
+        $this->assertFalse(Storage::disk('backups')->exists($firstBackup->archive_path));
+        $this->assertTrue(Storage::disk('backups')->exists($secondBackup->archive_path));
+    }
+
+    #[Test]
     public function admin_can_delete_failed_backup_record_and_archive(): void
     {
         Storage::fake('backups');

@@ -234,6 +234,50 @@ class SystemBackupRestoreManagerTest extends TestCase
         $this->assertDatabaseMissing('system_backups', ['id' => $sourceBackup->id]);
     }
 
+    #[Test]
+    public function restoring_existing_backup_uses_existing_archive_and_only_creates_the_expected_safety_backup(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        $publicRoot = $this->makeTemporaryDirectory('restore-existing-source-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+
+        $sourceBackup = $this->createBackupRecord('2026/04/20/source-existing.zip');
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => true,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+            'uploads/public/media/restored.txt' => 'restored file',
+        ]);
+
+        $fakeBackupManager = new RecordingSafetyBackupManager;
+        $fakeDatabaseRestoreRunner = new FakeDatabaseRestoreRunner;
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        $result = app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup, $user->id);
+
+        $this->assertSame(1, $fakeBackupManager->safetyBackupCalls);
+        $this->assertSame(1, $fakeBackupManager->validateCalls);
+        $this->assertNotNull($fakeBackupManager->createdSafetyBackup);
+        $this->assertSame(SystemBackup::TYPE_RESTORE_SAFETY, $fakeBackupManager->createdSafetyBackup?->type);
+        $this->assertTrue(Storage::disk('backups')->exists((string) $sourceBackup->archive_path));
+        $this->assertTrue(Storage::disk('backups')->exists((string) $fakeBackupManager->createdSafetyBackup?->archive_path));
+        $this->assertSame(2, SystemBackup::query()->count());
+        $this->assertSame(1, SystemBackup::query()->where('archive_path', $sourceBackup->archive_path)->count());
+        $this->assertSame((string) $sourceBackup->archive_path, $result->sourceArchivePath);
+        $this->assertSame($fakeBackupManager->createdSafetyBackup?->id, $result->safetyBackup?->id);
+    }
+
     private function createBackupRecord(string $archivePath, string $type = SystemBackup::TYPE_MANUAL): SystemBackup
     {
         return SystemBackup::query()->create([
@@ -342,5 +386,49 @@ class FakeRestoreMaintenanceRunner extends SystemBackupRestoreMaintenanceRunner
     {
         $this->runCalls++;
         $output[] = 'Simulated restore maintenance.';
+    }
+}
+
+class RecordingSafetyBackupManager extends SystemBackupManager
+{
+    public int $safetyBackupCalls = 0;
+
+    public int $validateCalls = 0;
+
+    public ?SystemBackup $createdSafetyBackup = null;
+
+    public function __construct() {}
+
+    public function createRestoreSafetyBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+    {
+        $this->safetyBackupCalls++;
+
+        $archivePath = '2026/04/20/generated-safety-'.$this->safetyBackupCalls.'.zip';
+        Storage::disk(SystemBackupManager::ARCHIVE_DISK)->put($archivePath, 'safety archive');
+
+        return $this->createdSafetyBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_RESTORE_SAFETY,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'label' => $label,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => SystemBackupManager::ARCHIVE_DISK,
+            'archive_path' => $archivePath,
+            'archive_filename' => basename($archivePath),
+            'archive_size_bytes' => strlen('safety archive'),
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+            'triggered_by_user_id' => $triggeredByUserId,
+        ]);
+    }
+
+    public function assertValidArchiveRelativePath(string $path): void
+    {
+        $this->validateCalls++;
+
+        if (str_contains($path, '..')) {
+            throw new RuntimeException('Backup archive path is invalid.');
+        }
     }
 }
