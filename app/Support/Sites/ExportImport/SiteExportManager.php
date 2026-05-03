@@ -6,7 +6,6 @@ use App\Models\Site;
 use App\Models\SiteExport;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -38,7 +37,7 @@ class SiteExportManager
             $payload = $this->dataBuilder->build($site, $includesMedia);
             $timestamp = now();
             $archiveName = sprintf('webblocks-cms-site-export-%s-%s.zip', $site->handle, $timestamp->format('Y-m-d-His'));
-            $archivePath = Str::lower(Str::random(8)).'-'.$archiveName;
+            $archivePath = $archiveName;
             $manifest = $this->manifestFor($site, $payload, $includesMedia, $timestamp);
             $size = $this->archiveBuilder->build(Storage::disk(self::ARCHIVE_DISK)->path($archivePath), $manifest, $payload, $includesMedia, $output);
 

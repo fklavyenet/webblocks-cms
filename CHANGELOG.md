@@ -10,6 +10,8 @@
 - Simplify backup and export storage by removing nested YYYY/MM/DD directories and using flat archive paths.
 - Fix backup archive storage so created and uploaded backups use the backups disk instead of export-related storage paths.
 - Simplify backup and export archive paths to flat filenames while keeping backup uploads separate from site transfer uploads.
+- Enable `Include media/assets` by default on Create Export.
+- Remove the random prefix from site export archive filenames so exports use clean timestamp-based names.
 
 ## 1.6.0
 

@@ -51,9 +51,23 @@ class SiteExportImportTest extends TestCase
         $siteExport = app(SiteExportManager::class)->export($site, false);
 
         $this->assertNotNull($siteExport->archive_path);
-        $this->assertMatchesRegularExpression('#^[a-z0-9]{8}-webblocks-cms-site-export-[a-z0-9-]+-\d{4}-\d{2}-\d{2}-\d{6}\.zip$#', $siteExport->archive_path);
+        $this->assertMatchesRegularExpression('#^webblocks-cms-site-export-[a-z0-9-]+-\d{4}-\d{2}-\d{2}-\d{6}\.zip$#', $siteExport->archive_path);
         $this->assertStringNotContainsString('/', $siteExport->archive_path);
         $this->assertStringNotContainsString('site-transfers', $siteExport->archive_path);
+    }
+
+    #[Test]
+    public function export_filename_does_not_use_a_random_prefix(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+
+        $this->assertSame($siteExport->archive_name, $siteExport->archive_path);
+        $this->assertStringStartsWith('webblocks-cms-site-export-', $siteExport->archive_path);
+        $this->assertStringNotContainsString('/', $siteExport->archive_path);
+        $this->assertMatchesRegularExpression('#^webblocks-cms-site-export-'.$site->handle.'-\d{4}-\d{2}-\d{2}-\d{6}\.zip$#', $siteExport->archive_path);
     }
 
     #[Test]
@@ -61,16 +75,16 @@ class SiteExportImportTest extends TestCase
     {
         Storage::fake('site-exports');
         [$site] = $this->seedCloneableSite();
-        $now = CarbonImmutable::parse('2026-05-03 07:38:50');
+        $firstTimestamp = CarbonImmutable::parse('2026-05-03 07:38:50');
+        $secondTimestamp = $firstTimestamp->addSecond();
 
-        $this->travelTo($now);
+        $this->travelTo($firstTimestamp);
+        $firstExport = app(SiteExportManager::class)->export($site, false);
 
-        try {
-            $firstExport = app(SiteExportManager::class)->export($site, false);
-            $secondExport = app(SiteExportManager::class)->export($site, false);
-        } finally {
-            $this->travelBack();
-        }
+        $this->travelTo($secondTimestamp);
+        $secondExport = app(SiteExportManager::class)->export($site, false);
+
+        $this->travelBack();
 
         $this->assertStringNotContainsString('/', (string) $firstExport->archive_path);
         $this->assertStringNotContainsString('/', (string) $secondExport->archive_path);

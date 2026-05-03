@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
 use Tests\TestCase;
@@ -42,6 +43,55 @@ class SiteExportImportAdminTest extends TestCase
         $download = $this->actingAs($user)->get(route('admin.site-transfers.exports.download', $siteExport));
         $download->assertOk();
         $download->assertDownload($siteExport->archive_name);
+    }
+
+    #[Test]
+    public function export_form_checks_include_media_by_default(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.site-transfers.exports.index'));
+
+        $response->assertOk();
+        $response->assertSee('name="includes_media" value="1" checked', false);
+    }
+
+    #[Test]
+    public function export_form_keeps_include_media_checked_after_validation_redirect_when_not_provided(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.site-transfers.exports.index'))
+            ->post(route('admin.site-transfers.exports.store'), []);
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+
+        $page = $this->actingAs($user)->get(route('admin.site-transfers.exports.index'));
+
+        $page->assertOk();
+        $page->assertSee('name="includes_media" value="1" checked', false);
+    }
+
+    #[Test]
+    public function admin_export_action_uses_clean_filename_without_random_prefix(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
+            'site_id' => $site->id,
+        ]);
+
+        $siteExport = SiteExport::query()->latest()->first();
+
+        $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
+        $this->assertNotNull($siteExport);
+        $this->assertSame($siteExport->archive_name, $siteExport->archive_path);
+        $this->assertStringStartsWith('webblocks-cms-site-export-', (string) $siteExport->archive_path);
+        $this->assertFalse((bool) preg_match('/^[a-z0-9]{8}-/', (string) $siteExport->archive_path));
+        $this->assertTrue(Str::endsWith((string) $siteExport->archive_path, '.zip'));
     }
 
     #[Test]

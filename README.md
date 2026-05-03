@@ -485,6 +485,8 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Site export packages remain separate on the `site-exports` disk and live directly under `storage/app/exports/`.
 - Backup uploads must not be mixed with site export uploads or site import package storage under `storage/app/site-transfers/`.
 - Backup and export archive storage is flat: backups and site export packages both store filename-only `archive_path` values with no `YYYY/MM/DD` nesting.
+- The Create Export flow enables `Include media/assets` by default so normal exports include related files unless you explicitly turn that off.
+- Site export filenames are clean and timestamp-based, for example `webblocks-cms-site-export-default-2026-05-03-130508.zip`, with no random prefix.
 - Flat archive paths simplify deletion, restore, debugging, and filesystem inspection by keeping `archive_path` equal to the stored filename.
 - Deleting a backup removes the backup record and deletes its stored archive file from the backups disk when that file is still present.
 - Backup restore is a full-system restore that overwrites the current database and uploaded files.

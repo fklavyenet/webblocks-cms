@@ -34,7 +34,7 @@
 
                         <div class="wb-stack wb-gap-2">
                             <label class="wb-checkbox" for="includes_media">
-                                <input id="includes_media" type="checkbox" name="includes_media" value="1" @checked(old('includes_media'))>
+                                <input id="includes_media" type="checkbox" name="includes_media" value="1" @checked(old('includes_media', true))>
                                 <span>Include media/assets</span>
                             </label>
 
