@@ -7,7 +7,7 @@ use Project\Support\UiDocs\SyncUiDocsGettingStarted;
 
 class SyncUiDocsGettingStartedCommand extends Command
 {
-    protected $signature = 'project:sync-ui-docs-getting-started';
+    protected $signature = 'webblocks:sync-ui-docs-getting-started';
 
     protected $description = 'Sync the site-specific WebBlocks UI Getting Started docs page';
 

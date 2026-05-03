@@ -5,11 +5,8 @@ namespace Project\Support\UiDocs;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -22,7 +19,7 @@ class SyncUiDocsGettingStarted
     public function run(): void
     {
         $homePage = Page::query()
-            ->with(['site', 'translations', 'slots.slotType'])
+            ->with(['site', 'translations'])
             ->get()
             ->first(fn (Page $page) => $page->publicShellPreset() === 'docs' && $page->translations->contains('slug', 'home'));
 
@@ -30,10 +27,22 @@ class SyncUiDocsGettingStarted
             throw new RuntimeException('Docs Home page not found.');
         }
 
-        $defaultLocaleId = Page::defaultLocaleId();
+        $page = Page::query()
+            ->with(['translations', 'slots.slotType'])
+            ->where('site_id', $homePage->site_id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', Page::defaultLocaleId())
+                ->where('slug', 'getting-started'))
+            ->first();
 
-        if (! $defaultLocaleId) {
-            throw new RuntimeException('Default locale not found.');
+        if (! $page) {
+            throw new RuntimeException('Getting Started page not found.');
+        }
+
+        $mainSlot = $page->slots->first(fn ($slot) => $slot->slotType?->slug === 'main');
+
+        if (! $mainSlot) {
+            throw new RuntimeException('Getting Started page main slot not found.');
         }
 
         $requiredBlockTypeIds = BlockType::query()
@@ -52,7 +61,8 @@ class SyncUiDocsGettingStarted
                 'grid',
                 'cluster',
             ])
-            ->pluck('id', 'slug');
+            ->get(['id', 'slug', 'status'])
+            ->keyBy('slug');
 
         foreach ([
             'section',
@@ -74,15 +84,15 @@ class SyncUiDocsGettingStarted
             }
         }
 
-        DB::transaction(function () use ($homePage, $defaultLocaleId, $requiredBlockTypeIds): void {
-            $page = $this->upsertGettingStartedPage($homePage, $defaultLocaleId);
-            $slotMap = $this->ensureDocsSlots($page, $homePage);
-            $mainSlotTypeId = $slotMap['main']->slot_type_id;
+        if ($requiredBlockTypeIds['code']->status !== 'published') {
+            throw new RuntimeException('Required published block type [code] is missing or inactive.');
+        }
 
+        DB::transaction(function () use ($page, $mainSlot, $requiredBlockTypeIds): void {
             $existingImportedBlocks = Block::query()
                 ->where('page_id', $page->id)
                 ->whereNull('parent_id')
-                ->where('slot_type_id', $mainSlotTypeId)
+                ->where('slot_type_id', $mainSlot->slot_type_id)
                 ->get()
                 ->filter(fn (Block $block) => $block->setting('import_group') === self::IMPORT_GROUP)
                 ->values();
@@ -94,13 +104,13 @@ class SyncUiDocsGettingStarted
             $baseSortOrder = (int) Block::query()
                 ->where('page_id', $page->id)
                 ->whereNull('parent_id')
-                ->where('slot_type_id', $mainSlotTypeId)
+                ->where('slot_type_id', $mainSlot->slot_type_id)
                 ->max('sort_order');
 
             $nextSortOrder = Block::query()
                 ->where('page_id', $page->id)
                 ->whereNull('parent_id')
-                ->where('slot_type_id', $mainSlotTypeId)
+                ->where('slot_type_id', $mainSlot->slot_type_id)
                 ->exists()
                     ? $baseSortOrder + 1
                     : 0;
@@ -109,101 +119,13 @@ class SyncUiDocsGettingStarted
                 $this->createPayloadTree(
                     page: $page,
                     parent: null,
-                    slotTypeId: $mainSlotTypeId,
-                    blockTypeIds: $requiredBlockTypeIds->all(),
+                    slotTypeId: $mainSlot->slot_type_id,
+                    blockTypeIds: $requiredBlockTypeIds->map(fn ($blockType) => $blockType->id)->all(),
                     sortOrder: $nextSortOrder + $sectionIndex,
                     payload: $sectionPayload,
                 );
             }
         });
-    }
-
-    private function upsertGettingStartedPage(Page $homePage, int $defaultLocaleId): Page
-    {
-        $page = Page::query()
-            ->where('site_id', $homePage->site_id)
-            ->whereHas('translations', fn ($query) => $query
-                ->where('locale_id', $defaultLocaleId)
-                ->where('slug', 'getting-started'))
-            ->first();
-
-        if (! $page) {
-            $payload = [
-                'site_id' => $homePage->site_id,
-                'title' => 'Getting Started',
-                'slug' => 'getting-started',
-                'page_type' => 'default',
-                'status' => 'published',
-            ];
-
-            if (Page::supportsSettingsColumn()) {
-                $payload['settings'] = ['public_shell' => $homePage->publicShellPreset()];
-            }
-
-            $page = Page::query()->create($payload);
-        }
-
-        $payload = [
-            'title' => 'Getting Started',
-            'slug' => 'getting-started',
-            'page_type' => 'default',
-            'status' => 'published',
-        ];
-
-        if (Page::supportsSettingsColumn()) {
-            $payload['settings'] = array_merge(is_array($page->settings) ? $page->settings : [], ['public_shell' => $homePage->publicShellPreset()]);
-        }
-
-        $page->update($payload);
-
-        PageTranslation::query()->updateOrCreate(
-            ['page_id' => $page->id, 'locale_id' => $defaultLocaleId],
-            [
-                'site_id' => $homePage->site_id,
-                'name' => 'Getting Started',
-                'slug' => 'getting-started',
-            ],
-        );
-
-        return $page->fresh(['translations', 'slots.slotType']);
-    }
-
-    private function ensureDocsSlots(Page $page, Page $homePage): array
-    {
-        $defaultPresetBySlug = [
-            'header' => 'docs-navbar',
-            'main' => 'docs-main',
-            'sidebar' => 'docs-sidebar',
-        ];
-        $defaultSortOrderBySlug = [
-            'header' => 1,
-            'main' => 2,
-            'sidebar' => 3,
-        ];
-        $slots = [];
-
-        foreach (['header', 'main', 'sidebar'] as $slug) {
-            $slotType = SlotType::query()->where('slug', $slug)->first();
-
-            if (! $slotType) {
-                throw new RuntimeException("Required slot type [{$slug}] is missing.");
-            }
-
-            $homeSlot = $homePage->slots->first(fn ($slot) => $slot->slotType?->slug === $slug);
-            $slot = PageSlot::query()->updateOrCreate(
-                ['page_id' => $page->id, 'slot_type_id' => $slotType->id],
-                [
-                    'sort_order' => $homeSlot?->sort_order ?? $defaultSortOrderBySlug[$slug],
-                    'settings' => [
-                        'wrapper_preset' => $homeSlot?->wrapperPreset() ?? $defaultPresetBySlug[$slug],
-                    ],
-                ],
-            );
-
-            $slots[$slug] = $slot;
-        }
-
-        return $slots;
     }
 
     private function createPayloadTree(Page $page, ?Block $parent, int $slotTypeId, array $blockTypeIds, int $sortOrder, array $payload): Block
@@ -269,7 +191,12 @@ class SyncUiDocsGettingStarted
             'children' => [
                 [
                     'type' => 'container',
-                    'settings' => ['width' => 'lg'],
+                    'settings' => [
+                        'width' => 'lg',
+                        'import_group' => self::IMPORT_GROUP,
+                        'import_key' => $importKey.'-container',
+                        'layout_name' => $layoutName.' container',
+                    ],
                     'children' => $children,
                 ],
             ],
@@ -328,11 +255,10 @@ HTML;
                 ],
                 [
                     'type' => 'plain_text',
-                    'content' => 'The smallest correct setup includes the main CSS and JS bundles. Add the icon CSS only if you want class-based icon usage with i.wb-icon markup. The docs and playground load the same built files from the published dist path so the examples stay aligned with the shipped package output.',
+                    'content' => 'The smallest correct setup includes the main CSS and JS bundles. Add the icon CSS only if you want class-based icon usage with <i class="wb-icon wb-icon-*">. The docs and playground in this repo load the same built files from the local published dist path so the examples stay aligned with the shipped package output.',
                 ],
                 [
                     'type' => 'code',
-                    'title' => 'Base asset includes',
                     'content' => $assetIncludes,
                     'settings' => ['language' => 'html'],
                 ],
@@ -340,12 +266,12 @@ HTML;
                     'type' => 'alert',
                     'title' => 'No extra layer required',
                     'content' => 'You do not need framework wrappers, a custom starter stylesheet, or a separate component runtime to use the package correctly.',
-                    'settings' => ['variant' => 'success'],
+                    'settings' => ['variant' => 'info'],
                 ],
                 [
                     'type' => 'alert',
                     'title' => 'Mask-image icon path',
-                    'content' => 'Keep webblocks-icons.css included if you want the shipped class-based icon behavior with wb-icon and wb-icon-* classes.',
+                    'content' => 'This guide uses the shipped class-based icon path with webblocks-icons.css and <i class="wb-icon wb-icon-...">. Keep that stylesheet included if you want the same icon behavior.',
                     'settings' => ['variant' => 'info'],
                 ],
             ]),
@@ -361,7 +287,6 @@ HTML;
                 ],
                 [
                     'type' => 'code',
-                    'title' => 'Root theme attributes',
                     'content' => $rootThemeSnippet,
                     'settings' => ['language' => 'html'],
                 ],
@@ -372,12 +297,12 @@ HTML;
                         [
                             'type' => 'card',
                             'title' => 'Mode',
-                            'content' => 'Use light, dark, or auto on the root so the shipped theme runtime can manage state predictably.',
+                            'content' => '`light`, `dark`, or `auto`',
                         ],
                         [
                             'type' => 'card',
                             'title' => 'Accent and preset',
-                            'content' => 'Accent changes the color system, while preset applies a named bundle of axis values for a faster starting point.',
+                            'content' => 'Accent changes the color system. Preset applies a named bundle of axis values.',
                         ],
                     ],
                 ],
@@ -393,48 +318,21 @@ HTML;
                     'content' => 'The fastest correct path is not to browse every primitive first. Start from the page job, then inspect the surfaces and primitives that the pattern uses.',
                 ],
                 [
-                    'type' => 'grid',
-                    'settings' => ['columns' => '2', 'gap' => '4'],
+                    'type' => 'link-list',
                     'children' => [
                         [
-                            'type' => 'card',
+                            'type' => 'link-list-item',
                             'title' => 'Dashboard shell',
                             'subtitle' => 'Admin and data-heavy screens',
                             'content' => 'Use this when the page needs sidebar navigation, a topbar, and structured main content.',
-                            'children' => [
-                                [
-                                    'type' => 'cluster',
-                                    'settings' => ['gap' => '2'],
-                                    'children' => [
-                                        [
-                                            'type' => 'button_link',
-                                            'title' => 'Open pattern',
-                                            'variant' => 'secondary',
-                                            'settings' => ['url' => 'pattern-dashboard-shell.html', 'target' => '_self'],
-                                        ],
-                                    ],
-                                ],
-                            ],
+                            'url' => 'patterns.html',
                         ],
                         [
-                            'type' => 'card',
+                            'type' => 'link-list-item',
                             'title' => 'Content shell',
                             'subtitle' => 'Docs, onboarding, long-form content',
                             'content' => 'Use this when prose, hierarchy, and reading width matter more than dense application chrome.',
-                            'children' => [
-                                [
-                                    'type' => 'cluster',
-                                    'settings' => ['gap' => '2'],
-                                    'children' => [
-                                        [
-                                            'type' => 'button_link',
-                                            'title' => 'Open pattern',
-                                            'variant' => 'secondary',
-                                            'settings' => ['url' => 'pattern-content-shell.html', 'target' => '_self'],
-                                        ],
-                                    ],
-                                ],
-                            ],
+                            'url' => 'patterns.html',
                         ],
                     ],
                 ],
@@ -486,24 +384,6 @@ HTML;
                             'subtitle' => 'Test HTML before you integrate',
                             'content' => 'Use this when you already have markup, want to try AI-generated snippets, or need to preview real WebBlocks assets without wiring a full page first.',
                             'url' => '../playground/',
-                        ],
-                    ],
-                ],
-                [
-                    'type' => 'cluster',
-                    'settings' => ['gap' => '2'],
-                    'children' => [
-                        [
-                            'type' => 'button_link',
-                            'title' => 'Browse patterns',
-                            'variant' => 'primary',
-                            'settings' => ['url' => 'patterns.html', 'target' => '_self'],
-                        ],
-                        [
-                            'type' => 'button_link',
-                            'title' => 'Open playground',
-                            'variant' => 'secondary',
-                            'settings' => ['url' => '../playground/', 'target' => '_self'],
                         ],
                     ],
                 ],

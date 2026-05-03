@@ -107,6 +107,11 @@ See `docs/getting-started.md` for the first-use workflow.
 - [Renderer Contracts](docs/block-ui-renderer-contract.md)
 - [Development Workflow](DEVELOPMENT.md)
 
+## Project Layer
+
+- Project-specific console commands belong under `project/`.
+- `webblocks:sync-ui-docs-getting-started` idempotently syncs the existing WebBlocks UI docs `Getting Started` page into the CMS-managed `main` slot content for that page without duplicating its generated blocks.
+
 ## Build Artifacts
 
 - The repository keeps `dist/` referenced as release-output space in the GitHub release workflow, while application layouts and docs also reference the WebBlocks UI package `dist` bundles loaded from CDN or published package paths.

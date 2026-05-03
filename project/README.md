@@ -24,4 +24,4 @@ Use `project/` for site-specific code that must survive CMS core updates.
 
 - `project:sync-ui-docs-navigation`
 - `project:sync-ui-docs-home-main`
-- `project:sync-ui-docs-getting-started`
+- `webblocks:sync-ui-docs-getting-started` syncs the existing Getting Started page main slot with idempotent, marker-based WebBlocks UI docs content blocks.
