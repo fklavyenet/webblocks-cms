@@ -85,6 +85,32 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
+    public function RichText_seeder_upgrades_an_existing_legacy_catalog_entry_and_keeps_it_visible_on_rerun(): void
+    {
+        $this->seedFoundation();
+
+        BlockType::query()->where('slug', 'rich-text')->update([
+            'category' => 'legacy',
+            'description' => null,
+            'sort_order' => 100,
+            'status' => 'draft',
+        ]);
+
+        $this->seed(BlockTypeSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $this->assertSame(1, BlockType::query()->where('slug', 'rich-text')->count());
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'rich-text',
+            'name' => 'Rich Text',
+            'category' => 'content',
+            'status' => 'published',
+            'is_container' => false,
+            'sort_order' => 6,
+        ]);
+    }
+
+    #[Test]
     public function RichText_admin_form_loads_editor_controls_and_named_asset(): void
     {
         $this->seedFoundation();

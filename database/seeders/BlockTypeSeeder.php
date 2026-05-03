@@ -9,13 +9,7 @@ class BlockTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeSlugs = ['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'stat-card', 'alert', 'link-list', 'link-list-item', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'];
-
-        BlockType::query()
-            ->whereNotIn('slug', $activeSlugs)
-            ->update(['status' => 'draft']);
-
-        collect([
+        $productBlockTypes = [
             [
                 'name' => 'Header',
                 'slug' => 'header',
@@ -247,7 +241,19 @@ class BlockTypeSeeder extends Seeder
                 'sort_order' => 19,
                 'status' => 'published',
             ],
-        ])->each(fn (array $item) => BlockType::query()->updateOrCreate(['slug' => $item['slug']], $item));
+        ];
+
+        $activeSlugs = collect($productBlockTypes)->pluck('slug')->all();
+
+        BlockType::query()
+            ->whereNotIn('slug', $activeSlugs)
+            ->update(['status' => 'draft']);
+
+        BlockType::query()->upsert(
+            $productBlockTypes,
+            ['slug'],
+            ['name', 'category', 'description', 'source_type', 'is_system', 'is_container', 'sort_order', 'status'],
+        );
 
         collect([
             'heading' => 'Heading',

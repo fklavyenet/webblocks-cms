@@ -16,6 +16,7 @@
     $featureItemBlockType = $featureItemBlockType ?? null;
     $linkListItemBlockType = $linkListItemBlockType ?? null;
     $activeLocale = $activeLocale ?? null;
+    $isDefaultLocale = $isDefaultLocale ?? (! $activeLocale || $activeLocale->is_default);
     $statusValue = old('status', $block->exists ? $block->status : ($block->status ?: 'published'));
 @endphp
 
@@ -78,6 +79,8 @@
                             'columnItemBlockType' => $columnItemBlockType,
                             'featureItemBlockType' => $featureItemBlockType,
                             'linkListItemBlockType' => $linkListItemBlockType,
+                            'activeLocale' => $activeLocale,
+                            'isDefaultLocale' => $isDefaultLocale,
                         ])
                     </div>
                 </div>

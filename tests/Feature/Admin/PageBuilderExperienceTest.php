@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -186,6 +187,43 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Sidebar Nav Item');
         $response->assertDontSee('Sidebar Nav Group');
         $response->assertDontSee('Hero');
+    }
+
+    #[Test]
+    public function code_block_editor_renders_without_missing_locale_flags(): void
+    {
+        $this->seedFoundation();
+
+        $codeType = BlockType::query()->updateOrCreate(
+            ['slug' => 'code'],
+            [
+                'name' => 'Code',
+                'category' => 'content',
+                'description' => 'Legacy code block for translated snippets.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 20,
+                'status' => 'published',
+            ],
+        );
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_id' => $codeType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee('Undefined variable', false);
+        $response->assertSee('Add Block: Code');
+        $response->assertSee('Syntax Language');
+        $this->assertFalse(Str::contains((string) $response->getContent(), 'Undefined variable $isDefaultLocale'));
     }
 
     #[Test]
