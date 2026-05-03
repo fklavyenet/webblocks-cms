@@ -25,6 +25,14 @@ class SystemBackupRestoreCommandTest extends TestCase
             ->with('demo.zip')
             ->andReturn([
                 'display_name' => 'archive demo.zip',
+                'backup_summary' => [
+                    'created_at' => '2026-05-03T17:47:15+00:00',
+                    'backup_id' => 49,
+                    'backup_type' => 'manual',
+                    'app_version' => '1.7.0',
+                    'restored_parts' => ['database', 'uploads'],
+                    'source_backup_status' => 'completed',
+                ],
             ]);
         $mock->shouldNotReceive('restoreReference');
 
@@ -33,6 +41,13 @@ class SystemBackupRestoreCommandTest extends TestCase
         $this->artisan(SystemBackupRestoreCommand::class, ['backup' => 'demo.zip'])
             ->expectsOutput('About to restore archive demo.zip.')
             ->expectsOutput('This will replace the current database and restore storage/app/public from the backup archive.')
+            ->expectsOutput('Archive summary:')
+            ->expectsOutput('- Created at: 2026-05-03T17:47:15+00:00')
+            ->expectsOutput('- Backup ID: 49')
+            ->expectsOutput('- Backup type: manual')
+            ->expectsOutput('- App version: 1.7.0')
+            ->expectsOutput('- Includes: database + uploads')
+            ->expectsOutput('- Source backup record status: completed')
             ->expectsConfirmation('Continue with this restore?', 'no')
             ->expectsOutput('Restore cancelled.')
             ->assertExitCode(1);
@@ -60,6 +75,14 @@ class SystemBackupRestoreCommandTest extends TestCase
             ->with('12')
             ->andReturn([
                 'display_name' => 'backup #12 (demo.zip)',
+                'backup_summary' => [
+                    'created_at' => '2026-05-03T17:47:15+00:00',
+                    'backup_id' => 12,
+                    'backup_type' => 'manual',
+                    'app_version' => '1.7.0',
+                    'restored_parts' => ['database', 'uploads'],
+                    'source_backup_status' => 'completed',
+                ],
             ]);
         $mock->shouldReceive('restoreReference')
             ->once()
@@ -85,11 +108,47 @@ class SystemBackupRestoreCommandTest extends TestCase
         $this->artisan(SystemBackupRestoreCommand::class, ['backup' => '12', '--force' => true])
             ->expectsOutput('About to restore backup #12 (demo.zip).')
             ->expectsOutput('This will replace the current database and restore storage/app/public from the backup archive.')
+            ->expectsOutput('Archive summary:')
+            ->expectsOutput('- Created at: 2026-05-03T17:47:15+00:00')
+            ->expectsOutput('- Backup ID: 12')
+            ->expectsOutput('- Backup type: manual')
+            ->expectsOutput('- App version: 1.7.0')
+            ->expectsOutput('- Includes: database + uploads')
+            ->expectsOutput('- Source backup record status: completed')
             ->expectsOutput('Pre-restore safety backup created: #'.$safetyBackup->id.' '.$safetyBackup->archive_filename)
             ->expectsOutput('Archive validation passed.')
             ->expectsOutput('Simulated database restore.')
             ->expectsOutput('Restore completed from demo.zip for database + uploads.')
             ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function command_requires_archive_summary_confirmation_without_force(): void
+    {
+        $mock = Mockery::mock(SystemBackupRestoreManager::class);
+        $mock->shouldReceive('describeRestoreSource')
+            ->once()
+            ->with('demo.zip')
+            ->andReturn([
+                'display_name' => 'archive demo.zip',
+                'backup_summary' => [
+                    'created_at' => '2026-05-03T17:47:15+00:00',
+                    'backup_id' => 49,
+                    'backup_type' => 'manual',
+                    'app_version' => '1.7.0',
+                    'restored_parts' => ['database', 'uploads'],
+                    'source_backup_status' => 'completed',
+                ],
+            ]);
+        $mock->shouldNotReceive('restoreReference');
+
+        $this->app->instance(SystemBackupRestoreManager::class, $mock);
+
+        $this->artisan(SystemBackupRestoreCommand::class, ['backup' => 'demo.zip'])
+            ->expectsConfirmation('Continue with this restore?', 'yes')
+            ->expectsConfirmation('Does this archive summary match the backup you intend to restore?', 'no')
+            ->expectsOutput('Restore cancelled.')
+            ->assertExitCode(1);
     }
 
     protected function tearDown(): void

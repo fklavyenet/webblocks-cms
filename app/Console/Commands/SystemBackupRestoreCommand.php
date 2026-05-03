@@ -31,7 +31,27 @@ class SystemBackupRestoreCommand extends Command
         $this->line('About to restore '.$target['display_name'].'.');
         $this->line('This will replace the current database and restore storage/app/public from the backup archive.');
 
+        $summary = (array) ($target['backup_summary'] ?? []);
+        $restoredParts = collect($summary['restored_parts'] ?? [])->filter()->implode(' + ');
+
+        $this->line('Archive summary:');
+        $this->line('- Created at: '.($summary['created_at'] ?? 'unknown'));
+        $this->line('- Backup ID: '.($summary['backup_id'] ?? 'unknown'));
+        $this->line('- Backup type: '.($summary['backup_type'] ?? 'unknown'));
+        $this->line('- App version: '.($summary['app_version'] ?? 'unknown'));
+        $this->line('- Includes: '.($restoredParts !== '' ? $restoredParts : 'unknown'));
+
+        if (! empty($summary['source_backup_status'])) {
+            $this->line('- Source backup record status: '.$summary['source_backup_status']);
+        }
+
         if (! $this->option('force') && ! $this->confirm('Continue with this restore?', false)) {
+            $this->warn('Restore cancelled.');
+
+            return self::FAILURE;
+        }
+
+        if (! $this->option('force') && ! $this->confirm('Does this archive summary match the backup you intend to restore?', false)) {
             $this->warn('Restore cancelled.');
 
             return self::FAILURE;

@@ -23,7 +23,22 @@ class SystemBackupRestoreManager
 
     public function describeRestoreSource(string $reference): array
     {
-        return $this->resolveRestoreSource($reference);
+        $target = $this->resolveRestoreSource($reference);
+        $inspection = $this->archiveInspector->inspect(
+            Storage::disk($target['archive_disk'])->path($target['archive_path'])
+        );
+
+        return $target + [
+            'inspection' => $inspection,
+            'backup_summary' => [
+                'created_at' => (string) ($inspection->manifest['created_at'] ?? 'unknown'),
+                'backup_id' => $inspection->manifest['backup_id'] ?? null,
+                'backup_type' => $inspection->manifest['backup_type'] ?? null,
+                'app_version' => $inspection->manifest['app_version'] ?? null,
+                'restored_parts' => $inspection->restoredParts(),
+                'source_backup_status' => $target['backup']?->status,
+            ],
+        ];
     }
 
     public function restoreReference(string $reference, ?int $triggeredByUserId = null): BackupRestoreResult
