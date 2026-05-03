@@ -473,6 +473,9 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 ## Backup Manager
 
 - The Backups screen supports both `Create backup` and `Upload backup` actions.
+- The Backups index header keeps the primary `Create backup` action alongside a single `Upload backup` action.
+- The recommendation card focuses on creating a fresh backup before risky changes and does not duplicate upload or cancel controls.
+- `System Updates` remains available through `Maintenance > Update` instead of as a duplicate action on the Backups screen.
 - Backup list actions stay visible for every row. Running backups keep a visible delete action in a disabled state so the UI stays consistent and clearly shows that deletion is blocked while a backup is still active.
 - `Upload backup` accepts a previously downloaded WebBlocks CMS backup archive from this backup system and validates the archive before it is registered.
 - Uploaded backup archives are useful for disaster recovery, restoring a previously downloaded backup, or moving a backup into a local DDEV install for debugging.
@@ -485,6 +488,7 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - When the existing restore flow runs, it validates the selected archive first and only creates a fresh safety backup before applying a valid archive.
 - MySQL and MariaDB backup creation uses raw SQL stdout from either direct `mysqldump` or `ddev exec --raw -- mysqldump` style execution. Restore feeds validated SQL content back through stdin instead of passing command text as SQL.
 - Running backups that never finish are automatically marked as failed when the Backups screen loads once they are older than the configured stale threshold.
+- When a backup does not finish in time, the Backups screen explains that it was marked as failed and guides the user to delete the failed record or create a fresh backup.
 - Failed backups can be safely deleted from the Backups list, including their stored archive file when one exists.
 - Interrupted or stuck running backup records can also be deleted from the Backups list with explicit confirmation when you know no backup process is still active.
 - This running-backup cleanup path is intended for local, test, or interrupted runs and should only be used after confirming the backup job is no longer active.

@@ -41,7 +41,66 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('Backups');
         $response->assertSee('Create backup');
         $response->assertSee('Upload backup');
+        $response->assertDontSee('System Updates');
+        $response->assertDontSee('>Cancel<', false);
         $response->assertSee('No backup history yet');
+    }
+
+    #[Test]
+    public function backups_index_has_exactly_one_upload_backup_action_and_no_duplicate_system_updates_control(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+        $content = $response->getContent();
+
+        $response->assertOk();
+        $response->assertSee('Upload backup');
+        $response->assertSee(route('admin.system.backups.upload'), false);
+        $this->assertStringContainsString('<div class="wb-page-actions">', $content);
+        $this->assertStringContainsString(route('admin.system.backups.upload'), $content);
+        $this->assertStringNotContainsString('<div class="wb-page-actions"><div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.index'), $content);
+        $this->assertSame(1, substr_count($content, 'Upload backup'));
+    }
+
+    #[Test]
+    public function recommendation_card_only_shows_create_backup_when_a_recent_backup_is_not_available(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+        $response->assertSee('Backup Recommendation');
+        $this->assertSame(2, substr_count($response->getContent(), 'Create backup'));
+        $this->assertSame(1, substr_count($response->getContent(), 'Upload backup'));
+        $response->assertDontSee('>Cancel<', false);
+    }
+
+    #[Test]
+    public function recommendation_card_hides_duplicate_create_action_when_a_recent_successful_backup_exists(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/05/03/recent.zip',
+            'archive_filename' => 'recent.zip',
+            'started_at' => now()->subMinutes(5),
+            'finished_at' => now()->subMinutes(4),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+        $response->assertSee('Recent backup available');
+        $this->assertSame(1, substr_count($response->getContent(), 'Create backup'));
+        $this->assertSame(1, substr_count($response->getContent(), 'Upload backup'));
     }
 
     #[Test]
@@ -545,10 +604,15 @@ class SystemBackupsTest extends TestCase
 
         $this->assertSame(SystemBackup::STATUS_FAILED, $backup->status);
         $this->assertNotNull($backup->finished_at);
-        $this->assertSame('Backup failed after remaining in a stale running state.', $backup->summary);
-        $this->assertSame('Backup was marked as failed because it stayed in a running state too long.', $backup->error_message);
+        $this->assertSame('This backup did not finish in time and was marked as failed.', $backup->summary);
+        $this->assertSame('This backup did not finish in time and was marked as failed. You can delete this failed backup record or create a fresh backup.', $backup->error_message);
         $this->assertStringContainsString('Backup started.', (string) $backup->output);
-        $this->assertStringContainsString('Marked as failed due to stale running state.', (string) $backup->output);
+        $this->assertStringContainsString('This backup did not finish in time and was marked as failed.', (string) $backup->output);
+
+        $page = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $page->assertSee('Latest failure');
+        $page->assertSee('This backup did not finish in time and was marked as failed. You can delete this failed backup record or create a fresh backup.');
     }
 
     #[Test]

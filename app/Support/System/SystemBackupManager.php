@@ -171,15 +171,15 @@ class SystemBackupManager
 
             $output = trim(implode(PHP_EOL.PHP_EOL, array_filter([
                 $backup->output,
-                'Marked as failed due to stale running state.',
+                'This backup did not finish in time and was marked as failed.',
             ])));
 
             $backup->update([
                 'status' => SystemBackup::STATUS_FAILED,
-                'summary' => 'Backup failed after remaining in a stale running state.',
+                'summary' => 'This backup did not finish in time and was marked as failed.',
                 'finished_at' => now(),
                 'output' => $output,
-                'error_message' => $backup->error_message ?: 'Backup was marked as failed because it stayed in a running state too long.',
+                'error_message' => $backup->error_message ?: 'This backup did not finish in time and was marked as failed. You can delete this failed backup record or create a fresh backup.',
             ]);
         }
     }

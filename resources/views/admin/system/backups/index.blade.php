@@ -5,7 +5,7 @@
         'title' => 'Backups',
         'description' => 'Create a local backup before updates or other risky maintenance, then review history, upload a downloaded backup archive, and restore through the normal backup flow.',
         'count' => $backups->total(),
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.index').'" class="wb-btn wb-btn-secondary">System Updates</a><a href="'.route('admin.system.backups.upload').'" class="wb-btn wb-btn-secondary">Upload backup</a></div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><form method="POST" action="'.route('admin.system.backups.store').'">'.csrf_field().'<button type="submit" class="wb-btn wb-btn-primary"'.(! $backupTableExists ? ' disabled' : '').'>Create backup</button></form><a href="'.route('admin.system.backups.upload').'" class="wb-btn wb-btn-secondary">Upload backup</a></div>',
     ])
 
     @include('admin.partials.flash')
@@ -78,16 +78,14 @@
 
                     <div class="wb-text-sm wb-text-muted">Each backup archive includes a database dump, the current `storage/app/public` uploads snapshot, and a manifest. Uploaded backup archives are validated before they are registered. This full-system restore flow overwrites the current database and uploaded files, is different from Export / Import, and reuses the same restore path that creates a fresh safety backup first.</div>
 
-                    <form method="POST" action="{{ route('admin.system.backups.store') }}" class="wb-stack wb-gap-3">
-                        @csrf
-                        <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                    @if (! $freshness['has_recent_successful_backup'])
+                        <form method="POST" action="{{ route('admin.system.backups.store') }}" class="wb-stack wb-gap-3">
+                            @csrf
                             <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
                                 <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
-                                <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">Upload backup</a>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

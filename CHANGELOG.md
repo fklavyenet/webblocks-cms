@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.
+- Simplify the Backups screen actions by removing duplicate upload, cancel, and System Updates controls, and clarify failed stale backup messaging.
 
 ## 1.6.0
 
