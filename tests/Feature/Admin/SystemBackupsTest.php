@@ -8,8 +8,11 @@ use App\Models\SystemBackup;
 use App\Models\SystemBackupRestore;
 use App\Models\User;
 use App\Support\Sites\ExportImport\SiteTransferPackage;
+use App\Support\System\BackupRestoreInspection;
+use App\Support\System\BackupRestoreResult;
 use App\Support\System\DatabaseDumpWriter;
 use App\Support\System\SystemBackupArchivePackage;
+use App\Support\System\SystemBackupRestoreManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -227,6 +230,80 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('action="'.route('admin.system.backups.restores.destroy', [$backup, $restore]).'"', false);
         $response->assertSee('name="_method" value="DELETE"', false);
         $response->assertSee('Delete this restore history entry? This will not delete any backup archive.');
+    }
+
+    #[Test]
+    public function successful_restore_redirects_to_backups_index_with_success_flash_even_if_original_backup_record_disappears(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/restore-source.zip',
+            'archive_filename' => 'restore-source.zip',
+            'started_at' => now()->subMinute(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $mock = Mockery::mock(SystemBackupRestoreManager::class);
+        $mock->shouldReceive('restoreFromBackup')
+            ->once()
+            ->withArgs(fn (SystemBackup $passedBackup, ?int $userId): bool => (int) $passedBackup->id === (int) $backup->id && $userId === $user->id)
+            ->andReturnUsing(function () use ($backup): BackupRestoreResult {
+                $backup->delete();
+
+                return $this->makeRestoreResult($backup);
+            });
+
+        $this->app->instance(SystemBackupRestoreManager::class, $mock);
+
+        $response = $this->actingAs($user)
+            ->followingRedirects()
+            ->post(route('admin.system.backups.restore', $backup), [
+                'acknowledge_restore_risk' => '1',
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('Backups');
+        $response->assertSee('System restore completed successfully.');
+        $response->assertDontSee('Restore Failed');
+        $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
+    }
+
+    #[Test]
+    public function backup_detail_route_still_works_for_existing_backup_records(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => '2026/04/20/existing-detail.zip',
+            'archive_filename' => 'existing-detail.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $this->createBackupArchive($backup->archive_path, [
+            'manifest.json' => json_encode($this->backupManifest(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.show', $backup));
+
+        $response->assertOk();
+        $response->assertSee('Restore backup');
+        $response->assertSee(route('admin.system.backups.restore', $backup), false);
+        $response->assertSee('Source filename:');
     }
 
     #[Test]
@@ -824,6 +901,7 @@ class SystemBackupsTest extends TestCase
 
         $page->assertSee('Restore Failed');
         $page->assertSee('Backup archive database/database.sql contains command output instead of SQL.');
+        $page->assertDontSee('System restore completed successfully.');
         $page->assertDontSee('Validation Error');
     }
 
@@ -912,5 +990,24 @@ class SystemBackupsTest extends TestCase
         $this->temporaryDirectories[] = $path;
 
         return $path;
+    }
+
+    private function makeRestoreResult(SystemBackup $backup): BackupRestoreResult
+    {
+        return new BackupRestoreResult(
+            sourceBackup: $backup,
+            sourceArchivePath: (string) $backup->archive_path,
+            sourceArchiveFilename: (string) $backup->archive_filename,
+            inspection: new BackupRestoreInspection(
+                manifest: $this->backupManifest(),
+                includesDatabase: true,
+                includesUploads: true,
+                databaseSqlPath: 'database/database.sql',
+                uploadsRootPath: 'uploads/public',
+            ),
+            safetyBackup: null,
+            output: ['Restore completed.'],
+            restoreRecord: null,
+        );
     }
 }

@@ -172,6 +172,68 @@ class SystemBackupRestoreManagerTest extends TestCase
         $this->assertSame('Backup archive database/database.sql contains command output instead of SQL.', $restoreRecord->error_message);
     }
 
+    #[Test]
+    public function completed_restore_keeps_succeeding_when_source_backup_record_disappears_during_database_overwrite(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        $publicRoot = $this->makeTemporaryDirectory('restore-delete-source-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+
+        $sourceBackup = $this->createBackupRecord('2026/04/20/source-deleted-during-restore.zip');
+        $safetyBackup = $this->createBackupRecord('2026/04/20/safety-for-deleted-source.zip', SystemBackup::TYPE_RESTORE_SAFETY);
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => true,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+            'uploads/public/media/restored.txt' => 'restored file',
+        ]);
+
+        $fakeBackupManager = new FakeSystemBackupManager($safetyBackup);
+        $fakeDatabaseRestoreRunner = new class($sourceBackup) extends DatabaseRestoreRunner
+        {
+            public array $restoredSqlPaths = [];
+
+            public function __construct(
+                private readonly SystemBackup $sourceBackup,
+            ) {}
+
+            public function restoreFrom(string $sqlPath, array &$output = []): array
+            {
+                $this->restoredSqlPaths[] = $sqlPath;
+                $this->sourceBackup->delete();
+                $output[] = 'Simulated database restore from '.basename($sqlPath).' with source backup removal.';
+
+                return [
+                    'driver' => 'sqlite',
+                    'strategy' => 'fake',
+                    'connection' => 'testing',
+                ];
+            }
+        };
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        $result = app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup, $user->id);
+
+        $this->assertCount(1, $fakeDatabaseRestoreRunner->restoredSqlPaths);
+        $this->assertSame(1, $fakeMaintenanceRunner->runCalls);
+        $this->assertNotNull($result->restoreRecord);
+        $this->assertNull($result->restoreRecord?->source_backup_id);
+        $this->assertSame($safetyBackup->id, $result->restoreRecord?->safety_backup_id);
+        $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $result->restoreRecord?->status);
+        $this->assertDatabaseMissing('system_backups', ['id' => $sourceBackup->id]);
+    }
+
     private function createBackupRecord(string $archivePath, string $type = SystemBackup::TYPE_MANUAL): SystemBackup
     {
         return SystemBackup::query()->create([

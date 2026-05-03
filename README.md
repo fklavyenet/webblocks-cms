@@ -479,6 +479,8 @@ The slot editor uses a modal block type picker. Editors can click Add Block, sea
 - Backup upload validation requires a backup `manifest.json`, `database/database.sql`, safe archive paths, rejects site export/import packages, and rejects empty or obvious non-SQL dump content before restore.
 - Uploaded backups are registered as normal backup records, appear in the existing Backups list and detail page, and reuse the same restore flow as locally created backups.
 - Backup restore is a full-system restore that overwrites the current database and uploaded files.
+- After a successful restore, the CMS returns to the Backups index instead of the original backup detail URL because the restored database may no longer contain that pre-restore backup record ID.
+- Judge restore success by the success flash on `/admin/system/backups` and the restored content, not by whether the old pre-restore backup record still exists after the database overwrite.
 - Backup restore is different from Export / Import, which creates a new site from a site package instead of replacing the current install.
 - When the existing restore flow runs, it validates the selected archive first and only creates a fresh safety backup before applying a valid archive.
 - MySQL and MariaDB backup creation uses raw SQL stdout from either direct `mysqldump` or `ddev exec --raw -- mysqldump` style execution. Restore feeds validated SQL content back through stdin instead of passing command text as SQL.

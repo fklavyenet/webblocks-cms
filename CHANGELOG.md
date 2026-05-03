@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.
+
 ## 1.6.0
 
 - Improve admin dashboard shortcuts and add System Updates quick action.

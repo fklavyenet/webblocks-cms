@@ -113,11 +113,11 @@ class SystemBackupController extends Controller
     public function restore(SystemBackup $backup, RunSystemBackupRestoreRequest $request): RedirectResponse
     {
         try {
-            $result = $this->systemBackupRestoreManager->restoreFromBackup($backup, $request->user()?->id);
+            $this->systemBackupRestoreManager->restoreFromBackup($backup, $request->user()?->id);
 
             return redirect()
-                ->route('admin.system.backups.show', $backup)
-                ->with('status', $result->summary().' Pre-restore safety backup: #'.$result->safetyBackup?->id.' '.$result->safetyBackup?->archive_filename);
+                ->route('admin.system.backups.index')
+                ->with('status', 'System restore completed successfully.');
         } catch (Throwable $throwable) {
             return redirect()
                 ->route('admin.system.backups.show', $backup)
