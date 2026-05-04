@@ -419,6 +419,7 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
 
         $response->assertOk();
+        $response->assertSee('Block Types');
         $response->assertSee('Header');
         $response->assertSee('Plain Text');
         $response->assertSee('Section');
@@ -431,6 +432,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Stat Card');
         $response->assertSee('Alert');
         $response->assertSee('Rich Text');
+        $response->assertSee('data-block-type-slug="rich-text"', false);
         $response->assertSee('Link List');
         $response->assertSee('Link List Item');
         $response->assertSee('Breadcrumb');
@@ -440,6 +442,50 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Sidebar Nav Item');
         $response->assertDontSee('Sidebar Nav Group');
         $response->assertDontSee('Hero');
+
+        $content = $response->getContent();
+        $this->assertNotFalse($content);
+        $tableStart = strpos($content, '<tbody>');
+        $tableEnd = strpos($content, '</tbody>');
+        $this->assertNotFalse($tableStart);
+        $this->assertNotFalse($tableEnd);
+        $tableBody = substr($content, $tableStart, $tableEnd - $tableStart);
+        $this->assertStringContainsString('data-block-type-slug="rich-text"', $tableBody);
+        $this->assertStringContainsString('>Rich Text</strong>', $tableBody);
+    }
+
+    #[Test]
+    public function slot_block_picker_real_html_includes_rich_text_and_code_rows_when_both_are_published(): void
+    {
+        $this->seedFoundation();
+
+        BlockType::query()->updateOrCreate(
+            ['slug' => 'code'],
+            [
+                'name' => 'Code',
+                'category' => 'legacy',
+                'description' => 'Legacy code block for translated snippets.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 20,
+                'status' => 'published',
+            ],
+        );
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Block Types');
+        $response->assertSee('Rich Text');
+        $response->assertSee('Plain Text');
+        $response->assertSee('Code');
+        $response->assertSee('data-block-type-slug="rich-text"', false);
+        $response->assertSee('data-block-type-slug="code"', false);
     }
 
     #[Test]
@@ -1752,7 +1798,9 @@ class PageBuilderExperienceTest extends TestCase
         $contentResponse->assertOk();
         $contentResponse->assertSee('<option value="content" selected>Content</option>', false);
         $contentResponse->assertSee('Rich Text');
+        $contentResponse->assertSee('data-block-type-slug="rich-text"', false);
         $contentResponse->assertDontSee('Section');
+        $contentResponse->assertDontSee('Grid');
 
         $layoutResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
             $page,
@@ -1776,6 +1824,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $combinedResponse->assertOk();
         $combinedResponse->assertSee('Rich Text');
+        $combinedResponse->assertSee('data-block-type-slug="rich-text"', false);
         $combinedResponse->assertSee('<option value="content" selected>Content</option>', false);
         $combinedResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $combinedResponse->assertDontSee('Plain Text');
@@ -2396,10 +2445,12 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Showing block types allowed inside Card.');
+        $response->assertDontSee('data-block-type-slug="rich-text"', false);
         $response->assertSee('>Cluster</strong>', false);
         $response->assertSee('>Button Link</strong>', false);
         $response->assertDontSee('>Header</strong>', false);
         $response->assertDontSee('>Plain Text</strong>', false);
+        $response->assertDontSee('>Rich Text</strong>', false);
         $response->assertDontSee('>Content Header</strong>', false);
         $response->assertDontSee('>Grid</strong>', false);
     }

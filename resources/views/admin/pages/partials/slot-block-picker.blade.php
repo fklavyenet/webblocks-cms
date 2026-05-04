@@ -195,7 +195,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($matchingBlockTypes as $blockType)
-                                        <tr>
+                                        <tr data-block-type-slug="{{ $blockType->slug }}">
                                             <td>
                                                 <a
                                                     href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_category' => $pickerCategory, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
