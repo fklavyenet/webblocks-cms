@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageRevision;
+use App\Models\PageSlot;
 use App\Models\User;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
@@ -145,7 +146,7 @@ class PageRevisionManager
                 ->map(fn ($slot) => [
                     'slot_type_id' => $slot->slot_type_id,
                     'sort_order' => $slot->sort_order,
-                    'settings' => $slot->getRawOriginal('settings'),
+                    'settings' => PageSlot::sanitizeSettings($slot->settings),
                 ])
                 ->all(),
             'blocks' => $blocks
@@ -253,7 +254,7 @@ class PageRevisionManager
             $page->slots()->create([
                 'slot_type_id' => $slot['slot_type_id'],
                 'sort_order' => $slot['sort_order'],
-                'settings' => $slot['settings'] ?? null,
+                'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
             ]);
         }
 

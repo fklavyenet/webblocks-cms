@@ -67,19 +67,16 @@ class PublicModeCompatibilityTest extends TestCase
             'page_id' => $page->id,
             'slot_type_id' => $headerType->id,
             'sort_order' => 0,
-            'settings' => ['wrapper_preset' => 'docs-navbar', 'wrapper_element' => 'header'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $mainType->id,
             'sort_order' => 1,
-            'settings' => ['wrapper_preset' => 'docs-main', 'wrapper_element' => 'main'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $sidebarType->id,
             'sort_order' => 2,
-            'settings' => ['wrapper_preset' => 'docs-sidebar', 'wrapper_element' => 'aside'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,

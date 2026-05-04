@@ -72,7 +72,7 @@ class PublicGettingStartedDocsPageTest extends TestCase
         $this->assertSame($firstBlockCount, $page->blocks()->count());
         $this->assertSame($homeBlockCountBefore, $home->fresh()->blocks()->count());
         $this->assertSame('docs', $page->publicShellPreset());
-        $this->assertSame([null, null, null], $page->slots->sortBy('sort_order')->pluck('settings.wrapper_preset')->values()->all());
+        $this->assertSame([null, null, null], $page->slots->sortBy('sort_order')->pluck('settings')->values()->all());
         $this->assertSame(NavigationItem::MENU_DOCS, $home->fresh()->blocks()->where('type', 'sidebar-navigation')->first()?->sidebarNavigationMenuKey());
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $home->site_id,
@@ -111,19 +111,16 @@ class PublicGettingStartedDocsPageTest extends TestCase
             'page_id' => $page->id,
             'slot_type_id' => $headerSlotType->id,
             'sort_order' => 1,
-            'settings' => ['wrapper_preset' => 'docs-navbar'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $mainSlotType->id,
             'sort_order' => 2,
-            'settings' => ['wrapper_preset' => 'docs-main'],
         ]);
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $sidebarSlotType->id,
             'sort_order' => 3,
-            'settings' => ['wrapper_preset' => 'docs-sidebar'],
         ]);
 
         Block::query()->create([

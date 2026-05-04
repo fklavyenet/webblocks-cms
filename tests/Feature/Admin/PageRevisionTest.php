@@ -492,4 +492,53 @@ class PageRevisionTest extends TestCase
             ->assertOk()
             ->assertSee('Updated content');
     }
+
+    #[Test]
+    public function revision_restore_strips_legacy_slot_wrapper_settings_from_snapshot_data(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $main = $this->slotType('main', 'Main', 1);
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'revision-slot-settings');
+
+        $revision = PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'created_by' => $user->id,
+            'label' => 'Legacy slot settings snapshot',
+            'reason' => 'Seeded for restore sanitization.',
+            'snapshot' => [
+                'schema_version' => 1,
+                'page' => [
+                    'title' => 'Revision Slot Settings',
+                    'slug' => 'revision-slot-settings',
+                    'page_type' => $page->page_type,
+                    'page_type_id' => $page->page_type_id,
+                    'layout_id' => $page->layout_id,
+                    'status' => $page->status,
+                    'settings' => $page->getRawOriginal('settings'),
+                    'published_at' => null,
+                    'review_requested_at' => null,
+                ],
+                'translations' => [],
+                'slots' => [[
+                    'slot_type_id' => $main->id,
+                    'sort_order' => 0,
+                    'settings' => [
+                        'wrapper_element' => 'section',
+                        'wrapper_preset' => 'docs-main',
+                        'custom' => 'keep-me',
+                    ],
+                ]],
+                'blocks' => [],
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('admin.pages.revisions.restore', [$page, $revision]))
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $restoredSlot = $page->fresh()->slots()->firstOrFail();
+        $this->assertSame(['custom' => 'keep-me'], $restoredSlot->settings);
+    }
 }

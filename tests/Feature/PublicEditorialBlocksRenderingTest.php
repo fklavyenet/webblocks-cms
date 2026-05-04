@@ -604,6 +604,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
                 'wrapper_preset' => 'plain',
             ],
         ]);
+        $this->assertNull($slot->fresh()->settings);
 
         Block::query()->create([
             'page_id' => $page->id,
@@ -655,6 +656,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'sort_order' => 0,
             'settings' => ['wrapper_preset' => 'docs-navbar', 'wrapper_element' => 'nav'],
         ]);
+        $this->assertNull($page->slots()->first()->settings);
 
         Block::query()->create([
             'page_id' => $page->id,
@@ -705,6 +707,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'sort_order' => 0,
             'settings' => ['wrapper_preset' => 'docs-sidebar', 'wrapper_element' => 'aside'],
         ]);
+        $this->assertNull($page->slots()->first()->settings);
 
         Block::query()->create([
             'page_id' => $page->id,
@@ -757,6 +760,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'sort_order' => 0,
             'settings' => ['wrapper_preset' => 'docs-main', 'wrapper_element' => 'main'],
         ]);
+        $this->assertNull($page->slots()->first()->settings);
 
         Block::query()->create([
             'page_id' => $page->id,
@@ -822,6 +826,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'sort_order' => 2,
             'settings' => ['wrapper_preset' => 'docs-main', 'wrapper_element' => 'main'],
         ]);
+        $this->assertSame([null, null, null], $page->fresh()->slots()->orderBy('sort_order')->get()->pluck('settings')->values()->all());
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => SlotType::query()->updateOrCreate(['slug' => 'footer'], ['name' => 'Footer', 'status' => 'published', 'sort_order' => 4, 'is_system' => true])->id,

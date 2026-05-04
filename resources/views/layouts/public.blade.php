@@ -33,7 +33,7 @@
             $slotCollection = collect($slots ?? []);
             $renderSlot = function (array $slot) use ($page) {
                 $wrapper = is_array($slot['wrapper'] ?? null) ? $slot['wrapper'] : [];
-                $tag = $wrapper['element'] ?? ($slot['wrapper_element'] ?? 'div');
+                $tag = $wrapper['element'] ?? 'div';
                 $attributes = collect($wrapper['attributes'] ?? [])
                     ->map(fn ($value, $name) => e((string) $name).'="'.e((string) $value).'"')
                     ->values()

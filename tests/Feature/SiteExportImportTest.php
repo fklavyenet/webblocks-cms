@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SiteExport;
 use App\Support\Pages\PublicPagePresenter;
@@ -314,6 +315,60 @@ class SiteExportImportTest extends TestCase
         $this->expectExceptionMessage('Archive entry path is invalid');
 
         app(SiteImportManager::class)->inspectUpload(new UploadedFile($path, 'dangerous.zip', 'application/zip', null, true));
+    }
+
+    #[Test]
+    public function import_strips_legacy_slot_wrapper_settings_from_page_slots(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+
+        $archivePath = Storage::disk('site-exports')->path($siteExport->archive_path);
+        $archive = new ZipArchive;
+        $archive->open($archivePath);
+        $pageSlots = json_decode((string) $archive->getFromName('data/page_slots.json'), true);
+        $pageSlots[0]['settings'] = [
+            'wrapper_element' => 'section',
+            'wrapper_preset' => 'docs-main',
+            'custom' => 'keep-me',
+        ];
+        $tempPath = Storage::disk('site-transfers')->path('site-export-slot-wrapper-cleanup.zip');
+        if (file_exists($tempPath)) {
+            unlink($tempPath);
+        }
+        $rewritten = new ZipArchive;
+        $rewritten->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        for ($i = 0; $i < $archive->numFiles; $i++) {
+            $entryName = $archive->getNameIndex($i);
+            $contents = $archive->getFromIndex($i);
+            if ($entryName === 'data/page_slots.json') {
+                $contents = json_encode($pageSlots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            }
+            $rewritten->addFromString($entryName, (string) $contents);
+        }
+        $rewritten->close();
+        $archive->close();
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile($tempPath, 'site-export-slot-wrapper-cleanup.zip', 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported UI Docs',
+            'site_handle' => 'imported-ui-docs-clean',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedSlot = PageSlot::query()
+            ->whereHas('page', fn ($query) => $query->where('site_id', $importedSite->id))
+            ->orderBy('id')
+            ->firstOrFail();
+
+        $this->assertSame(['custom' => 'keep-me'], $importedSlot->settings);
+
+        @unlink($tempPath);
     }
 
     #[Test]

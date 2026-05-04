@@ -316,7 +316,7 @@ class ImportDataMapper
                 'page_id' => $pageId,
                 'slot_type_id' => $slotTypeId,
                 'sort_order' => $slotData['sort_order'] ?? 0,
-                'settings' => $slotData['settings'] ?? null,
+                'settings' => PageSlot::sanitizeSettings($slotData['settings'] ?? null),
                 'created_at' => $slotData['created_at'] ?? null,
                 'updated_at' => $slotData['updated_at'] ?? null,
             ]);

@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -690,32 +691,9 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_settings_update_route_is_harmless_and_does_not_change_saved_wrapper_settings(): void
+    public function slot_settings_update_route_is_removed(): void
     {
-        $this->seedFoundation();
-
-        $user = User::factory()->superAdmin()->create();
-        $main = $this->slotType('main', 'Main', 1);
-        [$page, $pageSlot] = $this->pageWithSlot($main);
-        $pageSlot->update([
-            'settings' => [
-                'wrapper_element' => 'section',
-                'wrapper_preset' => 'docs-main',
-            ],
-        ]);
-
-        $response = $this->actingAs($user)
-            ->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
-                'wrapper_element' => 'script',
-                'wrapper_preset' => 'custom-class-hack',
-            ]);
-
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $response->assertSessionHas('status', 'Slot wrapper settings are resolved automatically from the page shell and slot name.');
-
-        $pageSlot->refresh();
-        $this->assertSame('section', $pageSlot->settings['wrapper_element'] ?? null);
-        $this->assertSame('docs-main', $pageSlot->settings['wrapper_preset'] ?? null);
+        $this->assertFalse(Route::has('admin.pages.slots.settings.update'));
     }
 
     #[Test]

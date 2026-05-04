@@ -51,8 +51,6 @@ class PublicPagePresenter
         return [
             'slug' => $slug,
             'name' => $slot->slotType?->name ?? str($slug)->headline()->toString(),
-            'wrapper_preset' => $wrapper['preset'],
-            'wrapper_element' => $wrapper['element'],
             'wrapper' => [
                 'preset' => $wrapper['preset'],
                 'element' => $wrapper['element'],

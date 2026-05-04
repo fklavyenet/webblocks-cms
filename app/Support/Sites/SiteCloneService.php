@@ -255,7 +255,7 @@ class SiteCloneService
                     'page_id' => $newPage->id,
                     'slot_type_id' => $slot->slot_type_id,
                     'sort_order' => $slot->sort_order,
-                    'settings' => $slot->getRawOriginal('settings'),
+                    'settings' => PageSlot::sanitizeSettings($slot->settings),
                     'created_at' => $slot->created_at,
                     'updated_at' => $slot->updated_at,
                 ]);

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageRequest;
-use App\Http\Requests\Admin\PageSlotSettingsRequest;
 use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
@@ -444,17 +443,6 @@ class PageController extends Controller
         ]);
     }
 
-    public function updateSlotSettings(PageSlotSettingsRequest $request, Page $page, PageSlot $slot): RedirectResponse
-    {
-        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
-        abort_unless($slot->page_id === $page->id, 404);
-
-        return redirect()
-            ->route('admin.pages.slots.blocks', $this->slotEditorRouteParameters($page, $slot))
-            ->with('status', 'Slot wrapper settings are resolved automatically from the page shell and slot name.');
-    }
-
     private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array
     {
         $requestedSite = null;
@@ -864,6 +852,7 @@ class PageController extends Controller
             }
 
             $slotData['page_id'] = $page->id;
+            $slotData['settings'] = PageSlot::sanitizeSettings($slotData['settings'] ?? null);
             $slotData['sort_order'] = $index;
 
             $slot = $slotId && $existingSlots->has($slotId)

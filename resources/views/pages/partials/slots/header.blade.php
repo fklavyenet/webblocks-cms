@@ -1,6 +1,6 @@
 @php
     $chrome = $slot['chrome'] ?? null;
-    $wrapperPreset = $slot['wrapper_preset'] ?? ($slot['wrapper']['preset'] ?? null);
+    $wrapperPreset = $slot['wrapper']['preset'] ?? null;
 
     if (! is_array($chrome)) {
         $chrome = [];

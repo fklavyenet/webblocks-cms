@@ -6,10 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
 
 class PageSlot extends Model
 {
     use HasFactory;
+
+    private const OBSOLETE_SETTINGS_KEYS = [
+        'wrapper_element',
+        'wrapper_preset',
+    ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $slot): void {
+            $slot->settings = self::sanitizeSettings($slot->settings);
+        });
+    }
 
     protected $fillable = [
         'page_id',
@@ -25,49 +38,20 @@ class PageSlot extends Model
         ];
     }
 
-    public static function acceptedWrapperPresets(): array
+    public static function sanitizeSettings(mixed $settings): ?array
     {
-        return ['default', 'plain', 'docs-navbar', 'docs-main', 'docs-sidebar'];
-    }
+        if (! is_array($settings)) {
+            return null;
+        }
 
-    public static function allowedWrapperElements(): array
-    {
-        return ['div', 'section', 'main', 'header', 'aside', 'footer', 'nav'];
-    }
+        $sanitized = Arr::except($settings, self::OBSOLETE_SETTINGS_KEYS);
 
-    public static function defaultWrapperElementForSlug(?string $slug): string
-    {
-        return match ($slug) {
-            'header' => 'header',
-            'sidebar' => 'aside',
-            'main' => 'main',
-            'footer' => 'footer',
-            default => 'div',
-        };
-    }
-
-    public static function normalizeWrapperPreset(?string $preset): string
-    {
-        $normalized = trim((string) $preset);
-
-        return in_array($normalized, self::acceptedWrapperPresets(), true) ? $normalized : 'default';
+        return $sanitized === [] ? null : $sanitized;
     }
 
     public function setting(string $key, mixed $default = null): mixed
     {
         return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
-    }
-
-    public function wrapperPreset(): string
-    {
-        return self::normalizeWrapperPreset((string) $this->setting('wrapper_preset', 'default'));
-    }
-
-    public function wrapperElement(): ?string
-    {
-        $element = trim((string) $this->setting('wrapper_element', ''));
-
-        return in_array($element, self::allowedWrapperElements(), true) ? $element : null;
     }
 
     public function page(): BelongsTo

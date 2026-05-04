@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Resolve public slot wrappers from page `Public Shell` plus slot name, remove editor-facing slot wrapper controls from Edit Slot, and ignore legacy saved `wrapper_element` and `wrapper_preset` values during public rendering.
+- Resolve public slot wrappers from page `Public Shell` plus slot name, remove editor-facing slot wrapper controls and the obsolete slot settings route, and strip legacy saved `wrapper_element` and `wrapper_preset` values from slot writes, imports, revisions, clones, and existing records.
 - Fix update checks so the update client compares against the persisted installed version when present, and align the system settings coverage with the current admin information panel wording.
 - Fix the Edit Slot Blocks admin table on narrow screens by keeping block type, children, status, and actions readable while allowing horizontal scroll instead of letter-by-letter wrapping.
 - Fix the admin mobile sidebar close behavior by aligning its backdrop placement with the standard WebBlocks UI sidebar pattern so outside clicks dismiss the sidebar in narrow view.
