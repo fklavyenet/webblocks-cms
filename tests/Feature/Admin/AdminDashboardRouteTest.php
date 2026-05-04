@@ -126,6 +126,22 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
+    public function admin_layout_places_sidebar_backdrop_inside_dashboard_shell_for_webblocks_ui_sidebar_close_behavior(): void
+    {
+        $user = User::factory()->editor()->create();
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<div class="wb-dashboard-shell">',
+            '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
+            '<aside class="wb-sidebar" id="admin-sidebar">',
+            '<div class="wb-dashboard-body">',
+        ], false);
+    }
+
+    #[Test]
     public function top_level_dashboard_redirect_uses_canonical_admin_path(): void
     {
         $user = User::factory()->editor()->create();

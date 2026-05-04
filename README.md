@@ -117,6 +117,7 @@ See `docs/getting-started.md` for the first-use workflow.
 ## Developer Notes
 
 - Refresh the product block catalog on an existing install with `ddev artisan db:seed --class=BlockTypeSeeder`. The seeder safely upserts product-owned block types such as `Rich Text` without duplicating rows.
+- In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 
 ## Build Artifacts
 

@@ -78,9 +78,9 @@
             }
         @endphp
 
-        <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
-
         <div class="wb-dashboard-shell">
+            <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
+
             <aside class="wb-sidebar" id="admin-sidebar">
                 <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand">
                     <img src="{{ asset('brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" class="wb-sidebar-brand-logo">

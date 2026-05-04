@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Fix the admin mobile sidebar close behavior by aligning its backdrop placement with the standard WebBlocks UI sidebar pattern so outside clicks dismiss the sidebar in narrow view.
 - Compact the Edit Slot block tree so visible rows use short plain-text summaries instead of long content previews, while preserving nested structure editing and block actions.
 - Simplify the Edit Slot block tree back to compact rows only by removing expandable detail previews and keeping full content editing in the block editor UI.
 - Further compact the Edit Slot Blocks table to one visual row per block by removing secondary metadata/summary lines and adding a dedicated children-count column.
