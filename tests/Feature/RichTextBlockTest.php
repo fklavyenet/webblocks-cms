@@ -149,7 +149,13 @@ class RichTextBlockTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<label for="content">Rich Text</label>', false);
-        $response->assertSee('name="content" class="wb-textarea"', false);
+        $response->assertSee('class="wb-admin-rich-text-editor"', false);
+        $response->assertSee('class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="Rich Text formatting"', false);
+        $response->assertSee('class="wb-action-group" role="group" aria-label="Inline formatting"', false);
+        $response->assertSee('class="wb-action-group" role="group" aria-label="Links"', false);
+        $response->assertSee('class="wb-action-group" role="group" aria-label="Lists"', false);
+        $response->assertSee('class="wb-toolbar-divider" aria-hidden="true"', false);
+        $response->assertSee('name="content" class="wb-textarea wb-admin-rich-text-textarea"', false);
         $response->assertSee('data-wb-rich-text-editor', false);
         $response->assertSee('data-wb-rich-text-action="bold"', false);
         $response->assertSee('data-wb-rich-text-action="italic"', false);
@@ -157,12 +163,12 @@ class RichTextBlockTest extends TestCase
         $response->assertSee('data-wb-rich-text-action="link"', false);
         $response->assertSee('data-wb-rich-text-action="bullet-list"', false);
         $response->assertSee('data-wb-rich-text-action="numbered-list"', false);
-        $response->assertSee('>Bold</button>', false);
-        $response->assertSee('>Italic</button>', false);
+        $response->assertSee('type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-label="Bold" title="Bold">B</button>', false);
+        $response->assertSee('type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-label="Italic" title="Italic">I</button>', false);
         $response->assertSee('>Code</button>', false);
         $response->assertSee('>Link</button>', false);
-        $response->assertSee('>Bullet List</button>', false);
-        $response->assertSee('>Numbered List</button>', false);
+        $response->assertSee('>• List</button>', false);
+        $response->assertSee('>1. List</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
         $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
 
@@ -176,6 +182,7 @@ class RichTextBlockTest extends TestCase
         $this->assertStringContainsString('function getSelectedLinesRange(value, start, end)', $assetContents);
         $this->assertStringContainsString('function getMarkdownLinkRange(value, start, end)', $assetContents);
         $this->assertStringContainsString('function toggleLink(textarea)', $assetContents);
+        $this->assertStringContainsString("button.dataset.wbRichTextAction", $assetContents);
         $this->assertStringNotContainsString('<script', $partialContents);
     }
 
