@@ -59,11 +59,6 @@ class PageRequest extends FormRequest
                 })(),
             ],
             'public_shell' => ['nullable', Rule::in(array_merge(Page::allowedPublicShellPresets(), ['dashboard']))],
-            'slots' => ['nullable', 'array'],
-            'slots.*.id' => ['nullable', 'integer', 'exists:page_slots,id'],
-            'slots.*.slot_type_id' => ['required', 'integer', 'exists:slot_types,id', 'distinct:strict'],
-            'slots.*.sort_order' => ['nullable', 'integer', 'min:0'],
-            'slots.*._delete' => ['nullable', 'boolean'],
             'blocks' => ['nullable', 'array'],
             'blocks.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
             'blocks.*.block_type_id' => ['required', 'integer', 'exists:block_types,id'],
@@ -111,16 +106,6 @@ class PageRequest extends FormRequest
             'name' => $data['title'],
             'slug' => $data['slug'],
         ];
-
-        $data['slots'] = collect($data['slots'] ?? [])
-            ->map(function (array $slot, int $index) {
-                $slot['_delete'] = (bool) ($slot['_delete'] ?? false);
-                $slot['sort_order'] = $index;
-
-                return $slot;
-            })
-            ->values()
-            ->all();
 
         $data['blocks'] = collect($data['blocks'] ?? [])
             ->map(function (array $block, int $index) use ($authorization) {

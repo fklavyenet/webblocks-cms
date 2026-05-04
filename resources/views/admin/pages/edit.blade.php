@@ -76,6 +76,10 @@
     </div>
 
     <div class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+            <strong>Page Settings</strong>
+            <span class="wb-text-sm wb-text-muted">Update core page fields only</span>
+        </div>
         <div class="wb-card-body">
             <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-4">
                 @csrf
@@ -85,6 +89,13 @@
             </form>
         </div>
     </div>
+
+    @include('admin.pages.partials.slots-card', [
+        'page' => $page,
+        'slotTypes' => $slotTypes,
+        'slotBlockPreviews' => $slotBlockPreviews,
+        'canEditContent' => $canEditContent,
+    ])
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

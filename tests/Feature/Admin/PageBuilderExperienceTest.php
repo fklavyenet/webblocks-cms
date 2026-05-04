@@ -78,7 +78,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function creating_a_page_starts_empty_and_persists_selected_slots(): void
+    public function edit_page_renders_separate_page_settings_slots_and_translations_sections(): void
     {
         $this->seedFoundation();
 
@@ -86,42 +86,52 @@ class PageBuilderExperienceTest extends TestCase
         $header = $this->slotType('header', 'Header', 1);
         $main = $this->slotType('main', 'Main', 2);
         $site = $this->defaultSite();
-
-        $response = $this->actingAs($user)->post(route('admin.pages.store'), [
+        $page = Page::query()->create([
             'site_id' => $site->id,
             'title' => 'About',
             'slug' => 'about',
             'status' => 'draft',
-            'slots' => [
-                ['slot_type_id' => $header->id],
-                ['slot_type_id' => $main->id],
-            ],
         ]);
 
-        $page = Page::query()->where('site_id', $site->id)->latest('id')->firstOrFail();
-        $pageSlot = PageSlot::query()->where('page_id', $page->id)->orderBy('sort_order')->firstOrFail();
-
-        $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertSame(0, Block::query()->where('page_id', $page->id)->count());
-        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $header->id, 'sort_order' => 0]);
-        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id, 'sort_order' => 1]);
-        $this->assertDatabaseHas('page_translations', [
+        PageSlot::query()->create([
             'page_id' => $page->id,
-            'locale_id' => $this->defaultLocale()->id,
-            'name' => 'About',
-            'slug' => 'about',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+        ]);
+
+        $pageSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
         ]);
 
         $editResponse = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $content = $editResponse->getContent();
 
         $editResponse->assertOk();
+        $editResponse->assertSee('Page Settings');
+        $editResponse->assertSee('Slots');
+        $editResponse->assertSee('Translations');
+        $editResponse->assertSee('Add Slot');
         $editResponse->assertSee('<th>Actions</th>', false);
         $editResponse->assertDontSee('<th class="wb-text-end">Actions</th>', false);
         $editResponse->assertSee('<div class="wb-action-group">', false);
         $editResponse->assertDontSee('<td class="wb-text-end">', false);
         $editResponse->assertSee('name="public_shell"', false);
         $editResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'"', false);
-        $editResponse->assertSee('data-wb-slot-remove', false);
+        $editResponse->assertSee('action="'.route('admin.pages.update', $page).'"', false);
+        $editResponse->assertSee('action="'.route('admin.pages.slots.store', $page).'"', false);
+        $editResponse->assertSee('action="'.route('admin.pages.slots.move-up', [$page, $page->slots()->firstOrFail()]).'"', false);
+        $editResponse->assertSee('action="'.route('admin.pages.slots.destroy', [$page, $pageSlot]).'"', false);
+        $editResponse->assertDontSee('name="slots[', false);
+        $this->assertNotFalse($content);
+        $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
+        $this->assertNotFalse(strpos($content, 'Page Settings'));
+        $this->assertNotFalse(strpos($content, 'Slots'));
+        $this->assertNotFalse(strpos($content, 'Translations'));
+        $this->assertTrue(strpos($content, 'Page Settings') < strpos($content, 'Slots'));
+        $this->assertTrue(strpos($content, 'Slots') < strpos($content, 'Translations'));
+        $this->assertTrue(strpos($content, '</form>') < strpos($content, '<strong>Slots</strong>'));
     }
 
     #[Test]
@@ -146,13 +156,164 @@ class PageBuilderExperienceTest extends TestCase
             'title' => 'About',
             'slug' => 'about',
             'public_shell' => 'docs',
-            'slots' => [
-                ['id' => $page->slots()->firstOrFail()->id, 'slot_type_id' => $main->id],
-            ],
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
         $this->assertSame('docs', $page->fresh()->publicShellPreset());
+    }
+
+    #[Test]
+    public function page_settings_update_does_not_change_slots_when_slot_inputs_are_submitted(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        [$page] = $this->pageWithSlot($header);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+            'site_id' => $page->site_id,
+            'title' => 'About Updated',
+            'slug' => 'about-updated',
+            'public_shell' => 'default',
+            'slots' => [
+                ['slot_type_id' => $main->id],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame('About Updated', $page->fresh()->title);
+        $this->assertSame(['header', 'main'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+    }
+
+    #[Test]
+    public function slot_can_be_added_with_a_dedicated_endpoint_and_duplicate_names_are_rejected(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        [$page] = $this->pageWithSlot($header);
+
+        $response = $this->actingAs($user)->post(route('admin.pages.slots.store', $page), [
+            'slot_type_id' => $main->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_slots', [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        $duplicate = $this->actingAs($user)
+            ->from(route('admin.pages.edit', $page))
+            ->post(route('admin.pages.slots.store', $page), [
+                'slot_type_id' => $main->id,
+            ]);
+
+        $duplicate->assertRedirect(route('admin.pages.edit', $page));
+        $duplicate->assertSessionHasErrors('slot_type_id');
+    }
+
+    #[Test]
+    public function slot_can_be_deleted_with_a_dedicated_endpoint_and_other_pages_slots_are_not_found(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        [$otherPage, $otherSlot] = $this->pageWithSlot($main, 'Docs', 'docs');
+
+        $response = $this->actingAs($user)->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]));
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseMissing('page_slots', ['id' => $pageSlot->id]);
+
+        $this->actingAs($user)
+            ->delete(route('admin.pages.slots.destroy', [$otherPage, $pageSlot]))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('page_slots', ['id' => $otherSlot->id]);
+    }
+
+    #[Test]
+    public function slot_delete_is_blocked_when_the_slot_still_contains_blocks(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.edit', $page))
+            ->delete(route('admin.pages.slots.destroy', [$page, $pageSlot]));
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $response->assertSessionHasErrors('slot');
+        $this->assertDatabaseHas('page_slots', ['id' => $pageSlot->id]);
+    }
+
+    #[Test]
+    public function slot_reorder_endpoints_move_slots_and_handle_edge_positions_safely(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        [$page, $headerSlot] = $this->pageWithSlot($header);
+        $mainSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+        $sidebarSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 2,
+        ]);
+
+        $moveDown = $this->actingAs($user)->post(route('admin.pages.slots.move-down', [$page, $headerSlot]));
+        $moveDown->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame(['main', 'header', 'sidebar'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+
+        $moveUp = $this->actingAs($user)->post(route('admin.pages.slots.move-up', [$page, $sidebarSlot]));
+        $moveUp->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame(['main', 'sidebar', 'header'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+
+        $edgeUp = $this->actingAs($user)->post(route('admin.pages.slots.move-up', [$page, $page->fresh()->slots()->orderBy('sort_order')->firstOrFail()]));
+        $edgeUp->assertRedirect(route('admin.pages.edit', $page));
+        $edgeUp->assertSessionHas('status', 'Slot is already at the edge of the page.');
+
+        $edgeDown = $this->actingAs($user)->post(route('admin.pages.slots.move-down', [$page, $headerSlot->fresh()]));
+        $edgeDown->assertRedirect(route('admin.pages.edit', $page));
+        $edgeDown->assertSessionHas('status', 'Slot is already at the edge of the page.');
+        $this->assertSame(['main', 'sidebar', 'header'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
     }
 
     #[Test]

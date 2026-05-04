@@ -115,9 +115,6 @@ class PageRevisionTest extends TestCase
             'site_id' => $site->id,
             'title' => 'About Updated',
             'slug' => 'about-updated',
-            'slots' => [
-                ['id' => $slot->id, 'slot_type_id' => $main->id],
-            ],
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
@@ -131,6 +128,61 @@ class PageRevisionTest extends TestCase
         $edit->assertOk();
         $edit->assertSee('Revision History');
         $edit->assertSee(route('admin.pages.revisions.index', $page), false);
+    }
+
+    #[Test]
+    public function slot_mutations_create_revisions(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $page = $this->pageFor($site);
+
+        $this->actingAs($user)->post(route('admin.pages.slots.store', $page), [
+            'slot_type_id' => $header->id,
+        ])->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->assertDatabaseHas('page_revisions', [
+            'page_id' => $page->id,
+            'created_by' => $user->id,
+            'label' => 'Slot added',
+        ]);
+
+        $headerSlot = $page->fresh()->slots()->firstOrFail();
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+        PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 2,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('admin.pages.slots.move-down', [$page, $headerSlot]))
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->assertDatabaseHas('page_revisions', [
+            'page_id' => $page->id,
+            'created_by' => $user->id,
+            'label' => 'Slot order updated',
+        ]);
+
+        $deletableSlot = $page->fresh()->slots()->where('slot_type_id', $sidebar->id)->firstOrFail();
+
+        $this->actingAs($user)
+            ->delete(route('admin.pages.slots.destroy', [$page, $deletableSlot]))
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->assertDatabaseHas('page_revisions', [
+            'page_id' => $page->id,
+            'created_by' => $user->id,
+            'label' => 'Slot deleted',
+        ]);
     }
 
     #[Test]

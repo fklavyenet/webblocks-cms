@@ -146,14 +146,12 @@ class PageController extends Controller
 
         $page = DB::transaction(function () use ($request) {
             $data = $request->validatedData();
-            $slots = $data['slots'] ?? [];
             $blocks = $data['blocks'] ?? [];
             $translation = $data['translation'];
-            unset($data['title'], $data['slug'], $data['slots'], $data['blocks'], $data['translation']);
+            unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
-            $this->syncSlots($page, $slots);
 
             if ($blocks === []) {
                 $this->syncBlocks($page, []);
@@ -227,18 +225,16 @@ class PageController extends Controller
 
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
-            $slots = $data['slots'] ?? [];
             $translation = $data['translation'];
-            unset($data['title'], $data['slug'], $data['slots'], $data['blocks'], $data['translation']);
+            unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
-            $this->syncSlots($page, $slots);
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
                 'Page updated',
-                'Page fields, default translation, and slot assignments were updated.',
+                'Page fields and the default translation were updated.',
             );
         });
 
@@ -830,39 +826,6 @@ class PageController extends Controller
 
         return $siteLocales->firstWhere('is_default', true)
             ?? Locale::query()->where('is_default', true)->firstOrFail();
-    }
-
-    private function syncSlots(Page $page, array $submittedSlots): void
-    {
-        $existingSlots = $page->slots()->get()->keyBy('id');
-        $keptSlotIds = [];
-
-        foreach (array_values($submittedSlots) as $index => $slotData) {
-            $slotId = $slotData['id'] ?? null;
-            $delete = (bool) ($slotData['_delete'] ?? false);
-
-            unset($slotData['id'], $slotData['_delete']);
-
-            if ($delete) {
-                if ($slotId && $existingSlots->has($slotId)) {
-                    $existingSlots[$slotId]->delete();
-                }
-
-                continue;
-            }
-
-            $slotData['page_id'] = $page->id;
-            $slotData['settings'] = PageSlot::sanitizeSettings($slotData['settings'] ?? null);
-            $slotData['sort_order'] = $index;
-
-            $slot = $slotId && $existingSlots->has($slotId)
-                ? tap($existingSlots[$slotId])->update($slotData)
-                : PageSlot::create($slotData);
-
-            $keptSlotIds[] = $slot->id;
-        }
-
-        $page->slots()->whereNotIn('id', $keptSlotIds)->delete();
     }
 
     private function slotBlockPreviewFor(Page $page, PageSlot $slot): array

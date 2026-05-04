@@ -9,7 +9,6 @@
             'admin-sortable-list' => public_path('assets/webblocks-cms/js/admin-sortable-list.js'),
             'inline-block-builder' => public_path('assets/webblocks-cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('assets/webblocks-cms/js/admin/builder-items.js'),
-            'slot-builder' => public_path('assets/webblocks-cms/js/admin/slot-builder.js'),
             'page-builder-modals' => public_path('assets/webblocks-cms/js/admin/page-builder-modals.js'),
             'rich-text-editor' => public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'),
         ];
@@ -236,9 +235,6 @@
         @endif
         @if (is_file($adminJsAssets['builder-items']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/builder-items.js') }}?v={{ filemtime($adminJsAssets['builder-items']) }}" defer></script>
-        @endif
-        @if (is_file($adminJsAssets['slot-builder']))
-            <script src="{{ asset('assets/webblocks-cms/js/admin/slot-builder.js') }}?v={{ filemtime($adminJsAssets['slot-builder']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['page-builder-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>

@@ -80,9 +80,6 @@ class PageEditorialWorkflowTest extends TestCase
             'site_id' => $site->id,
             'title' => 'Workflow Start',
             'slug' => 'workflow-start',
-            'slots' => [
-                ['slot_type_id' => $main->id],
-            ],
         ]);
 
         $page = Page::query()
@@ -96,6 +93,12 @@ class PageEditorialWorkflowTest extends TestCase
         $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
         $this->assertNull($page->fresh()->published_at);
         $this->assertNull($page->fresh()->review_requested_at);
+
+        $this->actingAs($user)
+            ->post(route('admin.pages.slots.store', $page), ['slot_type_id' => $main->id])
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
     }
 
     #[Test]
@@ -213,14 +216,49 @@ class PageEditorialWorkflowTest extends TestCase
     }
 
     #[Test]
+    public function slot_actions_are_denied_for_pages_outside_assigned_site_scope(): void
+    {
+        $primarySite = $this->defaultSite();
+        $secondarySite = Site::query()->create([
+            'name' => 'Campaign Site',
+            'handle' => 'campaign-site',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+        $siteAdmin = $this->siteAdminFor($primarySite);
+        $page = $this->pageFor($secondarySite, Page::STATUS_DRAFT, 'campaign-page');
+        $slotType = $this->slotType();
+        $otherSlotType = $this->slotType('sidebar', 'Sidebar', 3);
+        $slot = PageSlot::create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        $this->actingAs($siteAdmin)
+            ->post(route('admin.pages.slots.store', $page), ['slot_type_id' => $otherSlotType->id])
+            ->assertForbidden();
+
+        $this->actingAs($siteAdmin)
+            ->delete(route('admin.pages.slots.destroy', [$page, $slot]))
+            ->assertForbidden();
+
+        $this->actingAs($siteAdmin)
+            ->post(route('admin.pages.slots.move-down', [$page, $slot]))
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function editor_cannot_edit_slots_blocks_or_translations_after_page_leaves_draft(): void
     {
         $site = $this->defaultSite();
         $editor = $this->editorFor($site);
         $page = $this->pageFor($site, Page::STATUS_IN_REVIEW);
+        $slotType = $this->slotType();
+        $otherSlotType = $this->slotType('sidebar', 'Sidebar', 3);
         $slot = PageSlot::create([
             'page_id' => $page->id,
-            'slot_type_id' => $this->slotType()->id,
+            'slot_type_id' => $slotType->id,
             'sort_order' => 0,
         ]);
         $sectionType = $this->sectionBlockType();
@@ -237,10 +275,19 @@ class PageEditorialWorkflowTest extends TestCase
                 'site_id' => $site->id,
                 'title' => 'Changed',
                 'slug' => 'about',
-                'slots' => [
-                    ['id' => $slot->id, 'slot_type_id' => $slot->slot_type_id],
-                ],
             ])
+            ->assertForbidden();
+
+        $this->actingAs($editor)
+            ->post(route('admin.pages.slots.store', $page), ['slot_type_id' => $otherSlotType->id])
+            ->assertForbidden();
+
+        $this->actingAs($editor)
+            ->delete(route('admin.pages.slots.destroy', [$page, $slot]))
+            ->assertForbidden();
+
+        $this->actingAs($editor)
+            ->post(route('admin.pages.slots.move-up', [$page, $slot]))
             ->assertForbidden();
 
         $this->actingAs($editor)
