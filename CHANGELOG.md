@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Fix update checks so the update client compares against the persisted installed version when present, and align the system settings coverage with the current admin information panel wording.
 - Fix the Edit Slot Blocks admin table on narrow screens by keeping block type, children, status, and actions readable while allowing horizontal scroll instead of letter-by-letter wrapping.
 - Fix the admin mobile sidebar close behavior by aligning its backdrop placement with the standard WebBlocks UI sidebar pattern so outside clicks dismiss the sidebar in narrow view.
 - Compact the Edit Slot block tree so visible rows use short plain-text summaries instead of long content previews, while preserving nested structure editing and block actions.

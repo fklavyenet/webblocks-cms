@@ -20,7 +20,8 @@ class UpdateServerClient
         $serverUrl = rtrim((string) config('webblocks-updates.server_url', ''), '/');
         $product = (string) config('webblocks-updates.product', 'webblocks-cms');
         $channel = (string) config('webblocks-updates.channel', 'stable');
-        $installedVersion = $this->installedVersionStore->currentVersion();
+        $installedVersion = $this->installedVersionStore->storedVersion()
+            ?? $this->installedVersionStore->currentVersion();
 
         if (! config('webblocks-updates.enabled', true)) {
             return $this->result(

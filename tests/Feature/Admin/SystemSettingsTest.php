@@ -29,7 +29,7 @@ class SystemSettingsTest extends TestCase
         $response->assertSee('Cookie settings');
         $response->assertSee('Show the public privacy settings banner when visitor reports are enabled.');
         $response->assertSee('Visitors who decline still contribute privacy-safe anonymous page view counts.');
-        $response->assertSee('Installed version');
+        $response->assertSee('Application version');
         $response->assertSee('Environment');
         $response->assertSee('System');
         $response->assertSee('Maintenance');
