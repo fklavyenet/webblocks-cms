@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.8.0
+
 - Improve the Edit Page admin screen by moving Slots into a dedicated card separate from page settings.
 - Refine the Edit Page and Add Page admin forms by removing the redundant Site Context field and restoring a compact Add Slot dropdown.
 - Split slot create, delete, and reorder persistence from the page settings update form.
