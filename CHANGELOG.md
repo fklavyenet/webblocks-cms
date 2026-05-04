@@ -2,12 +2,13 @@
 
 ## [Unreleased]
 
-- Promote the Rich Text block type back into the visible block picker as a safe content block.
-- Add safe inline code formatting for Rich Text content and Card descriptions.
-- Add a safe Markdown-like Rich Text editor for the Rich Text block.
-- Render Rich Text content with allowlisted formatting for paragraphs, inline code, emphasis, links, and simple lists.
-- Fix Rich Text block visibility in the admin Block Picker on existing installs.
-- Improve the Block Picker modal with column headers and category filtering for larger block catalogs.
+## 1.9.0
+
+- Fix Rich Text block visibility on existing installations so the block remains available in the picker.
+- Improve the Block Picker with catalog-style rows, column headers, and combined category filtering, search, and sorting.
+- Add a safe Markdown-like Rich Text editor toolbar for body copy with bold, italic, code, links, and simple lists.
+- Render Rich Text content through allowlisted safe formatting for paragraphs, emphasis, inline code, links, and simple lists without raw HTML.
+- Preserve Card description inline-only rich text behavior while expanding Rich Text block editing capabilities.
 
 ## 1.8.0
 
