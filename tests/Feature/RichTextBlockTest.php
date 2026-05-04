@@ -157,8 +157,26 @@ class RichTextBlockTest extends TestCase
         $response->assertSee('data-wb-rich-text-action="link"', false);
         $response->assertSee('data-wb-rich-text-action="bullet-list"', false);
         $response->assertSee('data-wb-rich-text-action="numbered-list"', false);
+        $response->assertSee('>Bold</button>', false);
+        $response->assertSee('>Italic</button>', false);
+        $response->assertSee('>Code</button>', false);
+        $response->assertSee('>Link</button>', false);
+        $response->assertSee('>Bullet List</button>', false);
+        $response->assertSee('>Numbered List</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
         $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+
+        $assetContents = file_get_contents(public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'));
+        $partialContents = file_get_contents(resource_path('views/admin/blocks/types/partials/rich-text-editor.blade.php'));
+
+        $this->assertNotFalse($assetContents);
+        $this->assertNotFalse($partialContents);
+        $this->assertStringContainsString('function toggleWrap(textarea, before, after, placeholder)', $assetContents);
+        $this->assertStringContainsString('function toggleLinePrefix(textarea, applyPrefixFn, detectPrefixRegex, stripPrefixRegex, fallback)', $assetContents);
+        $this->assertStringContainsString('function getSelectedLinesRange(value, start, end)', $assetContents);
+        $this->assertStringContainsString('function getMarkdownLinkRange(value, start, end)', $assetContents);
+        $this->assertStringContainsString('function toggleLink(textarea)', $assetContents);
+        $this->assertStringNotContainsString('<script', $partialContents);
     }
 
     #[Test]

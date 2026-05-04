@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Align Rich Text public rendering with the WebBlocks UI `wb-rich-text` primitive while preserving sanitized Markdown-like body copy behavior.
+- Fix Rich Text editor toolbar actions so repeated clicks toggle existing Markdown-like formatting instead of duplicating wrappers, links, or list prefixes.
 
 ## 1.9.0
 

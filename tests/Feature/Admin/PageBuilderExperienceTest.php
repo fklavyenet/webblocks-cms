@@ -3426,5 +3426,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Headings should use Header blocks.', false);
         $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
         $response->assertDontSee('function bindEditor(textarea)', false);
+
+        $partialContents = file_get_contents(resource_path('views/admin/blocks/types/partials/rich-text-editor.blade.php'));
+
+        $this->assertNotFalse($partialContents);
+        $this->assertStringNotContainsString('<script', $partialContents);
     }
 }
