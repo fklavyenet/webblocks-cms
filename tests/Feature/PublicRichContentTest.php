@@ -221,7 +221,7 @@ class PublicRichContentTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_renders_safe_markdown_like_content_from_translation_content(): void
+    public function rich_text_renders_safe_html_fragment_from_translation_content(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -237,7 +237,7 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => "Intro with **bold**, *italic*, and [docs](https://example.com).\n\n1. First item\n2. Second item",
+            'content' => '<p>Intro with <strong>bold</strong>, <em>italic</em>, and <a href="https://example.com">docs</a>.</p><ol><li>First item</li><li>Second item</li></ol>',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -266,16 +266,44 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<script>alert(1)</script> and [bad](javascript:alert(1)) and `safe`',
+            'content' => '<p><script>alert(1)</script><a href="javascript:alert(1)">bad</a> and <code>safe</code></p>',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt; and [bad](javascript:alert(1)) and <code>safe</code></p>', false);
+        $response->assertSee('<p>bad and <code>safe</code></p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
         $response->assertDontSee('href="javascript:alert(1)"', false);
+    }
+
+    #[Test]
+    public function rich_text_public_rendering_does_not_add_public_javascript(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '<p>Safe body copy.</p>',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertDontSee('data-wb-rich-text-editor', false);
     }
 
     #[Test]

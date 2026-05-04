@@ -3413,33 +3413,49 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $richTextType->id]));
 
         $response->assertOk();
-        $response->assertSee('<label for="content">Rich Text</label>', false);
+        $response->assertSee('<label for="content__surface">Rich Text</label>', false);
         $response->assertSee('class="wb-admin-rich-text-editor"', false);
         $response->assertSee('class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="Rich Text formatting"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Inline formatting"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Links"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Lists"', false);
-        $response->assertSee('name="content" class="wb-textarea wb-admin-rich-text-textarea"', false);
+        $response->assertSee('class="wb-action-group" role="group" aria-label="Cleanup"', false);
         $response->assertSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-surface', false);
+        $response->assertSee('data-wb-rich-text-input', false);
+        $response->assertSee('contenteditable="true"', false);
         $response->assertSee('data-wb-rich-text-action="bold"', false);
         $response->assertSee('data-wb-rich-text-action="italic"', false);
         $response->assertSee('data-wb-rich-text-action="code"', false);
         $response->assertSee('data-wb-rich-text-action="link"', false);
         $response->assertSee('data-wb-rich-text-action="bullet-list"', false);
         $response->assertSee('data-wb-rich-text-action="numbered-list"', false);
+        $response->assertSee('data-wb-rich-text-action="clear"', false);
+        $response->assertSee('name="content"', false);
+        $response->assertSee('hidden', false);
         $response->assertSee('aria-label="Bold" title="Bold">B</button>', false);
         $response->assertSee('aria-label="Italic" title="Italic">I</button>', false);
         $response->assertSee('>Code</button>', false);
         $response->assertSee('>Link</button>', false);
         $response->assertSee('>• List</button>', false);
         $response->assertSee('>1. List</button>', false);
+        $response->assertSee('>Clear</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
         $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
-        $response->assertDontSee('function bindEditor(textarea)', false);
+
+        $assetContents = file_get_contents(public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'));
 
         $partialContents = file_get_contents(resource_path('views/admin/blocks/types/partials/rich-text-editor.blade.php'));
 
+        $this->assertNotFalse($assetContents);
         $this->assertNotFalse($partialContents);
+        $this->assertStringContainsString('function sanitizeHtmlFragment(html, doc)', $assetContents);
+        $this->assertStringContainsString('function bindEditor(root)', $assetContents);
+        $this->assertStringContainsString('data-wb-rich-text-surface', $partialContents);
+        $this->assertStringContainsString('data-wb-rich-text-input', $partialContents);
+        $this->assertStringNotContainsString('toggleWrap(textarea', $assetContents);
+        $this->assertStringNotContainsString('getMarkdownLinkRange', $assetContents);
+        $this->assertStringNotContainsString('**', $assetContents);
         $this->assertStringNotContainsString('<script', $partialContents);
     }
 }

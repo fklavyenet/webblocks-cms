@@ -148,27 +148,34 @@ class RichTextBlockTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $richTextType->id]));
 
         $response->assertOk();
-        $response->assertSee('<label for="content">Rich Text</label>', false);
+        $response->assertSee('<label for="content__surface">Rich Text</label>', false);
         $response->assertSee('class="wb-admin-rich-text-editor"', false);
         $response->assertSee('class="wb-toolbar wb-toolbar-sm wb-admin-rich-text-toolbar" role="toolbar" aria-label="Rich Text formatting"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Inline formatting"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Links"', false);
         $response->assertSee('class="wb-action-group" role="group" aria-label="Lists"', false);
+        $response->assertSee('class="wb-action-group" role="group" aria-label="Cleanup"', false);
         $response->assertSee('class="wb-toolbar-divider" aria-hidden="true"', false);
-        $response->assertSee('name="content" class="wb-textarea wb-admin-rich-text-textarea"', false);
         $response->assertSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-surface', false);
+        $response->assertSee('data-wb-rich-text-input', false);
+        $response->assertSee('contenteditable="true"', false);
         $response->assertSee('data-wb-rich-text-action="bold"', false);
         $response->assertSee('data-wb-rich-text-action="italic"', false);
         $response->assertSee('data-wb-rich-text-action="code"', false);
         $response->assertSee('data-wb-rich-text-action="link"', false);
         $response->assertSee('data-wb-rich-text-action="bullet-list"', false);
         $response->assertSee('data-wb-rich-text-action="numbered-list"', false);
+        $response->assertSee('data-wb-rich-text-action="clear"', false);
+        $response->assertSee('name="content"', false);
+        $response->assertSee('hidden', false);
         $response->assertSee('type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="bold" aria-label="Bold" title="Bold">B</button>', false);
         $response->assertSee('type="button" class="wb-btn wb-btn-sm wb-btn-ghost" data-wb-rich-text-action="italic" aria-label="Italic" title="Italic">I</button>', false);
         $response->assertSee('>Code</button>', false);
         $response->assertSee('>Link</button>', false);
         $response->assertSee('>• List</button>', false);
         $response->assertSee('>1. List</button>', false);
+        $response->assertSee('>Clear</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
         $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
 
@@ -177,17 +184,19 @@ class RichTextBlockTest extends TestCase
 
         $this->assertNotFalse($assetContents);
         $this->assertNotFalse($partialContents);
-        $this->assertStringContainsString('function toggleWrap(textarea, before, after, placeholder)', $assetContents);
-        $this->assertStringContainsString('function toggleLinePrefix(textarea, applyPrefixFn, detectPrefixRegex, stripPrefixRegex, fallback)', $assetContents);
-        $this->assertStringContainsString('function getSelectedLinesRange(value, start, end)', $assetContents);
-        $this->assertStringContainsString('function getMarkdownLinkRange(value, start, end)', $assetContents);
-        $this->assertStringContainsString('function toggleLink(textarea)', $assetContents);
+        $this->assertStringContainsString('function sanitizeHtmlFragment(html, doc)', $assetContents);
+        $this->assertStringContainsString('function bindEditor(root)', $assetContents);
+        $this->assertStringContainsString('data-wb-rich-text-surface', $partialContents);
+        $this->assertStringContainsString('data-wb-rich-text-input', $partialContents);
         $this->assertStringContainsString("button.dataset.wbRichTextAction", $assetContents);
+        $this->assertStringNotContainsString('toggleWrap(textarea', $assetContents);
+        $this->assertStringNotContainsString('getMarkdownLinkRange', $assetContents);
+        $this->assertStringNotContainsString('**', $assetContents);
         $this->assertStringNotContainsString('<script', $partialContents);
     }
 
     #[Test]
-    public function RichText_is_stored_in_translation_backed_content_as_plain_text(): void
+    public function RichText_is_stored_in_translation_backed_content_as_safe_html_fragment(): void
     {
         $this->seedFoundation();
 
@@ -201,7 +210,7 @@ class RichTextBlockTest extends TestCase
             'block_type_id' => $richTextType->id,
             'slot_type_id' => $pageSlot->slot_type_id,
             'sort_order' => 0,
-            'content' => 'Use `light`, `dark`, or `auto`.',
+            'content' => '<p>Use <code>light</code>, <code>dark</code>, or <code>auto</code>.</p>',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -212,11 +221,11 @@ class RichTextBlockTest extends TestCase
         $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
 
         $this->assertNull($block->fresh()->getRawOriginal('content'));
-        $this->assertSame('Use `light`, `dark`, or `auto`.', $content);
+        $this->assertSame('<p>Use <code>light</code>, <code>dark</code>, or <code>auto</code>.</p>', $content);
     }
 
     #[Test]
-    public function RichText_public_renderer_outputs_safe_markdown_like_html_and_escaped_content(): void
+    public function RichText_public_renderer_outputs_sanitized_safe_html_fragment(): void
     {
         $this->seedFoundation();
 
@@ -235,7 +244,7 @@ class RichTextBlockTest extends TestCase
         ]);
 
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => "Intro with **bold** and *italic*.\n\n- Item with `code`\n- [Docs](https://example.com)\n\n<script>alert(1)</script>",
+            'content' => '<p>Intro with <strong>bold</strong> and <em>italic</em>.</p><ul><li>Item with <code>code</code></li><li><a href="https://example.com" onclick="alert(1)">Docs</a></li></ul><script>alert(1)</script>',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -248,8 +257,8 @@ class RichTextBlockTest extends TestCase
         $response->assertSee('<div class="wb-rich-text wb-rich-text-readable">', false);
         $response->assertSee('<p>Intro with <strong>bold</strong> and <em>italic</em>.</p>', false);
         $response->assertSee('<ul><li>Item with <code>code</code></li><li><a href="https://example.com" rel="noopener noreferrer">Docs</a></li></ul>', false);
-        $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('onclick=', false);
         $response->assertDontSee('<div class="wb-stack wb-gap-3">', false);
         $response->assertDontSee('wb-prose', false);
     }

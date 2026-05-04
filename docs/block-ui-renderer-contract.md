@@ -184,7 +184,9 @@ Public pages now use explicit layout composition modes:
 - Shared fields: none
 - Intended WebBlocks UI output: sanitized body copy wrapped in `wb-rich-text wb-rich-text-readable` using the shipped WebBlocks UI rich text primitive.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep Rich Text limited to safe editorial body copy. Headings, media, buttons, tables, layout, and raw HTML composition remain separate blocks or features.
+- Storage model: Rich Text stores a restricted safe HTML fragment, not Markdown markers. Allowed tags are `p`, `strong`, `em`, `code`, `a[href]`, `ul`, `ol`, `li`, and `br` when needed. Classes, styles, event attributes, headings, media, tables, buttons, and unsupported HTML are stripped during sanitization.
+- Admin behavior: the admin editor is a dependency-free `contenteditable` surface synchronized to a hidden form field. It is intentionally limited to body-copy formatting and does not replace Header, Button, Media, Table, Layout, HTML, or other dedicated block types.
+- Notes for later renderer/admin improvements: keep Rich Text limited to safe editorial body copy. `wb-rich-text` remains the public typography primitive. Headings, media, buttons, tables, layout, and raw HTML composition remain separate blocks or features.
 
 ### `html`
 

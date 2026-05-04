@@ -112,15 +112,45 @@
     flex-shrink: 0;
 }
 
-.wb-admin-rich-text-textarea {
-    border: 0;
-    border-radius: 0;
+.wb-admin-rich-text-surface {
     min-height: 12rem;
-    resize: vertical;
+    padding: var(--wb-s3);
+    outline: none;
+    white-space: normal;
 }
 
-.wb-admin-rich-text-textarea:focus {
-    box-shadow: none;
+.wb-admin-rich-text-surface:focus {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--wb-accent) 28%, transparent);
+}
+
+.wb-admin-rich-text-surface:empty::before {
+    content: "Write body copy...";
+    color: var(--wb-text-muted);
+}
+
+.wb-admin-rich-text-surface p,
+.wb-admin-rich-text-surface ul,
+.wb-admin-rich-text-surface ol {
+    margin: 0 0 var(--wb-s3);
+}
+
+.wb-admin-rich-text-surface p:last-child,
+.wb-admin-rich-text-surface ul:last-child,
+.wb-admin-rich-text-surface ol:last-child {
+    margin-bottom: 0;
+}
+
+.wb-admin-rich-text-surface ul,
+.wb-admin-rich-text-surface ol {
+    padding-left: 1.5rem;
+}
+
+.wb-admin-rich-text-surface code {
+    font-family: var(--wb-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.wb-admin-rich-text-input {
+    display: none;
 }
 
 .wb-cms-block-tree-item {

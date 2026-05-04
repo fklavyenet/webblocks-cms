@@ -1,265 +1,534 @@
 (function () {
-    function dispatchEditorEvents(textarea) {
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    function dispatchEditorEvents(input) {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function replaceSelection(textarea, replacement, selectionStart, selectionEnd) {
-        var value = textarea.value;
-
-        textarea.value = value.slice(0, selectionStart) + replacement + value.slice(selectionEnd);
-        textarea.focus();
-        textarea.setSelectionRange(selectionStart, selectionStart + replacement.length);
-        dispatchEditorEvents(textarea);
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
-    function isWrappedSelection(value, start, end, before, after) {
-        if (
-            start < before.length
-            || end + after.length > value.length
-            || value.slice(start - before.length, start) !== before
-            || value.slice(end, end + after.length) !== after
-        ) {
+    function escapeAttribute(value) {
+        return escapeHtml(value);
+    }
+
+    function hasMeaningfulText(html) {
+        var text = String(html || '')
+            .replace(/<br\s*\/?>/gi, '')
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .trim();
+
+        return text !== '';
+    }
+
+    function isSafeHref(href) {
+        var value = String(href || '').trim();
+
+        if (!value || /\s/.test(value)) {
             return false;
         }
 
-        return hasStandaloneWrapBoundary(value, start - before.length, end + after.length, before, after);
-    }
-
-    function hasStandaloneWrapBoundary(value, wrappedStart, wrappedEnd, before, after) {
-        var beforeChar = before.charAt(0);
-        var afterChar = after.charAt(after.length - 1);
-        var previousChar = wrappedStart > 0 ? value.charAt(wrappedStart - 1) : '';
-        var nextChar = wrappedEnd < value.length ? value.charAt(wrappedEnd) : '';
-
-        if (before.length === 1 && before === after) {
-            return previousChar !== beforeChar && nextChar !== afterChar;
+        if (value.charAt(0) === '/') {
+            return value.slice(0, 2) !== '//';
         }
 
-        return true;
+        if (value.charAt(0) === '#') {
+            return value.length > 1;
+        }
+
+        if (!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value)) {
+            return false;
+        }
+
+        var scheme = value.split(':', 1)[0].toLowerCase();
+
+        if (scheme === 'http' || scheme === 'https') {
+            try {
+                var parsed = new URL(value);
+
+                return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        if (scheme === 'mailto' || scheme === 'tel') {
+            return value.slice(scheme.length + 1).trim() !== '';
+        }
+
+        return false;
     }
 
-    function expandSelectionToExistingWrap(value, start, end, before, after) {
-        if (!value || start > end) {
+    function unwrap(node) {
+        var parent = node.parentNode;
+
+        if (!parent) {
+            return;
+        }
+
+        while (node.firstChild) {
+            parent.insertBefore(node.firstChild, node);
+        }
+
+        parent.removeChild(node);
+    }
+
+    function sanitizeInlineNode(node, doc) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return escapeHtml(node.textContent || '');
+        }
+
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return '';
+        }
+
+        var tag = node.tagName.toLowerCase();
+
+        if (/^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/.test(tag)) {
+            return '';
+        }
+
+        if (tag === 'br') {
+            return '<br>';
+        }
+
+        if (tag === 'strong' || tag === 'em' || tag === 'code') {
+            var wrapped = sanitizeInlineChildren(node, doc);
+
+            return hasMeaningfulText(wrapped) ? '<' + tag + '>' + wrapped + '</' + tag + '>' : '';
+        }
+
+        if (tag === 'a') {
+            var href = String(node.getAttribute('href') || '').trim();
+            var linked = sanitizeInlineChildren(node, doc);
+
+            if (!hasMeaningfulText(linked)) {
+                return '';
+            }
+
+            if (!isSafeHref(href)) {
+                return linked;
+            }
+
+            return '<a href="' + escapeAttribute(href) + '">' + linked + '</a>';
+        }
+
+        return sanitizeInlineChildren(node, doc);
+    }
+
+    function sanitizeInlineChildren(node, doc) {
+        var html = '';
+
+        Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+            html += sanitizeInlineNode(child, doc);
+        });
+
+        return html;
+    }
+
+    function sanitizeListItem(node, doc) {
+        var content = sanitizeInlineChildren(node, doc);
+
+        if (!hasMeaningfulText(content)) {
+            return '';
+        }
+
+        return '<li>' + content + '</li>';
+    }
+
+    function sanitizeList(node, tagName, doc) {
+        var items = '';
+
+        Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+            if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'li') {
+                items += sanitizeListItem(child, doc);
+                return;
+            }
+
+            if (child.nodeType === Node.TEXT_NODE) {
+                var text = escapeHtml(child.textContent || '');
+
+                if (hasMeaningfulText(text)) {
+                    items += '<li>' + text + '</li>';
+                }
+
+                return;
+            }
+
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                var fallback = sanitizeInlineNode(child, doc);
+
+                if (hasMeaningfulText(fallback)) {
+                    items += '<li>' + fallback + '</li>';
+                }
+            }
+        });
+
+        return items ? '<' + tagName + '>' + items + '</' + tagName + '>' : '';
+    }
+
+    function sanitizeHtmlFragment(html, doc) {
+        var template = doc.createElement('template');
+        var blocks = [];
+        var inlineBuffer = '';
+
+        function flushInlineBuffer() {
+            if (!hasMeaningfulText(inlineBuffer)) {
+                inlineBuffer = '';
+                return;
+            }
+
+            blocks.push('<p>' + inlineBuffer + '</p>');
+            inlineBuffer = '';
+        }
+
+        function consumeRootNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                inlineBuffer += escapeHtml(node.textContent || '');
+                return;
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) {
+                return;
+            }
+
+            var tag = node.tagName.toLowerCase();
+
+            if (/^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/.test(tag)) {
+                return;
+            }
+
+            if (tag === 'p') {
+                flushInlineBuffer();
+
+                var paragraph = sanitizeInlineChildren(node, doc);
+
+                if (hasMeaningfulText(paragraph)) {
+                    blocks.push('<p>' + paragraph + '</p>');
+                }
+
+                return;
+            }
+
+            if (tag === 'ul' || tag === 'ol') {
+                flushInlineBuffer();
+
+                var list = sanitizeList(node, tag, doc);
+
+                if (list) {
+                    blocks.push(list);
+                }
+
+                return;
+            }
+
+            if (tag === 'li') {
+                flushInlineBuffer();
+
+                var item = sanitizeListItem(node, doc);
+
+                if (item) {
+                    blocks.push('<ul>' + item + '</ul>');
+                }
+
+                return;
+            }
+
+            inlineBuffer += sanitizeInlineNode(node, doc);
+        }
+
+        template.innerHTML = html || '';
+
+        Array.prototype.slice.call(template.content.childNodes).forEach(consumeRootNode);
+        flushInlineBuffer();
+
+        return blocks.join('');
+    }
+
+    function convertTextToHtml(text) {
+        var lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+        var blocks = [];
+        var paragraph = [];
+
+        function flushParagraph() {
+            if (!paragraph.length) {
+                return;
+            }
+
+            blocks.push('<p>' + paragraph.map(escapeHtml).join('<br>') + '</p>');
+            paragraph = [];
+        }
+
+        lines.forEach(function (line) {
+            if (line.trim() === '') {
+                flushParagraph();
+                return;
+            }
+
+            paragraph.push(line);
+        });
+
+        flushParagraph();
+
+        return blocks.join('');
+    }
+
+    function getSelectionRange(surface) {
+        var selection = window.getSelection();
+
+        if (!selection || selection.rangeCount === 0) {
             return null;
         }
 
-        var wrappedStart = start - before.length;
-        var wrappedEnd = end + after.length;
+        var range = selection.getRangeAt(0);
 
-        if (
-            wrappedStart >= 0
-            && wrappedEnd <= value.length
-            && value.slice(wrappedStart, start) === before
-            && value.slice(end, wrappedEnd) === after
-            && hasStandaloneWrapBoundary(value, wrappedStart, wrappedEnd, before, after)
-        ) {
-            return {
-                start: wrappedStart,
-                end: wrappedEnd,
-                innerStart: start,
-                innerEnd: end,
-            };
+        if (!surface.contains(range.commonAncestorContainer)) {
+            return null;
+        }
+
+        return range;
+    }
+
+    function closestElement(node, tagName, boundary) {
+        var current = node;
+        var expected = String(tagName || '').toUpperCase();
+
+        while (current && current !== boundary) {
+            if (current.nodeType === Node.ELEMENT_NODE && current.tagName === expected) {
+                return current;
+            }
+
+            current = current.parentNode;
         }
 
         return null;
     }
 
-    function toggleWrap(textarea, before, after, placeholder) {
-        var start = textarea.selectionStart;
-        var end = textarea.selectionEnd;
-        var value = textarea.value;
-        var selected = value.slice(start, end);
-        var expanded = expandSelectionToExistingWrap(value, start, end, before, after);
+    function placeCaretInside(node, atEnd) {
+        var selection = window.getSelection();
+        var range = document.createRange();
 
-        if (selected && isWrappedSelection(value, start, end, before, after)) {
-            replaceSelection(textarea, selected, start - before.length, end + after.length);
-            textarea.setSelectionRange(start - before.length, end - before.length);
-            return;
-        }
-
-        if (selected && expanded) {
-            replaceSelection(textarea, selected, expanded.start, expanded.end);
-            textarea.setSelectionRange(expanded.start, expanded.start + selected.length);
-            return;
-        }
-
-        if (!selected && isWrappedSelection(value, start, end, before, after)) {
-            replaceSelection(textarea, '', start - before.length, end + after.length);
-            textarea.setSelectionRange(start - before.length, start - before.length);
-            return;
-        }
-
-        if (!selected && expanded) {
-            replaceSelection(textarea, '', expanded.start, expanded.end);
-            textarea.setSelectionRange(expanded.start, expanded.start);
-            return;
-        }
-
-        var replacement = selected || placeholder;
-        var replacementStart = start + before.length;
-
-        replaceSelection(textarea, before + replacement + after, start, end);
-        textarea.setSelectionRange(replacementStart, replacementStart + replacement.length);
+        range.selectNodeContents(node);
+        range.collapse(atEnd !== false);
+        selection.removeAllRanges();
+        selection.addRange(range);
     }
 
-    function getSelectedLinesRange(value, start, end) {
-        var lineStart = value.lastIndexOf('\n', Math.max(0, start - 1));
-        var lineEnd = value.indexOf('\n', end);
-
-        return {
-            start: lineStart === -1 ? 0 : lineStart + 1,
-            end: lineEnd === -1 ? value.length : lineEnd,
-        };
+    function focusSurface(surface) {
+        if (document.activeElement !== surface) {
+            surface.focus();
+        }
     }
 
-    function toggleLinePrefix(textarea, applyPrefixFn, detectPrefixRegex, stripPrefixRegex, fallback) {
-        var start = textarea.selectionStart;
-        var end = textarea.selectionEnd;
-        var value = textarea.value;
+    function normalizeSurface(surface) {
+        var sanitized = sanitizeHtmlFragment(surface.innerHTML, document);
 
-        if (start === end) {
-            replaceSelection(textarea, fallback, start, end);
-            textarea.setSelectionRange(start, start + fallback.length);
+        surface.innerHTML = sanitized || '<p><br></p>';
+    }
+
+    function syncInput(editor) {
+        var sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
+
+        editor.surface.innerHTML = sanitized || '<p><br></p>';
+
+        if (editor.input.value !== sanitized) {
+            editor.input.value = sanitized;
+            dispatchEditorEvents(editor.input);
+        }
+    }
+
+    function execAndSync(editor, command, value) {
+        focusSurface(editor.surface);
+        document.execCommand(command, false, value || null);
+        normalizeSurface(editor.surface);
+        syncInput(editor);
+    }
+
+    function applyCode(editor) {
+        focusSurface(editor.surface);
+
+        var range = getSelectionRange(editor.surface);
+
+        if (!range) {
             return;
         }
 
-        var range = getSelectedLinesRange(value, start, end);
-        var selectedBlock = value.slice(range.start, range.end);
-        var lines = selectedBlock.split('\n');
-        var nonEmptyLines = lines.filter(function (line) {
-            return line.trim() !== '';
-        });
+        if (range.collapsed) {
+            var code = document.createElement('code');
 
-        if (nonEmptyLines.length === 0) {
-            replaceSelection(textarea, selectedBlock, range.start, range.end);
-            textarea.setSelectionRange(range.start, range.end);
+            code.textContent = 'code';
+            range.insertNode(code);
+            placeCaretInside(code, false);
+            normalizeSurface(editor.surface);
+            syncInput(editor);
             return;
         }
 
-        var shouldStrip = nonEmptyLines.every(function (line) {
-            return detectPrefixRegex.test(line);
-        });
-        var index = 0;
-        var replacement = lines.map(function (line) {
-            if (line.trim() === '') {
-                return line;
-            }
+        var existingCode = closestElement(range.commonAncestorContainer, 'CODE', editor.surface);
 
-            if (shouldStrip) {
-                return line.replace(stripPrefixRegex, '');
-            }
-
-            index += 1;
-
-            return applyPrefixFn(line, index);
-        }).join('\n');
-
-        replaceSelection(textarea, replacement, range.start, range.end);
-        textarea.setSelectionRange(range.start, range.start + replacement.length);
-    }
-
-    function getMarkdownLinkRange(value, start, end) {
-        var linkPattern = /\[[^\]]+\]\([^\s)]+\)/g;
-        var match;
-
-        while ((match = linkPattern.exec(value)) !== null) {
-            var matchStart = match.index;
-            var matchEnd = matchStart + match[0].length;
-
-            if ((start === matchStart && end === matchEnd) || (start >= matchStart && end <= matchEnd)) {
-                return {
-                    start: matchStart,
-                    end: matchEnd,
-                    value: match[0],
-                };
-            }
+        if (existingCode) {
+            unwrap(existingCode);
+            normalizeSurface(editor.surface);
+            syncInput(editor);
+            return;
         }
 
-        return null;
+        var fragment = range.extractContents();
+        var wrapper = document.createElement('code');
+
+        wrapper.appendChild(fragment);
+        range.insertNode(wrapper);
+        placeCaretInside(wrapper, true);
+        normalizeSurface(editor.surface);
+        syncInput(editor);
     }
 
-    function toggleLink(textarea) {
-        var start = textarea.selectionStart;
-        var end = textarea.selectionEnd;
-        var value = textarea.value;
-        var selected = value.slice(start, end);
-        var existingLink = getMarkdownLinkRange(value, start, end);
-        var placeholder = 'link text';
-        var urlPlaceholder = 'https://example.com';
+    function applyLink(editor) {
+        focusSurface(editor.surface);
+
+        var range = getSelectionRange(editor.surface);
+
+        if (!range) {
+            return;
+        }
+
+        var existingLink = closestElement(range.commonAncestorContainer, 'A', editor.surface);
+        var currentHref = existingLink ? existingLink.getAttribute('href') || '' : '';
+        var href = window.prompt('Enter link URL', currentHref || 'https://');
+
+        if (href === null) {
+            return;
+        }
+
+        href = href.trim();
 
         if (existingLink) {
-            textarea.focus();
-            textarea.setSelectionRange(existingLink.start, existingLink.end);
+            if (href === '') {
+                unwrap(existingLink);
+            } else if (isSafeHref(href)) {
+                existingLink.setAttribute('href', href);
+            }
+
+            normalizeSurface(editor.surface);
+            syncInput(editor);
             return;
         }
 
-        var replacement = '[' + (selected || placeholder) + '](' + urlPlaceholder + ')';
-        var labelStart = start + 1;
+        if (range.collapsed || !isSafeHref(href)) {
+            return;
+        }
 
-        replaceSelection(textarea, replacement, start, end);
-        textarea.setSelectionRange(labelStart, labelStart + (selected || placeholder).length);
+        document.execCommand('createLink', false, href);
+        normalizeSurface(editor.surface);
+        syncInput(editor);
     }
 
-    function bindEditor(textarea) {
-        var toolbar = textarea.parentElement ? textarea.parentElement.querySelector('[role="toolbar"]') : null;
+    function handlePaste(editor, event) {
+        event.preventDefault();
 
-        if (!toolbar || textarea.dataset.wbRichTextBound === 'true') {
+        var clipboard = event.clipboardData || window.clipboardData;
+        var html = clipboard && clipboard.getData ? clipboard.getData('text/html') : '';
+        var text = clipboard && clipboard.getData ? clipboard.getData('text/plain') : '';
+        var safeHtml = html ? sanitizeHtmlFragment(html, document) : convertTextToHtml(text);
+
+        focusSurface(editor.surface);
+        document.execCommand('insertHTML', false, safeHtml || escapeHtml(text));
+        normalizeSurface(editor.surface);
+        syncInput(editor);
+    }
+
+    function handleAction(editor, action) {
+        if (action === 'bold') {
+            execAndSync(editor, 'bold');
             return;
         }
 
-        textarea.dataset.wbRichTextBound = 'true';
+        if (action === 'italic') {
+            execAndSync(editor, 'italic');
+            return;
+        }
 
-        toolbar.querySelectorAll('[data-wb-rich-text-action]').forEach(function (button) {
+        if (action === 'code') {
+            applyCode(editor);
+            return;
+        }
+
+        if (action === 'link') {
+            applyLink(editor);
+            return;
+        }
+
+        if (action === 'bullet-list') {
+            execAndSync(editor, 'insertUnorderedList');
+            return;
+        }
+
+        if (action === 'numbered-list') {
+            execAndSync(editor, 'insertOrderedList');
+            return;
+        }
+
+        if (action === 'clear') {
+            focusSurface(editor.surface);
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('unlink', false, null);
+            normalizeSurface(editor.surface);
+            syncInput(editor);
+        }
+    }
+
+    function bindEditor(root) {
+        if (!root || root.dataset.wbRichTextBound === 'true') {
+            return;
+        }
+
+        var surface = root.querySelector('[data-wb-rich-text-surface]');
+        var input = root.querySelector('[data-wb-rich-text-input]');
+
+        if (!surface || !input) {
+            return;
+        }
+
+        root.dataset.wbRichTextBound = 'true';
+
+        var editor = {
+            root: root,
+            surface: surface,
+            input: input,
+        };
+
+        surface.innerHTML = sanitizeHtmlFragment(input.value, document) || '<p><br></p>';
+
+        root.querySelectorAll('[data-wb-rich-text-action]').forEach(function (button) {
             button.addEventListener('click', function () {
-                var action = button.dataset.wbRichTextAction;
-
-                if (action === 'bold') {
-                    toggleWrap(textarea, '**', '**', 'bold');
-                    return;
-                }
-
-                if (action === 'italic') {
-                    toggleWrap(textarea, '*', '*', 'italic');
-                    return;
-                }
-
-                if (action === 'code') {
-                    toggleWrap(textarea, '`', '`', 'code');
-                    return;
-                }
-
-                if (action === 'link') {
-                    toggleLink(textarea);
-                    return;
-                }
-
-                if (action === 'bullet-list') {
-                    toggleLinePrefix(
-                        textarea,
-                        function (line) {
-                            return '- ' + line;
-                        },
-                        /^- /,
-                        /^- /,
-                        '- list item'
-                    );
-                    return;
-                }
-
-                if (action === 'numbered-list') {
-                    toggleLinePrefix(
-                        textarea,
-                        function (line, index) {
-                            return String(index) + '. ' + line;
-                        },
-                        /^\d+\. /,
-                        /^\d+\. /,
-                        '1. list item'
-                    );
-                }
+                handleAction(editor, button.dataset.wbRichTextAction);
             });
         });
+
+        surface.addEventListener('input', function () {
+            syncInput(editor);
+        });
+
+        surface.addEventListener('blur', function () {
+            normalizeSurface(surface);
+            syncInput(editor);
+        });
+
+        surface.addEventListener('paste', function (event) {
+            handlePaste(editor, event);
+        });
+
+        if (input.form) {
+            input.form.addEventListener('submit', function () {
+                syncInput(editor);
+            });
+        }
     }
 
     document.querySelectorAll('[data-wb-rich-text-editor]').forEach(bindEditor);

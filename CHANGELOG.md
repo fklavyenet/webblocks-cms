@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Replace Rich Text's Markdown-like admin editing model with a dependency-free safe HTML editor to avoid marker duplication and nested link formatting while preserving sanitized public output.
+
 ## 1.10.0
 
 - Align Rich Text public rendering with the WebBlocks UI `wb-rich-text` primitive while preserving sanitized Markdown-like body copy behavior.

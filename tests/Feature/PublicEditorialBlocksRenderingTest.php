@@ -1192,7 +1192,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_block_supports_safe_markdown_like_rendering_without_raw_html(): void
+    public function rich_text_block_supports_safe_html_rendering_without_raw_html_passthrough(): void
     {
         $page = $this->pageWithMainSlot();
         $block = Block::query()->create([
@@ -1209,7 +1209,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $block->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
-            'content' => "Use **bold** and `auto`.\n\n- First item\n- Second item\n\n<script>alert(1)</script>",
+            'content' => '<p>Use <strong>bold</strong> and <code>auto</code>.</p><ul><li>First item</li><li>Second item</li></ul><script>alert(1)</script>',
         ]);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -1221,7 +1221,6 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<div class="wb-rich-text wb-rich-text-readable">', false);
         $response->assertSee('<p>Use <strong>bold</strong> and <code>auto</code>.</p>', false);
         $response->assertSee('<ul><li>First item</li><li>Second item</li></ul>', false);
-        $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
         $response->assertDontSee('<div class="wb-stack wb-gap-3">', false);
         $response->assertDontSee('wb-prose', false);
