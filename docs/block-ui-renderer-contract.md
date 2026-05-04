@@ -107,10 +107,19 @@ Public pages now use explicit layout composition modes:
 ### Public layout
 
 - The public layout owns the page-wide shell and should keep `<body class="wb-public-body">`.
+- Page `Public Shell` is the only source of truth for the outer public shell mode.
 - Major page regions should be built from shipped WebBlocks UI layout primitives first: `wb-public-main`, `wb-container`, `wb-section`, `wb-stack`, `wb-grid`.
 - `wb-content-shell`, `wb-content-header`, `wb-content-body`, and `wb-content-footer` belong inside the main content area when the page reads like article, guide, docs, or editorial content. They are not the site-wide header or footer chrome.
 - `#wb-overlay-root` is the shared mount point for public overlays such as the gallery viewer and cookie preference modal.
 - `wb-sidebar` is reserved for a true docs/app navigation shell. Generic marketing or editorial sidebars should stay ordinary `aside` content composed from `wb-grid`, `wb-stack`, cards, callouts, and link lists.
+
+### Slot wrappers
+
+- Slot `Wrapper element` controls the safe semantic wrapper tag and only allows vetted elements such as `div`, `section`, `main`, `header`, `aside`, `footer`, and `nav`.
+- Slot `Wrapper preset` controls shipped wrapper classes and structural attributes for the slot wrapper.
+- Presets are resolved at the slot layer. They do not move page-shell responsibility into blocks.
+- For docs pages, use `Public Shell = Docs` plus slot presets such as `docs-navbar`, `docs-sidebar`, and `docs-main`.
+- If a docs-oriented slot preset is selected on a non-docs page shell, the slot still renders its safe wrapper classes and element, but the page does not switch into the docs shell automatically.
 
 ### Header slot
 

@@ -32,31 +32,12 @@
             $publicShell = $page->publicShellPreset();
             $slotCollection = collect($slots ?? []);
             $renderSlot = function (array $slot) use ($page) {
-                $tag = $slot['wrapper_element'] ?: match ($slot['slug']) {
-                    'header' => 'header',
-                    'sidebar' => 'aside',
-                    'main' => 'main',
-                    'footer' => 'footer',
-                    default => 'div',
-                };
-                $attributes = ['data-wb-slot="'.$slot['slug'].'"'];
-
-                if ($slot['slug'] === 'main') {
-                    $attributes[] = 'id="main-content"';
-                }
-
-                if (($slot['wrapper_preset'] ?? 'default') === 'docs-navbar') {
-                    $attributes[] = 'class="wb-navbar wb-navbar-glass wb-w-full"';
-                }
-
-                if (($slot['wrapper_preset'] ?? 'default') === 'docs-main') {
-                    $attributes[] = 'class="wb-dashboard-main"';
-                }
-
-                if (($slot['wrapper_preset'] ?? 'default') === 'docs-sidebar') {
-                    $attributes[] = 'id="docsSidebar"';
-                    $attributes[] = 'class="wb-sidebar"';
-                }
+                $wrapper = is_array($slot['wrapper'] ?? null) ? $slot['wrapper'] : [];
+                $tag = $wrapper['element'] ?? ($slot['wrapper_element'] ?? 'div');
+                $attributes = collect($wrapper['attributes'] ?? [])
+                    ->map(fn ($value, $name) => e((string) $name).'="'.e((string) $value).'"')
+                    ->values()
+                    ->all();
 
                 return '<'.$tag.' '.implode(' ', $attributes).'>'
                     .view('pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render()

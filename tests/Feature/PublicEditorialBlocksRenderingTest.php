@@ -593,6 +593,142 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function slot_wrapper_element_and_plain_preset_change_public_output(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $slot = $page->slots()->firstOrFail();
+        $slot->update([
+            'settings' => [
+                'wrapper_element' => 'section',
+                'wrapper_preset' => 'plain',
+            ],
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Section wrapper content',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<section data-wb-slot="main" id="main-content">', false);
+        $response->assertDontSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertDontSee('wb-dashboard-main', false);
+    }
+
+    #[Test]
+    public function docs_preset_keeps_saved_element_but_applies_docs_wrapper_classes(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $site = Site::query()->firstOrFail();
+        $headerType = SlotType::query()->updateOrCreate(['slug' => 'header'], ['name' => 'Header', 'status' => 'published', 'sort_order' => 1, 'is_system' => true]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Docs Header Test',
+            'slug' => 'docs-header-test',
+            'page_type' => 'default',
+            'status' => 'published',
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Docs Header Test', 'slug' => 'docs-header-test', 'path' => '/p/docs-header-test'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'settings' => ['wrapper_preset' => 'docs-navbar', 'wrapper_element' => 'nav'],
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Docs nav content',
+        ]);
+
+        $response = $this->get('/p/docs-header-test');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertDontSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+    }
+
+    #[Test]
+    public function docs_only_slot_presets_render_safe_classes_on_default_shell_pages(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $site = Site::query()->firstOrFail();
+        $sidebarType = SlotType::query()->updateOrCreate(['slug' => 'sidebar'], ['name' => 'Sidebar', 'status' => 'published', 'sort_order' => 1, 'is_system' => true]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Default Shell Sidebar Test',
+            'slug' => 'default-shell-sidebar-test',
+            'page_type' => 'default',
+            'status' => 'published',
+            'settings' => ['public_shell' => 'default'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Default Shell Sidebar Test', 'slug' => 'default-shell-sidebar-test', 'path' => '/p/default-shell-sidebar-test'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebarType->id,
+            'sort_order' => 0,
+            'settings' => ['wrapper_preset' => 'docs-sidebar', 'wrapper_element' => 'aside'],
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebarType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Default shell sidebar content',
+        ]);
+
+        $response = $this->get('/p/default-shell-sidebar-test');
+
+        $response->assertOk();
+        $response->assertSee('<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">', false);
+        $response->assertDontSee('<div class="wb-dashboard-shell">', false);
+    }
+
+    #[Test]
     public function docs_shell_renders_semantic_slot_order_and_safe_slot_presets(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

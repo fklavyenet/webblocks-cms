@@ -91,6 +91,8 @@ class SiteCloneServiceTest extends TestCase
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
         $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
         $this->assertSame('English paragraph content', $presentedBlock->content);
+        $this->assertSame('main', $mainSlot['wrapper']['element']);
+        $this->assertSame('default', $mainSlot['wrapper']['preset']);
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,
             'menu_key' => NavigationItem::MENU_PRIMARY,

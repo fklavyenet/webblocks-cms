@@ -59,6 +59,7 @@
                             <option value="{{ $element }}" @selected($wrapperElement === $element)>{{ $element }}</option>
                         @endforeach
                     </select>
+                    <span class="wb-text-sm wb-text-muted">Controls the public semantic wrapper tag for this slot.</span>
                 </div>
                 <div class="wb-stack wb-gap-1">
                     <label for="wrapper_preset">Wrapper preset</label>
@@ -69,6 +70,7 @@
                         <option value="docs-main" @selected($wrapperPreset === 'docs-main')>Docs Main</option>
                         <option value="plain" @selected($wrapperPreset === 'plain')>Plain</option>
                     </select>
+                    <span class="wb-text-sm wb-text-muted">Maps the slot wrapper to shipped public shell classes without pushing shell markup into blocks.</span>
                 </div>
                 <div class="wb-stack wb-gap-1 wb-justify-end">
                     <label class="wb-text-sm wb-text-muted">Apply</label>

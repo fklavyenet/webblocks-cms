@@ -82,7 +82,7 @@ See `docs/installation.md` for the complete install guide.
 2. Sign in to `/admin`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
-5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Rich Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. `Rich Text` is for safe inline formatting inside body copy; keep headings, layouts, buttons, and media as dedicated first-class blocks. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. For docs layouts, set the page `Public Shell` to `Docs` and configure safe slot wrapper presets on the Header, Sidebar, and Main slots instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
+5. Build page structure with `Section`, `Container`, `Cluster`, or `Grid`, then add `Header`, `Plain Text`, `Rich Text`, `Button Link`, `Card`, `Stat Card`, or `Breadcrumb` blocks inside that layout tree. `Rich Text` is for safe inline formatting inside body copy; keep headings, layouts, buttons, and media as dedicated first-class blocks. Use `Breadcrumb` for header and context bars, and use `navigation-auto` only for actual menus. `Public Shell` is page-level and controls the outer public shell. Slot `Wrapper element` and `Wrapper preset` settings are slot-level and control the structural public wrapper for each region. For docs layouts, set the page `Public Shell` to `Docs` and configure Header, Sidebar, and Main slot presets instead of placing shell classes on individual blocks. For card actions, prefer `Card > Cluster > Button Link`; the legacy single card action fields remain available as a fallback.
 6. For a docs-style context bar, add `Breadcrumb` and `Header Actions` to the `Header` slot. `Header Actions` renders system-owned theme utilities such as color mode and accent controls without requiring raw HTML blocks.
 7. For a docs-style sidebar, use the `Sidebar` slot with the `Docs Sidebar` preset, then add `Sidebar Brand`, `Sidebar Navigation`, and `Sidebar Footer` as top-level sidebar blocks. Inside `Sidebar Navigation`, add `Sidebar Nav Item` and optional `Sidebar Nav Group` blocks.
 8. Publish the page as a `site_admin` or `super_admin`.
@@ -118,6 +118,8 @@ See `docs/getting-started.md` for the first-use workflow.
 
 - Refresh the product block catalog on an existing install with `ddev artisan db:seed --class=BlockTypeSeeder`. The seeder safely upserts product-owned block types such as `Rich Text` without duplicating rows.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
+- Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slots control safe wrapper semantics and shipped wrapper presets, and blocks render content inside those slot wrappers.
+- For docs pages, use `Public Shell = Docs` plus `Docs Navbar`, `Docs Sidebar`, and `Docs Main` slot presets on the Header, Sidebar, and Main slots.
 
 ## Build Artifacts
 

@@ -6,12 +6,14 @@ use App\Models\Block;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\PublicRendering\SlotWrapperResolver;
 use Illuminate\Support\Collection;
 
 class PublicPagePresenter
 {
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly SlotWrapperResolver $slotWrapperResolver,
     ) {}
 
     public function present(Page $page): array
@@ -44,22 +46,18 @@ class PublicPagePresenter
         $blocks = $topLevelBlocks
             ->where('slot_type_id', $slot->slot_type_id)
             ->values();
-        $wrapperPreset = $slot->wrapperPreset();
-
-        if ($wrapperPreset === 'default' && $slot->page?->publicShellPreset() === 'docs') {
-            $wrapperPreset = match ($slug) {
-                'header' => 'docs-navbar',
-                'sidebar' => 'docs-sidebar',
-                'main' => 'docs-main',
-                default => 'default',
-            };
-        }
+        $wrapper = $this->slotWrapperResolver->resolve($slot->page ?? $slot->page()->firstOrFail(), $slot);
 
         return [
             'slug' => $slug,
             'name' => $slot->slotType?->name ?? str($slug)->headline()->toString(),
-            'wrapper_preset' => $wrapperPreset,
-            'wrapper_element' => $slot->wrapperElement(),
+            'wrapper_preset' => $wrapper['preset'],
+            'wrapper_element' => $wrapper['element'],
+            'wrapper' => [
+                'preset' => $wrapper['preset'],
+                'element' => $wrapper['element'],
+                'attributes' => $wrapper['attributes'],
+            ],
             'blocks' => $blocks,
         ];
     }

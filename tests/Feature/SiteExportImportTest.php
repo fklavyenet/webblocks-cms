@@ -214,6 +214,8 @@ class SiteExportImportTest extends TestCase
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
         $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
         $this->assertSame('English paragraph content', $presentedBlock->content);
+        $this->assertSame('main', $mainSlot['wrapper']['element']);
+        $this->assertSame('default', $mainSlot['wrapper']['preset']);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
     }
 

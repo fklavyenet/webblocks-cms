@@ -32,7 +32,7 @@ class PageSlot extends Model
 
     public static function allowedWrapperElements(): array
     {
-        return ['div', 'header', 'main', 'aside', 'footer'];
+        return ['div', 'section', 'main', 'header', 'aside', 'footer', 'nav'];
     }
 
     public static function defaultWrapperElementForSlug(?string $slug): string

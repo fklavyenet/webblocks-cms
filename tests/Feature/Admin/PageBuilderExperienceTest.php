@@ -690,7 +690,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $pageSlot->refresh();
         $this->assertSame('docs-navbar', $pageSlot->settings['wrapper_preset'] ?? null);
-        $this->assertSame('header', $pageSlot->settings['wrapper_element'] ?? null);
+        $this->assertSame('div', $pageSlot->settings['wrapper_element'] ?? null);
     }
 
     #[Test]
