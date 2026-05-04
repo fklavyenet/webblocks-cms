@@ -45,10 +45,11 @@ Public page structure is controlled at the page and slot layer.
 - Page `Public Shell` is page-level outer-shell configuration.
 - `default` is the standard public shell.
 - `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
-- Slot wrapper settings are shared structural settings for public rendering. `Wrapper element` controls the safe semantic tag. `Wrapper preset` maps the slot wrapper to known public class sets.
+- Slot name determines the semantic public wrapper role for that region.
+- Slot wrappers are resolved automatically from page shell plus slot name. Unknown slots use the safe default `div` wrapper.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
 
-For docs-style pages, use page shell and slot wrapper presets instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` plus `Docs Navbar`, `Docs Sidebar`, and `Docs Main` on the Header, Sidebar, and Main slots.
+For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
 
 ## Project Boundary
 

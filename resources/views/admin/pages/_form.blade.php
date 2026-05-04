@@ -48,7 +48,7 @@
 					<option value="default" @selected(old('public_shell', $page->publicShellPreset()) === 'default')>Default</option>
 					<option value="docs" @selected(old('public_shell', $page->publicShellPreset()) === 'docs')>Docs</option>
 				</select>
-				<span class="wb-text-sm wb-text-muted">Page-level outer shell. Use slot settings for structural region wrappers.</span>
+				<span class="wb-text-sm wb-text-muted">Page-level outer shell. Default uses standard semantic slot wrappers. Docs automatically maps header, sidebar, and main slots to the docs shell wrappers.</span>
 			</div>
 			<div class="wb-stack-2 wb-field">
 				<label>Locale</label>

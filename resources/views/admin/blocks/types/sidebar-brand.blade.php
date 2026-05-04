@@ -11,7 +11,7 @@
     @endif
 
     <div class="wb-alert wb-alert-info">
-        <div>This block renders only the inner <code>wb-sidebar-brand</code> link. The outer <code>aside.wb-sidebar</code> wrapper still belongs to the Docs Sidebar slot preset.</div>
+        <div>This block renders only the inner <code>wb-sidebar-brand</code> link. The outer <code>aside.wb-sidebar</code> wrapper still belongs to the docs public shell when the block lives in the Sidebar slot.</div>
     </div>
 
     <div class="wb-stack wb-gap-1">

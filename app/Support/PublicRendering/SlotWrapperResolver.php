@@ -9,9 +9,11 @@ class SlotWrapperResolver
 {
     public function resolve(Page $page, PageSlot $slot): array
     {
-        $slug = $slot->slotType?->slug ?? 'main';
-        $preset = $this->resolvePreset($page, $slot, $slug);
-        $element = $this->resolveElement($slot, $slug);
+        $shell = $page->publicShellPreset();
+        $slug = $this->normalizeSlotSlug($slot->slotType?->slug);
+        $mapping = $shell === 'docs'
+            ? $this->resolveDocsMapping($slug)
+            : $this->resolveDefaultMapping($slug);
         $attributes = [
             'data-wb-slot' => $slug,
         ];
@@ -20,48 +22,47 @@ class SlotWrapperResolver
             $attributes['id'] = 'main-content';
         }
 
-        if ($preset === 'docs-navbar') {
-            $attributes['class'] = 'wb-navbar wb-navbar-glass wb-w-full';
-        }
-
-        if ($preset === 'docs-sidebar') {
+        if ($mapping['preset'] === 'docs-sidebar') {
             $attributes['id'] = 'docsSidebar';
-            $attributes['class'] = 'wb-sidebar';
         }
 
-        if ($preset === 'docs-main') {
-            $attributes['class'] = 'wb-dashboard-main';
+        if ($mapping['class'] !== null) {
+            $attributes['class'] = $mapping['class'];
         }
 
         return [
-            'preset' => $preset,
-            'element' => $element,
+            'preset' => $mapping['preset'],
+            'element' => $mapping['element'],
             'attributes' => $attributes,
         ];
     }
 
-    private function resolvePreset(Page $page, PageSlot $slot, string $slug): string
+    private function normalizeSlotSlug(?string $slug): string
     {
-        $preset = $slot->wrapperPreset();
+        $normalized = strtolower(trim((string) $slug));
 
-        if ($preset !== 'default') {
-            return $preset;
-        }
+        return $normalized !== '' ? $normalized : 'main';
+    }
 
-        if ($page->publicShellPreset() !== 'docs') {
-            return 'default';
-        }
-
+    private function resolveDefaultMapping(string $slug): array
+    {
         return match ($slug) {
-            'header' => 'docs-navbar',
-            'sidebar' => 'docs-sidebar',
-            'main' => 'docs-main',
-            default => 'default',
+            'header' => ['preset' => 'default', 'element' => 'header', 'class' => null],
+            'main' => ['preset' => 'default', 'element' => 'main', 'class' => null],
+            'sidebar' => ['preset' => 'default', 'element' => 'aside', 'class' => null],
+            'footer' => ['preset' => 'default', 'element' => 'footer', 'class' => null],
+            default => ['preset' => 'default', 'element' => 'div', 'class' => null],
         };
     }
 
-    private function resolveElement(PageSlot $slot, string $slug): string
+    private function resolveDocsMapping(string $slug): array
     {
-        return $slot->wrapperElement() ?? PageSlot::defaultWrapperElementForSlug($slug);
+        return match ($slug) {
+            'header' => ['preset' => 'docs-navbar', 'element' => 'nav', 'class' => 'wb-navbar wb-navbar-glass wb-w-full'],
+            'sidebar' => ['preset' => 'docs-sidebar', 'element' => 'aside', 'class' => 'wb-sidebar'],
+            'main' => ['preset' => 'docs-main', 'element' => 'main', 'class' => 'wb-dashboard-main'],
+            'footer' => ['preset' => 'default', 'element' => 'footer', 'class' => null],
+            default => ['preset' => 'default', 'element' => 'div', 'class' => null],
+        };
     }
 }

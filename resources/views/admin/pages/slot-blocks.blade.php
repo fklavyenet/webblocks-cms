@@ -10,9 +10,6 @@
 
 @section('content')
     @php
-        $slotSettings = is_array($slot->settings) ? $slot->settings : [];
-        $wrapperPreset = old('wrapper_preset', $slot->wrapperPreset());
-        $wrapperElement = old('wrapper_element', $slotSettings['wrapper_element'] ?? \App\Models\PageSlot::defaultWrapperElementForSlug($slot->slotType?->slug));
         $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
             $resolved = $parameters;
 
@@ -42,41 +39,13 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Slot Settings</strong>
-            <span class="wb-text-sm wb-text-muted">Shared structural wrapper settings for public rendering.</span>
+            <strong>Public Wrapper</strong>
+            <span class="wb-text-sm wb-text-muted">Resolved automatically from the page shell and slot name.</span>
         </div>
         <div class="wb-card-body">
-            <form method="POST" action="{{ route('admin.pages.slots.settings.update', [$page, $slot]) }}" class="wb-grid wb-grid-3">
-                @csrf
-                @method('PUT')
-                @unless ($activeLocale->is_default)
-                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                @endunless
-                <div class="wb-stack wb-gap-1">
-                    <label for="wrapper_element">Wrapper element</label>
-                    <select id="wrapper_element" name="wrapper_element" class="wb-select">
-                        @foreach (\App\Models\PageSlot::allowedWrapperElements() as $element)
-                            <option value="{{ $element }}" @selected($wrapperElement === $element)>{{ $element }}</option>
-                        @endforeach
-                    </select>
-                    <span class="wb-text-sm wb-text-muted">Controls the public semantic wrapper tag for this slot.</span>
-                </div>
-                <div class="wb-stack wb-gap-1">
-                    <label for="wrapper_preset">Wrapper preset</label>
-                    <select id="wrapper_preset" name="wrapper_preset" class="wb-select">
-                        <option value="default" @selected($wrapperPreset === 'default')>Default</option>
-                        <option value="docs-navbar" @selected($wrapperPreset === 'docs-navbar')>Docs Navbar</option>
-                        <option value="docs-sidebar" @selected($wrapperPreset === 'docs-sidebar')>Docs Sidebar</option>
-                        <option value="docs-main" @selected($wrapperPreset === 'docs-main')>Docs Main</option>
-                        <option value="plain" @selected($wrapperPreset === 'plain')>Plain</option>
-                    </select>
-                    <span class="wb-text-sm wb-text-muted">Maps the slot wrapper to shipped public shell classes without pushing shell markup into blocks.</span>
-                </div>
-                <div class="wb-stack wb-gap-1 wb-justify-end">
-                    <label class="wb-text-sm wb-text-muted">Apply</label>
-                    <button type="submit" class="wb-btn wb-btn-secondary">Save Slot Settings</button>
-                </div>
-            </form>
+            <p class="wb-text-sm wb-text-muted">
+                This slot's public wrapper is resolved automatically from the page shell and slot name. Blocks still render inside this slot normally.
+            </p>
         </div>
     </div>
 

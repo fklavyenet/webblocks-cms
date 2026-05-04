@@ -450,20 +450,9 @@ class PageController extends Controller
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         abort_unless($slot->page_id === $page->id, 404);
 
-        DB::transaction(function () use ($request, $page, $slot): void {
-            $slot->update(['settings' => $request->validatedSettings()]);
-
-            $this->revisionManager->capture(
-                $page->fresh(),
-                $request->user(),
-                'Slot settings updated',
-                'Shared slot wrapper settings were updated.',
-            );
-        });
-
         return redirect()
             ->route('admin.pages.slots.blocks', $this->slotEditorRouteParameters($page, $slot))
-            ->with('status', 'Slot settings updated successfully.');
+            ->with('status', 'Slot wrapper settings are resolved automatically from the page shell and slot name.');
     }
 
     private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array

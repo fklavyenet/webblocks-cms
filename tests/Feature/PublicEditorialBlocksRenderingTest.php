@@ -593,7 +593,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function slot_wrapper_element_and_plain_preset_change_public_output(): void
+    public function default_shell_ignores_saved_wrapper_settings_and_keeps_semantic_slot_mapping(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -623,13 +623,13 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section data-wb-slot="main" id="main-content">', false);
-        $response->assertDontSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertDontSee('<section data-wb-slot="main" id="main-content">', false);
         $response->assertDontSee('wb-dashboard-main', false);
     }
 
     #[Test]
-    public function docs_preset_keeps_saved_element_but_applies_docs_wrapper_classes(): void
+    public function docs_shell_header_uses_docs_nav_wrapper_even_when_saved_settings_match_or_conflict(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $site = Site::query()->firstOrFail();
@@ -679,7 +679,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function docs_only_slot_presets_render_safe_classes_on_default_shell_pages(): void
+    public function default_shell_ignores_docs_oriented_saved_wrapper_settings(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $site = Site::query()->firstOrFail();
@@ -724,8 +724,61 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get('/p/default-shell-sidebar-test');
 
         $response->assertOk();
-        $response->assertSee('<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">', false);
+        $response->assertSee('<aside data-wb-slot="sidebar">', false);
+        $response->assertDontSee('id="docsSidebar"', false);
+        $response->assertDontSee('class="wb-sidebar"', false);
         $response->assertDontSee('<div class="wb-dashboard-shell">', false);
+    }
+
+    #[Test]
+    public function docs_shell_ignores_bad_saved_wrapper_combination_for_header_slot(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $site = Site::query()->firstOrFail();
+        $headerType = SlotType::query()->updateOrCreate(['slug' => 'header'], ['name' => 'Header', 'status' => 'published', 'sort_order' => 1, 'is_system' => true]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Docs Header Legacy Settings Test',
+            'slug' => 'docs-header-legacy-settings-test',
+            'page_type' => 'default',
+            'status' => 'published',
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Docs Header Legacy Settings Test', 'slug' => 'docs-header-legacy-settings-test', 'path' => '/p/docs-header-legacy-settings-test'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'settings' => ['wrapper_preset' => 'docs-main', 'wrapper_element' => 'main'],
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Legacy docs header content',
+        ]);
+
+        $response = $this->get('/p/docs-header-legacy-settings-test');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertDontSee('<main data-wb-slot="header"', false);
+        $response->assertDontSee('class="wb-dashboard-main"', false);
     }
 
     #[Test]
@@ -856,7 +909,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<div class="wb-dashboard-shell">', false);
         $response->assertSee('<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>', false);
         $response->assertSee('<div class="wb-dashboard-body wb-w-full">', false);
-        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSee('<div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
         $response->assertDontSee('<div class="wb-container wb-container-lg wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">', false);
         $response->assertDontSee('wb-container wb-container-lg', false);
@@ -866,11 +919,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             '<div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>',
             '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
             '<div class="wb-dashboard-body wb-w-full">',
-            '<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">',
+            '<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">',
             '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
             '<footer data-wb-slot="footer">',
         ], false);
-        $response->assertSee('<header data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSeeInOrder([
             '<nav class="wb-breadcrumb" aria-label="Breadcrumb">',
             'data-wb-header-actions',
@@ -882,7 +935,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('wb-content-shell', false);
         $response->assertDontSee('wb-docs-main', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar-glass"', false);
-        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<header\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
+        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<nav\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
         $this->assertDoesNotMatchRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<header\b[^>]*data-wb-slot="header"[^>]*>/s', $html);
     }
 

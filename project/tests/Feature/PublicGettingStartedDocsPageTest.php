@@ -59,7 +59,7 @@ class PublicGettingStartedDocsPageTest extends TestCase
         $response->assertSee('<div class="wb-alert wb-alert-info">', false);
         $response->assertSee('Copy the nearest shipped example');
         $response->assertDontSee('wb-navbar-spacer', false);
-        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<header\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
+        $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<nav\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
         $this->assertDoesNotMatchRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<header\b[^>]*data-wb-slot="header"[^>]*>/s', $html);
 
         $firstBlockCount = $page->blocks()->count();

@@ -115,11 +115,11 @@ Public pages now use explicit layout composition modes:
 
 ### Slot wrappers
 
-- Slot `Wrapper element` controls the safe semantic wrapper tag and only allows vetted elements such as `div`, `section`, `main`, `header`, `aside`, `footer`, and `nav`.
-- Slot `Wrapper preset` controls shipped wrapper classes and structural attributes for the slot wrapper.
-- Presets are resolved at the slot layer. They do not move page-shell responsibility into blocks.
-- For docs pages, use `Public Shell = Docs` plus slot presets such as `docs-navbar`, `docs-sidebar`, and `docs-main`.
-- If a docs-oriented slot preset is selected on a non-docs page shell, the slot still renders its safe wrapper classes and element, but the page does not switch into the docs shell automatically.
+- Slot wrappers are deterministic runtime behavior, not editorial settings.
+- Page `Public Shell` and slot name are the only inputs used to resolve slot wrapper element, classes, and structural attributes.
+- `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
+- `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
+- Blocks render inside the resolved slot wrapper and do not own page-shell markup.
 
 ### Header slot
 

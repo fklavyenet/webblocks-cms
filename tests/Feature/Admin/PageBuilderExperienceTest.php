@@ -666,7 +666,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_edit_screen_exposes_wrapper_preset_selector_and_persists_safe_values(): void
+    public function slot_edit_screen_hides_wrapper_controls_and_keeps_block_editing_workflow_visible(): void
     {
         $this->seedFoundation();
 
@@ -677,40 +677,45 @@ class PageBuilderExperienceTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.pages.slots.blocks', [$page, $pageSlot]))
             ->assertOk()
-            ->assertSee('Slot Settings')
-            ->assertSee('name="wrapper_element"', false)
-            ->assertSee('name="wrapper_preset"', false)
-            ->assertSee('Docs Navbar');
-
-        $response = $this->actingAs($user)->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
-            'wrapper_element' => 'div',
-            'wrapper_preset' => 'docs-navbar',
-        ]);
-
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $pageSlot->refresh();
-        $this->assertSame('docs-navbar', $pageSlot->settings['wrapper_preset'] ?? null);
-        $this->assertSame('div', $pageSlot->settings['wrapper_element'] ?? null);
+            ->assertSee('Public Wrapper')
+            ->assertSee('resolved automatically from the page shell and slot name')
+            ->assertDontSee('Slot Settings')
+            ->assertDontSee('Wrapper element')
+            ->assertDontSee('Wrapper preset')
+            ->assertDontSee('Save Slot Settings')
+            ->assertDontSee('name="wrapper_element"', false)
+            ->assertDontSee('name="wrapper_preset"', false)
+            ->assertSee('Blocks')
+            ->assertSee('Add Block');
     }
 
     #[Test]
-    public function invalid_slot_wrapper_settings_are_rejected(): void
+    public function slot_settings_update_route_is_harmless_and_does_not_change_saved_wrapper_settings(): void
     {
         $this->seedFoundation();
 
         $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
+        $pageSlot->update([
+            'settings' => [
+                'wrapper_element' => 'section',
+                'wrapper_preset' => 'docs-main',
+            ],
+        ]);
 
         $response = $this->actingAs($user)
-            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
             ->put(route('admin.pages.slots.settings.update', [$page, $pageSlot]), [
                 'wrapper_element' => 'script',
                 'wrapper_preset' => 'custom-class-hack',
             ]);
 
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $response->assertSessionHasErrors(['wrapper_element', 'wrapper_preset']);
+        $response->assertSessionHas('status', 'Slot wrapper settings are resolved automatically from the page shell and slot name.');
+
+        $pageSlot->refresh();
+        $this->assertSame('section', $pageSlot->settings['wrapper_element'] ?? null);
+        $this->assertSame('docs-main', $pageSlot->settings['wrapper_preset'] ?? null);
     }
 
     #[Test]
