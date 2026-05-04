@@ -1,15 +1,13 @@
 @php
     $depth = $depth ?? 0;
-    $parentBlock = $parentBlock ?? null;
     $hasChildren = $block->children->isNotEmpty();
     $canAddChildren = $block->canAcceptChildren();
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
     $blockAdminSummary = app(\App\Support\Blocks\BlockAdminSummary::class);
-    $rowSummary = $blockAdminSummary->present($block);
-    $parentSummary = $parentBlock ? $blockAdminSummary->label($parentBlock, 60) : null;
-    $translationStatus = $block->translationStatus($activeLocale);
+    $rowSummary = $blockAdminSummary->primary($block);
+    $childCount = $block->children->count();
 @endphp
 
 <tbody
@@ -36,7 +34,7 @@
         data-wb-slot-depth="{{ $depth }}"
     >
         <td class="wb-block-hierarchy-cell">
-            <div class="wb-block-hierarchy wb-stack wb-gap-1">
+            <div class="wb-block-hierarchy">
                 <div class="wb-cms-block-tree-item">
                     <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder block" title="Drag to reorder block">
                         <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
@@ -60,26 +58,17 @@
 
                     <span class="wb-cms-block-tree-label"><strong>{{ $block->typeName() }}</strong></span>
                 </div>
-
-                <span class="wb-text-sm wb-text-muted wb-cms-block-row-meta">
-                    {{ $block->is_system ? 'System block' : 'Visitor-facing block' }}
-                    @if ($parentSummary)
-                        | Child of {{ $parentSummary }}
-                    @endif
-                    @if ($hasChildren)
-                        | Children: {{ $block->children->count() }} {{ \Illuminate\Support\Str::plural('item', $block->children->count()) }}
-                    @endif
-                </span>
             </div>
         </td>
         <td>
-            <div class="wb-stack wb-gap-1">
-                <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary['label'] }}</strong></a>
-                @if ($rowSummary['summary'] !== null)
-                    <span class="wb-text-sm wb-text-muted wb-cms-block-row-summary">{{ $rowSummary['summary'] }}</span>
-                @endif
-                <span class="wb-text-sm wb-text-muted">{{ $translationStatus['label'] }}{{ $translationStatus['state'] === 'fallback' ? ' from '.strtoupper($translationStatus['resolved_locale']->code) : '' }}</span>
-            </div>
+            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary }}</strong></a>
+        </td>
+        <td class="wb-cms-block-children-cell">
+            @if ($canAddChildren || $hasChildren)
+                <span class="wb-cms-block-children-badge" aria-label="{{ $childCount }} {{ \Illuminate\Support\Str::plural('child block', $childCount) }}">{{ $childCount }}</span>
+            @else
+                <span class="wb-text-muted" aria-hidden="true">-</span>
+            @endif
         </td>
         <td>
             <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">

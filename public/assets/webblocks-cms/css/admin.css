@@ -102,9 +102,7 @@
     overflow-wrap: anywhere;
 }
 
-.wb-cms-block-row-title,
-.wb-cms-block-row-summary,
-.wb-cms-block-row-meta {
+.wb-cms-block-row-title {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -115,9 +113,23 @@
     -webkit-line-clamp: 1;
 }
 
-.wb-cms-block-row-summary,
-.wb-cms-block-row-meta {
-    -webkit-line-clamp: 2;
+.wb-cms-block-children-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.wb-cms-block-children-badge {
+    display: inline-flex;
+    min-width: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    background: var(--wb-surface-2);
+    color: var(--wb-text-muted);
 }
 
 .wb-cms-block-tree-toggle-icon {

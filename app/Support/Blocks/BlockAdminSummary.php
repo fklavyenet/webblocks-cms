@@ -29,6 +29,13 @@ class BlockAdminSummary
         return $this->present($block, $maxLength, self::summaryMaxLength())['label'];
     }
 
+    public function primary(Block $block, int $maxLength = 80): string
+    {
+        $preferred = $this->preferredPrimary($block);
+
+        return $this->truncate($preferred, $maxLength) ?? $this->label($block, $maxLength);
+    }
+
     public function summary(Block $block, int $maxLength = 120): ?string
     {
         return $this->present($block, self::labelMaxLength(), $maxLength)['summary'];
@@ -60,6 +67,30 @@ class BlockAdminSummary
             'section', 'container', 'cluster', 'grid' => $this->layoutLines($block),
             default => $this->fallbackLines($block),
         };
+    }
+
+    private function preferredPrimary(Block $block): ?string
+    {
+        return match ($block->typeSlug()) {
+            'rich-text' => 'Rich Text',
+            'plain_text' => 'Plain Text',
+            'text' => 'Text',
+            'section', 'container', 'cluster', 'grid' => $this->sanitize($block->layoutAdminName()) ?? 'Layout wrapper',
+            'code' => $this->title($block) ?? $this->codeLanguage($block) ?? 'Code snippet',
+            default => $this->firstMeaningfulPrimary($block),
+        };
+    }
+
+    private function firstMeaningfulPrimary(Block $block): ?string
+    {
+        return collect([
+            $this->title($block),
+            $this->subtitle($block),
+            $this->sanitize($block->setting('label')),
+            $this->buttonUrl($block),
+            $this->linkListItemUrl($block),
+            $this->content($block),
+        ])->first(fn (?string $value) => $value !== null);
     }
 
     private function contentHeaderLines(Block $block): array

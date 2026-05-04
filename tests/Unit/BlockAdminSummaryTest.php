@@ -83,6 +83,22 @@ class BlockAdminSummaryTest extends TestCase
         $this->assertNull($presented['summary']);
     }
 
+    #[Test]
+    public function primary_prefers_structure_focused_labels_for_content_heavy_blocks(): void
+    {
+        $block = $this->textBlock('rich-text', '<p>Hello <strong>world</strong></p>');
+
+        $this->assertSame('Rich Text', app(BlockAdminSummary::class)->primary($block));
+    }
+
+    #[Test]
+    public function primary_falls_back_to_content_when_no_better_label_exists(): void
+    {
+        $block = $this->textBlock('plain_text', 'Alpha Beta Gamma');
+
+        $this->assertSame('Plain Text', app(BlockAdminSummary::class)->primary($block));
+    }
+
     private function textBlock(string $type, ?string $content = null, ?string $title = null, ?string $subtitle = null): Block
     {
         $block = new Block([

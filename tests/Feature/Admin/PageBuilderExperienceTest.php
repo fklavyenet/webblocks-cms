@@ -766,6 +766,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('draggable="true"', false);
         $response->assertSee('data-admin-sortable-handle', false);
         $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertSee('<th>Children</th>', false);
         $response->assertSee('<th>Actions</th>', false);
         $response->assertSee('<div class="wb-action-group">', false);
         $response->assertSee('title="Move block up"', false);
@@ -812,9 +813,11 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Rich Text');
-        $response->assertSee('Alpha & Beta Gamma');
+        $response->assertSee('>Rich Text</strong>', false);
+        $response->assertSee('>Rich Text</strong></a>', false);
         $response->assertSee('wb-cms-block-row-title', false);
         $response->assertDontSee('<p>Alpha &amp; Beta <strong>Gamma</strong>', false);
+        $response->assertDontSee('Alpha & Beta Gamma', false);
         $response->assertDontSee('Rho Sigma Tau Upsilon Phi Chi Psi Omega.', false);
         $response->assertSee('published');
         $response->assertSee('title="Edit block"', false);
@@ -855,9 +858,11 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('data-slot-block-details-row', false);
         $response->assertDontSee('data-wb-slot-block-details-row', false);
         $response->assertDontSee('title="Expand block details"', false);
-        $response->assertDontSee('Block type');
         $response->assertDontSee('Preview');
-        $response->assertSee('Compact row content that should stay in the collapsed summary only.');
+        $response->assertDontSee('Visitor-facing block');
+        $response->assertSee('>Plain Text</strong></a>', false);
+        $response->assertDontSee('Compact row content that should stay in the collapsed summary only.', false);
+        $response->assertSee('>-<', false);
     }
 
     #[Test]
@@ -895,7 +900,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('id="slot-block-details-'.$block->id.'"', false);
         $response->assertDontSee('wb-block-row-details-body', false);
         $response->assertDontSee('Preview');
-        $response->assertSee('Alpha Beta Gamma.');
+        $response->assertSee('>Rich Text</strong></a>', false);
+        $response->assertDontSee('Alpha Beta Gamma.', false);
         $response->assertDontSee('<p>Alpha <strong>Beta</strong>', false);
     }
 
@@ -953,8 +959,11 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
         $response->assertSee('aria-controls="slot-block-row-'.$child->id.'"', false);
         $response->assertSee('Docs shell');
-        $response->assertSee('HTML | &lt;div&gt;Hi&lt;/div&gt;', false);
+        $response->assertSee('>HTML</strong></a>', false);
+        $response->assertDontSee('HTML | &lt;div&gt;Hi&lt;/div&gt;', false);
         $response->assertDontSee('Code preview');
+        $response->assertSee('>1<', false);
+        $response->assertSee('>-<', false);
     }
 
     #[Test]
@@ -2178,8 +2187,11 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
-        $response->assertSee('Children: 1 item');
-        $response->assertSee('Children: 2 items');
+        $response->assertDontSee('Children: 1 item');
+        $response->assertDontSee('Children: 2 items');
+        $response->assertSee('class="wb-cms-block-children-badge"', false);
+        $response->assertSee('aria-label="1 child block">1</span>', false);
+        $response->assertSee('aria-label="2 child blocks">2</span>', false);
         $response->assertSee('data-wb-slot-toggle="'.$card->id.'"', false);
         $response->assertSee('data-wb-slot-block-id="'.$card->id.'"', false);
         $response->assertSee('data-wb-slot-parent-id="'.$card->id.'"', false);
@@ -2902,7 +2914,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Container');
         $response->assertSee('Cluster');
         $response->assertSee('Nested title');
-        $response->assertSee('Nested paragraph');
+        $response->assertSee('>Plain Text</strong></a>', false);
         $response->assertSee('Primary action');
         $response->assertDontSee('<th>Order</th>', false);
         $response->assertSee('data-wb-slot-block-row', false);
@@ -2927,7 +2939,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
         $response->assertSee('class="wb-block-hierarchy-cell"', false);
-        $response->assertSee('class="wb-block-hierarchy wb-stack wb-gap-1"', false);
+        $response->assertSee('class="wb-block-hierarchy"', false);
         $response->assertSee('assets/webblocks-cms/css/admin.css', false);
         $response->assertDontSee('site/css/admin.css', false);
         $response->assertSee('assets/webblocks-cms/js/admin/slot-block-tree.js', false);

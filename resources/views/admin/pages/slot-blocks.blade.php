@@ -119,6 +119,7 @@
                             <tr>
                                 <th>Block Type</th>
                                 <th>Summary</th>
+                                <th>Children</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
