@@ -24,6 +24,7 @@
     <div class="wb-stack wb-gap-1">
         <label for="content">Description</label>
         <textarea id="content" name="content" class="wb-textarea" rows="4">{{ old('content', $block->content) }}</textarea>
+        <div class="wb-text-sm wb-text-muted">Supports inline code with backticks, for example <code>`light`</code>, <code>`dark`</code>, or <code>`auto`</code>.</div>
     </div>
 
     <div class="wb-stack wb-gap-1">

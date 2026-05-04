@@ -3,6 +3,7 @@
     $title = trim((string) ($block->title ?? ''));
     $subtitle = trim((string) ($block->subtitle ?? ''));
     $description = trim((string) ($block->content ?? ''));
+    $renderedDescription = app(\App\Support\Formatting\InlineRichTextRenderer::class)->render($description);
     $actionLabel = trim((string) ($block->meta ?? ''));
     $url = $block->cardUrl();
     $target = $block->cardTarget();
@@ -27,7 +28,7 @@
             @endif
 
             @if ($description !== '')
-                <p class="wb-promo-text">{{ $description }}</p>
+                <p class="wb-promo-text">{!! $renderedDescription !!}</p>
             @endif
 
             @if ($hasFooterBlocks || $showsLegacyAction)
@@ -53,7 +54,7 @@
             <strong>{{ $title }}</strong>
 
             @if ($description !== '')
-                <p class="wb-m-0">{{ $description }}</p>
+                <p class="wb-m-0">{!! $renderedDescription !!}</p>
             @endif
         </div>
 

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Promote the Rich Text block type back into the visible block picker as a safe content block.
+- Add safe inline code formatting for Rich Text content and Card descriptions.
+
 ## 1.8.0
 
 - Improve the Edit Page admin screen by moving Slots into a dedicated card separate from page settings.

@@ -13,7 +13,6 @@ class BlockTranslationWriter
     public function __construct(
         private readonly BlockTranslationRegistry $registry,
         private readonly LocaleResolver $localeResolver,
-        private readonly RichTextHtmlSanitizer $richTextHtmlSanitizer,
     ) {}
 
     public function canonicalPayload(array $data, ?Block $block, Page $page, ?string $localeCode, bool $isCreating = false): array
@@ -220,7 +219,17 @@ class BlockTranslationWriter
             return $value;
         }
 
-        return $this->richTextHtmlSanitizer->sanitize(is_string($value) ? $value : null);
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        return trim(strip_tags($value)) !== '' ? $value : null;
     }
 
     private function canonicalBlockFieldsForFamily(string $family): array

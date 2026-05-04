@@ -1156,6 +1156,73 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function card_description_supports_safe_inline_code_only(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Mode options',
+            'content' => 'Mode is `auto`. <script>alert(1)</script>',
+            'subtitle' => 'Subtitle `raw`',
+            'meta' => 'Action `raw`',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<p class="wb-m-0">Mode is <code>auto</code>. &lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
+        $response->assertDontSee('<p class="wb-m-0">Mode is `auto`. &lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
+        $response->assertSee('<div class="wb-card-header">Subtitle `raw`</div>', false);
+        $response->assertDontSee('<div class="wb-card-header">Subtitle <code>raw</code></div>', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
+    }
+
+    #[Test]
+    public function rich_text_block_supports_safe_inline_code_only(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 6)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => '`light`, `dark`, or `auto`\n<script>alert(1)</script>',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-stack wb-gap-2">', false);
+        $response->assertSee('<code>light</code>, <code>dark</code>, or <code>auto</code>', false);
+        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('wb-prose', false);
+    }
+
+    #[Test]
     public function promo_card_renders_webblocks_promo_markup_with_optional_eyebrow(): void
     {
         $page = $this->pageWithMainSlot();

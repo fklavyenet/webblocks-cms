@@ -122,22 +122,14 @@ class RichTextBlockTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $richTextType->id]));
 
         $response->assertOk();
-        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
-        $response->assertSee('data-wb-rich-text-editor', false);
-        $response->assertSee('data-wb-rich-text-input', false);
-        $response->assertSee('data-wb-rich-text-surface', false);
-        $response->assertSee('data-wb-rich-text-command="bold"', false);
-        $response->assertSee('data-wb-rich-text-command="italic"', false);
-        $response->assertSee('data-wb-rich-text-command="code"', false);
-        $response->assertSee('data-wb-rich-text-command="unordered-list"', false);
-        $response->assertSee('data-wb-rich-text-command="ordered-list"', false);
-        $response->assertSee('data-wb-rich-text-command="blockquote"', false);
-        $response->assertSee('data-wb-rich-text-command="link"', false);
-        $response->assertSee('data-wb-rich-text-command="clear"', false);
+        $response->assertSee('<label for="content">Rich Text</label>', false);
+        $response->assertSee('name="content" class="wb-textarea"', false);
+        $response->assertSee('Use backticks for inline code', false);
+        $response->assertDontSee('data-wb-rich-text-editor', false);
     }
 
     #[Test]
-    public function RichText_is_stored_in_translation_backed_content_after_server_side_sanitization(): void
+    public function RichText_is_stored_in_translation_backed_content_as_plain_text(): void
     {
         $this->seedFoundation();
 
@@ -151,7 +143,7 @@ class RichTextBlockTest extends TestCase
             'block_type_id' => $richTextType->id,
             'slot_type_id' => $pageSlot->slot_type_id,
             'sort_order' => 0,
-            'content' => '<p onclick="evil()">Hello <strong>world</strong> <a href="javascript:alert(1)">bad</a> <a href="/docs">safe</a> <a href="https://example.com" target="_blank">blank</a></p>',
+            'content' => 'Use `light`, `dark`, or `auto`.',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -162,11 +154,11 @@ class RichTextBlockTest extends TestCase
         $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
 
         $this->assertNull($block->fresh()->getRawOriginal('content'));
-        $this->assertSame('<p>Hello <strong>world</strong> <a>bad</a> <a href="/docs">safe</a> <a href="https://example.com" target="_blank" rel="noopener noreferrer">blank</a></p>', $content);
+        $this->assertSame('Use `light`, `dark`, or `auto`.', $content);
     }
 
     #[Test]
-    public function RichText_public_renderer_outputs_safe_markup_only(): void
+    public function RichText_public_renderer_outputs_safe_inline_code_and_escaped_html(): void
     {
         $this->seedFoundation();
 
@@ -185,7 +177,7 @@ class RichTextBlockTest extends TestCase
         ]);
 
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<p>Intro <strong>bold</strong> <a href="https://example.com" target="_blank">docs</a></p><script>alert(1)</script>',
+            'content' => '<script>alert(1)</script> and `code`',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -194,8 +186,8 @@ class RichTextBlockTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-wb-public-block-type="rich-text"', false);
         $response->assertSee('<div class="wb-stack wb-gap-2">', false);
-        $response->assertSee('<p>Intro <strong>bold</strong> <a href="https://example.com" target="_blank" rel="noopener noreferrer">docs</a></p>', false);
-        $response->assertDontSee('alert(1)', false);
-        $response->assertDontSee('javascript:', false);
+        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; and <code>code</code>', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('wb-prose', false);
     }
 }

@@ -10,7 +10,6 @@ use App\Models\PageSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
-use App\Support\Blocks\RichTextHtmlSanitizer;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -498,7 +497,7 @@ class BlockTranslationIntegrityTest extends TestCase
             'block_type_id' => $blockType->id,
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'content' => '<p>Hello <strong>world</strong></p>',
+            'content' => 'Hello `world`',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -511,12 +510,12 @@ class BlockTranslationIntegrityTest extends TestCase
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,
             'locale_id' => $this->defaultLocale()->id,
-            'content' => '<p>Hello <strong>world</strong></p>',
+            'content' => 'Hello `world`',
         ]);
     }
 
     #[Test]
-    public function rich_text_unsafe_html_and_links_are_sanitized_before_persistence(): void
+    public function rich_text_input_is_kept_as_plain_text_in_translation_rows(): void
     {
         $user = User::factory()->superAdmin()->create();
         $page = $this->pageWithMainSlot($this->defaultSite());
@@ -528,7 +527,7 @@ class BlockTranslationIntegrityTest extends TestCase
             'block_type_id' => $blockType->id,
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'content' => '<script>alert(1)</script><p onclick="evil()">Safe <strong>copy</strong> <a href="javascript:alert(1)">bad</a> <a href="https://example.com" target="_blank">good</a></p>',
+            'content' => '<script>alert(1)</script> `good`',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -538,18 +537,7 @@ class BlockTranslationIntegrityTest extends TestCase
         $block = Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->firstOrFail();
         $content = DB::table('block_text_translations')->where('block_id', $block->id)->value('content');
 
-        $this->assertSame('<p>Safe <strong>copy</strong> <a>bad</a> <a href="https://example.com" target="_blank" rel="noopener noreferrer">good</a></p>', $content);
-        $this->assertStringNotContainsString('<script', $content);
-        $this->assertStringNotContainsString('onclick=', $content);
-        $this->assertStringNotContainsString('javascript:', $content);
-    }
-
-    #[Test]
-    public function rich_text_safe_relative_and_contact_links_are_preserved(): void
-    {
-        $sanitizer = app(RichTextHtmlSanitizer::class);
-
-        $this->assertSame('<p><a href="/docs">Docs</a> <a href="#jump">Jump</a> <a href="?tab=api">API</a> <a href="mailto:team@example.com">Email</a> <a href="tel:+12025550123">Call</a></p>', $sanitizer->sanitize('<p><a href="/docs">Docs</a> <a href="#jump">Jump</a> <a href="?tab=api">API</a> <a href="mailto:team@example.com">Email</a> <a href="tel:+12025550123">Call</a></p>'));
+        $this->assertSame('<script>alert(1)</script> `good`', $content);
     }
 
     #[Test]

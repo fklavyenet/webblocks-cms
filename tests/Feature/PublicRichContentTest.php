@@ -203,12 +203,11 @@ class PublicRichContentTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'content' => 'Rich text content',
             'status' => 'published',
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<p>Rich text content</p>',
+            'content' => 'Rich text `content`',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -222,7 +221,7 @@ class PublicRichContentTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_renders_allowed_safe_markup_from_translation_content(): void
+    public function rich_text_renders_safe_inline_code_from_translation_content(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -238,18 +237,18 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<p>Intro <strong>bold</strong> <em>emphasis</em> <code>code</code> <a href="/docs">docs</a></p><ul><li>One</li><li>Two</li></ul><blockquote>Quoted</blockquote>',
+            'content' => 'Intro `bold`, `emphasis`, and `code`.',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-stack wb-gap-2"><p>Intro <strong>bold</strong> <em>emphasis</em> <code>code</code> <a href="/docs">docs</a></p><ul><li>One</li><li>Two</li></ul><blockquote>Quoted</blockquote></div>', false);
+        $response->assertSee('<div class="wb-stack wb-gap-2">Intro <code>bold</code>, <code>emphasis</code>, and <code>code</code>.</div>', false);
     }
 
     #[Test]
-    public function rich_text_public_rendering_does_not_output_stripped_or_unsafe_markup(): void
+    public function rich_text_public_rendering_escapes_unsafe_markup_and_only_formats_inline_code(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -265,18 +264,15 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<p>Safe <a href="https://example.com" target="_blank" rel="nofollow">link</a> <a href="javascript:alert(1)">bad</a></p>',
+            'content' => '<script>alert(1)</script> and `safe`',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('href="https://example.com" target="_blank" rel="noopener noreferrer"', false);
-        $response->assertSee('<a>bad</a>', false);
-        $response->assertDontSee('javascript:alert', false);
-        $response->assertDontSee('alert(1)', false);
-        $response->assertDontSee('onclick=', false);
+        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; and <code>safe</code>', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
     }
 
     #[Test]

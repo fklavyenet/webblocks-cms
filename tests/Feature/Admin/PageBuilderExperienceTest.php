@@ -3261,7 +3261,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_block_form_exposes_editor_controls_and_named_asset(): void
+    public function rich_text_block_form_exposes_plain_text_editor_with_inline_code_help(): void
     {
         $this->seedFoundation();
 
@@ -3273,18 +3273,9 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $richTextType->id]));
 
         $response->assertOk();
-        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
-        $response->assertSee('data-wb-rich-text-editor', false);
-        $response->assertSee('data-wb-rich-text-input', false);
-        $response->assertSee('data-wb-rich-text-surface', false);
-        $response->assertSee('data-wb-rich-text-command="bold"', false);
-        $response->assertSee('data-wb-rich-text-command="italic"', false);
-        $response->assertSee('data-wb-rich-text-command="code"', false);
-        $response->assertSee('data-wb-rich-text-command="unordered-list"', false);
-        $response->assertSee('data-wb-rich-text-command="ordered-list"', false);
-        $response->assertSee('data-wb-rich-text-command="blockquote"', false);
-        $response->assertSee('data-wb-rich-text-command="link"', false);
-        $response->assertSee('data-wb-rich-text-command="clear"', false);
-        $response->assertDontSee('data-wb-rich-text-command="heading"', false);
+        $response->assertSee('<label for="content">Rich Text</label>', false);
+        $response->assertSee('name="content" class="wb-textarea"', false);
+        $response->assertSee('Use backticks for inline code', false);
+        $response->assertDontSee('data-wb-rich-text-editor', false);
     }
 }
