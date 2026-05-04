@@ -218,11 +218,14 @@ class RichTextBlockTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('data-wb-public-block-type="rich-text"', false);
-        $response->assertSee('<div class="wb-stack wb-gap-3">', false);
+        $response->assertSee('wb-rich-text', false);
+        $response->assertSee('wb-rich-text-readable', false);
+        $response->assertSee('<div class="wb-rich-text wb-rich-text-readable">', false);
         $response->assertSee('<p>Intro with <strong>bold</strong> and <em>italic</em>.</p>', false);
         $response->assertSee('<ul><li>Item with <code>code</code></li><li><a href="https://example.com" rel="noopener noreferrer">Docs</a></li></ul>', false);
         $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('<div class="wb-stack wb-gap-3">', false);
         $response->assertDontSee('wb-prose', false);
     }
 }

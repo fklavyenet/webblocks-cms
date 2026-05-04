@@ -1188,6 +1188,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<div class="wb-card-header">Subtitle `raw`</div>', false);
         $response->assertDontSee('<div class="wb-card-header">Subtitle <code>raw</code></div>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('wb-rich-text', false);
     }
 
     #[Test]
@@ -1215,11 +1216,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-stack wb-gap-3">', false);
+        $response->assertSee('wb-rich-text', false);
+        $response->assertSee('wb-rich-text-readable', false);
+        $response->assertSee('<div class="wb-rich-text wb-rich-text-readable">', false);
         $response->assertSee('<p>Use <strong>bold</strong> and <code>auto</code>.</p>', false);
         $response->assertSee('<ul><li>First item</li><li>Second item</li></ul>', false);
         $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('<div class="wb-stack wb-gap-3">', false);
         $response->assertDontSee('wb-prose', false);
     }
 

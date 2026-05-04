@@ -4,5 +4,5 @@
 @endphp
 
 @if ($content !== '')
-    <div class="wb-stack wb-gap-3">{!! $renderer->render($content) !!}</div>
+    <div class="wb-rich-text wb-rich-text-readable">{!! $renderer->render($content) !!}</div>
 @endif

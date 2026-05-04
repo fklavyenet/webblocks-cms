@@ -21,6 +21,10 @@ Confirmed primitives and patterns:
 - `wb-stat`
 - `wb-gallery`
 - `wb-alert`
+- `wb-rich-text`
+- `wb-rich-text-readable`
+- `wb-rich-text-compact`
+- `wb-rich-text-loose`
 - `wb-btn`
 - `wb-grid`
 - `wb-grid-2`
@@ -68,7 +72,7 @@ Public pages now use explicit layout composition modes:
 | footer slot | `wb-section`, `wb-container`, `wb-grid`, link-list/nav primitives | acceptable | P0 shell/layout | keep footer on shipped layout primitives and avoid extra custom classes |
 | `heading` | semantic heading | acceptable | P2 content quality | keep wrapper-free output and normalize anchor behavior later |
 | `text` | body copy in `wb-stack` rhythm | acceptable | P2 content quality | keep simple output and avoid bespoke typography wrappers |
-| `rich-text` | readable content, optional shipped prose wrapper | weak | P2 content quality | confirm shipped rich text primitive or document the UI gap explicitly |
+| `rich-text` | `wb-rich-text wb-rich-text-readable` | acceptable | P2 content quality | keep safe body copy scoped to the shipped rich text primitive |
 | `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage |
 | `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | keep default section stable and reserve promo semantics for explicit variants |
 | `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, `wb-link-list` | acceptable | P1 public marketing/docs | keep parent-driven variants explicit and avoid reintroducing forced wrapper cards |
@@ -178,9 +182,9 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `content`
 - Translatable fields: `content`
 - Shared fields: none
-- Intended WebBlocks UI output: readable body content with a shipped typography/prose wrapper only if WebBlocks UI actually ships that primitive.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: confirm whether `wb-prose` is a shipped primitive; if not, document the UI gap or switch to simpler readable body output without custom prose CSS.
+- Intended WebBlocks UI output: sanitized body copy wrapped in `wb-rich-text wb-rich-text-readable` using the shipped WebBlocks UI rich text primitive.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep Rich Text limited to safe editorial body copy. Headings, media, buttons, tables, layout, and raw HTML composition remain separate blocks or features.
 
 ### `html`
 

@@ -244,7 +244,9 @@ class PublicRichContentTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-stack wb-gap-3"><p>Intro with <strong>bold</strong>, <em>italic</em>, and <a href="https://example.com" rel="noopener noreferrer">docs</a>.</p><ol><li>First item</li><li>Second item</li></ol></div>', false);
+        $response->assertSee('wb-rich-text', false);
+        $response->assertSee('wb-rich-text-readable', false);
+        $response->assertSee('<div class="wb-rich-text wb-rich-text-readable"><p>Intro with <strong>bold</strong>, <em>italic</em>, and <a href="https://example.com" rel="noopener noreferrer">docs</a>.</p><ol><li>First item</li><li>Second item</li></ol></div>', false);
     }
 
     #[Test]
@@ -300,7 +302,8 @@ class PublicRichContentTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertDontSee('<div class="wb-stack wb-gap-3"></div>', false);
+        $response->assertDontSee('<div class="wb-rich-text wb-rich-text-readable"></div>', false);
+        $response->assertDontSee('wb-rich-text wb-rich-text-readable', false);
     }
 
     private function pageWithMainSlot(): Page

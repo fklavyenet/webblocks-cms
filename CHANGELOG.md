@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Align Rich Text public rendering with the WebBlocks UI `wb-rich-text` primitive while preserving sanitized Markdown-like body copy behavior.
+
 ## 1.9.0
 
 - Fix Rich Text block visibility on existing installations so the block remains available in the picker.
