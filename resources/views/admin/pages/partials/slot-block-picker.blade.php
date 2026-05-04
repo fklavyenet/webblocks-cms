@@ -1,5 +1,6 @@
 @php
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
+    $pickerCategory = filled($pickerCategory ?? null) ? trim((string) $pickerCategory) : null;
     $pickerSort = trim((string) request('block_type_sort', 'default'));
     $pickerParentId = request()->integer('parent_id') ?: null;
     $allowedPickerSorts = ['default', 'name', 'category'];
@@ -29,10 +30,44 @@
     };
 
     $closeUrl = $slotBlockRoute();
-    $resetUrl = $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]);
+    $resetUrl = $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null]);
+
+    $categoryLabels = [
+        'content' => 'Content',
+        'layout' => 'Layout',
+        'pattern' => 'Pattern',
+        'navigation' => 'Navigation',
+        'legacy' => 'Legacy',
+    ];
+
+    $categoryOrder = [
+        'content' => 0,
+        'layout' => 1,
+        'pattern' => 2,
+        'navigation' => 3,
+        'legacy' => 4,
+    ];
+
+    $availableCategories = ($pickerBlockTypes ?? $blockTypes)
+        ->map(fn ($blockType) => trim((string) ($blockType->category ?? '')))
+        ->filter()
+        ->unique()
+        ->sort(function ($left, $right) use ($categoryOrder) {
+            $leftKey = strtolower($left);
+            $rightKey = strtolower($right);
+            $leftRank = $categoryOrder[$leftKey] ?? 100;
+            $rightRank = $categoryOrder[$rightKey] ?? 100;
+
+            return $leftRank <=> $rightRank ?: $leftKey <=> $rightKey;
+        })
+        ->values();
 
     $matchingBlockTypes = ($pickerBlockTypes ?? $blockTypes)
-        ->filter(function ($blockType) use ($pickerSearchTerm) {
+        ->filter(function ($blockType) use ($pickerSearchTerm, $pickerCategory) {
+            if ($pickerCategory !== null && (string) ($blockType->category ?? '') !== $pickerCategory) {
+                return false;
+            }
+
             if ($pickerSearchTerm === '') {
                 return true;
             }
@@ -79,6 +114,16 @@
                 ? 'Configure the system-driven output for this block.'
                 : 'Open the editor for this content block.');
     };
+
+    $categoryDisplay = function (?string $category) use ($categoryLabels) {
+        $resolved = strtolower(trim((string) $category));
+
+        if ($resolved === '') {
+            return 'Other';
+        }
+
+        return $categoryLabels[$resolved] ?? str($resolved)->replace('-', ' ')->title()->toString();
+    };
 @endphp
 
 @if ($showPickerModal)
@@ -114,6 +159,16 @@
                         </div>
 
                         <div class="wb-stack wb-gap-1">
+                            <label for="slot_block_type_category">Category</label>
+                            <select id="slot_block_type_category" name="block_type_category" class="wb-select">
+                                <option value="">All categories</option>
+                                @foreach ($availableCategories as $category)
+                                    <option value="{{ $category }}" @selected($pickerCategory === $category)>{{ $categoryDisplay($category) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="wb-stack wb-gap-1">
                             <label for="slot_block_type_sort">Sort</label>
                             <select id="slot_block_type_sort" name="block_type_sort" class="wb-select">
                                 <option value="default" @selected($pickerSort === 'default')>Default order</option>
@@ -129,26 +184,41 @@
                     </form>
 
                     @if ($matchingBlockTypes->isNotEmpty())
-                        <div class="wb-list wb-list-sm">
-                            @foreach ($matchingBlockTypes as $blockType)
-                                <a
-                                    href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
-                                    class="wb-list-item wb-list-item-action"
-                                    data-wb-slot-block-link
-                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
-                                >
-                                    <div class="wb-list-item-text">
-                                        <span class="wb-list-item-title">{{ $blockType->name }}</span>
-                                        <span class="wb-list-item-sub">{{ $descriptionFor($blockType) }}</span>
-                                    </div>
-                                    <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
-                                </a>
-                            @endforeach
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped wb-table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($matchingBlockTypes as $blockType)
+                                        <tr>
+                                            <td>
+                                                <a
+                                                    href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_category' => $pickerCategory, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                                    class="wb-link"
+                                                    data-wb-slot-block-link
+                                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_category' => $pickerCategory, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                                >
+                                                    <strong>{{ $blockType->name }}</strong>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
+                                            </td>
+                                            <td>{{ $descriptionFor($blockType) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @else
                         <div class="wb-empty">
                             <div class="wb-empty-title">No matching block types</div>
-                            <div class="wb-empty-text">Try a different search term.</div>
+                            <div class="wb-empty-text">Try a different search term or category.</div>
                         </div>
                     @endif
                 </div>

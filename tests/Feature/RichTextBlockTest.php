@@ -111,6 +111,32 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
+    public function RichText_visibility_migration_normalizes_existing_legacy_catalog_rows(): void
+    {
+        $this->seedFoundation();
+
+        BlockType::query()->where('slug', 'rich-text')->update([
+            'category' => 'legacy',
+            'description' => 'Old description',
+            'sort_order' => 100,
+            'status' => 'draft',
+        ]);
+
+        $migration = require base_path('database/migrations/2026_05_04_160000_normalize_rich_text_block_type_visibility.php');
+        $migration->up();
+
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'rich-text',
+            'name' => 'Rich Text',
+            'category' => 'content',
+            'source_type' => 'static',
+            'is_container' => false,
+            'sort_order' => 6,
+            'status' => 'published',
+        ]);
+    }
+
+    #[Test]
     public function RichText_admin_form_loads_editor_controls_and_named_asset(): void
     {
         $this->seedFoundation();

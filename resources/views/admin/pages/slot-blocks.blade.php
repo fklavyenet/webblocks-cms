@@ -66,7 +66,7 @@
                             $locale = $translationStatus['locale'];
                             $isActiveLocale = $locale->id === $activeLocale->id;
                         @endphp
-                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_search' => request('block_type_search')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ strtoupper($locale->code) }}
                         </a>
                     @endforeach
@@ -127,6 +127,7 @@
         'slot' => $slot,
         'blockTypes' => $blockTypes,
         'pickerSearch' => $pickerSearch,
+        'pickerCategory' => $pickerCategory,
         'isPickerOpen' => $isPickerOpen,
         'slotModalMode' => $slotModalMode,
     ])

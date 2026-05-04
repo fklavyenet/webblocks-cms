@@ -276,6 +276,7 @@ class PageController extends Controller
         $pickerParentId = request()->integer('parent_id') ?: null;
         $resolvedBlocks = $this->blockTranslationResolver->resolveCollection($blocks, $activeLocale)->values();
         $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
+        $pickerCategory = $this->pickerCategory($pickerBlockTypes);
         $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes, $pickerBlockTypes, $pickerParentId);
         $rootBlocks = $this->blockTranslationResolver
             ->resolveCollection($blocks->whereNull('parent_id')->values(), $activeLocale)
@@ -294,6 +295,7 @@ class PageController extends Controller
             'assetPickerAssets' => $this->assetPickerAssets(),
             'assetPickerFolders' => $this->assetPickerFolders(),
             'pickerSearch' => trim((string) request('block_type_search')),
+            'pickerCategory' => $pickerCategory,
             'isPickerOpen' => request()->boolean('picker') || $modalState['mode'] === 'create',
             'slotModalMode' => $modalState['mode'],
             'slotModalBlock' => $modalState['block'],
@@ -715,6 +717,23 @@ class PageController extends Controller
         return $blockTypes
             ->filter(fn (BlockType $blockType) => $parentBlock->canAcceptChildType($blockType->slug))
             ->values();
+    }
+
+    private function pickerCategory($pickerBlockTypes): ?string
+    {
+        $requestedCategory = trim((string) request('block_type_category'));
+
+        if ($requestedCategory === '') {
+            return null;
+        }
+
+        $validCategories = $pickerBlockTypes
+            ->map(fn (BlockType $blockType) => trim((string) ($blockType->category ?? '')))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $validCategories->contains($requestedCategory) ? $requestedCategory : null;
     }
 
     private function descendantIdsFor($blocks, int $blockId)

@@ -4,6 +4,8 @@
 
 - Promote the Rich Text block type back into the visible block picker as a safe content block.
 - Add safe inline code formatting for Rich Text content and Card descriptions.
+- Fix Rich Text block visibility in the admin Block Picker on existing installs.
+- Improve the Block Picker modal with column headers and category filtering for larger block catalogs.
 
 ## 1.8.0
 

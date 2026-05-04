@@ -443,6 +443,29 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_picker_shows_rich_text_after_existing_legacy_catalog_entry_is_reseeded(): void
+    {
+        $this->seedFoundation();
+
+        BlockType::query()->where('slug', 'rich-text')->update([
+            'category' => 'legacy',
+            'status' => 'draft',
+            'sort_order' => 100,
+        ]);
+
+        $this->seed(BlockTypeSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Rich Text');
+    }
+
+    #[Test]
     public function code_block_editor_renders_without_missing_locale_flags(): void
     {
         $this->seedFoundation();
@@ -511,7 +534,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_renders_a_single_sorted_block_list_and_compact_filter_row_markup(): void
+    public function slot_block_picker_renders_catalog_headers_and_filter_controls(): void
     {
         $this->seedFoundation();
 
@@ -526,14 +549,23 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Recommended');
         $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
         $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
+        $response->assertSee('id="slot_block_type_category" name="block_type_category" class="wb-select"', false);
         $response->assertSee('id="slot_block_type_sort" name="block_type_sort" class="wb-select"', false);
+        $response->assertSee('All categories');
+        $response->assertSee('>Content</option>', false);
+        $response->assertSee('>Layout</option>', false);
+        $response->assertSee('>Pattern</option>', false);
+        $response->assertSee('>Navigation</option>', false);
         $response->assertSee('<option value="default" selected>Default order</option>', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
+        $response->assertSee('<th>Name</th>', false);
+        $response->assertSee('<th>Category</th>', false);
+        $response->assertSee('<th>Description</th>', false);
         $this->assertNotFalse($content);
         $this->assertFalse(strpos($content, 'slot-block-picker-recommended-title'));
         $this->assertFalse(strpos($content, 'slot-block-picker-all-title'));
 
-        $listStart = strpos($content, '<div class="wb-list wb-list-sm">');
+        $listStart = strpos($content, '<div class="wb-table-wrap">');
         $footerStart = strpos($content, '<div class="wb-modal-footer');
 
         $this->assertNotFalse($listStart);
@@ -541,35 +573,37 @@ class PageBuilderExperienceTest extends TestCase
 
         $listMarkup = substr($content, $listStart, $footerStart - $listStart);
 
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Content Header</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Section</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Container</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Cluster</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Grid</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Header</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Plain Text</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Button Link</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Card</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Stat Card</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Alert</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Link List Item</span>'));
-        $this->assertSame(1, substr_count($listMarkup, 'wb-list-item-title">Breadcrumb</span>'));
+        $this->assertStringContainsString('>Content Header</strong>', $listMarkup);
+        $this->assertStringContainsString('>Section</strong>', $listMarkup);
+        $this->assertStringContainsString('>Container</strong>', $listMarkup);
+        $this->assertStringContainsString('>Cluster</strong>', $listMarkup);
+        $this->assertStringContainsString('>Grid</strong>', $listMarkup);
+        $this->assertStringContainsString('>Header</strong>', $listMarkup);
+        $this->assertStringContainsString('>Plain Text</strong>', $listMarkup);
+        $this->assertStringContainsString('>Rich Text</strong>', $listMarkup);
+        $this->assertStringContainsString('>Button Link</strong>', $listMarkup);
+        $this->assertStringContainsString('>Card</strong>', $listMarkup);
+        $this->assertStringContainsString('>Stat Card</strong>', $listMarkup);
+        $this->assertStringContainsString('>Alert</strong>', $listMarkup);
+        $this->assertStringContainsString('>Link List</strong>', $listMarkup);
+        $this->assertStringContainsString('>Link List Item</strong>', $listMarkup);
+        $this->assertStringContainsString('>Breadcrumb</strong>', $listMarkup);
         $response->assertSeeInOrder([
-            'wb-list-item-title">Content Header</span>',
-            'wb-list-item-title">Section</span>',
-            'wb-list-item-title">Container</span>',
-            'wb-list-item-title">Cluster</span>',
-            'wb-list-item-title">Grid</span>',
-            'wb-list-item-title">Header</span>',
-            'wb-list-item-title">Plain Text</span>',
-            'wb-list-item-title">Button Link</span>',
-            'wb-list-item-title">Card</span>',
-            'wb-list-item-title">Stat Card</span>',
-            'wb-list-item-title">Alert</span>',
-            'wb-list-item-title">Link List</span>',
-            'wb-list-item-title">Link List Item</span>',
-            'wb-list-item-title">Breadcrumb</span>',
+            '>Content Header</strong>',
+            '>Section</strong>',
+            '>Container</strong>',
+            '>Cluster</strong>',
+            '>Grid</strong>',
+            '>Header</strong>',
+            '>Plain Text</strong>',
+            '>Rich Text</strong>',
+            '>Button Link</strong>',
+            '>Card</strong>',
+            '>Stat Card</strong>',
+            '>Alert</strong>',
+            '>Link List</strong>',
+            '>Link List Item</strong>',
+            '>Breadcrumb</strong>',
         ], false);
     }
 
@@ -1596,17 +1630,18 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $response->assertSeeInOrder([
-            'wb-list-item-title">Alert</span>',
-            'wb-list-item-title">Breadcrumb</span>',
-            'wb-list-item-title">Button Link</span>',
-            'wb-list-item-title">Card</span>',
-            'wb-list-item-title">Cluster</span>',
-            'wb-list-item-title">Container</span>',
-            'wb-list-item-title">Content Header</span>',
-            'wb-list-item-title">Grid</span>',
-            'wb-list-item-title">Header</span>',
-            'wb-list-item-title">Plain Text</span>',
-            'wb-list-item-title">Section</span>',
+            '>Alert</strong>',
+            '>Breadcrumb</strong>',
+            '>Button Link</strong>',
+            '>Card</strong>',
+            '>Cluster</strong>',
+            '>Container</strong>',
+            '>Content Header</strong>',
+            '>Grid</strong>',
+            '>Header</strong>',
+            '>Plain Text</strong>',
+            '>Rich Text</strong>',
+            '>Section</strong>',
         ], false);
     }
 
@@ -1629,20 +1664,21 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('<option value="category" selected>Category</option>', false);
         $response->assertSeeInOrder([
-            'wb-list-item-title">Header</span>',
-            'wb-list-item-title">Plain Text</span>',
-            'wb-list-item-title">Button Link</span>',
-            'wb-list-item-title">Card</span>',
-            'wb-list-item-title">Stat Card</span>',
-            'wb-list-item-title">Section</span>',
-            'wb-list-item-title">Container</span>',
-            'wb-list-item-title">Cluster</span>',
-            'wb-list-item-title">Grid</span>',
-            'wb-list-item-title">Link List</span>',
-            'wb-list-item-title">Link List Item</span>',
-            'wb-list-item-title">Breadcrumb</span>',
-            'wb-list-item-title">Content Header</span>',
-            'wb-list-item-title">Alert</span>',
+            '>Header</strong>',
+            '>Plain Text</strong>',
+            '>Rich Text</strong>',
+            '>Button Link</strong>',
+            '>Card</strong>',
+            '>Stat Card</strong>',
+            '>Section</strong>',
+            '>Container</strong>',
+            '>Cluster</strong>',
+            '>Grid</strong>',
+            '>Link List</strong>',
+            '>Link List Item</strong>',
+            '>Breadcrumb</strong>',
+            '>Content Header</strong>',
+            '>Alert</strong>',
         ], false);
     }
 
@@ -1660,6 +1696,9 @@ class PageBuilderExperienceTest extends TestCase
             ['term' => 'intro', 'expected' => 'Content Header'],
             ['term' => 'meta', 'expected' => 'Content Header'],
             ['term' => 'content_header', 'expected' => 'Content Header'],
+            ['term' => 'rich', 'expected' => 'Rich Text'],
+            ['term' => 'rich-text', 'expected' => 'Rich Text'],
+            ['term' => 'editorial', 'expected' => 'Rich Text'],
             ['term' => 'alert', 'expected' => 'Alert'],
             ['term' => 'callout', 'expected' => 'Alert'],
             ['term' => 'pattern', 'expected' => 'Alert'],
@@ -1692,6 +1731,56 @@ class PageBuilderExperienceTest extends TestCase
         $sortedSearchResponse->assertOk();
         $sortedSearchResponse->assertSee('Button Link');
         $sortedSearchResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
+    }
+
+    #[Test]
+    public function slot_block_picker_can_filter_by_category_and_combine_filters(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $contentResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_category' => 'content',
+        ]));
+
+        $contentResponse->assertOk();
+        $contentResponse->assertSee('<option value="content" selected>Content</option>', false);
+        $contentResponse->assertSee('Rich Text');
+        $contentResponse->assertDontSee('Section');
+
+        $layoutResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_category' => 'layout',
+        ]));
+
+        $layoutResponse->assertOk();
+        $layoutResponse->assertSee('Section');
+        $layoutResponse->assertDontSee('Rich Text');
+
+        $combinedResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'block_type_category' => 'content',
+            'block_type_search' => 'rich',
+            'block_type_sort' => 'name',
+        ]));
+
+        $combinedResponse->assertOk();
+        $combinedResponse->assertSee('Rich Text');
+        $combinedResponse->assertSee('<option value="content" selected>Content</option>', false);
+        $combinedResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
+        $combinedResponse->assertDontSee('Plain Text');
+
+        $combinedResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
     }
 
     #[Test]
@@ -2307,12 +2396,12 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Showing block types allowed inside Card.');
-        $response->assertSee('wb-list-item-title">Cluster</span>', false);
-        $response->assertSee('wb-list-item-title">Button Link</span>', false);
-        $response->assertDontSee('wb-list-item-title">Header</span>', false);
-        $response->assertDontSee('wb-list-item-title">Plain Text</span>', false);
-        $response->assertDontSee('wb-list-item-title">Content Header</span>', false);
-        $response->assertDontSee('wb-list-item-title">Grid</span>', false);
+        $response->assertSee('>Cluster</strong>', false);
+        $response->assertSee('>Button Link</strong>', false);
+        $response->assertDontSee('>Header</strong>', false);
+        $response->assertDontSee('>Plain Text</strong>', false);
+        $response->assertDontSee('>Content Header</strong>', false);
+        $response->assertDontSee('>Grid</strong>', false);
     }
 
     #[Test]
