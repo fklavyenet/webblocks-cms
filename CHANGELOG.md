@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
-- Replace Rich Text's Markdown-like admin editing model with a dependency-free safe HTML editor to avoid marker duplication and nested link formatting while preserving sanitized public output.
-- Fix the safe HTML Rich Text editor toolbar so formatting buttons preserve the contenteditable selection and apply formatting reliably.
+## 1.11.0
+
+- Replace Rich Text's Markdown-like admin editing model with a dependency-free safe HTML editor that stores restricted safe HTML fragments instead of marker-based text.
+- Keep Rich Text public rendering on the sanitized WebBlocks UI `wb-rich-text wb-rich-text-readable` primitive while preserving the approved safe HTML fragment model without raw unrestricted HTML, public JavaScript, or a third-party editor dependency.
+- Fix the safe HTML Rich Text editor toolbar so contenteditable selections are preserved across toolbar clicks and formatting actions apply reliably through saved range tracking, lazy editor initialization, submit-time sync, and browser output normalization for `<strong>` and `<em>`.
 
 ## 1.10.0
 
