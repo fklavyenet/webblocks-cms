@@ -24,17 +24,6 @@ class BlockAdminSummary
         ];
     }
 
-    public function details(Block $block, int $previewMaxLength = 180, int $codeMaxLines = 4): array
-    {
-        $preview = $this->detailPreview($block, $previewMaxLength, $codeMaxLines);
-
-        return [
-            'preview' => $preview['preview'],
-            'preview_format' => $preview['format'],
-            'language' => $preview['language'],
-        ];
-    }
-
     public function label(Block $block, int $maxLength = 80): string
     {
         return $this->present($block, $maxLength, self::summaryMaxLength())['label'];
@@ -70,32 +59,6 @@ class BlockAdminSummary
             'link-list-item', 'link_list_item' => $this->linkListItemLines($block),
             'section', 'container', 'cluster', 'grid' => $this->layoutLines($block),
             default => $this->fallbackLines($block),
-        };
-    }
-
-    private function detailPreview(Block $block, int $previewMaxLength, int $codeMaxLines): array
-    {
-        return match ($block->typeSlug()) {
-            'code' => [
-                'preview' => $this->codePreview($block, $codeMaxLines),
-                'format' => 'code',
-                'language' => $this->codeLanguage($block),
-            ],
-            'section', 'container', 'cluster', 'grid' => [
-                'preview' => null,
-                'format' => null,
-                'language' => null,
-            ],
-            'rich-text', 'plain_text', 'text' => [
-                'preview' => $this->truncate($this->content($block), $previewMaxLength),
-                'format' => 'text',
-                'language' => null,
-            ],
-            default => [
-                'preview' => $this->truncate($this->detailText($block), $previewMaxLength),
-                'format' => 'text',
-                'language' => null,
-            ],
         };
     }
 
@@ -181,19 +144,6 @@ class BlockAdminSummary
         return [$label, $summary];
     }
 
-    private function detailText(Block $block): ?string
-    {
-        $label = $this->present($block)['label'];
-
-        return collect([
-            $this->subtitle($block),
-            $this->content($block),
-            $this->sanitize($block->setting('label')),
-            $this->buttonUrl($block),
-            $this->linkListItemUrl($block),
-        ])->first(fn (?string $value) => $value !== null && $value !== $label);
-    }
-
     private function title(Block $block): ?string
     {
         return $this->field($block, 'title');
@@ -277,26 +227,6 @@ class BlockAdminSummary
         }
 
         return null;
-    }
-
-    private function codePreview(Block $block, int $maxLines): ?string
-    {
-        $content = $this->rawField($block, 'content');
-
-        if ($content === null) {
-            return null;
-        }
-
-        $lines = collect(preg_split('/\R/u', str_replace(["\r\n", "\r"], "\n", $content)) ?: [])
-            ->take(max($maxLines, 1))
-            ->map(function (string $line) {
-                return htmlspecialchars(rtrim($line), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            })
-            ->all();
-
-        $resolved = implode("\n", $lines);
-
-        return $resolved !== '' ? $resolved : null;
     }
 
     private function sanitize(mixed $value, bool $stripHtml = true): ?string

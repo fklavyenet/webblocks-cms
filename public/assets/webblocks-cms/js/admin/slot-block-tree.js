@@ -10,10 +10,6 @@
         return Array.prototype.slice.call(root.querySelectorAll('[data-slot-block-row][data-block-id], [data-wb-slot-block-row][data-wb-slot-block-id]'));
     }
 
-    function rootDetailRows(root) {
-        return Array.prototype.slice.call(root.querySelectorAll('[data-slot-block-details-row][data-block-id], [data-wb-slot-block-details-row][data-wb-slot-block-id]'));
-    }
-
     function rootToggles(root) {
         return Array.prototype.slice.call(root.querySelectorAll('[data-slot-block-toggle][data-slot-toggle], [data-wb-slot-block-toggle][data-wb-slot-toggle]'));
     }
@@ -139,12 +135,8 @@
 
     function setToggleExpanded(button, expanded) {
         button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        var controlsChildren = (button.getAttribute('aria-controls') || '').indexOf('slot-block-row-') !== -1;
-        var expandLabel = controlsChildren ? 'Expand block details and child blocks' : 'Expand block details';
-        var collapseLabel = controlsChildren ? 'Collapse block details and child blocks' : 'Collapse block details';
-
-        button.setAttribute('aria-label', expanded ? collapseLabel : expandLabel);
-        button.setAttribute('title', expanded ? collapseLabel : expandLabel);
+        button.setAttribute('aria-label', expanded ? 'Collapse child blocks' : 'Expand child blocks');
+        button.setAttribute('title', expanded ? 'Collapse child blocks' : 'Expand child blocks');
     }
 
     function rowVisible(root, row) {
@@ -177,14 +169,6 @@
             if (container) {
                 container.hidden = !visible;
             }
-        });
-
-        rootDetailRows(root).forEach(function (row) {
-            var visible = rowVisible(root, row);
-            var toggle = toggleButtonFor(root, rowBlockId(row));
-            var expanded = toggle && toggle.getAttribute('aria-expanded') === 'true';
-
-            row.hidden = !(visible && expanded);
         });
     }
 

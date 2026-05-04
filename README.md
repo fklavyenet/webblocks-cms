@@ -88,7 +88,7 @@ See `docs/installation.md` for the complete install guide.
 8. Publish the page as a `site_admin` or `super_admin`.
 9. Open the public URL or preview link to confirm the live result.
 
-In the admin slot editor, block lists stay structure-focused by showing compact summaries in the default collapsed rows. Expanding a block reveals secondary structure and metadata details, plus safe plain-text or escaped code previews, without turning the slot tree into a full content reader or editor. Use the block edit modal or block edit page when you need full content editing.
+In the admin slot editor, block lists stay structure-focused by showing compact rows with short plain-text summaries, status, context, and actions. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
 
 See `docs/getting-started.md` for the first-use workflow.
 

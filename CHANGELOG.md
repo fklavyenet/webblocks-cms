@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 - Compact the Edit Slot block tree so visible rows use short plain-text summaries instead of long content previews, while preserving nested structure editing and block actions.
-- Add expandable Edit Slot block details so collapsed rows stay compact while expanded rows reveal secondary structure metadata and safe text/code previews without becoming full content editors.
+- Simplify the Edit Slot block tree back to compact rows only by removing expandable detail previews and keeping full content editing in the block editor UI.
 - Fix block catalog reseeding so product block types like `Rich Text` are promoted back to their published metadata on existing installs, and fix the admin `Code` block editor locale flag crash.
 - Add a first-class `Rich Text` CMS block with a small dependency-free admin editor, translation-backed storage, server-side HTML sanitization, and safe public rendering.
 - Add a project-layer `webblocks:sync-ui-docs-getting-started` command that idempotently syncs the existing Getting Started page main slot from the WebBlocks UI docs source.

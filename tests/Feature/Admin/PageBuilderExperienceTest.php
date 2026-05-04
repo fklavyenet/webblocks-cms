@@ -822,7 +822,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function collapsed_slot_block_rows_keep_details_markup_hidden_and_compact(): void
+    public function slot_block_rows_stay_compact_without_detail_markup(): void
     {
         $this->seedFoundation();
 
@@ -851,17 +851,17 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
-        $response->assertSee('id="slot-block-details-'.$block->id.'"', false);
-        $response->assertSee('data-slot-block-details-row', false);
-        $response->assertSee('aria-controls="slot-block-details-'.$block->id.'"', false);
-        $response->assertSee('data-wb-slot-block-details-row', false);
-        $response->assertSee('hidden', false);
-        $response->assertSee('title="Expand block details"', false);
+        $response->assertDontSee('id="slot-block-details-'.$block->id.'"', false);
+        $response->assertDontSee('data-slot-block-details-row', false);
+        $response->assertDontSee('data-wb-slot-block-details-row', false);
+        $response->assertDontSee('title="Expand block details"', false);
+        $response->assertDontSee('Block type');
+        $response->assertDontSee('Preview');
         $response->assertSee('Compact row content that should stay in the collapsed summary only.');
     }
 
     #[Test]
-    public function expanded_slot_block_details_render_safe_metadata_without_raw_rich_text_html(): void
+    public function rich_text_slot_block_rows_keep_plain_text_compact_summaries_even_when_expanded_state_exists(): void
     {
         $this->seedFoundation();
 
@@ -892,18 +892,15 @@ class PageBuilderExperienceTest extends TestCase
             ->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
         $response->assertOk();
-        $response->assertSee('id="slot-block-details-'.$block->id.'"', false);
-        $response->assertSee('wb-block-row-details-body', false);
-        $response->assertSee('Block type');
-        $response->assertSee('Visibility');
-        $response->assertSee('Locale');
-        $response->assertSee('Preview');
+        $response->assertDontSee('id="slot-block-details-'.$block->id.'"', false);
+        $response->assertDontSee('wb-block-row-details-body', false);
+        $response->assertDontSee('Preview');
         $response->assertSee('Alpha Beta Gamma.');
         $response->assertDontSee('<p>Alpha <strong>Beta</strong>', false);
     }
 
     #[Test]
-    public function expanded_slot_block_details_preserve_actions_statuses_and_nested_expand_support(): void
+    public function slot_block_rows_preserve_actions_statuses_and_nested_child_toggle_support(): void
     {
         $this->seedFoundation();
 
@@ -952,16 +949,12 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('published');
         $response->assertSee('draft');
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
-        $response->assertSee('data-wb-slot-toggle="'.$child->id.'"', false);
+        $response->assertDontSee('data-wb-slot-toggle="'.$child->id.'"', false);
         $response->assertSee('data-wb-slot-parent-id="'.$section->id.'"', false);
-        $response->assertSee('aria-controls="slot-block-details-'.$section->id.' slot-block-row-'.$child->id.'"', false);
-        $response->assertSee('aria-controls="slot-block-details-'.$child->id.'"', false);
-        $response->assertSee('Layout');
+        $response->assertSee('aria-controls="slot-block-row-'.$child->id.'"', false);
         $response->assertSee('Docs shell');
-        $response->assertSee('Code preview');
-        $response->assertSee('Language: HTML');
-        $response->assertSee('&lt;div&gt;Hi&lt;/div&gt;', false);
-        $response->assertDontSee('<div>Hi</div>', false);
+        $response->assertSee('HTML | &lt;div&gt;Hi&lt;/div&gt;', false);
+        $response->assertDontSee('Code preview');
     }
 
     #[Test]

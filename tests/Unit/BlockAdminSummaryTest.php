@@ -73,47 +73,6 @@ class BlockAdminSummaryTest extends TestCase
     }
 
     #[Test]
-    public function it_strips_html_from_rich_text_detail_preview(): void
-    {
-        $block = $this->textBlock('rich-text', '<p>Hello <strong>world</strong> and <em>friends</em>.</p>');
-
-        $details = app(BlockAdminSummary::class)->details($block, 300);
-
-        $this->assertSame('Hello world and friends.', $details['preview']);
-        $this->assertSame('text', $details['preview_format']);
-    }
-
-    #[Test]
-    public function it_truncates_long_detail_preview_text(): void
-    {
-        $block = $this->textBlock('plain_text', str_repeat('Alpha Beta ', 40));
-
-        $details = app(BlockAdminSummary::class)->details($block, 60);
-
-        $this->assertSame(60, mb_strlen($details['preview']));
-        $this->assertStringEndsWith('...', $details['preview']);
-    }
-
-    #[Test]
-    public function it_escapes_code_preview_and_limits_lines(): void
-    {
-        $block = new Block([
-            'type' => 'code',
-            'content' => "<script>alert('x')</script>\nconst a = 1;\nconst b = 2;\nconst c = 3;\nconst d = 4;",
-            'settings' => ['language' => 'js'],
-        ]);
-        $block->setRelation('children', new EloquentCollection);
-
-        $details = app(BlockAdminSummary::class)->details($block, 180, 3);
-
-        $this->assertSame('code', $details['preview_format']);
-        $this->assertSame('JS', $details['language']);
-        $this->assertStringContainsString('&lt;script&gt;alert(&#039;x&#039;)&lt;/script&gt;', $details['preview']);
-        $this->assertStringContainsString('const b = 2;', $details['preview']);
-        $this->assertStringNotContainsString('const c = 3;', $details['preview']);
-    }
-
-    #[Test]
     public function compact_summary_rules_remain_unchanged_for_rich_text_blocks(): void
     {
         $block = $this->textBlock('rich-text', '<p>Hello <strong>world</strong></p>');
