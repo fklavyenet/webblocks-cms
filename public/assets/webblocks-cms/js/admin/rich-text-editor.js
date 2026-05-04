@@ -1,4 +1,6 @@
 (function () {
+    var activeEditor = null;
+
     function dispatchEditorEvents(input) {
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -89,6 +91,14 @@
         }
 
         var tag = node.tagName.toLowerCase();
+
+        if (tag === 'b') {
+            tag = 'strong';
+        }
+
+        if (tag === 'i') {
+            tag = 'em';
+        }
 
         if (/^(script|style|iframe|img|figure|table|thead|tbody|tfoot|tr|td|th|button|h[1-6])$/.test(tag)) {
             return '';
@@ -204,7 +214,7 @@
                 return;
             }
 
-            if (tag === 'p') {
+            if (tag === 'p' || tag === 'div') {
                 flushInlineBuffer();
 
                 var paragraph = sanitizeInlineChildren(node, doc);
@@ -310,6 +320,22 @@
         return null;
     }
 
+    function closestEditorRoot(node) {
+        var element = null;
+
+        if (!node) {
+            return null;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            element = node;
+        } else if (node.parentElement) {
+            element = node.parentElement;
+        }
+
+        return element ? element.closest('[data-wb-rich-text-editor]') : null;
+    }
+
     function placeCaretInside(node, atEnd) {
         var selection = window.getSelection();
         var range = document.createRange();
@@ -320,42 +346,133 @@
         selection.addRange(range);
     }
 
+    function placeCaretAfter(node) {
+        var selection = window.getSelection();
+        var range = document.createRange();
+
+        range.setStartAfter(node);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
     function focusSurface(surface) {
         if (document.activeElement !== surface) {
             surface.focus();
         }
     }
 
-    function normalizeSurface(surface) {
-        var sanitized = sanitizeHtmlFragment(surface.innerHTML, document);
-
-        surface.innerHTML = sanitized || '<p><br></p>';
+    function getEditor(root) {
+        return root && root._wbRichTextEditor ? root._wbRichTextEditor : null;
     }
 
-    function syncInput(editor) {
-        var sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
-
-        editor.surface.innerHTML = sanitized || '<p><br></p>';
+    function syncInput(editor, sanitized) {
+        if (typeof sanitized === 'undefined') {
+            sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
+        }
 
         if (editor.input.value !== sanitized) {
             editor.input.value = sanitized;
             dispatchEditorEvents(editor.input);
         }
+
+        return sanitized;
     }
 
-    function execAndSync(editor, command, value) {
+    function saveSelection(editor) {
+        var range = getSelectionRange(editor.surface);
+
+        if (!range) {
+            return false;
+        }
+
+        editor.savedRange = range.cloneRange();
+        activeEditor = editor;
+
+        return true;
+    }
+
+    function restoreSelection(editor) {
+        var selection = window.getSelection();
+
+        if (!editor || !editor.savedRange || !selection) {
+            return false;
+        }
+
         focusSurface(editor.surface);
-        document.execCommand(command, false, value || null);
-        normalizeSurface(editor.surface);
-        syncInput(editor);
+
+        try {
+            selection.removeAllRanges();
+            selection.addRange(editor.savedRange.cloneRange());
+            activeEditor = editor;
+
+            return true;
+        } catch (error) {
+            editor.savedRange = null;
+
+            return false;
+        }
     }
 
-    function applyCode(editor) {
+    function ensureSelection(editor) {
+        if (restoreSelection(editor)) {
+            return getSelectionRange(editor.surface);
+        }
+
         focusSurface(editor.surface);
 
         var range = getSelectionRange(editor.surface);
 
+        if (range) {
+            editor.savedRange = range.cloneRange();
+
+            return range;
+        }
+
+        placeCaretInside(editor.surface, true);
+        saveSelection(editor);
+
+        return getSelectionRange(editor.surface);
+    }
+
+    function finalizeEditorChange(editor, options) {
+        options = options || {};
+
+        var sanitized = sanitizeHtmlFragment(editor.surface.innerHTML, document);
+
+        editor.surface.innerHTML = sanitized || '<p><br></p>';
+        editor.savedRange = null;
+        syncInput(editor, sanitized);
+
+        if (options.keepFocus !== false) {
+            focusSurface(editor.surface);
+            placeCaretInside(editor.surface, true);
+            saveSelection(editor);
+        }
+    }
+
+    function execAndSync(editor, command, value) {
+        if (!ensureSelection(editor)) {
+            return;
+        }
+
+        focusSurface(editor.surface);
+        document.execCommand(command, false, value || null);
+        finalizeEditorChange(editor);
+    }
+
+    function applyCode(editor) {
+        var range = ensureSelection(editor);
+
         if (!range) {
+            return;
+        }
+
+        var existingCode = closestElement(range.commonAncestorContainer, 'CODE', editor.surface);
+
+        if (existingCode) {
+            unwrap(existingCode);
+            finalizeEditorChange(editor);
             return;
         }
 
@@ -365,17 +482,7 @@
             code.textContent = 'code';
             range.insertNode(code);
             placeCaretInside(code, false);
-            normalizeSurface(editor.surface);
-            syncInput(editor);
-            return;
-        }
-
-        var existingCode = closestElement(range.commonAncestorContainer, 'CODE', editor.surface);
-
-        if (existingCode) {
-            unwrap(existingCode);
-            normalizeSurface(editor.surface);
-            syncInput(editor);
+            finalizeEditorChange(editor);
             return;
         }
 
@@ -385,14 +492,11 @@
         wrapper.appendChild(fragment);
         range.insertNode(wrapper);
         placeCaretInside(wrapper, true);
-        normalizeSurface(editor.surface);
-        syncInput(editor);
+        finalizeEditorChange(editor);
     }
 
     function applyLink(editor) {
-        focusSurface(editor.surface);
-
-        var range = getSelectionRange(editor.surface);
+        var range = ensureSelection(editor);
 
         if (!range) {
             return;
@@ -411,22 +515,36 @@
         if (existingLink) {
             if (href === '') {
                 unwrap(existingLink);
-            } else if (isSafeHref(href)) {
-                existingLink.setAttribute('href', href);
+                finalizeEditorChange(editor);
+                return;
             }
 
-            normalizeSurface(editor.surface);
-            syncInput(editor);
+            if (isSafeHref(href)) {
+                existingLink.setAttribute('href', href);
+                finalizeEditorChange(editor);
+            }
+
             return;
         }
 
-        if (range.collapsed || !isSafeHref(href)) {
+        if (!isSafeHref(href)) {
             return;
         }
 
+        if (range.collapsed) {
+            var link = document.createElement('a');
+
+            link.setAttribute('href', href);
+            link.textContent = href;
+            range.insertNode(link);
+            placeCaretAfter(link);
+            finalizeEditorChange(editor);
+            return;
+        }
+
+        document.execCommand('unlink', false, null);
         document.execCommand('createLink', false, href);
-        normalizeSurface(editor.surface);
-        syncInput(editor);
+        finalizeEditorChange(editor);
     }
 
     function handlePaste(editor, event) {
@@ -437,13 +555,21 @@
         var text = clipboard && clipboard.getData ? clipboard.getData('text/plain') : '';
         var safeHtml = html ? sanitizeHtmlFragment(html, document) : convertTextToHtml(text);
 
-        focusSurface(editor.surface);
+        if (!ensureSelection(editor)) {
+            return;
+        }
+
         document.execCommand('insertHTML', false, safeHtml || escapeHtml(text));
-        normalizeSurface(editor.surface);
-        syncInput(editor);
+        finalizeEditorChange(editor);
     }
 
     function handleAction(editor, action) {
+        if (!editor || !action) {
+            return;
+        }
+
+        activeEditor = editor;
+
         if (action === 'bold') {
             execAndSync(editor, 'bold');
             return;
@@ -475,61 +601,225 @@
         }
 
         if (action === 'clear') {
-            focusSurface(editor.surface);
+            if (!ensureSelection(editor)) {
+                return;
+            }
+
             document.execCommand('removeFormat', false, null);
             document.execCommand('unlink', false, null);
-            normalizeSurface(editor.surface);
-            syncInput(editor);
+            finalizeEditorChange(editor);
         }
     }
 
     function bindEditor(root) {
-        if (!root || root.dataset.wbRichTextBound === 'true') {
-            return;
+        var existing = getEditor(root);
+
+        if (existing) {
+            return existing;
+        }
+
+        if (!root) {
+            return null;
         }
 
         var surface = root.querySelector('[data-wb-rich-text-surface]');
         var input = root.querySelector('[data-wb-rich-text-input]');
 
         if (!surface || !input) {
-            return;
+            return null;
         }
-
-        root.dataset.wbRichTextBound = 'true';
 
         var editor = {
             root: root,
             surface: surface,
             input: input,
+            savedRange: null,
         };
 
-        surface.innerHTML = sanitizeHtmlFragment(input.value, document) || '<p><br></p>';
+        var initialHtml = sanitizeHtmlFragment(input.value, document);
 
-        root.querySelectorAll('[data-wb-rich-text-action]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                handleAction(editor, button.dataset.wbRichTextAction);
-            });
+        root.dataset.wbRichTextBound = 'true';
+        root._wbRichTextEditor = editor;
+        surface.innerHTML = initialHtml || '<p><br></p>';
+
+        if (input.value !== initialHtml) {
+            input.value = initialHtml;
+        }
+
+        surface.addEventListener('focus', function () {
+            activeEditor = editor;
+            saveSelection(editor);
         });
 
         surface.addEventListener('input', function () {
+            activeEditor = editor;
             syncInput(editor);
+            saveSelection(editor);
         });
 
-        surface.addEventListener('blur', function () {
-            normalizeSurface(surface);
-            syncInput(editor);
+        surface.addEventListener('keyup', function () {
+            activeEditor = editor;
+            saveSelection(editor);
+        });
+
+        surface.addEventListener('mouseup', function () {
+            activeEditor = editor;
+            saveSelection(editor);
         });
 
         surface.addEventListener('paste', function (event) {
+            activeEditor = editor;
             handlePaste(editor, event);
         });
 
-        if (input.form) {
-            input.form.addEventListener('submit', function () {
-                syncInput(editor);
-            });
-        }
+        surface.addEventListener('blur', function () {
+            finalizeEditorChange(editor, { keepFocus: false });
+        });
+
+        return editor;
     }
 
-    document.querySelectorAll('[data-wb-rich-text-editor]').forEach(bindEditor);
+    function initializeEditors(context) {
+        var roots = [];
+        var scope = context || document;
+
+        if (scope.matches && scope.matches('[data-wb-rich-text-editor]')) {
+            roots.push(scope);
+        }
+
+        if (scope.querySelectorAll) {
+            roots = roots.concat(Array.prototype.slice.call(scope.querySelectorAll('[data-wb-rich-text-editor]')));
+        }
+
+        roots.forEach(function (root) {
+            bindEditor(root);
+        });
+    }
+
+    document.addEventListener('selectionchange', function () {
+        var selection = window.getSelection();
+        var node = null;
+        var root = null;
+        var editor = null;
+
+        if (!selection || selection.rangeCount === 0) {
+            return;
+        }
+
+        node = selection.anchorNode || selection.focusNode || selection.getRangeAt(0).commonAncestorContainer;
+        root = closestEditorRoot(node);
+
+        if (!root) {
+            return;
+        }
+
+        editor = bindEditor(root);
+
+        if (!editor) {
+            return;
+        }
+
+        activeEditor = editor;
+        saveSelection(editor);
+    });
+
+    document.addEventListener('focusin', function (event) {
+        var root = closestEditorRoot(event.target);
+        var editor = null;
+
+        if (!root) {
+            return;
+        }
+
+        editor = bindEditor(root);
+
+        if (!editor) {
+            return;
+        }
+
+        if (event.target === editor.surface || editor.surface.contains(event.target)) {
+            activeEditor = editor;
+            saveSelection(editor);
+        }
+    });
+
+    document.addEventListener('mousedown', function (event) {
+        var button = event.target.closest('[data-wb-rich-text-action]');
+        var root = null;
+        var editor = null;
+
+        if (button) {
+            root = closestEditorRoot(button);
+            editor = bindEditor(root);
+
+            if (!editor) {
+                return;
+            }
+
+            event.preventDefault();
+            activeEditor = editor;
+            restoreSelection(editor);
+            return;
+        }
+
+        root = closestEditorRoot(event.target);
+
+        if (!root) {
+            return;
+        }
+
+        bindEditor(root);
+    });
+
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-wb-rich-text-action]');
+        var root = null;
+        var editor = null;
+
+        if (!button) {
+            return;
+        }
+
+        root = closestEditorRoot(button);
+        editor = bindEditor(root);
+
+        if (!editor) {
+            return;
+        }
+
+        handleAction(editor, button.dataset.wbRichTextAction);
+    });
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+
+        if (!form || !form.matches || !form.matches('form')) {
+            return;
+        }
+
+        initializeEditors(form);
+
+        Array.prototype.slice.call(form.querySelectorAll('[data-wb-rich-text-editor]')).forEach(function (root) {
+            var editor = bindEditor(root);
+
+            if (editor) {
+                finalizeEditorChange(editor, { keepFocus: false });
+            }
+        });
+    }, true);
+
+    window.WebBlocksCmsAdminRichTextEditor = {
+        init: initializeEditors,
+        activeEditor: function () {
+            return activeEditor;
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeEditors(document);
+        });
+    } else {
+        initializeEditors(document);
+    }
 }());

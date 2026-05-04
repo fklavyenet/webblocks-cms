@@ -3451,6 +3451,12 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($partialContents);
         $this->assertStringContainsString('function sanitizeHtmlFragment(html, doc)', $assetContents);
         $this->assertStringContainsString('function bindEditor(root)', $assetContents);
+        $this->assertStringContainsString("document.addEventListener('selectionchange'", $assetContents);
+        $this->assertStringContainsString("document.addEventListener('mousedown'", $assetContents);
+        $this->assertStringContainsString('event.preventDefault();', $assetContents);
+        $this->assertStringContainsString('editor.savedRange = range.cloneRange();', $assetContents);
+        $this->assertStringContainsString("document.addEventListener('submit'", $assetContents);
+        $this->assertStringContainsString('window.WebBlocksCmsAdminRichTextEditor = {', $assetContents);
         $this->assertStringContainsString('data-wb-rich-text-surface', $partialContents);
         $this->assertStringContainsString('data-wb-rich-text-input', $partialContents);
         $this->assertStringNotContainsString('toggleWrap(textarea', $assetContents);

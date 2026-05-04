@@ -186,6 +186,16 @@ class RichTextBlockTest extends TestCase
         $this->assertNotFalse($partialContents);
         $this->assertStringContainsString('function sanitizeHtmlFragment(html, doc)', $assetContents);
         $this->assertStringContainsString('function bindEditor(root)', $assetContents);
+        $this->assertStringContainsString('var activeEditor = null;', $assetContents);
+        $this->assertStringContainsString("document.addEventListener('selectionchange'", $assetContents);
+        $this->assertStringContainsString("document.addEventListener('mousedown'", $assetContents);
+        $this->assertStringContainsString('event.preventDefault();', $assetContents);
+        $this->assertStringContainsString('editor.savedRange = range.cloneRange();', $assetContents);
+        $this->assertStringContainsString('restoreSelection(editor);', $assetContents);
+        $this->assertStringContainsString('syncInput(editor, sanitized);', $assetContents);
+        $this->assertStringContainsString("document.addEventListener('submit'", $assetContents);
+        $this->assertStringContainsString('window.WebBlocksCmsAdminRichTextEditor = {', $assetContents);
+        $this->assertStringContainsString('init: initializeEditors,', $assetContents);
         $this->assertStringContainsString('data-wb-rich-text-surface', $partialContents);
         $this->assertStringContainsString('data-wb-rich-text-input', $partialContents);
         $this->assertStringContainsString("button.dataset.wbRichTextAction", $assetContents);

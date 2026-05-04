@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Replace Rich Text's Markdown-like admin editing model with a dependency-free safe HTML editor to avoid marker duplication and nested link formatting while preserving sanitized public output.
+- Fix the safe HTML Rich Text editor toolbar so formatting buttons preserve the contenteditable selection and apply formatting reliably.
 
 ## 1.10.0
 
