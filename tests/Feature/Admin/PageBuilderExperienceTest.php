@@ -766,6 +766,13 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('draggable="true"', false);
         $response->assertSee('data-admin-sortable-handle', false);
         $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertSee('<div class="wb-table-wrap wb-admin-slot-blocks-table-wrap">', false);
+        $response->assertSee('class="wb-table wb-table-striped wb-table-hover wb-admin-slot-blocks-table"', false);
+        $response->assertSee('class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell"', false);
+        $response->assertSee('class="wb-cms-block-tree-label wb-admin-slot-block-type"', false);
+        $response->assertSee('class="wb-cms-block-row-title"', false);
+        $response->assertSee('class="wb-admin-slot-block-status-cell"', false);
+        $response->assertSee('class="wb-admin-slot-block-actions-cell"', false);
         $response->assertSee('<th>Children</th>', false);
         $response->assertSee('<th>Actions</th>', false);
         $response->assertSee('<div class="wb-action-group">', false);
@@ -2938,7 +2945,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-toggle="'.$section->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$container->id.'"', false);
         $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
-        $response->assertSee('class="wb-block-hierarchy-cell"', false);
+        $response->assertSee('class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell"', false);
         $response->assertSee('class="wb-block-hierarchy"', false);
         $response->assertSee('assets/webblocks-cms/css/admin.css', false);
         $response->assertDontSee('site/css/admin.css', false);

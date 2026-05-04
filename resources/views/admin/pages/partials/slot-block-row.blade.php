@@ -33,7 +33,7 @@
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
     >
-        <td class="wb-block-hierarchy-cell">
+        <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
             <div class="wb-block-hierarchy">
                 <div class="wb-cms-block-tree-item">
                     <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder block" title="Drag to reorder block">
@@ -56,11 +56,11 @@
                         </button>
                     @endif
 
-                    <span class="wb-cms-block-tree-label"><strong>{{ $block->typeName() }}</strong></span>
+                    <span class="wb-cms-block-tree-label wb-admin-slot-block-type"><strong>{{ $block->typeName() }}</strong></span>
                 </div>
             </div>
         </td>
-        <td>
+        <td class="wb-admin-slot-block-summary-cell">
             <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}"><strong class="wb-cms-block-row-title">{{ $rowSummary }}</strong></a>
         </td>
         <td class="wb-cms-block-children-cell">
@@ -70,12 +70,12 @@
                 <span class="wb-text-muted" aria-hidden="true">-</span>
             @endif
         </td>
-        <td>
+        <td class="wb-admin-slot-block-status-cell">
             <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
                 {{ $block->status }}
             </span>
         </td>
-        <td>
+        <td class="wb-admin-slot-block-actions-cell">
             <div class="wb-action-group">
                 <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
                     @csrf

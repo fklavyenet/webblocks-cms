@@ -99,14 +99,15 @@
 
 .wb-cms-block-tree-label {
     min-width: 0;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 }
 
 .wb-cms-block-row-title {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    word-break: break-word;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .wb-cms-block-row-title {
@@ -130,6 +131,59 @@
     line-height: 1.2;
     background: var(--wb-surface-2);
     color: var(--wb-text-muted);
+}
+
+.wb-admin-slot-blocks-table-wrap {
+    overflow-x: auto;
+}
+
+.wb-admin-slot-blocks-table {
+    min-width: 760px;
+    table-layout: auto;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-type-cell {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-type {
+    display: inline-block;
+    min-width: 7rem;
+    max-width: 100%;
+    white-space: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-summary-cell {
+    min-width: 0;
+    width: 100%;
+}
+
+.wb-admin-slot-blocks-table .wb-cms-block-row-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-cms-block-children-cell {
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-status-cell,
+.wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-status-cell .wb-status-pill {
+    white-space: nowrap;
+}
+
+.wb-admin-slot-blocks-table .wb-admin-slot-block-actions-cell .wb-action-group {
+    flex-wrap: nowrap;
 }
 
 .wb-cms-block-tree-toggle-icon {
