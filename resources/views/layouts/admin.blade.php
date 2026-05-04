@@ -10,6 +10,7 @@
             'inline-block-builder' => public_path('assets/webblocks-cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('assets/webblocks-cms/js/admin/builder-items.js'),
             'page-builder-modals' => public_path('assets/webblocks-cms/js/admin/page-builder-modals.js'),
+            'rich-text-editor' => public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'),
         ];
     @endphp
 
@@ -237,6 +238,9 @@
         @endif
         @if (is_file($adminJsAssets['page-builder-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['rich-text-editor']))
+            <script src="{{ asset('assets/webblocks-cms/js/admin/rich-text-editor.js') }}?v={{ filemtime($adminJsAssets['rich-text-editor']) }}" defer></script>
         @endif
         @stack('scripts')
     </body>

@@ -1,8 +1,8 @@
 @php
     $content = trim((string) ($block->content ?? ''));
-    $renderer = app(\App\Support\Formatting\InlineRichTextRenderer::class);
+    $renderer = app(\App\Support\Formatting\SafeRichTextRenderer::class);
 @endphp
 
 @if ($content !== '')
-    <div class="wb-stack wb-gap-2">{!! nl2br($renderer->render($content)) !!}</div>
+    <div class="wb-stack wb-gap-3">{!! $renderer->render($content) !!}</div>
 @endif

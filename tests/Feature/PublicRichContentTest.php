@@ -221,7 +221,7 @@ class PublicRichContentTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_renders_safe_inline_code_from_translation_content(): void
+    public function rich_text_renders_safe_markdown_like_content_from_translation_content(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -237,18 +237,18 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => 'Intro `bold`, `emphasis`, and `code`.',
+            'content' => "Intro with **bold**, *italic*, and [docs](https://example.com).\n\n1. First item\n2. Second item",
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-stack wb-gap-2">Intro <code>bold</code>, <code>emphasis</code>, and <code>code</code>.</div>', false);
+        $response->assertSee('<div class="wb-stack wb-gap-3"><p>Intro with <strong>bold</strong>, <em>italic</em>, and <a href="https://example.com" rel="noopener noreferrer">docs</a>.</p><ol><li>First item</li><li>Second item</li></ol></div>', false);
     }
 
     #[Test]
-    public function rich_text_public_rendering_escapes_unsafe_markup_and_only_formats_inline_code(): void
+    public function rich_text_public_rendering_escapes_unsafe_markup_and_rejects_unsafe_links(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -264,15 +264,16 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<script>alert(1)</script> and `safe`',
+            'content' => '<script>alert(1)</script> and [bad](javascript:alert(1)) and `safe`',
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; and <code>safe</code>', false);
+        $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt; and [bad](javascript:alert(1)) and <code>safe</code></p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('href="javascript:alert(1)"', false);
     }
 
     #[Test]
@@ -299,7 +300,7 @@ class PublicRichContentTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertDontSee('<div class="wb-stack wb-gap-2"></div>', false);
+        $response->assertDontSee('<div class="wb-stack wb-gap-3"></div>', false);
     }
 
     private function pageWithMainSlot(): Page

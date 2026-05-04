@@ -137,7 +137,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_admin_form_loads_editor_controls_and_named_asset(): void
+    public function RichText_admin_form_loads_safe_editor_toolbar_and_named_asset(): void
     {
         $this->seedFoundation();
 
@@ -150,8 +150,15 @@ class RichTextBlockTest extends TestCase
         $response->assertOk();
         $response->assertSee('<label for="content">Rich Text</label>', false);
         $response->assertSee('name="content" class="wb-textarea"', false);
-        $response->assertSee('Use backticks for inline code', false);
-        $response->assertDontSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-action="bold"', false);
+        $response->assertSee('data-wb-rich-text-action="italic"', false);
+        $response->assertSee('data-wb-rich-text-action="code"', false);
+        $response->assertSee('data-wb-rich-text-action="link"', false);
+        $response->assertSee('data-wb-rich-text-action="bullet-list"', false);
+        $response->assertSee('data-wb-rich-text-action="numbered-list"', false);
+        $response->assertSee('Headings should use Header blocks.', false);
+        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
     }
 
     #[Test]
@@ -184,7 +191,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_public_renderer_outputs_safe_inline_code_and_escaped_html(): void
+    public function RichText_public_renderer_outputs_safe_markdown_like_html_and_escaped_content(): void
     {
         $this->seedFoundation();
 
@@ -203,7 +210,7 @@ class RichTextBlockTest extends TestCase
         ]);
 
         app(BlockTranslationWriter::class)->sync($block, [
-            'content' => '<script>alert(1)</script> and `code`',
+            'content' => "Intro with **bold** and *italic*.\n\n- Item with `code`\n- [Docs](https://example.com)\n\n<script>alert(1)</script>",
         ], null, true);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
@@ -211,8 +218,10 @@ class RichTextBlockTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('data-wb-public-block-type="rich-text"', false);
-        $response->assertSee('<div class="wb-stack wb-gap-2">', false);
-        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; and <code>code</code>', false);
+        $response->assertSee('<div class="wb-stack wb-gap-3">', false);
+        $response->assertSee('<p>Intro with <strong>bold</strong> and <em>italic</em>.</p>', false);
+        $response->assertSee('<ul><li>Item with <code>code</code></li><li><a href="https://example.com" rel="noopener noreferrer">Docs</a></li></ul>', false);
+        $response->assertSee('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
         $response->assertDontSee('wb-prose', false);
     }

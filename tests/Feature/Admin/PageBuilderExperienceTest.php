@@ -3401,7 +3401,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function rich_text_block_form_exposes_plain_text_editor_with_inline_code_help(): void
+    public function rich_text_block_form_exposes_safe_toolbar_editor_markup(): void
     {
         $this->seedFoundation();
 
@@ -3415,7 +3415,16 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('<label for="content">Rich Text</label>', false);
         $response->assertSee('name="content" class="wb-textarea"', false);
-        $response->assertSee('Use backticks for inline code', false);
-        $response->assertDontSee('data-wb-rich-text-editor', false);
+        $response->assertSee('data-wb-rich-text-editor', false);
+        $response->assertSee('role="toolbar" aria-label="Rich Text formatting"', false);
+        $response->assertSee('>Bold</button>', false);
+        $response->assertSee('>Italic</button>', false);
+        $response->assertSee('>Code</button>', false);
+        $response->assertSee('>Link</button>', false);
+        $response->assertSee('>Bullet List</button>', false);
+        $response->assertSee('>Numbered List</button>', false);
+        $response->assertSee('Headings should use Header blocks.', false);
+        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertDontSee('function bindEditor(textarea)', false);
     }
 }
