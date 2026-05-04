@@ -1,6 +1,7 @@
 @php
     $pageSlots = $page->slots->sortBy('sort_order')->values();
     $availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
+    $addSlotMenuId = 'page-slot-add-menu-'.$page->id;
 @endphp
 
 <div class="wb-card">
@@ -11,17 +12,30 @@
         </div>
 
         @if ($canEditContent)
-            <form method="POST" action="{{ route('admin.pages.slots.store', $page) }}" class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                @csrf
-                <label class="wb-visually-hidden" for="slot_type_id">Add Slot</label>
-                <select id="slot_type_id" name="slot_type_id" class="wb-select" @disabled($availableSlotTypes->isEmpty())>
-                    <option value="">Select slot</option>
-                    @foreach ($availableSlotTypes as $slotType)
-                        <option value="{{ $slotType->id }}" @selected((string) old('slot_type_id') === (string) $slotType->id)>{{ $slotType->name }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="wb-btn wb-btn-primary" @disabled($availableSlotTypes->isEmpty())>Add Slot</button>
-            </form>
+            <div class="wb-dropdown wb-dropdown-end">
+                <button
+                    type="button"
+                    class="wb-btn wb-btn-primary wb-btn-sm"
+                    data-wb-toggle="dropdown"
+                    data-wb-target="#{{ $addSlotMenuId }}"
+                    aria-expanded="false"
+                    @disabled($availableSlotTypes->isEmpty())
+                >
+                    Add Slot
+                </button>
+
+                <div class="wb-dropdown-menu" id="{{ $addSlotMenuId }}">
+                    @forelse ($availableSlotTypes as $slotType)
+                        <form method="POST" action="{{ route('admin.pages.slots.store', $page) }}">
+                            @csrf
+                            <input type="hidden" name="slot_type_id" value="{{ $slotType->id }}">
+                            <button type="submit" class="wb-dropdown-item">{{ $slotType->name }}</button>
+                        </form>
+                    @empty
+                        <span class="wb-dropdown-item" aria-disabled="true">No slots available</span>
+                    @endforelse
+                </div>
+            </div>
         @else
             <span class="wb-text-sm wb-text-muted">Locked by workflow</span>
         @endif
@@ -35,10 +49,6 @@
         @error('slot')
             <div class="wb-alert wb-alert-danger">{{ $message }}</div>
         @enderror
-
-        @if ($availableSlotTypes->isEmpty() && $canEditContent)
-            <div class="wb-text-sm wb-text-muted">All slot types already added.</div>
-        @endif
 
         @if ($pageSlots->isEmpty())
             <div class="wb-empty">

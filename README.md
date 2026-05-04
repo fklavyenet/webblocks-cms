@@ -88,7 +88,7 @@ See `docs/installation.md` for the complete install guide.
 8. Publish the page as a `site_admin` or `super_admin`.
 9. Open the public URL or preview link to confirm the live result.
 
-On the Edit Page screen, page settings and slot structure are managed through separate admin actions.
+On the Edit Page screen, page settings and slot structure are managed separately, and slot additions are available from a compact `Add Slot` dropdown.
 
 In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a compact one-row-per-block table with block type, a single primary summary, a dedicated children-count column, status, and actions. On narrow screens the table remains one-row-per-block and scrolls horizontally instead of collapsing labels into vertical letter stacks. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
 

@@ -85,6 +85,7 @@ class PageBuilderExperienceTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $header = $this->slotType('header', 'Header', 1);
         $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
         $site = $this->defaultSite();
         $page = Page::query()->create([
             'site_id' => $site->id,
@@ -113,6 +114,15 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('Slots');
         $editResponse->assertSee('Translations');
         $editResponse->assertSee('Add Slot');
+        $editResponse->assertDontSee('Site Context');
+        $editResponse->assertDontSee('Select slot');
+        $editResponse->assertDontSee('name="slot_type_id" class="wb-select"', false);
+        $editResponse->assertSee('data-wb-toggle="dropdown"', false);
+        $editResponse->assertSee('class="wb-dropdown-menu" id="page-slot-add-menu-'.$page->id.'"', false);
+        $editResponse->assertSee('<button type="submit" class="wb-dropdown-item">Sidebar</button>', false);
+        $editResponse->assertDontSee('<button type="submit" class="wb-dropdown-item">Header</button>', false);
+        $editResponse->assertDontSee('<button type="submit" class="wb-dropdown-item">Main</button>', false);
+        $editResponse->assertSee('name="slot_type_id" value="'.$sidebar->id.'"', false);
         $editResponse->assertSee('<th>Actions</th>', false);
         $editResponse->assertDontSee('<th class="wb-text-end">Actions</th>', false);
         $editResponse->assertSee('<div class="wb-action-group">', false);
@@ -126,12 +136,93 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertDontSee('name="slots[', false);
         $this->assertNotFalse($content);
         $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
+        $this->assertFalse(str_contains($content, 'Site Context'));
         $this->assertNotFalse(strpos($content, 'Page Settings'));
         $this->assertNotFalse(strpos($content, 'Slots'));
         $this->assertNotFalse(strpos($content, 'Translations'));
         $this->assertTrue(strpos($content, 'Page Settings') < strpos($content, 'Slots'));
         $this->assertTrue(strpos($content, 'Slots') < strpos($content, 'Translations'));
         $this->assertTrue(strpos($content, '</form>') < strpos($content, '<strong>Slots</strong>'));
+    }
+
+    #[Test]
+    public function create_and_edit_page_forms_do_not_render_the_site_context_field(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.create'))
+            ->assertOk()
+            ->assertSee('Site')
+            ->assertDontSee('Site Context');
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('Site')
+            ->assertDontSee('Site Context');
+    }
+
+    #[Test]
+    public function add_slot_dropdown_only_lists_slot_types_that_are_not_already_on_the_page(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $footer = $this->slotType('footer', 'Footer', 4);
+        [$page] = $this->pageWithSlot($header);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('<button type="submit" class="wb-dropdown-item">Sidebar</button>', false);
+        $response->assertSee('<button type="submit" class="wb-dropdown-item">Footer</button>', false);
+        $response->assertDontSee('<button type="submit" class="wb-dropdown-item">Header</button>', false);
+        $response->assertDontSee('<button type="submit" class="wb-dropdown-item">Main</button>', false);
+        $response->assertSee('action="'.route('admin.pages.slots.store', $page).'"', false);
+        $response->assertSee('name="slot_type_id" value="'.$sidebar->id.'"', false);
+        $response->assertSee('name="slot_type_id" value="'.$footer->id.'"', false);
+    }
+
+    #[Test]
+    public function add_slot_dropdown_disables_when_no_slot_types_remain(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $footer = $this->slotType('footer', 'Footer', 4);
+        [$page] = $this->pageWithSlot($header);
+
+        foreach ([$main, $sidebar, $footer] as $index => $slotType) {
+            PageSlot::query()->create([
+                'page_id' => $page->id,
+                'slot_type_id' => $slotType->id,
+                'sort_order' => $index + 1,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-toggle="dropdown"', false);
+        $response->assertSee('disabled', false);
+        $response->assertSee('No slots available');
     }
 
     #[Test]

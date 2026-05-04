@@ -1,6 +1,5 @@
 @php
 	$formSiteId = old('site_id', $page->site_id ?: ($selectedSiteId ?? $sites->first()?->id));
-	$selectedSite = $sites->firstWhere('id', $formSiteId);
 	$canEditContent = $canEditContent ?? true;
 @endphp
 
@@ -25,10 +24,6 @@
 			</div>
 		</div>
 		<div class="wb-stack wb-gap-2">
-			<div class="wb-stack-2 wb-field">
-				<label>Site Context</label>
-				<input class="wb-input" type="text" value="{{ ($selectedSite?->name ?? 'Site') }}{{ $selectedSite?->domain ? ' | '.$selectedSite->domain : '' }}" disabled>
-			</div>
 			<div class="wb-stack-2 wb-field">
 				<label for="public_shell">Public Shell</label>
 				<select id="public_shell" name="public_shell" class="wb-select">
