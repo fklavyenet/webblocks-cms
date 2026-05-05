@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.13.0
+
 ### Admin UI
 
 - Add site-scoped Shared Slots admin management with listing, create, edit, delete guarding, and a dedicated Shared Slot block editor that reuses the existing block services.
@@ -25,6 +27,7 @@
 
 ### Internal / Tests
 
+- Add hidden source pages for internal Shared Slot block ownership so the existing block editor, translation, and asset flows can be reused without exposing those pages as normal site content.
 - Fix Shared Slot block editor redirects so block create, update, and delete flows stay in the current Shared Slot editor instead of falling back to `/admin/blocks` when editing through hidden source pages.
 - Keep the Edit Page Shared Slot source modal on one slot-scoped trigger path so each `Manage Source` action opens exactly one modal without duplicate handlers.
 
