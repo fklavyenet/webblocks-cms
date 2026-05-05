@@ -11,6 +11,7 @@
 - Add Shared Slot portability support so site export/import and site clone now include Shared Slot metadata, hidden internal source-page block trees, translations, media references, and handle-based page slot remapping without leaking hidden Shared Slot source pages into ordinary page listings or public routing.
 - Add Shared Slot revision history with a dedicated `shared_slot_revisions` store, automatic revision capture for Shared Slot metadata and block-tree changes, admin revision inspection screens, and in-place restore that preserves Shared Slot ids, page-slot references, translated block content, asset references, and hidden internal source pages without using `page_revisions`.
 - Guard Shared Slot admin routes before migrations so the sidebar icon uses a valid WebBlocks glyph and Shared Slot screens show controlled admin responses instead of raw SQL errors when Shared Slot schema is not ready yet.
+- Fix Shared Slot revision migration compatibility for MySQL/MariaDB by assigning explicit short foreign key constraint names in `shared_slot_revisions` so the migration no longer fails on identifier length limits.
 
 ## 1.12.0
 

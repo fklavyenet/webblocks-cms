@@ -10,14 +10,17 @@ return new class extends Migration
     {
         Schema::create('shared_slot_revisions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
-            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('shared_slot_id')->constrained('shared_slots', indexName: 'ssr_shared_slot_fk')->cascadeOnDelete();
+            $table->foreignId('site_id')->constrained('sites', indexName: 'ssr_site_fk')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users', indexName: 'ssr_user_fk')->nullOnDelete();
             $table->string('source_event', 100);
             $table->string('label')->nullable();
             $table->string('summary')->nullable();
             $table->json('snapshot');
-            $table->foreignId('restored_from_shared_slot_revision_id')->nullable()->constrained('shared_slot_revisions')->nullOnDelete();
+            $table->foreignId('restored_from_shared_slot_revision_id')
+                ->nullable()
+                ->constrained('shared_slot_revisions', indexName: 'ssr_restored_from_fk')
+                ->nullOnDelete();
             $table->timestamps();
 
             $table->index(['shared_slot_id', 'created_at']);
