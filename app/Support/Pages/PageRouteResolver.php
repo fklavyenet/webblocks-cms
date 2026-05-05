@@ -114,6 +114,7 @@ class PageRouteResolver
             })
             ->whereHas('page', fn ($query) => $query
                 ->where('site_id', $site->id)
+                ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
                 ->where('status', 'published'))
             ->first();
 

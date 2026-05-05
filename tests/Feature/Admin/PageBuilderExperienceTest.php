@@ -8,6 +8,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\Asset;
@@ -15,6 +16,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -77,6 +79,18 @@ class PageBuilderExperienceTest extends TestCase
         return [$page, $pageSlot];
     }
 
+    private function activeSharedSlotForPage(Page $page, string $name, string $handle, ?string $slotName = null, ?string $publicShell = null, bool $isActive = true): SharedSlot
+    {
+        return SharedSlot::query()->create([
+            'site_id' => $page->site_id,
+            'name' => $name,
+            'handle' => $handle,
+            'slot_name' => $slotName,
+            'public_shell' => $publicShell,
+            'is_active' => $isActive,
+        ]);
+    }
+
     #[Test]
     public function edit_page_renders_separate_page_settings_slots_and_translations_sections(): void
     {
@@ -137,11 +151,14 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($content);
         $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
         $this->assertFalse(str_contains($content, 'Site Context'));
-        $this->assertNotFalse(strpos($content, 'Page Settings'));
-        $this->assertNotFalse(strpos($content, 'Slots'));
-        $this->assertNotFalse(strpos($content, 'Translations'));
-        $this->assertTrue(strpos($content, 'Page Settings') < strpos($content, 'Slots'));
-        $this->assertTrue(strpos($content, 'Slots') < strpos($content, 'Translations'));
+        $pageSettingsPosition = strpos($content, 'Page Settings');
+        $slotsPosition = strpos($content, '<strong>Slots</strong>');
+        $translationsPosition = strpos($content, '<strong>Translations</strong>');
+        $this->assertNotFalse($pageSettingsPosition);
+        $this->assertNotFalse($slotsPosition);
+        $this->assertNotFalse($translationsPosition);
+        $this->assertTrue($pageSettingsPosition < $slotsPosition);
+        $this->assertTrue($slotsPosition < $translationsPosition);
         $this->assertTrue(strpos($content, '</form>') < strpos($content, '<strong>Slots</strong>'));
     }
 
@@ -223,6 +240,38 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-toggle="dropdown"', false);
         $response->assertSee('disabled', false);
         $response->assertSee('No slots available');
+    }
+
+    #[Test]
+    public function edit_page_still_loads_when_shared_slot_tables_are_not_available(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        Schema::dropIfExists('shared_slot_blocks');
+        Schema::dropIfExists('shared_slots');
+        if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+            Schema::table('page_slots', function ($table): void {
+                $table->dropForeign(['shared_slot_id']);
+                $table->dropColumn('shared_slot_id');
+            });
+        }
+        if (Schema::hasColumn('page_slots', 'source_type')) {
+            Schema::table('page_slots', function ($table): void {
+                $table->dropColumn('source_type');
+            });
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('Page Settings');
+        $response->assertSee('Slots');
+        $response->assertDontSee('name="source_type"', false);
+        $response->assertDontSee('name="shared_slot_id"', false);
     }
 
     #[Test]
@@ -3463,5 +3512,350 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringNotContainsString('getMarkdownLinkRange', $assetContents);
         $this->assertStringNotContainsString('**', $assetContents);
         $this->assertStringNotContainsString('<script', $partialContents);
+    }
+
+    #[Test]
+    public function page_edit_screen_displays_slot_source_states_and_compatible_shared_slot_options(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $page = Page::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'title' => 'Source Demo',
+            'slug' => 'source-demo',
+            'status' => Page::STATUS_DRAFT,
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        $pageSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'sort_order' => 0,
+        ]);
+
+        $sharedSlot = $this->activeSharedSlotForPage($page, 'Reusable Header', 'reusable-header', 'header', 'docs');
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+            'sort_order' => 1,
+        ]);
+
+        $disabledSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType('sidebar', 'Sidebar', 3)->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'sort_order' => 2,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $content = $response->getContent();
+
+        $response->assertOk();
+        $this->assertNotFalse($content);
+        $response->assertSee('Page Content');
+        $response->assertSee('Shared Slot: Reusable Header');
+        $response->assertSee('Disabled');
+        $response->assertSee('<th>Slot</th>', false);
+        $response->assertSee('<th>Blocks</th>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info">header</span>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info">main</span>', false);
+        $response->assertSee('<strong>0 page-owned blocks</strong>', false);
+        $response->assertSee('Manage Source');
+        $response->assertSee('data-wb-page-slot-source-open', false);
+        $response->assertSee('data-wb-page-slot-source-target="#slot-source-modal-'.$pageSlot->id.'"', false);
+        $response->assertSee('data-wb-page-slot-source-target="#slot-source-modal-'.$disabledSlot->id.'"', false);
+        $response->assertSee('id="slot-source-modal-'.$pageSlot->id.'"', false);
+        $response->assertSee('id="slot-source-modal-'.$disabledSlot->id.'"', false);
+        $this->assertSame(1, substr_count($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'id="slot-source-modal-'.$disabledSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'data-wb-page-slot-source-target="#slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'data-wb-page-slot-source-target="#slot-source-modal-'.$disabledSlot->id.'"'));
+        $response->assertSee('Manage Source: Header');
+        $response->assertSee('Manage Source: Sidebar');
+        $response->assertSee('Choose what this slot should render.');
+        $response->assertSee('Current: Page Content');
+        $response->assertSee('Current: Disabled');
+        $response->assertSee('This slot renders this page\'s own blocks.');
+        $response->assertSee('wb-admin-slot-source-picker', false);
+        $response->assertSee('wb-admin-slot-source-option', false);
+        $response->assertSee('wb-btn-primary is-active', false);
+        $response->assertSee('Page-owned blocks are preserved when switching sources.', false);
+        $response->assertSee('Save Source');
+        $response->assertDontSee('Update Source');
+        $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $pageSlot]).'"', false);
+        $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $disabledSlot]).'"', false);
+        $response->assertSee('assets/webblocks-cms/js/admin/page-slot-source-modals.js', false);
+        $response->assertSee('Edit Blocks');
+        $response->assertSee('Page Blocks');
+        $response->assertDontSee('Edit Shared Slot');
+        $response->assertDontSee('Edit Page Blocks (Preserved)');
+        $response->assertSee('Reusable Header (reusable-header)', false);
+        $response->assertDontSee('Reusable Header (reusable-header) | header | docs', false);
+        $response->assertDontSee('Switch this slot between page-owned content, a Shared Slot, or disabled output.');
+        $response->assertDontSee('<strong>Slot</strong>', false);
+        $response->assertDontSee('<strong>Current source</strong>', false);
+        $response->assertDontSee('<fieldset', false);
+        $response->assertDontSee('<legend', false);
+        $response->assertDontSee('wb-card wb-stack wb-gap-1', false);
+        $response->assertDontSee('This page\'s own slot blocks render publicly.');
+        $response->assertDontSee('Preserved but not currently rendered.');
+        $response->assertDontSee('<button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>', false);
+        $response->assertSee('type="radio"', false);
+        $response->assertSee('value="page"', false);
+        $response->assertSee('value="shared_slot"', false);
+        $response->assertSee('value="disabled"', false);
+        $response->assertSee('data-wb-slot-source-helper', false);
+        $this->assertNotFalse(strpos($content, '</table>'));
+        $this->assertNotFalse(strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertTrue(strpos($content, '</table>') < strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(3, substr_count($content, 'data-wb-page-slot-source-modal '));
+    }
+
+    #[Test]
+    public function shared_slot_selector_only_shows_compatible_active_same_site_shared_slots(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $compatible = $this->activeSharedSlotForPage($page, 'Compatible Header', 'compatible-header', 'header', 'docs');
+        $this->activeSharedSlotForPage($page, 'Any Header', 'any-header', null, null);
+        $this->activeSharedSlotForPage($page, 'Wrong Slot', 'wrong-slot', 'sidebar', 'docs');
+        $this->activeSharedSlotForPage($page, 'Wrong Shell', 'wrong-shell', 'header', 'default');
+        $this->activeSharedSlotForPage($page, 'Inactive Header', 'inactive-header', 'header', 'docs', false);
+
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+
+        SharedSlot::query()->create([
+            'site_id' => $otherSite->id,
+            'name' => 'Other Site Header',
+            'handle' => 'other-site-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('Compatible Header (compatible-header)', false);
+        $response->assertSee('Any Header (any-header)', false);
+        $response->assertDontSee('Only active Shared Slots from this site with compatible shell and slot rules are listed.');
+        $response->assertSee('Manage Source: Header');
+        $response->assertDontSee('Wrong Slot (wrong-slot)', false);
+        $response->assertDontSee('Wrong Shell (wrong-shell)', false);
+        $response->assertDontSee('Inactive Header (inactive-header)', false);
+        $response->assertDontSee('Other Site Header (other-site-header)', false);
+        $this->assertNotNull($compatible->id);
+    }
+
+    #[Test]
+    public function updating_slot_source_to_shared_slot_page_content_and_disabled_preserves_page_blocks(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        [$page, $pageSlot] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $pageBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $headerType->id,
+            'type' => 'header',
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $sharedSlot = $this->activeSharedSlotForPage($page, 'Reusable Header', 'reusable-header', 'header', 'docs');
+        $sharedSourcePage = Page::query()->create([
+            'site_id' => $page->site_id,
+            'title' => 'Shared Source',
+            'slug' => 'shared-source',
+            'status' => Page::STATUS_DRAFT,
+            'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
+            'settings' => ['shared_slot_id' => $sharedSlot->id, 'public_shell' => 'docs'],
+        ]);
+        $sharedSourceBlock = Block::query()->create([
+            'page_id' => $sharedSourcePage->id,
+            'block_type_id' => $headerType->id,
+            'type' => 'header',
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $toShared = $this->actingAs($user)->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+
+        $toShared->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $sharedSourceBlock->id, 'page_id' => $sharedSourcePage->id]);
+
+        $toDisabled = $this->actingAs($user)->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+
+        $toDisabled->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'shared_slot_id' => null,
+        ]);
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+
+        $toPage = $this->actingAs($user)->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+
+        $toPage->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'shared_slot_id' => null,
+        ]);
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlock->id, 'page_id' => $page->id]);
+    }
+
+    #[Test]
+    public function assigning_incompatible_or_unauthorized_shared_slots_is_rejected_and_incompatible_assignments_warn_in_admin(): void
+    {
+        $this->seedFoundation();
+
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $editor = User::factory()->editor()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+        $siteAdmin->sites()->sync([$page->site_id]);
+        $editor->sites()->sync([$page->site_id]);
+
+        $inactive = $this->activeSharedSlotForPage($page, 'Inactive Header', 'inactive-header', 'header', 'docs', false);
+        $wrongShell = $this->activeSharedSlotForPage($page, 'Wrong Shell', 'wrong-shell', 'header', 'default');
+        $wrongSlot = $this->activeSharedSlotForPage($page, 'Wrong Slot', 'wrong-slot', 'sidebar', 'docs');
+
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $crossSite = SharedSlot::query()->create([
+            'site_id' => $otherSite->id,
+            'name' => 'Cross Site',
+            'handle' => 'cross-site',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        foreach ([$inactive, $wrongShell, $wrongSlot, $crossSite] as $sharedSlot) {
+            $response = $this->actingAs($siteAdmin)
+                ->from(route('admin.pages.edit', $page))
+                ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                    'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+                    'shared_slot_id' => $sharedSlot->id,
+                ]);
+
+            $response->assertRedirect(route('admin.pages.edit', $page));
+            $response->assertSessionHasErrors('shared_slot_id');
+        }
+
+        $page->update(['status' => Page::STATUS_PUBLISHED]);
+
+        $this->actingAs($editor)
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            ])
+            ->assertForbidden();
+
+        $pageSlot->update([
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $wrongShell->id,
+        ]);
+        $wrongShell->update(['public_shell' => 'default']);
+
+        $warningResponse = $this->actingAs($siteAdmin)->get(route('admin.pages.edit', $page->fresh()));
+
+        $warningResponse->assertOk();
+        $warningResponse->assertSee('This Shared Slot is no longer compatible because its public shell no longer matches this page.');
+        $warningResponse->assertSee('Manage Source');
+    }
+
+    #[Test]
+    public function failed_slot_source_update_reopens_the_matching_slot_source_modal_on_page_edit(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $wrongShell = $this->activeSharedSlotForPage($page, 'Wrong Shell', 'wrong-shell', 'header', 'default');
+
+        $response = $this->followingRedirects()->actingAs($user)
+            ->from(route('admin.pages.edit', $page))
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'slot_id' => $pageSlot->id,
+                'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+                'shared_slot_id' => $wrongShell->id,
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('This slot source update needs attention.');
+        $response->assertSee('Shared Slot public shell must match the page public shell.');
+        $response->assertSee('Manage Source: Header');
+        $response->assertSee('Manage Source');
+        $response->assertSee('class="wb-modal wb-modal-lg is-open" id="slot-source-modal-'.$pageSlot->id.'"', false);
+    }
+
+    #[Test]
+    public function source_modal_shows_short_empty_shared_slot_message_and_create_link_when_allowed(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('No compatible Shared Slots are available.');
+        $response->assertSee(route('admin.shared-slots.create', ['site' => $page->site_id]), false);
     }
 }

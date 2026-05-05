@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageRevisionController;
 use App\Http\Controllers\Admin\PageSlotController;
 use App\Http\Controllers\Admin\PageTranslationController;
+use App\Http\Controllers\Admin\SharedSlotController;
+use App\Http\Controllers\Admin\SharedSlotRevisionController;
 use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
@@ -26,6 +28,8 @@ use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPrivacyConsentController;
 use App\Models\Locale;
+use App\Support\SharedSlots\SharedSlotSchema;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('install.complete')->prefix('install')->name('install.')->group(function () {
@@ -53,6 +57,39 @@ Route::middleware(['install.required', 'auth'])->group(function () {
 });
 
 Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')->name('admin.')->group(function () {
+    $missingSharedSlot = function (): never {
+        if (! app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
+            redirect()
+                ->route('admin.shared-slots.index')
+                ->withErrors(['shared_slots' => 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.'])
+                ->throwResponse();
+        }
+
+        abort(404);
+    };
+
+    $missingSharedSlotRevision = function (Request $request): never {
+        $schema = app(SharedSlotSchema::class);
+
+        if (! $schema->sharedSlotsTableExists()) {
+            redirect()
+                ->route('admin.shared-slots.index')
+                ->withErrors(['shared_slots' => 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.'])
+                ->throwResponse();
+        }
+
+        if (! $schema->revisionsTableExists()) {
+            $sharedSlot = $request->route('shared_slot');
+
+            redirect()
+                ->route($sharedSlot ? 'admin.shared-slots.edit' : 'admin.shared-slots.index', $sharedSlot ? ['shared_slot' => $sharedSlot] : [])
+                ->withErrors(['revisions' => 'Shared Slot revisions are not ready yet. Run the latest migrations before opening revision details.'])
+                ->throwResponse();
+        }
+
+        abort(404);
+    };
+
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
@@ -60,16 +97,23 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::post('/pages/{page}/revisions/{revision}/restore', [PageRevisionController::class, 'restore'])->name('pages.revisions.restore');
     Route::post('/pages/{page}/slots', [PageSlotController::class, 'store'])->name('pages.slots.store');
     Route::delete('/pages/{page}/slots/{slot}', [PageSlotController::class, 'destroy'])->name('pages.slots.destroy');
+    Route::put('/pages/{page}/slots/{slot}/source', [PageSlotController::class, 'updateSource'])->name('pages.slots.source.update');
     Route::post('/pages/{page}/slots/{slot}/move-up', [PageSlotController::class, 'moveUp'])->name('pages.slots.move-up');
     Route::post('/pages/{page}/slots/{slot}/move-down', [PageSlotController::class, 'moveDown'])->name('pages.slots.move-down');
+    Route::get('/shared-slots/{shared_slot}/revisions', [SharedSlotRevisionController::class, 'index'])->name('shared-slots.revisions.index')->missing($missingSharedSlot);
+    Route::get('/shared-slots/{shared_slot}/revisions/{revision}', [SharedSlotRevisionController::class, 'show'])->name('shared-slots.revisions.show')->missing($missingSharedSlotRevision);
+    Route::post('/shared-slots/{shared_slot}/revisions/{revision}/restore', [SharedSlotRevisionController::class, 'restore'])->name('shared-slots.revisions.restore')->missing($missingSharedSlotRevision);
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->name('reports.visitors.index');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::post('/pages/{page}/slots/{slot}/blocks/reorder', [PageController::class, 'reorderSlotBlocks'])->name('pages.slots.blocks.reorder');
+    Route::get('/shared-slots/{shared_slot}/blocks', [SharedSlotController::class, 'editBlocks'])->name('shared-slots.blocks.edit')->missing($missingSharedSlot);
+    Route::post('/shared-slots/{shared_slot}/blocks/reorder', [SharedSlotController::class, 'reorderBlocks'])->name('shared-slots.blocks.reorder')->missing($missingSharedSlot);
     Route::get('/pages/{page}/translations/{locale}/create', [PageTranslationController::class, 'create'])->name('pages.translations.create');
     Route::post('/pages/{page}/translations/{locale}', [PageTranslationController::class, 'store'])->name('pages.translations.store');
     Route::get('/pages/{page}/translations/{translation}/edit', [PageTranslationController::class, 'edit'])->name('pages.translations.edit');
     Route::put('/pages/{page}/translations/{translation}', [PageTranslationController::class, 'update'])->name('pages.translations.update');
     Route::resource('pages', PageController::class)->except([]);
+    Route::resource('shared-slots', SharedSlotController::class)->parameters(['shared-slots' => 'shared_slot'])->except(['show'])->missing($missingSharedSlot);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
     Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');

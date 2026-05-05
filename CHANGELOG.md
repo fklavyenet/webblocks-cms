@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Admin UI
+
+- Add site-scoped Shared Slots admin management with listing, create, edit, delete guarding, and a dedicated Shared Slot block editor that reuses the existing block services.
+- Add Page Edit slot source controls so each page slot can switch between `Page Content`, `Shared Slot`, and `Disabled` with same-site compatibility validation, preserved page-owned blocks, and a compact slot-scoped `Manage Source` modal.
+- Guard Shared Slot admin routes before migrations so the sidebar icon stays valid and Shared Slot screens fail with controlled admin responses instead of raw SQL errors when schema is not ready.
+
+### Public Rendering
+
+- Add site-scoped Shared Slot public rendering inside the consuming page slot wrapper while preserving page-owned slot rendering, disabled empty output, and backward-compatible handling for legacy null source types.
+- Enforce conservative public Shared Slot guards so cross-site references, inactive Shared Slots, incompatible public shells, and mismatched slot names render no shared content.
+- Fix Shared Slot render context so reusable blocks use the consuming public page and locale instead of leaking hidden source-page labels into context-sensitive blocks such as Breadcrumb.
+
+### Export / Import
+
+- Add Shared Slot portability so site export/import and site clone include Shared Slot metadata, hidden internal source-page block trees, translations, media references, and handle-based page slot remapping without leaking hidden source pages as ordinary pages.
+
+### Revisions
+
+- Add Shared Slot revision history with a dedicated `shared_slot_revisions` store, automatic capture for metadata and block-tree changes, and in-place restore that preserves Shared Slot ids, page-slot references, translations, and asset references without using `page_revisions`.
+- Fix Shared Slot revision migration compatibility for MySQL/MariaDB by assigning explicit short foreign key constraint names in `shared_slot_revisions`.
+
+### Internal / Tests
+
+- Fix Shared Slot block editor redirects so block create, update, and delete flows stay in the current Shared Slot editor instead of falling back to `/admin/blocks` when editing through hidden source pages.
+- Keep the Edit Page Shared Slot source modal on one slot-scoped trigger path so each `Manage Source` action opens exactly one modal without duplicate handlers.
+
 ## 1.12.0
 
 ### Admin UI

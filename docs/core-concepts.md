@@ -51,6 +51,45 @@ Public page structure is controlled at the page and slot layer.
 
 For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
 
+## Shared Slots
+
+Shared Slots are a slot-content ownership layer that sits under the existing page layout model.
+
+- Page layout still owns which slots are available.
+- Page shell plus slot name still own the public wrappers for each slot.
+- Each page slot source can be `page`, `shared_slot`, or `disabled`.
+- `page` means the slot uses blocks owned directly by the page, which remains the current behavior.
+- `shared_slot` means the slot references a site-scoped reusable Shared Slot block tree that is rendered dynamically at public runtime.
+- `disabled` means the slot wrapper still exists, but no blocks are rendered inside it.
+- Shared Slots are site-scoped reusable slot block trees, not copy-based templates.
+- Shared Slots do not own page shells or slot wrappers. The page shell still owns the outer shell, and the consuming page slot still owns the wrapper for `header`, `main`, `sidebar`, or other slot regions.
+- A valid Shared Slot contributes only the block tree rendered inside that existing page slot wrapper.
+- Public Shared Slot rendering is conservative:
+- Cross-site shared slot references render nothing.
+- If `SharedSlot.public_shell` is set, it must be compatible with the consuming page shell.
+- If `SharedSlot.slot_name` is set, it must match the consuming page slot name.
+- Null or empty `public_shell` and `slot_name` act as generic matches.
+
+Current scope now includes foundation, public rendering, site-scoped admin management, page slot source assignment, and site portability support for Shared Slots.
+
+- Shared Slots have their own admin listing and metadata forms under the site-content area of the admin.
+- Shared Slot block trees are edited through a dedicated Shared Slot block editor that reuses the current block authoring model instead of copying content into consuming page slots.
+- Shared Slot blocks remain real `blocks` records connected through `shared_slot_blocks`, with translated text staying in the existing translation tables.
+- Deleting a Shared Slot is blocked while any page slot still references it.
+- The page editor now exposes a per-slot source selector with three supported modes:
+- `Page Content`: `page_slots.source_type = page` and `shared_slot_id = null`.
+- `Shared Slot`: `page_slots.source_type = shared_slot` and `shared_slot_id` points to a compatible active Shared Slot from the same site.
+- `Disabled`: `page_slots.source_type = disabled` and `shared_slot_id = null`.
+- Changing a slot source does not delete or detach the existing page-owned block tree for that slot. If an editor switches a slot to `shared_slot` or `disabled`, the page-owned blocks remain attached so switching back to `Page Content` restores the prior page-specific content.
+- The page editor filters Shared Slot choices conservatively. Only active Shared Slots from the same site appear, and optional Shared Slot `public_shell` and `slot_name` constraints must match the consuming page shell and slot name.
+- Runtime public rendering guards remain in place even after write-time validation, so invalid, stale, cross-site, inactive, or incompatible assignments still render no shared content publicly.
+- Shared Slots now participate in site export/import and site clone. Their metadata, hidden-source-page block trees, translations, nested ordering, and media references are transferred as first-class site content. Consuming page slots keep `shared_slot` references by Shared Slot handle during export and are remapped to target-site Shared Slots during import and clone.
+- Hidden Shared Slot source pages remain internal. They are excluded from normal page export payloads, ordinary page listings, and public routing even though their block records still back the Shared Slot editor and portability flows.
+- Shared Slots now have their own revision history and restore flow that is intentionally separate from page revisions.
+- Shared Slot revisions capture Shared Slot metadata plus the reusable Shared Slot block tree behind the hidden internal source page.
+- Restoring a Shared Slot revision restores the Shared Slot in place. The Shared Slot id stays stable, existing `page_slots.shared_slot_id` references remain intact, and the restored content immediately affects every page that references that Shared Slot.
+- Shared Slot revisions do not treat page revisions as authoritative for Shared Slot content, and page revisions do not pretend to capture Shared Slot block trees.
+
 ## Project Boundary
 
 WebBlocks CMS core contains reusable CMS functionality.

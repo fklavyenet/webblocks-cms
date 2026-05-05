@@ -34,6 +34,7 @@
                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                             <a href="{{ route('admin.pages.create') }}" class="wb-btn wb-btn-primary">New Page</a>
                             <a href="{{ route('admin.pages.index') }}" class="wb-btn wb-btn-secondary">Pages</a>
+                            <a href="{{ route('admin.shared-slots.index') }}" class="wb-btn wb-btn-secondary">Shared Slots</a>
                             @can('access-system')
                                 <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Sites</a>
                                 <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">Backups</a>

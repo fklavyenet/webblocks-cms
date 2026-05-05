@@ -8,6 +8,7 @@
     $blockAdminSummary = app(\App\Support\Blocks\BlockAdminSummary::class);
     $rowSummary = $blockAdminSummary->primary($block);
     $childCount = $block->children->count();
+    $sharedSlot = $sharedSlot ?? null;
 @endphp
 
 <tbody
@@ -79,6 +80,9 @@
             <div class="wb-action-group">
                 <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
                     @csrf
+                    @if ($sharedSlot)
+                        <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                    @endif
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
@@ -86,6 +90,9 @@
                 </form>
                 <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
                     @csrf
+                    @if ($sharedSlot)
+                        <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                    @endif
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
@@ -98,6 +105,9 @@
                 <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">
                     @csrf
                     @method('DELETE')
+                    @if ($sharedSlot)
+                        <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                    @endif
                     @unless ($activeLocale->is_default)
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
@@ -119,5 +129,6 @@
         'slotBlockBaseRoute' => $slotBlockBaseRoute,
         'activeLocale' => $activeLocale,
         'expandedBlockIds' => $expandedBlockIds,
+        'sharedSlot' => $sharedSlot,
     ])
 @endforeach

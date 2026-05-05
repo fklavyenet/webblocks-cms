@@ -671,3 +671,26 @@
 .wb-navigation-tree-chosen .wb-navigation-row {
     border-color: var(--wb-accent);
 }
+.wb-admin-slot-source-picker {
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wb-admin-slot-source-option {
+    position: relative;
+}
+
+.wb-admin-slot-source-option input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.wb-admin-slot-source-option:focus-within {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}

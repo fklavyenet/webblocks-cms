@@ -8,7 +8,7 @@
     $options = collect($settings['options'] ?? []);
     $asset = $block->downloadAsset() ?? $block->attachmentAsset() ?? $block->asset;
     $assetUrl = $asset?->url();
-    $page = $block->page;
+    $page = $block->renderPage();
     $publishedPages = \App\Models\Page::query()
         ->where('status', 'published')
         ->with(['translations', 'site'])

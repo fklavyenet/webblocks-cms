@@ -11,11 +11,14 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\SharedSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
+use App\Support\SharedSlots\SharedSlotRevisionManager;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,20 +32,26 @@ class BlockController extends Controller
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
+        private readonly SharedSlotRevisionManager $sharedSlotRevisionManager,
         private readonly AdminAuthorization $authorization,
+        private readonly SharedSlotSourcePageManager $sharedSlotSourcePages,
     ) {}
 
     public function moveUp(Block $block): RedirectResponse
     {
-        $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
-        abort_unless($this->workflowManager->canEditContent(request()->user(), $block->page), 403);
+        [$sharedSlot, $page] = $this->editingContext($block);
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot ?? $block);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
+
         return $this->move($block, 'up');
     }
 
     public function moveDown(Block $block): RedirectResponse
     {
-        $this->authorization->abortUnlessSiteAccess(request()->user(), $block);
-        abort_unless($this->workflowManager->canEditContent(request()->user(), $block->page), 403);
+        [$sharedSlot, $page] = $this->editingContext($block);
+        $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot ?? $block);
+        abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
+
         return $this->move($block, 'down');
     }
 
@@ -64,6 +73,15 @@ class BlockController extends Controller
     public function create(Request $request): View
     {
         if ($request->filled('page_id') && $request->filled('slot_type_id')) {
+            if ($sharedSlot = $this->sharedSlotForPageId($request->integer('page_id'))) {
+                return redirect()->route('admin.shared-slots.blocks.edit', array_filter([
+                    'shared_slot' => $sharedSlot,
+                    'block_type_id' => $request->integer('block_type_id') ?: null,
+                    'picker' => $request->integer('block_type_id') ? 1 : null,
+                    'locale' => $this->requestedLocaleCode($request),
+                ], fn ($value) => $value !== null))->throwResponse();
+            }
+
             $pageSlotId = $this->pageSlotRouteId($request->integer('page_id'), $request->integer('slot_type_id'));
 
             if ($pageSlotId) {
@@ -126,25 +144,45 @@ class BlockController extends Controller
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
+        $sharedSlot = $this->sharedSlotContext($request, null, (int) $data['page_id']);
+        $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode) {
+        $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode, $sharedSlot) {
             $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
             $this->syncFeatureItems($block, $featureItems, $localeCode);
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block created',
-                'Page block structure or content was updated by adding a block.',
-            );
+            if ($sharedSlot) {
+                $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $this->sharedSlotRevisionManager->capture(
+                    $sharedSlot->fresh(),
+                    request()->user(),
+                    'block_created',
+                    'Shared Slot block created',
+                    'Shared Slot block structure or content was updated by adding a block.',
+                );
+            } else {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block created',
+                    'Page block structure or content was updated by adding a block.',
+                );
+            }
 
             return $block;
         });
+
+        if ($sharedSlot) {
+            return redirect()
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode])
+                ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
+                ->with('status', 'Block created successfully.');
+        }
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $previewUrl = $block->page->publicUrl($localeCode);
@@ -166,12 +204,20 @@ class BlockController extends Controller
 
     public function edit(Request $request, Block $block): View
     {
-        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
+        [$sharedSlot, $page] = $this->editingContext($block);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $block);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
         if ($block->supportsTranslations()) {
             $defaultLocale = $block->page?->availableSiteLocales()->firstWhere('is_default', true);
             $block = $this->blockTranslationResolver->resolve($block, $defaultLocale);
+        }
+
+        if ($sharedSlot) {
+            return redirect()->route('admin.shared-slots.blocks.edit', [
+                'shared_slot' => $sharedSlot,
+                'edit' => $block->id,
+            ])->throwResponse();
         }
 
         if ($block->page_id && $block->slot_type_id) {
@@ -227,30 +273,51 @@ class BlockController extends Controller
 
     public function update(BlockRequest $request, Block $block): RedirectResponse
     {
-        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
+        [$contextSharedSlot, $existingPage] = $this->editingContext($block);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $contextSharedSlot ?? $block);
         $data = $request->validatedData();
         $localeCode = $data['locale'] ?? null;
         $columnItems = $this->builderChildItemsFrom($request, 'column_items');
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $page = $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($data['page_id']);
+        $sharedSlot = $this->sharedSlotContext($request, $contextSharedSlot, (int) $data['page_id']);
+        $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
-        DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode): void {
+        DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $managedCtas, $data, $localeCode, $sharedSlot): void {
             $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
             $this->syncColumnItems($block, $columnItems, $localeCode);
             $this->syncFeatureItems($block, $featureItems, $localeCode);
             $this->syncLinkListItems($block, $linkListItems, $localeCode);
             $this->syncManagedCtas($block, $managedCtas, $localeCode);
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block updated',
-                'Page block structure or content was updated.',
-            );
+            if ($sharedSlot) {
+                $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $this->sharedSlotRevisionManager->capture(
+                    $sharedSlot->fresh(),
+                    request()->user(),
+                    'block_updated',
+                    'Shared Slot block updated',
+                    'Shared Slot block structure or content was updated.',
+                );
+            } else {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block updated',
+                    'Page block structure or content was updated.',
+                );
+            }
         });
+
+        if ($sharedSlot) {
+            return redirect()
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode])
+                ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
+                ->with('status', 'Block updated successfully.');
+        }
 
         $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
         $previewUrl = $block->page->publicUrl($localeCode);
@@ -272,23 +339,42 @@ class BlockController extends Controller
 
     public function destroy(Request $request, Block $block): RedirectResponse
     {
-        $this->authorization->abortUnlessSiteAccess($request->user(), $block);
-        abort_unless($this->workflowManager->canEditContent($request->user(), $block->page), 403);
+        [$sharedSlot, $page] = $this->editingContext($block);
+        $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $block);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
         $pageId = $block->page_id;
         $slotTypeId = $block->slot_type_id;
         $pageSlotId = $this->pageSlotRouteId($pageId, $slotTypeId);
 
-        DB::transaction(function () use ($block, $request): void {
+        DB::transaction(function () use ($block, $request, $sharedSlot): void {
             $page = $block->page()->firstOrFail();
             $block->delete();
 
-            $this->revisionManager->capture(
-                $page->fresh(),
-                $request->user(),
-                'Block deleted',
-                'Page block structure or content was updated by removing a block.',
-            );
+            if ($sharedSlot) {
+                $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $this->sharedSlotRevisionManager->capture(
+                    $sharedSlot->fresh(),
+                    $request->user(),
+                    'block_deleted',
+                    'Shared Slot block deleted',
+                    'Shared Slot block structure or content was updated by removing a block.',
+                );
+            } else {
+                $this->revisionManager->capture(
+                    $page->fresh(),
+                    $request->user(),
+                    'Block deleted',
+                    'Page block structure or content was updated by removing a block.',
+                );
+            }
         });
+
+        if ($sharedSlot) {
+            return redirect()
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
+                ->with('status', 'Block deleted successfully.');
+        }
 
         return redirect()
             ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request())])
@@ -298,7 +384,8 @@ class BlockController extends Controller
 
     private function move(Block $block, string $direction): RedirectResponse
     {
-        $moved = DB::transaction(function () use ($block, $direction): bool {
+        [$sharedSlot] = $this->editingContext($block);
+        $moved = DB::transaction(function () use ($block, $direction, $sharedSlot): bool {
             $siblings = Block::query()
                 ->where('page_id', $block->page_id)
                 ->where('slot_type_id', $block->slot_type_id)
@@ -336,15 +423,40 @@ class BlockController extends Controller
                 $sibling->update(['sort_order' => $index]);
             }
 
-            $this->revisionManager->capture(
-                $block->page()->firstOrFail(),
-                request()->user(),
-                'Block order updated',
-                'Page block order was changed.',
-            );
+            if ($sharedSlot) {
+                $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $this->sharedSlotRevisionManager->capture(
+                    $sharedSlot->fresh(),
+                    request()->user(),
+                    'blocks_reordered',
+                    'Shared Slot blocks reordered',
+                    'Shared Slot block order was changed.',
+                );
+            } else {
+                $this->revisionManager->capture(
+                    $block->page()->firstOrFail(),
+                    request()->user(),
+                    'Block order updated',
+                    'Page block order was changed.',
+                );
+            }
 
             return true;
         });
+
+        if ($sharedSlot) {
+            if (! $moved) {
+                return redirect()
+                    ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                    ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
+                    ->with('status', 'Block is already at the edge of its group.');
+            }
+
+            return redirect()
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
+                ->with('status', 'Block order updated successfully.');
+        }
 
         if (! $moved) {
             return redirect()
@@ -357,6 +469,85 @@ class BlockController extends Controller
             ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block))
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block order updated successfully.');
+    }
+
+    private function sharedSlotFromRequest(Request $request): ?SharedSlot
+    {
+        $sharedSlotId = $request->integer('shared_slot_id');
+
+        if ($sharedSlotId <= 0) {
+            return null;
+        }
+
+        $sharedSlot = SharedSlot::query()->findOrFail($sharedSlotId);
+
+        return $sharedSlot;
+    }
+
+    private function sharedSlotContext(Request $request, ?SharedSlot $contextSharedSlot = null, ?int $pageId = null): ?SharedSlot
+    {
+        $requestedSharedSlot = $this->sharedSlotFromRequest($request);
+        $pageSharedSlot = $this->sharedSlotForPageId($pageId);
+
+        if ($requestedSharedSlot && $contextSharedSlot && $requestedSharedSlot->isNot($contextSharedSlot)) {
+            abort(403);
+        }
+
+        if ($requestedSharedSlot && $pageSharedSlot && $requestedSharedSlot->isNot($pageSharedSlot)) {
+            abort(403);
+        }
+
+        if ($contextSharedSlot && $pageSharedSlot && $contextSharedSlot->isNot($pageSharedSlot)) {
+            abort(403);
+        }
+
+        return $requestedSharedSlot ?? $contextSharedSlot ?? $pageSharedSlot;
+    }
+
+    private function sharedSlotForPageId(?int $pageId): ?SharedSlot
+    {
+        if (! $pageId || $pageId < 1) {
+            return null;
+        }
+
+        $page = Page::query()->find($pageId);
+
+        if (! $page?->isSharedSlotSourcePage()) {
+            return null;
+        }
+
+        $sharedSlotId = (int) data_get($page->settings, 'shared_slot_id');
+
+        return $sharedSlotId > 0
+            ? SharedSlot::query()->find($sharedSlotId)
+            : null;
+    }
+
+    private function editablePageFromRequest(Request $request, ?SharedSlot $sharedSlot, int $pageId): Page
+    {
+        if ($sharedSlot) {
+            $page = $this->sharedSlotSourcePages->ensureFor($sharedSlot);
+
+            abort_unless((int) $page->id === $pageId, 403);
+
+            return $page;
+        }
+
+        return $this->authorization->scopePagesForUser(Page::query(), $request->user())->findOrFail($pageId);
+    }
+
+    private function editingContext(Block $block): array
+    {
+        $page = $block->page()->with('site.locales', 'translations')->firstOrFail();
+
+        if (! $page->isSharedSlotSourcePage()) {
+            return [null, $page];
+        }
+
+        $sharedSlotId = (int) data_get($page->settings, 'shared_slot_id');
+        $sharedSlot = $sharedSlotId > 0 ? SharedSlot::query()->find($sharedSlotId) : null;
+
+        return [$sharedSlot, $page];
     }
 
     private function parentBlocksFor(?int $pageId, ?int $ignoreId = null)

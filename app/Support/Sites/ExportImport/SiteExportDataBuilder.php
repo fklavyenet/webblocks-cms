@@ -11,23 +11,41 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Illuminate\Support\Collection;
 
 class SiteExportDataBuilder
 {
+    public function __construct(
+        private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
+    ) {}
+
     public function build(Site $site, bool $includesMedia): array
     {
         $site = $site->loadMissing(['siteLocales', 'locales']);
+        $sharedSlots = SharedSlot::query()
+            ->where('site_id', $site->id)
+            ->orderBy('id')
+            ->get();
+        $sharedSlotSourcePages = $sharedSlots
+            ->mapWithKeys(fn (SharedSlot $sharedSlot) => [$sharedSlot->id => $this->sharedSlotSourcePageManager->findFor($sharedSlot)])
+            ->filter(fn (?Page $page) => $page instanceof Page);
         $pages = Page::query()
             ->where('site_id', $site->id)
+            ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
             ->with(['translations', 'slots.slotType', 'pageType', 'layout'])
             ->orderBy('id')
             ->get();
         $pageIds = $pages->pluck('id');
+        $blockPageIds = $pageIds
+            ->merge($sharedSlotSourcePages->pluck('id'))
+            ->unique()
+            ->values();
 
         $blocks = Block::query()
-            ->whereIn('page_id', $pageIds)
+            ->whereIn('page_id', $blockPageIds)
             ->with(['blockType', 'slotType', 'blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
             ->orderBy('id')
             ->get();
@@ -114,13 +132,35 @@ class SiteExportDataBuilder
             'page_slots' => PageSlot::query()->whereIn('page_id', $pageIds)->orderBy('id')->get()->map(fn (PageSlot $slot) => [
                 'id' => $slot->id,
                 'page_id' => $slot->page_id,
+                'page_export_id' => $slot->page_id,
                 'slot_type_id' => $slot->slot_type_id,
                 'slot_type_slug' => optional($slot->slotType)->slug,
+                'source_type' => $slot->runtimeSourceType(),
+                'shared_slot_handle' => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT
+                    ? $slot->sharedSlot()->value('handle')
+                    : null,
                 'sort_order' => $slot->sort_order,
                 'settings' => $slot->getRawOriginal('settings'),
                 'created_at' => $slot->created_at?->toDateTimeString(),
                 'updated_at' => $slot->updated_at?->toDateTimeString(),
             ])->all(),
+            'shared_slots' => $sharedSlots->map(function (SharedSlot $sharedSlot) use ($sharedSlotSourcePages) {
+                $sourcePage = $sharedSlotSourcePages->get($sharedSlot->id);
+
+                return [
+                    'id' => $sharedSlot->id,
+                    'site_id' => $sharedSlot->site_id,
+                    'name' => $sharedSlot->name,
+                    'handle' => $sharedSlot->handle,
+                    'slot_name' => $sharedSlot->slot_name,
+                    'public_shell' => $sharedSlot->public_shell,
+                    'is_active' => (bool) $sharedSlot->is_active,
+                    'source_page_id' => $sourcePage?->id,
+                    'source_page_slug' => $sourcePage?->slug,
+                    'created_at' => $sharedSlot->created_at?->toDateTimeString(),
+                    'updated_at' => $sharedSlot->updated_at?->toDateTimeString(),
+                ];
+            })->all(),
             'blocks' => $blocks->map(fn (Block $block) => [
                 'id' => $block->id,
                 'page_id' => $block->page_id,
@@ -248,6 +288,7 @@ class SiteExportDataBuilder
                 'pages' => $pages->count(),
                 'page_translations' => PageTranslation::query()->whereIn('page_id', $pageIds)->count(),
                 'page_slots' => PageSlot::query()->whereIn('page_id', $pageIds)->count(),
+                'shared_slots' => $sharedSlots->count(),
                 'blocks' => $blocks->count(),
                 'block_assets' => $includesMedia ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() : 0,
                 'block_text_translations' => $blocks->sum(fn (Block $block) => $block->textTranslations->count()),

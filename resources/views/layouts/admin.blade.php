@@ -10,6 +10,7 @@
             'inline-block-builder' => public_path('assets/webblocks-cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('assets/webblocks-cms/js/admin/builder-items.js'),
             'page-builder-modals' => public_path('assets/webblocks-cms/js/admin/page-builder-modals.js'),
+            'page-slot-source-modals' => public_path('assets/webblocks-cms/js/admin/page-slot-source-modals.js'),
             'rich-text-editor' => public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'),
         ];
     @endphp
@@ -43,6 +44,7 @@
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => 'admin.shared-slots.*', 'icon' => 'wb-icon-layers'],
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
                 ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
@@ -238,6 +240,9 @@
         @endif
         @if (is_file($adminJsAssets['page-builder-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['page-slot-source-modals']))
+            <script src="{{ asset('assets/webblocks-cms/js/admin/page-slot-source-modals.js') }}?v={{ filemtime($adminJsAssets['page-slot-source-modals']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['rich-text-editor']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/rich-text-editor.js') }}?v={{ filemtime($adminJsAssets['rich-text-editor']) }}" defer></script>

@@ -125,6 +125,13 @@ class SiteImportManager
             $payload[pathinfo($file, PATHINFO_FILENAME)] = $this->archiveInspector->decodeJsonFile($archive, $file);
         }
 
+        foreach (SiteTransferPackage::OPTIONAL_DATA_FILES as $file) {
+            $key = pathinfo($file, PATHINFO_FILENAME);
+            $payload[$key] = $archive->locateName($file) === false
+                ? []
+                : $this->archiveInspector->decodeJsonFile($archive, $file);
+        }
+
         return $payload;
     }
 }

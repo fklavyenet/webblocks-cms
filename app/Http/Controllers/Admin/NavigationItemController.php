@@ -40,7 +40,7 @@ class NavigationItemController extends Controller
             'activeMenuKey' => $menuKey,
             'menuOptions' => NavigationItem::menuOptions(),
             'items' => $this->tree->buildMenuTree($menuKey, $site),
-            'pages' => Page::query()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
+            'pages' => Page::query()->visibleInAdmin()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
             'newItem' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'newGroup' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'editableItems' => NavigationItem::query()->forSite($site)->forMenu($menuKey)->with('page')->ordered()->get(),
@@ -55,7 +55,7 @@ class NavigationItemController extends Controller
 
         return view('admin.navigation.create', [
             'item' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'pages' => Page::query()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
+            'pages' => Page::query()->visibleInAdmin()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
             'parents' => $this->tree->parentOptions($menuKey, $site),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),
@@ -80,7 +80,7 @@ class NavigationItemController extends Controller
 
         return view('admin.navigation.edit', [
             'item' => $navigation,
-            'pages' => Page::query()->where('site_id', $navigation->site_id)->with('translations')->orderByDefaultTranslation('name')->get(),
+            'pages' => Page::query()->visibleInAdmin()->where('site_id', $navigation->site_id)->with('translations')->orderByDefaultTranslation('name')->get(),
             'parents' => $this->tree->parentOptions($navigation->menu_key, $navigation->site_id, $navigation->id),
             'menuOptions' => NavigationItem::menuOptions(),
             'linkTypes' => NavigationItem::linkTypes(),

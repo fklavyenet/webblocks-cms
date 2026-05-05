@@ -1,6 +1,6 @@
 @php
     $headingBlocks = \App\Models\Block::query()
-        ->where('page_id', $block->page_id)
+        ->where('page_id', $block->renderPageId())
         ->where('status', 'published')
         ->where('type', 'heading')
         ->whereIn('variant', ['h2', 'h3'])

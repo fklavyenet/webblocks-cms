@@ -7,6 +7,7 @@ use App\Models\Asset;
 use App\Models\ContactMessage;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +19,7 @@ class AdminAuthorization
         abort_unless($user->can('access-system'), 403);
     }
 
-    public function abortUnlessSiteAccess(User $user, Site|Page|NavigationItem|Block|ContactMessage|int|null $resource): void
+    public function abortUnlessSiteAccess(User $user, Site|Page|NavigationItem|Block|ContactMessage|SharedSlot|int|null $resource): void
     {
         if ($user->isSuperAdmin()) {
             return;
@@ -82,6 +83,8 @@ class AdminAuthorization
 
     public function scopePagesForUser(Builder $query, User $user): Builder
     {
+        $query->visibleInAdmin();
+
         if ($user->isSuperAdmin()) {
             return $query;
         }
@@ -90,6 +93,15 @@ class AdminAuthorization
     }
 
     public function scopeNavigationForUser(Builder $query, User $user): Builder
+    {
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->whereIn('site_id', $user->accessibleSiteIds());
+    }
+
+    public function scopeSharedSlotsForUser(Builder $query, User $user): Builder
     {
         if ($user->isSuperAdmin()) {
             return $query;
@@ -130,7 +142,7 @@ class AdminAuthorization
         return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
     }
 
-    private function siteIdFor(Site|Page|NavigationItem|Block|ContactMessage|int|null $resource): ?int
+    private function siteIdFor(Site|Page|NavigationItem|Block|ContactMessage|SharedSlot|int|null $resource): ?int
     {
         return match (true) {
             $resource instanceof Site => $resource->id,
@@ -138,6 +150,7 @@ class AdminAuthorization
             $resource instanceof NavigationItem => $resource->site_id,
             $resource instanceof Block => $resource->page?->site_id ?? $resource->page()->value('site_id'),
             $resource instanceof ContactMessage => $resource->page?->site_id ?? $resource->page()->value('site_id'),
+            $resource instanceof SharedSlot => $resource->site_id,
             is_numeric($resource) => (int) $resource,
             default => null,
         };

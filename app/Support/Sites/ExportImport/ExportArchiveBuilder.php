@@ -29,7 +29,7 @@ class ExportArchiveBuilder
             $archive->addEmptyDir('data');
             $archive->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
 
-            foreach (SiteTransferPackage::REQUIRED_DATA_FILES as $file) {
+            foreach (SiteTransferPackage::ALL_DATA_FILES as $file) {
                 $key = pathinfo($file, PATHINFO_FILENAME);
                 $archive->addFromString($file, json_encode($payload[$key] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
             }
@@ -58,7 +58,7 @@ class ExportArchiveBuilder
 
             $archive->close();
             $output[] = 'Archive created as '.basename($archivePath).'.';
-            $output[] = 'JSON manifests written for site, pages, blocks, navigation, locales, and assets.';
+            $output[] = 'JSON manifests written for site, pages, shared slots, blocks, navigation, locales, and assets.';
 
             if ($includesMedia) {
                 $output[] = 'Added '.$fileCount.' media file(s) to package.';

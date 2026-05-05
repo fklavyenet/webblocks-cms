@@ -14,10 +14,12 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\PageType;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Sites\SiteDomainNormalizer;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Storage;
@@ -33,6 +35,7 @@ class ImportDataMapper
         private readonly SiteDomainNormalizer $domainNormalizer,
         private readonly SiteTransferPathGuard $pathGuard,
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
     ) {}
 
     public function import(SiteImport $siteImport, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$output = []): Site
@@ -48,10 +51,13 @@ class ImportDataMapper
                 $folderMap = $this->importAssetFolders($payload, $output);
                 $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
                 $pageMap = $this->importPages($site, $payload, $localeMap, $output);
-                $this->importPageSlots($payload, $pageMap, $output);
-                $blockMap = $this->importBlocks($payload, $pageMap, $assetMap, $output);
+                ['shared_slots' => $sharedSlots, 'handle_map' => $sharedSlotHandleMap, 'source_page_map' => $sharedSlotSourcePageMap] = $this->importSharedSlots($site, $payload, $output);
+                $allPageMap = array_replace($pageMap, $sharedSlotSourcePageMap);
+                $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
+                $blockMap = $this->importBlocks($payload, $allPageMap, $assetMap, $output);
                 $this->importBlockTranslations($payload, $blockMap, $localeMap, $output);
                 $this->importBlockAssets($payload, $blockMap, $assetMap, $output);
+                $this->rebuildSharedSlotAssignments($sharedSlots, $output);
                 $this->importNavigation($site, $payload, $pageMap, $output);
 
                 $siteImport->forceFill([
@@ -297,12 +303,73 @@ class ImportDataMapper
         return $map;
     }
 
-    private function importPageSlots(array $payload, array $pageMap, array &$output): void
+    private function importSharedSlots(Site $site, array $payload, array &$output): array
+    {
+        $sharedSlots = [];
+        $handleMap = [];
+        $sourcePageMap = [];
+
+        foreach (($payload['shared_slots'] ?? []) as $sharedSlotData) {
+            $handle = str((string) ($sharedSlotData['handle'] ?? ''))->slug()->toString();
+
+            if ($handle === '') {
+                throw new RuntimeException('Import package contains a shared slot without a valid handle.');
+            }
+
+            $sharedSlot = SharedSlot::query()->firstOrNew([
+                'site_id' => $site->id,
+                'handle' => $handle,
+            ]);
+
+            $sharedSlot->fill([
+                'name' => $sharedSlotData['name'] ?? str($handle)->headline()->toString(),
+                'slot_name' => $sharedSlotData['slot_name'] ?? null,
+                'public_shell' => $sharedSlotData['public_shell'] ?? null,
+                'is_active' => (bool) ($sharedSlotData['is_active'] ?? true),
+                'created_at' => $sharedSlotData['created_at'] ?? null,
+                'updated_at' => $sharedSlotData['updated_at'] ?? null,
+            ]);
+            $sharedSlot->save();
+
+            $sourcePage = $this->sharedSlotSourcePageManager->ensureFor($sharedSlot);
+            Block::query()->where('page_id', $sourcePage->id)->delete();
+            $sharedSlot->slotBlocks()->delete();
+
+            if (array_key_exists('source_page_slug', $sharedSlotData) && is_string($sharedSlotData['source_page_slug']) && trim($sharedSlotData['source_page_slug']) !== '') {
+                $sourcePage->forceFill([
+                    'slug' => $sharedSlotData['source_page_slug'],
+                    'created_at' => $sharedSlotData['created_at'] ?? $sourcePage->created_at,
+                    'updated_at' => $sharedSlotData['updated_at'] ?? $sourcePage->updated_at,
+                ])->save();
+            }
+
+            $sharedSlots[] = $sharedSlot;
+            $handleMap[$sharedSlot->handle] = $sharedSlot->id;
+
+            if (! empty($sharedSlotData['source_page_id'])) {
+                $sourcePageMap[(int) $sharedSlotData['source_page_id']] = $sourcePage->id;
+            }
+        }
+
+        if ($sharedSlots !== []) {
+            $output[] = 'Imported '.count($sharedSlots).' shared slot(s).';
+        }
+
+        return [
+            'shared_slots' => $sharedSlots,
+            'handle_map' => $handleMap,
+            'source_page_map' => $sourcePageMap,
+        ];
+    }
+
+    private function importPageSlots(array $payload, array $pageMap, array $sharedSlotHandleMap, array $sharedSlotSourcePageExportIds, array &$output): void
     {
         $count = 0;
+        $sharedSlotSourcePageExportIds = array_map('intval', $sharedSlotSourcePageExportIds);
 
         foreach ($payload['page_slots'] as $slotData) {
-            $pageId = $pageMap[(int) ($slotData['page_id'] ?? 0)] ?? null;
+            $sourcePageId = (int) ($slotData['page_export_id'] ?? $slotData['page_id'] ?? 0);
+            $pageId = $pageMap[$sourcePageId] ?? null;
             $slotTypeSlug = $slotData['slot_type_slug'] ?? null;
             $slotTypeId = $slotTypeSlug
                 ? SlotType::query()->where('slug', $slotTypeSlug)->value('id')
@@ -312,19 +379,54 @@ class ImportDataMapper
                 throw new RuntimeException('Import package references a missing slot type for page slots.');
             }
 
-            PageSlot::query()->create([
+            $sourceType = PageSlot::normalizeRuntimeSourceType($slotData['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
+            $sharedSlotHandle = trim((string) ($slotData['shared_slot_handle'] ?? ''));
+            $sharedSlotId = $sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT
+                ? ($sharedSlotHandleMap[$sharedSlotHandle] ?? null)
+                : null;
+
+            if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && ! $sharedSlotId) {
+                throw new RuntimeException('Import package references a missing shared slot handle for a page slot assignment.');
+            }
+
+            $attributes = [
                 'page_id' => $pageId,
                 'slot_type_id' => $slotTypeId,
+                'source_type' => $sourceType,
+                'shared_slot_id' => $sharedSlotId,
                 'sort_order' => $slotData['sort_order'] ?? 0,
                 'settings' => PageSlot::sanitizeSettings($slotData['settings'] ?? null),
                 'created_at' => $slotData['created_at'] ?? null,
                 'updated_at' => $slotData['updated_at'] ?? null,
-            ]);
+            ];
+
+            if (in_array($sourcePageId, $sharedSlotSourcePageExportIds, true)) {
+                PageSlot::query()->updateOrCreate(
+                    [
+                        'page_id' => $pageId,
+                        'slot_type_id' => $slotTypeId,
+                    ],
+                    $attributes,
+                );
+            } else {
+                PageSlot::query()->create($attributes);
+            }
 
             $count++;
         }
 
         $output[] = 'Imported '.$count.' page slot assignment(s).';
+    }
+
+    private function rebuildSharedSlotAssignments(array $sharedSlots, array &$output): void
+    {
+        foreach ($sharedSlots as $sharedSlot) {
+            $this->sharedSlotSourcePageManager->rebuildAssignments($sharedSlot);
+        }
+
+        if ($sharedSlots !== []) {
+            $output[] = 'Rebuilt shared slot block assignments for '.count($sharedSlots).' shared slot(s).';
+        }
     }
 
     private function importBlocks(array $payload, array $pageMap, array $assetMap, array &$output): array

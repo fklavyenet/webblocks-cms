@@ -94,7 +94,10 @@
         'page' => $page,
         'slotTypes' => $slotTypes,
         'slotBlockPreviews' => $slotBlockPreviews,
+        'slotSharedSlotOptions' => $slotSharedSlotOptions,
+        'sharedSlotSourcesAvailable' => $sharedSlotSourcesAvailable,
         'canEditContent' => $canEditContent,
+        'canCreateSharedSlots' => $canCreateSharedSlots,
     ])
 
     <div class="wb-card wb-card-muted">

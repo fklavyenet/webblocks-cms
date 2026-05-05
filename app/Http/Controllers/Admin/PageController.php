@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
@@ -24,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -180,7 +182,7 @@ class PageController extends Controller
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
 
-        $page->loadMissing([
+        $relations = [
             'site',
             'translations.locale',
             'slots.slotType',
@@ -188,7 +190,13 @@ class PageController extends Controller
                 ->with('children')
                 ->whereNull('parent_id')
                 ->orderBy('sort_order'),
-        ]);
+        ];
+
+        if ($this->sharedSlotsSchemaAvailable()) {
+            $relations[] = 'slots.sharedSlot';
+        }
+
+        $page->loadMissing($relations);
         $page->loadCount('blocks');
 
         $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
@@ -209,10 +217,13 @@ class PageController extends Controller
                 ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
+            'slotSharedSlotOptions' => $this->slotSharedSlotOptions($page),
+            'sharedSlotSourcesAvailable' => $this->sharedSlotsSchemaAvailable(),
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
             'canViewRevisions' => $canViewRevisions,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
+            'canCreateSharedSlots' => ! request()->user()->isEditor(),
         ]);
     }
 
@@ -872,6 +883,35 @@ class PageController extends Controller
             'remaining' => max($blocks->count() - $visibleItems->count(), 0),
             'is_empty' => false,
         ];
+    }
+
+    private function slotSharedSlotOptions(Page $page): Collection
+    {
+        if (! $this->sharedSlotsSchemaAvailable()) {
+            return collect();
+        }
+
+        $sharedSlots = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), request()->user())
+            ->where('site_id', $page->site_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->orderBy('handle')
+            ->get();
+
+        return $page->slots
+            ->mapWithKeys(fn (PageSlot $slot) => [
+                $slot->id => $sharedSlots
+                    ->filter(fn (SharedSlot $sharedSlot) => $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug()))
+                    ->values(),
+            ]);
+    }
+
+    private function sharedSlotsSchemaAvailable(): bool
+    {
+        return Schema::hasTable('shared_slots')
+            && Schema::hasTable('shared_slot_blocks')
+            && Schema::hasColumn('page_slots', 'source_type')
+            && Schema::hasColumn('page_slots', 'shared_slot_id');
     }
 
     private function slotEditorRouteParameters(Page $page, PageSlot $slot): array
