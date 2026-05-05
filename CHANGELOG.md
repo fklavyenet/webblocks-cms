@@ -9,6 +9,7 @@
 - Guard existing page updates so the normal Edit Page form cannot move a page to another site; the Site field is now read-only for existing pages and forged site changes return a validation error instead of reaching a database integrity failure.
 - Add a dedicated admin `Move to another site` workflow for pages with transaction-safe site reassignment, translated path conflict checks, locale compatibility validation, Shared Slot remapping, and preserved page revisions/content state.
 - Add a dedicated admin `Duplicate page` workflow that creates draft page copies within the same site or another accessible site, preserves page-owned content state, validates translated path conflicts, and remaps compatible Shared Slots for cross-site duplicates.
+- Improve the `Duplicate page` workflow for Shared Slot-backed pages by showing a target-site Shared Slot compatibility summary, keeping the safe blocking default for missing or incompatible target Shared Slots, and adding an explicit `Disable incompatible Shared Slot-backed slots on the duplicated page` option that writes only the duplicated page's affected slots as disabled instead of persisting invalid cross-site Shared Slot references.
 
 ## 1.13.0
 

@@ -26,7 +26,13 @@ class PageDuplicator
         private readonly PageDuplicateValidator $validator,
     ) {}
 
-    public function duplicate(Page $page, Site $targetSite, User $actor, Collection $translations): PageDuplicateResult
+    public function duplicate(
+        Page $page,
+        Site $targetSite,
+        User $actor,
+        Collection $translations,
+        bool $disableIncompatibleSharedSlots = false,
+    ): PageDuplicateResult
     {
         $page->loadMissing([
             'site',
@@ -36,9 +42,9 @@ class PageDuplicator
             'navigationItems',
         ]);
 
-        $validation = $this->validator->validate($page, $targetSite, $translations);
+        $validation = $this->validator->validate($page, $targetSite, $translations, $disableIncompatibleSharedSlots);
 
-        return DB::transaction(function () use ($page, $targetSite, $actor, $translations, $validation): PageDuplicateResult {
+        return DB::transaction(function () use ($page, $targetSite, $actor, $translations, $validation, $disableIncompatibleSharedSlots): PageDuplicateResult {
             $lockedPage = Page::query()
                 ->with([
                     'site',
@@ -59,7 +65,7 @@ class PageDuplicator
                 ->lockForUpdate()
                 ->get();
 
-            $validation = $this->validator->validate($lockedPage, $targetSite, $translations);
+            $validation = $this->validator->validate($lockedPage, $targetSite, $translations, $disableIncompatibleSharedSlots);
             $defaultTranslation = $this->defaultTranslationPayload($lockedPage, $translations);
 
             $newPage = Page::query()->create([
@@ -88,12 +94,26 @@ class PageDuplicator
                 ]);
             }
 
+            $disabledSharedSlotCount = 0;
+
             foreach ($lockedPage->slots as $slot) {
+                $sourceType = $slot->runtimeSourceType();
+                $sharedSlotId = $validation->sharedSlotRemaps[$slot->id] ?? null;
+
+                if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && ! $sharedSlotId) {
+                    if (! $disableIncompatibleSharedSlots || ! $validation->disableEligibleSharedSlotIds->contains($slot->id)) {
+                        throw new \RuntimeException('Cross-site Shared Slot remap is missing for duplicated slot ['.$slot->slotSlug().'].');
+                    }
+
+                    $sourceType = PageSlot::SOURCE_TYPE_DISABLED;
+                    $disabledSharedSlotCount++;
+                }
+
                 PageSlot::query()->create([
                     'page_id' => $newPage->id,
                     'slot_type_id' => $slot->slot_type_id,
-                    'source_type' => $slot->runtimeSourceType(),
-                    'shared_slot_id' => $validation->sharedSlotRemaps[$slot->id] ?? null,
+                    'source_type' => $sourceType,
+                    'shared_slot_id' => $sharedSlotId,
                     'sort_order' => $slot->sort_order,
                     'settings' => PageSlot::sanitizeSettings($slot->settings),
                 ]);
@@ -160,6 +180,7 @@ class PageDuplicator
                 page: $duplicatedPage->fresh(['site', 'translations.locale', 'slots.sharedSlot', 'slots.slotType']),
                 targetSite: $targetSite,
                 remappedSharedSlotCount: $validation->sharedSlotRemaps->count(),
+                disabledSharedSlotCount: $disabledSharedSlotCount,
                 sourceNavigationCount: $validation->sourceNavigationCount,
             );
         });

@@ -45,6 +45,7 @@ class DuplicatePageRequest extends FormRequest
             'title' => $title,
             'slug' => Str::slug($slug !== '' ? $slug : $title),
             'translations' => $translations,
+            'disable_incompatible_shared_slots' => $this->boolean('disable_incompatible_shared_slots'),
         ]);
     }
 
@@ -58,6 +59,7 @@ class DuplicatePageRequest extends FormRequest
             'translations.*.locale_id' => ['required', 'integer', 'exists:locales,id'],
             'translations.*.name' => ['required', 'string', 'max:255'],
             'translations.*.slug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+            'disable_incompatible_shared_slots' => ['nullable', 'boolean'],
         ];
     }
 
