@@ -218,6 +218,11 @@
                     $sourceType === PageSlot::SOURCE_TYPE_DISABLED => 'Disabled',
                     default => 'Page Content',
                 };
+                $selectedSourceHelper = match ($selectedSourceType) {
+                    PageSlot::SOURCE_TYPE_SHARED_SLOT => 'This slot renders reusable Shared Slot content.',
+                    PageSlot::SOURCE_TYPE_DISABLED => 'This slot renders nothing publicly.',
+                    default => 'This slot renders this page\'s own blocks.',
+                };
             @endphp
             <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-page-slot-source-modal @if (! $showSourceModal) hidden @endif>
                 <div class="wb-modal wb-modal-lg {{ $showSourceModal ? 'is-open' : '' }}" id="{{ $sourceModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $sourceModalTitleId }}">
@@ -247,11 +252,11 @@
                                     @endif
                                 </div>
 
-                                <fieldset class="wb-stack wb-gap-2">
-                                    <legend>Source</legend>
+                                <div class="wb-stack wb-gap-2">
+                                    <label class="wb-text-sm" for="slot-source-type-page-{{ $pageSlot->id }}">Source</label>
 
-                                    <label class="wb-card wb-stack wb-gap-1" for="slot-source-type-page-{{ $pageSlot->id }}">
-                                        <span class="wb-cluster wb-cluster-2 wb-items-start">
+                                    <div class="wb-cluster wb-cluster-2 wb-admin-slot-source-picker" role="radiogroup" aria-label="Source" data-wb-slot-source-picker>
+                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_PAGE ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-page-{{ $pageSlot->id }}" data-wb-slot-source-option>
                                             <input
                                                 id="slot-source-type-page-{{ $pageSlot->id }}"
                                                 type="radio"
@@ -260,15 +265,10 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_PAGE)
                                             >
-                                            <span class="wb-stack wb-gap-1">
-                                                <strong>Page Content</strong>
-                                                <span class="wb-text-sm wb-text-muted">Render this page's own slot blocks.</span>
-                                            </span>
-                                        </span>
-                                    </label>
+                                            <span>Page Content</span>
+                                        </label>
 
-                                    <label class="wb-card wb-stack wb-gap-1" for="slot-source-type-shared-slot-{{ $pageSlot->id }}">
-                                        <span class="wb-cluster wb-cluster-2 wb-items-start">
+                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-shared-slot-{{ $pageSlot->id }}" data-wb-slot-source-option>
                                             <input
                                                 id="slot-source-type-shared-slot-{{ $pageSlot->id }}"
                                                 type="radio"
@@ -277,15 +277,10 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT)
                                             >
-                                            <span class="wb-stack wb-gap-1">
-                                                <strong>Shared Slot</strong>
-                                                <span class="wb-text-sm wb-text-muted">Render reusable content from a Shared Slot.</span>
-                                            </span>
-                                        </span>
-                                    </label>
+                                            <span>Shared Slot</span>
+                                        </label>
 
-                                    <label class="wb-card wb-stack wb-gap-1" for="slot-source-type-disabled-{{ $pageSlot->id }}">
-                                        <span class="wb-cluster wb-cluster-2 wb-items-start">
+                                        <label class="wb-btn wb-btn-sm {{ $selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED ? 'wb-btn-primary is-active' : 'wb-btn-secondary' }} wb-admin-slot-source-option" for="slot-source-type-disabled-{{ $pageSlot->id }}" data-wb-slot-source-option>
                                             <input
                                                 id="slot-source-type-disabled-{{ $pageSlot->id }}"
                                                 type="radio"
@@ -294,19 +289,18 @@
                                                 data-wb-slot-source-type
                                                 @checked($selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED)
                                             >
-                                            <span class="wb-stack wb-gap-1">
-                                                <strong>Disabled</strong>
-                                                <span class="wb-text-sm wb-text-muted">Render nothing in this slot.</span>
-                                            </span>
-                                        </span>
-                                    </label>
+                                            <span>Disabled</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="wb-text-sm wb-text-muted" data-wb-slot-source-helper>{{ $selectedSourceHelper }}</div>
 
                                     @if ($isOldSlot)
                                         @error('source_type')
                                             <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
                                         @enderror
                                     @endif
-                                </fieldset>
+                                </div>
 
                                 <div class="wb-stack wb-gap-1" data-wb-shared-slot-field @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) hidden @endif>
                                     <label for="slot-shared-slot-{{ $pageSlot->id }}">Shared Slot</label>

@@ -3582,9 +3582,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Choose what this slot should render.');
         $response->assertSee('Current: Page Content');
         $response->assertSee('Current: Disabled');
-        $response->assertSee('Render this page\'s own slot blocks.', false);
-        $response->assertSee('Render reusable content from a Shared Slot.', false);
-        $response->assertSee('Render nothing in this slot.', false);
+        $response->assertSee('This slot renders this page\'s own blocks.');
+        $response->assertSee('wb-admin-slot-source-picker', false);
+        $response->assertSee('wb-admin-slot-source-option', false);
+        $response->assertSee('wb-btn-primary is-active', false);
         $response->assertSee('Page-owned blocks are preserved when switching sources.', false);
         $response->assertSee('Save Source');
         $response->assertDontSee('Update Source');
@@ -3600,6 +3601,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Switch this slot between page-owned content, a Shared Slot, or disabled output.');
         $response->assertDontSee('<strong>Slot</strong>', false);
         $response->assertDontSee('<strong>Current source</strong>', false);
+        $response->assertDontSee('<fieldset', false);
+        $response->assertDontSee('<legend', false);
+        $response->assertDontSee('wb-card wb-stack wb-gap-1', false);
         $response->assertDontSee('This page\'s own slot blocks render publicly.');
         $response->assertDontSee('Preserved but not currently rendered.');
         $response->assertDontSee('<button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>', false);
@@ -3607,6 +3611,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('value="page"', false);
         $response->assertSee('value="shared_slot"', false);
         $response->assertSee('value="disabled"', false);
+        $response->assertSee('data-wb-slot-source-helper', false);
         $this->assertNotFalse(strpos($content, '</table>'));
         $this->assertNotFalse(strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
         $this->assertTrue(strpos($content, '</table>') < strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));

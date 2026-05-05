@@ -17,7 +17,7 @@
 - Compact the Edit Page `Slots` card for Shared Slots by keeping each row as a compact summary list, removing the redundant per-row Shared Slot management action, and moving slot source switching into per-slot modal settings while preserving compatibility filtering, validation, permissions, preserved page-owned blocks, and existing public rendering behavior.
 - Fix the Edit Page `Manage Source` action so each slot now targets its own working modal trigger again, with compact source controls that keep the existing source update route and validation unchanged.
 - Fix Page Edit slot source modal targeting so each `Manage Source` button uses a single slot-scoped admin trigger path and opens exactly one modal instead of conflicting with duplicate modal handlers.
-- Simplify the Edit Page slot source modal so source switching is decision-oriented, uses compact Page Content / Shared Slot / Disabled choices, shows a short current summary, and only reveals the compatible Shared Slot selector when needed while preserving existing source update behavior.
+- Align the Edit Page slot source modal with the WebBlocks admin UI by using a compact segmented Page Content / Shared Slot / Disabled picker, a short current summary, and conditional compatible Shared Slot selection while preserving existing source update behavior.
 
 ## 1.12.0
 

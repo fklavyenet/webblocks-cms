@@ -55,15 +55,35 @@
         var sourceSelect = form.querySelector('[data-wb-slot-source-type]:checked');
         var sharedSlotField = form.querySelector('[data-wb-shared-slot-field]');
         var sharedSlotSelect = form.querySelector('[data-wb-shared-slot-select]');
+        var sourceHelper = form.querySelector('[data-wb-slot-source-helper]');
 
         if (!sourceSelect || !sharedSlotField || !sharedSlotSelect) {
             return;
         }
 
         var sourceType = sourceSelect.value;
+        var helperTextBySource = {
+            page: "This slot renders this page's own blocks.",
+            shared_slot: 'This slot renders reusable Shared Slot content.',
+            disabled: 'This slot renders nothing publicly.'
+        };
 
         sharedSlotField.hidden = sourceType !== 'shared_slot';
         sharedSlotSelect.disabled = sourceType !== 'shared_slot';
+
+        if (sourceHelper) {
+            sourceHelper.textContent = helperTextBySource[sourceType] || helperTextBySource.page;
+        }
+
+        form.querySelectorAll('[data-wb-slot-source-option]').forEach(function (option) {
+            var input = option.querySelector('[data-wb-slot-source-type]');
+            var isActive = input && input.checked;
+
+            option.classList.toggle('wb-btn-primary', !!isActive);
+            option.classList.toggle('is-active', !!isActive);
+            option.classList.toggle('wb-btn-secondary', !isActive);
+            option.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     }
 
     document.querySelectorAll('[data-wb-page-slot-source-form]').forEach(syncSourceForm);
