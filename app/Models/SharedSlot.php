@@ -12,6 +12,8 @@ class SharedSlot extends Model
 {
     use HasFactory;
 
+    public const COMMON_SLOT_NAMES = ['header', 'sidebar', 'main', 'footer'];
+
     protected static function booted(): void
     {
         static::saving(function (self $sharedSlot): void {
@@ -58,5 +60,25 @@ class SharedSlot extends Model
     public function pageSlots(): HasMany
     {
         return $this->hasMany(PageSlot::class);
+    }
+
+    public function statusLabel(): string
+    {
+        return $this->is_active ? 'Active' : 'Inactive';
+    }
+
+    public function statusBadgeClass(): string
+    {
+        return $this->is_active ? 'wb-status-active' : 'wb-status-pending';
+    }
+
+    public function publicShellLabel(): string
+    {
+        return $this->public_shell ?: 'Any';
+    }
+
+    public function slotLabel(): string
+    {
+        return $this->slot_name ?: 'Any';
     }
 }

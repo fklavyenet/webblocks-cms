@@ -137,11 +137,14 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($content);
         $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
         $this->assertFalse(str_contains($content, 'Site Context'));
-        $this->assertNotFalse(strpos($content, 'Page Settings'));
-        $this->assertNotFalse(strpos($content, 'Slots'));
-        $this->assertNotFalse(strpos($content, 'Translations'));
-        $this->assertTrue(strpos($content, 'Page Settings') < strpos($content, 'Slots'));
-        $this->assertTrue(strpos($content, 'Slots') < strpos($content, 'Translations'));
+        $pageSettingsPosition = strpos($content, 'Page Settings');
+        $slotsPosition = strpos($content, '<strong>Slots</strong>');
+        $translationsPosition = strpos($content, '<strong>Translations</strong>');
+        $this->assertNotFalse($pageSettingsPosition);
+        $this->assertNotFalse($slotsPosition);
+        $this->assertNotFalse($translationsPosition);
+        $this->assertTrue($pageSettingsPosition < $slotsPosition);
+        $this->assertTrue($slotsPosition < $translationsPosition);
         $this->assertTrue(strpos($content, '</form>') < strpos($content, '<strong>Slots</strong>'));
     }
 

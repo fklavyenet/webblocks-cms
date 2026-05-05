@@ -6,6 +6,7 @@
 - Fix a Shared Slots foundation regression where public page-owned slot content could disappear when `page_slots.source_type` was null or not hydrated, and preserve backward-compatible page-owned rendering while `shared_slot` and `disabled` remain non-rendering in this phase.
 - Render Shared Slot content publicly by resolving site-scoped shared slot block trees dynamically inside the consuming page slot wrapper, while keeping page-owned slots unchanged, `disabled` slots empty, and legacy null or missing `source_type` values backward-compatible.
 - Add conservative public Shared Slot guards so cross-site references, incompatible public shells, mismatched slot names, inactive shared slots, and invalid assignments render no shared content instead of leaking or copying blocks.
+- Add site-scoped Shared Slots admin management with listing, create, edit, delete guarding, and a dedicated Shared Slot block editor that reuses the existing block services while keeping page-owned slot editing and public rendering unchanged.
 
 ## 1.12.0
 

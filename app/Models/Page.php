@@ -18,6 +18,10 @@ class Page extends Model
 {
     use HasFactory;
 
+    public const TYPE_DEFAULT = 'default';
+
+    public const TYPE_SHARED_SLOT_SOURCE = 'shared_slot_source';
+
     private ?string $pendingDefaultTranslationName = null;
 
     private ?string $pendingDefaultTranslationSlug = null;
@@ -34,7 +38,7 @@ class Page extends Model
     {
         static::creating(function (self $page): void {
             if (! $page->page_type) {
-                $page->page_type = 'default';
+                $page->page_type = self::TYPE_DEFAULT;
             }
 
             if (! $page->status) {
@@ -200,6 +204,11 @@ class Page extends Model
         );
     }
 
+    public function scopeVisibleInAdmin(Builder $query): Builder
+    {
+        return $query->where('page_type', '!=', self::TYPE_SHARED_SLOT_SOURCE);
+    }
+
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
@@ -329,6 +338,11 @@ class Page extends Model
     public function isPublished(): bool
     {
         return $this->status === self::STATUS_PUBLISHED;
+    }
+
+    public function isSharedSlotSourcePage(): bool
+    {
+        return $this->page_type === self::TYPE_SHARED_SLOT_SOURCE;
     }
 
     public function workflowLabel(): string

@@ -12,7 +12,9 @@
     $modalDescription = $isCreateMode
         ? 'Configure the new block, then save it back into the list.'
         : 'Update this block without leaving the slot management screen.';
-    $closeUrl = route('admin.pages.slots.blocks', [$page, $slot, 'picker' => $isCreateMode ? 1 : null, 'parent_id' => $isCreateMode ? (request()->integer('parent_id') ?: null) : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
+    $editorRouteName = $editorRouteName ?? 'admin.pages.slots.blocks';
+    $editorRouteParameters = $editorRouteParameters ?? [$page, $slot];
+    $closeUrl = route($editorRouteName, $editorRouteParameters + ['picker' => $isCreateMode ? 1 : null, 'parent_id' => $isCreateMode ? (request()->integer('parent_id') ?: null) : null, 'locale' => $activeLocale->is_default ? null : $activeLocale->code]);
     $activeTab = old('_slot_block_tab', 'block-fields');
 @endphp
 
@@ -42,6 +44,9 @@
 
                         <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
                         <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
+                        @if (! empty($sharedSlot ?? null))
+                            <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                        @endif
                         @unless ($activeLocale->is_default)
                             <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                         @endunless

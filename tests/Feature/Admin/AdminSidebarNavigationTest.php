@@ -33,6 +33,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertOk();
         $response->assertSee('>Dashboard<', false);
         $response->assertSee('href="'.route('admin.pages.index').'"', false);
+        $response->assertSee('href="'.route('admin.shared-slots.index').'"', false);
         $response->assertSee('href="'.route('admin.navigation.index').'"', false);
         $response->assertSee('href="'.route('admin.media.index').'"', false);
         $response->assertSee('href="'.route('admin.contact-messages.index').'"', false);
@@ -105,6 +106,18 @@ class AdminSidebarNavigationTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('href="'.route('admin.pages.index').'"', false);
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+    }
+
+    #[Test]
+    public function shared_slots_page_is_a_direct_top_level_sidebar_item(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.shared-slots.index'));
+
+        $response->assertOk();
+        $response->assertSee('href="'.route('admin.shared-slots.index').'"', false);
         $response->assertSee('class="wb-sidebar-link is-active"', false);
     }
 

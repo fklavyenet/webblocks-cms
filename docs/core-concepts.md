@@ -70,7 +70,13 @@ Shared Slots are a slot-content ownership layer that sits under the existing pag
 - If `SharedSlot.slot_name` is set, it must match the consuming page slot name.
 - Null or empty `public_shell` and `slot_name` act as generic matches.
 
-Current scope includes foundation plus public rendering. Admin workflows, export or import support, and revisions integration are completed in later phases.
+Current scope now includes foundation, public rendering, and site-scoped admin management for Shared Slots.
+
+- Shared Slots have their own admin listing and metadata forms under the site-content area of the admin.
+- Shared Slot block trees are edited through a dedicated Shared Slot block editor that reuses the current block authoring model instead of copying content into consuming page slots.
+- Shared Slot blocks remain real `blocks` records connected through `shared_slot_blocks`, with translated text staying in the existing translation tables.
+- Deleting a Shared Slot is blocked while any page slot still references it.
+- Page slot source selection in the page editor, Shared Slot revisions or history, and Shared Slot export or import remain deferred to later phases.
 
 ## Project Boundary
 

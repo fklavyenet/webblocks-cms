@@ -43,6 +43,7 @@
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
                 ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => 'admin.shared-slots.*', 'icon' => 'wb-icon-layout-template'],
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
                 ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
