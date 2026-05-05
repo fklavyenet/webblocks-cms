@@ -15,14 +15,11 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Project\Support\UiDocs\SetupWebBlocksUiDocsSite;
-use Project\Support\UiDocs\WebBlocksUiLocalResolver;
 use Tests\TestCase;
 
 class WebBlocksUiArchitectureImportTest extends TestCase
 {
     use RefreshDatabase;
-
-    private ?string $localResolverConfigBackup = null;
 
     #[Test]
     public function architecture_page_import_is_idempotent_and_renders_in_docs_shell(): void
@@ -66,8 +63,12 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->assertNotNull($currentLayerModelBlock);
         $this->assertNotNull($richTextBlock);
         $this->assertNotNull($alertBlock);
+        $this->assertSame('/p/foundation', $architecturePage->blocks
+            ->first(fn (Block $block) => $block->typeSlug() === 'link-list-item' && $block->translatedTextFieldValue('title') === 'foundation')?->url);
+        $this->assertSame('/p/foundation', $architecturePage->blocks
+            ->first(fn (Block $block) => $block->typeSlug() === 'link-list-item' && $block->translatedTextFieldValue('title') === 'Next')?->url);
 
-        $response = $this->withHeader('Host', $site->domain)->get('/p/architecture');
+        $response = $this->get('/p/architecture');
 
         $response->assertOk();
         $response->assertSee('Architecture');
@@ -120,115 +121,55 @@ class WebBlocksUiArchitectureImportTest extends TestCase
             1,
             NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Architecture')->count(),
         );
+        $this->assertSame(
+            0,
+            Site::query()->where('handle', 'ui-docs-webblocksui-com')->count(),
+        );
         $this->assertFalse(class_exists(\App\Console\Commands\WebBlocksUiImportCommand::class));
     }
 
     #[Test]
-    public function import_reports_local_resolver_note_when_preview_host_is_not_configured(): void
+    public function import_reports_default_site_preview_url(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $this->seed(BlockTypeSeeder::class);
-
-        $this->app['env'] = 'local';
-        $this->setLocalResolverConfigured(false);
 
         $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
 
         $import = $this->artisan('project:webblocksui-import docs-architecture');
-        $import->expectsOutput('If the host does not resolve, run project:webblocksui-local-resolver first.');
-        $import->expectsOutput('Architecture local preview URL: https://ui.docs.webblocksui.com.ddev.site/p/architecture');
+        $import->expectsOutput('Target site: Default Site (default)');
+        $import->expectsOutput('Architecture local preview URL: '.SetupWebBlocksUiDocsSite::architecturePreviewUrl());
         $import->assertExitCode(0);
     }
 
     #[Test]
-    public function setup_site_uses_local_ddev_domain_and_reports_architecture_preview_url_without_duplicates(): void
+    public function setup_site_targets_default_site_and_reports_architecture_preview_url_without_duplicates(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
         $this->seed(BlockTypeSeeder::class);
 
-        $this->app['env'] = 'local';
-        $this->setLocalResolverConfigured(false);
-
         $first = $this->artisan('project:webblocksui-setup-site');
-        $first->expectsOutput('Canonical site domain: ui.docs.webblocksui.com');
-        $first->expectsOutput('Resolved local site domain: ui.docs.webblocksui.com.ddev.site');
-        $first->expectsOutput('Local resolver status: not configured for ui.docs.webblocksui.com.ddev.site');
-        $first->expectsOutput('If the host does not resolve, run: ddev artisan project:webblocksui-local-resolver');
-        $first->expectsOutput('If the resolver command updates DDEV config, run: ddev restart');
-        $first->expectsOutput('Architecture local preview URL: https://ui.docs.webblocksui.com.ddev.site/p/architecture');
+        $first->expectsOutput('Target site: Default Site (default)');
+        $first->expectsOutput('Architecture local preview URL: '.SetupWebBlocksUiDocsSite::architecturePreviewUrl());
         $first->assertExitCode(0);
 
         $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
 
-        $site = Site::query()->where('handle', 'ui-docs-webblocksui-com')->firstOrFail();
+        $site = Site::query()->where('handle', 'default')->firstOrFail();
 
-        $this->assertSame('ui.docs.webblocksui.com.ddev.site', $site->domain);
-        $this->assertSame(1, Site::query()->where('handle', 'ui-docs-webblocksui-com')->count());
+        $this->assertNull($site->domain);
+        $this->assertSame(1, Site::query()->where('handle', 'default')->count());
         $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'home'))->count());
         $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'getting-started'))->count());
-        $this->assertSame('https://ui.docs.webblocksui.com.ddev.site/p/architecture', SetupWebBlocksUiDocsSite::architecturePreviewUrl());
+        $this->assertSame('https://webblocks-cms.ddev.site/p/architecture', SetupWebBlocksUiDocsSite::architecturePreviewUrl());
         $this->assertFalse(class_exists(\App\Console\Commands\SetupWebBlocksUiDocsSiteCommand::class));
-    }
-
-    protected function tearDown(): void
-    {
-        $this->restoreLocalResolverConfig();
-
-        parent::tearDown();
-    }
-
-    private function setLocalResolverConfigured(bool $configured): void
-    {
-        $path = base_path(WebBlocksUiLocalResolver::CONFIG_PATH);
-
-        if ($this->localResolverConfigBackup === null) {
-            $this->localResolverConfigBackup = is_file($path)
-                ? (string) file_get_contents($path)
-                : '__MISSING__';
-        }
-
-        if (! $configured) {
-            @unlink($path);
-
-            return;
-        }
-
-        $directory = dirname($path);
-
-        if (! is_dir($directory)) {
-            mkdir($directory, 0777, true);
-        }
-
-        file_put_contents($path, implode(PHP_EOL, [
-            '# Managed by tests',
-            'additional_hostnames:',
-            '  - '.SetupWebBlocksUiDocsSite::canonicalDomain(),
-            '',
-        ]));
-    }
-
-    private function restoreLocalResolverConfig(): void
-    {
-        if ($this->localResolverConfigBackup === null) {
-            return;
-        }
-
-        $path = base_path(WebBlocksUiLocalResolver::CONFIG_PATH);
-
-        if ($this->localResolverConfigBackup === '__MISSING__') {
-            @unlink($path);
-        } else {
-            file_put_contents($path, $this->localResolverConfigBackup);
-        }
-
-        $this->localResolverConfigBackup = null;
     }
 
     private function createTargetSite(): Site
     {
-        return Site::query()->firstOrCreate(
-            ['handle' => 'ui-docs-webblocksui-com'],
-            ['name' => 'WebBlocks UI Docs', 'domain' => SetupWebBlocksUiDocsSite::canonicalDomain(), 'is_primary' => true],
+        return Site::primary() ?? Site::query()->firstOrCreate(
+            ['handle' => 'default'],
+            ['name' => 'Default Site', 'domain' => null, 'is_primary' => true],
         );
     }
 

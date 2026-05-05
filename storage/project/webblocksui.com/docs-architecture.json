@@ -1,7 +1,6 @@
 {
   "site": {
-    "domain": "ui.docs.webblocksui.com",
-    "handle": "ui-docs-webblocksui-com"
+    "target": "default_site"
   },
   "page": {
     "key": "docs-architecture",

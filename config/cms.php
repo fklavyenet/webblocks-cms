@@ -16,6 +16,9 @@ return [
         'restore_timeout_seconds' => env('CMS_BACKUP_RESTORE_TIMEOUT_SECONDS', 300),
         'stale_after_minutes' => env('CMS_BACKUP_STALE_AFTER_MINUTES', 10),
     ],
+    'database' => [
+        'allow_destructive_commands' => env('WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS', false),
+    ],
     'visitor_reports' => [
         'enabled' => env('CMS_VISITOR_REPORTS_ENABLED', true),
         'utm_enabled' => env('CMS_VISITOR_UTM_ENABLED', true),

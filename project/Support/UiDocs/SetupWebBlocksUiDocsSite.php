@@ -21,8 +21,6 @@ class SetupWebBlocksUiDocsSite
 
     public const ARCHITECTURE_PATH = '/p/architecture';
 
-    public function __construct(private readonly WebBlocksUiLocalResolver $localResolver) {}
-
     public function run(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->first();
@@ -44,15 +42,7 @@ class SetupWebBlocksUiDocsSite
         $mainSlotType = $this->slotType('main', 'Main', 2);
 
         return DB::transaction(function () use ($defaultLocale, $requiredBlockTypes, $headerSlotType, $sidebarSlotType, $mainSlotType): array {
-            $domain = $this->resolvedSiteDomain();
-            $site = Site::query()->firstOrCreate(
-                ['handle' => 'ui-docs-webblocksui-com'],
-                ['name' => 'WebBlocks UI Docs', 'domain' => $domain, 'is_primary' => false],
-            );
-
-            if ((string) $site->domain !== $domain) {
-                $site->forceFill(['domain' => $domain])->save();
-            }
+            $site = $this->resolveTargetSite();
 
             $site->locales()->syncWithoutDetaching([
                 $defaultLocale->id => ['is_enabled' => true],
@@ -66,13 +56,11 @@ class SetupWebBlocksUiDocsSite
             $this->ensureSidebarNavigationBlock($homePage, $requiredBlockTypes['sidebar-navigation'], $sidebarSlotType->id, $defaultLocale->id);
 
             return [
-                'Canonical site domain: '.self::CANONICAL_DOMAIN,
-                'Resolved local site domain: '.$site->domain,
-                ...$this->localResolverMessages(),
+                'Target site: '.$site->name.' ('.$site->handle.')',
                 'Ensured page: Home',
                 'Ensured page: Getting Started',
                 'Ensured docs sidebar navigation dependency on Home page',
-                'Architecture local preview URL: '.$this->previewUrl(self::ARCHITECTURE_PATH),
+                'Architecture local preview URL: '.self::previewUrlForPath(self::ARCHITECTURE_PATH, $site),
             ];
         });
     }
@@ -89,7 +77,12 @@ class SetupWebBlocksUiDocsSite
 
     public static function architecturePreviewUrl(): string
     {
-        return 'https://'.self::LOCAL_DDEV_DOMAIN.self::ARCHITECTURE_PATH;
+        return self::previewUrlForPath(self::ARCHITECTURE_PATH);
+    }
+
+    public static function previewUrlForPath(string $path, ?Site $site = null): string
+    {
+        return rtrim(self::previewBaseUrl($site), '/').'/'.ltrim($path, '/');
     }
 
     private function firstOrCreateDocsPage(Site $site, string $name, string $slug, string $path): Page
@@ -180,32 +173,38 @@ class SetupWebBlocksUiDocsSite
         );
     }
 
-    private function resolvedSiteDomain(): string
+    private function resolveTargetSite(): Site
     {
-        return app()->environment('local') ? self::LOCAL_DDEV_DOMAIN : self::CANONICAL_DOMAIN;
-    }
+        $site = Site::primary();
 
-    private function previewUrl(string $path): string
-    {
-        $path = '/'.ltrim($path, '/');
-
-        return 'https://'.$this->resolvedSiteDomain().$path;
-    }
-
-    private function localResolverMessages(): array
-    {
-        if (! app()->environment('local')) {
-            return [];
+        if (! $site) {
+            $site = Site::query()->firstOrCreate(
+                ['handle' => 'default'],
+                ['name' => 'Default Site', 'domain' => null, 'is_primary' => true],
+            );
         }
 
-        if ($this->localResolver->status()['is_configured']) {
-            return ['Local resolver status: configured for '.self::LOCAL_DDEV_DOMAIN];
+        if (! $site->is_primary) {
+            $site->forceFill(['is_primary' => true])->save();
         }
 
-        return [
-            'Local resolver status: not configured for '.self::LOCAL_DDEV_DOMAIN,
-            'If the host does not resolve, run: ddev artisan project:webblocksui-local-resolver',
-            'If the resolver command updates DDEV config, run: ddev restart',
-        ];
+        return $site->fresh();
+    }
+
+    private static function previewBaseUrl(?Site $site = null): string
+    {
+        $host = trim((string) ($site?->domain ?? Site::primary()?->domain ?? ''));
+        $appUrl = trim((string) config('app.url', 'http://localhost'));
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME);
+
+        if ($host !== '') {
+            return (($scheme ?: 'https').'://'.$host);
+        }
+
+        if ($appUrl !== '') {
+            return $appUrl;
+        }
+
+        return 'http://localhost';
     }
 }

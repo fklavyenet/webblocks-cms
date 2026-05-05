@@ -5,13 +5,16 @@ namespace App\Providers;
 use App\Support\Locales\LocaleResolver;
 use App\Support\Install\InstallState;
 use App\Support\Pages\PageRouteResolver;
+use App\Support\Database\DestructiveDatabaseCommandGuard;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\SystemSettings;
 use App\Support\Visitors\VisitorConsent;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PageRouteResolver::class);
         $this->app->singleton(SystemSettings::class);
         $this->app->singleton(VisitorConsent::class);
+        $this->app->singleton(DestructiveDatabaseCommandGuard::class);
     }
 
     /**
@@ -72,6 +76,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
                 ->by($request->ip().'|'.((string) $request->input('block_id')));
         });
+
+        if ($this->app->runningInConsole()) {
+            Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+                app(DestructiveDatabaseCommandGuard::class)->ensureAllowed($event->command);
+            });
+        }
     }
 
     private function registerInstallRuntimeFallbacks(): void

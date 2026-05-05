@@ -123,16 +123,18 @@ See `docs/getting-started.md` for the first-use workflow.
 - Project-layer WebBlocks UI website import payloads live under `storage/project/webblocksui.com`.
 - These WebBlocks UI website files are project-specific migration assets, not CMS core release content.
 - CMS core stays generic; native export/import-style payloads remain the portability mechanism for website content.
-- Configure the local WebBlocks UI docs preview host with `ddev artisan project:webblocksui-local-resolver`; this writes project-specific DDEV `additional_hostnames` config for `ui.docs.webblocksui.com.ddev.site`.
-- If the resolver command updates DDEV config, run `ddev restart` before opening the preview host.
-- If the local target site and docs-shell dependency pages do not exist yet, create them with `ddev artisan project:webblocksui-setup-site`.
+- WebBlocks UI docs imports now target the CMS default site by default through the payload convention `{ "target": "default_site" }`.
+- If the default site's docs-shell dependency pages do not exist yet, create or reconcile them with `ddev artisan project:webblocksui-setup-site`.
 - Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
 - Import the WebBlocks UI Foundation page with `ddev artisan project:webblocksui-import docs-foundation`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
 - The Foundation payload source is `https://webblocksui.com/docs/foundation.html` and the imported page metadata preserves the requested website path `/docs/foundation.html` while the current CMS route model serves the page at `/p/foundation`.
-- Local preview host: `ui.docs.webblocksui.com.ddev.site`.
-- Full local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
-- Foundation local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/foundation`.
+- Default local preview host: `webblocks-cms.ddev.site`.
+- Full local preview URL: `https://webblocks-cms.ddev.site/p/architecture`.
+- Foundation local preview URL: `https://webblocks-cms.ddev.site/p/foundation`.
+- Before database-affecting import or repair work, create a safety dump such as `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`.
+- WebBlocks CMS blocks destructive database reset commands in normal local, development, and production environments. The guard blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe`, including normal console execution and `Artisan::call(...)` paths where Laravel emits the command start event.
+- Use `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` only when you intentionally need to bypass that safety guard.
 
 ## Developer Notes
 

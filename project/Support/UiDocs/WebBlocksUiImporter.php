@@ -28,7 +28,6 @@ class WebBlocksUiImporter
 
     public function __construct(
         private readonly BlockPayloadWriter $blockPayloadWriter,
-        private readonly WebBlocksUiLocalResolver $localResolver,
     ) {}
 
     public function run(string $key): array
@@ -71,7 +70,10 @@ class WebBlocksUiImporter
             throw new RuntimeException("Payload [{$key}] does not point at the verified WebBlocks UI source page.");
         }
 
-        $site = $this->resolveSite($payload['site'] ?? []);
+        $site = $this->resolveSite(array_replace(
+            is_array($manifest['site'] ?? null) ? $manifest['site'] : [],
+            is_array($payload['site'] ?? null) ? $payload['site'] : [],
+        ));
         $localeMap = $this->resolveLocales($site, $pagePayload['translations'] ?? []);
         $defaultLocaleCode = $this->defaultLocaleCode($pagePayload['translations'] ?? []);
         $requiredBlockTypes = $this->resolveRequiredBlockTypes($pagePayload);
@@ -102,21 +104,16 @@ class WebBlocksUiImporter
             $pageRefs = $this->resolvePageRefs($site, $docsHomePage, $page, $key);
 
             $this->syncSlots($page, $pagePayload, $slotTypes, $site);
-            $this->syncPageBlocks($page, $pagePayload, $defaultLocaleCode, $localeMap, $requiredBlockTypes, $slotTypes);
+            $this->syncPageBlocks($page, $pagePayload, $defaultLocaleCode, $localeMap, $requiredBlockTypes, $slotTypes, $site);
             $navigationCount = $this->syncNavigation($site, $payload['navigation'] ?? [], $pageRefs);
             $sidebarNavigationBlocks = $this->syncSidebarNavigationBlocks($site);
 
             $result[] = 'Imported payload key: '.$key;
-            $result[] = 'Canonical site domain: '.SetupWebBlocksUiDocsSite::canonicalDomain();
-            $result[] = 'Resolved local site domain: '.$site->domain;
+            $result[] = 'Target site: '.$site->name.' ('.$site->handle.')';
             $result[] = 'Source URL: '.$sourceUrl;
             $result[] = 'Page: '.($page->defaultTranslation()?->name ?? $page->id).' ('.$page->publicPath().')';
             $result[] = 'Navigation items synced: '.$navigationCount;
             $result[] = 'Sidebar navigation blocks updated: '.$sidebarNavigationBlocks;
-
-            foreach ($this->localResolverMessages() as $line) {
-                $result[] = $line;
-            }
 
             $previewTitle = $payloadTitle !== ''
                 ? $payloadTitle
@@ -252,7 +249,7 @@ class WebBlocksUiImporter
         }
     }
 
-    private function syncPageBlocks(Page $page, array $pagePayload, string $defaultLocaleCode, array $localeMap, array $blockTypeIds, array $slotTypes): void
+    private function syncPageBlocks(Page $page, array $pagePayload, string $defaultLocaleCode, array $localeMap, array $blockTypeIds, array $slotTypes, Site $site): void
     {
         foreach ($pagePayload['slots'] ?? [] as $slotSlug => $slotPayload) {
             $slotType = $slotTypes[$slotSlug] ?? null;
@@ -284,6 +281,7 @@ class WebBlocksUiImporter
             foreach (array_values($slotPayload['blocks'] ?? []) as $index => $blockPayload) {
                 $this->createPayloadTree(
                     page: $page,
+                    site: $site,
                     parent: null,
                     slotSlug: $slotSlug,
                     slotTypeId: $slotType->id,
@@ -300,6 +298,7 @@ class WebBlocksUiImporter
 
     private function createPayloadTree(
         Page $page,
+        Site $site,
         ?Block $parent,
         string $slotSlug,
         int $slotTypeId,
@@ -342,7 +341,7 @@ class WebBlocksUiImporter
             'status' => $payload['status'] ?? Block::query()->getModel()->getAttribute('status') ?? 'published',
             'is_system' => false,
             'variant' => $payload['variant'] ?? null,
-            'url' => $payload['url'] ?? null,
+            'url' => $this->normalizeBlockUrl($site, $type, $payload['url'] ?? null),
             'meta' => $defaultTranslation['meta'] ?? ($payload['meta'] ?? null),
             'title' => $defaultTranslation['title'] ?? null,
             'subtitle' => $defaultTranslation['subtitle'] ?? null,
@@ -372,6 +371,7 @@ class WebBlocksUiImporter
         foreach (array_values($payload['children'] ?? []) as $index => $childPayload) {
             $this->createPayloadTree(
                 page: $page,
+                site: $site,
                 parent: $block,
                 slotSlug: $slotSlug,
                 slotTypeId: $slotTypeId,
@@ -396,8 +396,6 @@ class WebBlocksUiImporter
             throw new RuntimeException('Navigation payload is missing items.');
         }
 
-        NavigationItem::query()->forSite($site->id)->forMenu($menuKey)->delete();
-
         $count = 0;
 
         foreach (array_values($items) as $index => $itemPayload) {
@@ -416,8 +414,15 @@ class WebBlocksUiImporter
         int &$count,
         int $defaultPosition,
     ): NavigationItem {
+        $title = trim((string) ($payload['title'] ?? ''));
+
+        if ($title === '') {
+            throw new RuntimeException('Navigation item title is missing.');
+        }
+
         $linkType = trim((string) ($payload['link_type'] ?? NavigationItem::LINK_CUSTOM_URL));
         $pageId = null;
+        $url = null;
 
         if ($linkType === NavigationItem::LINK_PAGE) {
             $pageRef = trim((string) ($payload['page_ref'] ?? ''));
@@ -426,21 +431,36 @@ class WebBlocksUiImporter
             if (! $pageId) {
                 throw new RuntimeException("Navigation item [{$payload['title']}] references missing page ref [{$pageRef}].");
             }
+        } elseif ($linkType === NavigationItem::LINK_CUSTOM_URL) {
+            $url = $this->normalizeNavigationUrl($site, $payload['url'] ?? null);
         }
 
-        $item = NavigationItem::query()->create([
+        $item = NavigationItem::query()
+            ->forSite($site->id)
+            ->forMenu($menuKey)
+            ->where('parent_id', $parent?->id)
+            ->where('title', $title)
+            ->first() ?? new NavigationItem([
+                'site_id' => $site->id,
+                'menu_key' => $menuKey,
+                'parent_id' => $parent?->id,
+                'title' => $title,
+            ]);
+
+        $item->fill([
             'site_id' => $site->id,
             'menu_key' => $menuKey,
             'parent_id' => $parent?->id,
             'page_id' => $pageId,
-            'title' => $payload['title'] ?? null,
+            'title' => $title,
             'link_type' => $linkType,
-            'url' => $payload['url'] ?? null,
+            'url' => $url,
             'target' => $payload['target'] ?? null,
             'position' => $payload['position'] ?? ($defaultPosition + 1),
             'visibility' => $payload['visibility'] ?? NavigationItem::VISIBILITY_VISIBLE,
             'is_system' => false,
         ]);
+        $item->save();
 
         if (isset($payload['icon'])) {
             $item->forceFill(['icon' => $payload['icon']])->save();
@@ -477,9 +497,11 @@ class WebBlocksUiImporter
     private function docsSidebarNavigationBlocks(Site $site)
     {
         return Block::query()
+            ->with('page.translations')
             ->where('type', 'sidebar-navigation')
             ->whereHas('page', fn ($query) => $query->where('site_id', $site->id))
-            ->get();
+            ->get()
+            ->filter(fn (Block $block) => $block->page?->publicShellPreset() === 'docs');
     }
 
     private function resolveDocsHomePage(Site $site): Page
@@ -526,6 +548,18 @@ class WebBlocksUiImporter
 
     private function resolveSite(array $sitePayload): Site
     {
+        $target = trim((string) ($sitePayload['target'] ?? $sitePayload['mode'] ?? ''));
+
+        if (in_array($target, ['default_site', 'default', 'primary_site', 'primary'], true)) {
+            $site = Site::primary();
+
+            if (! $site) {
+                throw new RuntimeException('Default site could not be resolved for WebBlocks UI import.');
+            }
+
+            return $site;
+        }
+
         $handle = trim((string) ($sitePayload['handle'] ?? ''));
         $domain = trim((string) ($sitePayload['domain'] ?? ''));
 
@@ -680,21 +714,53 @@ class WebBlocksUiImporter
 
     private function localPreviewUrl(Site $site, string $path): string
     {
-        $path = '/'.ltrim($path, '/');
-
-        return 'https://'.((string) $site->domain).$path;
+        return SetupWebBlocksUiDocsSite::previewUrlForPath($path, $site);
     }
 
-    private function localResolverMessages(): array
+    private function normalizeBlockUrl(Site $site, string $type, mixed $url): ?string
     {
-        if (! app()->environment('local')) {
-            return [];
+        if (! in_array($type, ['link-list-item', 'button_link'], true)) {
+            $value = trim((string) $url);
+
+            return $value !== '' ? $value : null;
         }
 
-        if ($this->localResolver->status()['is_configured']) {
-            return ['Local resolver status: configured for '.SetupWebBlocksUiDocsSite::localDdevDomain()];
+        return $this->normalizeNavigationUrl($site, $url);
+    }
+
+    private function normalizeNavigationUrl(Site $site, mixed $url): ?string
+    {
+        $value = trim((string) $url);
+
+        if ($value === '') {
+            return null;
         }
 
-        return ['If the host does not resolve, run project:webblocksui-local-resolver first.'];
+        if (Str::startsWith($value, ['http://', 'https://', '/', '#', '../'])) {
+            return $value;
+        }
+
+        if (! Str::endsWith($value, '.html')) {
+            return $value;
+        }
+
+        $slug = Str::of($value)->beforeLast('.html')->afterLast('/')->trim()->toString();
+
+        if (in_array($slug, ['architecture', 'foundation'], true)) {
+            return '/p/'.$slug;
+        }
+
+        $localPath = Page::query()
+            ->where('site_id', $site->id)
+            ->whereHas('translations', fn ($query) => $query->where('slug', $slug))
+            ->with('translations')
+            ->get()
+            ->first()?->publicPath();
+
+        if (is_string($localPath) && $localPath !== '') {
+            return $localPath;
+        }
+
+        return 'https://webblocksui.com/docs/'.ltrim($value, '/');
     }
 }

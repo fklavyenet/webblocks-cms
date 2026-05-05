@@ -12,6 +12,7 @@ use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Project\Support\UiDocs\SetupWebBlocksUiDocsSite;
 use Project\Support\UiDocs\WebBlocksUiImporter;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ class WebBlocksUiFoundationImportTest extends TestCase
 
         $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
 
-        $site = Site::query()->where('handle', 'ui-docs-webblocksui-com')->firstOrFail();
+        $site = Site::query()->where('handle', 'default')->firstOrFail();
         $home = Page::query()
             ->where('site_id', $site->id)
             ->whereHas('translations', fn ($query) => $query->where('slug', 'home'))
@@ -39,7 +40,7 @@ class WebBlocksUiFoundationImportTest extends TestCase
         $result = $importer->run('docs-foundation');
 
         $this->assertContains('Source URL: https://webblocksui.com/docs/foundation.html', $result);
-        $this->assertContains('Foundation local preview URL: https://'.$site->domain.'/p/foundation', $result);
+        $this->assertContains('Foundation local preview URL: '.SetupWebBlocksUiDocsSite::previewUrlForPath('/p/foundation', $site), $result);
 
         $this->assertDatabaseHas('page_translations', [
             'site_id' => $site->id,
@@ -112,7 +113,7 @@ class WebBlocksUiFoundationImportTest extends TestCase
         $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'callout' && $block->title === 'Token rule'));
         $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'quote' && str_contains((string) $block->content, 'default reading feel')));
         $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'link-list-item' && $block->url === '/p/architecture'));
-        $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'link-list-item' && $block->url === 'layout.html'));
+        $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'link-list-item' && $block->url === 'https://webblocksui.com/docs/layout.html'));
 
         $navigationTitles = NavigationItem::query()
             ->forSite($site->id)
@@ -138,7 +139,7 @@ class WebBlocksUiFoundationImportTest extends TestCase
 
         $rerun = $this->artisan('project:webblocksui-import docs-foundation');
         $rerun->expectsOutput('Source URL: https://webblocksui.com/docs/foundation.html');
-        $rerun->expectsOutput('Foundation local preview URL: https://'.$site->domain.'/p/foundation');
+        $rerun->expectsOutput('Foundation local preview URL: '.SetupWebBlocksUiDocsSite::previewUrlForPath('/p/foundation', $site));
         $rerun->assertExitCode(0);
 
         $this->assertSame($firstPageCount, Page::query()->count());
@@ -154,6 +155,7 @@ class WebBlocksUiFoundationImportTest extends TestCase
             1,
             NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Foundation')->count(),
         );
+        $this->assertSame(0, Site::query()->where('handle', 'ui-docs-webblocksui-com')->count());
     }
 
 }

@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
-- Add a project-layer `project:webblocksui-import` Foundation workflow with a JSON payload under `storage/project/webblocksui.com` for importing the WebBlocks UI Foundation docs page from `https://webblocksui.com/docs/foundation.html` without adding website-specific CMS core logic.
+- Retarget the project-layer WebBlocks UI Architecture and Foundation imports to the CMS default site by default, with explicit `{ "target": "default_site" }` payload metadata and default-site preview URLs.
+- Allow the project-layer Architecture and Foundation imports to recreate those docs pages idempotently on the default site after a local database restore without creating duplicate block trees or duplicate docs navigation items.
+- Add a destructive database command safety guard that blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe` outside the testing environment unless `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` is set.
+- Stabilize `ddev artisan test --filter=Project` by registering the project-layer WebBlocks UI setup and importer services deterministically instead of relying on incidental test order.
 
 ## 1.14.0
 
