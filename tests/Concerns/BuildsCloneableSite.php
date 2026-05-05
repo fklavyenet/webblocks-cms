@@ -10,9 +10,11 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Illuminate\Support\Facades\Storage;
 
 trait BuildsCloneableSite
@@ -218,6 +220,129 @@ trait BuildsCloneableSite
             'visibility' => NavigationItem::VISIBILITY_VISIBLE,
         ]);
 
-        return [$sourceSite, $heroAsset];
+        $sharedSlot = SharedSlot::query()->create([
+            'site_id' => $sourceSite->id,
+            'name' => 'Shared Header',
+            'handle' => 'shared-header',
+            'slot_name' => 'header',
+            'public_shell' => null,
+            'is_active' => true,
+        ]);
+        $sharedSourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+
+        $sharedSectionType = BlockType::query()->firstOrCreate(
+            ['slug' => 'section'],
+            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 10, 'is_system' => false],
+        );
+        $sharedContainerType = BlockType::query()->firstOrCreate(
+            ['slug' => 'container'],
+            ['name' => 'Container', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 11, 'is_system' => false],
+        );
+
+        $sharedRoot = Block::query()->create([
+            'page_id' => $sharedSourcePage->id,
+            'type' => 'section',
+            'block_type_id' => $sharedSectionType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sharedRoot->textTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'title' => 'Shared Header Root',
+        ]);
+        $sharedRoot->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Paylasilan Baslik Koku',
+        ]);
+
+        $sharedContainer = Block::query()->create([
+            'page_id' => $sharedSourcePage->id,
+            'parent_id' => $sharedRoot->id,
+            'type' => 'container',
+            'block_type_id' => $sharedContainerType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $sharedHeader = Block::query()->create([
+            'page_id' => $sharedSourcePage->id,
+            'parent_id' => $sharedContainer->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sharedHeader->textTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'title' => 'Shared About Header',
+        ]);
+        $sharedHeader->textTranslations()->create([
+            'locale_id' => $turkish->id,
+            'title' => 'Paylasilan Hakkinda Basligi',
+        ]);
+
+        $sharedImage = Block::query()->create([
+            'page_id' => $sharedSourcePage->id,
+            'parent_id' => $sharedContainer->id,
+            'type' => 'image',
+            'block_type_id' => $imageType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
+            'sort_order' => 1,
+            'asset_id' => $heroAsset->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sharedImage->imageTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'caption' => 'Shared hero image',
+            'alt_text' => 'Shared hero alt',
+        ]);
+        $sharedImage->imageTranslations()->create([
+            'locale_id' => $turkish->id,
+            'caption' => 'Paylasilan kahraman gorseli',
+            'alt_text' => 'Paylasilan kahraman alternatif',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($sharedRoot->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($sharedHeader->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($sharedImage->fresh(['imageTranslations']));
+
+        app(SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
+
+        PageSlot::query()
+            ->where('page_id', $aboutPage->id)
+            ->where('slot_type_id', $headerSlotType->id)
+            ->update([
+                'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+                'shared_slot_id' => $sharedSlot->id,
+            ]);
+
+        $disabledSlotType = SlotType::query()->firstOrCreate(
+            ['slug' => 'sidebar'],
+            ['name' => 'Sidebar', 'status' => 'published', 'sort_order' => 2, 'is_system' => true],
+        );
+        PageSlot::query()->create([
+            'page_id' => $aboutPage->id,
+            'slot_type_id' => $disabledSlotType->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'sort_order' => 2,
+        ]);
+
+        return [$sourceSite, $heroAsset, $sharedSlot];
     }
 }

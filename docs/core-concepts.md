@@ -70,7 +70,7 @@ Shared Slots are a slot-content ownership layer that sits under the existing pag
 - If `SharedSlot.slot_name` is set, it must match the consuming page slot name.
 - Null or empty `public_shell` and `slot_name` act as generic matches.
 
-Current scope now includes foundation, public rendering, site-scoped admin management, and page slot source assignment for Shared Slots.
+Current scope now includes foundation, public rendering, site-scoped admin management, page slot source assignment, and site portability support for Shared Slots.
 
 - Shared Slots have their own admin listing and metadata forms under the site-content area of the admin.
 - Shared Slot block trees are edited through a dedicated Shared Slot block editor that reuses the current block authoring model instead of copying content into consuming page slots.
@@ -83,7 +83,9 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - Changing a slot source does not delete or detach the existing page-owned block tree for that slot. If an editor switches a slot to `shared_slot` or `disabled`, the page-owned blocks remain attached so switching back to `Page Content` restores the prior page-specific content.
 - The page editor filters Shared Slot choices conservatively. Only active Shared Slots from the same site appear, and optional Shared Slot `public_shell` and `slot_name` constraints must match the consuming page shell and slot name.
 - Runtime public rendering guards remain in place even after write-time validation, so invalid, stale, cross-site, inactive, or incompatible assignments still render no shared content publicly.
-- Shared Slot revisions or history, Shared Slot export or import, and site clone support remain deferred to later phases.
+- Shared Slots now participate in site export/import and site clone. Their metadata, hidden-source-page block trees, translations, nested ordering, and media references are transferred as first-class site content. Consuming page slots keep `shared_slot` references by Shared Slot handle during export and are remapped to target-site Shared Slots during import and clone.
+- Hidden Shared Slot source pages remain internal. They are excluded from normal page export payloads, ordinary page listings, and public routing even though their block records still back the Shared Slot editor and portability flows.
+- Shared Slot revisions or history remain deferred to a later phase.
 
 ## Project Boundary
 

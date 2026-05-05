@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteExport;
 use App\Support\Pages\PublicPagePresenter;
@@ -111,6 +112,37 @@ class SiteExportImportTest extends TestCase
     }
 
     #[Test]
+    public function export_includes_shared_slot_metadata_and_handle_based_page_slot_references_without_hidden_source_pages(): void
+    {
+        Storage::fake('site-exports');
+        [$site, , $sharedSlot] = $this->seedCloneableSite();
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
+        $pageSlots = json_decode((string) $archive->getFromName('data/page_slots.json'), true);
+        $sharedSlots = json_decode((string) $archive->getFromName('data/shared_slots.json'), true);
+        $archive->close();
+
+        $this->assertCount(1, $sharedSlots);
+        $this->assertSame($sharedSlot->handle, $sharedSlots[0]['handle']);
+        $this->assertSame('header', $sharedSlots[0]['slot_name']);
+        $this->assertTrue($sharedSlots[0]['is_active']);
+        $this->assertCount(2, $pages);
+        $this->assertFalse(collect($pages)->contains(fn (array $page) => $page['page_type'] === Page::TYPE_SHARED_SLOT_SOURCE));
+
+        $sharedPageSlot = collect($pageSlots)->first(fn (array $slot) => ($slot['shared_slot_handle'] ?? null) === $sharedSlot->handle);
+        $disabledSlot = collect($pageSlots)->first(fn (array $slot) => ($slot['source_type'] ?? null) === PageSlot::SOURCE_TYPE_DISABLED);
+
+        $this->assertNotNull($sharedPageSlot);
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $sharedPageSlot['source_type']);
+        $this->assertSame($sharedSlot->handle, $sharedPageSlot['shared_slot_handle']);
+        $this->assertNotNull($disabledSlot);
+        $this->assertNull($disabledSlot['shared_slot_handle']);
+    }
+
+    #[Test]
     public function export_excludes_media_files_when_media_not_selected(): void
     {
         Storage::fake('site-exports');
@@ -169,7 +201,7 @@ class SiteExportImportTest extends TestCase
         Storage::fake('site-exports');
         Storage::fake('site-transfers');
         Storage::fake('public');
-        [$site] = $this->seedCloneableSite(withFile: true);
+        [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
         $siteExport = app(SiteExportManager::class)->export($site, true);
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
@@ -201,10 +233,18 @@ class SiteExportImportTest extends TestCase
         $this->assertNotNull($imageBlock->asset_id);
         $this->assertNull($imageBlock->getRawOriginal('title'));
         $this->assertNull($imageBlock->getRawOriginal('subtitle'));
+        $headerSlot = PageSlot::query()->where('page_id', $aboutPage->id)->where('source_type', PageSlot::SOURCE_TYPE_SHARED_SLOT)->firstOrFail();
+        $importedSharedSlot = SharedSlot::query()->where('site_id', $importedSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
+
+        $this->assertSame($importedSharedSlot->id, $headerSlot->shared_slot_id);
+        $this->assertNotSame($sourceSharedSlot->id, $importedSharedSlot->id);
+        $this->assertSame($importedSite->id, $importedSharedSlot->site_id);
+        $this->assertSame(1, Page::query()->where('site_id', $importedSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
         $presented = app(PublicPagePresenter::class)->present($aboutPage->fresh([
             'site',
             'translations',
             'slots.slotType',
+            'slots.sharedSlot.slotBlocks.block',
             'blocks.blockType',
             'blocks.children.blockType',
             'blocks.children.textTranslations',
@@ -212,12 +252,89 @@ class SiteExportImportTest extends TestCase
             'blocks.imageTranslations',
             'blocks.blockAssets.asset',
         ]));
+        $headerPresented = collect($presented['slots'])->firstWhere('slug', 'header');
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
         $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
+        $sidebarSlot = collect($presented['slots'])->firstWhere('slug', 'sidebar');
+        $headerSerialized = json_encode($headerPresented['blocks']->toArray());
+
+        $this->assertIsString($headerSerialized);
+        $this->assertStringContainsString('Shared About Header', $headerSerialized);
         $this->assertSame('English paragraph content', $presentedBlock->content);
         $this->assertSame('main', $mainSlot['wrapper']['element']);
         $this->assertSame('default', $mainSlot['wrapper']['preset']);
+        $this->assertCount(0, $sidebarSlot['blocks']);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
+    }
+
+    #[Test]
+    public function import_updates_existing_same_handle_shared_slot_deterministically(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        Storage::fake('public');
+        [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported UI Docs',
+            'site_handle' => 'imported-ui-docs-collision',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $sharedSlot = SharedSlot::query()->where('site_id', $importedSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
+
+        $sharedSlot->update(['name' => 'Before Reimport', 'is_active' => false]);
+
+        $secondImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $secondImport = app(SiteImportManager::class)->import($secondImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported UI Docs Again',
+            'site_handle' => 'imported-ui-docs-collision-2',
+        ]));
+
+        $secondImportedSite = Site::query()->findOrFail($secondImport->target_site_id);
+        $secondSharedSlot = SharedSlot::query()->where('site_id', $secondImportedSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
+
+        $this->assertSame($sourceSharedSlot->name, $secondSharedSlot->name);
+        $this->assertTrue($secondSharedSlot->is_active);
+    }
+
+    #[Test]
+    public function imported_hidden_shared_slot_source_pages_are_not_publicly_routable(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        Storage::fake('public');
+        [$site, , $sourceSharedSlot] = $this->seedCloneableSite(withFile: true);
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported UI Docs Hidden',
+            'site_handle' => 'imported-ui-docs-hidden',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedSharedSlot = SharedSlot::query()->where('site_id', $importedSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
+        $sourcePage = Page::query()->where('site_id', $importedSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->firstOrFail();
+
+        $sourcePage->update(['status' => Page::STATUS_PUBLISHED]);
+
+        $this->withHeader('Host', $importedSite->domain ?? 'localhost')
+            ->get('/p/'.$sourcePage->slug)
+            ->assertNotFound();
+
+        $this->assertSame($importedSharedSlot->id, (int) data_get($sourcePage->settings, 'shared_slot_id'));
     }
 
     #[Test]
@@ -362,10 +479,13 @@ class SiteExportImportTest extends TestCase
 
         $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
         $importedSlot = PageSlot::query()
-            ->whereHas('page', fn ($query) => $query->where('site_id', $importedSite->id))
-            ->orderBy('id')
-            ->firstOrFail();
+            ->whereHas('page', fn ($query) => $query
+                ->where('site_id', $importedSite->id)
+                ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE))
+            ->get()
+            ->first(fn (PageSlot $slot) => data_get($slot->settings, 'custom') === 'keep-me');
 
+        $this->assertNotNull($importedSlot);
         $this->assertSame(['custom' => 'keep-me'], $importedSlot->settings);
 
         @unlink($tempPath);

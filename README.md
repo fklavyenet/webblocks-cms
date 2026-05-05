@@ -14,7 +14,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - media library and site-scoped navigation management
 - install wizard for first-run setup
 - system updates, backups, and site export/import tools
-- site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, and can now be assigned per page slot from the Edit Page screen
+- site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, can be assigned per page slot from the Edit Page screen, and now participate in site export/import and site clone workflows
 
 ## Installation
 
@@ -131,6 +131,8 @@ See `docs/getting-started.md` for the first-use workflow.
 - The page editor now owns slot source assignment. Editors who can edit the page in its current workflow state can switch a slot between `page`, `shared_slot`, and `disabled`. Selecting a Shared Slot requires the same site, active status, and compatibility with the page shell and slot name.
 - Shared Slots are managed under the site-level admin navigation alongside Pages, Navigation, and Media. `super_admin` can manage Shared Slots for all sites, `site_admin` can manage Shared Slots for assigned sites, and editors can access Shared Slot block editing within assigned sites using the same draft-only content-editing rule used for page content.
 - Shared Slot deletion is guarded. If any `page_slots.shared_slot_id` still references a Shared Slot, deletion is blocked and references remain intact.
+- Shared Slots now travel with site portability tools. Site export/import packages include Shared Slot metadata plus the hidden internal source-page block tree, translations, and media references needed to rebuild the reusable Shared Slot in the target site. Page slots that use Shared Slots are exported by Shared Slot handle and remapped to the target-site Shared Slot during import or clone instead of keeping source database IDs.
+- Hidden Shared Slot source pages remain an internal implementation detail. They are excluded from ordinary page admin listings, normal exported page payloads, and public route resolution even though their block records are still used internally to preserve the existing block editor, translation, and asset flows.
 - Generic public block wrappers are only for simple non-root-owning content blocks. Layout/root-owning blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, `Header`, and `Content Header` own their real WebBlocks UI root markup and carry their public block type metadata on that root instead of receiving an extra outer wrapper.
 - `Code` blocks render as escaped plain `<pre><code>` output without the old card chrome or a visible language label. Language metadata may still be stored and exposed only as a sanitized `data-language` attribute on `<code>`.
 

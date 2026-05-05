@@ -14,8 +14,10 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Locale;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +30,7 @@ class SiteCloneService
         private readonly DatabaseManager $db,
         private readonly SiteDomainNormalizer $domainNormalizer,
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
     ) {}
 
     public function clone(string|int $source, string|int $target, SiteCloneOptions $options): SiteCloneResult
@@ -63,6 +66,7 @@ class SiteCloneService
                 'sites_created' => $targetCreated ? 1 : 0,
                 'sites_updated' => 1,
                 'pages_cloned' => 0,
+                'shared_slots_cloned' => 0,
                 'page_translations_cloned' => 0,
                 'page_slots_cloned' => 0,
                 'blocks_cloned' => 0,
@@ -76,7 +80,11 @@ class SiteCloneService
 
             $assetMap = [];
             $pageMap = $this->clonePages($sourceSite, $targetSite, $options, $counts);
-            $this->cloneBlocks($sourceSite, $targetSite, $pageMap, $assetMap, $options, $counts);
+            $sharedSlotClone = $this->cloneSharedSlots($sourceSite, $targetSite, $counts);
+            $allPageMap = array_replace($pageMap, $sharedSlotClone['source_page_map']);
+            $this->cloneBlocks($allPageMap, $assetMap, $options, $counts);
+            $this->cloneSharedSlotPageAssignments($sourceSite, $pageMap, $sharedSlotClone['handle_map']);
+            $this->rebuildSharedSlotAssignments($sharedSlotClone['shared_slots']);
 
             if ($options->withNavigation) {
                 $this->cloneNavigation($sourceSite, $targetSite, $pageMap, $options, $counts);
@@ -208,6 +216,7 @@ class SiteCloneService
 
         $sourcePages = Page::query()
             ->where('site_id', $sourceSite->id)
+            ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
             ->with(['translations.locale', 'slots'])
             ->orderBy('id')
             ->get();
@@ -267,7 +276,54 @@ class SiteCloneService
         return $pageMap;
     }
 
-    private function cloneBlocks(Site $sourceSite, Site $targetSite, array $pageMap, array &$assetMap, SiteCloneOptions $options, array &$counts): void
+    private function cloneSharedSlots(Site $sourceSite, Site $targetSite, array &$counts): array
+    {
+        $sharedSlots = [];
+        $handleMap = [];
+        $sourcePageMap = [];
+
+        $sourceSharedSlots = SharedSlot::query()
+            ->where('site_id', $sourceSite->id)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($sourceSharedSlots as $sourceSharedSlot) {
+            $targetSharedSlot = SharedSlot::query()->create([
+                'site_id' => $targetSite->id,
+                'name' => $sourceSharedSlot->name,
+                'handle' => $sourceSharedSlot->handle,
+                'slot_name' => $sourceSharedSlot->slot_name,
+                'public_shell' => $sourceSharedSlot->public_shell,
+                'is_active' => $sourceSharedSlot->is_active,
+                'created_at' => $sourceSharedSlot->created_at,
+                'updated_at' => $sourceSharedSlot->updated_at,
+            ]);
+
+            $sourcePage = $this->sharedSlotSourcePageManager->findFor($sourceSharedSlot);
+            $targetPage = $this->sharedSlotSourcePageManager->ensureFor($targetSharedSlot);
+
+            if ($sourcePage) {
+                $targetPage->forceFill([
+                    'slug' => $sourcePage->slug,
+                    'created_at' => $sourcePage->created_at,
+                    'updated_at' => $sourcePage->updated_at,
+                ])->save();
+                $sourcePageMap[$sourcePage->id] = $targetPage->id;
+            }
+
+            $sharedSlots[] = $targetSharedSlot;
+            $handleMap[$sourceSharedSlot->handle] = $targetSharedSlot->id;
+            $counts['shared_slots_cloned']++;
+        }
+
+        return [
+            'shared_slots' => $sharedSlots,
+            'handle_map' => $handleMap,
+            'source_page_map' => $sourcePageMap,
+        ];
+    }
+
+    private function cloneBlocks(array $pageMap, array &$assetMap, SiteCloneOptions $options, array &$counts): void
     {
         $blockMap = [];
 
@@ -329,6 +385,50 @@ class SiteCloneService
             }
 
             Block::query()->whereKey($blockMap[$block->id])->update(['parent_id' => $blockMap[$block->parent_id]]);
+        }
+    }
+
+    private function cloneSharedSlotPageAssignments(Site $sourceSite, array $pageMap, array $sharedSlotHandleMap): void
+    {
+        $sourceSlots = PageSlot::query()
+            ->whereHas('page', fn ($query) => $query
+                ->where('site_id', $sourceSite->id)
+                ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE))
+            ->with('sharedSlot')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($sourceSlots as $sourceSlot) {
+            $targetPageId = $pageMap[$sourceSlot->page_id] ?? null;
+
+            if (! $targetPageId) {
+                continue;
+            }
+
+            $sharedSlotId = null;
+
+            if ($sourceSlot->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+                $sharedSlotId = $sharedSlotHandleMap[$sourceSlot->sharedSlot?->handle ?? ''] ?? null;
+            }
+
+            PageSlot::query()
+                ->where('page_id', $targetPageId)
+                ->where('slot_type_id', $sourceSlot->slot_type_id)
+                ->update([
+                    'source_type' => $sourceSlot->runtimeSourceType(),
+                    'shared_slot_id' => $sharedSlotId,
+                    'sort_order' => $sourceSlot->sort_order,
+                    'settings' => PageSlot::sanitizeSettings($sourceSlot->settings),
+                    'created_at' => $sourceSlot->created_at,
+                    'updated_at' => $sourceSlot->updated_at,
+                ]);
+        }
+    }
+
+    private function rebuildSharedSlotAssignments(array $sharedSlots): void
+    {
+        foreach ($sharedSlots as $sharedSlot) {
+            $this->sharedSlotSourcePageManager->rebuildAssignments($sharedSlot);
         }
     }
 
@@ -501,12 +601,22 @@ class SiteCloneService
 
     private function sourceCounts(Site $sourceSite, SiteCloneOptions $options): array
     {
-        $pageIds = Page::query()->where('site_id', $sourceSite->id)->pluck('id');
+        $pageIds = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+            ->pluck('id');
+        $sharedSlotSourcePageIds = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)
+            ->pluck('id');
         $blockIds = Block::query()->whereIn('page_id', $pageIds)->pluck('id');
+        $sharedSlotBlockIds = Block::query()->whereIn('page_id', $sharedSlotSourcePageIds)->pluck('id');
         $defaultLocaleId = $this->defaultLocaleId();
         $assetIds = collect()
             ->merge(Block::query()->whereIn('id', $blockIds)->whereNotNull('asset_id')->pluck('asset_id'))
+            ->merge(Block::query()->whereIn('id', $sharedSlotBlockIds)->whereNotNull('asset_id')->pluck('asset_id'))
             ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('asset_id'))
+            ->merge(BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->pluck('asset_id'))
             ->filter()
             ->unique()
             ->values();
@@ -515,27 +625,38 @@ class SiteCloneService
             'sites_created' => 0,
             'sites_updated' => 1,
             'pages_cloned' => $pageIds->count(),
+            'shared_slots_cloned' => SharedSlot::query()->where('site_id', $sourceSite->id)->count(),
             'page_translations_cloned' => PageTranslation::query()
                 ->whereIn('page_id', $pageIds)
                 ->when(! $options->withTranslations && $defaultLocaleId, fn ($query) => $query->where('locale_id', $defaultLocaleId))
                 ->count(),
             'page_slots_cloned' => PageSlot::query()->whereIn('page_id', $pageIds)->count(),
-            'blocks_cloned' => $blockIds->count(),
+            'blocks_cloned' => $blockIds->count() + $sharedSlotBlockIds->count(),
             'block_translation_rows_cloned' => $options->withTranslations ? (
                 BlockTextTranslation::query()->whereIn('block_id', $blockIds)->count()
+                + BlockTextTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
                 + BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->count()
+                + BlockButtonTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
                 + BlockImageTranslation::query()->whereIn('block_id', $blockIds)->count()
+                + BlockImageTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->count()
+                + BlockContactFormTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
             ) : (
                 BlockTextTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
+                + BlockTextTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
+                + BlockButtonTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockImageTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
+                + BlockImageTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
+                + BlockContactFormTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
             ),
             'navigation_items_cloned' => $options->withNavigation ? NavigationItem::query()->where('site_id', $sourceSite->id)->count() : 0,
             'assets_linked' => $options->withMedia && ! $options->copyMediaFiles ? $assetIds->count() : 0,
             'assets_cloned' => $options->withMedia && $options->copyMediaFiles ? $assetIds->count() : 0,
-            'block_asset_links_cloned' => $options->withMedia ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() : 0,
+            'block_asset_links_cloned' => $options->withMedia
+                ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() + BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
+                : 0,
             'files_copied' => 0,
         ];
     }

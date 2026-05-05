@@ -29,4 +29,13 @@ class SiteTransferPackage
         'data/asset_folders.json',
         'data/assets.json',
     ];
+
+    public const OPTIONAL_DATA_FILES = [
+        'data/shared_slots.json',
+    ];
+
+    public const ALL_DATA_FILES = [
+        ...self::REQUIRED_DATA_FILES,
+        ...self::OPTIONAL_DATA_FILES,
+    ];
 }

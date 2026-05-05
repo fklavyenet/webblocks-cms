@@ -10,6 +10,7 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Pages\PublicPagePresenter;
@@ -29,7 +30,7 @@ class SiteCloneServiceTest extends TestCase
     #[Test]
     public function it_clones_site_content_translations_navigation_and_media_references_into_a_new_target_site(): void
     {
-        [$sourceSite, $heroAsset] = $this->seedCloneableSite();
+        [$sourceSite, $heroAsset, $sourceSharedSlot] = $this->seedCloneableSite();
 
         $result = app(SiteCloneService::class)->clone(
             $sourceSite->id,
@@ -77,10 +78,17 @@ class SiteCloneServiceTest extends TestCase
         $this->assertSame($heroAsset->id, $imageBlock->asset_id);
         $this->assertNull($imageBlock->getRawOriginal('title'));
         $this->assertNull($imageBlock->getRawOriginal('subtitle'));
+        $headerSlot = PageSlot::query()->where('page_id', $aboutPage->id)->where('source_type', PageSlot::SOURCE_TYPE_SHARED_SLOT)->firstOrFail();
+        $targetSharedSlot = SharedSlot::query()->where('site_id', $targetSite->id)->where('handle', $sourceSharedSlot->handle)->firstOrFail();
+
+        $this->assertSame($targetSharedSlot->id, $headerSlot->shared_slot_id);
+        $this->assertNotSame($sourceSharedSlot->id, $targetSharedSlot->id);
+        $this->assertSame(1, Page::query()->where('site_id', $targetSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
         $presented = app(PublicPagePresenter::class)->present($aboutPage->fresh([
             'site',
             'translations',
             'slots.slotType',
+            'slots.sharedSlot.slotBlocks.block',
             'blocks.blockType',
             'blocks.children.blockType',
             'blocks.children.textTranslations',
@@ -88,11 +96,18 @@ class SiteCloneServiceTest extends TestCase
             'blocks.imageTranslations',
             'blocks.blockAssets.asset',
         ]));
+        $headerSlotPresented = collect($presented['slots'])->firstWhere('slug', 'header');
         $mainSlot = collect($presented['slots'])->firstWhere('slug', 'main');
         $presentedBlock = $mainSlot['blocks']->firstWhere('type', 'plain_text');
+        $sidebarSlot = collect($presented['slots'])->firstWhere('slug', 'sidebar');
+        $headerSerialized = json_encode($headerSlotPresented['blocks']->toArray());
+
+        $this->assertIsString($headerSerialized);
+        $this->assertStringContainsString('Shared About Header', $headerSerialized);
         $this->assertSame('English paragraph content', $presentedBlock->content);
         $this->assertSame('main', $mainSlot['wrapper']['element']);
         $this->assertSame('default', $mainSlot['wrapper']['preset']);
+        $this->assertCount(0, $sidebarSlot['blocks']);
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,
             'menu_key' => NavigationItem::MENU_PRIMARY,
@@ -107,7 +122,27 @@ class SiteCloneServiceTest extends TestCase
                 ->where('slug', 'about'))
             ->firstOrFail();
         $this->assertSame(1, Block::query()->where('page_id', $sourceAbout->id)->where('type', 'header')->count());
-        $this->assertSame(2, Page::query()->where('site_id', $sourceSite->id)->count());
+        $this->assertSame(2, Page::query()->where('site_id', $sourceSite->id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)->count());
+        $this->assertSame(1, Page::query()->where('site_id', $sourceSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
+    }
+
+    #[Test]
+    public function dry_run_counts_include_shared_slots_without_creating_hidden_source_pages(): void
+    {
+        [$sourceSite] = $this->seedCloneableSite();
+
+        $result = app(SiteCloneService::class)->clone(
+            $sourceSite->id,
+            'ui-docs-preview',
+            SiteCloneOptions::fromArray([
+                'dry_run' => true,
+                'target_handle' => 'ui-docs-preview',
+                'target_name' => 'UI Docs Preview',
+            ]),
+        );
+
+        $this->assertSame(1, $result->count('shared_slots_cloned'));
+        $this->assertSame(0, Page::query()->where('site_id', Site::query()->where('handle', 'ui-docs-preview')->value('id'))->count());
     }
 
     #[Test]
@@ -224,7 +259,8 @@ class SiteCloneServiceTest extends TestCase
                 ->where('locale_id', $defaultLocaleId)
                 ->where('slug', 'existing'))
             ->count());
-        $this->assertSame(2, Page::query()->where('site_id', $targetSite->id)->count());
+        $this->assertSame(2, Page::query()->where('site_id', $targetSite->id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)->count());
+        $this->assertSame(1, Page::query()->where('site_id', $targetSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
         $this->assertSame(2, $result->count('pages_cloned'));
     }
 

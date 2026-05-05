@@ -45,6 +45,8 @@ class PageController extends Controller
 
     private function renderPage(Request $request, Page $page): View
     {
+        abort_if($page->isSharedSlotSourcePage(), 404);
+
         $page->load([
             'site',
             'translations.locale',
