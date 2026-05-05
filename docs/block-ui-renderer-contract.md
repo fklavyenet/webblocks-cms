@@ -177,6 +177,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: none
 - Intended WebBlocks UI output: ordinary paragraph/body copy; use a shipped `wb-stack` rhythm only when needed for multiple text nodes.
 - Current implementation: acceptable
+- Import/sync mapping note: use `text`/`plain_text` only for simple plain body copy with no safe inline formatting markup.
 - Notes for later renderer/admin improvements: keep this block simple and avoid turning it into a pseudo-rich-text block.
 
 ### `rich-text`
@@ -189,6 +190,7 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Storage model: Rich Text stores a restricted safe HTML fragment, not Markdown markers. Allowed tags are `p`, `strong`, `em`, `code`, `a[href]`, `ul`, `ol`, `li`, and `br` when needed. Classes, styles, event attributes, headings, media, tables, buttons, and unsupported HTML are stripped during sanitization.
 - Admin behavior: the admin editor is a dependency-free `contenteditable` surface synchronized to a hidden form field. It is intentionally limited to body-copy formatting and does not replace Header, Button, Media, Table, Layout, HTML, or other dedicated block types.
+- Import/sync mapping note: when imported body copy contains safe inline formatting, multiple paragraphs, or simple lists, it should become `rich-text` rather than `text`.
 - Notes for later renderer/admin improvements: keep Rich Text limited to safe editorial body copy. `wb-rich-text` remains the public typography primitive. Headings, media, buttons, tables, layout, and raw HTML composition remain separate blocks or features.
 
 ### `html`
@@ -430,6 +432,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: optional `settings.language`
 - Intended WebBlocks UI output: escaped source inside semantic `<pre><code>` with no injected HTML and no syntax-highlighting dependency.
 - Current implementation: acceptable
+- Import/sync mapping note: raw or multi-line snippets such as `<pre><code>` examples and package include blocks should become `code`, not `rich-text`.
 - Notes for later renderer/admin improvements: keep code rendering safe and dependency-free. Optional language metadata may be exposed from settings, but a full code editor or syntax-highlighting stack is intentionally out of scope for Phase 3.
 
 ### `toc`

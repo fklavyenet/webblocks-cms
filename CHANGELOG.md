@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 - Remove generic public block wrappers from root-owning layout/content-shell blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, and `Content Header`, and move `data-wb-public-block-type` metadata onto each renderer root while preserving public shell and slot ownership.
+- Improve Getting Started docs sync/import mapping so inline-format-aware body copy is stored as `Rich Text`, simple paragraphs stay `Plain Text`, and multi-line snippets become `Code` blocks.
+- Preserve inline WebBlocks icon HTML examples from the Getting Started sync/import path as safe inline code instead of executable markup.
 - Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
 
 ## 1.11.0

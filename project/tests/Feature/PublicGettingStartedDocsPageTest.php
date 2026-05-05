@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,27 @@ class PublicGettingStartedDocsPageTest extends TestCase
         $this->artisan('project:sync-ui-docs-navigation')->assertExitCode(0);
 
         $page->refresh();
+        $page->load('blocks.textTranslations');
+
+        $richTextBlock = $page->blocks
+            ->first(fn (Block $block) => $block->type === 'rich-text' && str_contains((string) $block->content, 'class-based icon usage'));
+        $plainTextBlock = $page->blocks
+            ->first(fn (Block $block) => $block->type === 'plain_text' && str_contains((string) $block->content, 'Theme axes live on the html element.'));
+        $codeBlock = $page->blocks
+            ->first(fn (Block $block) => $block->type === 'code' && str_contains((string) $block->content, '/packages/webblocks/dist/webblocks-ui.css'));
+
+        $this->assertNotNull($richTextBlock);
+        $this->assertNotNull($plainTextBlock);
+        $this->assertNotNull($codeBlock);
+        $this->assertSame('rich-text', $richTextBlock->typeSlug());
+        $this->assertSame('plain_text', $plainTextBlock->typeSlug());
+        $this->assertSame('code', $codeBlock->typeSlug());
+        $this->assertStringContainsString('<p>The smallest correct setup includes the main CSS and JS bundles.', (string) $richTextBlock->content);
+        $this->assertStringContainsString('<code>&lt;i class=&quot;wb-icon wb-icon-*&quot;&gt;</code>', (string) $richTextBlock->content);
+        $this->assertStringNotContainsString('<i class="wb-icon wb-icon-*">', (string) $richTextBlock->content);
+        $this->assertSame('Theme axes live on the html element. The package theme module reads and updates these attributes for you.', $plainTextBlock->content);
+        $this->assertSame('html', $codeBlock->setting('language'));
+        $this->assertStringContainsString('<link rel="stylesheet" href="/packages/webblocks/dist/webblocks-ui.css">', (string) $codeBlock->content);
 
         $response = $this->get('/p/getting-started');
         $html = $response->getContent();
@@ -55,13 +77,26 @@ class PublicGettingStartedDocsPageTest extends TestCase
         ], false);
         $response->assertSee('<header class="wb-content-header" data-wb-public-block-type="content-header">', false);
         $response->assertSee('<h1 class="wb-content-title">Getting Started</h1>', false);
+        $response->assertSee('<div class="wb-rich-text wb-rich-text-readable"><p>The smallest correct setup includes the main CSS and JS bundles. Add the icon CSS only if you want class-based icon usage with <code>&lt;i class=&quot;wb-icon wb-icon-*&quot;&gt;</code>.', false);
+        $response->assertSee('<p>Theme axes live on the html element. The package theme module reads and updates these attributes for you.</p>', false);
         $response->assertSee('<pre><code data-language="html">', false);
+        $response->assertSee('&lt;link rel=&quot;stylesheet&quot; href=&quot;/packages/webblocks/dist/webblocks-ui.css&quot;&gt;', false);
         $response->assertDontSee('wb-card wb-card-muted', false);
         $response->assertDontSee('<div class="wb-text-sm wb-text-muted">html</div>', false);
         $response->assertDontSee('>html<', false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="section">', false);
+        $response->assertDontSee('<section class="wb-public-block" data-wb-public-block-type="section">', false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="content-header">', false);
         $response->assertSee('<div class="wb-alert wb-alert-info">', false);
         $response->assertSee('Copy the nearest shipped example');
         $response->assertDontSee('wb-navbar-spacer', false);
+        $response->assertSeeInOrder([
+            '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+            '<div class="wb-container wb-container-lg wb-stack" data-wb-public-block-type="container">',
+            '<header class="wb-content-header" data-wb-public-block-type="content-header">',
+            '<div class="wb-rich-text wb-rich-text-readable">',
+            '<pre><code data-language="html">',
+        ], false);
         $this->assertMatchesRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<div class="wb-dashboard-body wb-w-full">\s*<nav\b[^>]*data-wb-slot="header"[^>]*>.*?<main\b[^>]*data-wb-slot="main"[^>]*>/s', $html);
         $this->assertDoesNotMatchRegularExpression('/<div class="wb-dashboard-shell">\s*<aside\b[^>]*data-wb-slot="sidebar"[^>]*>.*?<\/aside>\s*<header\b[^>]*data-wb-slot="header"[^>]*>/s', $html);
 
@@ -87,6 +122,11 @@ class PublicGettingStartedDocsPageTest extends TestCase
             'page_id' => $page->id,
             'locale_id' => 2,
         ]);
+
+        $this->assertSame(
+            1,
+            Block::query()->where('page_id', $page->id)->where('type', 'rich-text')->whereHas('textTranslations', fn ($query) => $query->where('content', 'like', '%class-based icon usage%'))->count(),
+        );
     }
 
     private function createDocsHomePage(): Page

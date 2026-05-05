@@ -7,6 +7,11 @@ use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
+use App\Support\Formatting\SafeRichTextRenderer;
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+use DOMXPath;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -14,7 +19,12 @@ class SyncUiDocsGettingStarted
 {
     private const IMPORT_GROUP = 'webblocks-ui-docs-getting-started';
 
-    public function __construct(private readonly BlockPayloadWriter $blockPayloadWriter) {}
+    private const INLINE_RICH_TEXT_TAGS = ['strong', 'em', 'code', 'a', 'br'];
+
+    public function __construct(
+        private readonly BlockPayloadWriter $blockPayloadWriter,
+        private readonly SafeRichTextRenderer $safeRichTextRenderer,
+    ) {}
 
     public function run(): void
     {
@@ -52,6 +62,7 @@ class SyncUiDocsGettingStarted
                 'content_header',
                 'header',
                 'plain_text',
+                'rich-text',
                 'button_link',
                 'card',
                 'alert',
@@ -70,6 +81,7 @@ class SyncUiDocsGettingStarted
             'content_header',
             'header',
             'plain_text',
+            'rich-text',
             'button_link',
             'card',
             'alert',
@@ -203,6 +215,282 @@ class SyncUiDocsGettingStarted
         ];
     }
 
+    private function plainTextBlock(string $content): array
+    {
+        return [
+            'type' => 'plain_text',
+            'content' => $content,
+        ];
+    }
+
+    private function richTextBlock(string $content): array
+    {
+        return [
+            'type' => 'rich-text',
+            'content' => $content,
+        ];
+    }
+
+    private function codeBlock(string $content, ?string $language = null, ?string $title = null): array
+    {
+        $payload = [
+            'type' => 'code',
+            'content' => $content,
+        ];
+
+        if ($title !== null) {
+            $payload['title'] = $title;
+        }
+
+        if ($language !== null && $language !== '') {
+            $payload['settings'] = ['language' => $language];
+        }
+
+        return $payload;
+    }
+
+    private function bodyCopyBlock(string $content): array
+    {
+        $root = $this->parseFragment($content);
+
+        if (! $root) {
+            return $this->plainTextBlock(trim($content));
+        }
+
+        if ($this->containsSingleCodeNode($root)) {
+            return $this->codeBlock($this->extractCodeText($root->firstChild), 'html');
+        }
+
+        if ($this->shouldUseRichText($root)) {
+            $richText = $this->toSafeRichTextHtml($root);
+
+            if ($richText !== '') {
+                return $this->richTextBlock($richText);
+            }
+        }
+
+        return $this->plainTextBlock($this->toPlainText($root));
+    }
+
+    private function parseFragment(string $content): ?DOMElement
+    {
+        $content = trim($content);
+
+        if ($content === '') {
+            return null;
+        }
+
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $markup = '<!DOCTYPE html><html><body><div data-project-ui-docs-root="1">'.$this->normalizeImportedFragment($content).'</div></body></html>';
+        $previous = libxml_use_internal_errors(true);
+
+        try {
+            $loaded = $document->loadHTML('<?xml encoding="UTF-8">'.$markup, LIBXML_NOERROR | LIBXML_NOWARNING);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+
+        if (! $loaded) {
+            return null;
+        }
+
+        $root = (new DOMXPath($document))->query('//div[@data-project-ui-docs-root="1"]')->item(0);
+
+        if (! $root instanceof DOMElement) {
+            return null;
+        }
+
+        $this->normalizePresentationalTags($root);
+
+        return $root;
+    }
+
+    private function normalizeImportedFragment(string $content): string
+    {
+        return preg_replace_callback(
+            '/<i\b[^>]*class="[^"]*\bwb-icon\b[^"]*"[^>]*>/i',
+            fn (array $matches): string => '<code>'.htmlspecialchars($matches[0], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</code>',
+            $content,
+        ) ?? $content;
+    }
+
+    private function normalizePresentationalTags(DOMElement $root): void
+    {
+        $document = $root->ownerDocument;
+
+        if (! $document) {
+            return;
+        }
+
+        $nodes = [];
+
+        foreach ((new DOMXPath($document))->query('.//b|.//i', $root) ?: [] as $node) {
+            if ($node instanceof DOMElement) {
+                $nodes[] = $node;
+            }
+        }
+
+        foreach ($nodes as $node) {
+            $replacement = $document->createElement($node->tagName === 'b' ? 'strong' : 'em');
+
+            while ($node->firstChild) {
+                $replacement->appendChild($node->firstChild);
+            }
+
+            $node->parentNode?->replaceChild($replacement, $node);
+        }
+    }
+
+    private function shouldUseRichText(DOMNode $node): bool
+    {
+        $meaningfulChildren = 0;
+
+        foreach ($this->meaningfulChildren($node) as $child) {
+            if ($this->isCodeNode($child)) {
+                return true;
+            }
+
+            if ($child->nodeType === XML_TEXT_NODE || $child->nodeType === XML_CDATA_SECTION_NODE) {
+                $meaningfulChildren++;
+
+                continue;
+            }
+
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = $this->tagName($child);
+
+            if (in_array($tag, ['ul', 'ol'], true)) {
+                return true;
+            }
+
+            if ($tag === 'p') {
+                $meaningfulChildren++;
+
+                if ($meaningfulChildren > 1 || $this->containsInlineFormatting($child)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (in_array($tag, self::INLINE_RICH_TEXT_TAGS, true) || $this->containsInlineFormatting($child)) {
+                return true;
+            }
+
+            $meaningfulChildren++;
+
+            if ($meaningfulChildren > 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function toSafeRichTextHtml(DOMNode $node): string
+    {
+        return $this->safeRichTextRenderer->sanitize($this->innerHtml($node));
+    }
+
+    private function toPlainText(DOMNode $node): string
+    {
+        $text = html_entity_decode($node->textContent ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+        return trim($text);
+    }
+
+    private function isCodeNode(DOMNode $node): bool
+    {
+        if ($node->nodeType !== XML_ELEMENT_NODE) {
+            return false;
+        }
+
+        $tag = $this->tagName($node);
+
+        return $tag === 'pre' || ($tag === 'code' && str_contains((string) $node->textContent, "\n"));
+    }
+
+    private function extractCodeText(DOMNode $node): string
+    {
+        $text = html_entity_decode($node->textContent ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return trim($text, "\n");
+    }
+
+    private function containsSingleCodeNode(DOMNode $node): bool
+    {
+        $children = $this->meaningfulChildren($node);
+
+        return count($children) === 1 && $this->isCodeNode($children[0]);
+    }
+
+    private function containsInlineFormatting(DOMNode $node): bool
+    {
+        foreach ($this->childNodes($node) as $child) {
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            if (in_array($this->tagName($child), self::INLINE_RICH_TEXT_TAGS, true) || $this->containsInlineFormatting($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function meaningfulChildren(DOMNode $node): array
+    {
+        return array_values(array_filter(
+            $this->childNodes($node),
+            function (DOMNode $child): bool {
+                if ($child->nodeType === XML_TEXT_NODE || $child->nodeType === XML_CDATA_SECTION_NODE) {
+                    return trim((string) $child->textContent) !== '';
+                }
+
+                return $child->nodeType === XML_ELEMENT_NODE;
+            },
+        ));
+    }
+
+    private function innerHtml(DOMNode $node): string
+    {
+        $document = $node->ownerDocument;
+
+        if (! $document) {
+            return '';
+        }
+
+        $html = '';
+
+        foreach ($this->childNodes($node) as $child) {
+            $html .= $document->saveHTML($child) ?: '';
+        }
+
+        return $html;
+    }
+
+    private function childNodes(DOMNode $parent): array
+    {
+        $nodes = [];
+
+        foreach ($parent->childNodes as $child) {
+            $nodes[] = $child;
+        }
+
+        return $nodes;
+    }
+
+    private function tagName(DOMNode $node): string
+    {
+        return strtolower($node->nodeName);
+    }
+
     private function sectionPayloads(): array
     {
         $assetIncludes = <<<'HTML'
@@ -253,15 +541,8 @@ HTML;
                     'title' => '1. Include the package files',
                     'variant' => 'h2',
                 ],
-                [
-                    'type' => 'plain_text',
-                    'content' => 'The smallest correct setup includes the main CSS and JS bundles. Add the icon CSS only if you want class-based icon usage with <i class="wb-icon wb-icon-*">. The docs and playground in this repo load the same built files from the local published dist path so the examples stay aligned with the shipped package output.',
-                ],
-                [
-                    'type' => 'code',
-                    'content' => $assetIncludes,
-                    'settings' => ['language' => 'html'],
-                ],
+                $this->bodyCopyBlock('The smallest correct setup includes the main CSS and JS bundles. Add the icon CSS only if you want class-based icon usage with <i class="wb-icon wb-icon-*">. The docs and playground in this repo load the same built files from the local published dist path so the examples stay aligned with the shipped package output.'),
+                $this->codeBlock($assetIncludes, 'html'),
                 [
                     'type' => 'alert',
                     'title' => 'No extra layer required',
@@ -281,15 +562,8 @@ HTML;
                     'title' => '2. Set root theme attributes',
                     'variant' => 'h2',
                 ],
-                [
-                    'type' => 'plain_text',
-                    'content' => 'Theme axes live on the html element. The package theme module reads and updates these attributes for you.',
-                ],
-                [
-                    'type' => 'code',
-                    'content' => $rootThemeSnippet,
-                    'settings' => ['language' => 'html'],
-                ],
+                $this->bodyCopyBlock('Theme axes live on the html element. The package theme module reads and updates these attributes for you.'),
+                $this->codeBlock($rootThemeSnippet, 'html'),
                 [
                     'type' => 'grid',
                     'settings' => ['columns' => '2', 'gap' => '4'],
@@ -313,10 +587,7 @@ HTML;
                     'title' => '3. Start from a pattern',
                     'variant' => 'h2',
                 ],
-                [
-                    'type' => 'plain_text',
-                    'content' => 'The fastest correct path is not to browse every primitive first. Start from the page job, then inspect the surfaces and primitives that the pattern uses.',
-                ],
+                $this->bodyCopyBlock('The fastest correct path is not to browse every primitive first. Start from the page job, then inspect the surfaces and primitives that the pattern uses.'),
                 [
                     'type' => 'link-list',
                     'children' => [
@@ -343,10 +614,7 @@ HTML;
                     'title' => '4. Copy the nearest shipped example',
                     'variant' => 'h2',
                 ],
-                [
-                    'type' => 'plain_text',
-                    'content' => 'The pattern example pages already combine shell choice, hierarchy, surfaces, primitives, and behavior hooks in one place without leaving the docs navigation.',
-                ],
+                $this->bodyCopyBlock('The pattern example pages already combine shell choice, hierarchy, surfaces, primitives, and behavior hooks in one place without leaving the docs navigation.'),
                 [
                     'type' => 'link-list',
                     'children' => [
@@ -405,34 +673,19 @@ HTML;
                     'title' => 'Markup',
                     'variant' => 'h3',
                 ],
-                [
-                    'type' => 'code',
-                    'title' => 'Structural markup',
-                    'content' => $markupSnippet,
-                    'settings' => ['language' => 'html'],
-                ],
+                $this->codeBlock($markupSnippet, 'html', 'Structural markup'),
                 [
                     'type' => 'header',
                     'title' => 'Theme',
                     'variant' => 'h3',
                 ],
-                [
-                    'type' => 'code',
-                    'title' => 'Theme hooks',
-                    'content' => $themeSnippet,
-                    'settings' => ['language' => 'html'],
-                ],
+                $this->codeBlock($themeSnippet, 'html', 'Theme hooks'),
                 [
                     'type' => 'header',
                     'title' => 'Behavior',
                     'variant' => 'h3',
                 ],
-                [
-                    'type' => 'code',
-                    'title' => 'Behavior hooks',
-                    'content' => $behaviorSnippet,
-                    'settings' => ['language' => 'html'],
-                ],
+                $this->codeBlock($behaviorSnippet, 'html', 'Behavior hooks'),
             ]),
         ];
     }
