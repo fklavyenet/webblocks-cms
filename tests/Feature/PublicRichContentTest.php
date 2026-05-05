@@ -45,10 +45,14 @@ class PublicRichContentTest extends TestCase
         $response->assertSee('<code data-language="php">', false);
         $response->assertSee('&lt;script&gt;alert(&#039;x&#039;)&lt;/script&gt;', false);
         $response->assertDontSee('<script>alert(', false);
+        $response->assertDontSee('wb-card', false);
+        $response->assertDontSee('wb-card-muted', false);
+        $response->assertDontSee('wb-card-body', false);
+        $response->assertDontSee('>php<', false);
     }
 
     #[Test]
-    public function code_block_renders_optional_header_metadata_without_executing_html(): void
+    public function code_block_does_not_render_visible_header_metadata_and_escapes_html(): void
     {
         $page = $this->pageWithMainSlot();
 
@@ -71,11 +75,66 @@ class PublicRichContentTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('Escaped snippet');
-        $response->assertSee('&lt;demo.js&gt;', false);
-        $response->assertDontSee('<demo.js>', false);
+        $response->assertSee('<pre><code data-language="js">console.log(&#039;&lt;b&gt;safe&lt;/b&gt;&#039;);</code></pre>', false);
         $response->assertSee('console.log(&#039;&lt;b&gt;safe&lt;/b&gt;&#039;);', false);
         $response->assertDontSee('<b>safe</b>', false);
+        $response->assertDontSee('Escaped snippet');
+        $response->assertDontSee('&lt;demo.js&gt;', false);
+        $response->assertDontSee('<demo.js>', false);
+    }
+
+    #[Test]
+    public function code_block_skips_empty_content_even_when_language_exists(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $this->blockType('code', 'Code', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '   ',
+            'settings' => json_encode(['language' => 'html'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('<pre>', false);
+        $response->assertDontSee('<code', false);
+    }
+
+    #[Test]
+    public function code_block_sanitizes_language_attribute_without_visible_label(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $this->blockType('code', 'Code', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '<script>alert(1)</script>',
+            'settings' => json_encode(['language' => 'C# Script<script>'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<code data-language="c#-script-script">', false);
+        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('>C# Script', false);
     }
 
     #[Test]

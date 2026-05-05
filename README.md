@@ -122,6 +122,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public wrapper semantics, and blocks render content inside those slot wrappers.
 - `default` uses standard semantic wrappers such as `header`, `main`, `aside`, and `footer`. `docs` automatically maps header, sidebar, and main slots to the docs navbar, sidebar, and main wrappers.
+- `Code` blocks render as escaped plain `<pre><code>` output without the old card chrome or a visible language label. Language metadata may still be stored and exposed only as a sanitized `data-language` attribute on `<code>`.
 
 ## Build Artifacts
 

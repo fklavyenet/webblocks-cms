@@ -56,6 +56,9 @@ class PublicGettingStartedDocsPageTest extends TestCase
         $response->assertSee('<header class="wb-content-header">', false);
         $response->assertSee('<h1 class="wb-content-title">Getting Started</h1>', false);
         $response->assertSee('<pre><code data-language="html">', false);
+        $response->assertDontSee('wb-card wb-card-muted', false);
+        $response->assertDontSee('<div class="wb-text-sm wb-text-muted">html</div>', false);
+        $response->assertDontSee('>html<', false);
         $response->assertSee('<div class="wb-alert wb-alert-info">', false);
         $response->assertSee('Copy the nearest shipped example');
         $response->assertDontSee('wb-navbar-spacer', false);

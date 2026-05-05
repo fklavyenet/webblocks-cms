@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
+
 ## 1.11.0
 
 - Replace Rich Text's Markdown-like admin editing model with a dependency-free safe HTML editor that stores restricted safe HTML fragments instead of marker-based text.
