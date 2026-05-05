@@ -1,25 +1,71 @@
+@php
+    $ariaLabel = $ariaLabel ?? 'Pagination';
+    $compact = $compact ?? false;
+    $window = 2;
+    $currentPage = $paginator->currentPage();
+    $lastPage = $paginator->lastPage();
+    $startPage = max(1, $currentPage - $window);
+    $endPage = min($lastPage, $currentPage + $window);
+    $pages = [];
+
+    if ($lastPage > 0) {
+        $pages[] = 1;
+
+        for ($page = $startPage; $page <= $endPage; $page++) {
+            $pages[] = $page;
+        }
+
+        $pages[] = $lastPage;
+        $pages = array_values(array_unique($pages));
+    }
+@endphp
+
 @if ($paginator->hasPages())
     <div class="wb-card-footer">
-        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-text-sm wb-text-muted">
+        <div class="wb-stack wb-gap-3">
+            <div class="wb-text-sm wb-text-muted wb-pagination-info">
                 Showing {{ $paginator->firstItem() }}-{{ $paginator->lastItem() }} of {{ $paginator->total() }}
             </div>
 
-            <div class="wb-cluster wb-cluster-2">
-                @if ($paginator->onFirstPage())
-                    <span class="wb-btn wb-btn-secondary" aria-disabled="true">Previous</span>
-                @else
-                    <a href="{{ $paginator->previousPageUrl() }}" class="wb-btn wb-btn-secondary">Previous</a>
-                @endif
+            <nav class="wb-pagination{{ $compact ? ' wb-pagination-compact' : '' }}" aria-label="{{ $ariaLabel }}">
+                <ol class="wb-pagination-list">
+                    <li class="wb-pagination-item{{ $paginator->onFirstPage() ? ' is-disabled' : '' }}">
+                        @if ($paginator->onFirstPage())
+                            <span class="wb-pagination-link">Previous</span>
+                        @else
+                            <a href="{{ $paginator->previousPageUrl() }}" class="wb-pagination-link" rel="prev">Previous</a>
+                        @endif
+                    </li>
 
-                <span class="wb-status-pill wb-status-info">Page {{ $paginator->currentPage() }} / {{ $paginator->lastPage() }}</span>
+                    @php($previousPage = null)
 
-                @if ($paginator->hasMorePages())
-                    <a href="{{ $paginator->nextPageUrl() }}" class="wb-btn wb-btn-secondary">Next</a>
-                @else
-                    <span class="wb-btn wb-btn-secondary" aria-disabled="true">Next</span>
-                @endif
-            </div>
+                    @foreach ($pages as $page)
+                        @if ($previousPage !== null && $page - $previousPage > 1)
+                            <li class="wb-pagination-item">
+                                <span class="wb-pagination-ellipsis" aria-hidden="true">&hellip;</span>
+                            </li>
+                        @endif
+
+                        <li class="wb-pagination-item{{ $page === $currentPage ? ' is-active' : '' }}">
+                            @if ($page === $currentPage)
+                                <span class="wb-pagination-link" aria-current="page">{{ $page }}</span>
+                            @else
+                                <a href="{{ $paginator->url($page) }}" class="wb-pagination-link">{{ $page }}</a>
+                            @endif
+                        </li>
+
+                        @php($previousPage = $page)
+                    @endforeach
+
+                    <li class="wb-pagination-item{{ $paginator->hasMorePages() ? '' : ' is-disabled' }}">
+                        @if ($paginator->hasMorePages())
+                            <a href="{{ $paginator->nextPageUrl() }}" class="wb-pagination-link" rel="next">Next</a>
+                        @else
+                            <span class="wb-pagination-link">Next</span>
+                        @endif
+                    </li>
+                </ol>
+            </nav>
         </div>
     </div>
 @endif
