@@ -1,8 +1,8 @@
 @php
-    $page = $block->page;
+    $page = $block->renderPage();
     $routeResolver = app(\App\Support\Pages\PageRouteResolver::class);
-    $site = $page?->site;
-    $localeCode = $page?->currentTranslation?->locale?->code ?? $block->getAttribute('resolved_locale_code');
+    $site = $block->renderSite();
+    $localeCode = $block->renderLocaleCode();
     $currentTranslation = $page?->currentTranslation
         ?? ($page ? $routeResolver->translationFor($page, $localeCode, $site) : null);
     $localeId = $currentTranslation?->locale_id;

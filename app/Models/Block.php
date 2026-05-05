@@ -639,6 +639,49 @@ class Block extends Model
         return str_replace('_', '-', (string) $this->typeSlug());
     }
 
+    public function renderPage(): ?Page
+    {
+        if ($this->relationLoaded('renderPage')) {
+            return $this->getRelation('renderPage');
+        }
+
+        return $this->page;
+    }
+
+    public function renderPageId(): ?int
+    {
+        $pageId = $this->renderPage()?->id ?? $this->page_id;
+
+        return $pageId ? (int) $pageId : null;
+    }
+
+    public function renderSite(): ?Site
+    {
+        return $this->renderPage()?->site;
+    }
+
+    public function renderLocaleCode(): ?string
+    {
+        $localeCode = $this->renderPage()?->currentTranslation?->locale?->code
+            ?? $this->getAttribute('render_locale_code')
+            ?? $this->getAttribute('resolved_locale_code');
+
+        return is_string($localeCode) && trim($localeCode) !== '' ? $localeCode : null;
+    }
+
+    public function renderSlotSlug(): string
+    {
+        $slotSlug = trim((string) $this->getAttribute('render_slot_slug'));
+
+        if ($slotSlug !== '') {
+            return $slotSlug;
+        }
+
+        $ownedSlotSlug = trim((string) $this->slot);
+
+        return $ownedSlotSlug !== '' ? $ownedSlotSlug : 'main';
+    }
+
     public function ownsPublicRoot(): bool
     {
         return in_array($this->typeSlug(), [

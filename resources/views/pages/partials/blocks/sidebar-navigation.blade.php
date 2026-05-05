@@ -11,7 +11,7 @@
     $currentPath = '/'.ltrim(request()->path(), '/');
     $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
     $currentUrl = rtrim(url()->current(), '/');
-    $currentPageId = (int) $block->page_id;
+    $currentPageId = (int) ($block->renderPageId() ?? 0);
     $normalizePath = function (?string $value): ?string {
         if (! is_string($value) || trim($value) === '') {
             return null;
@@ -65,7 +65,7 @@
     };
 
     $items = $menuKey !== null
-        ? $filterVisibleItems(app(\App\Support\Navigation\NavigationTree::class)->buildMenuTree($menuKey, $block->page?->site_id))
+        ? $filterVisibleItems(app(\App\Support\Navigation\NavigationTree::class)->buildMenuTree($menuKey, $block->renderSite()?->id))
         : $manualItems;
 @endphp
 

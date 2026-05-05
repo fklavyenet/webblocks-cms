@@ -1,6 +1,6 @@
 @php
     $menuKey = $block->navigationMenuKey();
-    $siteScope = $block->page?->site_id;
+    $siteScope = $block->renderSite()?->id;
     $items = app(\App\Support\Navigation\NavigationTree::class)
         ->buildMenuTree($menuKey, $siteScope)
         ->filter(fn ($item) => $item->isVisible());

@@ -43,9 +43,10 @@ class PublicPagePresenter
 
     private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
     {
+        $page = $slot->page ?? $slot->page()->firstOrFail();
         $slug = $slot->slotType?->slug ?? 'main';
-        $blocks = $this->resolveSlotBlocks($slot, $topLevelBlocks);
-        $wrapper = $this->slotWrapperResolver->resolve($slot->page ?? $slot->page()->firstOrFail(), $slot);
+        $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug);
+        $wrapper = $this->slotWrapperResolver->resolve($page, $slot);
 
         return [
             'slug' => $slug,
@@ -70,6 +71,27 @@ class PublicPagePresenter
         }
 
         return collect();
+    }
+
+    private function applyRenderContext(Collection $blocks, Page $page, string $slotSlug): Collection
+    {
+        return $blocks
+            ->map(function (Block $block) use ($page, $slotSlug) {
+                $block->setRelation('renderPage', $page);
+                $block->setAttribute('render_locale_code', $page->currentTranslation?->locale?->code);
+                $block->setAttribute('render_slot_slug', $slotSlug);
+
+                if ($block->relationLoaded('children')) {
+                    $children = $block->getRelation('children');
+
+                    if ($children instanceof Collection) {
+                        $block->setRelation('children', $this->applyRenderContext($children, $page, $slotSlug));
+                    }
+                }
+
+                return $block;
+            })
+            ->values();
     }
 
     private function resolveMetaDescription(Page $page, Collection $blocks): ?string

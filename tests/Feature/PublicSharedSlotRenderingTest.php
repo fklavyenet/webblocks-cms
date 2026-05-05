@@ -25,6 +25,37 @@ class PublicSharedSlotRenderingTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function page_owned_breadcrumb_in_the_header_slot_uses_the_public_page_context(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource([
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'shared_slot_id' => null,
+            'page_slug' => 'getting-started',
+            'page_title' => 'Getting Started',
+            'page_name' => 'Getting Started',
+        ]);
+
+        $breadcrumb = Block::query()->create([
+            'page_id' => $context['page']->id,
+            'type' => 'breadcrumb',
+            'block_type_id' => $this->blockType('breadcrumb', 'Breadcrumb', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => -10,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($breadcrumb);
+
+        $response = $this->get('/p/getting-started');
+
+        $response->assertOk();
+        $response->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
+        $response->assertSee('<span class="wb-breadcrumb-current" aria-current="page">Getting Started</span>', false);
+    }
+
+    #[Test]
     public function existing_page_owned_slot_rendering_still_works(): void
     {
         $context = $this->publishedPageWithSharedSlotSource([
@@ -55,6 +86,45 @@ class PublicSharedSlotRenderingTest extends TestCase
         $response->assertSee('Shared Header Child', false);
         $response->assertDontSee('Page Header Content', false);
         $response->assertDontSee('<main data-wb-slot="header"', false);
+    }
+
+    #[Test]
+    public function breadcrumb_inside_a_shared_slot_uses_the_consuming_page_context_without_leaking_hidden_source_titles(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource([
+            'page_slug' => 'getting-started',
+            'page_title' => 'Getting Started',
+            'page_name' => 'Getting Started',
+        ]);
+
+        $breadcrumb = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'type' => 'breadcrumb',
+            'block_type_id' => $this->blockType('breadcrumb', 'Breadcrumb', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => -10,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($breadcrumb);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $breadcrumb->id,
+            'parent_id' => null,
+            'sort_order' => -10,
+        ]);
+
+        $response = $this->get('/p/getting-started');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
+        $response->assertSee('<span class="wb-breadcrumb-current" aria-current="page">Getting Started</span>', false);
+        $response->assertDontSee('Shared Slot Source', false);
+        $response->assertDontSee('Shared Source getting-started', false);
     }
 
     #[Test]
@@ -284,6 +354,24 @@ class PublicSharedSlotRenderingTest extends TestCase
     }
 
     #[Test]
+    public function hidden_shared_slot_source_pages_remain_non_routable_even_if_a_translation_exists(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource();
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $context['sharedSourcePage']->id, 'locale_id' => Page::defaultLocaleId()],
+            [
+                'site_id' => $context['page']->site_id,
+                'name' => 'Hidden Shared Source',
+                'slug' => $context['sharedSourcePage']->slug,
+                'path' => '/p/'.$context['sharedSourcePage']->slug,
+            ],
+        );
+
+        $this->get('/p/'.$context['sharedSourcePage']->slug)->assertNotFound();
+    }
+
+    #[Test]
     public function switching_slot_sources_from_the_page_editor_updates_public_rendering_without_copying_blocks(): void
     {
         $context = $this->publishedPageWithSharedSlotSource([
@@ -360,7 +448,7 @@ class PublicSharedSlotRenderingTest extends TestCase
 
         $page = Page::query()->create([
             'site_id' => $site->id,
-            'title' => 'Home',
+            'title' => $overrides['page_title'] ?? 'Home',
             'slug' => $overrides['page_slug'] ?? 'home',
             'status' => Page::STATUS_PUBLISHED,
             'settings' => ['public_shell' => $overrides['page_shell'] ?? 'docs'],
@@ -371,7 +459,12 @@ class PublicSharedSlotRenderingTest extends TestCase
 
         PageTranslation::query()->updateOrCreate(
             ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
-            ['site_id' => $site->id, 'name' => 'Home', 'slug' => $slug, 'path' => $path],
+            [
+                'site_id' => $site->id,
+                'name' => $overrides['page_name'] ?? ($overrides['page_title'] ?? 'Home'),
+                'slug' => $slug,
+                'path' => $path,
+            ],
         );
 
         $sharedSourcePage = Page::query()->create([
@@ -594,7 +687,9 @@ class PublicSharedSlotRenderingTest extends TestCase
             'page' => $page,
             'pageSlot' => $pageSlot,
             'pageHeader' => $pageHeader,
+            'headerSlotType' => $headerSlotType,
             'sharedSlot' => $sharedSlot,
+            'sharedSourcePage' => $sharedSourcePage,
             'sharedRoot' => $sharedRoot,
             'sharedTitle' => $sharedTitle,
             'sharedLeaf' => $sharedLeaf,
