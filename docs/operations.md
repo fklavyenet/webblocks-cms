@@ -83,7 +83,6 @@ Site Clone is different from Export / Import:
 - Site Clone works inside the current install
 - Export / Import is for moving a site package between installs
 - Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, and media references, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind
-- Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, and media references, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind.
 - Shared Slot revision history is not cloned, matching the current page revision clone boundary.
 
 ## When To Use Which Tool
