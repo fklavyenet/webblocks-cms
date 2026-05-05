@@ -6,6 +6,7 @@
     $addSlotMenuId = 'page-slot-add-menu-'.$page->id;
     $slotSharedSlotOptions = $slotSharedSlotOptions ?? collect();
     $canCreateSharedSlots = $canCreateSharedSlots ?? false;
+    $sharedSlotSourcesAvailable = $sharedSlotSourcesAvailable ?? false;
 @endphp
 
 <div class="wb-card">
@@ -117,7 +118,7 @@
                                             @endif
                                         </div>
 
-                                        @if ($canEditContent)
+                                        @if ($canEditContent && $sharedSlotSourcesAvailable)
                                             <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-2">
                                                 @csrf
                                                 @method('PUT')
@@ -173,6 +174,8 @@
                                                     <button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>
                                                 </div>
                                             </form>
+                                        @elseif (! $sharedSlotSourcesAvailable)
+                                            <span class="wb-text-sm wb-text-muted">Shared Slot source controls will appear after the Shared Slots migration is available.</span>
                                         @else
                                             <span class="wb-text-sm wb-text-muted">Locked by workflow</span>
                                         @endif

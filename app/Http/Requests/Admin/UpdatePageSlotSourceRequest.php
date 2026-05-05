@@ -6,6 +6,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -52,6 +53,12 @@ class UpdatePageSlotSourceRequest extends FormRequest
                 return;
             }
 
+            if (! $this->sharedSlotsSchemaAvailable()) {
+                $validator->errors()->add('shared_slot_id', 'Shared Slots are not available until the Shared Slots migration has been run.');
+
+                return;
+            }
+
             if (! is_int($sharedSlotId) || $sharedSlotId < 1) {
                 $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
 
@@ -94,5 +101,12 @@ class UpdatePageSlotSourceRequest extends FormRequest
                 ? (int) $data['shared_slot_id']
                 : null,
         ];
+    }
+
+    private function sharedSlotsSchemaAvailable(): bool
+    {
+        return Schema::hasTable('shared_slots')
+            && Schema::hasColumn('page_slots', 'source_type')
+            && Schema::hasColumn('page_slots', 'shared_slot_id');
     }
 }

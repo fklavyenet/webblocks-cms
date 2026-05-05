@@ -25,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -181,16 +182,21 @@ class PageController extends Controller
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
 
-        $page->loadMissing([
+        $relations = [
             'site',
             'translations.locale',
             'slots.slotType',
-            'slots.sharedSlot',
             'blocks' => fn ($query) => $query
                 ->with('children')
                 ->whereNull('parent_id')
                 ->orderBy('sort_order'),
-        ]);
+        ];
+
+        if ($this->sharedSlotsSchemaAvailable()) {
+            $relations[] = 'slots.sharedSlot';
+        }
+
+        $page->loadMissing($relations);
         $page->loadCount('blocks');
 
         $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
@@ -212,6 +218,7 @@ class PageController extends Controller
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
             'slotSharedSlotOptions' => $this->slotSharedSlotOptions($page),
+            'sharedSlotSourcesAvailable' => $this->sharedSlotsSchemaAvailable(),
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
             'canViewRevisions' => $canViewRevisions,
@@ -880,6 +887,10 @@ class PageController extends Controller
 
     private function slotSharedSlotOptions(Page $page): Collection
     {
+        if (! $this->sharedSlotsSchemaAvailable()) {
+            return collect();
+        }
+
         $sharedSlots = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), request()->user())
             ->where('site_id', $page->site_id)
             ->where('is_active', true)
@@ -893,6 +904,14 @@ class PageController extends Controller
                     ->filter(fn (SharedSlot $sharedSlot) => $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug()))
                     ->values(),
             ]);
+    }
+
+    private function sharedSlotsSchemaAvailable(): bool
+    {
+        return Schema::hasTable('shared_slots')
+            && Schema::hasTable('shared_slot_blocks')
+            && Schema::hasColumn('page_slots', 'source_type')
+            && Schema::hasColumn('page_slots', 'shared_slot_id');
     }
 
     private function slotEditorRouteParameters(Page $page, PageSlot $slot): array

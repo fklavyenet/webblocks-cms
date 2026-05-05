@@ -95,6 +95,7 @@
         'slotTypes' => $slotTypes,
         'slotBlockPreviews' => $slotBlockPreviews,
         'slotSharedSlotOptions' => $slotSharedSlotOptions,
+        'sharedSlotSourcesAvailable' => $sharedSlotSourcesAvailable,
         'canEditContent' => $canEditContent,
         'canCreateSharedSlots' => $canCreateSharedSlots,
     ])

@@ -16,6 +16,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -239,6 +240,38 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-toggle="dropdown"', false);
         $response->assertSee('disabled', false);
         $response->assertSee('No slots available');
+    }
+
+    #[Test]
+    public function edit_page_still_loads_when_shared_slot_tables_are_not_available(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        Schema::dropIfExists('shared_slot_blocks');
+        Schema::dropIfExists('shared_slots');
+        if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+            Schema::table('page_slots', function ($table): void {
+                $table->dropForeign(['shared_slot_id']);
+                $table->dropColumn('shared_slot_id');
+            });
+        }
+        if (Schema::hasColumn('page_slots', 'source_type')) {
+            Schema::table('page_slots', function ($table): void {
+                $table->dropColumn('source_type');
+            });
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('Page Settings');
+        $response->assertSee('Slots');
+        $response->assertDontSee('name="source_type"', false);
+        $response->assertDontSee('name="shared_slot_id"', false);
     }
 
     #[Test]
