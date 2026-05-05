@@ -8,6 +8,7 @@
 - Fix the project-layer WebBlocks UI local preview resolver by adding a dedicated `project:webblocksui-local-resolver` command that writes a DDEV `additional_hostnames` override for `ui.docs.webblocksui.com.ddev.site` and points setup/import output at that local resolver workflow.
 - Guard existing page updates so the normal Edit Page form cannot move a page to another site; the Site field is now read-only for existing pages and forged site changes return a validation error instead of reaching a database integrity failure.
 - Add a dedicated admin `Move to another site` workflow for pages with transaction-safe site reassignment, translated path conflict checks, locale compatibility validation, Shared Slot remapping, and preserved page revisions/content state.
+- Add a dedicated admin `Duplicate page` workflow that creates draft page copies within the same site or another accessible site, preserves page-owned content state, validates translated path conflicts, and remaps compatible Shared Slots for cross-site duplicates.
 
 ## 1.13.0
 

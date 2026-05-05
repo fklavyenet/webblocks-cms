@@ -201,6 +201,10 @@ class PageController extends Controller
 
         $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
         $canViewRevisions = $this->revisionManager->canView(request()->user(), $page);
+        $canDuplicatePage = request()->user()?->canAccessAdmin()
+            && Site::query()
+                ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
+                ->exists();
         $canMoveToAnotherSite = request()->user()?->isSuperAdmin()
             || (request()->user()?->isSiteAdmin() && Site::query()
                 ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
@@ -227,6 +231,7 @@ class PageController extends Controller
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
             'canViewRevisions' => $canViewRevisions,
+            'canDuplicatePage' => $canDuplicatePage,
             'canMoveToAnotherSite' => $canMoveToAnotherSite,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
             'canCreateSharedSlots' => ! request()->user()->isEditor(),

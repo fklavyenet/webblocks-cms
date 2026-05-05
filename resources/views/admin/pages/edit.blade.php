@@ -3,9 +3,11 @@
     $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
+    $pageDuplicateUrl = $canDuplicatePage ? route('admin.pages.duplicate.create', $page) : null;
     $pageMoveUrl = $canMoveToAnotherSite ? route('admin.pages.move-site.create', $page) : null;
     $siteName = $page->site?->name ?? 'Site';
     $headerActions = collect([
+        $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">Duplicate page</a>' : null,
         $pageMoveUrl ? '<a href="'.$pageMoveUrl.'" class="wb-btn wb-btn-secondary">Move to another site</a>' : null,
         $pageRevisionsUrl ? '<a href="'.$pageRevisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : null,
         $pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : null,

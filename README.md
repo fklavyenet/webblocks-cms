@@ -138,13 +138,21 @@ See `docs/getting-started.md` for the first-use workflow.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.
 - `default` uses standard semantic wrappers such as `header`, `main`, `aside`, and `footer`. `docs` automatically maps header, sidebar, and main slots to the docs navbar, sidebar, and main wrappers.
 - Existing pages remain site-scoped after creation. The normal `Edit Page` form shows the current site as read-only context and does not move pages between sites.
+- Existing pages can also be copied through a dedicated `Duplicate page` admin action. Duplicate creates a new page and leaves the source page unchanged.
 - Cross-site page moves are handled through a dedicated `Move to another site` admin action on the Edit Page screen. The normal `Save Changes` path still cannot change `site_id` directly.
+- `super_admin` can duplicate pages into any site. `site_admin` and `editor` can duplicate only when they have access to both the source site and the target site.
 - `super_admin` can move pages between any sites. `site_admin` can move pages only when they have access to both the source site and the target site. `editor` cannot move pages between sites.
+- Duplicated pages always start as `draft`, even when the source page is published or in review.
+- The duplicate workflow copies the page layout, public shell settings, translations, page slots, page-owned block tree, nested block order, block translations, and existing asset references.
+- Duplicate does not copy navigation items, revision history, visitor/reporting rows, contact messages, or site transfer history.
+- Duplicate can target the same site or another accessible site. Every copied locale must have a unique target path; conflicts block the duplicate instead of auto-renaming slugs.
+- The duplicate screen collects the new default-locale title and slug plus explicit title/slug values for every additional copied locale so multilingual duplicates can be validated before writing.
 - The page move workflow preserves the page id, workflow state, layout, translations, slots, page-owned blocks, block translations, ordering, and page revisions. It does not duplicate the page or block tree.
 - Target-site path conflicts block the move. The first version does not auto-rename slugs or paths to resolve conflicts.
 - Shared Slot references must already be compatible on the target site. Matching same-handle Shared Slots are remapped when they satisfy the existing site, shell, active-state, and slot-name compatibility rules. Missing or incompatible target Shared Slots block the move.
+- Duplicate keeps same-site Shared Slot references as-is. Cross-site duplicate remaps only to compatible same-handle Shared Slots on the target site; missing or incompatible Shared Slots block the duplicate.
 - Page-linked navigation rows keep the moved page link valid by moving those linked items into the target site scope, but broader navigation review remains manual after the move.
-- Export / Import and Site Clone remain the site-level portability tools. `Move to another site` is only for moving one existing page in place inside the same CMS install.
+- Export / Import and Site Clone remain the site-level portability tools. `Move to another site` changes ownership of one existing page in place, while `Duplicate page` creates a new page copy inside the same CMS install.
 - Shared Slots participate only at the slot-content layer. When a page slot source is `shared_slot`, the referenced Shared Slot block tree renders inside the resolved page slot wrapper if site scope matches and any optional Shared Slot shell or slot-name constraints are compatible. Invalid or cross-site shared-slot references render no shared content.
 - The page editor now owns slot source assignment. Editors who can edit the page in its current workflow state can switch a slot between `page`, `shared_slot`, and `disabled`. Selecting a Shared Slot requires the same site, active status, and compatibility with the page shell and slot name.
 - Shared Slots are managed under the site-level admin navigation alongside Pages, Navigation, and Media. `super_admin` can manage Shared Slots for all sites, `site_admin` can manage Shared Slots for assigned sites, and editors can access Shared Slot block editing within assigned sites using the same draft-only content-editing rule used for page content.

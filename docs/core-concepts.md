@@ -19,12 +19,16 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 
 - A page belongs to exactly one site at a time.
 - The normal `Edit Page` form keeps `Site` read-only for existing pages.
+- Duplicating a page creates a new page record in the same site or another accessible site.
 - Cross-site page moves use a dedicated `Move to another site` workflow instead of an inline field change.
+- Page duplication uses a dedicated `Duplicate page` workflow instead of piggybacking on the normal page form.
 - The move runs as a controlled transaction so `pages.site_id` and `page_translations.site_id` stay valid against the composite `(page_id, site_id)` foreign key.
+- Duplicate always starts the new page as draft and copies content state without copying the source page revision history.
 - The move preserves the page id, translations, slots, page-owned blocks, block translations, order, workflow state, and revision history.
+- Duplicate preserves layout, translations, slots, page-owned blocks, nested block relationships, block translations, and compatible Shared Slot references, but it creates a new page id.
 - Target-site path conflicts are blocking validation errors in the current version.
 - Shared Slot references must be remappable to compatible same-handle Shared Slots on the target site, otherwise the move is blocked.
-- Site-level portability tools such as Export / Import and Site Clone remain separate from page moves.
+- Site-level portability tools such as Export / Import and Site Clone remain separate from page moves and page duplication.
 
 ## Page Builder
 

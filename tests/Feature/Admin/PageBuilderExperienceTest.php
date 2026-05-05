@@ -191,6 +191,7 @@ class PageBuilderExperienceTest extends TestCase
             ->assertDontSee('<select id="site_id" name="site_id"', false)
             ->assertSee('type="hidden" name="site_id" value="'.$page->site_id.'"', false)
             ->assertSee('Existing pages cannot be moved between sites from this form.')
+            ->assertSee('Duplicate page')
             ->assertSee('Move to another site')
             ->assertDontSee('Site Context');
     }
@@ -212,12 +213,39 @@ class PageBuilderExperienceTest extends TestCase
         $this->actingAs($editor)
             ->get(route('admin.pages.edit', $page))
             ->assertOk()
+            ->assertSee('Duplicate page')
             ->assertDontSee('Move to another site');
 
         $this->actingAs($siteAdmin)
             ->get(route('admin.pages.edit', $page))
             ->assertOk()
+            ->assertSee('Duplicate page')
             ->assertDontSee('Move to another site');
+    }
+
+    #[Test]
+    public function edit_page_shows_duplicate_action_for_site_admin_when_another_accessible_site_exists(): void
+    {
+        $this->seedFoundation();
+
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([$this->defaultLocale()->id => ['is_enabled' => true]]);
+
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $siteAdmin->sites()->sync([$page->site_id, $otherSite->id]);
+
+        $this->actingAs($siteAdmin)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('Duplicate page')
+            ->assertSee('Move to another site');
     }
 
     #[Test]
