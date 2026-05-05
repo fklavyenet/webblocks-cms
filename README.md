@@ -120,6 +120,16 @@ See `docs/getting-started.md` for the first-use workflow.
 - Install-specific code should stay outside CMS core and inside `project/`.
 - Release packages exclude `project/` so shipped artifacts contain reusable CMS product code only.
 - Website-specific sync, import, migration, and seed workflows must not be added to CMS core.
+- Project-layer WebBlocks UI website import payloads live under `storage/project/webblocksui.com`.
+- These WebBlocks UI website files are project-specific migration assets, not CMS core release content.
+- CMS core stays generic; native export/import-style payloads remain the portability mechanism for website content.
+- Configure the local WebBlocks UI docs preview host with `ddev artisan project:webblocksui-local-resolver`; this writes project-specific DDEV `additional_hostnames` config for `ui.docs.webblocksui.com.ddev.site`.
+- If the resolver command updates DDEV config, run `ddev restart` before opening the preview host.
+- If the local target site and docs-shell dependency pages do not exist yet, create them with `ddev artisan project:webblocksui-setup-site`.
+- Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
+- The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
+- Local preview host: `ui.docs.webblocksui.com.ddev.site`.
+- Full local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
 
 ## Developer Notes
 
@@ -127,6 +137,8 @@ See `docs/getting-started.md` for the first-use workflow.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.
 - `default` uses standard semantic wrappers such as `header`, `main`, `aside`, and `footer`. `docs` automatically maps header, sidebar, and main slots to the docs navbar, sidebar, and main wrappers.
+- Existing pages remain site-scoped after creation. The normal `Edit Page` form shows the current site as read-only context and does not move pages between sites.
+- Cross-site page moves are intentionally not part of the normal page update flow; a dedicated `Move to another site` workflow will be needed later.
 - Shared Slots participate only at the slot-content layer. When a page slot source is `shared_slot`, the referenced Shared Slot block tree renders inside the resolved page slot wrapper if site scope matches and any optional Shared Slot shell or slot-name constraints are compatible. Invalid or cross-site shared-slot references render no shared content.
 - The page editor now owns slot source assignment. Editors who can edit the page in its current workflow state can switch a slot between `page`, `shared_slot`, and `disabled`. Selecting a Shared Slot requires the same site, active status, and compatibility with the page shell and slot name.
 - Shared Slots are managed under the site-level admin navigation alongside Pages, Navigation, and Media. `super_admin` can manage Shared Slots for all sites, `site_admin` can manage Shared Slots for assigned sites, and editors can access Shared Slot block editing within assigned sites using the same draft-only content-editing rule used for page content.

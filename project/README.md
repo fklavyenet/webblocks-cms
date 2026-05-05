@@ -28,3 +28,21 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `project:sync-ui-docs-navigation`
 - `project:sync-ui-docs-home-main`
 - `webblocks:sync-ui-docs-getting-started` syncs the existing Getting Started page main slot with idempotent, marker-based WebBlocks UI docs content blocks.
+- `project:webblocksui-local-resolver` prepares the local DDEV router alias for the WebBlocks UI docs preview host by writing `.ddev/config.webblocksui.local-resolver.yaml` with `additional_hostnames`.
+- `project:webblocksui-setup-site` creates the project-layer WebBlocks UI docs site plus the docs Home, Getting Started, and sidebar-navigation dependencies needed by JSON-backed imports.
+- Canonical site domain: `ui.docs.webblocksui.com`.
+- Local DDEV preview host: `ui.docs.webblocksui.com.ddev.site`.
+- `project:webblocksui-local-resolver` edits DDEV config only. It does not touch CMS core routing and it does not edit the hosts file.
+- After `project:webblocksui-local-resolver` updates DDEV config, run `ddev restart` to apply the router alias.
+- `project:webblocksui-setup-site` uses the DDEV host alias as the persisted local site domain on local installs so the core host resolver can match requests without adding website-specific CMS core logic.
+- `project:webblocksui-import docs-architecture` imports the Architecture page from the project payload in `storage/project/webblocksui.com/docs-architecture.json` sourced from `https://webblocksui.com/docs/architecture.html`.
+- Local workflow:
+- `ddev artisan project:webblocksui-local-resolver`
+- `ddev restart`
+- `ddev artisan project:webblocksui-setup-site`
+- `ddev artisan project:webblocksui-import docs-architecture`
+- Open `https://ui.docs.webblocksui.com.ddev.site/p/architecture`
+- Canonical source page URL: `https://webblocksui.com/docs/architecture.html`.
+- CMS local Architecture path: `/p/architecture`.
+- Architecture local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
+- Source page URL and CMS preview URL are separate: source content comes from `https://webblocksui.com/docs/architecture.html`, while local CMS preview uses the DDEV host and current CMS path model.

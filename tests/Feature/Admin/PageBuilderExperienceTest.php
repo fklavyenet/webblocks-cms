@@ -175,13 +175,103 @@ class PageBuilderExperienceTest extends TestCase
             ->get(route('admin.pages.create'))
             ->assertOk()
             ->assertSee('Site')
+            ->assertSee('name="site_id"', false)
             ->assertDontSee('Site Context');
 
         $this->actingAs($user)
             ->get(route('admin.pages.edit', $page))
             ->assertOk()
             ->assertSee('Site')
+            ->assertDontSee('<select id="site_id" name="site_id"', false)
+            ->assertSee('type="hidden" name="site_id" value="'.$page->site_id.'"', false)
+            ->assertSee('Existing pages cannot be moved between sites from this form.')
             ->assertDontSee('Site Context');
+    }
+
+    #[Test]
+    public function create_page_still_allows_setting_the_site_and_edit_update_keeps_existing_site(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([$this->defaultLocale()->id => ['is_enabled' => true]]);
+
+        $create = $this->actingAs($user)->post(route('admin.pages.store'), [
+            'site_id' => $otherSite->id,
+            'title' => 'Campaign',
+            'slug' => 'campaign',
+            'public_shell' => 'default',
+        ]);
+
+        $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'campaign'))->firstOrFail();
+
+        $create->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame($otherSite->id, $page->site_id);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'site_id' => $otherSite->id,
+            'slug' => 'campaign',
+        ]);
+
+        $update = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+            'site_id' => $otherSite->id,
+            'title' => 'Campaign Updated',
+            'slug' => 'campaign-updated',
+            'public_shell' => 'docs',
+        ]);
+
+        $update->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame($otherSite->id, $page->fresh()->site_id);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'site_id' => $otherSite->id,
+            'slug' => 'campaign-updated',
+        ]);
+    }
+
+    #[Test]
+    public function forged_existing_page_site_change_is_rejected_without_moving_the_page(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([$this->defaultLocale()->id => ['is_enabled' => true]]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.edit', $page))
+            ->put(route('admin.pages.update', $page), [
+                'site_id' => $otherSite->id,
+                'title' => 'About Updated',
+                'slug' => 'about-updated',
+                'public_shell' => 'default',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $response->assertSessionHasErrors('site_id');
+        $response->assertSessionHasErrors([
+            'site_id' => 'Existing pages cannot be moved between sites from the Edit Page screen.',
+        ]);
+        $this->assertSame($this->defaultSite()->id, $page->fresh()->site_id);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'site_id' => $this->defaultSite()->id,
+            'slug' => 'about',
+        ]);
     }
 
     #[Test]

@@ -22,11 +22,14 @@ class PageRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $page = $this->route('page');
+        $page = $page instanceof Page ? $page : null;
         $title = (string) $this->input('title');
         $slug = (string) $this->input('slug');
+        $submittedSiteId = $this->input('site_id');
 
         $this->merge([
-            'site_id' => $this->input('site_id') ?: Site::primary()?->id,
+            'site_id' => filled($submittedSiteId) ? $submittedSiteId : ($page?->site_id ?? Site::primary()?->id),
             'slug' => Str::slug($slug !== '' ? $slug : $title),
         ]);
     }
@@ -156,27 +159,18 @@ class PageRequest extends FormRequest
             $page = $this->route('page');
             $page = $page instanceof Page ? $page->loadMissing('translations') : null;
 
-            if (! $page || $siteId <= 0 || $page->site_id === $siteId) {
+            if (! $page || $siteId <= 0) {
                 return;
             }
 
-            $enabledLocaleIds = Site::query()
-                ->whereKey($siteId)
-                ->with(['enabledLocales:id'])
-                ->first()?->enabledLocales
-                ->pluck('id')
-                ->map(fn ($id) => (int) $id)
-                ->all() ?? [];
+            if ($page->site_id !== $siteId) {
+                $validator->errors()->add('site_id', 'Existing pages cannot be moved between sites from the Edit Page screen.');
 
-            $invalidLocaleCodes = $page->translations
-                ->reject(fn (PageTranslation $translation) => in_array((int) $translation->locale_id, $enabledLocaleIds, true))
-                ->load('locale')
-                ->map(fn (PageTranslation $translation) => strtoupper((string) $translation->locale?->code))
-                ->filter()
-                ->values();
+                return;
+            }
 
-            if ($invalidLocaleCodes->isNotEmpty()) {
-                $validator->errors()->add('site_id', 'Target site must enable all existing page translation locales: '.$invalidLocaleCodes->join(', ').'.');
+            if ($page->site_id === $siteId) {
+                return;
             }
         }];
     }
