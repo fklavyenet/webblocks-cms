@@ -4,6 +4,10 @@
     $backUrl = route('admin.pages.edit', $page);
     $defaultTitle = old('title', trim(($defaultTranslation?->name ?? $page->title ?? 'Page').' Copy'));
     $defaultSlug = old('slug', trim(($defaultTranslation?->slug ?? $page->slug ?? 'page').'-copy', '-'));
+    $sharedSlotCompatibility = $sharedSlotValidation?->sharedSlotCompatibility ?? collect();
+    $sharedSlotIssues = $sharedSlotCompatibility->whereIn('status', ['missing_source', 'missing_target', 'incompatible_target'])->values();
+    $sharedSlotCompatible = $sharedSlotCompatibility->whereIn('status', ['same_site', 'compatible_target'])->values();
+    $canDisableIncompatibleSharedSlots = ($sharedSlotValidation?->disableEligibleSharedSlotIds->isNotEmpty() ?? false) && $selectedTargetSite && (int) $selectedTargetSite->id !== (int) $page->site_id;
 @endphp
 
 @extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -37,10 +41,55 @@
                         <div class="wb-alert-title">Warnings</div>
                         <div>Duplicated pages always start as draft. Every copied locale needs a unique path on the target site.</div>
                         @if ($sharedSlotHandles->isNotEmpty())
-                            <div class="wb-text-sm wb-mt-2">Shared Slot references stay in place for same-site duplicates. Cross-site duplicates remap only compatible same-handle Shared Slots: {{ $sharedSlotHandles->implode(', ') }}.</div>
+                            <div class="wb-text-sm wb-mt-2">Shared Slots are site-scoped. Same-site duplicates keep existing references. Cross-site duplicates remap only compatible same-handle Shared Slots: {{ $sharedSlotHandles->implode(', ') }}.</div>
                         @endif
                     </div>
                 </div>
+
+                @if ($sharedSlotCompatibility->isNotEmpty() && $selectedTargetSite)
+                    <div class="wb-card wb-card-muted">
+                        <div class="wb-card-body wb-stack wb-gap-3 wb-text-sm">
+                            <div>
+                                <strong>Shared Slot compatibility</strong>
+                                <div class="wb-text-muted">For target site: {{ $selectedTargetSite->name }}. Shared Slots are site-scoped and cannot be referenced across sites directly.</div>
+                            </div>
+
+                            @if ($sharedSlotCompatible->isNotEmpty())
+                                <div class="wb-alert wb-alert-info">
+                                    <div>
+                                        <div class="wb-alert-title">Compatible Shared Slots</div>
+                                        <div>{{ $sharedSlotCompatible->count() }} Shared Slot-backed slot(s) can be kept for this target site.</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($sharedSlotIssues->isNotEmpty())
+                                <div class="wb-alert wb-alert-warning">
+                                    <div>
+                                        <div class="wb-alert-title">Requires attention</div>
+                                        <div>The selected target site is missing compatible Shared Slots for {{ $sharedSlotIssues->count() }} slot(s). By default, duplication stays blocked until those Shared Slots exist on the target site.</div>
+                                    </div>
+                                </div>
+
+                                <div class="wb-stack wb-gap-2">
+                                    @foreach ($sharedSlotIssues as $sharedSlotIssue)
+                                        <div class="wb-card wb-card-muted">
+                                            <div class="wb-card-body wb-stack wb-gap-1">
+                                                <div><strong>Slot:</strong> {{ $sharedSlotIssue['slot_name'] ?: 'Unknown' }}</div>
+                                                <div><strong>Shared Slot:</strong> {{ $sharedSlotIssue['shared_slot_handle'] ?? 'Missing source Shared Slot' }}</div>
+                                                <div class="wb-text-muted">{{ $sharedSlotIssue['message'] }}</div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="wb-alert wb-alert-info">
+                                    <div>All Shared Slot-backed slots are compatible for the selected target site.</div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -49,19 +98,30 @@
                 <form method="POST" action="{{ route('admin.pages.duplicate.store', $page) }}" class="wb-stack wb-gap-4">
                     @csrf
 
-                    <div class="wb-field wb-stack-2">
-                        <label for="target_site_id">Target site</label>
-                        <select id="target_site_id" name="target_site_id" class="wb-select" required>
+                     <div class="wb-field wb-stack-2">
+                         <label for="target_site_id">Target site</label>
+                         <select id="target_site_id" name="target_site_id" class="wb-select" required>
                             @foreach ($sites as $site)
                                 <option value="{{ $site->id }}" @selected((int) old('target_site_id', $page->site_id) === (int) $site->id)>{{ $site->name }}</option>
                             @endforeach
                         </select>
                         @error('target_site_id')
                             <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
-                        @enderror
-                    </div>
+                         @enderror
+                     </div>
 
-                    <div class="wb-grid wb-grid-2">
+                    @if ($canDisableIncompatibleSharedSlots)
+                        <div class="wb-field wb-stack-2">
+                            <label class="wb-checkbox" for="disable_incompatible_shared_slots">
+                                <input type="hidden" name="disable_incompatible_shared_slots" value="0">
+                                <input id="disable_incompatible_shared_slots" type="checkbox" name="disable_incompatible_shared_slots" value="1" @checked(old('disable_incompatible_shared_slots'))>
+                                <span>Disable incompatible Shared Slot-backed slots on the duplicated page</span>
+                            </label>
+                            <div class="wb-text-sm wb-text-muted">Only Shared Slot-backed slots that cannot be remapped on the target site will be disabled. Page-owned content is duplicated normally, and the source page stays unchanged.</div>
+                        </div>
+                    @endif
+
+                     <div class="wb-grid wb-grid-2">
                         <div class="wb-field wb-stack-2">
                             <label for="title">New page title</label>
                             <input id="title" name="title" class="wb-input" type="text" value="{{ $defaultTitle }}" required>

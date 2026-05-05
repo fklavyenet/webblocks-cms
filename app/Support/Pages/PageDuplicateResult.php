@@ -12,6 +12,7 @@ class PageDuplicateResult
         public readonly Page $page,
         public readonly Site $targetSite,
         public readonly int $remappedSharedSlotCount,
+        public readonly int $disabledSharedSlotCount,
         public readonly int $sourceNavigationCount,
     ) {}
 }

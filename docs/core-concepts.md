@@ -28,6 +28,11 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - Duplicate preserves layout, translations, slots, page-owned blocks, nested block relationships, block translations, and compatible Shared Slot references, but it creates a new page id.
 - Target-site path conflicts are blocking validation errors in the current version.
 - Shared Slot references must be remappable to compatible same-handle Shared Slots on the target site, otherwise the move is blocked.
+- Same-site duplicate preserves existing Shared Slot references.
+- Cross-site duplicate remaps only compatible same-handle target-site Shared Slots.
+- When a cross-site duplicate cannot remap some Shared Slot-backed slots, the default behavior is still to block the duplicate.
+- The duplicate workflow can now explicitly disable only those incompatible duplicated page slots instead of persisting an invalid cross-site Shared Slot reference.
+- That opt-in fallback writes the duplicated page slot as `disabled`, clears `shared_slot_id`, leaves the source page unchanged, and does not copy Shared Slot block trees into the duplicated page in this version.
 - Site-level portability tools such as Export / Import and Site Clone remain separate from page moves and page duplication.
 
 ## Page Builder
@@ -77,6 +82,7 @@ Shared Slots are a slot-content ownership layer that sits under the existing pag
 - `shared_slot` means the slot references a site-scoped reusable Shared Slot block tree that is rendered dynamically at public runtime.
 - `disabled` means the slot wrapper still exists, but no blocks are rendered inside it.
 - Shared Slots are site-scoped reusable slot block trees, not copy-based templates.
+- Shared Slot references are valid only within the same site. Cross-site page operations must remap to a compatible target-site Shared Slot or fall back to a safe blocked or disabled result depending on the operation and explicit user choice.
 - Shared Slots do not own page shells or slot wrappers. The page shell still owns the outer shell, and the consuming page slot still owns the wrapper for `header`, `main`, `sidebar`, or other slot regions.
 - A valid Shared Slot contributes only the block tree rendered inside that existing page slot wrapper.
 - Public Shared Slot rendering is conservative:

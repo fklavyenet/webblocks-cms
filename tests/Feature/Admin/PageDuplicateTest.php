@@ -234,6 +234,31 @@ class PageDuplicateTest extends TestCase
         ], $overrides);
     }
 
+    private function attachSharedSlotToPageSlot(
+        Page $page,
+        Site $sharedSlotSite,
+        string $handle = 'docs-header',
+        string $slotName = 'header',
+        ?string $publicShell = 'docs',
+        bool $isActive = true,
+    ): SharedSlot {
+        $sharedSlot = SharedSlot::query()->create([
+            'site_id' => $sharedSlotSite->id,
+            'name' => str($handle)->headline()->toString(),
+            'handle' => $handle,
+            'slot_name' => $slotName,
+            'public_shell' => $publicShell,
+            'is_active' => $isActive,
+        ]);
+
+        PageSlot::query()->where('page_id', $page->id)->where('sort_order', 0)->update([
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+
+        return $sharedSlot;
+    }
+
     #[Test]
     public function super_admin_can_open_the_duplicate_page_screen(): void
     {
@@ -426,18 +451,7 @@ class PageDuplicateTest extends TestCase
 
         $site = $this->defaultSite();
         $page = $this->pageWithContent($site);
-        $sharedSlot = SharedSlot::query()->create([
-            'site_id' => $site->id,
-            'name' => 'Docs Header',
-            'handle' => 'docs-header',
-            'slot_name' => 'header',
-            'public_shell' => 'docs',
-            'is_active' => true,
-        ]);
-        PageSlot::query()->where('page_id', $page->id)->where('sort_order', 0)->update([
-            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
-            'shared_slot_id' => $sharedSlot->id,
-        ]);
+        $sharedSlot = $this->attachSharedSlotToPageSlot($page, $site);
 
         $this->actingAs(User::factory()->superAdmin()->create())
             ->post(route('admin.pages.duplicate.store', $page), $this->duplicatePayload($page, $site));
@@ -449,7 +463,7 @@ class PageDuplicateTest extends TestCase
     }
 
     #[Test]
-    public function duplicate_to_another_site_remaps_compatible_shared_slots_and_fails_when_missing(): void
+    public function cross_site_duplicate_still_fails_when_target_shared_slot_is_missing_without_disable_option(): void
     {
         $this->seedFoundation();
 
@@ -457,18 +471,7 @@ class PageDuplicateTest extends TestCase
         $targetSite = $this->createSite('secondary', 'secondary.example.test');
         $targetSite->locales()->syncWithoutDetaching([$this->createLocale('tr')->id => ['is_enabled' => true]]);
         $page = $this->pageWithContent($sourceSite);
-        $sourceSharedSlot = SharedSlot::query()->create([
-            'site_id' => $sourceSite->id,
-            'name' => 'Docs Header',
-            'handle' => 'docs-header',
-            'slot_name' => 'header',
-            'public_shell' => 'docs',
-            'is_active' => true,
-        ]);
-        PageSlot::query()->where('page_id', $page->id)->where('sort_order', 0)->update([
-            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
-            'shared_slot_id' => $sourceSharedSlot->id,
-        ]);
+        $this->attachSharedSlotToPageSlot($page, $sourceSite);
 
         $response = $this->actingAs(User::factory()->superAdmin()->create())
             ->from(route('admin.pages.duplicate.create', $page))
@@ -477,6 +480,45 @@ class PageDuplicateTest extends TestCase
         $response->assertRedirect(route('admin.pages.duplicate.create', $page));
         $response->assertSessionHasErrors('target_site_id');
         $this->assertSame(0, Page::query()->where('site_id', $targetSite->id)->count());
+    }
+
+    #[Test]
+    public function cross_site_duplicate_succeeds_when_target_shared_slot_is_missing_and_disable_option_is_selected(): void
+    {
+        $this->seedFoundation();
+
+        $sourceSite = $this->defaultSite();
+        $targetSite = $this->createSite('secondary', 'secondary.example.test');
+        $targetSite->locales()->syncWithoutDetaching([$this->createLocale('tr')->id => ['is_enabled' => true]]);
+        $page = $this->pageWithContent($sourceSite);
+        $sourceSharedSlot = $this->attachSharedSlotToPageSlot($page, $sourceSite);
+
+        $response = $this->actingAs(User::factory()->superAdmin()->create())
+            ->post(route('admin.pages.duplicate.store', $page), $this->duplicatePayload($page, $targetSite, [
+                'disable_incompatible_shared_slots' => '1',
+            ]));
+
+        $duplicate = Page::query()->where('site_id', $targetSite->id)->latest('id')->firstOrFail();
+        $duplicateHeader = PageSlot::query()->where('page_id', $duplicate->id)->where('sort_order', 0)->firstOrFail();
+        $sourceHeader = PageSlot::query()->where('page_id', $page->id)->where('sort_order', 0)->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.edit', $duplicate));
+        $this->assertSame(PageSlot::SOURCE_TYPE_DISABLED, $duplicateHeader->source_type);
+        $this->assertNull($duplicateHeader->shared_slot_id);
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $sourceHeader->fresh()->source_type);
+        $this->assertSame($sourceSharedSlot->id, $sourceHeader->fresh()->shared_slot_id);
+    }
+
+    #[Test]
+    public function cross_site_duplicate_remaps_compatible_shared_slots_when_present(): void
+    {
+        $this->seedFoundation();
+
+        $sourceSite = $this->defaultSite();
+        $targetSite = $this->createSite('secondary', 'secondary.example.test');
+        $targetSite->locales()->syncWithoutDetaching([$this->createLocale('tr')->id => ['is_enabled' => true]]);
+        $page = $this->pageWithContent($sourceSite);
+        $sourceSharedSlot = $this->attachSharedSlotToPageSlot($page, $sourceSite);
 
         SharedSlot::query()->create([
             'site_id' => $targetSite->id,
@@ -495,6 +537,57 @@ class PageDuplicateTest extends TestCase
 
         $this->assertNotNull($duplicateHeader->shared_slot_id);
         $this->assertNotSame($sourceSharedSlot->id, $duplicateHeader->shared_slot_id);
+        $this->assertSame($targetSite->id, SharedSlot::query()->findOrFail($duplicateHeader->shared_slot_id)->site_id);
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $duplicateHeader->source_type);
+    }
+
+    #[Test]
+    public function cross_site_duplicate_never_persists_a_shared_slot_reference_from_another_site(): void
+    {
+        $this->seedFoundation();
+
+        $sourceSite = $this->defaultSite();
+        $targetSite = $this->createSite('secondary', 'secondary.example.test');
+        $targetSite->locales()->syncWithoutDetaching([$this->createLocale('tr')->id => ['is_enabled' => true]]);
+        $page = $this->pageWithContent($sourceSite);
+        $this->attachSharedSlotToPageSlot($page, $sourceSite);
+
+        $this->actingAs(User::factory()->superAdmin()->create())
+            ->post(route('admin.pages.duplicate.store', $page), $this->duplicatePayload($page, $targetSite, [
+                'disable_incompatible_shared_slots' => '1',
+            ]));
+
+        $duplicate = Page::query()->where('site_id', $targetSite->id)->latest('id')->firstOrFail();
+        $duplicateSlotIds = PageSlot::query()->where('page_id', $duplicate->id)->pluck('shared_slot_id')->filter();
+
+        $this->assertCount(0, $duplicateSlotIds);
+
+        foreach ($duplicateSlotIds as $sharedSlotId) {
+            $this->assertSame($targetSite->id, SharedSlot::query()->findOrFail($sharedSlotId)->site_id);
+        }
+    }
+
+    #[Test]
+    public function duplicate_form_shows_shared_slot_compatibility_warning_after_blocked_submit(): void
+    {
+        $this->seedFoundation();
+
+        $sourceSite = $this->defaultSite();
+        $targetSite = $this->createSite('secondary', 'secondary.example.test');
+        $targetSite->locales()->syncWithoutDetaching([$this->createLocale('tr')->id => ['is_enabled' => true]]);
+        $page = $this->pageWithContent($sourceSite);
+        $this->attachSharedSlotToPageSlot($page, $sourceSite);
+
+        $response = $this->actingAs(User::factory()->superAdmin()->create())
+            ->from(route('admin.pages.duplicate.create', $page))
+            ->followingRedirects()
+            ->post(route('admin.pages.duplicate.store', $page), $this->duplicatePayload($page, $targetSite));
+
+        $response->assertOk();
+        $response->assertSee('Shared Slot compatibility');
+        $response->assertSee('Shared Slots are site-scoped and cannot be referenced across sites directly.');
+        $response->assertSee('Disable incompatible Shared Slot-backed slots on the duplicated page');
+        $response->assertSee('Shared Slot [docs-header] must exist on the target site before duplicating this page.');
     }
 
     #[Test]

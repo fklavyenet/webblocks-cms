@@ -22,7 +22,13 @@ Each site has its own content scope, domains, locales, navigation, and editorial
 - Existing pages stay site-scoped on the normal Edit Page form. To move one page between sites inside the same install, use the dedicated `Move to another site` action.
 - To create a copy of one page inside the same site or another accessible site, use the dedicated `Duplicate page` action instead of move.
 - Page moves require a different target site, matching locale support, no conflicting translated paths on the target site, and compatible Shared Slot remaps when the page uses Shared Slots.
-- Page duplicates require target-site access, locale compatibility, unique translated target paths, and compatible Shared Slot remaps for cross-site Shared Slot usage.
+- Page duplicates require target-site access, locale compatibility, unique translated target paths, and Shared Slot-safe handling for cross-site Shared Slot usage.
+- Shared Slots are site-scoped and cannot be referenced across sites directly.
+- Same-site duplicate keeps existing Shared Slot references.
+- Cross-site duplicate remaps only compatible same-handle Shared Slots from the target site.
+- Missing or incompatible target Shared Slots still block the duplicate by default.
+- When the duplicate screen offers `Disable incompatible Shared Slot-backed slots on the duplicated page` and the user opts in, only those incompatible duplicated page slots are written as disabled instead of preserving an invalid cross-site Shared Slot reference.
+- This duplicate fallback does not create Shared Slots automatically and does not copy Shared Slot content into page-owned blocks.
 - Page-linked navigation may need manual review after a move even though strict same-page navigation references are kept valid.
 
 ## Related Docs

@@ -147,6 +147,12 @@ See `docs/getting-started.md` for the first-use workflow.
 - Duplicate does not copy navigation items, revision history, visitor/reporting rows, contact messages, or site transfer history.
 - Duplicate can target the same site or another accessible site. Every copied locale must have a unique target path; conflicts block the duplicate instead of auto-renaming slugs.
 - The duplicate screen collects the new default-locale title and slug plus explicit title/slug values for every additional copied locale so multilingual duplicates can be validated before writing.
+- The duplicate screen now includes a Shared Slot compatibility summary for the currently selected target site whenever the source page uses Shared Slots.
+- Shared Slots are site-scoped. Same-site duplicates keep existing `shared_slot_id` references as-is.
+- Cross-site duplicate remaps only compatible same-handle Shared Slots from the target site. It never keeps a cross-site `shared_slot_id`.
+- Missing or incompatible target Shared Slots still block cross-site duplication by default.
+- The duplicate form now exposes `Disable incompatible Shared Slot-backed slots on the duplicated page` when relevant. When selected, only the duplicated page's affected Shared Slot-backed slots are written as `source_type = disabled` with `shared_slot_id = null`.
+- The duplicate fallback does not create Shared Slots automatically and does not duplicate Shared Slot block trees into the page in this version.
 - The page move workflow preserves the page id, workflow state, layout, translations, slots, page-owned blocks, block translations, ordering, and page revisions. It does not duplicate the page or block tree.
 - Target-site path conflicts block the move. The first version does not auto-rename slugs or paths to resolve conflicts.
 - Shared Slot references must already be compatible on the target site. Matching same-handle Shared Slots are remapped when they satisfy the existing site, shell, active-state, and slot-name compatibility rules. Missing or incompatible target Shared Slots block the move.
