@@ -3560,14 +3560,23 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Page Content');
         $response->assertSee('Shared Slot: Reusable Header');
         $response->assertSee('Disabled');
-        $response->assertSee('Slot key: <code>header</code>', false);
-        $response->assertSee('Slot key: <code>main</code>', false);
-        $response->assertSee('This slot is disabled for public rendering.');
-        $response->assertSee('These page blocks are preserved but not currently rendered.');
-        $response->assertSee('These page blocks are preserved while the slot is disabled.');
+        $response->assertSee('<span class="wb-status-pill wb-status-info">header</span>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info">main</span>', false);
+        $response->assertSee('No public slot content will render.');
+        $response->assertSee('Rendered publicly.');
+        $response->assertSee('Preserved but not currently rendered.');
+        $response->assertSee('Manage Source');
+        $response->assertSee('Slot Source: Header');
+        $response->assertSee('Slot Source: Sidebar');
+        $response->assertSee('Save Source');
+        $response->assertDontSee('Update Source');
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $pageSlot]).'"', false);
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $disabledSlot]).'"', false);
+        $response->assertSee('Edit Blocks');
+        $response->assertSee('Edit Shared Slot');
+        $response->assertSee('Edit Page Blocks (Preserved)');
         $response->assertSee('Reusable Header (reusable-header) | header | docs', false);
+        $response->assertDontSee('<button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>', false);
     }
 
     #[Test]
@@ -3607,6 +3616,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Compatible Header (compatible-header) | header | docs', false);
         $response->assertSee('Any Header (any-header) | Any slot | Any shell', false);
+        $response->assertSee('Only active Shared Slots from this site with compatible shell and slot rules are listed.');
+        $response->assertSee('Slot Source: Header');
         $response->assertDontSee('Wrong Slot (wrong-slot)', false);
         $response->assertDontSee('Wrong Shell (wrong-shell)', false);
         $response->assertDontSee('Inactive Header (inactive-header)', false);
@@ -3760,7 +3771,34 @@ class PageBuilderExperienceTest extends TestCase
         $warningResponse = $this->actingAs($siteAdmin)->get(route('admin.pages.edit', $page->fresh()));
 
         $warningResponse->assertOk();
-        $warningResponse->assertSee('currently incompatible');
         $warningResponse->assertSee('This Shared Slot is no longer compatible because its public shell no longer matches this page.');
+        $warningResponse->assertSee('Manage Source');
+    }
+
+    #[Test]
+    public function failed_slot_source_update_reopens_the_matching_slot_source_modal_on_page_edit(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $wrongShell = $this->activeSharedSlotForPage($page, 'Wrong Shell', 'wrong-shell', 'header', 'default');
+
+        $response = $this->followingRedirects()->actingAs($user)
+            ->from(route('admin.pages.edit', $page))
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'slot_id' => $pageSlot->id,
+                'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+                'shared_slot_id' => $wrongShell->id,
+            ]);
+
+        $response->assertOk();
+        $response->assertSee('This slot source update needs attention.');
+        $response->assertSee('Shared Slot public shell must match the page public shell.');
+        $response->assertSee('Slot Source: Header');
+        $response->assertSee('Manage Source');
     }
 }
