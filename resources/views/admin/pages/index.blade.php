@@ -38,52 +38,60 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            <form method="GET" action="{{ route('admin.pages.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
-                <div class="wb-cluster wb-cluster-2">
-                    <div class="wb-stack wb-gap-1">
-                    <label for="pages_search">Search</label>
-                    <input id="pages_search" name="search" type="text" class="wb-input" value="{{ $filters['search'] }}" placeholder="Search by title, slug, or page type">
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="pages_status">Status</label>
-                        <select id="pages_status" name="status" class="wb-select">
-                            <option value="">All statuses</option>
-                            <option value="draft" @selected($filters['status'] === 'draft')>Draft</option>
-                            <option value="in_review" @selected($filters['status'] === 'in_review')>In Review</option>
-                            <option value="published" @selected($filters['status'] === 'published')>Published</option>
-                            <option value="archived" @selected($filters['status'] === 'archived')>Archived</option>
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="pages_sort">Sort by</label>
-                        <select id="pages_sort" name="sort" class="wb-select">
-                            <option value="created_at" @selected($filters['sort'] === 'created_at')>Created at</option>
-                            <option value="updated_at" @selected($filters['sort'] === 'updated_at')>Updated at</option>
-                            <option value="title" @selected($filters['sort'] === 'title')>Title</option>
-                            <option value="slug" @selected($filters['sort'] === 'slug')>Slug</option>
-                            <option value="status" @selected($filters['sort'] === 'status')>Status</option>
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="pages_direction">Direction</label>
-                        <select id="pages_direction" name="direction" class="wb-select">
-                            <option value="desc" @selected($filters['direction'] === 'desc')>Descending</option>
-                            <option value="asc" @selected($filters['direction'] === 'asc')>Ascending</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                    <input type="hidden" name="site" value="{{ $filters['site'] }}">
-                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc')
-                        <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">Clear</a>
-                    @endif
-                </div>
-            </form>
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.pages.index'),
+                'search' => [
+                    'id' => 'pages_search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'value' => $filters['search'],
+                    'placeholder' => 'Search by title, slug, or page type',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'pages_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'selected' => $filters['status'],
+                        'placeholder' => 'All statuses',
+                        'options' => [
+                            'draft' => 'Draft',
+                            'in_review' => 'In Review',
+                            'published' => 'Published',
+                            'archived' => 'Archived',
+                        ],
+                    ],
+                    [
+                        'id' => 'pages_sort',
+                        'name' => 'sort',
+                        'label' => 'Sort by',
+                        'selected' => $filters['sort'],
+                        'options' => [
+                            'created_at' => 'Created at',
+                            'updated_at' => 'Updated at',
+                            'title' => 'Title',
+                            'slug' => 'Slug',
+                            'status' => 'Status',
+                        ],
+                    ],
+                    [
+                        'id' => 'pages_direction',
+                        'name' => 'direction',
+                        'label' => 'Direction',
+                        'selected' => $filters['direction'],
+                        'options' => [
+                            'desc' => 'Descending',
+                            'asc' => 'Ascending',
+                        ],
+                    ],
+                ],
+                'hidden' => [
+                    'site' => $filters['site'],
+                ],
+                'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
+                'resetUrl' => $clearUrl,
+                'applyLabel' => 'Apply',
+            ])
         </div>
     </div>
 
@@ -221,7 +229,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $pages])
+            @include('admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => 'Pages pagination', 'compact' => true])
         </div>
 
     @endif

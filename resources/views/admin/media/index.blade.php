@@ -32,45 +32,49 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            <form method="GET" action="{{ route('admin.media.index') }}" class="wb-cluster wb-cluster-between wb-cluster-2">
-                <div class="wb-cluster wb-cluster-2">
-                    <div class="wb-stack wb-gap-1">
-                        <label for="media_search">Search</label>
-                        <input id="media_search" name="search" type="text" class="wb-input" value="{{ $search }}" placeholder="Search title, filename, alt text, or caption">
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="media_kind">Kind</label>
-                        <select id="media_kind" name="kind" class="wb-select">
-                            <option value="">All kinds</option>
-                            <option value="image" @selected($kind === Asset::KIND_IMAGE)>Images</option>
-                            <option value="video" @selected($kind === Asset::KIND_VIDEO)>Videos</option>
-                            <option value="document" @selected($kind === Asset::KIND_DOCUMENT)>Documents</option>
-                            <option value="other" @selected($kind === Asset::KIND_OTHER)>Other</option>
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="media_usage">Usage</label>
-                        <select id="media_usage" name="usage" class="wb-select">
-                            <option value="">All assets</option>
-                            <option value="used" @selected($usage === 'used')>Used</option>
-                            <option value="unused" @selected($usage === 'unused')>Unused</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                    @if ($selectedFolderId)
-                        <input type="hidden" name="folder_id" value="{{ $selectedFolderId }}">
-                    @endif
-                    <input type="hidden" name="view" value="{{ $viewMode }}">
-                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $viewMode !== 'list')
-                        <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
-                    @endif
-                </div>
-            </form>
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.media.index'),
+                'search' => [
+                    'id' => 'media_search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'value' => $search,
+                    'placeholder' => 'Search title, filename, alt text, or caption',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'media_kind',
+                        'name' => 'kind',
+                        'label' => 'Kind',
+                        'selected' => $kind,
+                        'placeholder' => 'All kinds',
+                        'options' => [
+                            Asset::KIND_IMAGE => 'Images',
+                            Asset::KIND_VIDEO => 'Videos',
+                            Asset::KIND_DOCUMENT => 'Documents',
+                            Asset::KIND_OTHER => 'Other',
+                        ],
+                    ],
+                    [
+                        'id' => 'media_usage',
+                        'name' => 'usage',
+                        'label' => 'Usage',
+                        'selected' => $usage,
+                        'placeholder' => 'All assets',
+                        'options' => [
+                            'used' => 'Used',
+                            'unused' => 'Unused',
+                        ],
+                    ],
+                ],
+                'hidden' => [
+                    'folder_id' => $selectedFolderId,
+                    'view' => $viewMode,
+                ],
+                'showReset' => $selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $viewMode !== 'list',
+                'resetUrl' => route('admin.media.index'),
+                'applyLabel' => 'Apply',
+            ])
         </div>
     </div>
 
@@ -227,11 +231,10 @@
                 </div>
             @endif
 
-            <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
-                @include('admin.partials.pagination', ['paginator' => $assets])
-            </div>
+            <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
         </div>
+
+        @include('admin.partials.pagination', ['paginator' => $assets, 'ariaLabel' => 'Media pagination', 'compact' => true])
     </div>
 @endsection
 

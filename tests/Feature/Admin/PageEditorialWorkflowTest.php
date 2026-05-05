@@ -377,6 +377,15 @@ class PageEditorialWorkflowTest extends TestCase
         $index->assertSee('Draft');
         $index->assertSee('In Review');
         $index->assertSee('Archived');
+        $index->assertSee('data-admin-listing-filters', false);
+        $index->assertSee('data-admin-listing-filters-search', false);
+        $index->assertSee('data-admin-listing-filters-fields', false);
+        $index->assertSee('data-admin-listing-filters-actions', false);
+        $index->assertSee('id="pages_search"', false);
+        $index->assertSee('id="pages_status"', false);
+        $index->assertSee('id="pages_sort"', false);
+        $index->assertSee('id="pages_direction"', false);
+        $index->assertSee('Apply', false);
 
         $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
         $editorEdit->assertOk();
@@ -388,6 +397,72 @@ class PageEditorialWorkflowTest extends TestCase
         $siteAdminEdit->assertOk();
         $siteAdminEdit->assertSee('Submit for Review');
         $siteAdminEdit->assertSee('Publish');
+    }
+
+    #[Test]
+    public function page_index_filters_and_pagination_preserve_query_string_with_compact_summary(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+
+        foreach (range(1, 35) as $index) {
+            Page::query()->create([
+                'site_id' => $site->id,
+                'title' => sprintf('Pattern Page %02d', $index),
+                'slug' => sprintf('pattern-page-%02d', $index),
+                'status' => $index % 2 === 0 ? Page::STATUS_PUBLISHED : Page::STATUS_DRAFT,
+                'page_type' => 'default',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Pattern Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Pattern Page 02');
+        $response->assertDontSee('Pattern Page 01');
+        $response->assertSee('data-admin-pagination', false);
+        $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
+        $response->assertSee('aria-label="Pages pagination"', false);
+        $response->assertSee('aria-current="page">1</span>', false);
+        $response->assertSee('data-admin-pagination-summary', false);
+        $response->assertSee('1-15/17', false);
+        $response->assertDontSee('Showing 1-15 of 17', false);
+        $response->assertSee(e(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Pattern Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ])), false);
+        $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
+
+        $pageTwo = $this->actingAs($user)->get(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Pattern Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
+        $pageTwo->assertSee('16-17/17', false);
+        $pageTwo->assertSee(e(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Pattern Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 1,
+        ])), false);
     }
 
     #[Test]

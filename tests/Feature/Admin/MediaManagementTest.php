@@ -77,7 +77,7 @@ class MediaManagementTest extends TestCase
         $response->assertSee('List');
         $response->assertSee('Grid');
         $response->assertSee('<div class="wb-card wb-card-muted">', false);
-        $response->assertSee('<div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">', false);
+        $response->assertSee('data-admin-listing-filters', false);
         $response->assertSee('<div class="wb-table-wrap">', false);
         $response->assertSee('<div class="wb-page-actions">', false);
         $response->assertSee('name="view" value="list"', false);
@@ -103,6 +103,10 @@ class MediaManagementTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.media.index'));
 
         $response->assertOk();
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('data-admin-listing-filters-search', false);
+        $response->assertSee('data-admin-listing-filters-fields', false);
+        $response->assertSee('data-admin-listing-filters-actions', false);
         $response->assertSee('id="media_search"', false);
         $response->assertSee('id="media_kind"', false);
         $response->assertSee('id="media_usage"', false);
@@ -111,6 +115,62 @@ class MediaManagementTest extends TestCase
         $response->assertSee('<div class="wb-table-wrap">', false);
         $response->assertSee('wb-media-view-toggle', false);
         $response->assertSee(route('admin.media.show', $asset), false);
+    }
+
+    #[Test]
+    public function media_index_pagination_preserves_filters_and_uses_compact_summary(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        foreach (range(1, 35) as $index) {
+            Asset::create([
+                'disk' => 'public',
+                'path' => 'media/images/pattern-'.$index.'.jpg',
+                'filename' => 'pattern-'.$index.'.jpg',
+                'original_name' => 'pattern-'.$index.'.jpg',
+                'extension' => 'jpg',
+                'mime_type' => 'image/jpeg',
+                'size' => 1024 + $index,
+                'kind' => Asset::KIND_IMAGE,
+                'visibility' => 'public',
+                'title' => 'Pattern asset '.$index,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', [
+            'search' => 'Pattern asset',
+            'kind' => Asset::KIND_IMAGE,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-pagination', false);
+        $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
+        $response->assertSee('aria-label="Media pagination"', false);
+        $response->assertSee('aria-current="page">1</span>', false);
+        $response->assertSee('data-admin-pagination-summary', false);
+        $response->assertSee('1-20/35', false);
+        $response->assertDontSee('Showing 1-20 of 35', false);
+        $response->assertSee(e(route('admin.media.index', [
+            'search' => 'Pattern asset',
+            'kind' => Asset::KIND_IMAGE,
+            'page' => 2,
+        ])), false);
+        $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
+
+        $pageTwo = $this->actingAs($user)->get(route('admin.media.index', [
+            'search' => 'Pattern asset',
+            'kind' => Asset::KIND_IMAGE,
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
+        $pageTwo->assertSee('21-35/35', false);
+        $pageTwo->assertSee(e(route('admin.media.index', [
+            'search' => 'Pattern asset',
+            'kind' => Asset::KIND_IMAGE,
+            'page' => 1,
+        ])), false);
     }
 
     #[Test]

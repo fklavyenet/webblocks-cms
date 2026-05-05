@@ -33,12 +33,13 @@
     @if ($selects !== [])
         <div class="wb-admin-listing-filters-fields" data-admin-listing-filters-fields>
             @foreach ($selects as $select)
+                @php($selectedValue = (string) ($select['selected'] ?? $select['value'] ?? ''))
                 <div class="wb-stack wb-gap-1 wb-field wb-admin-listing-filters-select">
                     <label for="{{ $select['id'] }}" class="wb-label">{{ $select['label'] }}</label>
                     <select id="{{ $select['id'] }}" name="{{ $select['name'] }}" class="wb-select">
                         <option value="">{{ $select['placeholder'] ?? 'All' }}</option>
                         @foreach ($select['options'] as $value => $label)
-                            <option value="{{ $value }}" @selected(($select['value'] ?? '') === (string) $value)>{{ $label }}</option>
+                            <option value="{{ $value }}" @selected($selectedValue === (string) $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
