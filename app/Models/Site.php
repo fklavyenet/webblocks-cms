@@ -57,6 +57,11 @@ class Site extends Model
         return $this->hasMany(NavigationItem::class);
     }
 
+    public function sharedSlots(): HasMany
+    {
+        return $this->hasMany(SharedSlot::class);
+    }
+
     public function visitorEvents(): HasMany
     {
         return $this->hasMany(VisitorEvent::class);

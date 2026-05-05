@@ -51,6 +51,20 @@ Public page structure is controlled at the page and slot layer.
 
 For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
 
+## Shared Slots
+
+Shared Slots are a planned slot-content ownership layer that sits under the existing page layout model.
+
+- Page layout still owns which slots are available.
+- Page shell plus slot name still own the public wrappers for each slot.
+- Each page slot source can be `page`, `shared_slot`, or `disabled`.
+- `page` means the slot uses blocks owned directly by the page, which remains the current behavior.
+- `shared_slot` means the slot will reference a site-scoped reusable Shared Slot block tree.
+- `disabled` reserves a safe way to intentionally suppress slot content later without changing layout availability.
+- Shared Slots are site-scoped reusable slot block trees, not copy-based templates.
+
+This first phase adds only the data-model foundation. Admin workflows, public shared-slot rendering, export or import support, and revisions integration are completed in later phases.
+
 ## Project Boundary
 
 WebBlocks CMS core contains reusable CMS functionality.

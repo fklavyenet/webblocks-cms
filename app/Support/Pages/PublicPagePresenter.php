@@ -43,9 +43,9 @@ class PublicPagePresenter
     private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
     {
         $slug = $slot->slotType?->slug ?? 'main';
-        $blocks = $topLevelBlocks
-            ->where('slot_type_id', $slot->slot_type_id)
-            ->values();
+        $blocks = $slot->usesPageOwnedBlocks()
+            ? $topLevelBlocks->where('slot_type_id', $slot->slot_type_id)->values()
+            : collect();
         $wrapper = $this->slotWrapperResolver->resolve($slot->page ?? $slot->page()->firstOrFail(), $slot);
 
         return [

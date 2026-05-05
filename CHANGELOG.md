@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add the Shared Slots V1 foundation with site-scoped `shared_slots`, `shared_slot_blocks`, and page slot source fields so existing page-owned slots keep working unchanged while future phases can add shared-slot admin and rendering flows.
+
 ## 1.12.0
 
 ### Admin UI

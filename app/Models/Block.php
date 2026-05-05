@@ -104,6 +104,11 @@ class Block extends Model
         return $this->hasMany(BlockAsset::class)->orderBy('position');
     }
 
+    public function sharedSlotAssignments(): HasMany
+    {
+        return $this->hasMany(SharedSlotBlock::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function textTranslations(): HasMany
     {
         return $this->hasMany(BlockTextTranslation::class);
