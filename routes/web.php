@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PageRevisionController;
 use App\Http\Controllers\Admin\PageSlotController;
 use App\Http\Controllers\Admin\PageTranslationController;
 use App\Http\Controllers\Admin\SharedSlotController;
+use App\Http\Controllers\Admin\SharedSlotRevisionController;
 use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
@@ -64,6 +65,9 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::put('/pages/{page}/slots/{slot}/source', [PageSlotController::class, 'updateSource'])->name('pages.slots.source.update');
     Route::post('/pages/{page}/slots/{slot}/move-up', [PageSlotController::class, 'moveUp'])->name('pages.slots.move-up');
     Route::post('/pages/{page}/slots/{slot}/move-down', [PageSlotController::class, 'moveDown'])->name('pages.slots.move-down');
+    Route::get('/shared-slots/{shared_slot}/revisions', [SharedSlotRevisionController::class, 'index'])->name('shared-slots.revisions.index');
+    Route::get('/shared-slots/{shared_slot}/revisions/{revision}', [SharedSlotRevisionController::class, 'show'])->name('shared-slots.revisions.show');
+    Route::post('/shared-slots/{shared_slot}/revisions/{revision}/restore', [SharedSlotRevisionController::class, 'restore'])->name('shared-slots.revisions.restore');
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->name('reports.visitors.index');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::post('/pages/{page}/slots/{slot}/blocks/reorder', [PageController::class, 'reorderSlotBlocks'])->name('pages.slots.blocks.reorder');

@@ -62,6 +62,11 @@ class SharedSlot extends Model
         return $this->hasMany(PageSlot::class);
     }
 
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(SharedSlotRevision::class)->latest('created_at');
+    }
+
     public function statusLabel(): string
     {
         return $this->is_active ? 'Active' : 'Inactive';

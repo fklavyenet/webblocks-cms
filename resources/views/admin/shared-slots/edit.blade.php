@@ -1,6 +1,7 @@
 @php
     $indexUrl = route('admin.shared-slots.index', ['site' => $sharedSlot->site_id]);
     $blocksUrl = route('admin.shared-slots.blocks.edit', $sharedSlot);
+    $revisionsUrl = $canViewRevisions ? route('admin.shared-slots.revisions.index', $sharedSlot) : null;
 @endphp
 
 @extends('layouts.admin', ['title' => 'Edit Shared Slot', 'heading' => 'Shared Slots'])
@@ -10,7 +11,7 @@
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$indexUrl.'">Shared Slots</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($sharedSlot->name).'</span></li></ol></nav>',
         'title' => 'Edit Shared Slot',
         'context' => '<span>'.e($sharedSlot->site?->name ?? 'Site').'</span>',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$blocksUrl.'" class="wb-btn wb-btn-secondary">Edit Blocks</a><a href="'.$indexUrl.'" class="wb-btn wb-btn-secondary">Back to Shared Slots</a></div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2">'.($revisionsUrl ? '<a href="'.$revisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : '').'<a href="'.$blocksUrl.'" class="wb-btn wb-btn-secondary">Edit Blocks</a><a href="'.$indexUrl.'" class="wb-btn wb-btn-secondary">Back to Shared Slots</a></div>',
     ])
 
     @include('admin.partials.flash')

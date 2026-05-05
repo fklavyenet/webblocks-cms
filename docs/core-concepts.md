@@ -85,7 +85,10 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - Runtime public rendering guards remain in place even after write-time validation, so invalid, stale, cross-site, inactive, or incompatible assignments still render no shared content publicly.
 - Shared Slots now participate in site export/import and site clone. Their metadata, hidden-source-page block trees, translations, nested ordering, and media references are transferred as first-class site content. Consuming page slots keep `shared_slot` references by Shared Slot handle during export and are remapped to target-site Shared Slots during import and clone.
 - Hidden Shared Slot source pages remain internal. They are excluded from normal page export payloads, ordinary page listings, and public routing even though their block records still back the Shared Slot editor and portability flows.
-- Shared Slot revisions or history remain deferred to a later phase.
+- Shared Slots now have their own revision history and restore flow that is intentionally separate from page revisions.
+- Shared Slot revisions capture Shared Slot metadata plus the reusable Shared Slot block tree behind the hidden internal source page.
+- Restoring a Shared Slot revision restores the Shared Slot in place. The Shared Slot id stays stable, existing `page_slots.shared_slot_id` references remain intact, and the restored content immediately affects every page that references that Shared Slot.
+- Shared Slot revisions do not treat page revisions as authoritative for Shared Slot content, and page revisions do not pretend to capture Shared Slot block trees.
 
 ## Project Boundary
 

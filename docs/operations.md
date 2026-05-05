@@ -64,6 +64,7 @@ Shared Slots are exported and imported as first-class site content:
 - Shared Slot block trees, nested order, translations, and media references travel through the same block and asset packaging pipeline used for normal pages.
 - Page slots that use `shared_slot` export a stable Shared Slot handle reference and are remapped to the target site's imported Shared Slot during import.
 - Hidden Shared Slot source pages are kept internal and are not treated as ordinary user-facing pages in the package.
+- Shared Slot revision history is excluded from export/import, matching the current page revision portability boundary.
 
 It does not include install-global runtime data such as users, backups, update history, sessions, or contact submissions.
 
@@ -82,6 +83,8 @@ Site Clone is different from Export / Import:
 - Site Clone works inside the current install
 - Export / Import is for moving a site package between installs
 - Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, and media references, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind
+- Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, and media references, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind.
+- Shared Slot revision history is not cloned, matching the current page revision clone boundary.
 
 ## When To Use Which Tool
 

@@ -13,6 +13,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageWorkflowManager;
+use App\Support\SharedSlots\SharedSlotRevisionManager;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,7 @@ class SharedSlotController extends Controller
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
+        private readonly SharedSlotRevisionManager $revisionManager,
         private readonly SharedSlotSourcePageManager $sourcePages,
     ) {}
 
@@ -107,6 +109,14 @@ class SharedSlotController extends Controller
         $sharedSlot = DB::transaction(function () use ($request): SharedSlot {
             $sharedSlot = SharedSlot::query()->create($request->validatedData());
             $this->sourcePages->ensureFor($sharedSlot);
+            $this->revisionManager->capture(
+                $sharedSlot->fresh(),
+                $request->user(),
+                'created',
+                'Shared Slot created',
+                'Shared Slot metadata was created.',
+                force: true,
+            );
 
             return $sharedSlot;
         });
@@ -126,6 +136,7 @@ class SharedSlotController extends Controller
             'canManageSharedSlots' => $this->canManageSharedSlots(request()->user()),
             'canDeleteSharedSlot' => $this->canManageSharedSlots(request()->user()),
             'canEditSharedSlot' => $this->canEditSharedSlot(request()->user(), $sharedSlot),
+            'canViewRevisions' => $this->revisionManager->revisionsTableExists() && $this->revisionManager->canView(request()->user(), $sharedSlot),
         ]);
     }
 
@@ -136,9 +147,35 @@ class SharedSlotController extends Controller
         abort_unless($this->canEditSharedSlot($request->user(), $sharedSlot), 403);
 
         DB::transaction(function () use ($request, $sharedSlot): void {
+            $before = $sharedSlot->fresh();
             $sharedSlot->update($request->validatedData());
-            $this->sourcePages->ensureFor($sharedSlot->fresh());
-            $this->sourcePages->rebuildAssignments($sharedSlot->fresh());
+            $freshSharedSlot = $sharedSlot->fresh();
+            $this->sourcePages->ensureFor($freshSharedSlot);
+            $this->sourcePages->rebuildAssignments($freshSharedSlot);
+
+            $metadataChanged = collect(['name', 'handle', 'slot_name', 'public_shell'])
+                ->contains(fn (string $key) => data_get($before, $key) !== data_get($freshSharedSlot, $key));
+            $statusChanged = (bool) $before->is_active !== (bool) $freshSharedSlot->is_active;
+
+            if ($metadataChanged) {
+                $this->revisionManager->capture(
+                    $freshSharedSlot,
+                    $request->user(),
+                    'metadata_updated',
+                    'Shared Slot updated',
+                    'Shared Slot metadata was updated.',
+                );
+            }
+
+            if ($statusChanged) {
+                $this->revisionManager->capture(
+                    $freshSharedSlot,
+                    $request->user(),
+                    'status_updated',
+                    'Shared Slot status updated',
+                    'Shared Slot active status was changed.',
+                );
+            }
         });
 
         return redirect()
@@ -297,6 +334,13 @@ class SharedSlotController extends Controller
                 });
 
             $this->sourcePages->rebuildAssignments($sharedSlot);
+            $this->revisionManager->capture(
+                $sharedSlot->fresh(),
+                request()->user(),
+                'blocks_reordered',
+                'Shared Slot blocks reordered',
+                'Shared Slot block order was changed.',
+            );
         });
 
         return response()->json([
