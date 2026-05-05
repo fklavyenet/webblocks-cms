@@ -53,17 +53,24 @@ For docs-style pages, use page shell instead of pushing layout responsibility do
 
 ## Shared Slots
 
-Shared Slots are a planned slot-content ownership layer that sits under the existing page layout model.
+Shared Slots are a slot-content ownership layer that sits under the existing page layout model.
 
 - Page layout still owns which slots are available.
 - Page shell plus slot name still own the public wrappers for each slot.
 - Each page slot source can be `page`, `shared_slot`, or `disabled`.
 - `page` means the slot uses blocks owned directly by the page, which remains the current behavior.
-- `shared_slot` means the slot will reference a site-scoped reusable Shared Slot block tree.
-- `disabled` reserves a safe way to intentionally suppress slot content later without changing layout availability.
+- `shared_slot` means the slot references a site-scoped reusable Shared Slot block tree that is rendered dynamically at public runtime.
+- `disabled` means the slot wrapper still exists, but no blocks are rendered inside it.
 - Shared Slots are site-scoped reusable slot block trees, not copy-based templates.
+- Shared Slots do not own page shells or slot wrappers. The page shell still owns the outer shell, and the consuming page slot still owns the wrapper for `header`, `main`, `sidebar`, or other slot regions.
+- A valid Shared Slot contributes only the block tree rendered inside that existing page slot wrapper.
+- Public Shared Slot rendering is conservative:
+- Cross-site shared slot references render nothing.
+- If `SharedSlot.public_shell` is set, it must be compatible with the consuming page shell.
+- If `SharedSlot.slot_name` is set, it must match the consuming page slot name.
+- Null or empty `public_shell` and `slot_name` act as generic matches.
 
-This first phase adds only the data-model foundation. Admin workflows, public shared-slot rendering, export or import support, and revisions integration are completed in later phases.
+Current scope includes foundation plus public rendering. Admin workflows, export or import support, and revisions integration are completed in later phases.
 
 ## Project Boundary
 

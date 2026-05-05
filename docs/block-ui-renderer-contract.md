@@ -124,6 +124,8 @@ Public pages now use explicit layout composition modes:
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
 - Blocks render inside the resolved slot wrapper and do not own page-shell markup.
+- When a page slot uses `source_type = shared_slot`, the Shared Slot contributes only the inner block tree. It must not render its own page shell or slot wrapper.
+- Shared Slot compatibility is checked before rendering: site scope must match, optional `public_shell` must match the consuming page shell, and optional `slot_name` must match the consuming page slot.
 - Generic public block wrappers must stay non-semantic and must not be used for layout/root-owning blocks.
 - The page shell owns the outer shell, slot wrappers own the region wrapper, and root-owning blocks own their own real public root element.
 - Root-owning blocks must place `data-wb-public-block-type` on their own renderer root instead of receiving an extra outer `wb-public-block` wrapper.

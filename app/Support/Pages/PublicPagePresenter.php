@@ -13,6 +13,7 @@ class PublicPagePresenter
 {
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly PublicSharedSlotResolver $publicSharedSlotResolver,
         private readonly SlotWrapperResolver $slotWrapperResolver,
     ) {}
 
@@ -43,9 +44,7 @@ class PublicPagePresenter
     private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
     {
         $slug = $slot->slotType?->slug ?? 'main';
-        $blocks = $slot->usesPageOwnedBlocks()
-            ? $topLevelBlocks->where('slot_type_id', $slot->slot_type_id)->values()
-            : collect();
+        $blocks = $this->resolveSlotBlocks($slot, $topLevelBlocks);
         $wrapper = $this->slotWrapperResolver->resolve($slot->page ?? $slot->page()->firstOrFail(), $slot);
 
         return [
@@ -58,6 +57,19 @@ class PublicPagePresenter
             ],
             'blocks' => $blocks,
         ];
+    }
+
+    private function resolveSlotBlocks(PageSlot $slot, Collection $topLevelBlocks): Collection
+    {
+        if ($slot->usesPageOwnedBlocks()) {
+            return $topLevelBlocks->where('slot_type_id', $slot->slot_type_id)->values();
+        }
+
+        if (PageSlot::normalizeRuntimeSourceType($slot->source_type) === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+            return $this->publicSharedSlotResolver->resolve($slot);
+        }
+
+        return collect();
     }
 
     private function resolveMetaDescription(Page $page, Collection $blocks): ?string
