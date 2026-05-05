@@ -1970,6 +1970,73 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function top_level_section_wrapper_is_non_semantic_and_does_not_create_section_nesting(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $this->blockType('section', 'Section', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $this->blockType('container', 'Container', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $contentHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'content_header',
+            'block_type_id' => $this->blockType('content_header', 'Content Header', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $contentHeader->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Structured section heading',
+            'subtitle' => 'Section container flow',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($contentHeader->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $this->assertElementTag($html, '.wb-public-block', 'div');
+        $this->assertElementTag($html, '.wb-public-block .wb-section', 'section');
+        $this->assertElementTag($html, '.wb-public-block .wb-section .wb-container', 'div');
+        $response->assertSeeInOrder([
+            '<div class="wb-public-block" data-wb-public-block-type="section">',
+            '<section class="wb-section wb-stack">',
+            '<div class="wb-container wb-stack">',
+            '<header class="wb-content-header">',
+        ], false);
+        $response->assertDontSee('<section class="wb-public-block" data-wb-public-block-type="section">', false);
+        $response->assertDontSee('<section class="wb-public-block" data-wb-public-block-type="section"><section', false);
+    }
+
+    #[Test]
     public function public_rendering_only_uses_whitelisted_appearance_classes(): void
     {
         $page = $this->pageWithMainSlot();

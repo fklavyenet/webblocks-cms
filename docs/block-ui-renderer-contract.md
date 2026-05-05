@@ -124,6 +124,7 @@ Public pages now use explicit layout composition modes:
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
 - Blocks render inside the resolved slot wrapper and do not own page-shell markup.
+- Generic public block wrappers must stay non-semantic so they do not create accidental landmark nesting for layout blocks.
 
 ### Header slot
 
@@ -206,8 +207,15 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `variant`
 - Intended WebBlocks UI output: default wrapper uses `wb-section`; explicit `promo` variants may map to `wb-promo` when the shipped pattern fits; CTA actions should come from child blocks, not raw HTML.
 - Current implementation: acceptable
+- Wrapper rule: the `Section` block owns the real `<section class="wb-section ...">` root. Generic public block wrappers must not add an outer semantic `<section>` around it.
 - Notes for later renderer/admin improvements: keep default sections stable, treat `promo` as an explicit marketing variant, and keep child buttons/button groups structured.
 - Promo CTA behavior: child `button` blocks render in `wb-promo-actions`; non-button children continue rendering outside the CTA row.
+
+### Layout wrapper rule
+
+- `section`, `container`, `grid`, and `cluster` are layout/container blocks and should not gain extra semantic landmark wrappers from the generic public block loop.
+- `Section` owns the semantic `<section class="wb-section">` root when needed.
+- `Container`, `Grid`, and `Cluster` own their own non-semantic layout roots unless a specific renderer intentionally chooses otherwise.
 
 ### `hero`
 
