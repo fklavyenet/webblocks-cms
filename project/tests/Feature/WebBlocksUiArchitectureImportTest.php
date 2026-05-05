@@ -22,6 +22,8 @@ class WebBlocksUiArchitectureImportTest extends TestCase
 {
     use RefreshDatabase;
 
+    private ?string $localResolverConfigBackup = null;
+
     #[Test]
     public function architecture_page_import_is_idempotent_and_renders_in_docs_shell(): void
     {
@@ -128,7 +130,7 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->seed(BlockTypeSeeder::class);
 
         $this->app['env'] = 'local';
-        $this->configureLocalResolverState(false);
+        $this->setLocalResolverConfigured(false);
 
         $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
 
@@ -145,7 +147,7 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->seed(BlockTypeSeeder::class);
 
         $this->app['env'] = 'local';
-        $this->configureLocalResolverState(false);
+        $this->setLocalResolverConfigured(false);
 
         $first = $this->artisan('project:webblocksui-setup-site');
         $first->expectsOutput('Canonical site domain: ui.docs.webblocksui.com');
@@ -168,18 +170,58 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->assertFalse(class_exists(\App\Console\Commands\SetupWebBlocksUiDocsSiteCommand::class));
     }
 
-    private function configureLocalResolverState(bool $configured): void
+    protected function tearDown(): void
     {
-        $mock = \Mockery::mock(WebBlocksUiLocalResolver::class);
-        $mock->shouldReceive('status')->andReturn([
-            'config_path' => base_path(WebBlocksUiLocalResolver::CONFIG_PATH),
-            'config_exists' => $configured,
-            'required_hosts' => [SetupWebBlocksUiDocsSite::localDdevDomain()],
-            'configured_hosts' => $configured ? [SetupWebBlocksUiDocsSite::localDdevDomain()] : [],
-            'is_configured' => $configured,
-        ]);
+        $this->restoreLocalResolverConfig();
 
-        $this->instance(WebBlocksUiLocalResolver::class, $mock);
+        parent::tearDown();
+    }
+
+    private function setLocalResolverConfigured(bool $configured): void
+    {
+        $path = base_path(WebBlocksUiLocalResolver::CONFIG_PATH);
+
+        if ($this->localResolverConfigBackup === null) {
+            $this->localResolverConfigBackup = is_file($path)
+                ? (string) file_get_contents($path)
+                : '__MISSING__';
+        }
+
+        if (! $configured) {
+            @unlink($path);
+
+            return;
+        }
+
+        $directory = dirname($path);
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        file_put_contents($path, implode(PHP_EOL, [
+            '# Managed by tests',
+            'additional_hostnames:',
+            '  - '.SetupWebBlocksUiDocsSite::canonicalDomain(),
+            '',
+        ]));
+    }
+
+    private function restoreLocalResolverConfig(): void
+    {
+        if ($this->localResolverConfigBackup === null) {
+            return;
+        }
+
+        $path = base_path(WebBlocksUiLocalResolver::CONFIG_PATH);
+
+        if ($this->localResolverConfigBackup === '__MISSING__') {
+            @unlink($path);
+        } else {
+            file_put_contents($path, $this->localResolverConfigBackup);
+        }
+
+        $this->localResolverConfigBackup = null;
     }
 
     private function createTargetSite(): Site
