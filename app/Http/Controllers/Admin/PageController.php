@@ -201,6 +201,11 @@ class PageController extends Controller
 
         $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
         $canViewRevisions = $this->revisionManager->canView(request()->user(), $page);
+        $canMoveToAnotherSite = request()->user()?->isSuperAdmin()
+            || (request()->user()?->isSiteAdmin() && Site::query()
+                ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
+                ->whereKeyNot($page->site_id)
+                ->exists());
 
         $slotBlockPreviews = $page->slots
             ->mapWithKeys(fn (PageSlot $slot) => [
@@ -222,6 +227,7 @@ class PageController extends Controller
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
             'canViewRevisions' => $canViewRevisions,
+            'canMoveToAnotherSite' => $canMoveToAnotherSite,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
             'canCreateSharedSlots' => ! request()->user()->isEditor(),
         ]);

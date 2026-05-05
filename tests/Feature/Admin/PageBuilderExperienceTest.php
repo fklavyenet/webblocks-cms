@@ -170,6 +170,12 @@ class PageBuilderExperienceTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 1);
         [$page] = $this->pageWithSlot($main);
+        Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
 
         $this->actingAs($user)
             ->get(route('admin.pages.create'))
@@ -185,7 +191,33 @@ class PageBuilderExperienceTest extends TestCase
             ->assertDontSee('<select id="site_id" name="site_id"', false)
             ->assertSee('type="hidden" name="site_id" value="'.$page->site_id.'"', false)
             ->assertSee('Existing pages cannot be moved between sites from this form.')
+            ->assertSee('Move to another site')
             ->assertDontSee('Site Context');
+    }
+
+    #[Test]
+    public function edit_page_hides_move_action_for_editors_and_site_admins_without_another_accessible_site(): void
+    {
+        $this->seedFoundation();
+
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+
+        $editor = User::factory()->editor()->create();
+        $editor->sites()->sync([$page->site_id]);
+
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $siteAdmin->sites()->sync([$page->site_id]);
+
+        $this->actingAs($editor)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertDontSee('Move to another site');
+
+        $this->actingAs($siteAdmin)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertDontSee('Move to another site');
     }
 
     #[Test]
