@@ -13,7 +13,7 @@
 @endphp
 
 @if ($block->isPromoCard())
-    <section class="wb-card wb-promo">
+    <section class="wb-card wb-promo" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
         <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
             @if ($eyebrow !== '')
                 <p class="wb-eyebrow">{{ $eyebrow }}</p>
@@ -45,7 +45,7 @@
         </div>
     </section>
 @else
-    <article class="wb-card">
+    <article class="wb-card" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
         @if ($subtitle !== '')
             <div class="wb-card-header">{{ $subtitle }}</div>
         @endif

@@ -297,7 +297,7 @@ class ReconstructionIntegrityTest extends TestCase
         ]);
         $this->assertNull($restoredBlock->getRawOriginal('title'));
         $this->assertNull($restoredBlock->getRawOriginal('content'));
-        $this->get('/p/about')->assertOk()->assertSee('<h2>Legacy hero</h2>', false);
+        $this->get('/p/about')->assertOk()->assertSee('<h2 data-wb-public-block-type="header">Legacy hero</h2>', false);
     }
 
     #[Test]

@@ -124,7 +124,9 @@ Public pages now use explicit layout composition modes:
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
 - Blocks render inside the resolved slot wrapper and do not own page-shell markup.
-- Generic public block wrappers must stay non-semantic so they do not create accidental landmark nesting for layout blocks.
+- Generic public block wrappers must stay non-semantic and must not be used for layout/root-owning blocks.
+- The page shell owns the outer shell, slot wrappers own the region wrapper, and root-owning blocks own their own real public root element.
+- Root-owning blocks must place `data-wb-public-block-type` on their own renderer root instead of receiving an extra outer `wb-public-block` wrapper.
 
 ### Header slot
 
@@ -207,15 +209,18 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `variant`
 - Intended WebBlocks UI output: default wrapper uses `wb-section`; explicit `promo` variants may map to `wb-promo` when the shipped pattern fits; CTA actions should come from child blocks, not raw HTML.
 - Current implementation: acceptable
-- Wrapper rule: the `Section` block owns the real `<section class="wb-section ...">` root. Generic public block wrappers must not add an outer semantic `<section>` around it.
+- Wrapper rule: the `Section` block owns the real `<section class="wb-section ...">` root and carries `data-wb-public-block-type="section"` on that element. Generic public block wrappers must not wrap it.
 - Notes for later renderer/admin improvements: keep default sections stable, treat `promo` as an explicit marketing variant, and keep child buttons/button groups structured.
 - Promo CTA behavior: child `button` blocks render in `wb-promo-actions`; non-button children continue rendering outside the CTA row.
 
 ### Layout wrapper rule
 
-- `section`, `container`, `grid`, and `cluster` are layout/container blocks and should not gain extra semantic landmark wrappers from the generic public block loop.
+- `header`, `section`, `container`, `grid`, `cluster`, `card`, and `content_header` are root-owning layout/content-shell blocks and should not receive a generic public wrapper from the public block loop.
 - `Section` owns the semantic `<section class="wb-section">` root when needed.
 - `Container`, `Grid`, and `Cluster` own their own non-semantic layout roots unless a specific renderer intentionally chooses otherwise.
+- `Card` owns its `<article class="wb-card">` or promo `<section class="wb-card wb-promo">` root.
+- `Header` owns its semantic heading root such as `<h1>` or `<h2>`.
+- `Content Header` owns its semantic `<header class="wb-content-header">` root.
 
 ### `hero`
 

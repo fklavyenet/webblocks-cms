@@ -53,7 +53,7 @@ class PublicGettingStartedDocsPageTest extends TestCase
             'data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full"',
             'data-wb-slot="main" id="main-content" class="wb-dashboard-main"',
         ], false);
-        $response->assertSee('<header class="wb-content-header">', false);
+        $response->assertSee('<header class="wb-content-header" data-wb-public-block-type="content-header">', false);
         $response->assertSee('<h1 class="wb-content-title">Getting Started</h1>', false);
         $response->assertSee('<pre><code data-language="html">', false);
         $response->assertDontSee('wb-card wb-card-muted', false);

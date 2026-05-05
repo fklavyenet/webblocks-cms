@@ -5,4 +5,4 @@
     $classAttribute = $class ? ' class="'.$class.'"' : '';
 @endphp
 
-<{{ $level }}{!! $classAttribute !!}>{{ $text }}</{{ $level }}>
+<{{ $level }}{!! $classAttribute !!} data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">{{ $text }}</{{ $level }}>

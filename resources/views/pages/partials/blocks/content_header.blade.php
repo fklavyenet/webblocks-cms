@@ -7,7 +7,7 @@
     $headerClass = trim('wb-content-header '.($alignmentClass ?? ''));
 @endphp
 
-<header class="{{ $headerClass }}">
+<header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
     <{{ $headingTag }} class="wb-content-title">{{ $title }}</{{ $headingTag }}>
 
     @if ($introText !== '')

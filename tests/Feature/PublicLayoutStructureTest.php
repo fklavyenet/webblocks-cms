@@ -54,7 +54,7 @@ class PublicLayoutStructureTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<h1>WebBlocks CMS</h1>', false);
+        $response->assertSee('<h1 data-wb-public-block-type="header">WebBlocks CMS</h1>', false);
         $response->assertSee('<p>Main slot content</p>', false);
         $response->assertSee('<p>Sidebar supporting content</p>', false);
         $response->assertSee('<p>Footer supporting content</p>', false);
@@ -202,15 +202,15 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<main data-wb-slot="main" id="main-content">',
-            '<section class="wb-section wb-stack">',
-            '<div class="wb-container wb-stack">',
-            '<article class="wb-card">',
+            '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+            '<div class="wb-container wb-stack" data-wb-public-block-type="container">',
+            '<article class="wb-card" data-wb-public-block-type="card">',
             '<div class="wb-alert wb-alert-info">',
             '<h3 class="wb-alert-title">Spacing proof</h3>',
             '<p>Alert content follows the card inside the same container flow.</p>',
             '</div>',
-            '<div class="wb-grid wb-grid-2">',
-            '<h2>Grid child heading</h2>',
+            '<div class="wb-grid wb-grid-2" data-wb-public-block-type="grid">',
+            '<h2 data-wb-public-block-type="header">Grid child heading</h2>',
             '</section>',
             '</main>',
         ], false);

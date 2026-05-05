@@ -629,6 +629,24 @@ class Block extends Model
         return self::supportsPublicRender($this->typeSlug());
     }
 
+    public function publicBlockTypeAttribute(): string
+    {
+        return str_replace('_', '-', (string) $this->typeSlug());
+    }
+
+    public function ownsPublicRoot(): bool
+    {
+        return in_array($this->typeSlug(), [
+            'header',
+            'section',
+            'container',
+            'grid',
+            'cluster',
+            'card',
+            'content_header',
+        ], true);
+    }
+
     public function settingsText(): ?string
     {
         if (is_array($this->decodedSettings())) {

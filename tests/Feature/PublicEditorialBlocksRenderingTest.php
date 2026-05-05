@@ -1112,8 +1112,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<div class="wb-grid wb-grid-3 wb-gap-4">',
-            '<article class="wb-card">',
+            '<div class="wb-grid wb-grid-3 wb-gap-4" data-wb-public-block-type="grid">',
+            '<article class="wb-card" data-wb-public-block-type="card">',
             '<div class="wb-card-header">How to build</div>',
             '<div class="wb-card-body wb-stack wb-gap-2">',
             '<strong>Pattern-first workflow</strong>',
@@ -1149,7 +1149,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<article class="wb-card">', false);
+        $response->assertSee('<article class="wb-card" data-wb-public-block-type="card">', false);
         $response->assertSee('<div class="wb-card-body wb-stack wb-gap-2">', false);
         $response->assertSee('<strong>HTML stays HTML</strong>', false);
         $response->assertSee('<p class="wb-m-0">You write explicit markup and attach shipped WebBlocks classes.</p>', false);
@@ -1255,7 +1255,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-card wb-promo">', false);
+        $response->assertSee('<section class="wb-card wb-promo" data-wb-public-block-type="card">', false);
         $response->assertSee('<div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">', false);
         $response->assertSee('<p class="wb-eyebrow">Source-visible UI system</p>', false);
         $response->assertSee('<h2 class="wb-promo-title">WebBlocks UI - UI building blocks for humans and AI.</h2>', false);
@@ -1403,8 +1403,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $this->assertSame(2, substr_count($response->getContent(), '<article class="wb-card">'));
-        $response->assertDontSee('<section class="wb-card wb-promo">', false);
+        $this->assertSame(2, substr_count($response->getContent(), '<article class="wb-card" data-wb-public-block-type="card">'));
+        $response->assertDontSee('<section class="wb-card wb-promo" data-wb-public-block-type="card">', false);
     }
 
     #[Test]
@@ -1476,7 +1476,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<article class="wb-card">',
+            '<article class="wb-card" data-wb-public-block-type="card">',
             '<div class="wb-card-body wb-stack wb-gap-2">',
             '<strong>WebBlocks UI - UI building blocks for humans and AI.</strong>',
             '<div class="wb-card-footer">',
@@ -1572,7 +1572,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<div class="wb-cluster">',
+            '<div class="wb-cluster" data-wb-public-block-type="cluster">',
             '<a href="/start-here" class="wb-btn wb-btn-primary">Start here</a>',
             '<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>',
             '</div>',
@@ -1621,7 +1621,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-cluster wb-cluster-4 wb-cluster-center">', false);
+        $response->assertSee('<div class="wb-cluster wb-cluster-4 wb-cluster-center" data-wb-public-block-type="cluster">', false);
         $response->assertDontSee('wb-cluster-3', false);
         $response->assertDontSee('wb-cluster-between', false);
     }
@@ -1756,7 +1756,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<header class="wb-content-header wb-text-center">',
+            '<header class="wb-content-header wb-text-center" data-wb-public-block-type="content-header">',
             '<h1 class="wb-content-title">Docs title</h1>',
             '<p class="wb-content-subtitle">Short intro</p>',
             '<div class="wb-content-meta">',
@@ -1800,7 +1800,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<header class="wb-content-header">', false);
+        $response->assertSee('<header class="wb-content-header" data-wb-public-block-type="content-header">', false);
         $response->assertSee('<h2 class="wb-content-title">Only title</h2>', false);
         $response->assertDontSee('wb-content-subtitle', false);
         $response->assertDontSee('wb-content-meta', false);
@@ -1874,14 +1874,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $turkishResponse = $this->get('/tr/p/hakkinda');
 
         $defaultResponse->assertOk();
-        $defaultResponse->assertSee('<header class="wb-content-header wb-text-right">', false);
+        $defaultResponse->assertSee('<header class="wb-content-header wb-text-right" data-wb-public-block-type="content-header">', false);
         $defaultResponse->assertSee('<h3 class="wb-content-title">English docs title</h3>', false);
         $defaultResponse->assertSee('<p class="wb-content-subtitle">English intro</p>', false);
         $defaultResponse->assertSee('<span>Updated</span>', false);
         $defaultResponse->assertSee('<span>Guide</span>', false);
 
         $turkishResponse->assertOk();
-        $turkishResponse->assertSee('<header class="wb-content-header wb-text-right">', false);
+        $turkishResponse->assertSee('<header class="wb-content-header wb-text-right" data-wb-public-block-type="content-header">', false);
         $turkishResponse->assertSee('<h3 class="wb-content-title">Turkce baslik</h3>', false);
         $turkishResponse->assertSee('<p class="wb-content-subtitle">Turkce giris</p>', false);
         $turkishResponse->assertSee('<span>Guncel</span>', false);
@@ -1958,9 +1958,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<section class="wb-section wb-stack">',
-            '<div class="wb-container wb-stack">',
-            '<h1>Nested heading</h1>',
+            '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+            '<div class="wb-container wb-stack" data-wb-public-block-type="container">',
+            '<h1 data-wb-public-block-type="header">Nested heading</h1>',
             '<p>Nested paragraph</p>',
             '</div>',
             '</section>',
@@ -2023,15 +2023,16 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $html = $response->getContent();
 
         $response->assertOk();
-        $this->assertElementTag($html, '.wb-public-block', 'div');
-        $this->assertElementTag($html, '.wb-public-block .wb-section', 'section');
-        $this->assertElementTag($html, '.wb-public-block .wb-section .wb-container', 'div');
+        $this->assertElementTag($html, '.wb-section', 'section');
+        $this->assertElementTag($html, '.wb-container', 'div');
         $response->assertSeeInOrder([
-            '<div class="wb-public-block" data-wb-public-block-type="section">',
-            '<section class="wb-section wb-stack">',
-            '<div class="wb-container wb-stack">',
-            '<header class="wb-content-header">',
+            '<section class="wb-section wb-stack" data-wb-public-block-type="section">',
+            '<div class="wb-container wb-stack" data-wb-public-block-type="container">',
+            '<header class="wb-content-header" data-wb-public-block-type="content-header">',
         ], false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="section">', false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="container">', false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="content-header">', false);
         $response->assertDontSee('<section class="wb-public-block" data-wb-public-block-type="section">', false);
         $response->assertDontSee('<section class="wb-public-block" data-wb-public-block-type="section"><section', false);
     }
@@ -2107,9 +2108,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-section wb-section-lg wb-stack">', false);
-        $response->assertSee('<div class="wb-container wb-container-xl wb-stack">', false);
-        $response->assertSee('<h2 class="wb-text-center">Centered heading</h2>', false);
+        $response->assertSee('<section class="wb-section wb-section-lg wb-stack" data-wb-public-block-type="section">', false);
+        $response->assertSee('<div class="wb-container wb-container-xl wb-stack" data-wb-public-block-type="container">', false);
+        $response->assertSee('<h2 class="wb-text-center" data-wb-public-block-type="header">Centered heading</h2>', false);
         $response->assertSee('<p class="wb-text-right">Aligned paragraph</p>', false);
         $response->assertDontSee('wb-bg-muted', false);
         $response->assertDontSee('wb-content-title', false);
@@ -2144,7 +2145,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<h3>Title &lt;script&gt;alert(1)&lt;/script&gt;</h3>', false);
+        $response->assertSee('<h3 data-wb-public-block-type="header">Title &lt;script&gt;alert(1)&lt;/script&gt;</h3>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
     }
 
@@ -2211,9 +2212,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $frenchResponse = $this->get('/fr/p/a-propos');
 
         $defaultResponse->assertOk();
-        $defaultResponse->assertSee('<h2 class="wb-text-center">English title</h2>', false);
+        $defaultResponse->assertSee('<h2 class="wb-text-center" data-wb-public-block-type="header">English title</h2>', false);
         $frenchResponse->assertOk();
-        $frenchResponse->assertSee('<h2 class="wb-text-center">Titre francais</h2>', false);
+        $frenchResponse->assertSee('<h2 class="wb-text-center" data-wb-public-block-type="header">Titre francais</h2>', false);
     }
 
     #[Test]

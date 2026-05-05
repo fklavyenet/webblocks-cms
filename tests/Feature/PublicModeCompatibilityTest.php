@@ -240,10 +240,10 @@ class PublicModeCompatibilityTest extends TestCase
         $content = $response->getContent();
 
         $response->assertOk();
-        $response->assertSee('<section class="wb-card wb-promo">', false);
-        $response->assertSee('<header class="wb-content-header">', false);
+        $response->assertSee('class="wb-card wb-promo"', false);
+        $response->assertSee('<header class="wb-content-header" data-wb-public-block-type="content-header">', false);
         $response->assertSee('<div class="wb-alert wb-alert-warning">', false);
-        $response->assertSee('<article class="wb-card">', false);
+        $response->assertSee('<article class="wb-card" data-wb-public-block-type="card">', false);
         $response->assertSee('<div class="wb-stat">', false);
         $response->assertSee('<div class="wb-link-list">', false);
         $response->assertSee('data-wb-header-actions', false);

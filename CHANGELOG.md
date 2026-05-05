@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Fix public block wrapper semantics so top-level blocks no longer force semantic `<section>` wrappers, removing accidental `section > section` nesting around `Section` layout blocks while preserving public shell and slot ownership.
+- Remove generic public block wrappers from root-owning layout/content-shell blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, and `Content Header`, and move `data-wb-public-block-type` metadata onto each renderer root while preserving public shell and slot ownership.
 - Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
 
 ## 1.11.0

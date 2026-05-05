@@ -103,7 +103,7 @@ class BlockTranslationIntegrityTest extends TestCase
 
         $this->assertNull($freshBlock->getRawOriginal('title'));
         $this->assertNull($freshBlock->getRawOriginal('content'));
-        $this->get('/p/about')->assertOk()->assertSee('<h1>Hero heading</h1>', false);
+        $this->get('/p/about')->assertOk()->assertSee('<h1 data-wb-public-block-type="header">Hero heading</h1>', false);
     }
 
     #[Test]

@@ -9,9 +9,13 @@
             <div class="wb-stack wb-gap-6">
 @endif
                 @foreach ($slot['blocks'] as $block)
-                    <div class="wb-public-block" data-wb-public-block-type="{{ $block->typeSlug() }}">
+                    @if ($block->ownsPublicRoot())
                         @include('pages.partials.block', ['block' => $block])
-                    </div>
+                    @else
+                        <div class="wb-public-block" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+                            @include('pages.partials.block', ['block' => $block])
+                        </div>
+                    @endif
                 @endforeach
 @if ($renderShell)
             </div>

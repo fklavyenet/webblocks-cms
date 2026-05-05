@@ -2285,9 +2285,9 @@ class PageBuilderExperienceTest extends TestCase
 
         $movedResponse->assertOk();
         $movedResponse->assertSeeInOrder([
-            '<article class="wb-card">',
+            '<article class="wb-card" data-wb-public-block-type="card">',
             '<div class="wb-card-footer">',
-            '<div class="wb-cluster">',
+            '<div class="wb-cluster" data-wb-public-block-type="cluster">',
             '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
         ], false);
     }
