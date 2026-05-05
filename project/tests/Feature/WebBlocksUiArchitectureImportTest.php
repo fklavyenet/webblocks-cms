@@ -14,6 +14,7 @@ use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Project\Support\UiDocs\SetupWebBlocksUiDocsSite;
 use Tests\TestCase;
 
 class WebBlocksUiArchitectureImportTest extends TestCase
@@ -120,11 +121,37 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->assertFalse(class_exists(\App\Console\Commands\WebBlocksUiImportCommand::class));
     }
 
+    #[Test]
+    public function setup_site_uses_local_ddev_domain_and_reports_architecture_preview_url_without_duplicates(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $this->app['env'] = 'local';
+
+        $first = $this->artisan('project:webblocksui-setup-site');
+        $first->expectsOutput('Canonical site domain: ui.docs.webblocksui.com');
+        $first->expectsOutput('Resolved local site domain: ui.docs.webblocksui.com.ddev.site');
+        $first->expectsOutput('Architecture local preview URL: https://ui.docs.webblocksui.com.ddev.site/p/architecture');
+        $first->assertExitCode(0);
+
+        $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
+
+        $site = Site::query()->where('handle', 'ui-docs-webblocksui-com')->firstOrFail();
+
+        $this->assertSame('ui.docs.webblocksui.com.ddev.site', $site->domain);
+        $this->assertSame(1, Site::query()->where('handle', 'ui-docs-webblocksui-com')->count());
+        $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'home'))->count());
+        $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'getting-started'))->count());
+        $this->assertSame('https://ui.docs.webblocksui.com.ddev.site/p/architecture', SetupWebBlocksUiDocsSite::architecturePreviewUrl());
+        $this->assertFalse(class_exists(\App\Console\Commands\SetupWebBlocksUiDocsSiteCommand::class));
+    }
+
     private function createTargetSite(): Site
     {
         return Site::query()->firstOrCreate(
-            ['domain' => 'ui.docs.webblocksui.com'],
-            ['name' => 'WebBlocks UI Docs', 'handle' => 'ui-docs-webblocksui-com', 'is_primary' => true],
+            ['handle' => 'ui-docs-webblocksui-com'],
+            ['name' => 'WebBlocks UI Docs', 'domain' => SetupWebBlocksUiDocsSite::canonicalDomain(), 'is_primary' => true],
         );
     }
 

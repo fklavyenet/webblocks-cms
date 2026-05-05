@@ -13,6 +13,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
+use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -89,10 +90,14 @@ class WebBlocksUiImporter
             $sidebarNavigationBlocks = $this->syncSidebarNavigationBlocks($site);
 
             $result[] = 'Imported payload key: '.$key;
-            $result[] = 'Site: '.$site->domain;
+            $result[] = 'Canonical site domain: '.SetupWebBlocksUiDocsSite::canonicalDomain();
+            $result[] = 'Resolved local site domain: '.$site->domain;
             $result[] = 'Page: '.($page->defaultTranslation()?->name ?? $page->id).' ('.$page->publicPath().')';
             $result[] = 'Navigation items synced: '.$navigationCount;
             $result[] = 'Sidebar navigation blocks updated: '.$sidebarNavigationBlocks;
+            if ($key === 'docs-architecture') {
+                $result[] = 'Architecture local preview URL: '.$this->localPreviewUrl($site, $page->publicPath() ?? SetupWebBlocksUiDocsSite::ARCHITECTURE_PATH);
+            }
         });
 
         return $result;
@@ -504,6 +509,10 @@ class WebBlocksUiImporter
             $site = Site::query()->where('domain', $domain)->first();
         }
 
+        if (! $site && app()->environment('local') && $domain !== '') {
+            $site = Site::query()->where('domain', $this->localAliasDomainFor($domain))->first();
+        }
+
         if (! $site) {
             $label = $handle !== '' ? $handle : $domain;
             throw new RuntimeException('Target site could not be resolved for WebBlocks UI import ['.$label.'].');
@@ -632,5 +641,17 @@ class WebBlocksUiImporter
         }
 
         $block->delete();
+    }
+
+    private function localAliasDomainFor(string $domain): string
+    {
+        return Str::finish($domain, '.ddev.site');
+    }
+
+    private function localPreviewUrl(Site $site, string $path): string
+    {
+        $path = '/'.ltrim($path, '/');
+
+        return 'https://'.((string) $site->domain).$path;
     }
 }

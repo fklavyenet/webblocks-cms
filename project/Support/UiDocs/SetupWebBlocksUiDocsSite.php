@@ -15,6 +15,12 @@ use RuntimeException;
 
 class SetupWebBlocksUiDocsSite
 {
+    public const CANONICAL_DOMAIN = 'ui.docs.webblocksui.com';
+
+    public const LOCAL_DDEV_DOMAIN = 'ui.docs.webblocksui.com.ddev.site';
+
+    public const ARCHITECTURE_PATH = '/p/architecture';
+
     public function run(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->first();
@@ -36,13 +42,14 @@ class SetupWebBlocksUiDocsSite
         $mainSlotType = $this->slotType('main', 'Main', 2);
 
         return DB::transaction(function () use ($defaultLocale, $requiredBlockTypes, $headerSlotType, $sidebarSlotType, $mainSlotType): array {
+            $domain = $this->resolvedSiteDomain();
             $site = Site::query()->firstOrCreate(
                 ['handle' => 'ui-docs-webblocksui-com'],
-                ['name' => 'WebBlocks UI Docs', 'domain' => 'ui.docs.webblocksui.com', 'is_primary' => false],
+                ['name' => 'WebBlocks UI Docs', 'domain' => $domain, 'is_primary' => false],
             );
 
-            if (! $site->domain) {
-                $site->forceFill(['domain' => 'ui.docs.webblocksui.com'])->save();
+            if ((string) $site->domain !== $domain) {
+                $site->forceFill(['domain' => $domain])->save();
             }
 
             $site->locales()->syncWithoutDetaching([
@@ -57,12 +64,29 @@ class SetupWebBlocksUiDocsSite
             $this->ensureSidebarNavigationBlock($homePage, $requiredBlockTypes['sidebar-navigation'], $sidebarSlotType->id, $defaultLocale->id);
 
             return [
-                'Site: '.$site->domain,
+                'Canonical site domain: '.self::CANONICAL_DOMAIN,
+                'Resolved local site domain: '.$site->domain,
                 'Ensured page: Home',
                 'Ensured page: Getting Started',
                 'Ensured docs sidebar navigation dependency on Home page',
+                'Architecture local preview URL: '.$this->previewUrl(self::ARCHITECTURE_PATH),
             ];
         });
+    }
+
+    public static function canonicalDomain(): string
+    {
+        return self::CANONICAL_DOMAIN;
+    }
+
+    public static function localDdevDomain(): string
+    {
+        return self::LOCAL_DDEV_DOMAIN;
+    }
+
+    public static function architecturePreviewUrl(): string
+    {
+        return 'https://'.self::LOCAL_DDEV_DOMAIN.self::ARCHITECTURE_PATH;
     }
 
     private function firstOrCreateDocsPage(Site $site, string $name, string $slug, string $path): Page
@@ -151,5 +175,17 @@ class SetupWebBlocksUiDocsSite
             ['slug' => $slug],
             ['name' => $name, 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => true],
         );
+    }
+
+    private function resolvedSiteDomain(): string
+    {
+        return app()->environment('local') ? self::LOCAL_DDEV_DOMAIN : self::CANONICAL_DOMAIN;
+    }
+
+    private function previewUrl(string $path): string
+    {
+        $path = '/'.ltrim($path, '/');
+
+        return 'https://'.$this->resolvedSiteDomain().$path;
     }
 }
