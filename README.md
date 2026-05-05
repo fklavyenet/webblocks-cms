@@ -116,7 +116,9 @@ See `docs/getting-started.md` for the first-use workflow.
 ## Project Layer
 
 - Project-specific console commands belong under `project/`.
-- `webblocks:sync-ui-docs-getting-started` idempotently syncs the existing WebBlocks UI docs `Getting Started` page into the CMS-managed `main` slot content for that page without duplicating its generated blocks, and maps plain paragraphs to `Plain Text`, inline-format-aware body copy to `Rich Text`, and multi-line snippets to `Code`.
+- Install-specific code should stay outside CMS core and inside `project/`.
+- Release packages exclude `project/` so shipped artifacts contain reusable CMS product code only.
+- Website-specific sync, import, migration, and seed workflows must not be added to CMS core.
 
 ## Developer Notes
 

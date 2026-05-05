@@ -56,7 +56,10 @@ For docs-style pages, use page shell instead of pushing layout responsibility do
 WebBlocks CMS core contains reusable CMS functionality.
 
 - Keep install-specific code that must survive CMS updates in `project/`.
-- Keep site-specific commands, views, routes, and config out of core when they are not reusable product features.
+- Keep site-specific commands, views, routes, config, import helpers, and migration workflows out of core when they are not reusable product features.
 - Treat `project/` as the update-safe extension boundary for one install.
+- Keep reusable product behavior such as blocks, layouts, admin UI, public renderers, workflow, backup/restore, export/import, and generic project-layer support in core.
+- Keep site migration/import helpers and install-specific content sync tooling in `project/`.
+- Core release packages do not ship `project/` content.
 
 See `../DEVELOPMENT.md` for the full development and release workflow.

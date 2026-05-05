@@ -130,7 +130,7 @@ class LinkListBlockTest extends TestCase
             'title' => 'Getting Started',
             'subtitle' => 'Includes, root attributes, first workflow',
             'content' => 'Use this page first if you need the shortest correct setup path for a real project.',
-            'url' => 'getting-started.html',
+            'url' => 'guide.html',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -138,7 +138,7 @@ class LinkListBlockTest extends TestCase
         $item = Block::query()->where('page_id', $page->id)->where('type', 'link-list-item')->firstOrFail();
 
         $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $this->assertSame('getting-started.html', $item->fresh()->url);
+        $this->assertSame('guide.html', $item->fresh()->url);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $item->id,
             'locale_id' => $this->defaultLocale()->id,
@@ -177,7 +177,7 @@ class LinkListBlockTest extends TestCase
             '/p/about',
             'foundation.html',
             'docs/foundation.html',
-            'getting-started.html',
+            'guide.html',
             '#foundation',
             'mailto:hello@example.com',
             'tel:+49123456789',
@@ -294,7 +294,7 @@ class LinkListBlockTest extends TestCase
             'title' => 'Getting Started',
             'subtitle' => 'Guide',
             'content' => 'First item',
-            'url' => 'getting-started.html',
+            'url' => 'guide.html',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -346,7 +346,7 @@ class LinkListBlockTest extends TestCase
             'title' => 'Getting Started',
             'subtitle' => 'Guide',
             'content' => 'First item',
-            'url' => 'getting-started.html',
+            'url' => 'guide.html',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -397,7 +397,7 @@ class LinkListBlockTest extends TestCase
                     'title' => 'Getting Started',
                     'subtitle' => 'Guide',
                     'content' => 'First item',
-                    'url' => 'getting-started.html',
+                    'url' => 'guide.html',
                     'status' => 'published',
                     'is_system' => 0,
                     'sort_order' => 1,
@@ -430,7 +430,7 @@ class LinkListBlockTest extends TestCase
         ]);
         $publicResponse->assertSeeInOrder([
             'href="architecture.html"',
-            'href="getting-started.html"',
+            'href="guide.html"',
         ], false);
     }
 
@@ -467,7 +467,7 @@ class LinkListBlockTest extends TestCase
             'title' => 'Getting Started',
             'subtitle' => 'Includes, root attributes, first workflow',
             'content' => 'Use this page first if you need the shortest correct setup path for a real project.',
-            'url' => 'getting-started.html',
+            'url' => 'guide.html',
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -478,7 +478,7 @@ class LinkListBlockTest extends TestCase
         $response->assertOk();
         $response->assertSee('<div class="wb-link-list">', false);
         $response->assertSee('class="wb-link-list-item"', false);
-        $response->assertSee('href="getting-started.html"', false);
+        $response->assertSee('href="guide.html"', false);
         $response->assertSee('Getting Started');
         $response->assertSee('Includes, root attributes, first workflow');
         $response->assertSee('Use this page first if you need the shortest correct setup path for a real project.');

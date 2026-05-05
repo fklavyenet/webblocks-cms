@@ -64,6 +64,7 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - Project views are available through the `project::` namespace.
 - Project console commands can be registered in `project/Routes/console.php`.
 - This layer is for one install or site instance. It is not the plugin system.
+- These files are safe to keep locally, but they are not part of WebBlocks CMS core release packages.
 MARKDOWN,
             'project/config/providers.php' => <<<'PHP'
 <?php

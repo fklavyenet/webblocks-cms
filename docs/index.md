@@ -47,3 +47,8 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Development
 
 - [Development Workflow](../DEVELOPMENT.md)
+
+## Project Boundary
+
+- [Core Concepts](core-concepts.md#project-boundary)
+- [Updates](updates.md)

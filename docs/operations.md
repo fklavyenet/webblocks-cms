@@ -21,6 +21,8 @@ The update screen can report states such as:
 
 The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, and records the update run before persisting the installed version.
 
+Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
+
 ## Backup / Restore
 
 Backup / Restore is the environment-level recovery tool.
@@ -102,3 +104,4 @@ Site Clone is different from Export / Import:
 - Updates, backups, restore, and site transfer tools are install-level features
 - pages, media, navigation, and editorial workflow are primarily site-scoped content features
 - users are install-level accounts, even when some roles are restricted to assigned sites
+- release packaging and installed-path preservation are separate concerns: releases do not ship `project/`, while installed `project/` content is preserved across updates

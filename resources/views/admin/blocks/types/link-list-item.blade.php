@@ -17,7 +17,7 @@
 
         <div class="wb-stack wb-gap-1">
             <label for="url">URL</label>
-            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" placeholder="getting-started.html" required>
+            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" placeholder="guide.html" required>
         </div>
     </div>
 

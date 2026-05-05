@@ -100,33 +100,11 @@ jobs:
           version="${{ steps.release.outputs.version }}"
           output_dir='dist'
           archive_path="${output_dir}/webblocks-cms-${version}.zip"
-          manifest_file="$(mktemp)"
-
-          cleanup() {
-            rm -f "$manifest_file"
-          }
-
-          trap cleanup EXIT
 
           mkdir -p "$output_dir"
           rm -f "$archive_path" "${archive_path}.sha256"
 
-          while IFS= read -r path; do
-            case "$path" in
-              .github/*|.ddev/*|node_modules/*|vendor/*|dist/*|storage/logs/*|storage/app/backups/*|storage/app/temp/*|storage/app/test-releases/*|storage/app/test-release-command/*|storage/app/release-validation/*|storage/framework/cache/*|storage/framework/sessions/*|storage/framework/views/*|storage/framework/testing/*|storage/app/public/assets/*|storage/app/public/media/*|storage/app/public/releases/*|storage/app/releases/*|bootstrap/cache/*|public/build/*|public/hot|public/storage/*|release-notes.md|.env|.env.*|.phpunit.result.cache|*.log|.DS_Store|*/.DS_Store)
-                continue
-                ;;
-            esac
-
-            printf '%s\n' "$path" >> "$manifest_file"
-          done < <(git ls-files --cached --others --exclude-standard)
-
-          if [ ! -s "$manifest_file" ]; then
-            printf 'No files selected for release archive.\n' >&2
-            exit 1
-          fi
-
-          zip -q "$archive_path" -@ < "$manifest_file"
+          git archive --format=zip --worktree-attributes --output "$archive_path" HEAD
           shasum -a 256 "$archive_path" | cut -d' ' -f1 > "${archive_path}.sha256"
 
       - name: Capture archive checksum
