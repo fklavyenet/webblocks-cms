@@ -2,20 +2,26 @@
 
 ## [Unreleased]
 
-- Remove generic public block wrappers from root-owning layout/content-shell blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, and `Content Header`, and move `data-wb-public-block-type` metadata onto each renderer root while preserving public shell and slot ownership.
-- Improve the admin `Block Types` catalog with search plus category, status, and support filters so larger block catalogs remain manageable.
-- Align admin listing pagination with the WebBlocks UI `wb-pagination` contract, including ordered page links, passive current-page markers, and non-link disabled previous/next controls.
-- Standardize the `Block Types` index on a shared compact admin listing filter toolbar with a reusable search-left, filters-middle, actions-right layout contract for future admin lists.
-- Apply the shared compact admin listing filters beyond `Block Types` to the `Pages` and `Media` index screens.
-- Shared compact admin listing filters were extended to `Contact Messages` and `Users`.
-- Refine shared admin pagination so compact mode renders the pagination links and same-line `from-to/total` summary together.
-- Standardize admin listing pagination and compact summary presentation across the `Pages` and `Media` screens.
-- Admin listing pagination and compact summaries were standardized on these screens where pagination is present.
-- Document the shared admin listing filter and compact pagination pattern for future admin index screens.
-- Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
-- Clarify the CMS core versus `project/` boundary in core documentation.
-- Exclude install-specific project-layer content from published release packages.
-- Add regression coverage that prevents website-specific docs sync commands or references from leaking into CMS core.
+## 1.12.0
+
+### Admin UI
+
+- Standardized shared compact listing filters across the `Block Types`, `Pages`, `Media`, `Contact Messages`, and `Users` index screens so search stays prominent, compact filters stay grouped, and apply or reset actions remain aligned on one toolbar row when space allows.
+- Aligned dense admin pagination with the shared WebBlocks UI contract, including compact same-line `from-to/total` summaries and query-preserving page links on these core listing screens.
+
+### Public Rendering
+
+- Removed generic public block wrappers from root-owning layout and content-shell blocks while preserving shell and slot ownership and keeping public block metadata on each renderer root.
+- Simplified `Code` block public rendering to escaped `<pre><code>` output without the old card chrome or visible language label, while preserving sanitized non-visual language metadata.
+
+### Release / Project Boundary
+
+- Clarified the CMS core versus `project/` boundary in core documentation and kept website-specific sync and import workflows out of CMS core.
+- Excluded install-specific project-layer content from published release packages.
+
+### Internal / Tests
+
+- Added regression coverage that prevents website-specific docs sync commands or references from leaking into CMS core.
 
 ## 1.11.0
 
