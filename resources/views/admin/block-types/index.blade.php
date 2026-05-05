@@ -16,51 +16,45 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            <form method="GET" action="{{ route('admin.block-types.index') }}" class="wb-stack wb-gap-3">
-                <div class="wb-grid wb-grid-4 wb-gap-3">
-                    <div class="wb-stack wb-gap-1 wb-field">
-                        <label for="block_types_search" class="wb-label">Search</label>
-                        <input id="block_types_search" name="search" type="text" class="wb-input" value="{{ $filters['search'] }}" placeholder="Search block types...">
-                    </div>
-
-                    <div class="wb-stack wb-gap-1 wb-field">
-                        <label for="block_types_category" class="wb-label">Category</label>
-                        <select id="block_types_category" name="category" class="wb-select">
-                            <option value="">All categories</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category }}" @selected($filters['category'] === $category)>{{ ucfirst($category) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1 wb-field">
-                        <label for="block_types_status" class="wb-label">Status</label>
-                        <select id="block_types_status" name="status" class="wb-select">
-                            <option value="">All statuses</option>
-                            @foreach ($statuses as $status)
-                                <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1 wb-field">
-                        <label for="block_types_support" class="wb-label">Support</label>
-                        <select id="block_types_support" name="support" class="wb-select">
-                            <option value="">All support</option>
-                            @foreach ($supportOptions as $value => $label)
-                                <option value="{{ $value }}" @selected($filters['support'] === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                    <button type="submit" class="wb-btn wb-btn-primary">Apply filters</button>
-                    @if ($hasActiveFilters)
-                        <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">Reset</a>
-                    @endif
-                </div>
-            </form>
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.block-types.index'),
+                'search' => [
+                    'id' => 'block_types_search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'value' => $filters['search'],
+                    'placeholder' => 'Search block types...',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'block_types_category',
+                        'name' => 'category',
+                        'label' => 'Category',
+                        'value' => $filters['category'],
+                        'placeholder' => 'All categories',
+                        'options' => collect($categories)->mapWithKeys(fn (string $category) => [$category => ucfirst($category)])->all(),
+                    ],
+                    [
+                        'id' => 'block_types_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'value' => $filters['status'],
+                        'placeholder' => 'All statuses',
+                        'options' => collect($statuses)->mapWithKeys(fn (string $status) => [$status => ucfirst(str_replace('_', ' ', $status))])->all(),
+                    ],
+                    [
+                        'id' => 'block_types_support',
+                        'name' => 'support',
+                        'label' => 'Support',
+                        'value' => $filters['support'],
+                        'placeholder' => 'All support',
+                        'options' => $supportOptions,
+                    ],
+                ],
+                'showReset' => $hasActiveFilters,
+                'resetUrl' => route('admin.block-types.index'),
+                'applyLabel' => 'Apply filters',
+            ])
         </div>
     </div>
 

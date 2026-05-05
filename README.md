@@ -94,6 +94,8 @@ In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a
 
 The admin `Block Types` catalog supports search plus category, status, and support filters, and its table footer pagination now follows the WebBlocks UI `wb-pagination` primitive contract for dense admin listings.
 
+Admin index and listing screens should use the shared compact listing filter toolbar partial at `resources/views/admin/partials/listing-filters.blade.php`. The contract is: Search stays on the far left and grows to fill the remaining horizontal space, compact select filters sit to the right of Search, and Apply or Reset actions stay right-aligned on the same toolbar row on wide screens. Admin list pagination should use the shared `admin.partials.pagination` partial, and dense admin listings should enable its compact mode so the page links and compact summary render together in one row using the `from-to/total` format.
+
 See `docs/getting-started.md` for the first-use workflow.
 
 ## Documentation

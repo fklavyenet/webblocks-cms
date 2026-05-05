@@ -5,6 +5,9 @@
 - Remove generic public block wrappers from root-owning layout/content-shell blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, and `Content Header`, and move `data-wb-public-block-type` metadata onto each renderer root while preserving public shell and slot ownership.
 - Improve the admin `Block Types` catalog with search plus category, status, and support filters so larger block catalogs remain manageable.
 - Align admin listing pagination with the WebBlocks UI `wb-pagination` contract, including ordered page links, passive current-page markers, and non-link disabled previous/next controls.
+- Standardize the `Block Types` index on a shared compact admin listing filter toolbar with a reusable search-left, filters-middle, actions-right layout contract for future admin lists.
+- Refine shared admin pagination so compact mode renders the pagination links and same-line `from-to/total` summary together.
+- Document the shared admin listing filter and compact pagination pattern for future admin index screens.
 - Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
 - Clarify the CMS core versus `project/` boundary in core documentation.
 - Exclude install-specific project-layer content from published release packages.

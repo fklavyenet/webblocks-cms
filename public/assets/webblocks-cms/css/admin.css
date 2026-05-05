@@ -358,8 +358,76 @@
     background-size: 100% 100%, 100% 100%, 100% 100%, calc(100% - 3rem) 100%;
 }
 
+.wb-admin-listing-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--wb-s3);
+}
+
+.wb-admin-listing-filters-search {
+    flex: 1 1 20rem;
+    min-width: min(100%, 20rem);
+}
+
+.wb-admin-listing-filters-search .wb-input {
+    width: 100%;
+}
+
+.wb-admin-listing-filters-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--wb-s3);
+}
+
+.wb-admin-listing-filters-select {
+    flex: 0 1 10rem;
+    min-width: 8.5rem;
+}
+
+.wb-admin-listing-filters-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--wb-s2);
+    margin-inline-start: auto;
+}
+
 .wb-admin-filter-actions-end {
     align-self: end;
+}
+
+.wb-admin-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--wb-s2);
+}
+
+.wb-admin-pagination-compact {
+    gap: var(--wb-s2);
+}
+
+.wb-admin-pagination-compact .wb-pagination-info {
+    white-space: nowrap;
+}
+
+@media (min-width: 64rem) {
+    .wb-admin-listing-filters {
+        flex-wrap: nowrap;
+    }
+
+    .wb-admin-listing-filters-search {
+        min-width: 0;
+    }
+
+    .wb-admin-listing-filters-fields,
+    .wb-admin-listing-filters-actions {
+        flex-wrap: nowrap;
+    }
 }
 
 [data-admin-sortable-item].is-dragging {

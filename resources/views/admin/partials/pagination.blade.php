@@ -1,6 +1,9 @@
 @php
     $ariaLabel = $ariaLabel ?? 'Pagination';
     $compact = $compact ?? false;
+    $summaryText = $paginator->firstItem() !== null && $paginator->lastItem() !== null
+        ? $paginator->firstItem().'-'.$paginator->lastItem().'/'.$paginator->total()
+        : null;
     $window = 2;
     $currentPage = $paginator->currentPage();
     $lastPage = $paginator->lastPage();
@@ -22,11 +25,7 @@
 
 @if ($paginator->hasPages())
     <div class="wb-card-footer">
-        <div class="wb-stack wb-gap-3">
-            <div class="wb-text-sm wb-text-muted wb-pagination-info">
-                Showing {{ $paginator->firstItem() }}-{{ $paginator->lastItem() }} of {{ $paginator->total() }}
-            </div>
-
+        <div class="wb-admin-pagination{{ $compact ? ' wb-admin-pagination-compact' : '' }}" data-admin-pagination>
             <nav class="wb-pagination{{ $compact ? ' wb-pagination-compact' : '' }}" aria-label="{{ $ariaLabel }}">
                 <ol class="wb-pagination-list">
                     <li class="wb-pagination-item{{ $paginator->onFirstPage() ? ' is-disabled' : '' }}">
@@ -66,6 +65,16 @@
                     </li>
                 </ol>
             </nav>
+
+            @if ($summaryText)
+                <div class="wb-text-sm wb-text-muted wb-pagination-info" data-admin-pagination-summary>
+                    @if ($compact)
+                        {{ $summaryText }}
+                    @else
+                        Showing {{ $paginator->firstItem() }}-{{ $paginator->lastItem() }} of {{ $paginator->total() }}
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 @endif

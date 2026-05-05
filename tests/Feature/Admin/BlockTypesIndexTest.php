@@ -34,6 +34,14 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('Category');
         $response->assertSee('Status');
         $response->assertSee('Support');
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('data-admin-listing-filters-search', false);
+        $response->assertSee('data-admin-listing-filters-fields', false);
+        $response->assertSee('data-admin-listing-filters-actions', false);
+        $response->assertSee('id="block_types_search"', false);
+        $response->assertSee('id="block_types_category"', false);
+        $response->assertSee('id="block_types_status"', false);
+        $response->assertSee('id="block_types_support"', false);
         $response->assertSee('Apply filters');
         $response->assertSee('Search block types...');
         $response->assertSee('New Custom Block Type');
@@ -153,10 +161,14 @@ class BlockTypesIndexTest extends TestCase
         ]));
 
         $response->assertOk();
+        $response->assertSee('data-admin-pagination', false);
         $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
         $response->assertSee('aria-label="Block types pagination"', false);
         $response->assertSee('class="wb-pagination-list"', false);
         $response->assertSee('aria-current="page">1</span>', false);
+        $response->assertSee('data-admin-pagination-summary', false);
+        $response->assertSee('1-15/35', false);
+        $response->assertDontSee('Showing 1-15 of 35', false);
         $response->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=2', false);
         $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
 
@@ -170,6 +182,7 @@ class BlockTypesIndexTest extends TestCase
 
         $pageTwo->assertOk();
         $pageTwo->assertSee('aria-current="page">2</span>', false);
+        $pageTwo->assertSee('16-30/35', false);
         $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=1', false);
         $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=3', false);
     }
