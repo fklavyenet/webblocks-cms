@@ -1,0 +1,449 @@
+{
+  "site": {
+    "domain": "ui.docs.webblocksui.com",
+    "handle": "ui-docs-webblocksui-com"
+  },
+  "page": {
+    "key": "docs-architecture",
+    "status": "published",
+    "page_type": "default",
+    "public_shell": "docs",
+    "source_url": "https://webblocksui.com/docs/architecture.html",
+    "requested_public_path": "/docs/architecture.html",
+    "current_public_path": "/p/architecture",
+    "translations": {
+      "en": {
+        "name": "Architecture",
+        "slug": "architecture"
+      }
+    },
+    "slots": {
+      "header": {
+        "sort_order": 0,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "sidebar": {
+        "sort_order": 1,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "main": {
+        "sort_order": 2,
+        "source_type": "page",
+        "settings": null,
+        "blocks": [
+          {
+            "key": "content-header",
+            "type": "section",
+            "settings": {
+              "layout_name": "Architecture intro"
+            },
+            "children": [
+              {
+                "key": "content-header-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Architecture intro container"
+                },
+                "children": [
+                  {
+                    "key": "content-header-block",
+                    "type": "content_header",
+                    "variant": "h1",
+                    "translations": {
+                      "en": {
+                        "title": "Architecture",
+                        "subtitle": "WebBlocks UI is intentionally layered so that tokens, structure, visible building blocks, and full-screen compositions do not blur together."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "current-layer-model",
+            "type": "section",
+            "settings": {
+              "layout_name": "The current layer model"
+            },
+            "children": [
+              {
+                "key": "current-layer-model-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "The current layer model container"
+                },
+                "children": [
+                  {
+                    "key": "current-layer-model-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "translations": {
+                      "en": {
+                        "title": "The current layer model"
+                      }
+                    }
+                  },
+                  {
+                    "key": "current-layer-model-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "layer-foundation",
+                        "type": "link-list-item",
+                        "url": "foundation.html",
+                        "translations": {
+                          "en": {
+                            "title": "foundation",
+                            "subtitle": "tokens and theme axes",
+                            "content": "This layer defines tokens, dark mode, presets, accent sets, radius, density, shadow, font, border, reset, element-level rules, and the default styling for raw HTML such as headings and code."
+                          }
+                        }
+                      },
+                      {
+                        "key": "layer-utilities",
+                        "type": "link-list-item",
+                        "url": "utilities.html",
+                        "translations": {
+                          "en": {
+                            "title": "utilities",
+                            "subtitle": "small helper classes",
+                            "content": "Use utilities for small adjustments after the main pattern and primitive decisions are already correct. Spacing, text sizing, alignment, color, and visibility helpers live here."
+                          }
+                        }
+                      },
+                      {
+                        "key": "layer-layout",
+                        "type": "link-list-item",
+                        "url": "layout.html",
+                        "translations": {
+                          "en": {
+                            "title": "layout",
+                            "subtitle": "containers and structural flow",
+                            "content": "This layer contains container, stack, cluster, split, grid, row/column, navbar, sidebar, and shell structure. It solves frame and flow, not button-level UI."
+                          }
+                        }
+                      },
+                      {
+                        "key": "layer-primitives-surfaces",
+                        "type": "link-list-item",
+                        "url": "primitives.html",
+                        "translations": {
+                          "en": {
+                            "title": "primitives + surfaces",
+                            "subtitle": "controls and framed content regions",
+                            "content": "Buttons, forms, tables, dropdowns, drawers, modals, and tabs are primitives. Cards, stats, callouts, lists, toolbars, filter bars, and empty states are surfaces. Public classification follows UI role, not folder name."
+                          }
+                        }
+                      },
+                      {
+                        "key": "layer-patterns",
+                        "type": "link-list-item",
+                        "url": "patterns.html",
+                        "translations": {
+                          "en": {
+                            "title": "patterns",
+                            "subtitle": "screen-level compositions",
+                            "content": "Patterns define real page jobs such as dashboard shell, auth shell, settings shell, content shell, and marketing surfaces."
+                          }
+                        }
+                      },
+                      {
+                        "key": "layer-icons",
+                        "type": "link-list-item",
+                        "url": "icons.html",
+                        "translations": {
+                          "en": {
+                            "title": "icons",
+                            "subtitle": "asset layer",
+                            "content": "Icons are delivered as class-based assets and aliases in this guide. They support primitives and patterns rather than acting as a separate UI layer."
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "build-order-matters",
+            "type": "section",
+            "settings": {
+              "layout_name": "Build order matters"
+            },
+            "children": [
+              {
+                "key": "build-order-matters-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Build order matters container"
+                },
+                "children": [
+                  {
+                    "key": "build-order-matters-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "translations": {
+                      "en": {
+                        "title": "Build order matters"
+                      }
+                    }
+                  },
+                  {
+                    "key": "build-order-matters-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>The package build order is intentional. Later layers rely on earlier layers already being present.</p><ol><li>foundation</li><li>utilities</li><li>layout</li><li>primitives</li><li>patterns</li><li>icons</li></ol>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "build-order-warning",
+                    "type": "alert",
+                    "settings": {
+                      "variant": "warning"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Do not flatten the layer model",
+                        "content": "If a class primarily defines page structure, keep it in layout or patterns. If it is an atomic control, keep it in primitives. If it is a framed content region, treat it as a surface. If it only nudges spacing or text alignment, keep it in utilities."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "what-this-site-is-not-doing",
+            "type": "section",
+            "settings": {
+              "layout_name": "What this site is not doing"
+            },
+            "children": [
+              {
+                "key": "what-this-site-is-not-doing-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "What this site is not doing container"
+                },
+                "children": [
+                  {
+                    "key": "what-this-site-is-not-doing-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "translations": {
+                      "en": {
+                        "title": "What this site is not doing"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-custom-classes-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "No custom classes"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-custom-classes-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Every class used in <code>docs/</code> comes from the shipped package CSS.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-style-scripts-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "No style scripts"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-style-scripts-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Layout, spacing, and presentation are left to CSS. No JavaScript is added to fake CSS concerns.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-behavior-css-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "No behavior CSS"
+                      }
+                    }
+                  },
+                  {
+                    "key": "no-behavior-css-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Overlays, tabs, drawers, dropdowns, and theme switching rely on shipped JavaScript hooks instead of CSS hacks.</p>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "previous-next-links",
+            "type": "section",
+            "settings": {
+              "layout_name": "Architecture previous and next"
+            },
+            "children": [
+              {
+                "key": "previous-next-links-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Architecture previous and next container"
+                },
+                "children": [
+                  {
+                    "key": "previous-next-links-list",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "previous-link",
+                        "type": "link-list-item",
+                        "url": "/p/getting-started",
+                        "translations": {
+                          "en": {
+                            "title": "Previous",
+                            "subtitle": "Getting Started"
+                          }
+                        }
+                      },
+                      {
+                        "key": "next-link",
+                        "type": "link-list-item",
+                        "url": "foundation.html",
+                        "translations": {
+                          "en": {
+                            "title": "Next",
+                            "subtitle": "Foundation"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "navigation": {
+    "menu_key": "docs",
+    "items": [
+      {
+        "key": "home",
+        "title": "Home",
+        "link_type": "page",
+        "page_ref": "home",
+        "icon": "home",
+        "position": 1,
+        "visibility": "visible"
+      },
+      {
+        "key": "getting-started",
+        "title": "Getting Started",
+        "link_type": "page",
+        "page_ref": "getting-started",
+        "icon": "rocket",
+        "position": 2,
+        "visibility": "visible"
+      },
+      {
+        "key": "architecture",
+        "title": "Architecture",
+        "link_type": "page",
+        "page_ref": "docs-architecture",
+        "icon": "layers",
+        "position": 3,
+        "visibility": "visible"
+      },
+      {
+        "key": "foundation",
+        "title": "Foundation",
+        "link_type": "custom_url",
+        "url": "foundation.html",
+        "icon": "palette",
+        "position": 4,
+        "visibility": "visible"
+      },
+      {
+        "key": "layout",
+        "title": "Layout",
+        "link_type": "custom_url",
+        "url": "layout.html",
+        "icon": "layout",
+        "position": 5,
+        "visibility": "visible"
+      },
+      {
+        "key": "primitives",
+        "title": "Primitives",
+        "link_type": "custom_url",
+        "url": "primitives.html",
+        "icon": "box",
+        "position": 6,
+        "visibility": "visible"
+      },
+      {
+        "key": "icons",
+        "title": "Icons",
+        "link_type": "custom_url",
+        "url": "icons.html",
+        "icon": "star",
+        "position": 7,
+        "visibility": "visible"
+      },
+      {
+        "key": "patterns",
+        "title": "Patterns",
+        "link_type": "custom_url",
+        "url": "patterns.html",
+        "icon": "grid",
+        "position": 8,
+        "visibility": "visible"
+      },
+      {
+        "key": "playground",
+        "title": "Playground",
+        "link_type": "custom_url",
+        "url": "../playground/",
+        "icon": "code",
+        "position": 9,
+        "visibility": "visible"
+      }
+    ]
+  }
+}

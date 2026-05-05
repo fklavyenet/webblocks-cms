@@ -1,0 +1,15 @@
+{
+  "source_site": "webblocksui.com",
+  "site": {
+    "domain": "ui.docs.webblocksui.com",
+    "handle": "ui-docs-webblocksui-com"
+  },
+  "payloads": {
+    "docs-architecture": {
+      "file": "docs-architecture.json",
+      "title": "Architecture",
+      "source_url": "https://webblocksui.com/docs/architecture.html",
+      "requested_public_path": "/docs/architecture.html"
+    }
+  }
+}

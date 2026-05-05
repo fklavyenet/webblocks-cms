@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add a project-layer `project:webblocksui-import` workflow with JSON payloads under `storage/project/webblocksui.com` for importing the WebBlocks UI Architecture docs page from `https://webblocksui.com/docs/architecture.html` without adding website-specific CMS core logic.
+- Add a project-layer `project:webblocksui-setup-site` command that explicitly prepares the target `ui.docs.webblocksui.com` site and required docs-shell dependency pages for those imports.
+
 ## 1.13.0
 
 ### Admin UI

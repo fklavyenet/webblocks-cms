@@ -120,6 +120,12 @@ See `docs/getting-started.md` for the first-use workflow.
 - Install-specific code should stay outside CMS core and inside `project/`.
 - Release packages exclude `project/` so shipped artifacts contain reusable CMS product code only.
 - Website-specific sync, import, migration, and seed workflows must not be added to CMS core.
+- Project-layer WebBlocks UI website import payloads live under `storage/project/webblocksui.com`.
+- These WebBlocks UI website files are project-specific migration assets, not CMS core release content.
+- CMS core stays generic; native export/import-style payloads remain the portability mechanism for website content.
+- If the local target site and docs-shell dependency pages do not exist yet, create them with `ddev artisan project:webblocksui-setup-site`.
+- Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
+- The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
 
 ## Developer Notes
 

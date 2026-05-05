@@ -28,3 +28,5 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `project:sync-ui-docs-navigation`
 - `project:sync-ui-docs-home-main`
 - `webblocks:sync-ui-docs-getting-started` syncs the existing Getting Started page main slot with idempotent, marker-based WebBlocks UI docs content blocks.
+- `project:webblocksui-setup-site` creates the project-layer `ui.docs.webblocksui.com` site plus the docs Home, Getting Started, and sidebar-navigation dependencies needed by JSON-backed imports.
+- `project:webblocksui-import docs-architecture` imports the Architecture page from the project payload in `storage/project/webblocksui.com/docs-architecture.json` sourced from `https://webblocksui.com/docs/architecture.html`.
