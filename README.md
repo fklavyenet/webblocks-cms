@@ -123,9 +123,13 @@ See `docs/getting-started.md` for the first-use workflow.
 - Project-layer WebBlocks UI website import payloads live under `storage/project/webblocksui.com`.
 - These WebBlocks UI website files are project-specific migration assets, not CMS core release content.
 - CMS core stays generic; native export/import-style payloads remain the portability mechanism for website content.
+- Configure the local WebBlocks UI docs preview host with `ddev artisan project:webblocksui-local-resolver`; this writes project-specific DDEV `additional_hostnames` config for `ui.docs.webblocksui.com.ddev.site`.
+- If the resolver command updates DDEV config, run `ddev restart` before opening the preview host.
 - If the local target site and docs-shell dependency pages do not exist yet, create them with `ddev artisan project:webblocksui-setup-site`.
 - Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
+- Local preview host: `ui.docs.webblocksui.com.ddev.site`.
+- Full local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
 
 ## Developer Notes
 

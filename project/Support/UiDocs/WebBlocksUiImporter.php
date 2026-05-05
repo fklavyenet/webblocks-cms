@@ -26,7 +26,10 @@ class WebBlocksUiImporter
 
     private const IMPORT_GROUP = 'webblocksui-project-import';
 
-    public function __construct(private readonly BlockPayloadWriter $blockPayloadWriter) {}
+    public function __construct(
+        private readonly BlockPayloadWriter $blockPayloadWriter,
+        private readonly WebBlocksUiLocalResolver $localResolver,
+    ) {}
 
     public function run(string $key): array
     {
@@ -96,6 +99,9 @@ class WebBlocksUiImporter
             $result[] = 'Navigation items synced: '.$navigationCount;
             $result[] = 'Sidebar navigation blocks updated: '.$sidebarNavigationBlocks;
             if ($key === 'docs-architecture') {
+                foreach ($this->localResolverMessages() as $line) {
+                    $result[] = $line;
+                }
                 $result[] = 'Architecture local preview URL: '.$this->localPreviewUrl($site, $page->publicPath() ?? SetupWebBlocksUiDocsSite::ARCHITECTURE_PATH);
             }
         });
@@ -653,5 +659,18 @@ class WebBlocksUiImporter
         $path = '/'.ltrim($path, '/');
 
         return 'https://'.((string) $site->domain).$path;
+    }
+
+    private function localResolverMessages(): array
+    {
+        if (! app()->environment('local')) {
+            return [];
+        }
+
+        if ($this->localResolver->status()['is_configured']) {
+            return ['Local resolver status: configured for '.SetupWebBlocksUiDocsSite::localDdevDomain()];
+        }
+
+        return ['If the host does not resolve, run project:webblocksui-local-resolver first.'];
     }
 }

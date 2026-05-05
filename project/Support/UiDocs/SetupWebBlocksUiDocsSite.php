@@ -21,6 +21,8 @@ class SetupWebBlocksUiDocsSite
 
     public const ARCHITECTURE_PATH = '/p/architecture';
 
+    public function __construct(private readonly WebBlocksUiLocalResolver $localResolver) {}
+
     public function run(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->first();
@@ -66,6 +68,7 @@ class SetupWebBlocksUiDocsSite
             return [
                 'Canonical site domain: '.self::CANONICAL_DOMAIN,
                 'Resolved local site domain: '.$site->domain,
+                ...$this->localResolverMessages(),
                 'Ensured page: Home',
                 'Ensured page: Getting Started',
                 'Ensured docs sidebar navigation dependency on Home page',
@@ -187,5 +190,22 @@ class SetupWebBlocksUiDocsSite
         $path = '/'.ltrim($path, '/');
 
         return 'https://'.$this->resolvedSiteDomain().$path;
+    }
+
+    private function localResolverMessages(): array
+    {
+        if (! app()->environment('local')) {
+            return [];
+        }
+
+        if ($this->localResolver->status()['is_configured']) {
+            return ['Local resolver status: configured for '.self::LOCAL_DDEV_DOMAIN];
+        }
+
+        return [
+            'Local resolver status: not configured for '.self::LOCAL_DDEV_DOMAIN,
+            'If the host does not resolve, run: ddev artisan project:webblocksui-local-resolver',
+            'If the resolver command updates DDEV config, run: ddev restart',
+        ];
     }
 }
