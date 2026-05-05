@@ -12,6 +12,7 @@
 - Add Shared Slot revision history with a dedicated `shared_slot_revisions` store, automatic revision capture for Shared Slot metadata and block-tree changes, admin revision inspection screens, and in-place restore that preserves Shared Slot ids, page-slot references, translated block content, asset references, and hidden internal source pages without using `page_revisions`.
 - Guard Shared Slot admin routes before migrations so the sidebar icon uses a valid WebBlocks glyph and Shared Slot screens show controlled admin responses instead of raw SQL errors when Shared Slot schema is not ready yet.
 - Fix Shared Slot revision migration compatibility for MySQL/MariaDB by assigning explicit short foreign key constraint names in `shared_slot_revisions` so the migration no longer fails on identifier length limits.
+- Fix Shared Slot block editor redirects so block create, update, and delete flows stay in the current Shared Slot editor instead of falling back to `/admin/blocks` when editing through hidden Shared Slot source pages.
 
 ## 1.12.0
 

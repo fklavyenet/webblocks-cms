@@ -73,6 +73,15 @@ class BlockController extends Controller
     public function create(Request $request): View
     {
         if ($request->filled('page_id') && $request->filled('slot_type_id')) {
+            if ($sharedSlot = $this->sharedSlotForPageId($request->integer('page_id'))) {
+                return redirect()->route('admin.shared-slots.blocks.edit', array_filter([
+                    'shared_slot' => $sharedSlot,
+                    'block_type_id' => $request->integer('block_type_id') ?: null,
+                    'picker' => $request->integer('block_type_id') ? 1 : null,
+                    'locale' => $this->requestedLocaleCode($request),
+                ], fn ($value) => $value !== null))->throwResponse();
+            }
+
             $pageSlotId = $this->pageSlotRouteId($request->integer('page_id'), $request->integer('slot_type_id'));
 
             if ($pageSlotId) {
@@ -135,7 +144,7 @@ class BlockController extends Controller
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $sharedSlot = $this->sharedSlotFromRequest($request);
+        $sharedSlot = $this->sharedSlotContext($request, null, (int) $data['page_id']);
         $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
         $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
@@ -272,7 +281,7 @@ class BlockController extends Controller
         $featureItems = $this->builderChildItemsFrom($request, 'feature_items');
         $linkListItems = $this->builderChildItemsFrom($request, 'link_list_items', true);
         $managedCtas = $this->managedCtasFrom($request);
-        $sharedSlot = $this->sharedSlotFromRequest($request) ?? $contextSharedSlot;
+        $sharedSlot = $this->sharedSlotContext($request, $contextSharedSlot, (int) $data['page_id']);
         $page = $this->editablePageFromRequest($request, $sharedSlot, (int) $data['page_id']);
         $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $page);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
@@ -473,6 +482,45 @@ class BlockController extends Controller
         $sharedSlot = SharedSlot::query()->findOrFail($sharedSlotId);
 
         return $sharedSlot;
+    }
+
+    private function sharedSlotContext(Request $request, ?SharedSlot $contextSharedSlot = null, ?int $pageId = null): ?SharedSlot
+    {
+        $requestedSharedSlot = $this->sharedSlotFromRequest($request);
+        $pageSharedSlot = $this->sharedSlotForPageId($pageId);
+
+        if ($requestedSharedSlot && $contextSharedSlot && $requestedSharedSlot->isNot($contextSharedSlot)) {
+            abort(403);
+        }
+
+        if ($requestedSharedSlot && $pageSharedSlot && $requestedSharedSlot->isNot($pageSharedSlot)) {
+            abort(403);
+        }
+
+        if ($contextSharedSlot && $pageSharedSlot && $contextSharedSlot->isNot($pageSharedSlot)) {
+            abort(403);
+        }
+
+        return $requestedSharedSlot ?? $contextSharedSlot ?? $pageSharedSlot;
+    }
+
+    private function sharedSlotForPageId(?int $pageId): ?SharedSlot
+    {
+        if (! $pageId || $pageId < 1) {
+            return null;
+        }
+
+        $page = Page::query()->find($pageId);
+
+        if (! $page?->isSharedSlotSourcePage()) {
+            return null;
+        }
+
+        $sharedSlotId = (int) data_get($page->settings, 'shared_slot_id');
+
+        return $sharedSlotId > 0
+            ? SharedSlot::query()->find($sharedSlotId)
+            : null;
     }
 
     private function editablePageFromRequest(Request $request, ?SharedSlot $sharedSlot, int $pageId): Page

@@ -438,6 +438,103 @@ class SharedSlotAdminManagementTest extends TestCase
     }
 
     #[Test]
+    public function shared_slot_block_create_route_redirects_hidden_source_pages_back_to_the_shared_slot_editor(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'sidebar']);
+        $sidebarSlotType = $this->slotType('sidebar', 'Sidebar', 2);
+        $brandType = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
+        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.blocks.create', [
+            'page_id' => $sourcePage->id,
+            'slot_type_id' => $sidebarSlotType->id,
+            'block_type_id' => $brandType->id,
+        ]));
+
+        $response->assertRedirect(route('admin.shared-slots.blocks.edit', [
+            'shared_slot' => $sharedSlot,
+            'block_type_id' => $brandType->id,
+            'picker' => 1,
+        ]));
+    }
+
+    #[Test]
+    public function creating_updating_and_deleting_blocks_from_shared_slot_context_stay_in_that_editor(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'sidebar']);
+        $sidebarSlotType = $this->slotType('sidebar', 'Sidebar', 2);
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $user = User::factory()->superAdmin()->create();
+
+        $create = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $sourcePage->id,
+            'slot_type_id' => $sidebarSlotType->id,
+            'block_type_id' => $plainTextType->id,
+            'parent_id' => null,
+            'sort_order' => 0,
+            'text' => 'Shared sidebar copy',
+            'status' => 'published',
+        ]);
+
+        $create->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
+
+        $block = Block::query()
+            ->where('page_id', $sourcePage->id)
+            ->where('type', 'plain_text')
+            ->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $sourcePage->id,
+            'slot_type_id' => $sidebarSlotType->id,
+            'block_type_id' => $plainTextType->id,
+            'parent_id' => null,
+            'sort_order' => 0,
+            'text' => 'Updated shared sidebar copy',
+            'status' => 'published',
+        ])->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
+
+        $this->actingAs($user)
+            ->delete(route('admin.blocks.destroy', $block))
+            ->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
+    }
+
+    #[Test]
+    public function users_cannot_forge_shared_slot_context_for_a_source_page_from_another_site(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $otherSite = $this->secondarySite();
+        $localSharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'header']);
+        $foreignSharedSlot = $this->sharedSlotFor($otherSite, ['name' => 'Foreign Slot', 'handle' => 'foreign-slot', 'slot_name' => 'header']);
+        $headerSlotType = $this->slotType('header', 'Header', 1);
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $foreignSourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($foreignSharedSlot);
+        $user = $this->siteAdminFor($site);
+
+        $this->actingAs($user)
+            ->post(route('admin.blocks.store'), [
+                'shared_slot_id' => $localSharedSlot->id,
+                'page_id' => $foreignSourcePage->id,
+                'slot_type_id' => $headerSlotType->id,
+                'block_type_id' => $plainTextType->id,
+                'parent_id' => null,
+                'sort_order' => 0,
+                'text' => 'Forged copy',
+                'status' => 'published',
+            ])
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function shared_slot_block_order_and_nesting_persist(): void
     {
         $this->seedFoundation();
