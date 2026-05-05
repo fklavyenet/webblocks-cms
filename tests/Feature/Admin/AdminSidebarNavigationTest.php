@@ -119,6 +119,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertOk();
         $response->assertSee('href="'.route('admin.shared-slots.index').'"', false);
         $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertSee('wb-icon-layers', false);
     }
 
     #[Test]

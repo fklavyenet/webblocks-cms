@@ -14,6 +14,7 @@ use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\SharedSlots\SharedSlotRevisionManager;
+use App\Support\SharedSlots\SharedSlotSchema;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,7 @@ class SharedSlotController extends Controller
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
         private readonly SharedSlotRevisionManager $revisionManager,
+        private readonly SharedSlotSchema $schema,
         private readonly SharedSlotSourcePageManager $sourcePages,
     ) {}
 
@@ -40,6 +42,7 @@ class SharedSlotController extends Controller
     {
         $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
         [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
+        $sharedSlotsReady = $this->schema->sharedSlotsTableExists();
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
         $sort = $request->string('sort')->toString();
@@ -54,8 +57,10 @@ class SharedSlotController extends Controller
             $sort = 'updated_at';
         }
 
-        return view('admin.shared-slots.index', [
-            'sharedSlots' => $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), $request->user())
+        $sharedSlots = null;
+
+        if ($sharedSlotsReady) {
+            $sharedSlots = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), $request->user())
                 ->with(['site'])
                 ->withCount('pageSlots')
                 ->when($search !== '', function ($query) use ($search) {
@@ -72,7 +77,12 @@ class SharedSlotController extends Controller
                 ->orderBy($sort, $direction)
                 ->when($sort !== 'updated_at', fn ($query) => $query->orderByDesc('updated_at'))
                 ->paginate(15)
-                ->withQueryString(),
+                ->withQueryString();
+        }
+
+        return view('admin.shared-slots.index', [
+            'sharedSlots' => $sharedSlots,
+            'sharedSlotsReady' => $sharedSlotsReady,
             'sites' => $sites,
             'activeSite' => $activeSite,
             'showAllSites' => $siteFilterValue === 'all',
@@ -87,9 +97,13 @@ class SharedSlotController extends Controller
         ]);
     }
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         abort_unless($this->canManageSharedSlots($request->user()), 403);
+
+        if (! $this->schema->sharedSlotsTableExists()) {
+            return $this->sharedSlotsNotReadyRedirect();
+        }
 
         $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
         [$activeSite] = $this->resolveSiteContext($request, $sites, persist: false);
@@ -109,14 +123,17 @@ class SharedSlotController extends Controller
         $sharedSlot = DB::transaction(function () use ($request): SharedSlot {
             $sharedSlot = SharedSlot::query()->create($request->validatedData());
             $this->sourcePages->ensureFor($sharedSlot);
-            $this->revisionManager->capture(
-                $sharedSlot->fresh(),
-                $request->user(),
-                'created',
-                'Shared Slot created',
-                'Shared Slot metadata was created.',
-                force: true,
-            );
+
+            if ($this->revisionManager->revisionsTableExists()) {
+                $this->revisionManager->capture(
+                    $sharedSlot->fresh(),
+                    $request->user(),
+                    'created',
+                    'Shared Slot created',
+                    'Shared Slot metadata was created.',
+                    force: true,
+                );
+            }
 
             return $sharedSlot;
         });
@@ -126,8 +143,12 @@ class SharedSlotController extends Controller
             ->with('status', 'Shared Slot created successfully.');
     }
 
-    public function edit(SharedSlot $sharedSlot): View
+    public function edit(SharedSlot $sharedSlot): View|RedirectResponse
     {
+        if (! $this->schema->sharedSlotsTableExists()) {
+            return $this->sharedSlotsNotReadyRedirect();
+        }
+
         $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot);
 
         return view('admin.shared-slots.edit', [
@@ -157,7 +178,7 @@ class SharedSlotController extends Controller
                 ->contains(fn (string $key) => data_get($before, $key) !== data_get($freshSharedSlot, $key));
             $statusChanged = (bool) $before->is_active !== (bool) $freshSharedSlot->is_active;
 
-            if ($metadataChanged) {
+            if ($metadataChanged && $this->revisionManager->revisionsTableExists()) {
                 $this->revisionManager->capture(
                     $freshSharedSlot,
                     $request->user(),
@@ -167,7 +188,7 @@ class SharedSlotController extends Controller
                 );
             }
 
-            if ($statusChanged) {
+            if ($statusChanged && $this->revisionManager->revisionsTableExists()) {
                 $this->revisionManager->capture(
                     $freshSharedSlot,
                     $request->user(),
@@ -185,8 +206,19 @@ class SharedSlotController extends Controller
 
     public function destroy(SharedSlot $sharedSlot): RedirectResponse
     {
+        if (! $this->schema->sharedSlotsTableExists()) {
+            return $this->sharedSlotsNotReadyRedirect();
+        }
+
         $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot);
         abort_unless($this->canManageSharedSlots(request()->user()), 403);
+
+        if (! $this->schema->pageSlotSourceColumnsExist()) {
+            return $this->sharedSlotsNotReadyRedirect(
+                route('admin.shared-slots.edit', $sharedSlot),
+                'Shared Slot references are not ready yet. Run the latest migrations before deleting Shared Slots.'
+            );
+        }
 
         if ($sharedSlot->pageSlots()->exists()) {
             return redirect()
@@ -206,8 +238,15 @@ class SharedSlotController extends Controller
             ->with('status', 'Shared Slot deleted successfully.');
     }
 
-    public function editBlocks(SharedSlot $sharedSlot): View
+    public function editBlocks(SharedSlot $sharedSlot): View|RedirectResponse
     {
+        if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
+            return $this->sharedSlotsNotReadyRedirect(
+                route('admin.shared-slots.index'),
+                'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.'
+            );
+        }
+
         $this->authorization->abortUnlessSiteAccess(request()->user(), $sharedSlot);
         abort_unless($this->canEditSharedSlot(request()->user(), $sharedSlot), 403);
 
@@ -263,6 +302,13 @@ class SharedSlotController extends Controller
 
     public function reorderBlocks(Request $request, SharedSlot $sharedSlot): JsonResponse
     {
+        if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
+            return response()->json([
+                'message' => 'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.',
+                'errors' => ['shared_slots' => ['Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.']],
+            ], 409);
+        }
+
         $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot);
         abort_unless($this->canEditSharedSlot($request->user(), $sharedSlot), 403);
 
@@ -334,13 +380,15 @@ class SharedSlotController extends Controller
                 });
 
             $this->sourcePages->rebuildAssignments($sharedSlot);
-            $this->revisionManager->capture(
-                $sharedSlot->fresh(),
-                request()->user(),
-                'blocks_reordered',
-                'Shared Slot blocks reordered',
-                'Shared Slot block order was changed.',
-            );
+            if ($this->revisionManager->revisionsTableExists()) {
+                $this->revisionManager->capture(
+                    $sharedSlot->fresh(),
+                    request()->user(),
+                    'blocks_reordered',
+                    'Shared Slot blocks reordered',
+                    'Shared Slot block order was changed.',
+                );
+            }
         });
 
         return response()->json([
@@ -683,5 +731,12 @@ class SharedSlotController extends Controller
             ->with('parent')
             ->orderBy('name')
             ->get();
+    }
+
+    private function sharedSlotsNotReadyRedirect(?string $url = null, ?string $message = null): RedirectResponse
+    {
+        return redirect()
+            ->to($url ?? route('admin.shared-slots.index'))
+            ->withErrors(['shared_slots' => $message ?? 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.']);
     }
 }

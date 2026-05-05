@@ -3,6 +3,7 @@
     $siteContextDescription = $showAllSites
         ? 'Showing Shared Slots across all allowed sites.'
         : 'Showing Shared Slots for '.$activeSite->name.($activeSite?->domain ? ' ('.$activeSite->domain.')' : '').'.';
+    $sharedSlotsReady = $sharedSlotsReady ?? true;
     $newSharedSlotUrl = $activeSite ? route('admin.shared-slots.create', ['site' => $activeSite->id]) : route('admin.shared-slots.create');
     $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
     $headerActions = '<form method="GET" action="'.route('admin.shared-slots.index').'" class="wb-inline-flex wb-items-center wb-gap-2 wb-flex-wrap">'
@@ -25,66 +26,76 @@
     @include('admin.partials.page-header', [
         'title' => 'Shared Slots',
         'context' => '<span>'.e($siteContextDescription).'</span>',
-        'count' => $sharedSlots->total(),
+        'count' => $sharedSlotsReady ? $sharedSlots->total() : null,
         'actions' => $headerActions,
     ])
 
     @include('admin.partials.flash')
 
-    <div class="wb-card wb-card-muted">
-        <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
-                'action' => route('admin.shared-slots.index'),
-                'search' => [
-                    'id' => 'shared_slots_search',
-                    'name' => 'search',
-                    'label' => 'Search',
-                    'value' => $filters['search'],
-                    'placeholder' => 'Search by name, handle, slot, or shell',
-                ],
-                'selects' => [
-                    [
-                        'id' => 'shared_slots_status',
-                        'name' => 'status',
-                        'label' => 'Status',
-                        'selected' => $filters['status'],
-                        'placeholder' => 'All statuses',
-                        'options' => [
-                            'active' => 'Active',
-                            'inactive' => 'Inactive',
-                        ],
-                    ],
-                    [
-                        'id' => 'shared_slots_sort',
-                        'name' => 'sort',
-                        'label' => 'Sort by',
-                        'selected' => $filters['sort'],
-                        'options' => [
-                            'updated_at' => 'Updated at',
-                            'name' => 'Name',
-                            'handle' => 'Handle',
-                            'slot_name' => 'Slot',
-                            'public_shell' => 'Public shell',
-                        ],
-                    ],
-                    [
-                        'id' => 'shared_slots_direction',
-                        'name' => 'direction',
-                        'label' => 'Direction',
-                        'selected' => $filters['direction'],
-                        'options' => [
-                            'desc' => 'Descending',
-                            'asc' => 'Ascending',
-                        ],
-                    ],
-                ],
-                'hidden' => ['site' => $filters['site']],
-                'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'updated_at' || $filters['direction'] !== 'desc',
-                'resetUrl' => $clearUrl,
-                'applyLabel' => 'Apply',
-            ])
+    @if (! $sharedSlotsReady)
+        <div class="wb-card">
+            <div class="wb-card-body">
+                <div class="wb-empty">
+                    <div class="wb-empty-title">Shared Slots are not ready yet</div>
+                    <div class="wb-empty-text">Run the latest migrations before using Shared Slot admin screens in this environment.</div>
+                </div>
+            </div>
         </div>
-    </div>
+    @else
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body">
+                @include('admin.partials.listing-filters', [
+                    'action' => route('admin.shared-slots.index'),
+                    'search' => [
+                        'id' => 'shared_slots_search',
+                        'name' => 'search',
+                        'label' => 'Search',
+                        'value' => $filters['search'],
+                        'placeholder' => 'Search by name, handle, slot, or shell',
+                    ],
+                    'selects' => [
+                        [
+                            'id' => 'shared_slots_status',
+                            'name' => 'status',
+                            'label' => 'Status',
+                            'selected' => $filters['status'],
+                            'placeholder' => 'All statuses',
+                            'options' => [
+                                'active' => 'Active',
+                                'inactive' => 'Inactive',
+                            ],
+                        ],
+                        [
+                            'id' => 'shared_slots_sort',
+                            'name' => 'sort',
+                            'label' => 'Sort by',
+                            'selected' => $filters['sort'],
+                            'options' => [
+                                'updated_at' => 'Updated at',
+                                'name' => 'Name',
+                                'handle' => 'Handle',
+                                'slot_name' => 'Slot',
+                                'public_shell' => 'Public shell',
+                            ],
+                        ],
+                        [
+                            'id' => 'shared_slots_direction',
+                            'name' => 'direction',
+                            'label' => 'Direction',
+                            'selected' => $filters['direction'],
+                            'options' => [
+                                'desc' => 'Descending',
+                                'asc' => 'Ascending',
+                            ],
+                        ],
+                    ],
+                    'hidden' => ['site' => $filters['site']],
+                    'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'updated_at' || $filters['direction'] !== 'desc',
+                    'resetUrl' => $clearUrl,
+                    'applyLabel' => 'Apply',
+                ])
+            </div>
+        </div>
 
     @if ($sharedSlots->isEmpty())
         <div class="wb-card">
@@ -147,5 +158,6 @@
 
             @include('admin.partials.pagination', ['paginator' => $sharedSlots, 'ariaLabel' => 'Shared Slots pagination', 'compact' => true])
         </div>
+    @endif
     @endif
 @endsection

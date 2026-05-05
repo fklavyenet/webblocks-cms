@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Page;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Support\SharedSlots\SharedSlotSchema;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -40,18 +41,23 @@ class SharedSlotRequest extends FormRequest
         $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
         $siteId = (int) $this->input('site_id');
 
+        $handleRules = [
+            'required',
+            'string',
+            'max:100',
+            'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+        ];
+
+        if (app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
+            $handleRules[] = Rule::unique(SharedSlot::class, 'handle')
+                ->where(fn ($query) => $query->where('site_id', $siteId))
+                ->ignore($sharedSlot?->id);
+        }
+
         return [
             'site_id' => ['required', 'integer', 'exists:sites,id'],
             'name' => ['required', 'string', 'max:255'],
-            'handle' => [
-                'required',
-                'string',
-                'max:100',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-                Rule::unique(SharedSlot::class, 'handle')
-                    ->where(fn ($query) => $query->where('site_id', $siteId))
-                    ->ignore($sharedSlot?->id),
-            ],
+            'handle' => $handleRules,
             'slot_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'public_shell' => ['nullable', Rule::in(Page::allowedPublicShellPresets())],
             'is_active' => ['required', 'boolean'],
@@ -78,9 +84,16 @@ class SharedSlotRequest extends FormRequest
         return [function (Validator $validator): void {
             /** @var AdminAuthorization $authorization */
             $authorization = app(AdminAuthorization::class);
+            $schema = app(SharedSlotSchema::class);
             $sharedSlot = $this->route('shared_slot');
             $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
             $siteId = (int) $this->input('site_id');
+
+            if (! $schema->sharedSlotsTableExists()) {
+                $validator->errors()->add('shared_slots', 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.');
+
+                return;
+            }
 
             if ($siteId > 0 && ! $this->user()?->isSuperAdmin() && ! $authorization->scopeSitesForUser(Site::query(), $this->user())->whereKey($siteId)->exists()) {
                 $validator->errors()->add('site_id', 'Selected site is outside your allowed site scope.');

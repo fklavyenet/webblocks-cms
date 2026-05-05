@@ -393,6 +393,23 @@ class SharedSlotRevisionTest extends TestCase
     }
 
     #[Test]
+    public function shared_slot_revision_routes_redirect_cleanly_when_shared_slot_schema_is_missing(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+
+        Schema::dropIfExists('shared_slot_revisions');
+        Schema::dropIfExists('shared_slot_blocks');
+        Schema::dropIfExists('shared_slots');
+
+        $response = $this->actingAs($user)->get(route('admin.shared-slots.revisions.index', ['shared_slot' => 999]));
+
+        $response->assertRedirect(route('admin.shared-slots.index'));
+        $response->assertSessionHasErrors('shared_slots');
+    }
+
+    #[Test]
     public function restoring_a_shared_slot_revision_restores_metadata_and_block_tree_and_keeps_references_intact(): void
     {
         $this->seedFoundation();

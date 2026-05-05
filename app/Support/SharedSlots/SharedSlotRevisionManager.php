@@ -11,8 +11,6 @@ use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Throwable;
 
 class SharedSlotRevisionManager
 {
@@ -21,6 +19,7 @@ class SharedSlotRevisionManager
     public function __construct(
         private readonly SharedSlotSourcePageManager $sourcePages,
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly SharedSlotSchema $schema,
     ) {}
 
     public function canView(User $user, SharedSlot $sharedSlot): bool
@@ -38,11 +37,7 @@ class SharedSlotRevisionManager
 
     public function revisionsTableExists(): bool
     {
-        try {
-            return Schema::hasTable('shared_slot_revisions');
-        } catch (Throwable) {
-            return false;
-        }
+        return $this->schema->revisionsTableExists();
     }
 
     public function capture(

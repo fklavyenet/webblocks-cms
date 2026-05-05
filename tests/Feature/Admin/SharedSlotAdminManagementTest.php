@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -109,6 +110,67 @@ class SharedSlotAdminManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Shared Slots');
         $response->assertSee('Primary Header');
+    }
+
+    #[Test]
+    public function shared_slots_index_loads_an_informative_empty_state_when_schema_is_missing(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+
+        Schema::dropIfExists('shared_slot_blocks');
+        Schema::dropIfExists('shared_slots');
+
+        $response = $this->actingAs($user)->get(route('admin.shared-slots.index'));
+
+        $response->assertOk();
+        $response->assertSee('Shared Slots are not ready yet');
+        $response->assertSee('Run the latest migrations before using Shared Slot admin screens in this environment.');
+    }
+
+    #[Test]
+    public function shared_slot_admin_actions_redirect_cleanly_when_shared_slot_schema_is_missing(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+
+        Schema::dropIfExists('shared_slot_blocks');
+        Schema::dropIfExists('shared_slots');
+
+        $this->actingAs($user)
+            ->get(route('admin.shared-slots.create'))
+            ->assertRedirect(route('admin.shared-slots.index'))
+            ->assertSessionHasErrors('shared_slots');
+
+        $this->actingAs($user)
+            ->from(route('admin.shared-slots.create'))
+            ->post(route('admin.shared-slots.store'), [
+                'site_id' => $this->defaultSite()->id,
+                'name' => 'Header',
+                'handle' => 'header',
+                'slot_name' => 'header',
+                'public_shell' => 'docs',
+                'is_active' => '1',
+            ])
+            ->assertRedirect(route('admin.shared-slots.create'))
+            ->assertSessionHasErrors('shared_slots');
+
+        $this->actingAs($user)
+            ->get(route('admin.shared-slots.edit', ['shared_slot' => 999]))
+            ->assertRedirect(route('admin.shared-slots.index'))
+            ->assertSessionHasErrors('shared_slots');
+
+        $this->actingAs($user)
+            ->delete(route('admin.shared-slots.destroy', ['shared_slot' => 999]))
+            ->assertRedirect(route('admin.shared-slots.index'))
+            ->assertSessionHasErrors('shared_slots');
+
+        $this->actingAs($user)
+            ->get(route('admin.shared-slots.blocks.edit', ['shared_slot' => 999]))
+            ->assertRedirect(route('admin.shared-slots.index'))
+            ->assertSessionHasErrors('shared_slots');
     }
 
     #[Test]

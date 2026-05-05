@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,5 +57,14 @@ class SharedSlotRevision extends Model
     public function eventText(): string
     {
         return str($this->source_event)->replace('_', ' ')->headline()->toString();
+    }
+
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        if (! app(SharedSlotSchema::class)->revisionsTableExists()) {
+            return null;
+        }
+
+        return parent::resolveRouteBinding($value, $field);
     }
 }

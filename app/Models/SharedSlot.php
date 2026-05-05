@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -118,5 +119,14 @@ class SharedSlot extends Model
     public function isCompatibleWithPageSlot(Page $page, string $slotName): bool
     {
         return $this->compatibilityIssuesFor($page, $slotName) === [];
+    }
+
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        if (! app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
+            return null;
+        }
+
+        return parent::resolveRouteBinding($value, $field);
     }
 }
