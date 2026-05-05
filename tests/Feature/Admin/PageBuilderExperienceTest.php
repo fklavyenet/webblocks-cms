@@ -3579,6 +3579,13 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($content, 'data-wb-page-slot-source-target="#slot-source-modal-'.$disabledSlot->id.'"'));
         $response->assertSee('Manage Source: Header');
         $response->assertSee('Manage Source: Sidebar');
+        $response->assertSee('Choose what this slot should render.');
+        $response->assertSee('Current: Page Content');
+        $response->assertSee('Current: Disabled');
+        $response->assertSee('Render this page\'s own slot blocks.', false);
+        $response->assertSee('Render reusable content from a Shared Slot.', false);
+        $response->assertSee('Render nothing in this slot.', false);
+        $response->assertSee('Page-owned blocks are preserved when switching sources.', false);
         $response->assertSee('Save Source');
         $response->assertDontSee('Update Source');
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $pageSlot]).'"', false);
@@ -3590,9 +3597,16 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Edit Page Blocks (Preserved)');
         $response->assertSee('Reusable Header (reusable-header)', false);
         $response->assertDontSee('Reusable Header (reusable-header) | header | docs', false);
+        $response->assertDontSee('Switch this slot between page-owned content, a Shared Slot, or disabled output.');
+        $response->assertDontSee('<strong>Slot</strong>', false);
+        $response->assertDontSee('<strong>Current source</strong>', false);
         $response->assertDontSee('This page\'s own slot blocks render publicly.');
         $response->assertDontSee('Preserved but not currently rendered.');
         $response->assertDontSee('<button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>', false);
+        $response->assertSee('type="radio"', false);
+        $response->assertSee('value="page"', false);
+        $response->assertSee('value="shared_slot"', false);
+        $response->assertSee('value="disabled"', false);
         $this->assertNotFalse(strpos($content, '</table>'));
         $this->assertNotFalse(strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
         $this->assertTrue(strpos($content, '</table>') < strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
@@ -3636,7 +3650,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Compatible Header (compatible-header)', false);
         $response->assertSee('Any Header (any-header)', false);
-        $response->assertSee('Only active Shared Slots from this site with compatible shell and slot rules are listed.');
+        $response->assertDontSee('Only active Shared Slots from this site with compatible shell and slot rules are listed.');
         $response->assertSee('Manage Source: Header');
         $response->assertDontSee('Wrong Slot (wrong-slot)', false);
         $response->assertDontSee('Wrong Shell (wrong-shell)', false);
@@ -3821,5 +3835,22 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Manage Source: Header');
         $response->assertSee('Manage Source');
         $response->assertSee('class="wb-modal wb-modal-lg is-open" id="slot-source-modal-'.$pageSlot->id.'"', false);
+    }
+
+    #[Test]
+    public function source_modal_shows_short_empty_shared_slot_message_and_create_link_when_allowed(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page] = $this->pageWithSlot($header, 'Docs', 'docs');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('No compatible Shared Slots are available.');
+        $response->assertSee(route('admin.shared-slots.create', ['site' => $page->site_id]), false);
     }
 }

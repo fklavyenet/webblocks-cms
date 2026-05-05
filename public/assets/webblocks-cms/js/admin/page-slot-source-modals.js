@@ -52,7 +52,7 @@
             return;
         }
 
-        var sourceSelect = form.querySelector('[data-wb-slot-source-type]');
+        var sourceSelect = form.querySelector('[data-wb-slot-source-type]:checked');
         var sharedSlotField = form.querySelector('[data-wb-shared-slot-field]');
         var sharedSlotSelect = form.querySelector('[data-wb-shared-slot-select]');
 
@@ -64,10 +64,6 @@
 
         sharedSlotField.hidden = sourceType !== 'shared_slot';
         sharedSlotSelect.disabled = sourceType !== 'shared_slot';
-
-        form.querySelectorAll('[data-wb-source-type-note]').forEach(function (note) {
-            note.hidden = note.getAttribute('data-wb-source-type-note') !== sourceType;
-        });
     }
 
     document.querySelectorAll('[data-wb-page-slot-source-form]').forEach(syncSourceForm);
