@@ -109,7 +109,18 @@ class PageSlot extends Model
 
     public function usesPageOwnedBlocks(): bool
     {
-        return $this->source_type === self::SOURCE_TYPE_PAGE;
+        return self::normalizeRuntimeSourceType($this->source_type) === self::SOURCE_TYPE_PAGE;
+    }
+
+    public static function normalizeRuntimeSourceType(mixed $sourceType): string
+    {
+        $normalized = trim((string) $sourceType);
+
+        if ($normalized === '') {
+            return self::SOURCE_TYPE_PAGE;
+        }
+
+        return self::normalizeSourceType($normalized);
     }
 
     public function blocks(): HasMany

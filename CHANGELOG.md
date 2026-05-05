@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add the Shared Slots V1 foundation with site-scoped `shared_slots`, `shared_slot_blocks`, and page slot source fields so existing page-owned slots keep working unchanged while future phases can add shared-slot admin and rendering flows.
+- Fix a Shared Slots foundation regression where public page-owned slot content could disappear when `page_slots.source_type` was null or not hydrated, and preserve backward-compatible page-owned rendering while `shared_slot` and `disabled` remain non-rendering in this phase.
 
 ## 1.12.0
 

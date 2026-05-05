@@ -6,13 +6,16 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\SharedSlotBlock;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Pages\PublicPagePresenter;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -137,6 +140,98 @@ class SharedSlotsFoundationTest extends TestCase
     }
 
     #[Test]
+    public function published_page_renders_existing_page_owned_header_sidebar_and_main_slot_blocks(): void
+    {
+        $page = $this->publishedPageWithSlots();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<aside data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar">',
+            'Shared Slots Regression Sidebar',
+            '<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">',
+            'Shared Slots Regression Header',
+            '<main data-wb-slot="main" id="main-content" class="wb-dashboard-main">',
+            'Shared Slots Regression Main',
+        ], false);
+    }
+
+    #[Test]
+    public function page_source_type_renders_page_owned_slot_blocks_in_public_output(): void
+    {
+        $page = $this->publishedPageWithSlots([
+            'header' => PageSlot::SOURCE_TYPE_PAGE,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Shared Slots Regression Header', false);
+        $response->assertSee('Shared Slots Regression Main', false);
+        $response->assertSee('Shared Slots Regression Sidebar', false);
+    }
+
+    #[Test]
+    public function missing_source_type_attribute_is_treated_as_page_owned_for_rendering_compatibility(): void
+    {
+        $page = $this->publishedPageWithSlots();
+
+        $headerSlot = PageSlot::query()->where('page_id', $page->id)
+            ->whereHas('slotType', fn ($query) => $query->where('slug', 'header'))
+            ->firstOrFail();
+
+        $legacySlot = new PageSlot;
+        $legacySlot->setRawAttributes(Arr::except($headerSlot->getAttributes(), ['source_type']), true);
+        $legacySlot->setRelation('slotType', $headerSlot->slotType);
+        $legacySlot->setRelation('page', $headerSlot->page);
+
+        $this->assertTrue($legacySlot->usesPageOwnedBlocks());
+
+        $presented = app(PublicPagePresenter::class)->present($page->fresh()->load(['slots.slotType', 'blocks']));
+
+        $this->assertCount(1, $legacySlot->blocks()->get());
+        $this->assertCount(1, $presented['slots'][1]['blocks']);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Shared Slots Regression Header', false);
+    }
+
+    #[Test]
+    public function disabled_source_type_renders_no_slot_blocks(): void
+    {
+        $this->publishedPageWithSlots([
+            'header' => PageSlot::SOURCE_TYPE_DISABLED,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertDontSee('Shared Slots Regression Header', false);
+        $response->assertSee('Shared Slots Regression Main', false);
+        $response->assertSee('Shared Slots Regression Sidebar', false);
+    }
+
+    #[Test]
+    public function shared_slot_source_type_does_not_accidentally_render_page_owned_blocks_yet(): void
+    {
+        $this->publishedPageWithSlots([
+            'header' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertDontSee('Shared Slots Regression Header', false);
+        $response->assertSee('Shared Slots Regression Main', false);
+        $response->assertSee('Shared Slots Regression Sidebar', false);
+    }
+
+    #[Test]
     public function shared_slots_are_site_scoped_and_relationships_resolve(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
@@ -220,5 +315,95 @@ class SharedSlotsFoundationTest extends TestCase
             ['slug' => $slug],
             ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder],
         );
+    }
+
+    private function publishedPageWithSlots(array $slotSourceTypes = []): Page
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $headerType = $this->blockType('header', 'Header', 1);
+        $plainTextType = $this->blockType('plain_text', 'Plain Text', 2);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Home',
+            'slug' => 'home',
+            'status' => Page::STATUS_PUBLISHED,
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Home', 'slug' => 'home', 'path' => '/'],
+        );
+
+        $sharedHeaderSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Shared Header',
+            'handle' => 'shared-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        foreach ([['type' => $header, 'order' => 0], ['type' => $main, 'order' => 1], ['type' => $sidebar, 'order' => 2]] as $definition) {
+            $slug = $definition['type']->slug;
+            $sourceType = $slotSourceTypes[$slug] ?? PageSlot::SOURCE_TYPE_PAGE;
+
+            PageSlot::query()->create([
+                'page_id' => $page->id,
+                'slot_type_id' => $definition['type']->id,
+                'source_type' => $sourceType,
+                'shared_slot_id' => $sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT ? $sharedHeaderSlot->id : null,
+                'sort_order' => $definition['order'],
+            ]);
+        }
+
+        $headerBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $headerBlock->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Shared Slots Regression Header',
+        ]);
+
+        foreach ([
+            ['slot' => $main, 'order' => 0, 'content' => 'Shared Slots Regression Main'],
+            ['slot' => $sidebar, 'order' => 0, 'content' => 'Shared Slots Regression Sidebar'],
+        ] as $definition) {
+            $block = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => 'plain_text',
+                'block_type_id' => $plainTextType->id,
+                'source_type' => 'static',
+                'slot' => $definition['slot']->slug,
+                'slot_type_id' => $definition['slot']->id,
+                'sort_order' => $definition['order'],
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+            $block->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'content' => $definition['content'],
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+        }
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($headerBlock->fresh(['textTranslations']));
+
+        return $page;
     }
 }
