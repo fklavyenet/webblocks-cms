@@ -14,7 +14,8 @@
 - Fix Shared Slot revision migration compatibility for MySQL/MariaDB by assigning explicit short foreign key constraint names in `shared_slot_revisions` so the migration no longer fails on identifier length limits.
 - Fix Shared Slot block editor redirects so block create, update, and delete flows stay in the current Shared Slot editor instead of falling back to `/admin/blocks` when editing through hidden Shared Slot source pages.
 - Fix Shared Slot public rendering context so reusable blocks render against the consuming public page and locale instead of leaking hidden Shared Slot source page labels into Breadcrumb output.
-- Compact the Edit Page `Slots` card for Shared Slots by keeping each row as a summary list and moving slot source switching into per-slot modal settings while preserving compatibility filtering, validation, permissions, preserved page-owned blocks, and existing public rendering behavior.
+- Compact the Edit Page `Slots` card for Shared Slots by keeping each row as a compact summary list, removing the redundant per-row Shared Slot management action, and moving slot source switching into per-slot modal settings while preserving compatibility filtering, validation, permissions, preserved page-owned blocks, and existing public rendering behavior.
+- Fix the Edit Page `Manage Source` action so each slot now targets its own working modal trigger again, with compact source controls that keep the existing source update route and validation unchanged.
 
 ## 1.12.0
 

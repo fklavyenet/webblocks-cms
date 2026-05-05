@@ -3555,28 +3555,43 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+        $content = $response->getContent();
 
         $response->assertOk();
+        $this->assertNotFalse($content);
         $response->assertSee('Page Content');
         $response->assertSee('Shared Slot: Reusable Header');
         $response->assertSee('Disabled');
+        $response->assertSee('<th>Slot</th>', false);
+        $response->assertSee('<th>Blocks</th>', false);
         $response->assertSee('<span class="wb-status-pill wb-status-info">header</span>', false);
         $response->assertSee('<span class="wb-status-pill wb-status-info">main</span>', false);
-        $response->assertSee('No public slot content will render.');
-        $response->assertSee('Rendered publicly.');
-        $response->assertSee('Preserved but not currently rendered.');
+        $response->assertSee('<strong>0 page-owned blocks</strong>', false);
         $response->assertSee('Manage Source');
-        $response->assertSee('Slot Source: Header');
-        $response->assertSee('Slot Source: Sidebar');
+        $response->assertSee('data-wb-toggle="modal"', false);
+        $response->assertSee('data-wb-target="#slot-source-modal-'.$pageSlot->id.'"', false);
+        $response->assertSee('data-wb-target="#slot-source-modal-'.$disabledSlot->id.'"', false);
+        $response->assertSee('id="slot-source-modal-'.$pageSlot->id.'"', false);
+        $response->assertSee('id="slot-source-modal-'.$disabledSlot->id.'"', false);
+        $response->assertSee('Manage Source: Header');
+        $response->assertSee('Manage Source: Sidebar');
         $response->assertSee('Save Source');
         $response->assertDontSee('Update Source');
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $pageSlot]).'"', false);
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $disabledSlot]).'"', false);
+        $response->assertSee('assets/webblocks-cms/js/admin/page-slot-source-modals.js', false);
         $response->assertSee('Edit Blocks');
-        $response->assertSee('Edit Shared Slot');
-        $response->assertSee('Edit Page Blocks (Preserved)');
-        $response->assertSee('Reusable Header (reusable-header) | header | docs', false);
+        $response->assertSee('Page Blocks');
+        $response->assertDontSee('Edit Shared Slot');
+        $response->assertDontSee('Edit Page Blocks (Preserved)');
+        $response->assertSee('Reusable Header (reusable-header)', false);
+        $response->assertDontSee('Reusable Header (reusable-header) | header | docs', false);
+        $response->assertDontSee('This page\'s own slot blocks render publicly.');
+        $response->assertDontSee('Preserved but not currently rendered.');
         $response->assertDontSee('<button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">Update Source</button>', false);
+        $this->assertNotFalse(strpos($content, '</table>'));
+        $this->assertNotFalse(strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertTrue(strpos($content, '</table>') < strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
     }
 
     #[Test]
@@ -3614,10 +3629,10 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
 
         $response->assertOk();
-        $response->assertSee('Compatible Header (compatible-header) | header | docs', false);
-        $response->assertSee('Any Header (any-header) | Any slot | Any shell', false);
+        $response->assertSee('Compatible Header (compatible-header)', false);
+        $response->assertSee('Any Header (any-header)', false);
         $response->assertSee('Only active Shared Slots from this site with compatible shell and slot rules are listed.');
-        $response->assertSee('Slot Source: Header');
+        $response->assertSee('Manage Source: Header');
         $response->assertDontSee('Wrong Slot (wrong-slot)', false);
         $response->assertDontSee('Wrong Shell (wrong-shell)', false);
         $response->assertDontSee('Inactive Header (inactive-header)', false);
@@ -3798,7 +3813,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('This slot source update needs attention.');
         $response->assertSee('Shared Slot public shell must match the page public shell.');
-        $response->assertSee('Slot Source: Header');
+        $response->assertSee('Manage Source: Header');
         $response->assertSee('Manage Source');
+        $response->assertSee('class="wb-modal wb-modal-lg is-open" id="slot-source-modal-'.$pageSlot->id.'"', false);
     }
 }

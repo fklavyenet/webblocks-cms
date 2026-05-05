@@ -65,9 +65,9 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Slot</th>
                             <th>Source</th>
-                            <th>Page Blocks</th>
+                            <th>Blocks</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -91,38 +91,37 @@
                                 $selectedSharedSlotId = $isOldSlot && old('shared_slot_id') !== null
                                     ? (int) old('shared_slot_id')
                                     : (int) ($pageSlot->shared_slot_id ?? 0);
-                                $sourceModalName = 'slot-source-'.$pageSlot->id;
                                 $showSourceModal = $isOldSlot && ($errors->has('source_type') || $errors->has('shared_slot_id'));
                                 $pageBlockCount = $preview['is_empty'] ? 0 : $preview['items']->count() + $preview['remaining'];
-                                $pageBlockCountLabel = $pageBlockCount.' '.($pageBlockCount === 1 ? 'page-owned block' : 'page-owned blocks');
+                                $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
+                                $slotName = $pageSlot->slotType?->name ?? 'Slot';
+                                $pageBlockCountLabel = $sourceType === PageSlot::SOURCE_TYPE_PAGE
+                                    ? $pageBlockCount.' '.($pageBlockCount === 1 ? 'block' : 'blocks')
+                                    : $pageBlockCount.' '.($pageBlockCount === 1 ? 'page-owned block' : 'page-owned blocks');
                             @endphp
                             <tr>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <strong>{{ $pageSlot->slotType?->name ?? 'Slot' }}</strong>
-                                        <div>
+                                        <strong>{{ $slotName }}</strong>
+                                        <div class="wb-cluster wb-cluster-2">
                                             <span class="wb-status-pill wb-status-info">{{ $pageSlot->slotSlug() }}</span>
                                         </div>
-                                        @if ($warning)
-                                            <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
-                                        @endif
                                     </div>
                                 </td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         @if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
                                             <strong>Shared Slot: {{ $sharedSlot->name }}</strong>
-                                            <span class="wb-text-sm wb-text-muted">Handle: <code>{{ $sharedSlot->handle }}</code></span>
-                                            <span class="wb-text-sm wb-text-muted">{{ $sharedSlot->slot_name ?: 'Any slot' }} | {{ $sharedSlot->public_shell ?: 'Any shell' }}</span>
+                                            <span class="wb-text-sm wb-text-muted"><code>{{ $sharedSlot->handle }}</code></span>
                                         @elseif ($sourceType === PageSlot::SOURCE_TYPE_DISABLED)
                                             <strong>Disabled</strong>
-                                            <span class="wb-text-sm wb-text-muted">No public slot content will render.</span>
                                         @else
                                             <strong>Page Content</strong>
-                                            <span class="wb-text-sm wb-text-muted">This page's own slot blocks render publicly.</span>
                                         @endif
 
-                                        @if ($canEditContent && $sharedSlotSourcesAvailable && $showSourceModal)
+                                        @if ($warning)
+                                            <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
+                                        @elseif ($canEditContent && $sharedSlotSourcesAvailable && $showSourceModal)
                                             <div class="wb-alert wb-alert-danger wb-text-sm">This slot source update needs attention.</div>
                                         @elseif (! $sharedSlotSourcesAvailable)
                                             <span class="wb-text-sm wb-text-muted">Shared Slot source controls will appear after the Shared Slots migration is available.</span>
@@ -132,57 +131,39 @@
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         <strong>{{ $pageBlockCountLabel }}</strong>
-                                        @if ($preview['is_empty'])
-                                            <span class="wb-text-sm wb-text-muted">No page blocks saved yet</span>
-                                        @else
-                                            <div class="wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm wb-text-muted">
-                                                @foreach ($preview['items'] as $item)
-                                                    <span class="wb-status-pill wb-status-info">{{ $item }}</span>
-                                                @endforeach
-                                                @if ($preview['remaining'] > 0)
-                                                    <span class="wb-text-sm wb-text-muted">+{{ $preview['remaining'] }} more</span>
-                                                @endif
-                                            </div>
-                                        @endif
-
-                                        @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
-                                            <span class="wb-text-sm wb-text-muted">Rendered publicly.</span>
-                                        @elseif ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT)
-                                            <span class="wb-text-sm wb-text-muted">Preserved but not currently rendered.</span>
-                                        @else
-                                            <span class="wb-text-sm wb-text-muted">Preserved but not currently rendered.</span>
+                                        @if ($sourceType !== PageSlot::SOURCE_TYPE_PAGE && $pageBlockCount > 0)
+                                            <span class="wb-text-sm wb-text-muted">Preserved</span>
                                         @endif
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="wb-stack wb-gap-2">
-                                        @if ($canEditContent)
-                                            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                                                @if ($sharedSlotSourcesAvailable)
-                                                    <button
-                                                        type="button"
-                                                        class="wb-btn wb-btn-secondary wb-btn-sm"
-                                                        x-data=""
-                                                        x-on:click.prevent="$dispatch('open-modal', '{{ $sourceModalName }}')"
-                                                    >
-                                                        Manage Source
-                                                    </button>
-                                                @endif
+                                    @if ($canEditContent)
+                                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                            @if ($sharedSlotSourcesAvailable)
+                                                <button
+                                                    type="button"
+                                                    class="wb-btn wb-btn-secondary wb-btn-sm"
+                                                    data-wb-toggle="modal"
+                                                    data-wb-target="#{{ $sourceModalId }}"
+                                                    aria-controls="{{ $sourceModalId }}"
+                                                >
+                                                    Manage Source
+                                                </button>
+                                            @endif
 
-                                                @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
-                                                    <a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>
-                                                @elseif ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
-                                                    <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Shared Slot</a>
-                                                    <a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-btn wb-btn-secondary wb-btn-sm">Edit Page Blocks (Preserved)</a>
-                                                @else
-                                                    <a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-btn wb-btn-secondary wb-btn-sm">Edit Page Blocks (Preserved)</a>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <span class="wb-text-sm wb-text-muted">Workflow locks slot editing for this page.</span>
-                                        @endif
+                                            @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
+                                                <a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>
+                                            @else
+                                                <a
+                                                    href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}"
+                                                    class="wb-btn wb-btn-secondary wb-btn-sm"
+                                                    title="Preserved page-owned blocks, not currently rendered"
+                                                    aria-label="Edit preserved page-owned blocks"
+                                                >
+                                                    Page Blocks
+                                                </a>
+                                            @endif
 
-                                        @if ($canEditContent)
                                             <div class="wb-action-group">
                                                 <form method="POST" action="{{ route('admin.pages.slots.move-up', [$page, $pageSlot]) }}">
                                                     @csrf
@@ -198,114 +179,9 @@
                                                     <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete slot" aria-label="Delete slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                                 </form>
                                             </div>
-                                        @endif
-                                    </div>
-
-                                    @if ($canEditContent && $sharedSlotSourcesAvailable)
-                                        <x-modal name="{{ $sourceModalName }}" :show="$showSourceModal" focusable>
-                                            <div class="wb-modal-header">
-                                                <div class="wb-stack wb-gap-1">
-                                                    <h2 class="wb-modal-title">Slot Source: {{ $pageSlot->slotType?->name ?? 'Slot' }}</h2>
-                                                    <span class="wb-text-sm wb-text-muted">Switch between page-owned blocks, reusable Shared Slot content, or a disabled public slot.</span>
-                                                </div>
-
-                                                <button type="button" class="wb-modal-close" x-on:click="$dispatch('close')" aria-label="Close slot source settings">
-                                                    <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                                                </button>
-                                            </div>
-
-                                            <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="slot_id" value="{{ $pageSlot->id }}">
-
-                                                <div class="wb-modal-body wb-stack wb-gap-4" x-data="{ sourceType: @js($selectedSourceType) }">
-                                                    <div class="wb-stack wb-gap-1">
-                                                        <strong>Current source</strong>
-                                                        @if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
-                                                            <span>Shared Slot: {{ $sharedSlot->name }}</span>
-                                                            <span class="wb-text-sm wb-text-muted">Handle: <code>{{ $sharedSlot->handle }}</code></span>
-                                                            <span class="wb-text-sm wb-text-muted">{{ $sharedSlot->slot_name ?: 'Any slot' }} | {{ $sharedSlot->public_shell ?: 'Any shell' }}</span>
-                                                        @elseif ($sourceType === PageSlot::SOURCE_TYPE_DISABLED)
-                                                            <span>Disabled</span>
-                                                            <span class="wb-text-sm wb-text-muted">No public slot content will render.</span>
-                                                        @else
-                                                            <span>Page Content</span>
-                                                            <span class="wb-text-sm wb-text-muted">This page's own slot blocks render publicly.</span>
-                                                        @endif
-
-                                                        @if ($warning)
-                                                            <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
-                                                        @endif
-                                                    </div>
-
-                                                    <div class="wb-stack wb-gap-1">
-                                                        <label for="slot-source-type-{{ $pageSlot->id }}">Source</label>
-                                                        <select
-                                                            id="slot-source-type-{{ $pageSlot->id }}"
-                                                            name="source_type"
-                                                            class="wb-select"
-                                                            x-model="sourceType"
-                                                        >
-                                                            <option value="page" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_PAGE)>Page Content</option>
-                                                            <option value="shared_slot" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT)>Shared Slot</option>
-                                                            <option value="disabled" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED)>Disabled</option>
-                                                        </select>
-                                                        <div class="wb-text-sm wb-text-muted" x-show="sourceType === 'page'">Page Content renders this page's own slot blocks.</div>
-                                                        <div class="wb-text-sm wb-text-muted" x-show="sourceType === 'shared_slot'">Shared Slot renders reusable slot content.</div>
-                                                        <div class="wb-text-sm wb-text-muted" x-show="sourceType === 'disabled'">Disabled renders no public slot content.</div>
-                                                        <div class="wb-text-sm wb-text-muted">Existing page-owned blocks are preserved when switching source.</div>
-                                                        @if ($isOldSlot)
-                                                            @error('source_type')
-                                                                <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
-                                                            @enderror
-                                                        @endif
-                                                    </div>
-
-                                                    <div class="wb-stack wb-gap-1" x-bind:aria-hidden="sourceType !== 'shared_slot'">
-                                                        <label for="slot-shared-slot-{{ $pageSlot->id }}">Shared Slot</label>
-                                                        <select
-                                                            id="slot-shared-slot-{{ $pageSlot->id }}"
-                                                            name="shared_slot_id"
-                                                            class="wb-select"
-                                                            x-bind:disabled="sourceType !== 'shared_slot'"
-                                                        >
-                                                            <option value="">Select Shared Slot</option>
-                                                            @foreach ($compatibleSharedSlots as $compatibleSharedSlot)
-                                                                <option value="{{ $compatibleSharedSlot->id }}" @selected($selectedSharedSlotId === (int) $compatibleSharedSlot->id)>
-                                                                    {{ $compatibleSharedSlot->name }} ({{ $compatibleSharedSlot->handle }}) | {{ $compatibleSharedSlot->slot_name ?: 'Any slot' }} | {{ $compatibleSharedSlot->public_shell ?: 'Any shell' }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-
-                                                        @if ($compatibleSharedSlots->isEmpty())
-                                                            <div class="wb-text-sm wb-text-muted">
-                                                                No compatible active Shared Slots are available for this slot.
-                                                                @if ($canCreateSharedSlots)
-                                                                    <a href="{{ route('admin.shared-slots.create', ['site' => $page->site_id]) }}">Create Shared Slot</a>
-                                                                @endif
-                                                            </div>
-                                                        @else
-                                                            <div class="wb-text-sm wb-text-muted">Only active Shared Slots from this site with compatible shell and slot rules are listed.</div>
-                                                        @endif
-
-                                                        @if ($isOldSlot)
-                                                            @error('shared_slot_id')
-                                                                <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
-                                                            @enderror
-                                                        @endif
-                                                    </div>
-                                                </div>
-
-                                                <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                                                    <span class="wb-text-sm wb-text-muted">Slot key: <code>{{ $pageSlot->slotSlug() }}</code></span>
-                                                    <div class="wb-cluster wb-cluster-2">
-                                                        <button type="button" class="wb-btn wb-btn-secondary" x-on:click="$dispatch('close')">Cancel</button>
-                                                        <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </x-modal>
+                                        </div>
+                                    @else
+                                        <span class="wb-text-sm wb-text-muted">Workflow locks slot editing for this page.</span>
                                     @endif
                                 </td>
                             </tr>
@@ -316,3 +192,131 @@
         @endif
     </div>
 </div>
+
+@if ($canEditContent && $sharedSlotSourcesAvailable)
+    @push('overlays')
+        @foreach ($pageSlots as $pageSlot)
+            @php
+                $sourceType = $pageSlot->runtimeSourceType();
+                $sharedSlot = $pageSlot->sharedSlot;
+                $warning = $pageSlot->sharedSlotWarning();
+                $compatibleSharedSlots = $slotSharedSlotOptions->get($pageSlot->id, collect());
+                $oldSlotId = (int) old('slot_id');
+                $isOldSlot = $oldSlotId === $pageSlot->id;
+                $selectedSourceType = $isOldSlot && old('source_type') !== null
+                    ? old('source_type')
+                    : $sourceType;
+                $selectedSharedSlotId = $isOldSlot && old('shared_slot_id') !== null
+                    ? (int) old('shared_slot_id')
+                    : (int) ($pageSlot->shared_slot_id ?? 0);
+                $showSourceModal = $isOldSlot && ($errors->has('source_type') || $errors->has('shared_slot_id'));
+                $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
+                $sourceModalTitleId = $sourceModalId.'-title';
+                $slotName = $pageSlot->slotType?->name ?? 'Slot';
+            @endphp
+            <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-page-slot-source-modal @if (! $showSourceModal) hidden @endif>
+                <div class="wb-modal wb-modal-lg {{ $showSourceModal ? 'is-open' : '' }}" id="{{ $sourceModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $sourceModalTitleId }}">
+                    <div class="wb-modal-dialog">
+                        <div class="wb-modal-header">
+                            <div class="wb-stack wb-gap-1">
+                                <h2 class="wb-modal-title" id="{{ $sourceModalTitleId }}">Manage Source: {{ $slotName }}</h2>
+                                <span class="wb-text-sm wb-text-muted">Switch this slot between page-owned content, a Shared Slot, or disabled output.</span>
+                            </div>
+
+                            <button type="button" class="wb-modal-close" data-wb-page-slot-source-modal-close aria-label="Close slot source settings">
+                                <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0" data-wb-page-slot-source-form>
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="slot_id" value="{{ $pageSlot->id }}">
+
+                            <div class="wb-modal-body wb-stack wb-gap-4">
+                                <div class="wb-stack wb-gap-1">
+                                    <strong>Slot</strong>
+                                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                        <span>{{ $slotName }}</span>
+                                        <span class="wb-status-pill wb-status-info">{{ $pageSlot->slotSlug() }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <strong>Current source</strong>
+                                    @if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
+                                        <span>Shared Slot: {{ $sharedSlot->name }}</span>
+                                        <span class="wb-text-sm wb-text-muted"><code>{{ $sharedSlot->handle }}</code></span>
+                                    @elseif ($sourceType === PageSlot::SOURCE_TYPE_DISABLED)
+                                        <span>Disabled</span>
+                                    @else
+                                        <span>Page Content</span>
+                                    @endif
+
+                                    @if ($warning)
+                                        <div class="wb-alert wb-alert-warning wb-text-sm">{{ $warning }}</div>
+                                    @endif
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="slot-source-type-{{ $pageSlot->id }}">Source</label>
+                                    <select id="slot-source-type-{{ $pageSlot->id }}" name="source_type" class="wb-select" data-wb-slot-source-type>
+                                        <option value="page" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_PAGE)>Page Content</option>
+                                        <option value="shared_slot" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT)>Shared Slot</option>
+                                        <option value="disabled" @selected($selectedSourceType === PageSlot::SOURCE_TYPE_DISABLED)>Disabled</option>
+                                    </select>
+                                    <div class="wb-text-sm wb-text-muted" data-wb-source-type-note="page" @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_PAGE) hidden @endif>Render this page's own slot blocks publicly.</div>
+                                    <div class="wb-text-sm wb-text-muted" data-wb-source-type-note="shared_slot" @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) hidden @endif>Render reusable Shared Slot content in this slot.</div>
+                                    <div class="wb-text-sm wb-text-muted" data-wb-source-type-note="disabled" @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_DISABLED) hidden @endif>Render nothing publicly for this slot.</div>
+                                    <div class="wb-text-sm wb-text-muted">Page-owned blocks stay available when you switch sources.</div>
+                                    @if ($isOldSlot)
+                                        @error('source_type')
+                                            <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
+                                        @enderror
+                                    @endif
+                                </div>
+
+                                <div class="wb-stack wb-gap-1" data-wb-shared-slot-field @if ($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) hidden @endif>
+                                    <label for="slot-shared-slot-{{ $pageSlot->id }}">Shared Slot</label>
+                                    <select id="slot-shared-slot-{{ $pageSlot->id }}" name="shared_slot_id" class="wb-select" data-wb-shared-slot-select @disabled($selectedSourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT)>
+                                        <option value="">Select Shared Slot</option>
+                                        @foreach ($compatibleSharedSlots as $compatibleSharedSlot)
+                                            <option value="{{ $compatibleSharedSlot->id }}" @selected($selectedSharedSlotId === (int) $compatibleSharedSlot->id)>
+                                                {{ $compatibleSharedSlot->name }} ({{ $compatibleSharedSlot->handle }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    @if ($compatibleSharedSlots->isEmpty())
+                                        <div class="wb-text-sm wb-text-muted">
+                                            No compatible active Shared Slots are available for this slot.
+                                            @if ($canCreateSharedSlots)
+                                                <a href="{{ route('admin.shared-slots.create', ['site' => $page->site_id]) }}">Create Shared Slot</a>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="wb-text-sm wb-text-muted">Only active Shared Slots from this site with compatible shell and slot rules are listed.</div>
+                                    @endif
+
+                                    @if ($isOldSlot)
+                                        @error('shared_slot_id')
+                                            <div class="wb-alert wb-alert-danger wb-text-sm">{{ $message }}</div>
+                                        @enderror
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                                <span class="wb-text-sm wb-text-muted">Slot key: <code>{{ $pageSlot->slotSlug() }}</code></span>
+                                <div class="wb-cluster wb-cluster-2">
+                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-page-slot-source-modal-close>Cancel</button>
+                                    <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endpush
+@endif
