@@ -81,4 +81,37 @@ class SharedSlot extends Model
     {
         return $this->slot_name ?: 'Any';
     }
+
+    public function compatibilityIssuesFor(Page $page, string $slotName): array
+    {
+        $issues = [];
+
+        if ((int) $this->site_id !== (int) $page->site_id) {
+            $issues[] = 'site';
+        }
+
+        if (! $this->is_active) {
+            $issues[] = 'inactive';
+        }
+
+        $sharedShell = trim((string) ($this->public_shell ?? ''));
+
+        if ($sharedShell !== '' && Page::normalizePublicShellPreset($sharedShell) !== $page->publicShellPreset()) {
+            $issues[] = 'public_shell';
+        }
+
+        $requiredSlotName = trim((string) ($this->slot_name ?? ''));
+        $normalizedSlotName = str($slotName)->slug()->toString();
+
+        if ($requiredSlotName !== '' && $requiredSlotName !== $normalizedSlotName) {
+            $issues[] = 'slot_name';
+        }
+
+        return $issues;
+    }
+
+    public function isCompatibleWithPageSlot(Page $page, string $slotName): bool
+    {
+        return $this->compatibilityIssuesFor($page, $slotName) === [];
+    }
 }

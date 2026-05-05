@@ -51,28 +51,11 @@ class PublicSharedSlotResolver
     {
         $page = $slot->page ?? $slot->page()->first();
 
-        if (! $page || (int) $sharedSlot->site_id !== (int) $page->site_id) {
+        if (! $page) {
             return false;
         }
 
-        if (! $sharedSlot->is_active) {
-            return false;
-        }
-
-        $sharedShell = trim((string) ($sharedSlot->public_shell ?? ''));
-
-        if ($sharedShell !== '' && Page::normalizePublicShellPreset($sharedShell) !== $page->publicShellPreset()) {
-            return false;
-        }
-
-        $requiredSlotName = trim((string) ($sharedSlot->slot_name ?? ''));
-        $pageSlotName = trim((string) ($slot->slotType?->slug ?? ''));
-
-        if ($requiredSlotName !== '' && $requiredSlotName !== $pageSlotName) {
-            return false;
-        }
-
-        return true;
+        return $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug());
     }
 
     private function buildTree(Collection $childrenByParent, ?int $parentId): Collection

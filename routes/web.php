@@ -61,6 +61,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::post('/pages/{page}/revisions/{revision}/restore', [PageRevisionController::class, 'restore'])->name('pages.revisions.restore');
     Route::post('/pages/{page}/slots', [PageSlotController::class, 'store'])->name('pages.slots.store');
     Route::delete('/pages/{page}/slots/{slot}', [PageSlotController::class, 'destroy'])->name('pages.slots.destroy');
+    Route::put('/pages/{page}/slots/{slot}/source', [PageSlotController::class, 'updateSource'])->name('pages.slots.source.update');
     Route::post('/pages/{page}/slots/{slot}/move-up', [PageSlotController::class, 'moveUp'])->name('pages.slots.move-up');
     Route::post('/pages/{page}/slots/{slot}/move-down', [PageSlotController::class, 'moveDown'])->name('pages.slots.move-down');
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->name('reports.visitors.index');

@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
@@ -184,6 +185,7 @@ class PageController extends Controller
             'site',
             'translations.locale',
             'slots.slotType',
+            'slots.sharedSlot',
             'blocks' => fn ($query) => $query
                 ->with('children')
                 ->whereNull('parent_id')
@@ -209,10 +211,12 @@ class PageController extends Controller
                 ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
             'slotBlockPreviews' => $slotBlockPreviews,
+            'slotSharedSlotOptions' => $this->slotSharedSlotOptions($page),
             'translationStatuses' => $page->translationStatusForSite(),
             'canEditContent' => $canEditContent,
             'canViewRevisions' => $canViewRevisions,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
+            'canCreateSharedSlots' => ! request()->user()->isEditor(),
         ]);
     }
 
@@ -872,6 +876,23 @@ class PageController extends Controller
             'remaining' => max($blocks->count() - $visibleItems->count(), 0),
             'is_empty' => false,
         ];
+    }
+
+    private function slotSharedSlotOptions(Page $page): Collection
+    {
+        $sharedSlots = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), request()->user())
+            ->where('site_id', $page->site_id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->orderBy('handle')
+            ->get();
+
+        return $page->slots
+            ->mapWithKeys(fn (PageSlot $slot) => [
+                $slot->id => $sharedSlots
+                    ->filter(fn (SharedSlot $sharedSlot) => $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug()))
+                    ->values(),
+            ]);
     }
 
     private function slotEditorRouteParameters(Page $page, PageSlot $slot): array

@@ -7,6 +7,7 @@
 - Render Shared Slot content publicly by resolving site-scoped shared slot block trees dynamically inside the consuming page slot wrapper, while keeping page-owned slots unchanged, `disabled` slots empty, and legacy null or missing `source_type` values backward-compatible.
 - Add conservative public Shared Slot guards so cross-site references, incompatible public shells, mismatched slot names, inactive shared slots, and invalid assignments render no shared content instead of leaking or copying blocks.
 - Add site-scoped Shared Slots admin management with listing, create, edit, delete guarding, and a dedicated Shared Slot block editor that reuses the existing block services while keeping page-owned slot editing and public rendering unchanged.
+- Add Page Edit slot source controls so each page slot can switch between Page Content, Shared Slot, and Disabled with same-site active Shared Slot filtering, write-time compatibility validation, workflow-aware permissions, and preserved page-owned blocks when editors switch sources.
 
 ## 1.12.0
 

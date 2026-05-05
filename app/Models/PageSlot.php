@@ -107,9 +107,67 @@ class PageSlot extends Model
         return $this->belongsTo(SharedSlot::class);
     }
 
+    public function runtimeSourceType(): string
+    {
+        return self::normalizeRuntimeSourceType($this->source_type);
+    }
+
+    public function sourceTypeLabel(): string
+    {
+        return match ($this->runtimeSourceType()) {
+            self::SOURCE_TYPE_SHARED_SLOT => 'Shared Slot',
+            self::SOURCE_TYPE_DISABLED => 'Disabled',
+            default => 'Page Content',
+        };
+    }
+
+    public function slotSlug(): string
+    {
+        return trim((string) ($this->slotType?->slug ?? $this->slotType()->value('slug') ?? ''));
+    }
+
+    public function sharedSlotCompatibilityIssues(?SharedSlot $sharedSlot = null): array
+    {
+        $sharedSlot ??= $this->sharedSlot;
+        $page = $this->page ?? $this->page()->first();
+
+        if (! $page || ! $sharedSlot instanceof SharedSlot) {
+            return [];
+        }
+
+        return $sharedSlot->compatibilityIssuesFor($page, $this->slotSlug());
+    }
+
+    public function sharedSlotWarning(): ?string
+    {
+        if ($this->runtimeSourceType() !== self::SOURCE_TYPE_SHARED_SLOT) {
+            return null;
+        }
+
+        if (! $this->sharedSlot instanceof SharedSlot) {
+            return 'This slot references a Shared Slot that no longer exists.';
+        }
+
+        $issues = $this->sharedSlotCompatibilityIssues($this->sharedSlot);
+
+        if ($issues === []) {
+            return null;
+        }
+
+        $messages = collect($issues)->map(fn (string $issue) => match ($issue) {
+            'site' => 'it belongs to another site',
+            'inactive' => 'it is inactive',
+            'public_shell' => 'its public shell no longer matches this page',
+            'slot_name' => 'its slot name no longer matches this slot',
+            default => 'it is no longer compatible',
+        });
+
+        return 'This Shared Slot is no longer compatible because '.$messages->implode(', ').'.';
+    }
+
     public function usesPageOwnedBlocks(): bool
     {
-        return self::normalizeRuntimeSourceType($this->source_type) === self::SOURCE_TYPE_PAGE;
+        return $this->runtimeSourceType() === self::SOURCE_TYPE_PAGE;
     }
 
     public static function normalizeRuntimeSourceType(mixed $sourceType): string

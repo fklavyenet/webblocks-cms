@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePageSlotRequest;
+use App\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Support\Pages\PageRevisionManager;
@@ -79,6 +80,26 @@ class PageSlotController extends Controller
     public function moveDown(Page $page, PageSlot $slot): RedirectResponse
     {
         return $this->move($page, $slot, 'down');
+    }
+
+    public function updateSource(UpdatePageSlotSourceRequest $request, Page $page, PageSlot $slot): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        abort_unless($slot->page_id === $page->id, 404);
+
+        DB::transaction(function () use ($request, $page, $slot): void {
+            $slot->update($request->validatedData());
+
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'Slot source updated',
+                'Page slot source was updated.',
+            );
+        });
+
+        return $this->redirectToEdit($page, 'Slot source updated successfully.');
     }
 
     private function move(Page $page, PageSlot $slot, string $direction): RedirectResponse

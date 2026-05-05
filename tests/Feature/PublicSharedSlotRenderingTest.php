@@ -12,6 +12,7 @@ use App\Models\SharedSlot;
 use App\Models\SharedSlotBlock;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\User;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Pages\PublicPagePresenter;
 use Database\Seeders\FoundationSiteLocaleSeeder;
@@ -280,6 +281,67 @@ class PublicSharedSlotRenderingTest extends TestCase
         $frenchResponse->assertSee('En-tete partage', false);
         $frenchResponse->assertSee('Contenu partage enfant', false);
         $frenchResponse->assertDontSee('Shared Header Child', false);
+    }
+
+    #[Test]
+    public function switching_slot_sources_from_the_page_editor_updates_public_rendering_without_copying_blocks(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource([
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'shared_slot_id' => null,
+        ]);
+        $user = User::factory()->superAdmin()->create();
+        $page = $context['page'];
+        $pageSlot = $context['pageSlot'];
+        $sharedSlot = $context['sharedSlot'];
+        $pageBlockId = $context['pageHeader']->id;
+        $pageBlockCountBefore = Block::query()->where('page_id', $page->id)->count();
+
+        $this->get('/')->assertOk()->assertSee('Page Header Content', false)->assertDontSee('Shared Header Title', false);
+
+        $this->actingAs($user)
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+                'shared_slot_id' => $sharedSlot->id,
+            ])
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->get('/')->assertOk()->assertSee('Shared Header Title', false)->assertDontSee('Page Header Content', false);
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+        ]);
+        $this->assertSame($pageBlockCountBefore, Block::query()->where('page_id', $page->id)->count());
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
+
+        $this->actingAs($user)
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            ])
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->get('/')->assertOk()->assertDontSee('Shared Header Title', false)->assertDontSee('Page Header Content', false);
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'shared_slot_id' => null,
+        ]);
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
+
+        $this->actingAs($user)
+            ->put(route('admin.pages.slots.source.update', [$page, $pageSlot]), [
+                'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            ])
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $this->get('/')->assertOk()->assertSee('Page Header Content', false)->assertDontSee('Shared Header Title', false);
+        $this->assertDatabaseHas('page_slots', [
+            'id' => $pageSlot->id,
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'shared_slot_id' => null,
+        ]);
+        $this->assertDatabaseHas('blocks', ['id' => $pageBlockId, 'page_id' => $page->id]);
     }
 
     private function publishedPageWithSharedSlotSource(array $overrides = []): array
