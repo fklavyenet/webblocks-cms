@@ -277,11 +277,80 @@ class ContactFormModuleTest extends TestCase
         $response->assertOk();
         $response->assertSee(route('admin.contact-messages.show', $matching), false);
         $response->assertDontSee(route('admin.contact-messages.show', $filteredOut), false);
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('data-admin-listing-filters-search', false);
+        $response->assertSee('data-admin-listing-filters-fields', false);
+        $response->assertSee('data-admin-listing-filters-actions', false);
         $response->assertSee('Search');
         $response->assertSee('Notification');
+        $response->assertSee('id="contact_messages_search"', false);
+        $response->assertSee('id="contact_messages_status"', false);
+        $response->assertSee('id="contact_messages_notification"', false);
+        $response->assertSee('Apply', false);
+        $response->assertSee(route('admin.contact-messages.index'), false);
         $response->assertSee('wb-action-group', false);
         $response->assertSee('wb-icon-menu', false);
         $response->assertDontSee('<th>Source</th>', false);
+    }
+
+    #[Test]
+    public function admin_messages_list_pagination_preserves_filters_and_uses_compact_summary(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+
+        foreach (range(1, 35) as $index) {
+            ContactMessage::create([
+                'block_id' => $block->id,
+                'page_id' => $page->id,
+                'name' => 'Pattern Sender '.$index,
+                'email' => 'pattern-'.$index.'@example.com',
+                'subject' => sprintf('Pattern Subject %02d', $index),
+                'message' => 'Pattern pagination message '.$index,
+                'status' => 'new',
+                'notification_enabled' => true,
+                'notification_sent_at' => now(),
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.index', [
+            'search' => 'Pattern',
+            'status' => 'new',
+            'notification' => 'sent',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-pagination', false);
+        $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
+        $response->assertSee('aria-label="Contact messages pagination"', false);
+        $response->assertSee('aria-current="page">1</span>', false);
+        $response->assertSee('data-admin-pagination-summary', false);
+        $response->assertSee('1-20/35', false);
+        $response->assertDontSee('Showing 1-20 of 35', false);
+        $response->assertSee(e(route('admin.contact-messages.index', [
+            'search' => 'Pattern',
+            'status' => 'new',
+            'notification' => 'sent',
+            'page' => 2,
+        ])), false);
+        $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
+
+        $pageTwo = $this->actingAs($user)->get(route('admin.contact-messages.index', [
+            'search' => 'Pattern',
+            'status' => 'new',
+            'notification' => 'sent',
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
+        $pageTwo->assertSee('21-35/35', false);
+        $pageTwo->assertSee(e(route('admin.contact-messages.index', [
+            'search' => 'Pattern',
+            'status' => 'new',
+            'notification' => 'sent',
+            'page' => 1,
+        ])), false);
     }
 
     #[Test]

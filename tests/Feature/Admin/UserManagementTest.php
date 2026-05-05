@@ -23,6 +23,14 @@ class UserManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Users');
         $response->assertSee($managedUser->email);
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('data-admin-listing-filters-search', false);
+        $response->assertSee('data-admin-listing-filters-fields', false);
+        $response->assertSee('data-admin-listing-filters-actions', false);
+        $response->assertSee('id="users_search"', false);
+        $response->assertSee('id="users_status"', false);
+        $response->assertSee('id="users_role"', false);
+        $response->assertSee('Apply', false);
     }
 
     #[Test]
@@ -162,6 +170,23 @@ class UserManagementTest extends TestCase
         $response->assertSee('q=member', false);
         $response->assertSee('status=active', false);
         $response->assertSee('role='.User::ROLE_EDITOR, false);
+        $response->assertSee('data-admin-pagination', false);
+        $response->assertSee('class="wb-pagination wb-pagination-compact"', false);
+        $response->assertSee('aria-label="Users pagination"', false);
+        $response->assertSee('data-admin-pagination-summary', false);
+        $response->assertSee('1-15/16', false);
+        $response->assertDontSee('Showing 1-15 of 16', false);
+
+        $pageTwo = $this->actingAs($admin)->get(route('admin.users.index', [
+            'q' => 'member',
+            'status' => 'active',
+            'role' => User::ROLE_EDITOR,
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
+        $pageTwo->assertSee('16-16/16', false);
     }
 
     #[Test]

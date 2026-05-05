@@ -11,42 +11,44 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            <form method="GET" action="{{ route('admin.contact-messages.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
-                <div class="wb-cluster wb-cluster-2">
-                    <div class="wb-stack wb-gap-1">
-                        <label for="contact_messages_search">Search</label>
-                        <input id="contact_messages_search" name="search" type="text" class="wb-input" value="{{ $filters['search'] ?? '' }}" placeholder="Search name, email, subject, or message">
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="contact_messages_status">Status</label>
-                        <select id="contact_messages_status" name="status" class="wb-select">
-                            <option value="">All statuses</option>
-                            @foreach (\App\Models\ContactMessage::statuses() as $status)
-                                <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="contact_messages_notification">Notification</label>
-                        <select id="contact_messages_notification" name="notification" class="wb-select">
-                            <option value="">All notifications</option>
-                            <option value="sent" @selected(($filters['notification'] ?? '') === 'sent')>Sent</option>
-                            <option value="pending" @selected(($filters['notification'] ?? '') === 'pending')>Pending</option>
-                            <option value="failed" @selected(($filters['notification'] ?? '') === 'failed')>Failed</option>
-                            <option value="disabled" @selected(($filters['notification'] ?? '') === 'disabled')>Disabled</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if (($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['notification'] ?? '') !== '')
-                        <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
-                    @endif
-                </div>
-            </form>
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.contact-messages.index'),
+                'search' => [
+                    'id' => 'contact_messages_search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'value' => $filters['search'] ?? '',
+                    'placeholder' => 'Search name, email, subject, or message',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'contact_messages_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'selected' => $filters['status'] ?? '',
+                        'placeholder' => 'All statuses',
+                        'options' => collect(\App\Models\ContactMessage::statuses())
+                            ->mapWithKeys(fn (string $status): array => [$status => ucfirst($status)])
+                            ->all(),
+                    ],
+                    [
+                        'id' => 'contact_messages_notification',
+                        'name' => 'notification',
+                        'label' => 'Notification',
+                        'selected' => $filters['notification'] ?? '',
+                        'placeholder' => 'All notifications',
+                        'options' => [
+                            'sent' => 'Sent',
+                            'pending' => 'Pending',
+                            'failed' => 'Failed',
+                            'disabled' => 'Disabled',
+                        ],
+                    ],
+                ],
+                'showReset' => ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['notification'] ?? '') !== '',
+                'resetUrl' => route('admin.contact-messages.index'),
+                'applyLabel' => 'Apply',
+            ])
         </div>
     </div>
 
@@ -146,7 +148,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $messages])
+            @include('admin.partials.pagination', ['paginator' => $messages, 'ariaLabel' => 'Contact messages pagination', 'compact' => true])
         </div>
     @endif
 @endsection

@@ -16,40 +16,44 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            <form method="GET" action="{{ route('admin.users.index') }}" class="wb-cluster wb-cluster-2 wb-cluster-between">
-                <div class="wb-cluster wb-cluster-2">
-                    <div class="wb-stack wb-gap-1">
-                        <label for="users_search">Search</label>
-                        <input id="users_search" name="q" type="text" class="wb-input" value="{{ $filters['q'] }}" placeholder="Search by name or email">
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="users_status">Status</label>
-                        <select id="users_status" name="status" class="wb-select">
-                            <option value="">All statuses</option>
-                            <option value="active" @selected($filters['status'] === 'active')>Active</option>
-                            <option value="inactive" @selected($filters['status'] === 'inactive')>Inactive</option>
-                        </select>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                        <label for="users_role">Role</label>
-                        <select id="users_role" name="role" class="wb-select">
-                            <option value="">All roles</option>
-                            <option value="super_admin" @selected($filters['role'] === 'super_admin')>Super admins</option>
-                            <option value="site_admin" @selected($filters['role'] === 'site_admin')>Site admins</option>
-                            <option value="editor" @selected($filters['role'] === 'editor')>Editors</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
-                    <button type="submit" class="wb-btn wb-btn-primary">Apply</button>
-                    @if ($hasActiveFilters)
-                        <a href="{{ route('admin.users.index') }}" class="wb-btn wb-btn-secondary">Clear</a>
-                    @endif
-                </div>
-            </form>
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.users.index'),
+                'search' => [
+                    'id' => 'users_search',
+                    'name' => 'q',
+                    'label' => 'Search',
+                    'value' => $filters['q'],
+                    'placeholder' => 'Search by name or email',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'users_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'selected' => $filters['status'],
+                        'placeholder' => 'All statuses',
+                        'options' => [
+                            'active' => 'Active',
+                            'inactive' => 'Inactive',
+                        ],
+                    ],
+                    [
+                        'id' => 'users_role',
+                        'name' => 'role',
+                        'label' => 'Role',
+                        'selected' => $filters['role'],
+                        'placeholder' => 'All roles',
+                        'options' => [
+                            'super_admin' => 'Super admins',
+                            'site_admin' => 'Site admins',
+                            'editor' => 'Editors',
+                        ],
+                    ],
+                ],
+                'showReset' => $hasActiveFilters,
+                'resetUrl' => route('admin.users.index'),
+                'applyLabel' => 'Apply',
+            ])
         </div>
     </div>
 
@@ -132,7 +136,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $users])
+            @include('admin.partials.pagination', ['paginator' => $users, 'ariaLabel' => 'Users pagination', 'compact' => true])
         </div>
     @endif
 @endsection

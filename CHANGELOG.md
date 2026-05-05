@@ -7,8 +7,10 @@
 - Align admin listing pagination with the WebBlocks UI `wb-pagination` contract, including ordered page links, passive current-page markers, and non-link disabled previous/next controls.
 - Standardize the `Block Types` index on a shared compact admin listing filter toolbar with a reusable search-left, filters-middle, actions-right layout contract for future admin lists.
 - Apply the shared compact admin listing filters beyond `Block Types` to the `Pages` and `Media` index screens.
+- Shared compact admin listing filters were extended to `Contact Messages` and `Users`.
 - Refine shared admin pagination so compact mode renders the pagination links and same-line `from-to/total` summary together.
 - Standardize admin listing pagination and compact summary presentation across the `Pages` and `Media` screens.
+- Admin listing pagination and compact summaries were standardized on these screens where pagination is present.
 - Document the shared admin listing filter and compact pagination pattern for future admin index screens.
 - Align Code block public rendering with the WebBlocks UI docs code view by outputting escaped `<pre><code>` markup, removing the old card chrome, and hiding the visible language label while preserving stored language metadata for non-visual use.
 - Clarify the CMS core versus `project/` boundary in core documentation.
