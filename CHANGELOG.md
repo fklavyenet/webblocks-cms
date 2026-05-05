@@ -16,6 +16,7 @@
 - Fix Shared Slot public rendering context so reusable blocks render against the consuming public page and locale instead of leaking hidden Shared Slot source page labels into Breadcrumb output.
 - Compact the Edit Page `Slots` card for Shared Slots by keeping each row as a compact summary list, removing the redundant per-row Shared Slot management action, and moving slot source switching into per-slot modal settings while preserving compatibility filtering, validation, permissions, preserved page-owned blocks, and existing public rendering behavior.
 - Fix the Edit Page `Manage Source` action so each slot now targets its own working modal trigger again, with compact source controls that keep the existing source update route and validation unchanged.
+- Fix Page Edit slot source modal targeting so each `Manage Source` button uses a single slot-scoped admin trigger path and opens exactly one modal instead of conflicting with duplicate modal handlers.
 
 ## 1.12.0
 

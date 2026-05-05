@@ -3568,11 +3568,15 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('<span class="wb-status-pill wb-status-info">main</span>', false);
         $response->assertSee('<strong>0 page-owned blocks</strong>', false);
         $response->assertSee('Manage Source');
-        $response->assertSee('data-wb-toggle="modal"', false);
-        $response->assertSee('data-wb-target="#slot-source-modal-'.$pageSlot->id.'"', false);
-        $response->assertSee('data-wb-target="#slot-source-modal-'.$disabledSlot->id.'"', false);
+        $response->assertSee('data-wb-page-slot-source-open', false);
+        $response->assertSee('data-wb-page-slot-source-target="#slot-source-modal-'.$pageSlot->id.'"', false);
+        $response->assertSee('data-wb-page-slot-source-target="#slot-source-modal-'.$disabledSlot->id.'"', false);
         $response->assertSee('id="slot-source-modal-'.$pageSlot->id.'"', false);
         $response->assertSee('id="slot-source-modal-'.$disabledSlot->id.'"', false);
+        $this->assertSame(1, substr_count($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'id="slot-source-modal-'.$disabledSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'data-wb-page-slot-source-target="#slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(1, substr_count($content, 'data-wb-page-slot-source-target="#slot-source-modal-'.$disabledSlot->id.'"'));
         $response->assertSee('Manage Source: Header');
         $response->assertSee('Manage Source: Sidebar');
         $response->assertSee('Save Source');
@@ -3592,6 +3596,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse(strpos($content, '</table>'));
         $this->assertNotFalse(strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
         $this->assertTrue(strpos($content, '</table>') < strpos($content, 'id="slot-source-modal-'.$pageSlot->id.'"'));
+        $this->assertSame(3, substr_count($content, 'data-wb-page-slot-source-modal '));
     }
 
     #[Test]

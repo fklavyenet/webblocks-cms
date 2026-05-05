@@ -82,10 +82,10 @@
     });
 
     document.addEventListener('click', function (event) {
-        var openTrigger = event.target.closest('[data-wb-toggle="modal"][data-wb-target^="#slot-source-modal-"]');
+        var openTrigger = event.target.closest('[data-wb-page-slot-source-open][data-wb-page-slot-source-target^="#slot-source-modal-"]');
 
         if (openTrigger) {
-            var modalSelector = openTrigger.getAttribute('data-wb-target');
+            var modalSelector = openTrigger.getAttribute('data-wb-page-slot-source-target');
             var modal = modalSelector ? document.querySelector(modalSelector) : null;
 
             if (modal) {

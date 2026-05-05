@@ -143,8 +143,8 @@
                                                 <button
                                                     type="button"
                                                     class="wb-btn wb-btn-secondary wb-btn-sm"
-                                                    data-wb-toggle="modal"
-                                                    data-wb-target="#{{ $sourceModalId }}"
+                                                    data-wb-page-slot-source-open
+                                                    data-wb-page-slot-source-target="#{{ $sourceModalId }}"
                                                     aria-controls="{{ $sourceModalId }}"
                                                 >
                                                     Manage Source
