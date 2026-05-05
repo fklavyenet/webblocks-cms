@@ -34,6 +34,12 @@ class WebBlocksUiImporter
     public function run(string $key): array
     {
         $manifest = $this->loadJson(base_path(self::STORAGE_ROOT.'/manifest.json'));
+        $manifestSource = trim((string) ($manifest['source_site'] ?? ''));
+
+        if ($manifestSource !== self::SOURCE) {
+            throw new RuntimeException('WebBlocks UI manifest source site is not valid.');
+        }
+
         $payloadMeta = Arr::get($manifest, 'payloads.'.$key);
 
         if (! is_array($payloadMeta)) {
@@ -53,10 +59,16 @@ class WebBlocksUiImporter
             throw new RuntimeException("Payload [{$payloadFile}] does not match requested key [{$key}].");
         }
 
+        $payloadTitle = trim((string) ($payloadMeta['title'] ?? ''));
+        $expectedSourceUrl = trim((string) ($payloadMeta['source_url'] ?? ''));
         $sourceUrl = trim((string) ($pagePayload['source_url'] ?? ''));
 
-        if ($sourceUrl !== 'https://webblocksui.com/docs/architecture.html') {
-            throw new RuntimeException("Payload [{$key}] does not point at the verified WebBlocks UI Architecture source page.");
+        if ($expectedSourceUrl === '') {
+            throw new RuntimeException("Manifest entry for [{$key}] is missing a source URL.");
+        }
+
+        if ($sourceUrl !== $expectedSourceUrl) {
+            throw new RuntimeException("Payload [{$key}] does not point at the verified WebBlocks UI source page.");
         }
 
         $site = $this->resolveSite($payload['site'] ?? []);
@@ -76,6 +88,8 @@ class WebBlocksUiImporter
             $site,
             $pagePayload,
             $key,
+            $payloadTitle,
+            $sourceUrl,
             $defaultLocaleCode,
             $localeMap,
             $requiredBlockTypes,
@@ -95,15 +109,19 @@ class WebBlocksUiImporter
             $result[] = 'Imported payload key: '.$key;
             $result[] = 'Canonical site domain: '.SetupWebBlocksUiDocsSite::canonicalDomain();
             $result[] = 'Resolved local site domain: '.$site->domain;
+            $result[] = 'Source URL: '.$sourceUrl;
             $result[] = 'Page: '.($page->defaultTranslation()?->name ?? $page->id).' ('.$page->publicPath().')';
             $result[] = 'Navigation items synced: '.$navigationCount;
             $result[] = 'Sidebar navigation blocks updated: '.$sidebarNavigationBlocks;
-            if ($key === 'docs-architecture') {
-                foreach ($this->localResolverMessages() as $line) {
-                    $result[] = $line;
-                }
-                $result[] = 'Architecture local preview URL: '.$this->localPreviewUrl($site, $page->publicPath() ?? SetupWebBlocksUiDocsSite::ARCHITECTURE_PATH);
+
+            foreach ($this->localResolverMessages() as $line) {
+                $result[] = $line;
             }
+
+            $previewTitle = $payloadTitle !== ''
+                ? $payloadTitle
+                : ($page->defaultTranslation()?->name ?? Str::headline($key));
+            $result[] = $previewTitle.' local preview URL: '.$this->localPreviewUrl($site, $page->publicPath() ?? '/');
         });
 
         return $result;
@@ -473,7 +491,7 @@ class WebBlocksUiImporter
             ->first(fn (Page $candidate) => $candidate->publicShellPreset() === 'docs' && $candidate->translations->contains('slug', 'home'));
 
         if (! $page) {
-            throw new RuntimeException('Docs Home page not found for the target site. Import the docs home page before importing Architecture.');
+            throw new RuntimeException('Docs Home page not found for the target site. Import the docs home page before importing this page.');
         }
 
         return $page;
@@ -481,10 +499,16 @@ class WebBlocksUiImporter
 
     private function resolvePageRefs(Site $site, Page $docsHomePage, Page $importedPage, string $pageKey): array
     {
-        $refs = [
-            'home' => $docsHomePage->id,
-            $pageKey => $importedPage->id,
-        ];
+        $refs = collect(Page::query()
+            ->with('translations')
+            ->where('site_id', $site->id)
+            ->get())
+            ->filter(fn (Page $page) => $page->setting('project_source') === self::SOURCE && filled($page->setting('project_page_key')))
+            ->mapWithKeys(fn (Page $page) => [(string) $page->setting('project_page_key') => $page->id])
+            ->all();
+
+        $refs['home'] = $docsHomePage->id;
+        $refs[$pageKey] = $importedPage->id;
 
         $gettingStartedPageId = Page::query()
             ->where('site_id', $site->id)
@@ -492,7 +516,7 @@ class WebBlocksUiImporter
             ->value('id');
 
         if (! $gettingStartedPageId) {
-            throw new RuntimeException('Getting Started page not found for the target site. Import the docs Getting Started page before importing Architecture.');
+            throw new RuntimeException('Getting Started page not found for the target site. Import the docs Getting Started page before importing this page.');
         }
 
         $refs['getting-started'] = (int) $gettingStartedPageId;

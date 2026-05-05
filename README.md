@@ -127,9 +127,12 @@ See `docs/getting-started.md` for the first-use workflow.
 - If the resolver command updates DDEV config, run `ddev restart` before opening the preview host.
 - If the local target site and docs-shell dependency pages do not exist yet, create them with `ddev artisan project:webblocksui-setup-site`.
 - Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
+- Import the WebBlocks UI Foundation page with `ddev artisan project:webblocksui-import docs-foundation`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
+- The Foundation payload source is `https://webblocksui.com/docs/foundation.html` and the imported page metadata preserves the requested website path `/docs/foundation.html` while the current CMS route model serves the page at `/p/foundation`.
 - Local preview host: `ui.docs.webblocksui.com.ddev.site`.
 - Full local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
+- Foundation local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/foundation`.
 
 ## Developer Notes
 

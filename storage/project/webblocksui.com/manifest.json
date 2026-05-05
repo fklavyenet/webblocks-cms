@@ -10,6 +10,12 @@
       "title": "Architecture",
       "source_url": "https://webblocksui.com/docs/architecture.html",
       "requested_public_path": "/docs/architecture.html"
+    },
+    "docs-foundation": {
+      "file": "docs-foundation.json",
+      "title": "Foundation",
+      "source_url": "https://webblocksui.com/docs/foundation.html",
+      "requested_public_path": "/docs/foundation.html"
     }
   }
 }

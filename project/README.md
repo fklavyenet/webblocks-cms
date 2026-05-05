@@ -36,13 +36,19 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - After `project:webblocksui-local-resolver` updates DDEV config, run `ddev restart` to apply the router alias.
 - `project:webblocksui-setup-site` uses the DDEV host alias as the persisted local site domain on local installs so the core host resolver can match requests without adding website-specific CMS core logic.
 - `project:webblocksui-import docs-architecture` imports the Architecture page from the project payload in `storage/project/webblocksui.com/docs-architecture.json` sourced from `https://webblocksui.com/docs/architecture.html`.
+- `project:webblocksui-import docs-foundation` imports the Foundation page from the project payload in `storage/project/webblocksui.com/docs-foundation.json` sourced from `https://webblocksui.com/docs/foundation.html`.
 - Local workflow:
 - `ddev artisan project:webblocksui-local-resolver`
 - `ddev restart`
 - `ddev artisan project:webblocksui-setup-site`
 - `ddev artisan project:webblocksui-import docs-architecture`
+- `ddev artisan project:webblocksui-import docs-foundation`
 - Open `https://ui.docs.webblocksui.com.ddev.site/p/architecture`
+- Or open `https://ui.docs.webblocksui.com.ddev.site/p/foundation`
 - Canonical source page URL: `https://webblocksui.com/docs/architecture.html`.
+- Canonical Foundation source page URL: `https://webblocksui.com/docs/foundation.html`.
 - CMS local Architecture path: `/p/architecture`.
+- CMS local Foundation path: `/p/foundation`.
 - Architecture local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/architecture`.
+- Foundation local preview URL: `https://ui.docs.webblocksui.com.ddev.site/p/foundation`.
 - Source page URL and CMS preview URL are separate: source content comes from `https://webblocksui.com/docs/architecture.html`, while local CMS preview uses the DDEV host and current CMS path model.

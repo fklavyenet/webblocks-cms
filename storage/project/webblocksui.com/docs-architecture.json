@@ -97,7 +97,7 @@
                       {
                         "key": "layer-foundation",
                         "type": "link-list-item",
-                        "url": "foundation.html",
+                        "url": "/p/foundation",
                         "translations": {
                           "en": {
                             "title": "foundation",
@@ -342,7 +342,7 @@
                       {
                         "key": "next-link",
                         "type": "link-list-item",
-                        "url": "foundation.html",
+                        "url": "/p/foundation",
                         "translations": {
                           "en": {
                             "title": "Next",
@@ -394,7 +394,7 @@
         "key": "foundation",
         "title": "Foundation",
         "link_type": "custom_url",
-        "url": "foundation.html",
+        "url": "/p/foundation",
         "icon": "palette",
         "position": 4,
         "visibility": "visible"

@@ -81,7 +81,7 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $response->assertSee('Do not flatten the layer model');
         $response->assertSee('<code>docs/</code>', false);
         $response->assertSee('/p/getting-started');
-        $response->assertSee('foundation.html');
+        $response->assertSee('/p/foundation');
 
         $navigationTitles = NavigationItem::query()
             ->forSite($site->id)

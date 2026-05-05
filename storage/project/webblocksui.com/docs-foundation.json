@@ -1,0 +1,614 @@
+{
+  "site": {
+    "domain": "ui.docs.webblocksui.com",
+    "handle": "ui-docs-webblocksui-com"
+  },
+  "page": {
+    "key": "docs-foundation",
+    "status": "published",
+    "page_type": "default",
+    "public_shell": "docs",
+    "source_url": "https://webblocksui.com/docs/foundation.html",
+    "requested_public_path": "/docs/foundation.html",
+    "current_public_path": "/p/foundation",
+    "translations": {
+      "en": {
+        "name": "Foundation",
+        "slug": "foundation"
+      }
+    },
+    "slots": {
+      "header": {
+        "sort_order": 0,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "sidebar": {
+        "sort_order": 1,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "main": {
+        "sort_order": 2,
+        "source_type": "page",
+        "settings": null,
+        "blocks": [
+          {
+            "key": "foundation-intro",
+            "type": "section",
+            "settings": {
+              "layout_name": "Foundation intro"
+            },
+            "children": [
+              {
+                "key": "foundation-intro-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Foundation intro container"
+                },
+                "children": [
+                  {
+                    "key": "foundation-context",
+                    "type": "header",
+                    "variant": "h6",
+                    "translations": {
+                      "en": {
+                        "title": "WebBlocks UI"
+                      }
+                    }
+                  },
+                  {
+                    "key": "foundation-content-header",
+                    "type": "content_header",
+                    "variant": "h1",
+                    "translations": {
+                      "en": {
+                        "title": "Foundation",
+                        "subtitle": "Foundation is where tokens, dark mode, presets, theme axes, reset rules, and raw element styling live. If you are asking about `h1-h6`, code blocks, root theme attributes, or the spacing scale, start here."
+                      }
+                    }
+                  },
+                  {
+                    "key": "foundation-toc",
+                    "type": "toc",
+                    "translations": {
+                      "en": {
+                        "title": "On this page"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "theme-axes-heading",
+            "type": "heading",
+            "variant": "h2",
+            "url": "theme-axes",
+            "translations": {
+              "en": {
+                "title": "Theme axes on `<html>`"
+              }
+            }
+          },
+          {
+            "key": "theme-axes-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Theme axes"
+            },
+            "children": [
+              {
+                "key": "theme-axes-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Theme axes container"
+                },
+                "children": [
+                  {
+                    "key": "theme-axes-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>The shipped theme system stores state on the root element. <code>WBTheme</code> supports mode, preset, accent, radius, density, shadow, and font. Border is a real CSS axis, but it is not part of the shipped <code>WBTheme</code> JS API.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "theme-axes-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<html\n  data-mode=\"auto\"\n  data-preset=\"corporate\"\n  data-accent=\"royal\"\n  data-radius=\"soft\"\n  data-density=\"compact\"\n  data-shadow=\"soft\"\n  data-font=\"editorial\"\n  data-border=\"subtle\">"
+                      }
+                    }
+                  },
+                  {
+                    "key": "theme-axes-table",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "content": "Axis | Values | What it changes\ndata-mode | light, dark, auto | Light/dark token set and color-scheme.\ndata-preset | modern, minimal, editorial, playful, corporate | Bundle of accent, radius, density, shadow, and font defaults.\ndata-accent | ocean, forest, sunset, royal, mint, amber, rose, slate-fire | Accent token family.\ndata-radius | sharp, soft | Corner radius tokens.\ndata-density | compact, comfortable | Spacing scale.\ndata-shadow | flat, soft | Shadow depth.\ndata-font | system, modern, editorial | Body and heading font stacks.\ndata-border | none, subtle, medium, strong, accent, dashed | Global border appearance."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "token-groups-heading",
+            "type": "heading",
+            "variant": "h2",
+            "url": "token-groups",
+            "translations": {
+              "en": {
+                "title": "Token groups"
+              }
+            }
+          },
+          {
+            "key": "token-groups-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Token groups"
+            },
+            "children": [
+              {
+                "key": "token-groups-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Token groups container"
+                },
+                "children": [
+                  {
+                    "key": "token-groups-grid",
+                    "type": "grid",
+                    "settings": {
+                      "columns": "2",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "key": "token-group-surface-text",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Surface and text",
+                            "content": "`--wb-bg`, `--wb-surface`, `--wb-surface-2`, `--wb-text`, `--wb-muted`, `--wb-border`"
+                          }
+                        }
+                      },
+                      {
+                        "key": "token-group-accent-semantic",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Accent and semantic",
+                            "content": "`--wb-accent*`, `--wb-success*`, `--wb-warning*`, `--wb-danger*`, `--wb-info*`"
+                          }
+                        }
+                      },
+                      {
+                        "key": "token-group-typography",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Typography",
+                            "content": "`--wb-font`, `--wb-font-heading`, `--wb-font-mono`, `--wb-font-size-*`"
+                          }
+                        }
+                      },
+                      {
+                        "key": "token-group-spacing-shape",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Spacing and shape",
+                            "content": "`--wb-s1` through `--wb-s20`, plus `--wb-r-sm` through `--wb-r-full`"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "key": "token-rule-callout",
+                    "type": "callout",
+                    "variant": "info",
+                    "translations": {
+                      "en": {
+                        "title": "Token rule",
+                        "content": "New package code should use tokens, not hardcoded colors, radii, or spacing values."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "spacing-scale-heading",
+            "type": "heading",
+            "variant": "h2",
+            "url": "spacing-scale",
+            "translations": {
+              "en": {
+                "title": "Spacing scale"
+              }
+            }
+          },
+          {
+            "key": "spacing-scale-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Spacing scale"
+            },
+            "children": [
+              {
+                "key": "spacing-scale-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Spacing scale container"
+                },
+                "children": [
+                  {
+                    "key": "spacing-scale-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>The base token scale starts in <code>tokens.css</code> and can be tightened or expanded by the density axis.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "spacing-scale-table",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "Spacing examples",
+                        "content": "Token | Default value\n--wb-s1 | 4px default\n--wb-s4 | 16px default\n--wb-s8 | 32px default\n--wb-s20 | 80px default"
+                      }
+                    }
+                  },
+                  {
+                    "key": "spacing-compact-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Compact"
+                      }
+                    }
+                  },
+                  {
+                    "key": "spacing-compact-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Use <code>data-density=\"compact\"</code> for tighter admin and data-heavy UIs.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "spacing-comfortable-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Comfortable"
+                      }
+                    }
+                  },
+                  {
+                    "key": "spacing-comfortable-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Use <code>data-density=\"comfortable\"</code> for calmer editorial or marketing flows.</p>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "base-element-styling-heading",
+            "type": "heading",
+            "variant": "h2",
+            "url": "base-element-styling",
+            "translations": {
+              "en": {
+                "title": "Base element styling"
+              }
+            }
+          },
+          {
+            "key": "base-element-styling-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Base element styling"
+            },
+            "children": [
+              {
+                "key": "base-element-styling-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Base element styling container"
+                },
+                "children": [
+                  {
+                    "key": "base-element-styling-copy-one",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Raw HTML already has package styling before you add any primitives. This is where <code>h1-h6</code>, paragraphs, links, code, blockquotes, tables, and focus rings are defined.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-element-styling-copy-two",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Paragraph width is no longer globally constrained. Use <code>.wb-prose</code> or the docs alias <code>.wb-docs-prose</code> when a content block needs a calmer reading measure.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-example-heading-one",
+                    "type": "header",
+                    "variant": "h1",
+                    "translations": {
+                      "en": {
+                        "title": "Heading Level 1"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-example-heading-two",
+                    "type": "header",
+                    "variant": "h2",
+                    "translations": {
+                      "en": {
+                        "title": "Heading Level 2"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-example-heading-three",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Heading Level 3"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-example-paragraph",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>A paragraph uses the base body font and line-height. Apply <code>.wb-prose</code> when you want a readable max-width for docs, policies, and other text-first surfaces. Inline <code>code</code> and links are already styled at the element layer.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-example-quote",
+                    "type": "quote",
+                    "translations": {
+                      "en": {
+                        "content": "Foundation handles the default reading feel before any page-level primitive is introduced."
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-element-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<h1>Heading Level 1</h1>\n<div class=\"wb-prose\">\n  <p>Paragraph copy with <code>inline code</code>.</p>\n</div>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "theme-controls-heading",
+            "type": "heading",
+            "variant": "h2",
+            "url": "theme-controls",
+            "translations": {
+              "en": {
+                "title": "Theme controls the package already ships"
+              }
+            }
+          },
+          {
+            "key": "theme-controls-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Theme controls"
+            },
+            "children": [
+              {
+                "key": "theme-controls-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Theme controls container"
+                },
+                "children": [
+                  {
+                    "key": "theme-controls-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<button data-wb-mode-set=\"dark\">Dark</button>\n<button data-wb-preset-set=\"minimal\">Minimal</button>\n<button data-wb-accent-set=\"forest\">Forest</button>\n<button data-wb-radius-set=\"soft\">Soft radius</button>\n<button data-wb-density-set=\"compact\">Compact</button>\n<button data-wb-shadow-set=\"soft\">Soft shadow</button>\n<button data-wb-font-set=\"editorial\">Editorial font</button>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "foundation-previous-next",
+            "type": "section",
+            "settings": {
+              "layout_name": "Foundation previous and next"
+            },
+            "children": [
+              {
+                "key": "foundation-previous-next-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Foundation previous and next container"
+                },
+                "children": [
+                  {
+                    "key": "foundation-previous-next-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "foundation-previous-link",
+                        "type": "link-list-item",
+                        "url": "/p/architecture",
+                        "translations": {
+                          "en": {
+                            "title": "Previous",
+                            "subtitle": "Architecture"
+                          }
+                        }
+                      },
+                      {
+                        "key": "foundation-next-link",
+                        "type": "link-list-item",
+                        "url": "layout.html",
+                        "translations": {
+                          "en": {
+                            "title": "Next",
+                            "subtitle": "Layout"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "navigation": {
+    "menu_key": "docs",
+    "items": [
+      {
+        "key": "home",
+        "title": "Home",
+        "link_type": "page",
+        "page_ref": "home",
+        "icon": "home",
+        "position": 1,
+        "visibility": "visible"
+      },
+      {
+        "key": "getting-started",
+        "title": "Getting Started",
+        "link_type": "page",
+        "page_ref": "getting-started",
+        "icon": "rocket",
+        "position": 2,
+        "visibility": "visible"
+      },
+      {
+        "key": "architecture",
+        "title": "Architecture",
+        "link_type": "custom_url",
+        "url": "/p/architecture",
+        "icon": "layers",
+        "position": 3,
+        "visibility": "visible"
+      },
+      {
+        "key": "foundation",
+        "title": "Foundation",
+        "link_type": "page",
+        "page_ref": "docs-foundation",
+        "icon": "palette",
+        "position": 4,
+        "visibility": "visible"
+      },
+      {
+        "key": "layout",
+        "title": "Layout",
+        "link_type": "custom_url",
+        "url": "layout.html",
+        "icon": "layout",
+        "position": 5,
+        "visibility": "visible"
+      },
+      {
+        "key": "primitives",
+        "title": "Primitives",
+        "link_type": "custom_url",
+        "url": "primitives.html",
+        "icon": "box",
+        "position": 6,
+        "visibility": "visible"
+      },
+      {
+        "key": "icons",
+        "title": "Icons",
+        "link_type": "custom_url",
+        "url": "icons.html",
+        "icon": "star",
+        "position": 7,
+        "visibility": "visible"
+      },
+      {
+        "key": "patterns",
+        "title": "Patterns",
+        "link_type": "custom_url",
+        "url": "patterns.html",
+        "icon": "grid",
+        "position": 8,
+        "visibility": "visible"
+      },
+      {
+        "key": "playground",
+        "title": "Playground",
+        "link_type": "custom_url",
+        "url": "../playground/",
+        "icon": "code",
+        "position": 9,
+        "visibility": "visible"
+      }
+    ]
+  }
+}
