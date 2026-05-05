@@ -7,12 +7,19 @@
 	<div class="wb-grid wb-grid-2">
 		<div class="wb-stack-4 wb-gap-1">
 			<div class="wb-stack-2 wb-field">
-				<label for="site_id">Site</label>
-				<select id="site_id" name="site_id" class="wb-select" required>
-					@foreach ($sites as $site)
-						<option value="{{ $site->id }}" @selected((string) $formSiteId === (string) $site->id)>{{ $site->name }}</option>
-					@endforeach
-				</select>
+				@if ($page->exists)
+					<label>Site</label>
+					<input class="wb-input" type="text" value="{{ $page->site?->name ?? 'Site' }}" readonly>
+					<input type="hidden" name="site_id" value="{{ $page->site_id }}">
+					<span class="wb-text-sm wb-text-muted">Existing pages cannot be moved between sites from this form.</span>
+				@else
+					<label for="site_id">Site</label>
+					<select id="site_id" name="site_id" class="wb-select" required>
+						@foreach ($sites as $site)
+							<option value="{{ $site->id }}" @selected((string) $formSiteId === (string) $site->id)>{{ $site->name }}</option>
+						@endforeach
+					</select>
+				@endif
 			</div>
 			<div class="wb-stack-2 wb-field">
 				<label for="title">Title</label>
