@@ -2,25 +2,45 @@
 
 ## [Unreleased]
 
-- Simplify Page Details modal by folding structure counts into the Page card.
-- Refine Page Details modal metadata into grouped cards for readability.
-- Add nullable page audit attribution fields for who created, last edited, published, archived, or submitted a page for review.
-- Add compact actor, source, and event metadata to page revisions and Shared Slot revisions, and surface it in admin revision history screens.
-- Add nullable created/updated audit attribution to Shared Slots.
-- Update the Pages index Page Details modal to show actor metadata when available while keeping old, deleted-user, imported, and console-created records safe with `Not recorded` fallback.
-- Pages index Page Details now uses the standard modal pattern instead of the old drawer.
-- Removed the ambiguous Edit Blocks action from Page Details.
+
+## 1.15.0
+
+### Search
+
 - Add Search V1 as a core CMS feature with a database-backed `public_search_index`, public `/search` and localized search routes, and site plus locale scoped published-only results.
 - Add compatible Shared Slot content extraction for Search V1 while excluding hidden Shared Slot source pages, disabled slots, and incompatible Shared Slot assignments from public search results.
 - Add a first-class `Search Form` block with translation-backed label, placeholder, and button text plus public WebBlocks UI-aligned rendering.
 - Add a super-admin System > Search status screen and non-destructive `ddev artisan search:rebuild` command for rebuilding derived search rows.
-- Keep destructive database command guards unchanged and document that Search V1 rebuilds derived data without requiring database resets.
 - Fix `search:rebuild` so missing search-table migrations fail clearly instead of reporting a misleading successful `Indexed rows: 0 / Skipped pages/locales: 0`, and improve rebuild reporting to count skipped locales meaningfully.
 - Add a public search modal opened from the `Header Actions` search trigger while keeping `/search` as the fallback and direct-link route.
 - Add public locale-aware `/search.json` endpoints for modal results powered by `public_search_index` with current site and locale scoping.
+
+### Admin UI
+
+- Simplify Page Details modal by folding structure counts into the Page card.
+- Refine Page Details modal metadata into grouped cards for readability.
+- Update the Pages index Page Details modal to show actor metadata when available while keeping old, deleted-user, imported, and console-created records safe with `Not recorded` fallback.
+- Pages index Page Details now uses the standard modal pattern instead of the old drawer.
+- Removed the ambiguous Edit Blocks action from Page Details.
+
+### Audit / Revisions
+
+- Add nullable page audit attribution fields for who created, last edited, published, archived, or submitted a page for review.
+- Add compact actor, source, and event metadata to page revisions and Shared Slot revisions, and surface it in admin revision history screens.
+- Add nullable created/updated audit attribution to Shared Slots.
+
+### Safety / Operations
+
+- Keep destructive database command guards unchanged and document that Search V1 rebuilds derived data without requiring database resets.
+- Add a destructive database command safety guard that blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe` outside the testing environment unless `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` is set.
+
+### Project Layer
+
 - Retarget the project-layer WebBlocks UI Architecture and Foundation imports to the CMS default site by default, with explicit `{ "target": "default_site" }` payload metadata and default-site preview URLs.
 - Allow the project-layer Architecture and Foundation imports to recreate those docs pages idempotently on the default site after a local database restore without creating duplicate block trees or duplicate docs navigation items.
-- Add a destructive database command safety guard that blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe` outside the testing environment unless `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` is set.
+
+### Tests / Internal
+
 - Stabilize `ddev artisan test --filter=Project` by registering the project-layer WebBlocks UI setup and importer services deterministically instead of relying on incidental test order.
 
 ## 1.14.0
