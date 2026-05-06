@@ -2,16 +2,28 @@
 
 ## [Unreleased]
 
-- Add admin-only `Project Name` and `Project Tagline` settings under System Settings.
-- Update admin topbar and admin browser titles to use Project Identity while keeping the fixed WebBlocks CMS product identity in the sidebar and version footer.
-- Change public page title fallback to `Site Label · Page Label` and keep Project Identity out of public metadata.
-- Update public search modal copy to name the resolved site being searched when site context is available.
+## 1.16.0
+
+### Admin Identity
+
 - Separate fixed WebBlocks CMS admin product identity from editable public site branding and metadata.
 - Move `Settings` navigation under `System` while keeping `Maintenance` focused on operational tools.
+- Add admin-only `Project Name` and `Project Tagline` settings under System Settings.
+- Update admin topbar and admin browser titles to use Project Identity while keeping the fixed WebBlocks CMS product identity in the sidebar and version footer.
+
+### Site Metadata / SEO
+
 - Add site-level Branding and SEO Defaults fields, including public favicon and site-scoped head metadata fallbacks.
+
+### Page SEO
+
 - Add locale-aware page SEO overrides on `page_translations`, with public metadata resolving page overrides before site defaults.
 - Include page SEO translation metadata in page revisions, duplication, move workflows, and site portability paths where page translations are transferred.
 
+### Public UX
+
+- Change public page title fallback to `Site Label · Page Label` and keep Project Identity out of public metadata.
+- Update public search modal copy to name the resolved site being searched when site context is available.
 
 ## 1.15.0
 
