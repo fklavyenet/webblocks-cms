@@ -5,6 +5,14 @@
         : 'Showing pages for '.$activeSite->name.($activeSite->domain ? ' ('.$activeSite->domain.')' : '').'.';
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
+    $detailsBaseQuery = array_filter([
+        'site' => $filters['site'],
+        'search' => $filters['search'] !== '' ? $filters['search'] : null,
+        'status' => $filters['status'] !== '' ? $filters['status'] : null,
+        'sort' => $filters['sort'] !== 'created_at' ? $filters['sort'] : null,
+        'direction' => $filters['direction'] !== 'desc' ? $filters['direction'] : null,
+        'page' => $pages->currentPage() > 1 ? $pages->currentPage() : null,
+    ], fn ($value) => $value !== null && $value !== '');
     $headerActions = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-inline-flex wb-items-center wb-gap-2 wb-flex-wrap">'
         .'<span class="wb-text-sm wb-text-muted wb-nowrap">Site</span>'
         .'<select id="pages_site_context" name="site" class="wb-select wb-w-auto" aria-label="Site" onchange="this.form.submit()">'
@@ -202,17 +210,16 @@
                                      </td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <button
-                                                type="button"
+                                            <a
+                                                href="{{ route('admin.pages.index', array_merge($detailsBaseQuery, ['details' => $page->id])) }}"
                                                 class="wb-action-btn"
-                                                data-wb-toggle="drawer"
-                                                data-wb-target="#pageDetailsDrawer-{{ $page->id }}"
-                                                aria-controls="pageDetailsDrawer-{{ $page->id }}"
+                                                aria-haspopup="dialog"
+                                                aria-controls="pageDetailsModal-{{ $page->id }}"
                                                 title="Page details"
                                                 aria-label="Open page details"
                                             >
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
-                                            </button>
+                                            </a>
 
                                             <a href="{{ route('admin.pages.edit', $page) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" onsubmit="return confirm('Delete this page?');">
@@ -235,11 +242,12 @@
     @endif
 @endsection
 
-@push('overlays')
-    @foreach ($pages as $page)
-        @include('admin.pages.partials.details-drawer', [
-            'page' => $page,
-            'drawerId' => 'pageDetailsDrawer-'.$page->id,
+@if ($detailsPage)
+    @push('overlays')
+        @include('admin.pages.partials.details-modal', [
+            'page' => $detailsPage,
+            'drawerId' => 'pageDetailsModal-'.$detailsPage->id,
+            'closeUrl' => route('admin.pages.index', $detailsBaseQuery),
         ])
-    @endforeach
-@endpush
+    @endpush
+@endif

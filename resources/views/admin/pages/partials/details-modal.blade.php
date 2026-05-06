@@ -1,12 +1,13 @@
 @php
-    $drawerId = $drawerId ?? 'pageDetailsDrawer';
+    $drawerId = $drawerId ?? 'pageDetailsModal';
     $drawerTitleId = $drawerId.'Title';
     $defaultPublicUrl = $page->publicUrl();
+    $defaultPublicPath = $page->publicPath();
     $publishedAt = data_get($page, 'published_at');
     $reviewRequestedAt = data_get($page, 'review_requested_at');
     $slotCount = $page->slots_count ?? ($page->relationLoaded('slots') ? $page->slots->count() : $page->slots()->count());
     $blockCount = $page->blocks_count ?? ($page->relationLoaded('blocks') ? $page->blocks->count() : $page->blocks()->count());
-    $firstSlot = $page->relationLoaded('slots') ? $page->slots->first() : $page->slots()->orderBy('sort_order')->first();
+    $closeUrl = $closeUrl ?? route('admin.pages.edit', $page);
     $publishedLabel = $publishedAt instanceof \Illuminate\Support\Carbon
         ? $publishedAt->format('Y-m-d H:i')
         : ($publishedAt ?: 'Not recorded');
@@ -15,16 +16,23 @@
         : ($reviewRequestedAt ?: 'Not recorded');
 @endphp
 
-<div class="wb-drawer wb-drawer-right wb-drawer-sm" id="{{ $drawerId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $drawerTitleId }}">
-    <div class="wb-drawer-header">
-        <h2 class="wb-drawer-title" id="{{ $drawerTitleId }}">Page Details</h2>
-        <button class="wb-drawer-close" data-wb-dismiss="drawer" aria-label="Close details panel">
-            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-        </button>
-    </div>
+<div class="wb-overlay-layer wb-overlay-layer--dialog">
+    <div class="wb-overlay-backdrop"></div>
 
-    <div class="wb-drawer-body">
-        <div class="wb-stack wb-stack-4">
+    <div class="wb-modal wb-modal-lg is-open" id="{{ $drawerId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $drawerTitleId }}">
+        <div class="wb-modal-dialog">
+            <div class="wb-modal-header">
+                <div class="wb-stack wb-gap-1">
+                    <h2 class="wb-modal-title" id="{{ $drawerTitleId }}">Page Details</h2>
+                    <span class="wb-text-sm wb-text-muted">Review page metadata without leaving the index.</span>
+                </div>
+                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close page details">
+                    <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="wb-modal-body">
+                <div class="wb-stack wb-gap-4">
             <div class="wb-list wb-list-sm">
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
@@ -43,7 +51,7 @@
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Path</span>
-                        <span class="wb-list-item-sub">{{ $page->publicPath() }}</span>
+                        <span class="wb-list-item-sub">{{ $defaultPublicPath ?? 'Missing' }}</span>
                     </div>
                 </div>
 
@@ -68,14 +76,16 @@
                     </div>
                 </div>
 
-                @foreach ($page->translationStatusForSite() as $translationStatus)
-                    <div class="wb-list-item">
-                        <div class="wb-list-item-text">
-                            <span class="wb-list-item-title">{{ strtoupper($translationStatus['locale']->code) }}</span>
-                            <span class="wb-list-item-sub">{{ $translationStatus['translation']?->slug ?? 'Missing' }}{{ $translationStatus['public_path'] ? ' | '.$translationStatus['public_path'] : '' }}</span>
-                        </div>
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Locales</span>
+                        <span class="wb-list-item-sub">
+                            @foreach ($page->translationStatusForSite() as $translationStatus)
+                                {{ strtoupper($translationStatus['locale']->code) }}: {{ $translationStatus['translation']?->slug ?? 'Missing' }}{{ $translationStatus['public_path'] ? ' | '.$translationStatus['public_path'] : '' }}@if (! $loop->last); @endif
+                            @endforeach
+                        </span>
                     </div>
-                @endforeach
+                </div>
 
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
@@ -127,19 +137,20 @@
                 </div>
             </div>
 
-            @if ($page->isPublished() && $defaultPublicUrl)
-                <a href="{{ $defaultPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary wb-w-full">Open Public Page</a>
-            @endif
-        </div>
-    </div>
+                </div>
+            </div>
 
-    <div class="wb-drawer-footer">
-        <div class="wb-cluster wb-cluster-2">
-            <a href="{{ route('admin.pages.edit', $page) }}" class="wb-btn wb-btn-primary">Edit Slots</a>
+            <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2">
+                    <a href="{{ route('admin.pages.edit', $page) }}" class="wb-btn wb-btn-primary">Edit Page</a>
 
-            @if ($firstSlot)
-                <a href="{{ route('admin.pages.slots.blocks', [$page, $firstSlot]) }}" class="wb-btn wb-btn-secondary">Edit Blocks</a>
-            @endif
+                    @if ($page->isPublished() && $defaultPublicUrl)
+                        <a href="{{ $defaultPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary">Open Public Page</a>
+                    @endif
+                </div>
+
+                <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+            </div>
         </div>
     </div>
 </div>

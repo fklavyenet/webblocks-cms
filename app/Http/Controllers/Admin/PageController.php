@@ -46,6 +46,7 @@ class PageController extends Controller
         $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
+        $detailsPageId = $request->integer('details');
         $sort = $request->string('sort')->toString();
         $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
         $allowedStatuses = $this->workflowManager->allowedStatuses();
@@ -65,8 +66,7 @@ class PageController extends Controller
             ->withCount(['enabledLocales as locales_count'])
             ->pluck('locales_count', 'id');
 
-        return view('admin.pages.index', [
-            'pages' => $this->authorization->scopePagesForUser(Page::query(), $request->user())
+        $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
                 ->with(['site', 'translations.locale'])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
@@ -102,7 +102,10 @@ class PageController extends Controller
                 ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
                 ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
                 ->paginate(15)
-                ->withQueryString(),
+                ->withQueryString();
+
+        return view('admin.pages.index', [
+            'pages' => $pages,
             'sites' => $sites,
             'activeSite' => $activeSite,
             'showAllSites' => $siteFilterValue === 'all',
@@ -114,6 +117,7 @@ class PageController extends Controller
                 'sort' => $sort,
                 'direction' => $direction,
             ],
+            'detailsPage' => $detailsPageId > 0 ? $pages->getCollection()->firstWhere('id', $detailsPageId) : null,
             'siteLocaleCounts' => $siteLocaleCounts,
         ]);
     }

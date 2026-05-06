@@ -3,9 +3,11 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\BlockType;
+use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
@@ -67,6 +69,92 @@ class PageEditorialWorkflowTest extends TestCase
             'slug' => $slug,
             'status' => $status,
         ]);
+    }
+
+    #[Test]
+    public function page_index_page_details_uses_modal_markup_and_keeps_only_meaningful_actions(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType();
+        $secondaryLocale = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$secondaryLocale->id => ['is_enabled' => true]]);
+
+        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
+        $page->forceFill([
+            'review_requested_at' => now()->subDay(),
+            'published_at' => now()->subHour(),
+        ])->save();
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $secondaryLocale->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/tr/p/hakkinda'],
+        );
+
+        $slot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $this->sectionBlockType()->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => $main->slug,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', ['details' => $page->id]));
+
+        $response->assertOk();
+        $response->assertSee('details='.$page->id);
+        $response->assertSee('aria-controls="pageDetailsModal-'.$page->id.'"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg is-open" id="pageDetailsModal-'.$page->id.'"', false);
+        $response->assertDontSee('wb-drawer wb-drawer-right wb-drawer-sm', false);
+        $response->assertSee('Page Details');
+        $response->assertSee('Review page metadata without leaving the index.');
+        $response->assertSee('ID');
+        $response->assertSee((string) $page->id);
+        $response->assertSee('Name');
+        $response->assertSee('About');
+        $response->assertSee('Path');
+        $response->assertSee('/p/about');
+        $response->assertSee('Site');
+        $response->assertSee($site->name);
+        $response->assertSee('Default URL');
+        $response->assertSee($page->publicUrl() ?? '');
+        $response->assertSee('Slug');
+        $response->assertSee('about');
+        $response->assertSee('Locales');
+        $response->assertSee('EN: about | /p/about');
+        $response->assertSee('TR: hakkinda | /tr/p/hakkinda');
+        $response->assertSee('Status');
+        $response->assertSee('Published');
+        $response->assertSee('Review Requested');
+        $response->assertSee('Slot count');
+        $response->assertSee('1');
+        $response->assertSee('Block count');
+        $response->assertSee('Created');
+        $response->assertSee('Updated');
+        $response->assertSee('href="'.route('admin.pages.edit', $page).'" class="wb-btn wb-btn-primary">Edit Page</a>', false);
+        $response->assertSee('href="'.$page->publicUrl().'" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary">Open Public Page</a>', false);
+        $response->assertSee('>Close</a>', false);
+        $response->assertDontSee('Edit Blocks');
+        $response->assertDontSee('Edit Slots');
+        $response->assertDontSee(route('admin.pages.slots.blocks', [$page, $slot]));
     }
 
     #[Test]

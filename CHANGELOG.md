@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Pages index Page Details now uses the standard modal pattern instead of the old drawer.
+- Removed the ambiguous Edit Blocks action from Page Details.
 - Add Search V1 as a core CMS feature with a database-backed `public_search_index`, public `/search` and localized search routes, and site plus locale scoped published-only results.
 - Add compatible Shared Slot content extraction for Search V1 while excluding hidden Shared Slot source pages, disabled slots, and incompatible Shared Slot assignments from public search results.
 - Add a first-class `Search Form` block with translation-backed label, placeholder, and button text plus public WebBlocks UI-aligned rendering.

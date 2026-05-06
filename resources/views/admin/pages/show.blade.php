@@ -48,5 +48,10 @@
         </div>
     </div>
 
-    @include('admin.pages.partials.details-drawer', ['page' => $page])
+    @if (request()->query('details'))
+        @include('admin.pages.partials.details-modal', [
+            'page' => $page,
+            'closeUrl' => request()->fullUrlWithQuery(['details' => null]),
+        ])
+    @endif
 @endsection

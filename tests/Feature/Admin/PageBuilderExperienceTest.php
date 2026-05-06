@@ -1222,6 +1222,21 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function edit_page_screen_keeps_slot_level_block_editing_available_from_slot_controls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>', false);
+    }
+
+    #[Test]
     public function slot_settings_update_route_is_removed(): void
     {
         $this->assertFalse(Route::has('admin.pages.slots.settings.update'));
