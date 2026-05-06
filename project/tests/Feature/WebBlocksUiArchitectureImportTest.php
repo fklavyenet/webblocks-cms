@@ -8,6 +8,7 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use Database\Seeders\BlockTypeSeeder;
@@ -163,6 +164,91 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'getting-started'))->count());
         $this->assertSame('https://webblocks-cms.ddev.site/p/architecture', SetupWebBlocksUiDocsSite::architecturePreviewUrl());
         $this->assertFalse(class_exists(\App\Console\Commands\SetupWebBlocksUiDocsSiteCommand::class));
+    }
+
+    #[Test]
+    public function setup_site_preserves_existing_docs_shared_slot_assignments(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $site = $this->createTargetSite();
+        $page = $this->createGettingStartedPage($site);
+        $headerType = SlotType::query()->where('slug', 'header')->firstOrFail();
+        $sidebarType = SlotType::query()->where('slug', 'sidebar')->firstOrFail();
+
+        $headerSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Header',
+            'handle' => 'docs-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+        $sidebarSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Sidebar',
+            'handle' => 'docs-sidebar',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        PageSlot::query()->where('page_id', $page->id)->where('slot_type_id', $headerType->id)->update([
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $headerSharedSlot->id,
+        ]);
+        PageSlot::query()->where('page_id', $page->id)->where('slot_type_id', $sidebarType->id)->update([
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sidebarSharedSlot->id,
+        ]);
+
+        $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
+
+        $slots = $page->fresh(['slots.slotType'])->slots->keyBy(fn ($slot) => $slot->slotType?->slug);
+
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $slots['header']->source_type);
+        $this->assertSame($headerSharedSlot->id, $slots['header']->shared_slot_id);
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $slots['sidebar']->source_type);
+        $this->assertSame($sidebarSharedSlot->id, $slots['sidebar']->shared_slot_id);
+        $this->assertSame(PageSlot::SOURCE_TYPE_PAGE, $slots['main']->source_type);
+        $this->assertNull($slots['main']->shared_slot_id);
+    }
+
+    #[Test]
+    public function setup_site_repairs_docs_shared_slot_assignments_when_expected_shared_slots_exist(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $site = $this->createTargetSite();
+        $page = $this->createGettingStartedPage($site);
+
+        $headerSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Header',
+            'handle' => 'docs-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+        $sidebarSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Sidebar',
+            'handle' => 'docs-sidebar',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
+
+        $slots = $page->fresh(['slots.slotType'])->slots->keyBy(fn ($slot) => $slot->slotType?->slug);
+
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $slots['header']->source_type);
+        $this->assertSame($headerSharedSlot->id, $slots['header']->shared_slot_id);
+        $this->assertSame(PageSlot::SOURCE_TYPE_SHARED_SLOT, $slots['sidebar']->source_type);
+        $this->assertSame($sidebarSharedSlot->id, $slots['sidebar']->shared_slot_id);
     }
 
     private function createTargetSite(): Site

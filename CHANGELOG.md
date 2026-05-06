@@ -7,6 +7,7 @@
 - Align the Edit Slot Block Types modal filters with the shared compact admin listing filter layout.
 - Fix Code block editing from the Edit Slot Blocks list after block catalog and global Blocks index updates.
 - Fix public TOC rendering so it collects explicit canonical `Header` anchors from the same page tree, including nested layout blocks, and update the project-layer Foundation payload with explicit subsection anchors.
+- Guard the project-layer WebBlocks UI docs setup against clearing existing docs Shared Slot assignments, and add a repair command to restore docs shared-slot wiring while cleaning proven local TOC debug artifacts.
 
 ## 1.16.0
 
