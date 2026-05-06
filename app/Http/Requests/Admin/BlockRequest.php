@@ -214,8 +214,8 @@ class BlockRequest extends FormRequest
             if ($selectedBlockType?->slug === 'header') {
                 $anchor = trim((string) $this->input('anchor', ''));
 
-                if ($anchor !== '' && ! preg_match('/^[A-Za-z][A-Za-z0-9\-_:.]*$/', $anchor)) {
-                    $validator->errors()->add('anchor', 'Anchor ID must start with a letter and may contain letters, numbers, dashes, underscores, colons, or periods.');
+                if ($anchor !== '' && ! preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', $anchor)) {
+                    $validator->errors()->add('anchor', 'Anchor ID must start with a letter or number and may contain letters, numbers, dashes, underscores, colons, or periods.');
                 }
             }
 

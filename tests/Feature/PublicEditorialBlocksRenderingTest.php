@@ -2236,6 +2236,36 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function header_block_allows_digit_led_canonical_anchor_ids(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'url' => '12-column-row-system',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => '12-column row system',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<h2 id="12-column-row-system" data-wb-public-block-type="header">12-column row system</h2>', false);
+    }
+
+    #[Test]
     public function multilingual_text_rendering_is_unchanged_when_shared_settings_are_present(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

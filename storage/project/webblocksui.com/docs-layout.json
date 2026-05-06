@@ -1,0 +1,729 @@
+{
+  "site": {
+    "target": "default_site"
+  },
+  "page": {
+    "key": "docs-layout",
+    "status": "published",
+    "page_type": "default",
+    "public_shell": "docs",
+    "source_url": "https://webblocksui.com/docs/layout.html",
+    "requested_public_path": "/docs/layout.html",
+    "current_public_path": "/p/layout",
+    "translations": {
+      "en": {
+        "name": "Layout",
+        "slug": "layout"
+      }
+    },
+    "slots": {
+      "header": {
+        "sort_order": 0,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "sidebar": {
+        "sort_order": 1,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "main": {
+        "sort_order": 2,
+        "source_type": "page",
+        "settings": null,
+        "blocks": [
+          {
+            "key": "layout-intro",
+            "type": "section",
+            "settings": {
+              "layout_name": "Layout intro"
+            },
+            "children": [
+              {
+                "key": "layout-intro-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Layout intro container"
+                },
+                "children": [
+                  {
+                    "key": "layout-title",
+                    "type": "header",
+                    "variant": "h1",
+                    "url": "layout",
+                    "settings": {
+                      "anchor": "layout"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Layout"
+                      }
+                    }
+                  },
+                  {
+                    "key": "layout-intro-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Layout is where page width, structural flow, navigation frame, and shell choice live. If you are asking about <code>wb-container</code>, <code>wb-grid-*</code>, <code>wb-row</code>, navbar, sidebar, or dashboard/content/auth shells, start here.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "layout-toc",
+                    "type": "toc",
+                    "translations": {
+                      "en": {
+                        "title": "On this page"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "base-composition-primitives-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Base composition primitives"
+            },
+            "children": [
+              {
+                "key": "base-composition-primitives-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Base composition primitives container"
+                },
+                "children": [
+                  {
+                    "key": "base-composition-primitives-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "base-composition-primitives",
+                    "settings": {
+                      "anchor": "base-composition-primitives"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Base composition primitives"
+                      }
+                    }
+                  },
+                  {
+                    "key": "base-composition-primitives-table",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "content": "Class | Use it for | Why it matters\nwb-container* | Page width and horizontal padding | Keeps content measure consistent.\nwb-section* | Major vertical bands | Defines outer page rhythm.\nwb-stack* | Vertical flow | Handles repeated spacing without one-off margins.\nwb-cluster* | Wrapped inline groups | Good for actions, chips, compact controls.\nwb-split | Two-sided layouts | Lets the first child grow and the last child stay fixed.\nwb-grid* | Simple repeated columns | Fast 2/3/4-column and auto-fill layout."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "simple-grid-and-flow-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Simple grid and flow"
+            },
+            "children": [
+              {
+                "key": "simple-grid-and-flow-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Simple grid and flow container"
+                },
+                "children": [
+                  {
+                    "key": "simple-grid-and-flow-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "simple-grid-and-flow",
+                    "settings": {
+                      "anchor": "simple-grid-and-flow"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Simple grid and flow"
+                      }
+                    }
+                  },
+                  {
+                    "key": "stack-cluster-split-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Stack + cluster + split"
+                      }
+                    }
+                  },
+                  {
+                    "key": "stack-cluster-split-grid",
+                    "type": "grid",
+                    "settings": {
+                      "columns": "3",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "key": "stack-card",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Stack",
+                            "content": "Three blocks with vertical rhythm. Use it for prose and form sections."
+                          }
+                        }
+                      },
+                      {
+                        "key": "cluster-card",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Cluster",
+                            "content": "Wraps inline items and keeps compact controls from breaking awkwardly."
+                          }
+                        }
+                      },
+                      {
+                        "key": "split-card",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "Split",
+                            "content": "Grows left. Action stays fixed on the right."
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "key": "simple-grid-and-flow-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<div class=\"wb-grid-2\">...</div>\n<div class=\"wb-grid-auto\">...</div>\n<div class=\"wb-split\">\n  <div>grows</div>\n  <button class=\"wb-btn wb-btn-sm\">fixed side</button>\n</div>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "row-system-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "12-column row system"
+            },
+            "children": [
+              {
+                "key": "row-system-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "12-column row system container"
+                },
+                "children": [
+                  {
+                    "key": "row-system-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "12-column-row-system",
+                    "settings": {
+                      "anchor": "12-column-row-system"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "12-column row system"
+                      }
+                    }
+                  },
+                  {
+                    "key": "row-system-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>WebBlocks also ships a Bootstrap-like row/column grid in <code>layout/grid.css</code>.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "row-system-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<div class=\"wb-row\">\n  <div class=\"wb-col-md-8\">main</div>\n  <div class=\"wb-col-md-4\">sidebar</div>\n</div>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "row-system-columns-grid",
+                    "type": "grid",
+                    "settings": {
+                      "columns": "2",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "key": "row-system-main-card",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "wb-col-md-8",
+                            "content": "Use this for the wider main reading or application column."
+                          }
+                        }
+                      },
+                      {
+                        "key": "row-system-sidebar-card",
+                        "type": "card",
+                        "translations": {
+                          "en": {
+                            "title": "wb-col-md-4",
+                            "content": "Use this for the narrower sidebar rail or supporting content."
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "navigation-structure-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Navigation structure"
+            },
+            "children": [
+              {
+                "key": "navigation-structure-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Navigation structure container"
+                },
+                "children": [
+                  {
+                    "key": "navigation-structure-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "navigation-structure",
+                    "settings": {
+                      "anchor": "navigation-structure"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Navigation structure"
+                      }
+                    }
+                  },
+                  {
+                    "key": "navigation-navbar-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Navbar"
+                      }
+                    }
+                  },
+                  {
+                    "key": "navigation-navbar-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "navigation-navbar-atlas",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Atlas",
+                            "subtitle": "Top-level workspace"
+                          }
+                        }
+                      },
+                      {
+                        "key": "navigation-navbar-overview",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Overview",
+                            "subtitle": "Primary destination"
+                          }
+                        }
+                      },
+                      {
+                        "key": "navigation-navbar-billing",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Billing",
+                            "subtitle": "Account action"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "key": "navigation-navbar-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>Use navbar for top-level movement and actions.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "navigation-sidebar-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "translations": {
+                      "en": {
+                        "title": "Sidebar"
+                      }
+                    }
+                  },
+                  {
+                    "key": "navigation-sidebar-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "navigation-sidebar-workspace",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Workspace",
+                            "subtitle": "Sidebar parent context"
+                          }
+                        }
+                      },
+                      {
+                        "key": "navigation-sidebar-overview",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Overview",
+                            "subtitle": "Summary destination"
+                          }
+                        }
+                      },
+                      {
+                        "key": "navigation-sidebar-members",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Members",
+                            "subtitle": "People management"
+                          }
+                        }
+                      },
+                      {
+                        "key": "navigation-sidebar-settings",
+                        "type": "link-list-item",
+                        "url": "#",
+                        "translations": {
+                          "en": {
+                            "title": "Settings",
+                            "subtitle": "Configuration area"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "shell-selection-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Shell selection"
+            },
+            "children": [
+              {
+                "key": "shell-selection-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Shell selection container"
+                },
+                "children": [
+                  {
+                    "key": "shell-selection-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "shell-selection",
+                    "settings": {
+                      "anchor": "shell-selection"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Shell selection"
+                      }
+                    }
+                  },
+                  {
+                    "key": "shell-selection-table",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "content": "Shell | Class | When to start here\nDashboard | wb-dashboard-shell | Admin products with persistent navigation and scrollable main area.\nAuth | wb-auth-shell | Login, register, and quiet entry flows.\nSettings | wb-settings-shell | Preference-heavy pages with local nav and sectioned forms.\nContent | wb-content-shell | Docs, articles, legal pages, and text-first content."
+                      }
+                    }
+                  },
+                  {
+                    "key": "shell-selection-callout",
+                    "type": "callout",
+                    "variant": "info",
+                    "translations": {
+                      "en": {
+                        "title": "Shell rule",
+                        "content": "Choose the page shell before refining primitives. A dashboard should not be assembled from random cards before the frame is decided."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "header-hierarchy-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Header hierarchy"
+            },
+            "children": [
+              {
+                "key": "header-hierarchy-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Header hierarchy container"
+                },
+                "children": [
+                  {
+                    "key": "header-hierarchy-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "header-hierarchy",
+                    "settings": {
+                      "anchor": "header-hierarchy"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Header hierarchy"
+                      }
+                    }
+                  },
+                  {
+                    "key": "header-hierarchy-breadcrumb",
+                    "type": "breadcrumb"
+                  },
+                  {
+                    "key": "members-example-card",
+                    "type": "card",
+                    "settings": {
+                      "variant": "promo"
+                    },
+                    "children": [
+                      {
+                        "key": "members-example-actions",
+                        "type": "cluster",
+                        "settings": {
+                          "alignment": "end"
+                        },
+                        "children": [
+                          {
+                            "key": "members-example-invite-button",
+                            "type": "button_link",
+                            "variant": "primary",
+                            "settings": {
+                              "url": "#",
+                              "target": "_self"
+                            },
+                            "translations": {
+                              "en": {
+                                "title": "Invite"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "translations": {
+                      "en": {
+                        "eyebrow": "Workspace / Members",
+                        "title": "Members",
+                        "content": "Manage people, roles, and invitations.",
+                        "subtitle": "Breadcrumb is optional. Title is primary. Subtitle is supportive. Actions stay separate."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "layout-previous-next-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Layout previous and next"
+            },
+            "children": [
+              {
+                "key": "layout-previous-next-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Layout previous and next container"
+                },
+                "children": [
+                  {
+                    "key": "layout-previous-next-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "layout-previous-link",
+                        "type": "link-list-item",
+                        "url": "/p/foundation",
+                        "translations": {
+                          "en": {
+                            "title": "Previous",
+                            "subtitle": "Foundation"
+                          }
+                        }
+                      },
+                      {
+                        "key": "layout-next-link",
+                        "type": "link-list-item",
+                        "url": "primitives.html",
+                        "translations": {
+                          "en": {
+                            "title": "Next",
+                            "subtitle": "Primitives"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "navigation": {
+    "menu_key": "docs",
+    "items": [
+      {
+        "key": "home",
+        "title": "Home",
+        "link_type": "page",
+        "page_ref": "home",
+        "icon": "home",
+        "position": 1,
+        "visibility": "visible"
+      },
+      {
+        "key": "getting-started",
+        "title": "Getting Started",
+        "link_type": "page",
+        "page_ref": "getting-started",
+        "icon": "rocket",
+        "position": 2,
+        "visibility": "visible"
+      },
+      {
+        "key": "architecture",
+        "title": "Architecture",
+        "link_type": "custom_url",
+        "url": "/p/architecture",
+        "icon": "layers",
+        "position": 3,
+        "visibility": "visible"
+      },
+      {
+        "key": "foundation",
+        "title": "Foundation",
+        "link_type": "custom_url",
+        "url": "/p/foundation",
+        "icon": "palette",
+        "position": 4,
+        "visibility": "visible"
+      },
+      {
+        "key": "layout",
+        "title": "Layout",
+        "link_type": "page",
+        "page_ref": "docs-layout",
+        "icon": "layout",
+        "position": 5,
+        "visibility": "visible"
+      },
+      {
+        "key": "primitives",
+        "title": "Primitives",
+        "link_type": "custom_url",
+        "url": "primitives.html",
+        "icon": "box",
+        "position": 6,
+        "visibility": "visible"
+      },
+      {
+        "key": "icons",
+        "title": "Icons",
+        "link_type": "custom_url",
+        "url": "icons.html",
+        "icon": "star",
+        "position": 7,
+        "visibility": "visible"
+      },
+      {
+        "key": "patterns",
+        "title": "Patterns",
+        "link_type": "custom_url",
+        "url": "patterns.html",
+        "icon": "grid",
+        "position": 8,
+        "visibility": "visible"
+      },
+      {
+        "key": "playground",
+        "title": "Playground",
+        "link_type": "custom_url",
+        "url": "../playground/",
+        "icon": "code",
+        "position": 9,
+        "visibility": "visible"
+      }
+    ]
+  }
+}

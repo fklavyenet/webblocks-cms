@@ -8,6 +8,7 @@
 - Fix Code block editing from the Edit Slot Blocks list after block catalog and global Blocks index updates.
 - Fix public TOC rendering so it collects explicit canonical `Header` anchors from the same page tree, including nested layout blocks, and update the project-layer Foundation payload with explicit subsection anchors.
 - Guard the project-layer WebBlocks UI docs setup against clearing existing docs Shared Slot assignments, and add a repair command to restore docs shared-slot wiring while cleaning proven local TOC debug artifacts.
+- Add a project-layer `docs-layout` payload/import key for `https://webblocksui.com/docs/layout.html`, with idempotent default-site import, docs navigation reconciliation, and preserved docs Shared Slot assignments.
 
 ## 1.16.0
 
