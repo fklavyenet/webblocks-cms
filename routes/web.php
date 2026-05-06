@@ -147,7 +147,8 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
     Route::post('/blocks/{block}/move-up', [BlockController::class, 'moveUp'])->name('blocks.move-up');
     Route::post('/blocks/{block}/move-down', [BlockController::class, 'moveDown'])->name('blocks.move-down');
-    Route::resource('blocks', BlockController::class)->except(['show']);
+    Route::get('/blocks', [BlockController::class, 'index'])->name('blocks.index')->middleware('can:access-system');
+    Route::resource('blocks', BlockController::class)->except(['show', 'index']);
 
     Route::middleware('can:access-system')->group(function () {
         Route::resource('users', UserController::class)->except(['show'])->middleware('can:manage-users');

@@ -53,6 +53,15 @@
                 ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
             ];
 
+            if ($user?->can('access-system')) {
+                array_splice($menuItems, 2, 0, [[
+                    'label' => 'Blocks',
+                    'route' => 'admin.blocks.index',
+                    'active' => 'admin.blocks.index',
+                    'icon' => 'wb-icon-box',
+                ]]);
+            }
+
             $sidebarGroups = [];
 
             if ($user?->can('access-system')) {

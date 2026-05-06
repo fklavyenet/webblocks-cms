@@ -146,6 +146,39 @@ class AdminSidebarNavigationTest extends TestCase
     }
 
     #[Test]
+    public function blocks_navigation_item_is_visible_only_to_super_admin_users(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $editor = User::factory()->editor()->create();
+
+        $superAdminResponse = $this->actingAs($superAdmin)->get(route('admin.dashboard'));
+        $superAdminResponse->assertOk();
+        $superAdminResponse->assertSee('href="'.route('admin.blocks.index').'"', false);
+
+        $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+        $siteAdminResponse->assertOk();
+        $siteAdminResponse->assertDontSee('href="'.route('admin.blocks.index').'"', false);
+
+        $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+        $editorResponse->assertOk();
+        $editorResponse->assertDontSee('href="'.route('admin.blocks.index').'"', false);
+    }
+
+    #[Test]
+    public function blocks_page_is_a_direct_top_level_sidebar_item_for_super_admins(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.blocks.index'));
+
+        $response->assertOk();
+        $response->assertSee('href="'.route('admin.blocks.index').'"', false);
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertSee('wb-icon-box', false);
+    }
+
+    #[Test]
     public function shared_slots_page_is_a_direct_top_level_sidebar_item(): void
     {
         $user = User::factory()->create();

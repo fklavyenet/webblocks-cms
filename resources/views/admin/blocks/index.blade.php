@@ -3,29 +3,78 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks',
-        'description' => $currentPage ? 'Manage block instances for the selected page.' : 'Manage block instances across the CMS.',
+        'description' => $currentPage ? 'Inspect block instances for the selected page.' : 'Inspect and edit block instances across the CMS.',
         'count' => $blocks->total(),
-        'actions' => $currentPage ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">Manage Slots</a>' : null,
+        'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">Manage Slots</a>' : null,
     ])
 
     @include('admin.partials.flash')
 
-    @if ($currentPage)
-            <div class="wb-card wb-card-muted">
-                <div class="wb-card-body">
-                <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                    <span>Active page filter: {{ $currentPage->title }}</span>
-                    <div class="wb-cluster wb-cluster-2">
-                        <a href="{{ route('admin.pages.edit', $currentPage) }}" class="wb-btn wb-btn-secondary">Back to Page</a>
-                        <a href="{{ route('admin.blocks.index') }}" class="wb-btn wb-btn-secondary">Clear Filter</a>
-                    </div>
-                </div>
-            </div>
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.blocks.index'),
+                'search' => [
+                    'id' => 'blocks_search',
+                    'name' => 'search',
+                    'label' => 'Search',
+                    'value' => $filters['search'],
+                    'placeholder' => 'Search blocks, pages, or translated content',
+                ],
+                'selects' => [
+                    [
+                        'id' => 'blocks_site',
+                        'name' => 'site',
+                        'label' => 'Site',
+                        'selected' => $filters['site'],
+                        'placeholder' => 'All sites',
+                        'options' => $filterSites,
+                    ],
+                    [
+                        'id' => 'blocks_page',
+                        'name' => 'page_id',
+                        'label' => 'Page',
+                        'selected' => $filters['page_id'],
+                        'placeholder' => 'All pages',
+                        'options' => $filterPages,
+                    ],
+                    [
+                        'id' => 'blocks_block_type',
+                        'name' => 'block_type_id',
+                        'label' => 'Block Type',
+                        'selected' => $filters['block_type_id'],
+                        'placeholder' => 'All block types',
+                        'options' => $filterBlockTypes,
+                    ],
+                    [
+                        'id' => 'blocks_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'selected' => $filters['status'],
+                        'placeholder' => 'All statuses',
+                        'options' => [
+                            'draft' => 'Draft',
+                            'published' => 'Published',
+                        ],
+                    ],
+                    [
+                        'id' => 'blocks_locale',
+                        'name' => 'locale',
+                        'label' => 'Locale',
+                        'selected' => $filters['locale'],
+                        'placeholder' => 'All locales',
+                        'options' => $filterLocales,
+                    ],
+                ],
+                'showReset' => $hasActiveFilters,
+                'resetUrl' => route('admin.blocks.index'),
+                'applyLabel' => 'Apply',
+            ])
         </div>
-    @endif
+    </div>
 
     @if ($blocks->isEmpty())
-        <div class="wb-card"><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">No blocks yet</div><div class="wb-empty-text">Create blocks from each page's slot editing screen.</div></div></div></div>
+        <div class="wb-card"><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">No blocks found</div><div class="wb-empty-text">Adjust the filters or open a page or shared slot editor to manage block content.</div></div></div></div>
     @else
         <div class="wb-card">
             <div class="wb-card-body">
@@ -71,7 +120,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $blocks])
+            @include('admin.partials.pagination', ['paginator' => $blocks, 'ariaLabel' => 'Blocks pagination', 'compact' => true])
         </div>
     @endif
 @endsection

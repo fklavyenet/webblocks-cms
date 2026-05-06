@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
@@ -20,6 +21,7 @@ use App\Support\Pages\PageWorkflowManager;
 use App\Support\SharedSlots\SharedSlotRevisionManager;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Users\AdminAuthorization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,18 +57,35 @@ class BlockController extends Controller
         return $this->move($block, 'down');
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $pageId = request()->integer('page_id') ?: null;
+        abort_unless($request->user()?->can('access-system'), 403);
+
+        $filters = $this->blockIndexFilters($request);
+        $pageId = $filters['page_id'] !== '' ? (int) $filters['page_id'] : null;
+        $localeId = $this->localeIdForFilter($filters['locale']);
+        $blocks = $this->applyIndexFilters(
+            $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
+                ->with(['page', 'parent', 'blockType', 'slotType', 'children']),
+            $filters,
+            $localeId,
+        )
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->withQueryString();
+        $currentPage = $pageId
+            ? Page::query()->with(['site', 'translations.locale'])->find($pageId)
+            : null;
 
         return view('admin.blocks.index', [
-            'blocks' => $this->authorization->scopeBlocksForUser(Block::query(), request()->user())
-                ->with(['page', 'parent', 'blockType', 'slotType', 'children'])
-                ->when($pageId, fn ($query) => $query->where('page_id', $pageId))
-                ->orderByDesc('id')
-                ->paginate(15)
-                ->withQueryString(),
-            'currentPage' => $pageId ? $this->authorization->scopePagesForUser(Page::query(), request()->user())->find($pageId) : null,
+            'blocks' => $blocks,
+            'currentPage' => $currentPage,
+            'filters' => $filters,
+            'filterSites' => $this->blockIndexSiteOptions(),
+            'filterPages' => $this->blockIndexPageOptions($filters['site']),
+            'filterBlockTypes' => $this->blockIndexBlockTypeOptions(),
+            'filterLocales' => $this->blockIndexLocaleOptions(),
+            'hasActiveFilters' => $this->hasActiveIndexFilters($filters),
         ]);
     }
 
@@ -1002,5 +1021,223 @@ class BlockController extends Controller
         $localeCode = trim((string) $request->input('locale', $request->query('locale', '')));
 
         return $localeCode !== '' ? $localeCode : null;
+    }
+
+    private function blockIndexFilters(Request $request): array
+    {
+        $status = trim((string) $request->query('status', ''));
+        $localeCode = Locale::normalizeCode(trim((string) $request->query('locale', '')));
+
+        return [
+            'search' => trim((string) $request->query('search', '')),
+            'site' => $this->normalizePositiveIntegerFilter($request->query('site')),
+            'page_id' => $this->normalizePositiveIntegerFilter($request->query('page_id')),
+            'block_type_id' => $this->normalizePositiveIntegerFilter($request->query('block_type_id')),
+            'status' => in_array($status, ['draft', 'published'], true) ? $status : '',
+            'locale' => $localeCode && Locale::query()->where('code', $localeCode)->exists() ? $localeCode : '',
+        ];
+    }
+
+    private function normalizePositiveIntegerFilter(mixed $value): string
+    {
+        $resolved = is_scalar($value) ? trim((string) $value) : '';
+
+        if ($resolved === '' || ! ctype_digit($resolved)) {
+            return '';
+        }
+
+        return (int) $resolved > 0 ? $resolved : '';
+    }
+
+    private function localeIdForFilter(string $localeCode): ?int
+    {
+        if ($localeCode === '') {
+            return null;
+        }
+
+        return Locale::query()->where('code', $localeCode)->value('id');
+    }
+
+    private function applyIndexFilters(Builder $query, array $filters, ?int $localeId): Builder
+    {
+        if ($filters['search'] !== '') {
+            $term = '%'.$this->escapeLike($filters['search']).'%';
+
+            $query->where(function (Builder $searchQuery) use ($term, $localeId): void {
+                $searchQuery
+                    ->where('blocks.id', 'like', $term)
+                    ->orWhere('blocks.type', 'like', $term)
+                    ->orWhere('blocks.title', 'like', $term)
+                    ->orWhere('blocks.subtitle', 'like', $term)
+                    ->orWhere('blocks.content', 'like', $term)
+                    ->orWhere('blocks.meta', 'like', $term)
+                    ->orWhere('blocks.url', 'like', $term)
+                    ->orWhere('blocks.slot', 'like', $term)
+                    ->orWhere('blocks.status', 'like', $term)
+                    ->orWhereHas('blockType', function (Builder $blockTypeQuery) use ($term): void {
+                        $blockTypeQuery->where(function (Builder $candidateQuery) use ($term): void {
+                            $candidateQuery
+                                ->where('name', 'like', $term)
+                                ->orWhere('slug', 'like', $term);
+                        });
+                    })
+                    ->orWhereHas('page.translations', function (Builder $pageTranslationQuery) use ($term): void {
+                        $pageTranslationQuery->where(function (Builder $candidateQuery) use ($term): void {
+                            $candidateQuery
+                                ->where('name', 'like', $term)
+                                ->orWhere('slug', 'like', $term)
+                                ->orWhere('path', 'like', $term);
+                        });
+                    })
+                    ->orWhereHas('textTranslations', function (Builder $translationQuery) use ($term, $localeId): void {
+                        if ($localeId) {
+                            $translationQuery->where('locale_id', $localeId);
+                        }
+
+                        $translationQuery->where(function (Builder $candidateQuery) use ($term): void {
+                            $candidateQuery
+                                ->where('title', 'like', $term)
+                                ->orWhere('eyebrow', 'like', $term)
+                                ->orWhere('subtitle', 'like', $term)
+                                ->orWhere('content', 'like', $term)
+                                ->orWhere('meta', 'like', $term);
+                        });
+                    })
+                    ->orWhereHas('buttonTranslations', function (Builder $translationQuery) use ($term, $localeId): void {
+                        if ($localeId) {
+                            $translationQuery->where('locale_id', $localeId);
+                        }
+
+                        $translationQuery->where('title', 'like', $term);
+                    })
+                    ->orWhereHas('imageTranslations', function (Builder $translationQuery) use ($term, $localeId): void {
+                        if ($localeId) {
+                            $translationQuery->where('locale_id', $localeId);
+                        }
+
+                        $translationQuery->where(function (Builder $candidateQuery) use ($term): void {
+                            $candidateQuery
+                                ->where('caption', 'like', $term)
+                                ->orWhere('alt_text', 'like', $term);
+                        });
+                    })
+                    ->orWhereHas('contactFormTranslations', function (Builder $translationQuery) use ($term, $localeId): void {
+                        if ($localeId) {
+                            $translationQuery->where('locale_id', $localeId);
+                        }
+
+                        $translationQuery->where(function (Builder $candidateQuery) use ($term): void {
+                            $candidateQuery
+                                ->where('title', 'like', $term)
+                                ->orWhere('content', 'like', $term)
+                                ->orWhere('submit_label', 'like', $term)
+                                ->orWhere('success_message', 'like', $term);
+                        });
+                    });
+            });
+        }
+
+        if ($filters['site'] !== '') {
+            $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->where('site_id', (int) $filters['site']));
+        }
+
+        if ($filters['page_id'] !== '') {
+            $query->where('page_id', (int) $filters['page_id']);
+        }
+
+        if ($filters['block_type_id'] !== '') {
+            $query->where('block_type_id', (int) $filters['block_type_id']);
+        }
+
+        if ($filters['status'] !== '') {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($localeId) {
+            $query->where(function (Builder $localeQuery) use ($localeId): void {
+                $localeQuery
+                    ->whereHas('textTranslations', fn (Builder $translationQuery) => $translationQuery->where('locale_id', $localeId))
+                    ->orWhereHas('buttonTranslations', fn (Builder $translationQuery) => $translationQuery->where('locale_id', $localeId))
+                    ->orWhereHas('imageTranslations', fn (Builder $translationQuery) => $translationQuery->where('locale_id', $localeId))
+                    ->orWhereHas('contactFormTranslations', fn (Builder $translationQuery) => $translationQuery->where('locale_id', $localeId));
+            });
+        }
+
+        return $query;
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    private function blockIndexSiteOptions(): array
+    {
+        return Site::query()
+            ->whereHas('pages.blocks')
+            ->primaryFirst()
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (Site $site) => [(string) $site->id => $site->name])
+            ->all();
+    }
+
+    private function blockIndexPageOptions(string $siteId): array
+    {
+        return Page::query()
+            ->with(['translations.locale'])
+            ->whereHas('blocks')
+            ->when($siteId !== '', fn (Builder $query) => $query->where('site_id', (int) $siteId))
+            ->orderByDesc('id')
+            ->get()
+            ->mapWithKeys(fn (Page $page) => [(string) $page->id => $this->blockIndexPageLabel($page)])
+            ->all();
+    }
+
+    private function blockIndexPageLabel(Page $page): string
+    {
+        $title = trim((string) ($page->title ?? ''));
+        $path = trim((string) ($page->defaultTranslation()?->path ?? ''));
+        $parts = [$title !== '' ? $title : 'Page'];
+
+        if ($path !== '') {
+            $parts[] = $path;
+        }
+
+        $parts[] = '#'.$page->id;
+
+        return implode(' | ', $parts);
+    }
+
+    private function blockIndexBlockTypeOptions(): array
+    {
+        return BlockType::query()
+            ->whereHas('blocks')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (BlockType $blockType) => [(string) $blockType->id => $blockType->name])
+            ->all();
+    }
+
+    private function blockIndexLocaleOptions(): array
+    {
+        return Locale::query()
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (Locale $locale) => [$locale->code => $locale->name.' ('.$locale->code.')'])
+            ->all();
+    }
+
+    private function hasActiveIndexFilters(array $filters): bool
+    {
+        foreach ($filters as $value) {
+            if ($value !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
