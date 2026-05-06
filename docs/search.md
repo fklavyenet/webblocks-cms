@@ -27,8 +27,30 @@ Search does not index:
 
 - default locale: `/search?q=term`
 - non-default locale: `/{locale}/search?q=term`
+- enhanced JSON endpoint: `/search.json?q=term`
+- enhanced localized JSON endpoint: `/{locale}/search.json?q=term`
 
 The current host resolves the site, and the route prefix resolves the locale using the same public routing model as pages.
+
+## Public Search UX
+
+The primary public UX is an enhanced search modal opened from the `Header Actions` search trigger when JavaScript is available.
+
+- the trigger remains a normal link to the current locale's `/search` route, so direct links, no-JS usage, and accessibility fallback still work
+- modal results are powered by `public_search_index`
+- results remain scoped to the current resolved site and locale
+- the fallback `/search` page remains the canonical non-JS and direct-link experience
+
+The JSON endpoint returns safe structured payload data for the modal:
+
+- normalized `query`
+- `count`
+- `minimum_length`
+- `results` with `title`, `url`, and `excerpt`
+- `no_results` message when applicable
+- `minimum_query_length` message when applicable
+
+The endpoint does not expose admin data, draft content, or raw unsafe HTML.
 
 ## Search Form Block
 
@@ -38,6 +60,7 @@ Use the first-class `Search Form` block to place a search form in any public slo
 - shared fields: button visibility and button variant
 - default target: the current site's resolved search route
 - current `q` value is preserved when the block renders on the search page
+- it continues to submit to `/search` as a normal GET form and is not forced into the modal flow
 
 ## Admin Screen
 

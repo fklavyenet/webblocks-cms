@@ -93,6 +93,90 @@ class PublicSearchTest extends TestCase
     }
 
     #[Test]
+    public function search_json_route_returns_results_for_current_site_and_locale(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Alpha Title', 'alpha-title', 'Alpha content');
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $response = $this->getJson('/search.json?q=Alpha');
+
+        $response->assertOk()
+            ->assertJsonPath('query', 'Alpha')
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('minimum_length', 2)
+            ->assertJsonPath('results.0.title', 'Alpha Title')
+            ->assertJsonPath('results.0.url', '/p/alpha-title');
+    }
+
+    #[Test]
+    public function search_json_route_does_not_leak_other_site_or_draft_results(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Visible Alpha', 'visible-alpha', 'Alpha content');
+
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'slug' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+        $this->pageWithText($otherSite, $locale, $slotType, $plainTextType, 'Other Alpha', 'other-alpha', 'Alpha content');
+
+        $draft = $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Draft Alpha', 'draft-alpha', 'Alpha content');
+        $draft->update(['status' => Page::STATUS_DRAFT]);
+
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $response = $this->getJson('/search.json?q=Alpha');
+
+        $response->assertOk();
+        $response->assertJsonPath('count', 1);
+        $response->assertJsonMissing(['title' => 'Other Alpha']);
+        $response->assertJsonMissing(['title' => 'Draft Alpha']);
+        $response->assertJsonPath('results.0.title', 'Visible Alpha');
+    }
+
+    #[Test]
+    public function search_json_route_handles_empty_and_short_queries_safely(): void
+    {
+        $this->seedSearchFoundation();
+
+        $this->getJson('/search.json')
+            ->assertOk()
+            ->assertJsonPath('query', '')
+            ->assertJsonPath('count', 0)
+            ->assertJsonPath('minimum_query_length', null)
+            ->assertJsonPath('no_results', null)
+            ->assertJsonPath('results', []);
+
+        $this->getJson('/search.json?q=a')
+            ->assertOk()
+            ->assertJsonPath('query', 'a')
+            ->assertJsonPath('count', 0)
+            ->assertJsonPath('minimum_query_length', 'Enter at least 2 characters to search.')
+            ->assertJsonPath('results', []);
+    }
+
+    #[Test]
+    public function search_json_route_returns_safe_strings_for_dangerous_queries_and_results(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        $this->pageWithText($site, $locale, $slotType, $plainTextType, '<script>alert(2)</script>', 'dangerous-title', 'Alpha <img src=x onerror=alert(3)> content');
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $response = $this->getJson('/search.json?q=%3Cscript%3Ealert(2)%3C%2Fscript%3E');
+
+        $response->assertOk();
+        $response->assertJsonPath('query', 'alert(2)');
+        $response->assertJsonPath('count', 1);
+        $response->assertJsonPath('results.0.title', 'alert(2)');
+        $response->assertJsonPath('results.0.url', '/p/dangerous-title');
+        $this->assertIsString($response->json('results.0.excerpt'));
+    }
+
+    #[Test]
     public function foundation_like_docs_page_is_searchable_through_public_search(): void
     {
         [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();

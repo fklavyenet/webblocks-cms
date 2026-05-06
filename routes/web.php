@@ -54,9 +54,13 @@ Route::middleware('install.required')->get('/{locale}', [PublicPageController::c
     ->name('localized.home');
 
 Route::middleware('install.required')->get('/search', PublicSearchController::class)->name('search');
+Route::middleware('install.required')->get('/search.json', [PublicSearchController::class, 'json'])->name('search.json');
 Route::middleware('install.required')->get('/{locale}/search', PublicSearchController::class)
     ->where('locale', Locale::routePattern())
     ->name('localized.search');
+Route::middleware('install.required')->get('/{locale}/search.json', [PublicSearchController::class, 'json'])
+    ->where('locale', Locale::routePattern())
+    ->name('localized.search.json');
 
 Route::middleware(['install.required', 'auth'])->group(function () {
     Route::redirect('/dashboard', '/admin')->name('dashboard');

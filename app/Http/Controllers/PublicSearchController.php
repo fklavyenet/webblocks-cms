@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Search\PublicSearchQuery;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -15,6 +16,46 @@ class PublicSearchController extends Controller
     ) {}
 
     public function __invoke(Request $request): View
+    {
+        $search = $this->resolveSearch($request);
+
+        return view('search.show', [
+            'site' => $search['site'],
+            'locale' => $search['locale'],
+            'query' => $search['query'],
+            'results' => $search['results'],
+            'state' => $search['state'],
+            'minimumLength' => $search['minimumLength'],
+            'searchPath' => $search['searchPath'],
+        ]);
+    }
+
+    public function json(Request $request): JsonResponse
+    {
+        $search = $this->resolveSearch($request);
+        $query = $search['query'];
+        $results = $search['results'];
+        $minimumLength = $search['minimumLength'];
+
+        return response()->json([
+            'query' => $query,
+            'count' => $results?->total() ?? 0,
+            'minimum_length' => $minimumLength,
+            'results' => $results?->getCollection()->map(fn ($result) => [
+                'title' => (string) $result->title,
+                'url' => (string) $result->url,
+                'excerpt' => (string) ($result->display_excerpt ?? ''),
+            ])->values()->all() ?? [],
+            'no_results' => $search['state'] === 'no-results'
+                ? sprintf('No results matched %s.', $query)
+                : null,
+            'minimum_query_length' => $search['state'] === 'short'
+                ? sprintf('Enter at least %d characters to search.', $minimumLength)
+                : null,
+        ]);
+    }
+
+    private function resolveSearch(Request $request): array
     {
         $site = $this->pageRouteResolver->currentSite($request);
         $locale = $this->pageRouteResolver->currentLocale($request);
@@ -28,7 +69,7 @@ class PublicSearchController extends Controller
             $state = $results->isEmpty() ? 'no-results' : 'results';
         }
 
-        return view('search.show', [
+        return [
             'site' => $site,
             'locale' => $locale,
             'query' => $query,
@@ -36,6 +77,7 @@ class PublicSearchController extends Controller
             'state' => $state,
             'minimumLength' => $minimumLength,
             'searchPath' => $this->pageRouteResolver->searchPath($locale->code, $site),
-        ]);
+            'searchJsonPath' => $this->pageRouteResolver->searchJsonPath($locale->code, $site),
+        ];
     }
 }

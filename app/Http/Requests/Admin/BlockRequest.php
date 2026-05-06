@@ -162,6 +162,7 @@ class BlockRequest extends FormRequest
             'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
             'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+            'header_actions_show_search' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
             'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'current-page', 'exact'])],
@@ -777,6 +778,7 @@ class BlockRequest extends FormRequest
                 if (! $isTranslatedHeaderActionsEdit) {
                     $settings['show_mode_toggle'] = (bool) ($data['header_actions_show_mode_toggle'] ?? true);
                     $settings['show_accent_toggle'] = (bool) ($data['header_actions_show_accent_toggle'] ?? true);
+                    $settings['show_search'] = (bool) ($data['header_actions_show_search'] ?? true);
                 }
 
                 $data['title'] = null;

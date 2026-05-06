@@ -59,6 +59,18 @@ class PageRouteResolver
         return $this->applyLocalePrefix('/search', $locale);
     }
 
+    public function searchJsonPath(?string $localeCode = null, ?Site $site = null): ?string
+    {
+        $resolvedSite = $site ?? $this->siteResolver->primary();
+        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+        if (! $locale) {
+            return null;
+        }
+
+        return $this->applyLocalePrefix('/search.json', $locale);
+    }
+
     public function pathFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
     {
         $resolvedSite = $site ?? $page->site;

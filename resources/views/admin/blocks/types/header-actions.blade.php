@@ -3,6 +3,7 @@
     $settings = is_array($settings) ? $settings : [];
     $showModeToggle = old('header_actions_show_mode_toggle', ($settings['show_mode_toggle'] ?? true) ? '1' : '0');
     $showAccentToggle = old('header_actions_show_accent_toggle', ($settings['show_accent_toggle'] ?? true) ? '1' : '0');
+    $showSearch = old('header_actions_show_search', ($settings['show_search'] ?? true) ? '1' : '0');
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -13,7 +14,7 @@
         </div>
     </div>
 
-    <div class="wb-grid wb-grid-2">
+    <div class="wb-grid wb-grid-3">
         <div class="wb-stack wb-gap-1">
             <label for="header_actions_show_mode_toggle">Color mode control</label>
             <select id="header_actions_show_mode_toggle" name="header_actions_show_mode_toggle" class="wb-select">
@@ -27,6 +28,14 @@
             <select id="header_actions_show_accent_toggle" name="header_actions_show_accent_toggle" class="wb-select">
                 <option value="1" @selected((string) $showAccentToggle === '1')>Show accent toggle</option>
                 <option value="0" @selected((string) $showAccentToggle === '0')>Hide accent toggle</option>
+            </select>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="header_actions_show_search">Search trigger</label>
+            <select id="header_actions_show_search" name="header_actions_show_search" class="wb-select">
+                <option value="1" @selected((string) $showSearch === '1')>Show search trigger</option>
+                <option value="0" @selected((string) $showSearch === '0')>Hide search trigger</option>
             </select>
         </div>
     </div>

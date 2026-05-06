@@ -16,6 +16,8 @@
 - Add a super-admin System > Search status screen and non-destructive `ddev artisan search:rebuild` command for rebuilding derived search rows.
 - Keep destructive database command guards unchanged and document that Search V1 rebuilds derived data without requiring database resets.
 - Fix `search:rebuild` so missing search-table migrations fail clearly instead of reporting a misleading successful `Indexed rows: 0 / Skipped pages/locales: 0`, and improve rebuild reporting to count skipped locales meaningfully.
+- Add a public search modal opened from the `Header Actions` search trigger while keeping `/search` as the fallback and direct-link route.
+- Add public locale-aware `/search.json` endpoints for modal results powered by `public_search_index` with current site and locale scoping.
 - Retarget the project-layer WebBlocks UI Architecture and Foundation imports to the CMS default site by default, with explicit `{ "target": "default_site" }` payload metadata and default-site preview URLs.
 - Allow the project-layer Architecture and Foundation imports to recreate those docs pages idempotently on the default site after a local database restore without creating duplicate block trees or duplicate docs navigation items.
 - Add a destructive database command safety guard that blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe` outside the testing environment unless `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` is set.

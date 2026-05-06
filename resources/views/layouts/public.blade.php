@@ -3,6 +3,10 @@
     @php
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
         $siteCssPath = public_path('site/css/site.css');
+        $publicJsAssets = [
+            'header-actions' => public_path('assets/webblocks-cms/js/public/header-actions.js'),
+            'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
+        ];
     @endphp
 
     <head>
@@ -71,6 +75,14 @@
         @endif
         @endif
 
+        @include('search.partials.modal')
+
         <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        @if (is_file($publicJsAssets['header-actions']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($publicJsAssets['header-actions']) }}" defer></script>
+        @endif
+        @if (is_file($publicJsAssets['public-search-modal']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
+        @endif
     </body>
 </html>

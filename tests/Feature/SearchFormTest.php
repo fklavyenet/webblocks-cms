@@ -69,6 +69,7 @@ class SearchFormTest extends TestCase
         $response->assertSee('role="search"', false);
         $response->assertSee('name="q"', false);
         $response->assertSee('action="/search"', false);
+        $response->assertDontSee('data-wb-public-search-open', false);
     }
 
     #[Test]

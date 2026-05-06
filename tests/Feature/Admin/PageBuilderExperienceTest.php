@@ -1166,6 +1166,7 @@ class PageBuilderExperienceTest extends TestCase
         $formResponse->assertSee('System Header Actions');
         $formResponse->assertSee('name="header_actions_show_mode_toggle"', false);
         $formResponse->assertSee('name="header_actions_show_accent_toggle"', false);
+        $formResponse->assertSee('name="header_actions_show_search"', false);
         $formResponse->assertDontSee('Generic Block Form');
         $formResponse->assertDontSee('name="title"', false);
         $formResponse->assertDontSee('name="content"', false);
@@ -1177,6 +1178,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'header_actions_show_mode_toggle' => '1',
             'header_actions_show_accent_toggle' => '0',
+            'header_actions_show_search' => '1',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -1194,7 +1196,7 @@ class PageBuilderExperienceTest extends TestCase
         ]);
         $this->assertSame('admin.blocks.types.header-actions', $block->adminFormView());
         $this->assertSame('pages.partials.blocks.header-actions', $block->publicRenderView());
-        $this->assertSame(['show_mode_toggle' => true, 'show_accent_toggle' => false], json_decode((string) $block->getRawOriginal('settings'), true));
+        $this->assertSame(['show_mode_toggle' => true, 'show_accent_toggle' => false, 'show_search' => true], json_decode((string) $block->getRawOriginal('settings'), true));
     }
 
     #[Test]

@@ -397,14 +397,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-mode-cycle', false);
         $response->assertSee('data-wb-header-actions-mode-toggle', false);
         $response->assertSee('data-wb-header-actions-accent-toggle', false);
+        $response->assertSee('data-wb-public-search-open', false);
         $response->assertSee('data-wb-toggle="dropdown"', false);
         $response->assertSee('data-wb-accent-set="ocean"', false);
         $response->assertSee('type="button"', false);
         $response->assertSee('aria-pressed="false"', false);
         $response->assertSee('<i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>', false);
         $response->assertSee('<i class="wb-icon wb-icon-palette" aria-hidden="true"></i>', false);
+        $response->assertSee('<i class="wb-icon wb-icon-search" aria-hidden="true"></i>', false);
         $response->assertSee('aria-label="Auto mode"', false);
         $response->assertSee('aria-label="Change accent color"', false);
+        $response->assertSee('aria-label="Search"', false);
+        $response->assertSee('href="/search"', false);
         $response->assertSee('aria-expanded="false"', false);
         $response->assertSee('aria-haspopup="menu"', false);
         $response->assertSee('aria-controls="wb-header-actions-accent-menu-', false);
@@ -436,6 +440,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('data-wb-header-actions-mode-toggle', false);
         $response->assertSee('data-wb-header-actions-accent-toggle', false);
+        $response->assertSee('data-wb-public-search-open', false);
 
         Block::query()->where('page_id', $page->id)->where('type', 'header-actions')->delete();
 
@@ -447,7 +452,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'settings' => json_encode(['show_mode_toggle' => false, 'show_accent_toggle' => false], JSON_UNESCAPED_SLASHES),
+            'settings' => json_encode(['show_mode_toggle' => false, 'show_accent_toggle' => false, 'show_search' => false], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => true,
         ]);
@@ -458,6 +463,36 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('data-wb-header-actions', false);
         $response->assertDontSee('data-wb-header-actions-mode-toggle', false);
         $response->assertDontSee('data-wb-header-actions-accent-toggle', false);
+        $response->assertDontSee('data-wb-public-search-open', false);
+    }
+
+    #[Test]
+    public function public_layout_includes_search_modal_markup_and_public_assets(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 14, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['show_mode_toggle' => false, 'show_accent_toggle' => false, 'show_search' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('id="wb-public-overlay-root"', false);
+        $response->assertSee('data-wb-public-search-overlay', false);
+        $response->assertSee('id="wb-public-search-modal"', false);
+        $response->assertSee('data-search-json-path="/search.json"', false);
+        $response->assertSee('assets/webblocks-cms/js/public/header-actions.js', false);
+        $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
     }
 
     #[Test]

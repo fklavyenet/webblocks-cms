@@ -1,9 +1,12 @@
 @php
+    $routeResolver = app(\App\Support\Pages\PageRouteResolver::class);
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
     $showModeToggle = ($settings['show_mode_toggle'] ?? true) !== false;
     $showAccentToggle = ($settings['show_accent_toggle'] ?? true) !== false;
+    $showSearch = ($settings['show_search'] ?? true) !== false;
     $accentMenuId = 'wb-header-actions-accent-menu-'.$block->id;
+    $searchPath = $routeResolver->searchPath($block->renderLocaleCode(), $block->renderSite());
     $accents = [
         'ocean' => 'Ocean',
         'forest' => 'Forest',
@@ -16,9 +19,22 @@
     ];
 @endphp
 
-@if ($showModeToggle || $showAccentToggle)
+@if ($showModeToggle || $showAccentToggle || ($showSearch && $searchPath))
     <div class="wb-cluster wb-cluster-2 wb-cluster-end" data-wb-header-actions>
         <div class="wb-topbar-actions">
+            @if ($showSearch && $searchPath)
+                <a
+                    href="{{ $searchPath }}"
+                    class="wb-topbar-action"
+                    data-wb-public-search-open
+                    aria-label="Search"
+                    title="Search"
+                >
+                    <i class="wb-icon wb-icon-search" aria-hidden="true"></i>
+                    <span class="wb-sr-only">Search</span>
+                </a>
+            @endif
+
             @if ($showModeToggle)
                 <button
                     type="button"
