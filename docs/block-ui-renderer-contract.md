@@ -70,7 +70,7 @@ Public pages now use explicit layout composition modes:
 | main slot | `wb-public-main`, `wb-container`, `wb-content-shell` | acceptable | P0 shell/layout | add `wb-content-shell` usage where content reads like article/docs content |
 | sidebar slot | `wb-grid`, `wb-stack`, optional `wb-content-shell` aside | weak | P0 shell/layout | stop treating generic sidebars as faux app sidebars |
 | footer slot | `wb-section`, `wb-container`, `wb-grid`, link-list/nav primitives | acceptable | P0 shell/layout | keep footer on shipped layout primitives and avoid extra custom classes |
-| `heading` | semantic heading | acceptable | P2 content quality | keep wrapper-free output and normalize anchor behavior later |
+| `heading` | legacy removed | retired | P0 removed | do not reintroduce; `header` is the canonical heading/title block |
 | `text` | body copy in `wb-stack` rhythm | acceptable | P2 content quality | keep simple output and avoid bespoke typography wrappers |
 | `rich-text` | `wb-rich-text wb-rich-text-readable` | acceptable | P2 content quality | keep safe body copy scoped to the shipped rich text primitive |
 | `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage |
@@ -102,7 +102,7 @@ Public pages now use explicit layout composition modes:
 | `testimonial` | quote/testimonial card | weak | P2 content quality | decide whether quote variants are sufficient or a separate block is needed |
 | `timeline` | timeline pattern | weak | P2 content quality | promote only if timeline content is a real recurring use case |
 | `pricing` | pricing card/grid pattern | weak | P1 public marketing/docs | make first-class only with structured plans/features |
-| `toc` | table-of-contents navigation | missing | P1 public marketing/docs | add first-class docs navigation support |
+| `toc` | table-of-contents navigation | acceptable | P1 public marketing/docs | keep same-page TOC collection on explicit anchored `header` blocks only |
 | `breadcrumb` | breadcrumb navigation | missing | P2 content quality | defer until the public page shell truly needs it and a shipped pattern is confirmed |
 | `cookie-notice` | shared privacy banner/modal pattern | missing | P3 later/custom | keep consent UI in the public layout rather than block renderers |
 
@@ -169,6 +169,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `variant`/level, alignment setting, anchor
 - Intended WebBlocks UI output: semantic `<h1>`-`<h6>` based on `level`; optional `id` from the shared anchor; no invented wrapper beyond the heading element.
 - Current implementation: acceptable
+- TOC contract: explicit shared anchors are the only supported TOC source, and the public TOC collects anchored `header` blocks from the same rendered page tree, including nested layout descendants.
 - Notes for later renderer/admin improvements: keep anchor behavior explicit, preserve wrapper-free output, and keep heading semantics owned by `Header` rather than a parallel legacy block.
 
 ### `text`

@@ -2185,6 +2185,57 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function header_block_renders_canonical_anchor_id_and_ignores_invalid_saved_anchor_values(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $validAnchor = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'url' => '#Overview',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $validAnchor->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Overview',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($validAnchor->fresh(['textTranslations']));
+
+        $invalidAnchor = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'variant' => 'h3',
+            'url' => 'bad anchor',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $invalidAnchor->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Bad Anchor',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($invalidAnchor->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<h2 id="Overview" data-wb-public-block-type="header">Overview</h2>', false);
+        $response->assertSee('<h3 data-wb-public-block-type="header">Bad Anchor</h3>', false);
+        $response->assertDontSee('id="bad anchor"', false);
+    }
+
+    #[Test]
     public function multilingual_text_rendering_is_unchanged_when_shared_settings_are_present(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

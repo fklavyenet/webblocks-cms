@@ -304,6 +304,110 @@ class PublicRichContentTest extends TestCase
     }
 
     #[Test]
+    public function toc_includes_nested_public_headers_and_skips_unanchored_or_hidden_entries(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'toc',
+            'block_type_id' => $this->blockType('toc', 'TOC', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'On this page',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $this->blockType('section', 'Section', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'type' => 'container',
+            'block_type_id' => $this->blockType('container', 'Container', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $nestedHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h3',
+            'url' => 'nested-details',
+            'settings' => json_encode(['anchor' => 'nested-details'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($nestedHeader, ['title' => 'Nested details'], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($nestedHeader->fresh(['textTranslations']));
+
+        $unanchoredHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'variant' => 'h3',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($unanchoredHeader, ['title' => 'Missing anchor'], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($unanchoredHeader->fresh(['textTranslations']));
+
+        $hiddenHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'variant' => 'h3',
+            'url' => 'hidden-section',
+            'settings' => json_encode(['anchor' => 'hidden-section'], JSON_UNESCAPED_SLASHES),
+            'status' => 'draft',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($hiddenHeader, ['title' => 'Hidden section'], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($hiddenHeader->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a class="wb-link-list-item" href="#nested-details">', false);
+        $response->assertSee('<span class="wb-link-list-title">Nested details</span>', false);
+        $response->assertDontSee('href="#Missing anchor"', false);
+        $response->assertDontSee('href="#hidden-section"', false);
+    }
+
+    #[Test]
     public function faq_renders_without_breaking_layout(): void
     {
         $page = $this->pageWithMainSlot();

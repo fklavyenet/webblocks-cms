@@ -300,6 +300,73 @@ class Block extends Model
         return $resolved !== '' ? $resolved : null;
     }
 
+    public function headerAnchor(): ?string
+    {
+        if ($this->typeSlug() !== 'header') {
+            return null;
+        }
+
+        $anchor = $this->stringValueOrNull($this->setting('anchor'))
+            ?? $this->stringValueOrNull($this->url);
+
+        if ($anchor === null) {
+            return null;
+        }
+
+        $anchor = ltrim($anchor, '#');
+
+        return preg_match('/^[A-Za-z][A-Za-z0-9\-_:.]*$/', $anchor) === 1
+            ? $anchor
+            : null;
+    }
+
+    public function tocEligibleHeadingText(): ?string
+    {
+        if ($this->typeSlug() !== 'header') {
+            return null;
+        }
+
+        return $this->stringValueOrNull($this->title)
+            ?? $this->stringValueOrNull($this->content)
+            ?? $this->translatedTextFieldValue('title')
+            ?? $this->translatedTextFieldValue('content');
+    }
+
+    public function publicTocHeadingBlocks(?string $localeCode = null): Collection
+    {
+        $page = $this->renderPage();
+
+        if (! $page) {
+            return collect();
+        }
+
+        $pageBlocks = $page->relationLoaded('blocks')
+            ? $page->blocks
+            : $page->blocks()->where('status', 'published')->with('children')->orderBy('sort_order')->orderBy('id')->get();
+
+        $resolver = app(BlockTranslationResolver::class);
+        $translatedBlocks = $resolver->resolveCollection($pageBlocks, $localeCode ?? $this->renderLocaleCode());
+
+        return $translatedBlocks
+            ->filter(function (Block $candidate): bool {
+                if ($candidate->id === $this->id) {
+                    return false;
+                }
+
+                if ($candidate->typeSlug() !== 'header') {
+                    return false;
+                }
+
+                if (! in_array($candidate->variant, ['h2', 'h3'], true)) {
+                    return false;
+                }
+
+                return $candidate->headerAnchor() !== null;
+            })
+            ->sortBy(fn (Block $heading) => sprintf('%010d-%010d', (int) $heading->sort_order, (int) $heading->id))
+            ->values();
+    }
+
     public function translatedTextFieldValue(string $field, bool $stripTags = false): ?string
     {
         if ($this->translationFamily() !== 'text') {

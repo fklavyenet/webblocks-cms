@@ -94,7 +94,7 @@ See `docs/installation.md` for the complete install guide.
 8. Publish the page as a `site_admin` or `super_admin`.
 9. Open the public URL or preview link to confirm the live result.
 
-For common editorial choices, `Code`, `Table`, `TOC`, and `Quote` are available as first-class block picker options and remain editable from the slot editor. Use `Header` as the canonical heading or title block, including optional anchor IDs for direct links and TOC targets. Do not use the legacy `Heading` block type.
+For common editorial choices, `Code`, `Table`, `TOC`, and `Quote` are available as first-class block picker options and remain editable from the slot editor. Use `Header` as the canonical heading or title block, including optional shared anchor IDs for direct links and TOC targets. `TOC` renders links from explicit anchored `Header` blocks on the same public page, including nested headers inside layout wrappers such as `Section`, `Container`, `Grid`, `Cluster`, or `Card`. Do not use the legacy `Heading` block type.
 
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
 
@@ -156,6 +156,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Admin chrome product identity is fixed to `WebBlocks CMS`, `A modern block-based CMS`, and `WebBlocks CMS v{VERSION}` from `App\Support\WebBlocks`. System Settings and editable site fields do not change those labels.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.
+- `Header` is the canonical heading block. Its shared anchor is stored explicitly and reused for public `id` output plus same-page `TOC` links; `TOC` does not parse rendered HTML and does not depend on legacy `heading` blocks.
 - Site-level public metadata now comes from the currently resolved site. `display_name`, `tagline`, favicon, social image, and SEO Defaults provide public `<head>` fallbacks by site and host context.
 - Page-level SEO overrides live on `page_translations`, stay locale-aware, and affect public `<head>` metadata plus social metadata only.
 - Metadata precedence is now: site label plus page translation SEO/title for the public title, page translation SEO override for description and keywords where applicable, site SEO defaults, then safe CMS fallback when no site or page context exists.

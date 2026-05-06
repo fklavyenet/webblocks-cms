@@ -21,7 +21,7 @@
 
     <div class="wb-stack wb-gap-1">
         <label for="anchor">Anchor ID</label>
-        <input id="anchor" name="anchor" class="wb-input" type="text" value="{{ old('anchor', $block->setting('anchor', $block->url)) }}">
+        <input id="anchor" name="anchor" class="wb-input" type="text" value="{{ old('anchor', $block->headerAnchor()) }}">
         <div class="wb-text-sm wb-text-muted">Optional shared anchor for TOC links and direct section linking.</div>
     </div>
 </div>

@@ -285,6 +285,7 @@
                     "key": "spacing-compact-heading",
                     "type": "header",
                     "variant": "h3",
+                    "url": "compact",
                     "translations": {
                       "en": {
                         "title": "Compact"
@@ -304,6 +305,7 @@
                     "key": "spacing-comfortable-heading",
                     "type": "header",
                     "variant": "h3",
+                    "url": "comfortable",
                     "translations": {
                       "en": {
                         "title": "Comfortable"

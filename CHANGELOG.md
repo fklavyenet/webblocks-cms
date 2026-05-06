@@ -6,6 +6,7 @@
 - Add a super-admin global Blocks index link under `Pages` and give the Blocks listing compact `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale` filters.
 - Align the Edit Slot Block Types modal filters with the shared compact admin listing filter layout.
 - Fix Code block editing from the Edit Slot Blocks list after block catalog and global Blocks index updates.
+- Fix public TOC rendering so it collects explicit canonical `Header` anchors from the same page tree, including nested layout blocks, and update the project-layer Foundation payload with explicit subsection anchors.
 
 ## 1.16.0
 

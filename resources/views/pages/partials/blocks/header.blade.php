@@ -3,7 +3,7 @@
     $text = (string) ($block->title ?? '');
     $class = $block->headerAlignmentClass();
     $classAttribute = $class ? ' class="'.$class.'"' : '';
-    $anchor = trim((string) ($block->setting('anchor', $block->url) ?? ''));
+    $anchor = $block->headerAnchor() ?? '';
     $anchorAttribute = $anchor !== '' ? ' id="'.e($anchor).'"' : '';
 @endphp
 

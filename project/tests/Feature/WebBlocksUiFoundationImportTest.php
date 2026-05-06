@@ -98,16 +98,31 @@ class WebBlocksUiFoundationImportTest extends TestCase
         $this->assertSame('html', $themeAxesCode->setting('language'));
         $this->assertSame('html', $themeControlsCode->setting('language'));
 
-        $this->assertSame(
-            ['theme-axes', 'token-groups', 'spacing-scale', 'base-element-styling', 'theme-controls'],
+        $this->assertEqualsCanonicalizing(
+            ['theme-axes', 'token-groups', 'spacing-scale', 'base-element-styling', 'theme-controls', 'compact', 'comfortable'],
             $foundationPage->blocks
                 ->where('type', 'header')
                 ->filter(fn (Block $block) => filled($block->url))
-                ->sortBy('sort_order')
                 ->pluck('url')
                 ->values()
                 ->all(),
         );
+
+        $compactHeading = Block::query()
+            ->where('page_id', $foundationPage->id)
+            ->where('type', 'header')
+            ->whereHas('textTranslations', fn ($query) => $query->where('title', 'Compact'))
+            ->first();
+        $comfortableHeading = Block::query()
+            ->where('page_id', $foundationPage->id)
+            ->where('type', 'header')
+            ->whereHas('textTranslations', fn ($query) => $query->where('title', 'Comfortable'))
+            ->first();
+
+        $this->assertNotNull($compactHeading);
+        $this->assertNotNull($comfortableHeading);
+        $this->assertSame('compact', $compactHeading?->url);
+        $this->assertSame('comfortable', $comfortableHeading?->url);
 
         $this->assertSame('/p/foundation', $foundationPage->publicPath());
         $this->assertTrue($foundationPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'toc'));
@@ -157,6 +172,26 @@ class WebBlocksUiFoundationImportTest extends TestCase
             NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Foundation')->count(),
         );
         $this->assertSame(0, Site::query()->where('handle', 'ui-docs-webblocksui-com')->count());
+    }
+
+    #[Test]
+    public function imported_foundation_page_toc_renders_entries_from_explicit_header_anchors(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
+        $this->artisan('project:webblocksui-import docs-architecture')->assertExitCode(0);
+        $this->artisan('project:webblocksui-import docs-foundation')->assertExitCode(0);
+
+        $response = $this->get('/p/foundation');
+
+        $response->assertOk();
+        $response->assertSee('On this page');
+        $response->assertSee('href="#theme-axes"', false);
+        $response->assertSee('href="#compact"', false);
+        $response->assertSee('href="#comfortable"', false);
+        $response->assertDontSee('href="#heading-level-3"', false);
     }
 
 }
