@@ -4,6 +4,7 @@
 
 - Publish `Table`, `TOC`, and `Quote` in the block picker and remove the legacy `Heading` block type in favor of `Header`.
 - Add a super-admin global Blocks index link under `Pages` and give the Blocks listing compact `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale` filters.
+- Align the Edit Slot Block Types modal filters with the shared compact admin listing filter layout.
 
 ## 1.16.0
 

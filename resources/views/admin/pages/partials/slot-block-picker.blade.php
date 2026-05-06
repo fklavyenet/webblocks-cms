@@ -144,44 +144,48 @@
                 </div>
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
-                    <form method="GET" action="{{ route('admin.pages.slots.blocks', [$page, $slot]) }}" class="wb-cluster wb-cluster-between wb-cluster-2">
-                        <input type="hidden" name="picker" value="1">
-                        @unless ($activeLocale->is_default)
-                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                        @endunless
-                        @if ($pickerParentId)
-                            <input type="hidden" name="parent_id" value="{{ $pickerParentId }}">
-                        @endif
-
-                        <div class="wb-stack wb-gap-1">
-                            <label for="slot_block_type_search">Search block types</label>
-                            <input id="slot_block_type_search" name="block_type_search" class="wb-input" type="text" value="{{ $pickerSearch }}" placeholder="Search by name, intent, or slug">
-                        </div>
-
-                        <div class="wb-stack wb-gap-1">
-                            <label for="slot_block_type_category">Category</label>
-                            <select id="slot_block_type_category" name="block_type_category" class="wb-select">
-                                <option value="">All categories</option>
-                                @foreach ($availableCategories as $category)
-                                    <option value="{{ $category }}" @selected($pickerCategory === $category)>{{ $categoryDisplay($category) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="wb-stack wb-gap-1">
-                            <label for="slot_block_type_sort">Sort</label>
-                            <select id="slot_block_type_sort" name="block_type_sort" class="wb-select">
-                                <option value="default" @selected($pickerSort === 'default')>Default order</option>
-                                <option value="name" @selected($pickerSort === 'name')>Name A-Z</option>
-                                <option value="category" @selected($pickerSort === 'category')>Category</option>
-                            </select>
-                        </div>
-
-                        <div class="wb-cluster wb-cluster-end wb-cluster-2">
-                            <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">Reset</a>
-                            <button type="submit" class="wb-btn wb-btn-primary">Search</button>
-                        </div>
-                    </form>
+                    @include('admin.partials.listing-filters', [
+                        'action' => route('admin.pages.slots.blocks', [$page, $slot]),
+                        'search' => [
+                            'id' => 'slot_block_type_search',
+                            'name' => 'block_type_search',
+                            'label' => 'Search block types',
+                            'value' => $pickerSearch,
+                            'placeholder' => 'Search by name, intent, or slug',
+                        ],
+                        'selects' => [
+                            [
+                                'id' => 'slot_block_type_category',
+                                'name' => 'block_type_category',
+                                'label' => 'Category',
+                                'selected' => $pickerCategory,
+                                'placeholder' => 'All categories',
+                                'options' => $availableCategories
+                                    ->mapWithKeys(fn ($category) => [$category => $categoryDisplay($category)])
+                                    ->all(),
+                            ],
+                            [
+                                'id' => 'slot_block_type_sort',
+                                'name' => 'block_type_sort',
+                                'label' => 'Sort',
+                                'selected' => $pickerSort,
+                                'options' => [
+                                    'default' => 'Default order',
+                                    'name' => 'Name A-Z',
+                                    'category' => 'Category',
+                                ],
+                            ],
+                        ],
+                        'hidden' => [
+                            'picker' => 1,
+                            'locale' => $activeLocale->is_default ? null : $activeLocale->code,
+                            'parent_id' => $pickerParentId,
+                        ],
+                        'showReset' => true,
+                        'resetUrl' => $resetUrl,
+                        'applyLabel' => 'Search',
+                        'resetFirst' => true,
+                    ])
 
                     @if ($matchingBlockTypes->isNotEmpty())
                         <div class="wb-table-wrap">

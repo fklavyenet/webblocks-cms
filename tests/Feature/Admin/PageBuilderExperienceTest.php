@@ -796,17 +796,26 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Recommended');
-        $response->assertSee('class="wb-cluster wb-cluster-between wb-cluster-2"', false);
-        $response->assertSee('id="slot_block_type_search" name="block_type_search" class="wb-input"', false);
-        $response->assertSee('id="slot_block_type_category" name="block_type_category" class="wb-select"', false);
-        $response->assertSee('id="slot_block_type_sort" name="block_type_sort" class="wb-select"', false);
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('data-admin-listing-filters-search', false);
+        $response->assertSee('data-admin-listing-filters-fields', false);
+        $response->assertSee('data-admin-listing-filters-actions', false);
+        $response->assertSee('id="slot_block_type_search"', false);
+        $response->assertSee('name="block_type_search"', false);
+        $response->assertSee('id="slot_block_type_category"', false);
+        $response->assertSee('name="block_type_category"', false);
+        $response->assertSee('id="slot_block_type_sort"', false);
+        $response->assertSee('name="block_type_sort"', false);
+        $response->assertSee('name="picker" value="1"', false);
+        $response->assertSee('Search block types', false);
+        $response->assertSee('>Reset</a>', false);
+        $response->assertSee('>Search</button>', false);
         $response->assertSee('All categories');
         $response->assertSee('>Content</option>', false);
         $response->assertSee('>Layout</option>', false);
         $response->assertSee('>Pattern</option>', false);
         $response->assertSee('>Navigation</option>', false);
         $response->assertSee('<option value="default" selected>Default order</option>', false);
-        $response->assertSee('<div class="wb-cluster wb-cluster-end wb-cluster-2">', false);
         $response->assertSee('<th>Name</th>', false);
         $response->assertSee('<th>Category</th>', false);
         $response->assertSee('<th>Description</th>', false);
@@ -2056,6 +2065,53 @@ class PageBuilderExperienceTest extends TestCase
         $combinedResponse->assertDontSee('Plain Text');
 
         $combinedResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
+    }
+
+    #[Test]
+    public function slot_block_picker_filter_form_preserves_picker_state_for_nested_picker_context(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            $page,
+            $pageSlot,
+            'picker' => 1,
+            'parent_id' => $card->id,
+            'block_type_search' => 'rich',
+            'block_type_category' => 'content',
+            'block_type_sort' => 'name',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('name="picker" value="1"', false);
+        $response->assertSee('name="parent_id" value="'.$card->id.'"', false);
+        $response->assertSee('value="rich"', false);
+        $response->assertSee('<option value="content" selected>Content</option>', false);
+        $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
+        $response->assertSee('href="'.e(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id])).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
+        $response->assertSee('data-base-url="', false);
+        $response->assertSee('picker=1', false);
+        $response->assertSee('parent_id='.$card->id, false);
+        $response->assertSee('block_type_search=rich', false);
+        $response->assertSee('block_type_category=content', false);
+        $response->assertSee('block_type_sort=name', false);
     }
 
     #[Test]

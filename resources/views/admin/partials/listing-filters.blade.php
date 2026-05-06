@@ -7,6 +7,7 @@
     $resetUrl = $resetUrl ?? null;
     $applyLabel = $applyLabel ?? 'Apply';
     $resetLabel = $resetLabel ?? 'Reset';
+    $resetFirst = $resetFirst ?? false;
 @endphp
 
 <form method="{{ $method }}" action="{{ $action }}" class="wb-admin-listing-filters" data-admin-listing-filters>
@@ -48,8 +49,13 @@
     @endif
 
     <div class="wb-admin-listing-filters-actions" data-admin-listing-filters-actions>
+        @if ($showReset && $resetUrl && $resetFirst)
+            <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">{{ $resetLabel }}</a>
+        @endif
+
         <button type="submit" class="wb-btn wb-btn-primary">{{ $applyLabel }}</button>
-        @if ($showReset && $resetUrl)
+
+        @if ($showReset && $resetUrl && ! $resetFirst)
             <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">{{ $resetLabel }}</a>
         @endif
     </div>
