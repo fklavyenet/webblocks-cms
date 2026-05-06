@@ -6,6 +6,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Site;
 use App\Support\Search\PublicSearchIndexer;
+use App\Support\Search\PublicSearchSchema;
 use Illuminate\Console\Command;
 
 class SearchRebuildCommand extends Command
@@ -19,12 +20,19 @@ class SearchRebuildCommand extends Command
 
     public function __construct(
         private readonly PublicSearchIndexer $indexer,
+        private readonly PublicSearchSchema $schema,
     ) {
         parent::__construct();
     }
 
     public function handle(): int
     {
+        if (! $this->schema->tableExists()) {
+            $this->error('Public search index table is missing. Run `ddev artisan migrate` first.');
+
+            return self::FAILURE;
+        }
+
         $site = $this->resolveSite($this->option('site'));
         $locale = $this->resolveLocale($this->option('locale'));
         $page = $this->resolvePage($this->option('page'));

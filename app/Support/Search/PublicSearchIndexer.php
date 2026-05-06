@@ -43,11 +43,16 @@ class PublicSearchIndexer
             ->get()
             ->each(function (Page $candidate) use ($locale, $result): void {
                 $this->searchablePages->loadForIndexing($candidate);
+                $candidateLocales = $this->searchablePages->candidateLocales($candidate, $locale);
                 $locales = $this->searchablePages->searchableLocales($candidate, $locale);
 
-                if ($locales->isEmpty()) {
-                    $result->addSkipped();
+                $skippedLocales = max(0, $candidateLocales->count() - $locales->count());
 
+                if ($skippedLocales > 0) {
+                    $result->addSkipped($skippedLocales);
+                }
+
+                if ($locales->isEmpty()) {
                     return;
                 }
 
@@ -76,10 +81,17 @@ class PublicSearchIndexer
         }
 
         $this->searchablePages->loadForIndexing($page);
+        $candidateLocales = $this->searchablePages->candidateLocales($page, $locale);
         $locales = $this->searchablePages->searchableLocales($page, $locale);
 
+        $skippedLocales = max(0, $candidateLocales->count() - $locales->count());
+
+        if ($skippedLocales > 0) {
+            $result->addSkipped($skippedLocales);
+        }
+
         if ($locales->isEmpty()) {
-            return $result->addSkipped();
+            return $result;
         }
 
         foreach ($locales as $resolvedLocale) {

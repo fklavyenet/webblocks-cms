@@ -99,6 +99,51 @@ class SearchTest extends TestCase
     }
 
     #[Test]
+    public function rebuild_uses_page_translation_name_and_indexes_published_docs_shell_pages(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+
+        $page = $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Foundation Draft Label', 'foundation', Page::STATUS_PUBLISHED, 'Foundation body copy', [
+            'public_shell' => 'docs',
+        ]);
+
+        $page->translations()->where('locale_id', $locale->id)->update([
+            'name' => 'Foundation',
+        ]);
+
+        $result = app(PublicSearchIndexer::class)->rebuild();
+
+        $this->assertSame(1, $result->indexed);
+        $this->assertSame(0, $result->skipped);
+        $this->assertDatabaseHas('public_search_index', [
+            'page_id' => $page->id,
+            'locale_id' => $locale->id,
+            'title' => 'Foundation',
+            'url' => '/p/foundation',
+        ]);
+    }
+
+    #[Test]
+    public function rebuild_reports_skipped_locales_when_published_translations_are_missing(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Foundation', 'foundation', Page::STATUS_PUBLISHED, 'Foundation body copy');
+
+        $result = app(PublicSearchIndexer::class)->rebuild();
+
+        $this->assertSame(1, $result->indexed);
+        $this->assertSame(1, $result->skipped);
+    }
+
+    #[Test]
     public function shared_slot_content_is_indexed_only_for_compatible_consuming_pages_and_hidden_source_pages_are_excluded(): void
     {
         [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
@@ -155,14 +200,14 @@ class SearchTest extends TestCase
         return [$site, $locale, $slotType, $plainTextType];
     }
 
-    private function pageWithText(Site $site, Locale $locale, SlotType $slotType, BlockType $plainTextType, string $title, string $slug, string $status, string $content): Page
+    private function pageWithText(Site $site, Locale $locale, SlotType $slotType, BlockType $plainTextType, string $title, string $slug, string $status, string $content, array $settings = ['public_shell' => 'default']): Page
     {
         $page = Page::query()->create([
             'site_id' => $site->id,
             'title' => $title,
             'slug' => $slug,
             'status' => $status,
-            'settings' => ['public_shell' => 'default'],
+            'settings' => $settings,
         ]);
 
         PageTranslation::query()->updateOrCreate(

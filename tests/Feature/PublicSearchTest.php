@@ -92,6 +92,22 @@ class PublicSearchTest extends TestCase
             ->assertSee('/tr/p/turkce-sonuc');
     }
 
+    #[Test]
+    public function foundation_like_docs_page_is_searchable_through_public_search(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+
+        $page = $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Foundation', 'foundation', 'Design tokens and layout foundations');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $this->get('/search?q=foundation')
+            ->assertOk()
+            ->assertSee('Foundation')
+            ->assertSee('/p/foundation');
+    }
+
     private function seedSearchFoundation(): array
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

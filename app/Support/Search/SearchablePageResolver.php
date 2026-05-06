@@ -50,12 +50,17 @@ class SearchablePageResolver
 
     public function searchableLocales(Page $page, ?Locale $onlyLocale = null): Collection
     {
-        $locales = $page->availableSiteLocales()
+        return $this->candidateLocales($page, $onlyLocale)
             ->filter(function (Locale $locale) use ($page) {
                 return $page->translationForLocale($locale)?->exists
                     && $page->publicPath($locale->code) !== null;
             })
             ->values();
+    }
+
+    public function candidateLocales(Page $page, ?Locale $onlyLocale = null): Collection
+    {
+        $locales = $page->availableSiteLocales();
 
         if (! $onlyLocale) {
             return $locales;

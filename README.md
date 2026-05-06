@@ -180,6 +180,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - The first-class `Search Form` block renders a semantic GET search form that targets the current site's resolved search route and stores translated label, placeholder, and button text in block translation rows.
 - Super admins can review derived search status and run a non-destructive rebuild from `Admin -> Maintenance -> Search`.
 - Rebuild the derived search index safely with `ddev artisan search:rebuild`, optionally scoped by `--site`, `--locale`, or `--page`.
+- If the search table does not exist yet on an install, run `ddev artisan migrate` before `ddev artisan search:rebuild`.
 - Search index rows are derived runtime data. They can exist in environment-level backups, but they are not required content payloads for export/import portability because rebuild can recreate them from pages, blocks, translations, and Shared Slots.
 - Destructive database reset commands remain guarded. Search rebuild does not require `migrate:fresh`, `migrate:refresh`, `migrate:reset`, or `db:wipe`.
 - Generic public block wrappers are only for simple non-root-owning content blocks. Layout/root-owning blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, `Header`, and `Content Header` own their real WebBlocks UI root markup and carry their public block type metadata on that root instead of receiving an extra outer wrapper.

@@ -64,6 +64,8 @@ ddev artisan search:rebuild --page=123
 
 The command rebuilds only the requested search scope and does not modify CMS content.
 
+If the search table is missing on the current install, run `ddev artisan migrate` first so the derived index can be created.
+
 ## Portability Boundary
 
 `public_search_index` is derived runtime data.
