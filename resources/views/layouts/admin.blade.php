@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+@php
+    use App\Support\WebBlocks;
+@endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
         $adminCssPath = public_path('assets/webblocks-cms/css/admin.css');
@@ -21,8 +24,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('partials.head-meta', [
-            'title' => $title ?? config('app.name'),
-            'metaDescription' => $metaDescription ?? config('app.slogan'),
+            'title' => $title ?? WebBlocks::name(),
+            'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
         ])
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
@@ -56,21 +59,21 @@
                 $sidebarGroups[] = [
                     'label' => 'System',
                     'icon' => 'wb-icon-palette',
-                    'items' => [
-                        ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
-                        ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
-                        ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
-                        ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
-                        ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
-                    ],
-                ];
+                        'items' => [
+                            ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
+                            ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
+                            ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
+                            ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
+                            ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
+                            ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ],
+                    ];
 
                 $sidebarGroups[] = [
                     'label' => 'Maintenance',
                     'icon' => 'wb-icon-file',
                     'items' => [
                         ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
-                        ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
                         ['label' => 'Search', 'route' => 'admin.system.search.index', 'active' => 'admin.system.search.*'],
                         ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
                         ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
@@ -85,9 +88,10 @@
 
             <aside class="wb-sidebar" id="admin-sidebar">
                 <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand">
-                    <img src="{{ asset('brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" class="wb-sidebar-brand-logo">
+                    <img src="{{ asset('brand/logo-64.png') }}" alt="{{ WebBlocks::name() }} logo" class="wb-sidebar-brand-logo">
                     <span class="wb-sidebar-brand-copy">
-                        <x-brand-copy slogan-class="wb-sidebar-brand-note" />
+                        <span>{{ WebBlocks::name() }}</span>
+                        <span class="wb-sidebar-brand-note">{{ WebBlocks::slogan() }}</span>
                     </span>
                 </a>
 
@@ -132,7 +136,7 @@
                 </nav>
 
                 <div class="wb-sidebar-footer">
-                    <div class="wb-text-sm wb-text-muted">{{ config('app.name') }} v{{ $installedVersionDisplay ?? config('app.version') }}</div>
+                    <div class="wb-text-sm wb-text-muted">{{ WebBlocks::name() }} v{{ WebBlocks::VERSION }}</div>
                 </div>
             </aside>
 
@@ -152,9 +156,9 @@
 
                     <div class="wb-navbar-identity">
                         <span class="wb-navbar-brand">
-                            <span>{{ config('app.name') }}</span>
+                            <span>{{ WebBlocks::name() }}</span>
                         </span>
-                        <span class="wb-navbar-context">{{ $heading ?? config('app.slogan') }}</span>
+                        <span class="wb-navbar-context">{{ $heading ?? WebBlocks::slogan() }}</span>
                     </div>
 
                     <div class="wb-navbar-end wb-ms-auto">

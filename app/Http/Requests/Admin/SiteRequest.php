@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\Site;
 use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -25,12 +27,21 @@ class SiteRequest extends FormRequest
         $submittedLocaleIds = collect($this->input('locale_ids', []))
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0);
+        $authorization = app(AdminAuthorization::class);
+        $user = $this->user();
 
         $this->merge([
             'is_primary' => $this->boolean('is_primary'),
             'handle' => str((string) $this->input('handle'))->slug()->toString(),
             'domain' => $domain,
             'locale_ids' => $this->normalizedLocaleIds($submittedLocaleIds, $site, $defaultLocaleId)->all(),
+            'display_name' => trim((string) $this->input('display_name')),
+            'tagline' => trim((string) $this->input('tagline')),
+            'seo_title' => trim((string) $this->input('seo_title')),
+            'seo_description' => trim((string) $this->input('seo_description')),
+            'seo_keywords' => trim((string) $this->input('seo_keywords')),
+            'favicon_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('favicon_asset_id') ?: null) : null,
+            'social_image_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('social_image_asset_id') ?: null) : null,
         ]);
     }
 
@@ -45,6 +56,13 @@ class SiteRequest extends FormRequest
             'handle' => ['required', 'string', 'max:255', Rule::unique(Site::class, 'handle')->ignore($site?->id)],
             'domain' => ['nullable', 'string', 'max:255', Rule::unique(Site::class, 'domain')->ignore($site?->id)],
             'is_primary' => ['nullable', 'boolean'],
+            'display_name' => ['nullable', 'string', 'max:255'],
+            'tagline' => ['nullable', 'string', 'max:255'],
+            'favicon_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:1000'],
+            'seo_keywords' => ['nullable', 'string', 'max:500'],
+            'social_image_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
             'locale_ids' => ['required', 'array', 'min:1'],
             'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query
                 ->where(fn ($enabled) => $enabled

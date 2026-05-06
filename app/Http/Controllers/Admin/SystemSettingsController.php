@@ -20,8 +20,6 @@ class SystemSettingsController extends Controller
     {
         return view('admin.system.settings', [
             'settings' => [
-                'app_name' => old('app_name', $this->systemSettings->appName()),
-                'app_slogan' => old('app_slogan', $this->systemSettings->appSlogan()),
                 'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
                 'timezone' => old('timezone', $this->systemSettings->timezone()),
                 'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),

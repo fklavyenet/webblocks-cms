@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\BlockTextTranslation;
@@ -104,18 +105,34 @@ class SiteLocaleManagementTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $favicon = $this->imageAsset('sites/favicon.png', 'favicon.png');
+        $socialImage = $this->imageAsset('sites/social.png', 'social.png');
 
         $response = $this->actingAs($user)->put(route('admin.sites.update', $site), [
             'name' => $site->name,
             'handle' => 'Default Site',
             'domain' => 'https://PRIMARY.EXAMPLE.TEST/some/path',
             'is_primary' => 1,
+            'display_name' => 'Primary Public Site',
+            'tagline' => 'Public facing tagline',
+            'favicon_asset_id' => $favicon->id,
+            'seo_title' => 'Primary SEO Title',
+            'seo_description' => 'Primary SEO Description',
+            'seo_keywords' => 'alpha,beta',
+            'social_image_asset_id' => $socialImage->id,
             'locale_ids' => [$defaultLocale->id],
         ]);
 
         $response->assertRedirect(route('admin.sites.edit', $site));
         $this->assertSame('default-site', $site->fresh()->handle);
         $this->assertSame('primary.example.test', $site->fresh()->domain);
+        $this->assertSame('Primary Public Site', $site->fresh()->display_name);
+        $this->assertSame('Public facing tagline', $site->fresh()->tagline);
+        $this->assertSame($favicon->id, $site->fresh()->favicon_asset_id);
+        $this->assertSame('Primary SEO Title', $site->fresh()->seo_title);
+        $this->assertSame('Primary SEO Description', $site->fresh()->seo_description);
+        $this->assertSame('alpha,beta', $site->fresh()->seo_keywords);
+        $this->assertSame($socialImage->id, $site->fresh()->social_image_asset_id);
         $this->assertTrue($site->fresh()->hasEnabledLocale($defaultLocale));
     }
 
@@ -176,6 +193,27 @@ class SiteLocaleManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('name="locale_ids[]" value="'.$defaultLocale->id.'"', false);
         $response->assertSee('disabled', false);
+        $response->assertSee('Branding');
+        $response->assertSee('SEO Defaults');
+        $response->assertSee('Public display name');
+        $response->assertSee('Default meta title');
+    }
+
+    private function imageAsset(string $path, string $filename): Asset
+    {
+        return Asset::query()->create([
+            'disk' => 'public',
+            'path' => $path,
+            'filename' => $filename,
+            'original_name' => $filename,
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1024,
+            'kind' => Asset::KIND_IMAGE,
+            'visibility' => 'public',
+            'width' => 64,
+            'height' => 64,
+        ]);
     }
 
     #[Test]

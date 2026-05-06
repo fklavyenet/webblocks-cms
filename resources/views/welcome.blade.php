@@ -1,7 +1,4 @@
-@extends('layouts.public', [
-    'title' => config('app.name'),
-    'metaDescription' => config('app.slogan'),
-])
+@extends('layouts.public')
 
 @section('content')
     <section class="wb-section wb-section-muted">

@@ -17,8 +17,6 @@ class SystemSettings
     public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
     public const MANAGED_KEYS = [
-        self::APP_NAME,
-        self::APP_SLOGAN,
         self::DEFAULT_LOCALE,
         self::TIMEZONE,
         self::VISITOR_CONSENT_BANNER_ENABLED,
@@ -43,20 +41,6 @@ class SystemSettings
     public function get(string $key, mixed $default = null): mixed
     {
         return Arr::get($this->all(), $key, $default);
-    }
-
-    public function appName(): string
-    {
-        $value = trim((string) $this->get(self::APP_NAME, ''));
-
-        return $value !== '' ? $value : (string) config('app.name');
-    }
-
-    public function appSlogan(): string
-    {
-        $value = trim((string) $this->get(self::APP_SLOGAN, ''));
-
-        return $value !== '' ? $value : (string) config('app.slogan');
     }
 
     public function defaultLocaleCode(): string

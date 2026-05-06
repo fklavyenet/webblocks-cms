@@ -6,6 +6,7 @@ use App\Support\Sites\SiteDomainNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,6 +19,13 @@ class Site extends Model
         'handle',
         'domain',
         'is_primary',
+        'display_name',
+        'tagline',
+        'favicon_asset_id',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'social_image_asset_id',
     ];
 
     protected function casts(): array
@@ -79,6 +87,16 @@ class Site extends Model
             ->withTimestamps();
     }
 
+    public function faviconAsset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'favicon_asset_id');
+    }
+
+    public function socialImageAsset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'social_image_asset_id');
+    }
+
     public function siteLocales(): HasMany
     {
         return $this->hasMany(SiteLocale::class);
@@ -118,6 +136,13 @@ class Site extends Model
     public static function primary(): ?self
     {
         return static::query()->primaryFirst()->first();
+    }
+
+    public function publicDisplayName(): string
+    {
+        $displayName = trim((string) $this->display_name);
+
+        return $displayName !== '' ? $displayName : $this->name;
     }
 
     public static function enforcePrimaryInvariant(self $site): void

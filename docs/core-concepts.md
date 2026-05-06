@@ -35,6 +35,17 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - That opt-in fallback writes the duplicated page slot as `disabled`, clears `shared_slot_id`, leaves the source page unchanged, and does not copy Shared Slot block trees into the duplicated page in this version.
 - Site-level portability tools such as Export / Import and Site Clone remain separate from page moves and page duplication.
 
+## Site Identity
+
+- WebBlocks CMS product identity is fixed in the admin shell and comes from `App\Support\WebBlocks`.
+- Site records own public-facing identity and metadata.
+- `sites.name` remains the internal admin record name.
+- `display_name` is the optional public site name override.
+- `tagline` is optional public-facing copy for the site.
+- `seo_title`, `seo_description`, and `seo_keywords` are site-level fallback metadata.
+- `favicon_asset_id` and `social_image_asset_id` are optional site-level media references for public head output.
+- Page-level SEO override fields are intentionally not part of this phase.
+
 ## Page Builder
 
 Editing happens through slots.
@@ -82,6 +93,15 @@ Public page structure is controlled at the page and slot layer.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
 
 For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
+
+## Public Metadata
+
+- Public metadata is resolved from the current site context, not from editable install-level application name or slogan settings.
+- Page titles remain the strongest title source when a page is being rendered.
+- Site `seo_title` is used as a fallback when there is no stronger page-specific title.
+- Site `seo_description` and `seo_keywords` provide fallback `<meta>` values for the current resolved site.
+- Site favicon and social image media are rendered only when the selected assets resolve to usable public URLs.
+- Multisite metadata stays host-aware through the resolved public site; the primary site is not used blindly when another site matches the current host.
 
 ## Shared Slots
 

@@ -1,9 +1,9 @@
-@extends('layouts.admin', ['title' => 'Settings', 'heading' => 'Settings'])
+@extends('layouts.admin', ['title' => 'System Settings', 'heading' => 'System Settings'])
 
 @section('content')
     @include('admin.partials.page-header', [
-        'title' => 'Settings',
-        'description' => 'Manage compact system-level application settings. Content and editorial fields stay in pages, blocks, navigation, and sites.',
+        'title' => 'System Settings',
+        'description' => 'Manage compact system-level settings for locale, timezone, privacy, and runtime information. Public site branding and SEO defaults live on each Site.',
     ])
 
     @include('admin.partials.flash')
@@ -18,16 +18,6 @@
                     @method('PUT')
 
                     <div class="wb-stack wb-gap-3">
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_app_name">Application name</label>
-                            <input id="settings_app_name" name="app_name" class="wb-input" type="text" value="{{ $settings['app_name'] }}" required>
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_app_slogan">Application slogan</label>
-                            <input id="settings_app_slogan" name="app_slogan" class="wb-input" type="text" value="{{ $settings['app_slogan'] }}">
-                        </div>
-
                         <div class="wb-stack-2 wb-field">
                             <label for="settings_default_locale">Default locale</label>
                             <select id="settings_default_locale" name="default_locale" class="wb-select" required>
@@ -60,8 +50,6 @@
                     @csrf
                     @method('PUT')
 
-                    <input type="hidden" name="app_name" value="{{ $settings['app_name'] }}">
-                    <input type="hidden" name="app_slogan" value="{{ $settings['app_slogan'] }}">
                     <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
                     <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
 

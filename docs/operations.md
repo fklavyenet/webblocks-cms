@@ -4,7 +4,15 @@
 
 WebBlocks CMS includes install-level operational tools for updates, backups, and site transfer packages.
 
-These tools live under the admin `System` navigation because they affect the install as a whole, not just one page or one content editor workflow.
+`Settings` also lives under the admin `System` navigation because it controls install-level locale, timezone, privacy, version, and environment settings.
+
+`Maintenance` remains the operational tools group for:
+
+- Visitor Reports
+- Search
+- Backups
+- Export / Import
+- Update
 
 ## System Updates
 
@@ -93,6 +101,26 @@ Search rebuild is non-destructive:
 - it deletes and recreates only derived rows inside the requested scope
 - it does not modify page, block, translation, Shared Slot, or media content
 - it does not require destructive database reset commands
+
+## System Settings
+
+System Settings is the compact install-level configuration screen.
+
+It keeps:
+
+- default locale
+- timezone
+- cookie or privacy banner settings
+- product version information
+- environment information
+
+It does not control:
+
+- the fixed WebBlocks CMS admin brand labels
+- public site branding
+- public site SEO defaults
+
+Those public-facing values now live on each Site instead.
 
 ## Site Clone
 

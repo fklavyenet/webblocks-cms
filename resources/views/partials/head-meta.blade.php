@@ -1,24 +1,57 @@
 @php
-    $brandName = config('app.name');
-    $brandSlogan = config('app.slogan');
-    $resolvedTitle = trim($title ?? '') !== '' ? $title : $brandName;
-    $fullTitle = $resolvedTitle === $brandName ? $brandName.' - '.$brandSlogan : $resolvedTitle.' - '.$brandName;
-    $metaDescription = trim($metaDescription ?? '') !== '' ? $metaDescription : $brandSlogan;
-    $brandImage = asset('brand/og-image.png');
+    $brandName = trim((string) ($brandName ?? config('app.name')));
+    $siteName = trim((string) ($siteName ?? $brandName));
+    $siteTagline = trim((string) ($siteTagline ?? config('app.slogan')));
+    $resolvedTitle = trim((string) ($title ?? ''));
+    $fullTitle = $resolvedTitle !== ''
+        ? $resolvedTitle
+        : ($siteName !== '' ? $siteName : $brandName);
+    $metaDescription = trim((string) ($metaDescription ?? ''));
+    $metaKeywords = trim((string) ($metaKeywords ?? ''));
+    $faviconUrl = trim((string) ($faviconUrl ?? ''));
+    $ogTitle = trim((string) ($ogTitle ?? $fullTitle));
+    $ogDescription = trim((string) ($ogDescription ?? $metaDescription));
+    $ogImage = trim((string) ($ogImage ?? asset('brand/og-image.png')));
+    $ogSiteName = trim((string) ($ogSiteName ?? $siteName));
 @endphp
 
 <title>{{ $fullTitle }}</title>
-<meta name="description" content="{{ $metaDescription }}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('brand/favicon-16x16.png') }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('brand/favicon-32x32.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('brand/apple-touch-icon.png') }}">
-<link rel="icon" href="{{ asset('brand/favicon-32x32.png') }}">
-<meta property="og:title" content="{{ $fullTitle }}">
-<meta property="og:description" content="{{ $metaDescription }}">
-<meta property="og:image" content="{{ $brandImage }}">
+@if ($metaDescription !== '')
+    <meta name="description" content="{{ $metaDescription }}">
+@endif
+@if ($metaKeywords !== '')
+    <meta name="keywords" content="{{ $metaKeywords }}">
+@endif
+@if ($faviconUrl !== '')
+    <link rel="icon" href="{{ $faviconUrl }}">
+    <link rel="shortcut icon" href="{{ $faviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+@else
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('brand/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('brand/favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('brand/apple-touch-icon.png') }}">
+    <link rel="icon" href="{{ asset('brand/favicon-32x32.png') }}">
+@endif
+@if ($ogTitle !== '')
+    <meta property="og:title" content="{{ $ogTitle }}">
+@endif
+@if ($ogDescription !== '')
+    <meta property="og:description" content="{{ $ogDescription }}">
+@endif
+@if ($ogImage !== '')
+    <meta property="og:image" content="{{ $ogImage }}">
+@endif
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="{{ $brandName }}">
+@if ($ogSiteName !== '')
+    <meta property="og:site_name" content="{{ $ogSiteName }}">
+@endif
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ $fullTitle }}">
-<meta name="twitter:description" content="{{ $metaDescription }}">
-<meta name="twitter:image" content="{{ $brandImage }}">
+@if ($ogTitle !== '')
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+@endif
+@if ($ogDescription !== '')
+    <meta name="twitter:description" content="{{ $ogDescription }}">
+@endif
+@if ($ogImage !== '')
+    <meta name="twitter:image" content="{{ $ogImage }}">
+@endif

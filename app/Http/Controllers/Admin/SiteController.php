@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiteCloneRequest;
 use App\Http\Requests\Admin\SiteDeleteRequest;
 use App\Http\Requests\Admin\SiteRequest;
+use App\Models\Asset;
+use App\Models\AssetFolder;
 use App\Models\Locale;
 use App\Models\Site;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
 use App\Support\Sites\SiteDeleteService;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -21,6 +24,7 @@ class SiteController extends Controller
     public function __construct(
         private readonly SiteCloneService $siteCloneService,
         private readonly SiteDeleteService $siteDeleteService,
+        private readonly AdminAuthorization $authorization,
     ) {}
 
     public function index(): View
@@ -50,6 +54,8 @@ class SiteController extends Controller
             'pageTitle' => 'Add Site',
             'formAction' => route('admin.sites.store'),
             'formMethod' => 'POST',
+            'assetPickerAssets' => $this->assetPickerAssets(),
+            'assetPickerFolders' => $this->assetPickerFolders(),
         ]);
     }
 
@@ -76,12 +82,14 @@ class SiteController extends Controller
         $deleteReport = $this->siteDeleteService->inspect($site);
 
         return view('admin.sites.form', [
-            'site' => $site->loadMissing('locales'),
+            'site' => $site->loadMissing(['locales', 'faviconAsset', 'socialImageAsset']),
             'locales' => Locale::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'pageTitle' => 'Edit Site: '.$site->name,
             'formAction' => route('admin.sites.update', $site),
             'formMethod' => 'PUT',
             'siteDeleteReport' => $deleteReport,
+            'assetPickerAssets' => $this->assetPickerAssets(),
+            'assetPickerFolders' => $this->assetPickerFolders(),
         ]);
     }
 
@@ -182,5 +190,22 @@ class SiteController extends Controller
             ->unique()
             ->mapWithKeys(fn (int $localeId) => [$localeId => ['is_enabled' => true]])
             ->all());
+    }
+
+    private function assetPickerAssets()
+    {
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+            ->with('folder')
+            ->latest()
+            ->get();
+    }
+
+    private function assetPickerFolders()
+    {
+        return AssetFolder::query()
+            ->withCount('assets')
+            ->with('parent')
+            ->orderBy('name')
+            ->get();
     }
 }

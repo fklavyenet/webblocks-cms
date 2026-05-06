@@ -37,7 +37,6 @@ class PublicPagePresenter
         return [
             'page' => $page,
             'slots' => $slots,
-            'metaDescription' => $this->resolveMetaDescription($page, $translatedTopLevelBlocks),
         ];
     }
 
@@ -92,15 +91,5 @@ class PublicPagePresenter
                 return $block;
             })
             ->values();
-    }
-
-    private function resolveMetaDescription(Page $page, Collection $blocks): ?string
-    {
-        $summary = $blocks
-            ->map(fn (Block $block) => $block->content ?: $block->subtitle)
-            ->filter()
-            ->first();
-
-        return $summary ? str(strip_tags((string) $summary))->squish()->limit(160)->toString() : config('app.slogan');
     }
 }

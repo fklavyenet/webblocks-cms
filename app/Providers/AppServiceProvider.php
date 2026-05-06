@@ -45,8 +45,6 @@ class AppServiceProvider extends ServiceProvider
         try {
             $systemSettings = app(SystemSettings::class);
 
-            Config::set('app.name', $systemSettings->appName());
-            Config::set('app.slogan', $systemSettings->appSlogan());
             Config::set('app.locale', $systemSettings->defaultLocaleCode());
             Config::set('app.fallback_locale', $systemSettings->defaultLocaleCode());
             Config::set('app.timezone', $systemSettings->timezone());
@@ -60,12 +58,20 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['layouts.public', 'pages.show'], function ($view): void {
             $request = request();
             $consent = app(VisitorConsent::class);
+            $resolvedPublicSite = null;
+
+            try {
+                $resolvedPublicSite = app(PageRouteResolver::class)->resolvedSite($request)->site;
+            } catch (Throwable) {
+                // Keep public fallbacks safe when no site can be resolved.
+            }
 
             $view->with('visitorPrivacy', [
                 'banner_enabled' => $consent->bannerEnabled(),
                 'has_choice' => $consent->hasStoredChoice($request),
                 'server_choice' => $consent->storedChoice($request),
             ]);
+            $view->with('resolvedPublicSite', $resolvedPublicSite);
         });
 
         View::composer('layouts.admin', function ($view): void {

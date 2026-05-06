@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\Locale;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -14,16 +15,16 @@ class SystemSettingsTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function admin_can_view_settings_page_from_system_maintenance_navigation(): void
+    public function admin_can_view_system_settings_page_without_application_brand_fields(): void
     {
         $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
         $response->assertOk();
-        $response->assertSee('Settings');
-        $response->assertSee('Application name');
-        $response->assertSee('Application slogan');
+        $response->assertSee('System Settings');
+        $response->assertDontSee('Application name');
+        $response->assertDontSee('Application slogan');
         $response->assertSee('Default locale');
         $response->assertSee('Timezone');
         $response->assertSee('Cookie settings');
@@ -55,8 +56,6 @@ class SystemSettingsTest extends TestCase
         $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
 
         $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
-            'app_name' => 'My WebBlocks',
-            'app_slogan' => 'Compact system copy',
             'default_locale' => $locale->code,
             'timezone' => 'Europe/Istanbul',
             'visitor_consent_banner_enabled' => '1',
@@ -64,20 +63,16 @@ class SystemSettingsTest extends TestCase
 
         $response->assertRedirect(route('admin.system.settings.edit'));
 
-        $this->assertSame('My WebBlocks', SystemSetting::query()->where('key', 'system.app_name')->value('value'));
-        $this->assertSame('Compact system copy', SystemSetting::query()->where('key', 'system.app_slogan')->value('value'));
         $this->assertSame($locale->code, SystemSetting::query()->where('key', 'system.default_locale')->value('value'));
         $this->assertSame('Europe/Istanbul', SystemSetting::query()->where('key', 'system.timezone')->value('value'));
         $this->assertSame('1', SystemSetting::query()->where('key', 'system.visitor_consent_banner_enabled')->value('value'));
 
         $followUp = $this->actingAs($user)->get(route('admin.system.settings.edit'));
-        $followUp->assertSee('My WebBlocks');
-        $followUp->assertSee('Compact system copy');
         $followUp->assertSee('Europe/Istanbul');
     }
 
     #[Test]
-    public function settings_require_valid_enabled_locale_and_non_blank_app_name(): void
+    public function settings_require_valid_enabled_locale_and_timezone(): void
     {
         $user = User::factory()->superAdmin()->create();
         $disabledLocale = Locale::query()->create([
@@ -87,14 +82,30 @@ class SystemSettingsTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
-            'app_name' => ' ',
-            'app_slogan' => 'Bad payload',
             'default_locale' => $disabledLocale->code,
             'timezone' => 'Not/A_Timezone',
             'visitor_consent_banner_enabled' => '1',
         ]);
 
         $response->assertRedirect(route('admin.system.settings.edit'));
-        $response->assertSessionHasErrors(['app_name', 'default_locale', 'timezone']);
+        $response->assertSessionHasErrors(['default_locale', 'timezone']);
+    }
+
+    #[Test]
+    public function legacy_application_name_and_slogan_settings_do_not_change_admin_product_identity(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(['key' => 'system.app_name'], ['value' => 'Changed Site Name']);
+        SystemSetting::query()->updateOrCreate(['key' => 'system.app_slogan'], ['value' => 'Changed Site Slogan']);
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee(WebBlocks::name());
+        $response->assertSee(WebBlocks::slogan());
+        $response->assertSee(WebBlocks::name().' v'.WebBlocks::VERSION);
+        $response->assertDontSee('Changed Site Name');
+        $response->assertDontSee('Changed Site Slogan');
     }
 }

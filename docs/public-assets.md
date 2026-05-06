@@ -18,6 +18,15 @@ Install-specific or site-specific public overrides remain under:
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
+## Site Branding Assets
+
+Public favicon and social sharing artwork are now selected from the shared Media library on each Site.
+
+- favicon output uses the current resolved site's `favicon_asset_id` when that asset has a public URL
+- Open Graph fallback imagery uses the current resolved site's `social_image_asset_id` when available
+- these are site-scoped metadata assets, not CMS product-brand assets
+- page-level SEO or social image overrides are not part of this phase
+
 ## WebBlocks UI Assets
 
 WebBlocks UI assets remain loaded from CDN in the CMS public layout.

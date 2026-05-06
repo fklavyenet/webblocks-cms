@@ -6,10 +6,19 @@ WebBlocks CMS supports multiple sites within one install.
 
 Each site has its own content scope, domains, locales, navigation, and editorial context.
 
+Each site also owns its own public identity fallback layer:
+
+- public display name
+- tagline
+- favicon
+- social image
+- SEO Defaults for title, description, and keywords
+
 ## How Site Scope Works
 
 - Content is scoped by site.
 - Public routing resolves the active site from the current host.
+- Public `<head>` metadata and favicon output resolve from that same current host-matched site.
 - Admin users with site-scoped roles can work only inside their assigned sites.
 - Navigation, pages, media usage, and reporting remain site-aware.
 

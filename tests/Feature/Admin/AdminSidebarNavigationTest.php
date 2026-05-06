@@ -56,8 +56,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertDontSee('>Structure<', false);
         $this->assertSame(1, substr_count($content, $usersHref));
         $this->assertTrue(
-            strpos($content, $reportsHref) < strpos($content, $settingsHref)
-            && strpos($content, $settingsHref) < strpos($content, $searchHref)
+            strpos($content, $reportsHref) < strpos($content, $searchHref)
             && strpos($content, $searchHref) < strpos($content, $backupsHref)
             && strpos($content, $backupsHref) < strpos($content, $transfersHref)
             && strpos($content, $transfersHref) < strpos($content, $updatesHref)
@@ -67,6 +66,7 @@ class AdminSidebarNavigationTest extends TestCase
             && strpos($content, $sitesHref) < strpos($content, $localesHref)
             && strpos($content, $localesHref) < strpos($content, $slotTypesHref)
             && strpos($content, $slotTypesHref) < strpos($content, $blockTypesHref)
+            && strpos($content, $blockTypesHref) < strpos($content, $settingsHref)
         );
         $this->assertTrue(
             strpos($content, '>System<') < strpos($content, '>Maintenance<')
@@ -74,7 +74,7 @@ class AdminSidebarNavigationTest extends TestCase
     }
 
     #[Test]
-    public function settings_page_marks_maintenance_group_and_settings_item_active(): void
+    public function settings_page_marks_system_group_and_settings_item_active(): void
     {
         $user = User::factory()->superAdmin()->create();
 
@@ -82,6 +82,7 @@ class AdminSidebarNavigationTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('wb-nav-group-toggle is-active', false);
+        $response->assertSee('>System<', false);
         $response->assertSee('>Maintenance<', false);
         $response->assertSee('href="'.route('admin.system.settings.edit').'"', false);
         $response->assertSee('class="wb-nav-group-item is-active"', false);

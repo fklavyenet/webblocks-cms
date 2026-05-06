@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Separate fixed WebBlocks CMS admin product identity from editable public site branding and metadata.
+- Move `Settings` navigation under `System` while keeping `Maintenance` focused on operational tools.
+- Add site-level Branding and SEO Defaults fields, including public favicon and site-scoped head metadata fallbacks.
+
 
 ## 1.15.0
 

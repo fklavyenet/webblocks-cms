@@ -1,12 +1,26 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
+        use App\Support\WebBlocks;
+
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
         $siteCssPath = public_path('site/css/site.css');
         $publicJsAssets = [
             'header-actions' => public_path('assets/webblocks-cms/js/public/header-actions.js'),
             'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
         ];
+        $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
+        $siteName = $resolvedSite?->publicDisplayName() ?? config('app.name');
+        $siteTagline = trim((string) ($resolvedSite?->tagline ?? config('app.slogan')));
+        $siteSeoTitle = trim((string) ($resolvedSite?->seo_title ?? ''));
+        $siteSeoDescription = trim((string) ($resolvedSite?->seo_description ?? ''));
+        $siteSeoKeywords = trim((string) ($resolvedSite?->seo_keywords ?? ''));
+        $faviconUrl = $resolvedSite?->faviconAsset?->url();
+        $socialImageUrl = $resolvedSite?->socialImageAsset?->url();
+        $resolvedTitle = trim((string) ($title ?? ''));
+        $headTitle = $resolvedTitle !== '' ? $resolvedTitle : ($siteSeoTitle !== '' ? $siteSeoTitle : $siteName);
+        $headDescription = trim((string) ($metaDescription ?? ''));
+        $headDescription = $headDescription !== '' ? $headDescription : $siteSeoDescription;
     @endphp
 
     <head>
@@ -15,8 +29,17 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('partials.head-meta', [
-            'title' => $title ?? config('app.name'),
-            'metaDescription' => $metaDescription ?? config('app.slogan'),
+            'brandName' => WebBlocks::name(),
+            'siteName' => $siteName,
+            'siteTagline' => $siteTagline,
+            'title' => $headTitle,
+            'metaDescription' => $headDescription,
+            'metaKeywords' => $siteSeoKeywords,
+            'faviconUrl' => $faviconUrl,
+            'ogTitle' => $siteSeoTitle !== '' ? $siteSeoTitle : $headTitle,
+            'ogDescription' => $siteSeoDescription !== '' ? $siteSeoDescription : $headDescription,
+            'ogImage' => $socialImageUrl,
+            'ogSiteName' => $siteName,
         ])
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
