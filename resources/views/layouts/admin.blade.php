@@ -71,6 +71,7 @@
                     'items' => [
                         ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
                         ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                        ['label' => 'Search', 'route' => 'admin.system.search.index', 'active' => 'admin.system.search.*'],
                         ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
                         ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
                         ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],

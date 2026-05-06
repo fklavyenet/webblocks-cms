@@ -47,6 +47,18 @@ class PageRouteResolver
         return $this->applyLocalePrefix('/', $locale);
     }
 
+    public function searchPath(?string $localeCode = null, ?Site $site = null): ?string
+    {
+        $resolvedSite = $site ?? $this->siteResolver->primary();
+        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+        if (! $locale) {
+            return null;
+        }
+
+        return $this->applyLocalePrefix('/search', $locale);
+    }
+
     public function pathFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
     {
         $resolvedSite = $site ?? $page->site;
@@ -152,9 +164,8 @@ class PageRouteResolver
             }
         }
 
-        $translation = $translations
-            ? $translations->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
-            : $page->translations()->where('locale_id', $resolvedLocale->id)->first();
+        $translation = $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
+            ?? $page->translations()->where('locale_id', $resolvedLocale->id)->first();
 
         if ($translation) {
             $page->setRelation('currentTranslation', $translation);

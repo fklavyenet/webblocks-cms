@@ -3,6 +3,7 @@
 use App\Console\Commands\ImportDemoMedia;
 use App\Console\Commands\ProjectInitCommand;
 use App\Console\Commands\ResetPrimitiveBlocksCommand;
+use App\Console\Commands\SearchRebuildCommand;
 use App\Console\Commands\SiteExportCommand;
 use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SiteCloneCommand;
@@ -52,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ImportDemoMedia::class,
         ProjectInitCommand::class,
         ResetPrimitiveBlocksCommand::class,
+        SearchRebuildCommand::class,
         SiteExportCommand::class,
         SiteImportCommand::class,
         SiteCloneCommand::class,

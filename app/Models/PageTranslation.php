@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PageTranslation extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
 
     protected $fillable = [
         'page_id',
@@ -40,6 +42,18 @@ class PageTranslation extends Model
 
             $translation->site_id = $siteId;
             $translation->path = self::pathFromSlug((string) $translation->slug);
+        });
+
+        static::saved(function (self $translation): void {
+            static::refreshSearchForTranslation($translation->fresh(['page', 'locale']));
+        });
+
+        static::deleted(function (self $translation): void {
+            $page = $translation->page ?? $translation->page()->first();
+
+            if ($page instanceof Page) {
+                app(\App\Support\Search\PublicSearchIndexer::class)->refreshPage($page);
+            }
         });
     }
 

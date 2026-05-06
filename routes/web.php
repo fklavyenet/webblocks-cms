@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
+use App\Http\Controllers\Admin\SystemSearchController;
 use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\VisitorReportController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Install\InstallWizardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicSearchController;
 use App\Http\Controllers\PublicPrivacyConsentController;
 use App\Models\Locale;
 use App\Support\SharedSlots\SharedSlotSchema;
@@ -50,6 +52,11 @@ Route::middleware('install.required')->get('/', [PublicPageController::class, 'h
 Route::middleware('install.required')->get('/{locale}', [PublicPageController::class, 'home'])
     ->where('locale', Locale::routePattern())
     ->name('localized.home');
+
+Route::middleware('install.required')->get('/search', PublicSearchController::class)->name('search');
+Route::middleware('install.required')->get('/{locale}/search', PublicSearchController::class)
+    ->where('locale', Locale::routePattern())
+    ->name('localized.search');
 
 Route::middleware(['install.required', 'auth'])->group(function () {
     Route::redirect('/dashboard', '/admin')->name('dashboard');
@@ -173,6 +180,8 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
         Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
         Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+        Route::get('system/search', [SystemSearchController::class, 'index'])->name('system.search.index');
+        Route::post('system/search/rebuild', [SystemSearchController::class, 'rebuild'])->name('system.search.rebuild');
         Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');
         Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
         Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');

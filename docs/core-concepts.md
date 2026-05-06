@@ -58,6 +58,18 @@ Blocks are the reusable editorial units of the CMS.
 
 This keeps content ownership clear across multisite, localization, revisions, and public rendering.
 
+## Search
+
+Search V1 is derived public infrastructure, not project-layer website logic.
+
+- Search indexes published public pages only.
+- Search rows are scoped by site and locale.
+- Search uses page translations as the source of truth for title and public URL metadata.
+- Search content is built from page-owned published blocks plus compatible Shared Slot blocks resolved in the context of the consuming page.
+- Hidden Shared Slot source pages are excluded from public route resolution and from standalone search results.
+- The first version stores derived rows in the database table `public_search_index` and uses conservative SQL matching instead of an external search service.
+- Search rows are derived runtime data and can be rebuilt safely from CMS content.
+
 ## Public Shells
 
 Public page structure is controlled at the page and slot layer.

@@ -40,6 +40,7 @@ class MultisiteMultilingualFoundationTest extends TestCase
     #[Test]
     public function existing_pages_are_backfilled_to_the_default_site_and_english_translation_during_migration(): void
     {
+        Schema::dropIfExists('public_search_index');
         Schema::dropIfExists('page_translations');
         Schema::dropIfExists('block_contact_form_translations');
         Schema::dropIfExists('block_image_translations');

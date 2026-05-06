@@ -10,6 +10,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - multisite and locale-aware page management
 - install-level user management with `super_admin`, `site_admin`, and `editor` roles
 - editorial workflow for pages with review and publishing states
+- database-backed public site search scoped by site and locale, with Search Form block support and a System > Search rebuild screen
 - page revisions and in-place restore
 - media library and site-scoped navigation management
 - install wizard for first-run setup
@@ -107,6 +108,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - [Editorial Workflow](docs/editorial-workflow.md)
 - [Revisions](docs/revisions.md)
 - [Operations](docs/operations.md)
+- [Search](docs/search.md)
 - [Updates](docs/updates.md)
 - [Multisite](docs/multisite.md)
 - [Localization](docs/localization.md)
@@ -173,6 +175,13 @@ See `docs/getting-started.md` for the first-use workflow.
 - Shared Slots now travel with site portability tools. Site export/import packages include Shared Slot metadata plus the hidden internal source-page block tree, translations, and media references needed to rebuild the reusable Shared Slot in the target site. Page slots that use Shared Slots are exported by Shared Slot handle and remapped to the target-site Shared Slot during import or clone instead of keeping source database IDs.
 - Shared Slot revision history does not travel with export/import or site clone. That matches the current page-revision portability boundary and keeps site transfer packages focused on live site content instead of editorial history.
 - Hidden Shared Slot source pages remain an internal implementation detail. They are excluded from ordinary page admin listings, normal exported page payloads, and public route resolution even though their block records are still used internally to preserve the existing block editor, translation, and asset flows.
+- Search V1 is a core CMS feature backed by the derived `public_search_index` table. It indexes only published public pages, scopes rows by site and locale, includes compatible Shared Slot content in the consuming page record, and excludes hidden Shared Slot source pages from standalone results.
+- Public search routes follow the same locale model as pages: `/search?q=term` for the default locale and `/{locale}/search?q=term` for non-default locales.
+- The first-class `Search Form` block renders a semantic GET search form that targets the current site's resolved search route and stores translated label, placeholder, and button text in block translation rows.
+- Super admins can review derived search status and run a non-destructive rebuild from `Admin -> Maintenance -> Search`.
+- Rebuild the derived search index safely with `ddev artisan search:rebuild`, optionally scoped by `--site`, `--locale`, or `--page`.
+- Search index rows are derived runtime data. They can exist in environment-level backups, but they are not required content payloads for export/import portability because rebuild can recreate them from pages, blocks, translations, and Shared Slots.
+- Destructive database reset commands remain guarded. Search rebuild does not require `migrate:fresh`, `migrate:refresh`, `migrate:reset`, or `db:wipe`.
 - Generic public block wrappers are only for simple non-root-owning content blocks. Layout/root-owning blocks such as `Section`, `Container`, `Grid`, `Cluster`, `Card`, `Header`, and `Content Header` own their real WebBlocks UI root markup and carry their public block type metadata on that root instead of receiving an extra outer wrapper.
 - `Code` blocks render as escaped plain `<pre><code>` output without the old card chrome or a visible language label. Language metadata may still be stored and exposed only as a sanitized `data-language` attribute on `<code>`.
 

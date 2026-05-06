@@ -38,6 +38,7 @@ class CoreCommandListTest extends TestCase
             ->doesntExpectOutputToContain($removedHomeMainCommand)
             ->doesntExpectOutputToContain($projectGettingStartedCommand)
             ->doesntExpectOutputToContain($projectNavigationCommand)
+            ->expectsOutputToContain('search:rebuild')
             ->expectsOutputToContain('project:init')
             ->assertExitCode(0);
     }

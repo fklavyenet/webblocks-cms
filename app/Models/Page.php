@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Search\ReindexesPublicSearch;
 use App\Support\Pages\PageRouteResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
 class Page extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
 
     public const TYPE_DEFAULT = 'default';
 
@@ -61,6 +63,12 @@ class Page extends Model
             if ($page->wasChanged('site_id')) {
                 $page->unsetRelation('translations');
             }
+
+            static::refreshSearchForPage($page);
+        });
+
+        static::deleted(function (self $page): void {
+            app(\App\Support\Search\PublicSearchIndexer::class)->deletePage($page);
         });
 
         static::created(function (self $page): void {

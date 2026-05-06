@@ -3,6 +3,7 @@
 namespace App\Support\Pages;
 
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
@@ -16,7 +17,7 @@ class PublicSharedSlotResolver
         private readonly BlockTranslationResolver $blockTranslationResolver,
     ) {}
 
-    public function resolve(PageSlot $slot): Collection
+    public function resolve(PageSlot $slot, Locale|string|null $locale = null): Collection
     {
         $page = $slot->page ?? $slot->page()->first();
         $sharedSlot = $slot->sharedSlot;
@@ -43,7 +44,7 @@ class PublicSharedSlotResolver
 
         $childrenByParent = $assignments->groupBy('parent_id');
 
-        return $this->buildTree($childrenByParent, null)
+        return $this->buildTree($childrenByParent, null, $locale)
             ->values();
     }
 
@@ -58,16 +59,16 @@ class PublicSharedSlotResolver
         return $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug());
     }
 
-    private function buildTree(Collection $childrenByParent, ?int $parentId): Collection
+    private function buildTree(Collection $childrenByParent, ?int $parentId, Locale|string|null $locale = null): Collection
     {
         return $childrenByParent->get($parentId, collect())
             ->sortBy(fn (SharedSlotBlock $assignment) => sprintf('%010d-%010d', (int) $assignment->sort_order, (int) $assignment->id))
             ->values()
-            ->map(function (SharedSlotBlock $assignment) use ($childrenByParent) {
+            ->map(function (SharedSlotBlock $assignment) use ($childrenByParent, $locale) {
                 $block = clone $assignment->block;
-                $block->setRelation('children', $this->buildTree($childrenByParent, $assignment->id));
+                $block->setRelation('children', $this->buildTree($childrenByParent, $assignment->id, $locale));
 
-                return $this->blockTranslationResolver->resolve($block);
+                return $this->blockTranslationResolver->resolve($block, $locale);
             });
     }
 

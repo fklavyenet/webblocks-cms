@@ -68,6 +68,32 @@ Shared Slots are exported and imported as first-class site content:
 
 It does not include install-global runtime data such as users, backups, update history, sessions, or contact submissions.
 
+It also does not require the derived public search index as portable content:
+
+- `public_search_index` is runtime-derived data
+- export/import payloads do not need search rows to recreate the site
+- use `ddev artisan search:rebuild` after import when you need fresh search rows immediately
+
+## Search Index
+
+Search V1 adds an install-level operational screen and command for the derived public search index.
+
+- admin screen: `Admin -> Maintenance -> Search`
+- rebuild command: `ddev artisan search:rebuild`
+
+Supported rebuild scopes:
+
+- whole install
+- one site with `--site=`
+- one locale with `--locale=`
+- one page with `--page=`
+
+Search rebuild is non-destructive:
+
+- it deletes and recreates only derived rows inside the requested scope
+- it does not modify page, block, translation, Shared Slot, or media content
+- it does not require destructive database reset commands
+
 ## Site Clone
 
 Site Clone duplicates site-owned content from one site into another site inside the same install.

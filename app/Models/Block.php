@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
 class Block extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
 
     protected $fillable = [
         'page_id',
@@ -61,6 +63,14 @@ class Block extends Model
                     ->whereKey($block->slot_type_id)
                     ->value('slug') ?? $block->slot;
             }
+        });
+
+        static::saved(function (self $block): void {
+            static::refreshSearchForBlock($block->fresh('page'));
+        });
+
+        static::deleted(function (self $block): void {
+            static::refreshSearchForBlock($block);
         });
     }
 

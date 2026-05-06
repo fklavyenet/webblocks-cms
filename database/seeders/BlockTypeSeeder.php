@@ -231,6 +231,17 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Search Form',
+                'slug' => 'search-form',
+                'category' => 'navigation',
+                'description' => 'Public site search form that targets the current site and locale search route.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 20,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Sidebar Footer',
                 'slug' => 'sidebar-footer',
                 'category' => 'navigation',

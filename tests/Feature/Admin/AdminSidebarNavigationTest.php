@@ -21,6 +21,7 @@ class AdminSidebarNavigationTest extends TestCase
         $content = $response->getContent();
         $reportsHref = 'href="'.route('admin.reports.visitors.index').'"';
         $settingsHref = 'href="'.route('admin.system.settings.edit').'"';
+        $searchHref = 'href="'.route('admin.system.search.index').'"';
         $backupsHref = 'href="'.route('admin.system.backups.index').'"';
         $transfersHref = 'href="'.route('admin.site-transfers.exports.index').'"';
         $updatesHref = 'href="'.route('admin.system.updates.index').'"';
@@ -41,6 +42,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('>Maintenance<', false);
         $response->assertSee('href="'.route('admin.reports.visitors.index').'"', false);
         $response->assertSee('href="'.route('admin.system.settings.edit').'"', false);
+        $response->assertSee('href="'.route('admin.system.search.index').'"', false);
         $response->assertSee('href="'.route('admin.system.backups.index').'"', false);
         $response->assertSee('href="'.route('admin.site-transfers.exports.index').'"', false);
         $response->assertSee('href="'.route('admin.system.updates.index').'"', false);
@@ -55,7 +57,8 @@ class AdminSidebarNavigationTest extends TestCase
         $this->assertSame(1, substr_count($content, $usersHref));
         $this->assertTrue(
             strpos($content, $reportsHref) < strpos($content, $settingsHref)
-            && strpos($content, $settingsHref) < strpos($content, $backupsHref)
+            && strpos($content, $settingsHref) < strpos($content, $searchHref)
+            && strpos($content, $searchHref) < strpos($content, $backupsHref)
             && strpos($content, $backupsHref) < strpos($content, $transfersHref)
             && strpos($content, $transfersHref) < strpos($content, $updatesHref)
         );
@@ -81,6 +84,20 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('wb-nav-group-toggle is-active', false);
         $response->assertSee('>Maintenance<', false);
         $response->assertSee('href="'.route('admin.system.settings.edit').'"', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+    }
+
+    #[Test]
+    public function search_page_marks_maintenance_group_and_search_item_active(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.search.index'));
+
+        $response->assertOk();
+        $response->assertSee('wb-nav-group-toggle is-active', false);
+        $response->assertSee('>Maintenance<', false);
+        $response->assertSee('href="'.route('admin.system.search.index').'"', false);
         $response->assertSee('class="wb-nav-group-item is-active"', false);
     }
 

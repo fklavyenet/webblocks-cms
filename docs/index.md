@@ -37,11 +37,13 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Operations (Backup, Restore, Updates)
 
 - [Operations](operations.md)
+- [Search](search.md)
 - [Updates](updates.md)
 
 ## Public Rendering
 
 - [Public Assets](public-assets.md)
+- [Search](search.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
 
 ## Development

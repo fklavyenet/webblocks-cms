@@ -53,6 +53,7 @@ class BlockRequest extends FormRequest
         $isSidebarNavItem = $selectedBlockType?->slug === 'sidebar-nav-item';
         $isSidebarNavGroup = $selectedBlockType?->slug === 'sidebar-nav-group';
         $isSidebarFooter = $selectedBlockType?->slug === 'sidebar-footer';
+        $isSearchForm = $selectedBlockType?->slug === 'search-form';
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
@@ -80,10 +81,10 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable', 'string'],
+            'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'name' => [($isLayoutPrimitive || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
@@ -170,6 +171,7 @@ class BlockRequest extends FormRequest
             'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
             'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
+            'show_button' => [$isSearchForm ? 'nullable' : 'prohibited', 'boolean'],
             'status' => ['required', Rule::in(['draft', 'published'])],
         ];
     }
@@ -198,6 +200,12 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'search-form') {
+                if (blank($this->input('content'))) {
+                    $validator->errors()->add('content', 'Search placeholder is required.');
                 }
             }
 
@@ -1065,6 +1073,35 @@ class BlockRequest extends FormRequest
                     ? null
                     : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
+
+            if ($blockType?->slug === 'search-form') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedSearchFormEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedSearchFormEdit) {
+                    $settings['show_button'] = (bool) ($data['show_button'] ?? true);
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: 'Search';
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: 'Search';
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: 'Search this site';
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['meta'] = null;
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+
+                $data['variant'] = $isTranslatedSearchFormEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (in_array(trim((string) ($data['variant'] ?? 'primary')), ['primary', 'secondary'], true) ? trim((string) ($data['variant'] ?? 'primary')) : 'primary');
+            }
         }
 
         if (! empty($data['slot_type_id'])) {
@@ -1083,6 +1120,7 @@ class BlockRequest extends FormRequest
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
         unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
         unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
+        unset($data['show_button']);
         unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;

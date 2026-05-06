@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\SharedSlots\SharedSlotSchema;
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SharedSlot extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
 
     public const COMMON_SLOT_NAMES = ['header', 'sidebar', 'main', 'footer'];
 
@@ -20,6 +22,14 @@ class SharedSlot extends Model
         static::saving(function (self $sharedSlot): void {
             $sharedSlot->handle = str((string) $sharedSlot->handle)->slug()->toString();
             $sharedSlot->slot_name = str((string) $sharedSlot->slot_name)->slug()->toString();
+        });
+
+        static::saved(function (self $sharedSlot): void {
+            static::refreshSearchForSharedSlot($sharedSlot);
+        });
+
+        static::deleted(function (self $sharedSlot): void {
+            static::refreshSearchForSharedSlot($sharedSlot);
         });
     }
 

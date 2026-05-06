@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use InvalidArgumentException;
 class PageSlot extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
 
     public const SOURCE_TYPE_PAGE = 'page';
 
@@ -37,6 +39,14 @@ class PageSlot extends Model
             if ($slot->source_type === self::SOURCE_TYPE_SHARED_SLOT && ! $slot->shared_slot_id) {
                 throw new InvalidArgumentException('Shared slot page slots must reference a shared slot.');
             }
+        });
+
+        static::saved(function (self $slot): void {
+            static::refreshSearchForPage($slot->page ?? $slot->page()->first());
+        });
+
+        static::deleted(function (self $slot): void {
+            static::refreshSearchForPage($slot->page ?? $slot->page()->first());
         });
     }
 

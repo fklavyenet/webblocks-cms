@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Add Search V1 as a core CMS feature with a database-backed `public_search_index`, public `/search` and localized search routes, and site plus locale scoped published-only results.
+- Add compatible Shared Slot content extraction for Search V1 while excluding hidden Shared Slot source pages, disabled slots, and incompatible Shared Slot assignments from public search results.
+- Add a first-class `Search Form` block with translation-backed label, placeholder, and button text plus public WebBlocks UI-aligned rendering.
+- Add a super-admin System > Search status screen and non-destructive `ddev artisan search:rebuild` command for rebuilding derived search rows.
+- Keep destructive database command guards unchanged and document that Search V1 rebuilds derived data without requiring database resets.
 - Retarget the project-layer WebBlocks UI Architecture and Foundation imports to the CMS default site by default, with explicit `{ "target": "default_site" }` payload metadata and default-site preview URLs.
 - Allow the project-layer Architecture and Foundation imports to recreate those docs pages idempotently on the default site after a local database restore without creating duplicate block trees or duplicate docs navigation items.
 - Add a destructive database command safety guard that blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe` outside the testing environment unless `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` is set.

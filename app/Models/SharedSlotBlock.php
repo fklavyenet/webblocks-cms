@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SharedSlotBlock extends Model
 {
     use HasFactory;
+    use ReindexesPublicSearch;
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $assignment): void {
+            static::refreshSearchForSharedSlot($assignment->shared_slot_id);
+        });
+
+        static::deleted(function (self $assignment): void {
+            static::refreshSearchForSharedSlot($assignment->shared_slot_id);
+        });
+    }
 
     protected $fillable = [
         'shared_slot_id',
