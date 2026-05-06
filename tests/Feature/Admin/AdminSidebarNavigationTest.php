@@ -3,7 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Site;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -86,6 +88,22 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('>Maintenance<', false);
         $response->assertSee('href="'.route('admin.system.settings.edit').'"', false);
         $response->assertSee('class="wb-nav-group-item is-active"', false);
+    }
+
+    #[Test]
+    public function sidebar_brand_and_footer_stay_fixed_when_project_identity_changes(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(['key' => 'system.project_name'], ['value' => 'Project Alpha']);
+        SystemSetting::query()->updateOrCreate(['key' => 'system.project_tagline'], ['value' => 'Admin context only']);
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('>WebBlocks CMS<', false);
+        $response->assertSee('>A modern block-based CMS<', false);
+        $response->assertSee('WebBlocks CMS v'.WebBlocks::VERSION);
     }
 
     #[Test]

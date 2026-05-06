@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'System Settings',
-        'description' => 'Manage compact system-level settings for locale, timezone, privacy, and runtime information. Public site branding and SEO defaults live on each Site.',
+        'description' => 'Manage compact system-level settings for project identity, locale, timezone, privacy, and runtime information. Public site branding and SEO defaults live on each Site.',
     ])
 
     @include('admin.partials.flash')
@@ -43,6 +43,45 @@
         </div>
 
         <div class="wb-card">
+            <div class="wb-card-header"><strong>Project</strong></div>
+
+            <div class="wb-card-body">
+                <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-4">
+                    @csrf
+                    @method('PUT')
+
+                    <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
+                    <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+                    <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
+
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-text-sm wb-text-muted">
+                            Project identity is shown only in the admin interface so users can distinguish this CMS project from other WebBlocks CMS installs.
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="settings_project_name">Project Name</label>
+                            <input id="settings_project_name" name="project_name" type="text" class="wb-input" maxlength="255" value="{{ $settings['project_name'] }}">
+                            <div class="wb-text-sm wb-text-muted">Shown in the admin topbar and admin browser titles.</div>
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="settings_project_tagline">Project Tagline</label>
+                            <input id="settings_project_tagline" name="project_tagline" type="text" class="wb-input" maxlength="255" value="{{ $settings['project_tagline'] }}">
+                            <div class="wb-text-sm wb-text-muted">Shown under the project name in the admin topbar when provided.</div>
+                        </div>
+
+                        <div class="wb-text-sm wb-text-muted">
+                            These fields do not change the WebBlocks CMS product brand, do not change public site metadata, and do not replace Site Branding or Page SEO fields.
+                        </div>
+                    </div>
+
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />
+                </form>
+            </div>
+        </div>
+
+        <div class="wb-card">
             <div class="wb-card-header"><strong>Cookie settings</strong></div>
 
             <div class="wb-card-body">
@@ -50,6 +89,8 @@
                     @csrf
                     @method('PUT')
 
+                    <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
+                    <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
                     <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
                     <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
 

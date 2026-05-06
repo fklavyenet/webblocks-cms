@@ -9,6 +9,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - block-based page building with reusable layouts, slots, and blocks
 - multisite and locale-aware page management
 - fixed WebBlocks CMS product identity in admin chrome, with public site identity managed per site
+- admin-only Project Name and Project Tagline settings so multiple installs are easier to distinguish without changing public metadata
 - install-level user management with `super_admin`, `site_admin`, and `editor` roles
 - editorial workflow for pages with review and publishing states
 - database-backed public site search scoped by site and locale, with a header-triggered modal UX, `/search` fallback page, Search Form block support, and a System > Search rebuild screen
@@ -98,6 +99,8 @@ On the Edit Site screen, keep internal site routing fields such as `Name`, `Hand
 
 In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a compact one-row-per-block table with block type, a single primary summary, a dedicated children-count column, status, and actions. The Block Picker supports search, category filtering, and sortable catalog-style rows so larger block catalogs remain manageable. On narrow screens the table remains one-row-per-block and scrolls horizontally instead of collapsing labels into vertical letter stacks. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
 
+`Admin -> System -> Settings` now also owns Project Identity. `Project Name` and `Project Tagline` are admin-only context labels used in the topbar and admin browser titles so teams can distinguish one install from another. They do not change the fixed WebBlocks CMS sidebar brand or version footer, and they do not affect public site metadata, favicon, SEO defaults, search scope, or locale-aware page metadata.
+
 Admin index and listing screens such as `Block Types`, `Pages`, `Media`, `Contact Messages`, and `Users` should use the shared compact listing filter toolbar partial at `resources/views/admin/partials/listing-filters.blade.php`. The contract is: Search stays on the far left and grows to fill the remaining horizontal space, compact select and other small filter inputs sit to the right of Search, and Apply or Reset actions stay right-aligned on the same toolbar row on wide screens. Admin list pagination should use the shared `admin.partials.pagination` partial, and dense admin listings should enable its compact mode so the page links and compact summary render together in one row using the `from-to/total` format instead of a separate verbose summary line. On the `Pages` index, the row-level `Page Details` action opens the standard admin modal pattern with grouped `Page` and `Status & Audit` cards and keeps only `Edit Page` plus `Open Public Page` when a public URL exists. Page Details also shows system-managed audit attribution for who created, last edited, published, archived, or submitted the page for review when that metadata exists; older, deleted-user, console, and imported records safely show `Not recorded` instead of guessing a user.
 
 See `docs/getting-started.md` for the first-use workflow.
@@ -150,7 +153,9 @@ See `docs/getting-started.md` for the first-use workflow.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.
 - Site-level public metadata now comes from the currently resolved site. `display_name`, `tagline`, favicon, social image, and SEO Defaults provide public `<head>` fallbacks by site and host context.
 - Page-level SEO overrides live on `page_translations`, stay locale-aware, and affect public `<head>` metadata plus social metadata only.
-- Metadata precedence is now: page translation SEO override, page translation title where applicable, site SEO defaults, then safe CMS fallback when no site or page context exists.
+- Metadata precedence is now: site label plus page translation SEO/title for the public title, page translation SEO override for description and keywords where applicable, site SEO defaults, then safe CMS fallback when no site or page context exists.
+- Public page titles now default to `Site Label · Page Label`, using site `display_name`, then site `seo_title`, then site `name` for site context.
+- Public search modal copy now names the resolved site being searched when a site label is available.
 - Page-level SEO does not change CMS admin product identity, does not replace page body content, and is not treated as public search body content by default.
 - `default` uses standard semantic wrappers such as `header`, `main`, `aside`, and `footer`. `docs` automatically maps header, sidebar, and main slots to the docs navbar, sidebar, and main wrappers.
 - Existing pages remain site-scoped after creation. The normal `Edit Page` form shows the current site as read-only context and does not move pages between sites.

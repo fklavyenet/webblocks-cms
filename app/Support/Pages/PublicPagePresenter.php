@@ -9,6 +9,7 @@ use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\PublicRendering\SlotWrapperResolver;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class PublicPagePresenter
 {
@@ -47,42 +48,45 @@ class PublicPagePresenter
         $site = $page?->site;
         $translation = $page?->currentTranslation;
         $siteName = $site?->publicDisplayName() ?? $site?->name ?? config('app.name');
+        $siteLabel = $this->siteLabel($site);
         $siteSeoTitle = trim((string) ($site?->seo_title ?? ''));
         $siteSeoDescription = trim((string) ($site?->seo_description ?? ''));
         $siteSeoKeywords = trim((string) ($site?->seo_keywords ?? ''));
         $pageTitle = $this->trimmed($translation?->name);
         $seoTitle = $this->trimmed($translation?->seo_title);
+        $pageLabel = $seoTitle ?? $pageTitle;
         $seoDescription = $this->trimmed($translation?->seo_description);
         $seoKeywords = $this->trimmed($translation?->seo_keywords);
         $ogTitle = $this->trimmed($translation?->og_title);
         $ogDescription = $this->trimmed($translation?->og_description);
         $ogImage = $this->trimmed($translation?->ogImage?->url())
             ?? $this->trimmed($site?->socialImageAsset?->url());
-        $title = $seoTitle
-            ?? $pageTitle
-            ?? $siteSeoTitle
-            ?? $this->trimmed($siteName)
+        $title = $this->composeSiteFirstTitle($siteLabel, $pageLabel)
+            ?? config('app.name');
+        $resolvedOgTitle = $ogTitle
+            ?? $this->composeSiteFirstTitle($siteLabel, $pageLabel)
             ?? config('app.name');
 
         return [
             'site_name' => $siteName,
             'site_tagline' => trim((string) ($site?->tagline ?? config('app.slogan'))),
+            'site_label' => $siteLabel,
             'title' => $title,
             'meta_description' => $seoDescription ?? $siteSeoDescription,
             'meta_keywords' => $seoKeywords ?? $siteSeoKeywords,
             'favicon_url' => $this->trimmed($site?->faviconAsset?->url()),
-            'og_title' => $ogTitle
-                ?? $seoTitle
-                ?? $pageTitle
-                ?? $siteSeoTitle
-                ?? $this->trimmed($siteName)
-                ?? config('app.name'),
+            'og_title' => $resolvedOgTitle,
             'og_description' => $ogDescription
                 ?? $seoDescription
                 ?? $siteSeoDescription,
             'og_image' => $ogImage,
             'og_site_name' => $siteName,
         ];
+    }
+
+    public function publicSiteLabel(?Page $page = null): ?string
+    {
+        return $this->siteLabel($page?->site);
     }
 
     private function presentSlot(PageSlot $slot, Collection $topLevelBlocks): array
@@ -143,5 +147,28 @@ class PublicPagePresenter
         $value = trim((string) $value);
 
         return $value !== '' ? $value : null;
+    }
+
+    private function siteLabel(mixed $site): ?string
+    {
+        return $this->trimmed($site?->display_name)
+            ?? $this->trimmed($site?->seo_title)
+            ?? $this->trimmed($site?->name);
+    }
+
+    private function composeSiteFirstTitle(?string $siteLabel, ?string $pageLabel): ?string
+    {
+        if ($siteLabel !== null && $pageLabel !== null) {
+            $siteNormalized = Str::lower($siteLabel);
+            $pageNormalized = Str::lower($pageLabel);
+
+            if ($siteNormalized === $pageNormalized || Str::contains($pageNormalized, $siteNormalized)) {
+                return $pageLabel;
+            }
+
+            return $siteLabel.' · '.$pageLabel;
+        }
+
+        return $siteLabel ?? $pageLabel;
     }
 }

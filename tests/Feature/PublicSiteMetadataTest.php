@@ -9,6 +9,7 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
+use App\Models\SystemSetting;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\BlockTypeSeeder;
@@ -38,7 +39,8 @@ class PublicSiteMetadataTest extends TestCase
         $response->assertOk();
         $response->assertSee('<meta name="description" content="Default site description.">', false);
         $response->assertSee('<meta name="keywords" content="alpha,beta,gamma">', false);
-        $response->assertSee('<meta property="og:title" content="Home">', false);
+        $response->assertSee('<title>Marketing Site · Home</title>', false);
+        $response->assertSee('<meta property="og:title" content="Marketing Site · Home">', false);
         $response->assertSee('<meta property="og:description" content="Default site description.">', false);
     }
 
@@ -85,10 +87,10 @@ class PublicSiteMetadataTest extends TestCase
         $response = $this->get('http://campaign.example.test/p/campaign-home');
 
         $response->assertOk();
-        $response->assertSee('<title>Campaign Home</title>', false);
+        $response->assertSee('<title>Campaign Public Name · Campaign Home</title>', false);
         $response->assertSee('<meta name="description" content="Campaign description.">', false);
         $response->assertSee('<meta name="keywords" content="campaign">', false);
-        $response->assertSee('<meta property="og:title" content="Campaign Home">', false);
+        $response->assertSee('<meta property="og:title" content="Campaign Public Name · Campaign Home">', false);
         $response->assertDontSee('Primary description.');
         $response->assertDontSee('Primary Meta Title');
     }
@@ -119,7 +121,7 @@ class PublicSiteMetadataTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<title>Page SEO Title</title>', false);
+        $response->assertSee('<title>Marketing Site · Page SEO Title</title>', false);
         $response->assertSee('<meta name="description" content="Page SEO Description">', false);
         $response->assertSee('<meta name="keywords" content="page,keywords">', false);
         $response->assertSee('<meta property="og:title" content="Page OG Title">', false);
@@ -166,7 +168,7 @@ class PublicSiteMetadataTest extends TestCase
         $response = $this->get('http://primary.example.test/tr/p/anasayfa');
 
         $response->assertOk();
-        $response->assertSee('<title>TR SEO Baslik</title>', false);
+        $response->assertSee('<title>Site Default Title · TR SEO Baslik</title>', false);
         $response->assertSee('<meta name="description" content="TR SEO Aciklama">', false);
         $response->assertSee('<meta name="keywords" content="tr,anahtar">', false);
         $response->assertSee('<meta property="og:title" content="TR OG Baslik">', false);
@@ -199,10 +201,10 @@ class PublicSiteMetadataTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<title>Home</title>', false);
+        $response->assertSee('<title>Marketing Site · Home</title>', false);
         $response->assertSee('<meta name="description" content="Site default description.">', false);
         $response->assertSee('<meta name="keywords" content="site,keywords">', false);
-        $response->assertSee('<meta property="og:title" content="Home">', false);
+        $response->assertSee('<meta property="og:title" content="Marketing Site · Home">', false);
         $response->assertSee('<meta property="og:description" content="Site default description.">', false);
         $response->assertDontSee('<meta property="og:image"', false);
     }
@@ -215,11 +217,29 @@ class PublicSiteMetadataTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<title>Home</title>', false);
+        $response->assertSee('<title>Default Site · Home</title>', false);
         $response->assertDontSee('<meta name="description"', false);
         $response->assertDontSee('<meta name="keywords"', false);
-        $response->assertSee('<meta property="og:title" content="Home">', false);
+        $response->assertSee('<meta property="og:title" content="Default Site · Home">', false);
         $response->assertDontSee('<meta property="og:description"', false);
+    }
+
+    #[Test]
+    public function public_title_does_not_use_project_name_and_avoids_duplicate_site_label(): void
+    {
+        [$site, $locale] = $this->seedPublicSite();
+        $page = Page::query()->firstOrFail();
+
+        SystemSetting::query()->updateOrCreate(['key' => 'system.project_name'], ['value' => 'Admin Project']);
+        $site->update(['display_name' => 'WebBlocks UI Docs']);
+        $page->translationForLocale($locale)->update(['seo_title' => 'WebBlocks UI Docs']);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<title>WebBlocks UI Docs</title>', false);
+        $response->assertSee('<meta property="og:title" content="WebBlocks UI Docs">', false);
+        $response->assertDontSee('Admin Project');
     }
 
     private function seedPublicSite(): array

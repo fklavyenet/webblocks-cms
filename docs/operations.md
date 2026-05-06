@@ -4,7 +4,7 @@
 
 WebBlocks CMS includes install-level operational tools for updates, backups, and site transfer packages.
 
-`Settings` also lives under the admin `System` navigation because it controls install-level locale, timezone, privacy, version, and environment settings.
+`Settings` also lives under the admin `System` navigation because it controls install-level project identity, locale, timezone, privacy, version, and environment settings.
 
 `Maintenance` remains the operational tools group for:
 
@@ -108,6 +108,7 @@ System Settings is the compact install-level configuration screen.
 
 It keeps:
 
+- Project Name and Project Tagline for admin-only install context
 - default locale
 - timezone
 - cookie or privacy banner settings
@@ -119,8 +120,9 @@ It does not control:
 - the fixed WebBlocks CMS admin brand labels
 - public site branding
 - public site SEO defaults
+- public favicon, public search scope, or page translation SEO
 
-Those public-facing values now live on each Site instead.
+Project Identity helps distinguish one CMS install from another in the admin topbar and browser title. Those public-facing values still live on each Site or page translation instead.
 
 ## Site Clone
 

@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SlotType;
 use App\Models\Site;
+use App\Models\SystemSetting;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Search\PublicSearchIndexer;
 use Database\Seeders\BlockTypeSeeder;
@@ -190,6 +191,46 @@ class PublicSearchTest extends TestCase
             ->assertOk()
             ->assertSee('Foundation')
             ->assertSee('/p/foundation');
+    }
+
+    #[Test]
+    public function search_modal_description_includes_the_resolved_site_label(): void
+    {
+        [$site] = $this->seedSearchFoundation();
+        $site->update([
+            'display_name' => 'Docs Portal',
+            'seo_title' => 'Docs SEO Title',
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Search published content in Docs Portal.');
+        $response->assertDontSee('Search published content for this site.');
+    }
+
+    #[Test]
+    public function search_modal_description_is_scoped_to_the_current_site_and_not_project_name(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+
+        SystemSetting::query()->updateOrCreate(['key' => 'system.project_name'], ['value' => 'Admin Project']);
+
+        $campaignSite = Site::query()->create([
+            'name' => 'Campaign Admin Name',
+            'display_name' => 'Campaign Public Name',
+            'handle' => 'campaign',
+            'domain' => 'campaign.example.test',
+            'is_primary' => false,
+        ]);
+        $campaignSite->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+        $this->pageWithText($campaignSite, $locale, $slotType, $plainTextType, 'Campaign Home', 'campaign-home', 'Campaign content');
+
+        $response = $this->get('http://campaign.example.test/p/campaign-home');
+
+        $response->assertOk();
+        $response->assertSee('Search published content in Campaign Public Name.');
+        $response->assertDontSee('Admin Project');
     }
 
     private function seedSearchFoundation(): array

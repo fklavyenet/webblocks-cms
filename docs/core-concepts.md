@@ -38,6 +38,10 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 ## Site Identity
 
 - WebBlocks CMS product identity is fixed in the admin shell and comes from `App\Support\WebBlocks`.
+- Project Identity is install-level admin context configured in `Admin -> System -> Settings`.
+- Project Identity currently includes `Project Name` and `Project Tagline`.
+- Project Identity is used only for admin topbar context and admin browser titles.
+- Project Identity does not change the fixed WebBlocks CMS sidebar brand, the sidebar version footer, public site metadata, public favicon, public search scope, or page translation SEO values.
 - Site records own public-facing identity and metadata.
 - `sites.name` remains the internal admin record name.
 - `display_name` is the optional public site name override.
@@ -97,15 +101,23 @@ For docs-style pages, use page shell instead of pushing layout responsibility do
 
 ## Public Metadata
 
-- Public metadata is resolved from the current site and current page translation context, not from editable install-level application name or slogan settings.
-- Title precedence is: page translation `seo_title`, page translation title, site `seo_title`, site public display name or site name, then a safe CMS fallback.
+- Public metadata is resolved from the current site and current page translation context, not from Project Identity or editable legacy application name or slogan settings.
+- Public page titles default to `Site Label · Page Label`.
+- Site label precedence is: site `display_name`, site `seo_title`, site `name`, then a safe CMS fallback.
+- Page label precedence is: page translation `seo_title`, then page translation title.
 - Description precedence is: page translation `seo_description`, site `seo_description`, then no description tag.
 - Keywords precedence is: page translation `seo_keywords`, site `seo_keywords`, then no keywords tag.
-- Open Graph title precedence is: page translation `og_title`, page translation `seo_title`, page translation title, site `seo_title`, site public display name or site name.
+- Open Graph title precedence is: page translation `og_title`, otherwise the same site-first public title pattern.
 - Open Graph description precedence is: page translation `og_description`, page translation `seo_description`, site `seo_description`.
 - Open Graph image precedence is: page translation `og_image_asset_id`, site `social_image_asset_id`, then no `og:image` tag.
 - Site favicon media is unchanged and still stays site-level only in this phase.
 - Multisite metadata stays host-aware through the resolved public site; the primary site is not used blindly when another site matches the current host.
+
+## Search Context
+
+- Public search stays scoped by resolved site and locale.
+- The search modal copy can include the resolved site label so users can see which site is being searched.
+- Public search copy uses Site Identity, not Project Identity.
 
 ## Shared Slots
 

@@ -24,7 +24,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('partials.head-meta', [
-            'title' => $title ?? WebBlocks::name(),
+            'title' => $adminBrowserTitle ?? $title ?? WebBlocks::name(),
             'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
         ])
 
@@ -154,12 +154,14 @@
                         <span></span><span></span><span></span>
                     </button>
 
-                    <div class="wb-navbar-identity">
-                        <span class="wb-navbar-brand">
-                            <span>{{ WebBlocks::name() }}</span>
-                        </span>
-                        <span class="wb-navbar-context">{{ $heading ?? WebBlocks::slogan() }}</span>
-                    </div>
+                     <div class="wb-navbar-identity">
+                         <span class="wb-navbar-brand">
+                            <span>{{ $adminProjectIdentity['name'] ?? WebBlocks::name() }}</span>
+                         </span>
+                        @if (($adminProjectIdentity['tagline'] ?? '') !== '')
+                            <span class="wb-navbar-context">{{ $adminProjectIdentity['tagline'] }}</span>
+                        @endif
+                     </div>
 
                     <div class="wb-navbar-end wb-ms-auto">
                         <div class="wb-navbar-iconbar">

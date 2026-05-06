@@ -12,12 +12,13 @@
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
         $publicMeta = $publicMeta ?? [
             'site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
+            'site_label' => trim((string) ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name'))),
             'site_tagline' => trim((string) ($resolvedSite?->tagline ?? config('app.slogan'))),
-            'title' => trim((string) ($title ?? ($resolvedSite?->seo_title ?? $resolvedSite?->publicDisplayName() ?? config('app.name')))),
+            'title' => trim((string) ($title ?? ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name')))),
             'meta_description' => trim((string) ($metaDescription ?? ($resolvedSite?->seo_description ?? ''))),
             'meta_keywords' => trim((string) ($metaKeywords ?? ($resolvedSite?->seo_keywords ?? ''))),
             'favicon_url' => $resolvedSite?->faviconAsset?->url(),
-            'og_title' => trim((string) ($ogTitle ?? ($resolvedSite?->seo_title ?? $title ?? $resolvedSite?->publicDisplayName() ?? config('app.name')))),
+            'og_title' => trim((string) ($ogTitle ?? $title ?? ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name')))),
             'og_description' => trim((string) ($ogDescription ?? ($metaDescription ?? $resolvedSite?->seo_description ?? ''))),
             'og_image' => trim((string) ($ogImage ?? ($resolvedSite?->socialImageAsset?->url() ?? ''))),
             'og_site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),

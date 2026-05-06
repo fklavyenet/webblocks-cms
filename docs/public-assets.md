@@ -27,6 +27,7 @@ Public favicon and social sharing artwork are now selected from the shared Media
 - these are site-scoped metadata assets, not CMS product-brand assets
 - page translation `og_image_asset_id` can override the site social image for one locale when that asset has a public URL
 - page-level SEO assets affect public metadata only and do not change CMS admin branding
+- install-level Project Identity does not affect public favicon, public metadata, or site-scoped social sharing assets
 
 ## WebBlocks UI Assets
 

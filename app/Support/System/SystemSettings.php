@@ -3,20 +3,36 @@
 namespace App\Support\System;
 
 use App\Models\Locale;
+use App\Models\Site;
 use App\Models\SystemSetting;
+use App\Support\WebBlocks;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class SystemSettings
 {
+    public const PROJECT_NAME = 'system.project_name';
+    public const PROJECT_TAGLINE = 'system.project_tagline';
     public const APP_NAME = 'system.app_name';
     public const APP_SLOGAN = 'system.app_slogan';
     public const DEFAULT_LOCALE = 'system.default_locale';
     public const TIMEZONE = 'system.timezone';
     public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
+    private const READABLE_KEYS = [
+        self::PROJECT_NAME,
+        self::PROJECT_TAGLINE,
+        self::APP_NAME,
+        self::APP_SLOGAN,
+        self::DEFAULT_LOCALE,
+        self::TIMEZONE,
+        self::VISITOR_CONSENT_BANNER_ENABLED,
+    ];
+
     public const MANAGED_KEYS = [
+        self::PROJECT_NAME,
+        self::PROJECT_TAGLINE,
         self::DEFAULT_LOCALE,
         self::TIMEZONE,
         self::VISITOR_CONSENT_BANNER_ENABLED,
@@ -30,7 +46,7 @@ class SystemSettings
 
         try {
             return SystemSetting::query()
-                ->whereIn('key', self::MANAGED_KEYS)
+                ->whereIn('key', self::READABLE_KEYS)
                 ->pluck('value', 'key')
                 ->all();
         } catch (Throwable) {
@@ -79,6 +95,53 @@ class SystemSettings
         $timezone = trim((string) $this->get(self::TIMEZONE, ''));
 
         return $timezone !== '' ? $timezone : (string) config('app.timezone', 'UTC');
+    }
+
+    public function projectName(): ?string
+    {
+        return $this->trimmed($this->get(self::PROJECT_NAME));
+    }
+
+    public function projectTagline(): ?string
+    {
+        return $this->trimmed($this->get(self::PROJECT_TAGLINE));
+    }
+
+    public function adminProjectIdentity(): array
+    {
+        $projectName = $this->projectName();
+        $primarySite = $this->primarySite();
+        $siteName = $this->trimmed($primarySite?->publicDisplayName())
+            ?? $this->trimmed($primarySite?->name);
+
+        return [
+            'name' => $projectName
+                ?? $siteName
+                ?? WebBlocks::name(),
+            'tagline' => $projectName !== null ? ($this->projectTagline() ?? '') : '',
+        ];
+    }
+
+    public function adminBrowserTitle(?string $screenTitle = null): string
+    {
+        $screenTitle = $this->trimmed($screenTitle);
+        $projectName = $this->projectName();
+        $productName = WebBlocks::name();
+        $parts = [];
+
+        if ($projectName !== null) {
+            $parts[] = $projectName;
+        }
+
+        if ($screenTitle !== null && ! in_array($screenTitle, $parts, true)) {
+            $parts[] = $screenTitle;
+        }
+
+        if (! in_array($productName, $parts, true)) {
+            $parts[] = $productName;
+        }
+
+        return implode(' · ', $parts);
     }
 
     public function visitorConsentBannerEnabled(): bool
@@ -152,5 +215,25 @@ class SystemSettings
         } catch (Throwable) {
             return false;
         }
+    }
+
+    private function primarySite(): ?Site
+    {
+        try {
+            if (! Schema::hasTable('sites')) {
+                return null;
+            }
+
+            return Site::query()->primaryFirst()->first();
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function trimmed(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : null;
     }
 }

@@ -42,7 +42,13 @@ The primary public UX is an enhanced search modal opened from the `Header Action
 - the trigger remains a normal link to the current locale's `/search` route, so direct links, no-JS usage, and accessibility fallback still work
 - modal results are powered by `public_search_index`
 - results remain scoped to the current resolved site and locale
+- the modal description can name the resolved site label so users can see which site is being searched
 - the fallback `/search` page remains the canonical non-JS and direct-link experience
+
+The public search modal uses Site Identity only:
+
+- site label precedence is `display_name`, then `seo_title`, then `name`
+- Project Identity from `System -> Settings` is admin-only and does not affect public search copy or scope
 
 The JSON endpoint returns safe structured payload data for the modal:
 

@@ -7,6 +7,10 @@
     $publicSearchLocale = $publicRouteResolver->currentLocale(request());
     $publicSearchSearchPath = $publicRouteResolver->searchPath($publicSearchLocale->code, $publicSearchSite);
     $publicSearchJsonPath = $publicRouteResolver->searchJsonPath($publicSearchLocale->code, $publicSearchSite);
+    $publicSearchSiteLabel = trim((string) ($publicSearchSite->display_name ?: $publicSearchSite->seo_title ?: $publicSearchSite->name));
+    $publicSearchDescription = $publicSearchSiteLabel !== ''
+        ? 'Search published content in '.$publicSearchSiteLabel.'.'
+        : 'Search published content for this site.';
 @endphp
 
 @if ($publicSearchSearchPath && $publicSearchJsonPath)
@@ -28,7 +32,7 @@
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
                             <h2 class="wb-modal-title" id="{{ $publicSearchTitleId }}">Search</h2>
-                            <p class="wb-text-sm wb-text-muted" id="{{ $publicSearchDescriptionId }}">Search published content for this site.</p>
+                            <p class="wb-text-sm wb-text-muted" id="{{ $publicSearchDescriptionId }}">{{ $publicSearchDescription }}</p>
                         </div>
 
                         <button type="button" class="wb-modal-close" data-wb-public-search-close aria-label="Close search">

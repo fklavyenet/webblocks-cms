@@ -20,6 +20,8 @@ class SystemSettingsController extends Controller
     {
         return view('admin.system.settings', [
             'settings' => [
+                'project_name' => old('project_name', $this->systemSettings->projectName()),
+                'project_tagline' => old('project_tagline', $this->systemSettings->projectTagline()),
                 'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
                 'timezone' => old('timezone', $this->systemSettings->timezone()),
                 'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),

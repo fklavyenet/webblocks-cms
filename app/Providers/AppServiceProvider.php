@@ -75,7 +75,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.admin', function ($view): void {
+            $systemSettings = app(SystemSettings::class);
+
             $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());
+            $view->with('adminProjectIdentity', $systemSettings->adminProjectIdentity());
+            $view->with('adminBrowserTitle', $systemSettings->adminBrowserTitle($view->getData()['title'] ?? null));
         });
 
         RateLimiter::for('contact-form-submissions', function (Request $request) {
