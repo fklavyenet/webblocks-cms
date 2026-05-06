@@ -101,6 +101,17 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Code',
+                'slug' => 'code',
+                'category' => 'content',
+                'description' => 'Translated code snippet body with a shared optional syntax language label.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 7,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Button Link',
                 'slug' => 'button_link',
                 'category' => 'content',
@@ -306,7 +317,6 @@ class BlockTypeSeeder extends Seeder
         collect([
             'text' => 'Text',
             'callout' => 'Callout',
-            'code' => 'Code',
             'list' => 'List',
             'accordion' => 'Accordion',
             'tabs' => 'Tabs',

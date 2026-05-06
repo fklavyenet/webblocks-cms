@@ -638,11 +638,25 @@ class BlockController extends Controller
     {
         $selectedId = $request->integer('block_type_id') ?: $block->block_type_id;
 
-        if (! $selectedId && $block->type) {
-            return $blockTypes->firstWhere('slug', $block->type);
+        if ($selectedId) {
+            $selectedBlockType = $blockTypes->firstWhere('id', $selectedId)
+                ?? $block->blockType
+                ?? BlockType::query()->find($selectedId);
+
+            if ($selectedBlockType) {
+                return $selectedBlockType;
+            }
         }
 
-        return $blockTypes->firstWhere('id', $selectedId);
+        $typeSlug = trim((string) ($block->typeSlug() ?? $block->type));
+
+        if ($typeSlug === '') {
+            return null;
+        }
+
+        return $blockTypes->firstWhere('slug', $typeSlug)
+            ?? $block->blockType
+            ?? BlockType::query()->where('slug', $typeSlug)->first();
     }
 
     private function builderChildItemsFrom(Request $request, string $inputKey, bool $includeSubtitle = false): array

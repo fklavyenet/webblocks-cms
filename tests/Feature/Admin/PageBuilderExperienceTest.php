@@ -719,19 +719,7 @@ class PageBuilderExperienceTest extends TestCase
     {
         $this->seedFoundation();
 
-        $codeType = BlockType::query()->updateOrCreate(
-            ['slug' => 'code'],
-            [
-                'name' => 'Code',
-                'category' => 'content',
-                'description' => 'Legacy code block for translated snippets.',
-                'source_type' => 'static',
-                'is_system' => false,
-                'is_container' => false,
-                'sort_order' => 20,
-                'status' => 'published',
-            ],
-        );
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
 
         $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 1);
@@ -749,6 +737,50 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Add Block: Code');
         $response->assertSee('Syntax Language');
         $this->assertFalse(Str::contains((string) $response->getContent(), 'Undefined variable $isDefaultLocale'));
+    }
+
+    #[Test]
+    public function existing_code_blocks_open_the_slot_edit_modal_after_catalog_refresh(): void
+    {
+        $this->seedFoundation();
+
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main, 'Getting Started', 'getting-started');
+
+        $codeBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $codeType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Install command',
+            'subtitle' => 'composer.json',
+            'content' => 'ddev composer install',
+            'settings' => json_encode(['language' => 'bash'], JSON_THROW_ON_ERROR),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->seed(BlockTypeSeeder::class);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $codeBlock->id]));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-editor-modal"', false);
+        $response->assertSee('Edit Block: Code (Getting Started / Main)', false);
+        $response->assertSee('name="_slot_block_mode" value="edit"', false);
+        $response->assertSee('name="_slot_block_id" value="'.$codeBlock->id.'"', false);
+        $response->assertSee('name="title"', false);
+        $response->assertSee('name="subtitle"', false);
+        $response->assertSee('name="content"', false);
+        $response->assertSee('name="language"', false);
+        $response->assertSee('ddev composer install');
+        $response->assertSee('value="bash"', false);
+        $response->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $codeBlock->id]).'" class="wb-action-btn wb-action-btn-edit"', false);
     }
 
     #[Test]
@@ -2165,6 +2197,26 @@ class PageBuilderExperienceTest extends TestCase
         $quoteResponse->assertSee('Add Block: Quote');
         $quoteResponse->assertSee('name="content"', false);
         $quoteResponse->assertSee('name="variant"', false);
+    }
+
+    #[Test]
+    public function code_table_toc_quote_and_header_are_seeded_as_published_catalog_entries_while_heading_stays_removed(): void
+    {
+        $this->seedFoundation();
+
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
+        $tableType = BlockType::query()->where('slug', 'table')->firstOrFail();
+        $tocType = BlockType::query()->where('slug', 'toc')->firstOrFail();
+        $quoteType = BlockType::query()->where('slug', 'quote')->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $this->assertSame('published', $codeType->status);
+        $this->assertSame('content', $codeType->category);
+        $this->assertSame('published', $tableType->status);
+        $this->assertSame('published', $tocType->status);
+        $this->assertSame('published', $quoteType->status);
+        $this->assertSame('published', $headerType->status);
+        $this->assertDatabaseMissing('block_types', ['slug' => 'heading']);
     }
 
     #[Test]

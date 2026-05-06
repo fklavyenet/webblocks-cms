@@ -482,7 +482,7 @@ class SharedSlotController extends Controller
 
         if ($editingBlock) {
             $editingBlock = $this->blockTranslationResolver->resolve($editingBlock, $activeLocale);
-            $selectedBlockType = $blockTypes->firstWhere('id', (int) old('block_type_id', $editingBlock->block_type_id));
+            $selectedBlockType = $this->resolvedEditorBlockType($blockTypes, $editingBlock, old('block_type_id'));
 
             if ($selectedBlockType) {
                 $editingBlock->block_type_id = $selectedBlockType->id;
@@ -625,6 +625,41 @@ class SharedSlotController extends Controller
             ->values();
 
         return $validCategories->contains($requestedCategory) ? $requestedCategory : null;
+    }
+
+    private function resolvedEditorBlockType($publishedBlockTypes, Block $block, mixed $requestedBlockTypeId = null): ?BlockType
+    {
+        $requestedId = (int) $requestedBlockTypeId;
+
+        if ($requestedId > 0) {
+            $requestedBlockType = $publishedBlockTypes->firstWhere('id', $requestedId)
+                ?? BlockType::query()->find($requestedId);
+
+            if ($requestedBlockType) {
+                return $requestedBlockType;
+            }
+        }
+
+        $blockTypeId = (int) ($block->block_type_id ?? 0);
+
+        if ($blockTypeId > 0) {
+            $resolvedById = $publishedBlockTypes->firstWhere('id', $blockTypeId)
+                ?? $block->blockType
+                ?? BlockType::query()->find($blockTypeId);
+
+            if ($resolvedById) {
+                return $resolvedById;
+            }
+        }
+
+        $typeSlug = trim((string) $block->typeSlug());
+
+        if ($typeSlug === '') {
+            return null;
+        }
+
+        return $publishedBlockTypes->firstWhere('slug', $typeSlug)
+            ?? BlockType::query()->where('slug', $typeSlug)->first();
     }
 
     private function descendantIdsFor($blocks, int $blockId)

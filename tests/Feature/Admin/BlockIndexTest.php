@@ -59,6 +59,57 @@ class BlockIndexTest extends TestCase
     }
 
     #[Test]
+    public function site_admin_can_edit_slot_blocks_even_though_blocks_index_is_forbidden(): void
+    {
+        $user = User::factory()->siteAdmin()->create();
+        $mainSlot = $this->slotType('main', 'Main', 1);
+        $codeType = $this->blockType('code');
+        $site = $this->defaultSite();
+        $user->sites()->sync([$site->id]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Getting Started',
+            'slug' => 'getting-started',
+            'status' => 'draft',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $site->id, 'name' => 'Getting Started', 'slug' => 'getting-started', 'path' => '/p/getting-started'],
+        );
+
+        $pageSlot = $page->slots()->create([
+            'slot_type_id' => $mainSlot->id,
+            'sort_order' => 0,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $codeType->id,
+            'source_type' => $codeType->source_type ?? 'static',
+            'slot' => $mainSlot->slug,
+            'slot_type_id' => $mainSlot->id,
+            'sort_order' => 0,
+            'title' => 'Install command',
+            'content' => 'ddev composer install',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.blocks.index'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $block->id]))
+            ->assertOk()
+            ->assertSee('Edit Block: Code (Getting Started / Main)')
+            ->assertSee('id="slot-block-editor-modal"', false);
+    }
+
+    #[Test]
     public function blocks_index_uses_the_shared_listing_filters_toolbar(): void
     {
         $user = User::factory()->superAdmin()->create();

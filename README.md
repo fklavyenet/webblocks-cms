@@ -94,7 +94,7 @@ See `docs/installation.md` for the complete install guide.
 8. Publish the page as a `site_admin` or `super_admin`.
 9. Open the public URL or preview link to confirm the live result.
 
-For common editorial choices, `Table`, `TOC`, and `Quote` are available as first-class block picker options. Use `Header` as the canonical heading or title block, including optional anchor IDs for direct links and TOC targets. Do not use the legacy `Heading` block type.
+For common editorial choices, `Code`, `Table`, `TOC`, and `Quote` are available as first-class block picker options and remain editable from the slot editor. Use `Header` as the canonical heading or title block, including optional anchor IDs for direct links and TOC targets. Do not use the legacy `Heading` block type.
 
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
 
