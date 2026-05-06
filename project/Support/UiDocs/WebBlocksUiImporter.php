@@ -461,12 +461,20 @@ class WebBlocksUiImporter
             $url = $this->normalizeNavigationUrl($site, $payload['url'] ?? null);
         }
 
+        $matchTitles = collect([$title])
+            ->merge(Arr::wrap($payload['match_titles'] ?? []))
+            ->map(fn (mixed $value) => trim((string) $value))
+            ->filter()
+            ->unique()
+            ->values();
+
         $item = NavigationItem::query()
             ->forSite($site->id)
             ->forMenu($menuKey)
             ->where('parent_id', $parent?->id)
-            ->where('title', $title)
-            ->first() ?? new NavigationItem([
+            ->get()
+            ->first(fn (NavigationItem $item) => $matchTitles->contains($item->title))
+            ?? new NavigationItem([
                 'site_id' => $site->id,
                 'menu_key' => $menuKey,
                 'parent_id' => $parent?->id,
