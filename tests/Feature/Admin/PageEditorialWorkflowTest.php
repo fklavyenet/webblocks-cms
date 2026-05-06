@@ -133,7 +133,7 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertSee('Review page metadata without leaving the index.');
         $response->assertSee('Page');
         $response->assertSee('Status &amp; Audit', false);
-        $response->assertSee('Structure');
+        $response->assertDontSee('<div class="wb-card-header"><strong>Structure</strong></div>', false);
         $response->assertSee('ID');
         $response->assertSee((string) $page->id);
         $response->assertSee('Name');
@@ -296,7 +296,7 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertOk();
         $response->assertSee('Page');
         $response->assertSee('Status &amp; Audit', false);
-        $response->assertSee('Structure');
+        $response->assertDontSee('<div class="wb-card-header"><strong>Structure</strong></div>', false);
         $response->assertSee('Created by');
         $response->assertSee('Last edited by');
         $response->assertSee('Published by');

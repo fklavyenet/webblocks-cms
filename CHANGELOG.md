@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Simplify Page Details modal by folding structure counts into the Page card.
 - Refine Page Details modal metadata into grouped cards for readability.
 - Add nullable page audit attribution fields for who created, last edited, published, archived, or submitted a page for review.
 - Add compact actor, source, and event metadata to page revisions and Shared Slot revisions, and surface it in admin revision history screens.

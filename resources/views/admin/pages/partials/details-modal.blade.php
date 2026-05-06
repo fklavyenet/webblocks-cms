@@ -73,6 +73,14 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Slot count</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $slotCount }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Block count</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $blockCount }}</span></div>
+                                </div>
                             </div>
                         </div>
 
@@ -119,20 +127,6 @@
                                     <div class="wb-settings-row-label"><strong>Updated</strong></div>
                                     <div class="wb-settings-row-control"><span>{{ $page->updated_at?->format('Y-m-d H:i') }}</span></div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="wb-card">
-                        <div class="wb-card-header"><strong>Structure</strong></div>
-                        <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                            <div class="wb-settings-row">
-                                <div class="wb-settings-row-label"><strong>Slot count</strong></div>
-                                <div class="wb-settings-row-control"><span>{{ $slotCount }}</span></div>
-                            </div>
-                            <div class="wb-settings-row">
-                                <div class="wb-settings-row-label"><strong>Block count</strong></div>
-                                <div class="wb-settings-row-control"><span>{{ $blockCount }}</span></div>
                             </div>
                         </div>
                     </div>
