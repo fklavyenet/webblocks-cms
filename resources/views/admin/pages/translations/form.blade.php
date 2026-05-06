@@ -2,6 +2,9 @@
     $translationPublicUrl = $translation->exists ? $page->publicUrl($locale->code) : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $siteName = $page->site?->name ?? 'Site';
+    $selectedOgImage = old('og_image_asset_id')
+        ? $assetPickerAssets->firstWhere('id', (int) old('og_image_asset_id'))
+        : $translation->ogImage;
 @endphp
 
 @extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
@@ -10,20 +13,20 @@
     @include('admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
         'title' => $pageTitle,
-        'description' => 'Edit page name and routing for this locale. Block content stays shared in this phase.',
+        'description' => 'Edit page name, routing, and SEO overrides for this locale. Block content stays shared in this phase.',
         'actions' => $translationPublicUrl ? '<a href="'.$translationPublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>Open</span></a>' : '',
     ])
 
     @include('admin.partials.flash')
 
-    <div class="wb-card">
-        <div class="wb-card-body">
-            <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4">
-                @csrf
-                @if ($formMethod !== 'POST')
-                    @method($formMethod)
-                @endif
+    <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4">
+        @csrf
+        @if ($formMethod !== 'POST')
+            @method($formMethod)
+        @endif
 
+        <div class="wb-card">
+            <div class="wb-card-body">
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
@@ -60,9 +63,66 @@
                         </div>
                     </div>
                 </div>
-
-                <x-admin.form-actions :cancel-url="route('admin.pages.edit', $page)" />
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="wb-card">
+            <div class="wb-card-header"><strong>SEO</strong></div>
+
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-text-sm wb-text-muted">These fields override the site-level SEO defaults for this locale only. Leave any field blank to fall back to the page title or site default where available.</div>
+
+                <div class="wb-grid wb-grid-2">
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_seo_title">SEO title</label>
+                            <input id="translation_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $translation->seo_title) }}">
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_seo_description">SEO description</label>
+                            <textarea id="translation_seo_description" name="seo_description" class="wb-input" rows="5">{{ old('seo_description', $translation->seo_description) }}</textarea>
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_seo_keywords">SEO keywords</label>
+                            <input id="translation_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $translation->seo_keywords) }}">
+                        </div>
+                    </div>
+
+                    <div class="wb-stack wb-gap-3">
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_og_title">Open Graph title</label>
+                            <input id="translation_og_title" name="og_title" class="wb-input" type="text" value="{{ old('og_title', $translation->og_title) }}">
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="translation_og_description">Open Graph description</label>
+                            <textarea id="translation_og_description" name="og_description" class="wb-input" rows="5">{{ old('og_description', $translation->og_description) }}</textarea>
+                        </div>
+
+                        <div class="wb-stack wb-gap-2 wb-field">
+                            <label for="og_image_asset_id">Open Graph image</label>
+                            @include('admin.media.asset-picker-panel', [
+                                'name' => 'translation-og-image',
+                                'title' => 'Open Graph image',
+                                'inputId' => 'og_image_asset_id',
+                                'fieldName' => 'og_image_asset_id',
+                                'selectedAsset' => $selectedOgImage,
+                                'assetPickerAssets' => $assetPickerAssets,
+                                'assetPickerFolders' => $assetPickerFolders,
+                                'accept' => 'image',
+                                'buttonLabel' => 'Choose social image',
+                                'replaceLabel' => 'Replace social image',
+                                'clearLabel' => 'Remove social image',
+                            ])
+                            <div class="wb-text-sm wb-text-muted">Overrides the site-level social image for this locale when the selected image has a public URL.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-admin.form-actions :cancel-url="route('admin.pages.edit', $page)" />
+    </form>
 @endsection

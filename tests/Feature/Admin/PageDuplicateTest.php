@@ -107,6 +107,12 @@ class PageDuplicateTest extends TestCase
             'name' => $title,
             'slug' => $slug,
             'path' => '/p/'.$slug,
+            'seo_title' => $title.' SEO',
+            'seo_description' => $title.' SEO Description',
+            'seo_keywords' => 'about,seo',
+            'og_title' => $title.' OG',
+            'og_description' => $title.' OG Description',
+            'og_image_asset_id' => $asset->id,
         ]);
 
         $turkish = $this->createLocale('tr');
@@ -118,6 +124,12 @@ class PageDuplicateTest extends TestCase
             'name' => $title.' TR',
             'slug' => $slug.'-tr',
             'path' => '/p/'.$slug.'-tr',
+            'seo_title' => $title.' TR SEO',
+            'seo_description' => $title.' TR SEO Description',
+            'seo_keywords' => 'tr,seo',
+            'og_title' => $title.' TR OG',
+            'og_description' => $title.' TR OG Description',
+            'og_image_asset_id' => $asset->id,
         ]);
 
         $headerSlot = PageSlot::query()->create([
@@ -422,6 +434,19 @@ class PageDuplicateTest extends TestCase
         $this->assertDatabaseHas('block_text_translations', ['block_id' => $duplicatePlainText->id, 'locale_id' => Locale::query()->where('code', 'tr')->value('id'), 'title' => 'Govde']);
         $this->assertDatabaseHas('block_image_translations', ['block_id' => $duplicateImage->id, 'locale_id' => $this->defaultLocale()->id]);
         $this->assertSame($sourceBlocks->firstWhere('type', 'image')?->asset_id, $duplicateImage->asset_id);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $duplicate->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'seo_title' => 'About SEO',
+            'og_title' => 'About OG',
+            'og_image_asset_id' => $sourceBlocks->firstWhere('type', 'image')?->asset_id,
+        ]);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $duplicate->id,
+            'locale_id' => Locale::query()->where('code', 'tr')->value('id'),
+            'seo_title' => 'About TR SEO',
+            'og_title' => 'About TR OG',
+        ]);
     }
 
     #[Test]

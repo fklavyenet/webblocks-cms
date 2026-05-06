@@ -157,6 +157,12 @@ class PageRevisionManager
                     'name' => $translation->name,
                     'slug' => $translation->slug,
                     'path' => $translation->path,
+                    'seo_title' => $translation->seo_title,
+                    'seo_description' => $translation->seo_description,
+                    'seo_keywords' => $translation->seo_keywords,
+                    'og_title' => $translation->og_title,
+                    'og_description' => $translation->og_description,
+                    'og_image_asset_id' => $translation->og_image_asset_id,
                 ])
                 ->all(),
             'slots' => $page->slots
@@ -264,6 +270,12 @@ class PageRevisionManager
                 'name' => $translation['name'],
                 'slug' => $translation['slug'],
                 'path' => $translation['path'] ?? null,
+                'seo_title' => $translation['seo_title'] ?? null,
+                'seo_description' => $translation['seo_description'] ?? null,
+                'seo_keywords' => $translation['seo_keywords'] ?? null,
+                'og_title' => $translation['og_title'] ?? null,
+                'og_description' => $translation['og_description'] ?? null,
+                'og_image_asset_id' => $translation['og_image_asset_id'] ?? null,
             ]);
         }
 

@@ -60,6 +60,7 @@ class SiteExportDataBuilder
             ? collect()
                 ->merge($blocks->pluck('asset_id'))
                 ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('asset_id'))
+                ->merge(PageTranslation::query()->whereIn('page_id', $pageIds)->pluck('og_image_asset_id'))
                 ->filter()
                 ->map(fn ($id) => (int) $id)
                 ->unique()
@@ -126,6 +127,12 @@ class SiteExportDataBuilder
                 'name' => $translation->name,
                 'slug' => $translation->slug,
                 'path' => $translation->path,
+                'seo_title' => $translation->seo_title,
+                'seo_description' => $translation->seo_description,
+                'seo_keywords' => $translation->seo_keywords,
+                'og_title' => $translation->og_title,
+                'og_description' => $translation->og_description,
+                'og_image_asset_id' => $includesMedia ? $translation->og_image_asset_id : null,
                 'created_at' => $translation->created_at?->toDateTimeString(),
                 'updated_at' => $translation->updated_at?->toDateTimeString(),
             ])->all(),

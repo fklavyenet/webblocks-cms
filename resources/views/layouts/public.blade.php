@@ -10,17 +10,18 @@
             'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
         ];
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
-        $siteName = $resolvedSite?->publicDisplayName() ?? config('app.name');
-        $siteTagline = trim((string) ($resolvedSite?->tagline ?? config('app.slogan')));
-        $siteSeoTitle = trim((string) ($resolvedSite?->seo_title ?? ''));
-        $siteSeoDescription = trim((string) ($resolvedSite?->seo_description ?? ''));
-        $siteSeoKeywords = trim((string) ($resolvedSite?->seo_keywords ?? ''));
-        $faviconUrl = $resolvedSite?->faviconAsset?->url();
-        $socialImageUrl = $resolvedSite?->socialImageAsset?->url();
-        $resolvedTitle = trim((string) ($title ?? ''));
-        $headTitle = $resolvedTitle !== '' ? $resolvedTitle : ($siteSeoTitle !== '' ? $siteSeoTitle : $siteName);
-        $headDescription = trim((string) ($metaDescription ?? ''));
-        $headDescription = $headDescription !== '' ? $headDescription : $siteSeoDescription;
+        $publicMeta = $publicMeta ?? [
+            'site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
+            'site_tagline' => trim((string) ($resolvedSite?->tagline ?? config('app.slogan'))),
+            'title' => trim((string) ($title ?? ($resolvedSite?->seo_title ?? $resolvedSite?->publicDisplayName() ?? config('app.name')))),
+            'meta_description' => trim((string) ($metaDescription ?? ($resolvedSite?->seo_description ?? ''))),
+            'meta_keywords' => trim((string) ($metaKeywords ?? ($resolvedSite?->seo_keywords ?? ''))),
+            'favicon_url' => $resolvedSite?->faviconAsset?->url(),
+            'og_title' => trim((string) ($ogTitle ?? ($resolvedSite?->seo_title ?? $title ?? $resolvedSite?->publicDisplayName() ?? config('app.name')))),
+            'og_description' => trim((string) ($ogDescription ?? ($metaDescription ?? $resolvedSite?->seo_description ?? ''))),
+            'og_image' => trim((string) ($ogImage ?? ($resolvedSite?->socialImageAsset?->url() ?? ''))),
+            'og_site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
+        ];
     @endphp
 
     <head>
@@ -30,16 +31,16 @@
 
         @include('partials.head-meta', [
             'brandName' => WebBlocks::name(),
-            'siteName' => $siteName,
-            'siteTagline' => $siteTagline,
-            'title' => $headTitle,
-            'metaDescription' => $headDescription,
-            'metaKeywords' => $siteSeoKeywords,
-            'faviconUrl' => $faviconUrl,
-            'ogTitle' => $siteSeoTitle !== '' ? $siteSeoTitle : $headTitle,
-            'ogDescription' => $siteSeoDescription !== '' ? $siteSeoDescription : $headDescription,
-            'ogImage' => $socialImageUrl,
-            'ogSiteName' => $siteName,
+            'siteName' => $publicMeta['site_name'] ?? null,
+            'siteTagline' => $publicMeta['site_tagline'] ?? null,
+            'title' => $publicMeta['title'] ?? null,
+            'metaDescription' => $publicMeta['meta_description'] ?? null,
+            'metaKeywords' => $publicMeta['meta_keywords'] ?? null,
+            'faviconUrl' => $publicMeta['favicon_url'] ?? null,
+            'ogTitle' => $publicMeta['og_title'] ?? null,
+            'ogDescription' => $publicMeta['og_description'] ?? null,
+            'ogImage' => $publicMeta['og_image'] ?? null,
+            'ogSiteName' => $publicMeta['og_site_name'] ?? null,
         ])
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">

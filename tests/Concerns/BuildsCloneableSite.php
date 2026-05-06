@@ -129,6 +129,32 @@ trait BuildsCloneableSite
             'title' => 'Hero',
         ]);
 
+        $aboutPage->defaultTranslation()?->update([
+            'seo_title' => 'About SEO',
+            'seo_description' => 'About SEO Description',
+            'og_title' => 'About OG',
+            'og_description' => 'About OG Description',
+            'og_image_asset_id' => $heroAsset->id,
+        ]);
+
+        $homePage->defaultTranslation()?->update([
+            'seo_title' => 'Home SEO',
+            'seo_description' => 'Home SEO Description',
+        ]);
+
+        $aboutPage->translations()->where('locale_id', $turkish->id)->update([
+            'seo_title' => 'Hakkinda SEO',
+            'seo_description' => 'Hakkinda SEO Description',
+            'og_title' => 'Hakkinda OG',
+            'og_description' => 'Hakkinda OG Description',
+            'og_image_asset_id' => $heroAsset->id,
+        ]);
+
+        $homePage->translations()->where('locale_id', $turkish->id)->update([
+            'seo_title' => 'Ana Sayfa SEO',
+            'seo_description' => 'Ana Sayfa SEO Description',
+        ]);
+
         $header = Block::query()->create([
             'page_id' => $aboutPage->id,
             'type' => 'header',

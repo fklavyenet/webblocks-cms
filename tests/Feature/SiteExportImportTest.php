@@ -225,6 +225,18 @@ class SiteExportImportTest extends TestCase
         $this->assertNull($aboutPage->updated_by_user_id);
 
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $aboutPage->id,
+            'slug' => 'about',
+            'seo_title' => 'About SEO',
+            'og_title' => 'About OG',
+        ]);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $aboutPage->id,
+            'slug' => 'hakkinda',
+            'seo_title' => 'Hakkinda SEO',
+            'og_title' => 'Hakkinda OG',
+        ]);
 
         $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
         $plainText = Block::query()->where('page_id', $aboutPage->id)->where('type', 'plain_text')->firstOrFail();

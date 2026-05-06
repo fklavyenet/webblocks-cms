@@ -44,7 +44,8 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - `tagline` is optional public-facing copy for the site.
 - `seo_title`, `seo_description`, and `seo_keywords` are site-level fallback metadata.
 - `favicon_asset_id` and `social_image_asset_id` are optional site-level media references for public head output.
-- Page-level SEO override fields are intentionally not part of this phase.
+- Page translation rows also own localized SEO override fields such as `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_asset_id`.
+- This keeps public page metadata locale-aware and out of shared page JSON settings.
 
 ## Page Builder
 
@@ -96,11 +97,14 @@ For docs-style pages, use page shell instead of pushing layout responsibility do
 
 ## Public Metadata
 
-- Public metadata is resolved from the current site context, not from editable install-level application name or slogan settings.
-- Page titles remain the strongest title source when a page is being rendered.
-- Site `seo_title` is used as a fallback when there is no stronger page-specific title.
-- Site `seo_description` and `seo_keywords` provide fallback `<meta>` values for the current resolved site.
-- Site favicon and social image media are rendered only when the selected assets resolve to usable public URLs.
+- Public metadata is resolved from the current site and current page translation context, not from editable install-level application name or slogan settings.
+- Title precedence is: page translation `seo_title`, page translation title, site `seo_title`, site public display name or site name, then a safe CMS fallback.
+- Description precedence is: page translation `seo_description`, site `seo_description`, then no description tag.
+- Keywords precedence is: page translation `seo_keywords`, site `seo_keywords`, then no keywords tag.
+- Open Graph title precedence is: page translation `og_title`, page translation `seo_title`, page translation title, site `seo_title`, site public display name or site name.
+- Open Graph description precedence is: page translation `og_description`, page translation `seo_description`, site `seo_description`.
+- Open Graph image precedence is: page translation `og_image_asset_id`, site `social_image_asset_id`, then no `og:image` tag.
+- Site favicon media is unchanged and still stays site-level only in this phase.
 - Multisite metadata stays host-aware through the resolved public site; the primary site is not used blindly when another site matches the current host.
 
 ## Shared Slots

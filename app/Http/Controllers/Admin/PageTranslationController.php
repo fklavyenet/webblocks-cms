@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageTranslationRequest;
+use App\Models\Asset;
+use App\Models\AssetFolder;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
@@ -39,6 +41,8 @@ class PageTranslationController extends Controller
             'page' => $page->loadMissing(['site', 'translations.locale']),
             'translation' => $translation,
             'locale' => $locale,
+            'assetPickerAssets' => $this->assetPickerAssets(),
+            'assetPickerFolders' => $this->assetPickerFolders(),
             'formAction' => route('admin.pages.translations.store', [$page, $locale]),
             'formMethod' => 'POST',
             'pageTitle' => 'Add Translation: '.$page->title.' / '.strtoupper($locale->code),
@@ -82,8 +86,10 @@ class PageTranslationController extends Controller
 
         return view('admin.pages.translations.form', [
             'page' => $page->loadMissing(['site', 'translations.locale']),
-            'translation' => $translation->loadMissing('locale'),
+            'translation' => $translation->loadMissing(['locale', 'ogImage']),
             'locale' => $translation->locale,
+            'assetPickerAssets' => $this->assetPickerAssets(),
+            'assetPickerFolders' => $this->assetPickerFolders(),
             'formAction' => route('admin.pages.translations.update', [$page, $translation]),
             'formMethod' => 'PUT',
             'pageTitle' => 'Edit Translation: '.$page->title.' / '.strtoupper($translation->locale->code),
@@ -112,5 +118,22 @@ class PageTranslationController extends Controller
         });
 
         return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation updated successfully.');
+    }
+
+    private function assetPickerAssets()
+    {
+        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+            ->with('folder')
+            ->latest()
+            ->get();
+    }
+
+    private function assetPickerFolders()
+    {
+        return AssetFolder::query()
+            ->withCount('assets')
+            ->with('parent')
+            ->orderBy('name')
+            ->get();
     }
 }

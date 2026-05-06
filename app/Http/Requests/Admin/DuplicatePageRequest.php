@@ -135,17 +135,31 @@ class DuplicatePageRequest extends FormRequest
                 'name' => $validated['title'],
                 'slug' => $validated['slug'],
                 'path' => PageTranslation::pathFromSlug($validated['slug']),
+                'seo_title' => $defaultTranslation->seo_title,
+                'seo_description' => $defaultTranslation->seo_description,
+                'seo_keywords' => $defaultTranslation->seo_keywords,
+                'og_title' => $defaultTranslation->og_title,
+                'og_description' => $defaultTranslation->og_description,
+                'og_image_asset_id' => $defaultTranslation->og_image_asset_id,
                 'name_field' => 'title',
                 'slug_field' => 'slug',
             ]);
         }
 
         foreach ($validated['translations'] ?? [] as $index => $translation) {
+            $sourceTranslation = $page?->translations->firstWhere('locale_id', (int) $translation['locale_id']);
+
             $translations->push([
                 'locale_id' => (int) $translation['locale_id'],
                 'name' => $translation['name'],
                 'slug' => $translation['slug'],
                 'path' => PageTranslation::pathFromSlug($translation['slug']),
+                'seo_title' => $sourceTranslation?->seo_title,
+                'seo_description' => $sourceTranslation?->seo_description,
+                'seo_keywords' => $sourceTranslation?->seo_keywords,
+                'og_title' => $sourceTranslation?->og_title,
+                'og_description' => $sourceTranslation?->og_description,
+                'og_image_asset_id' => $sourceTranslation?->og_image_asset_id,
                 'name_field' => 'translations.'.$index.'.name',
                 'slug_field' => 'translations.'.$index.'.slug',
             ]);

@@ -22,6 +22,9 @@ Search does not index:
 - disabled slots
 - cross-site, inactive, shell-incompatible, or slot-incompatible Shared Slot content
 - admin-only labels, block type names, CSS classes, or raw settings blobs as search content
+- page SEO descriptions, keywords, and Open Graph metadata as public body-search content
+
+Search may still use the page translation title because that is part of the public page identity, but page SEO overrides are otherwise treated as head metadata rather than searchable body content in Search V1.
 
 ## Public Search Routes
 

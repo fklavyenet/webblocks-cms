@@ -19,7 +19,20 @@ class PageTranslation extends Model
         'name',
         'slug',
         'path',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'og_title',
+        'og_description',
+        'og_image_asset_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'og_image_asset_id' => 'integer',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -75,5 +88,10 @@ class PageTranslation extends Model
     public function locale(): BelongsTo
     {
         return $this->belongsTo(Locale::class);
+    }
+
+    public function ogImage(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'og_image_asset_id');
     }
 }

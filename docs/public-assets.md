@@ -25,7 +25,8 @@ Public favicon and social sharing artwork are now selected from the shared Media
 - favicon output uses the current resolved site's `favicon_asset_id` when that asset has a public URL
 - Open Graph fallback imagery uses the current resolved site's `social_image_asset_id` when available
 - these are site-scoped metadata assets, not CMS product-brand assets
-- page-level SEO or social image overrides are not part of this phase
+- page translation `og_image_asset_id` can override the site social image for one locale when that asset has a public URL
+- page-level SEO assets affect public metadata only and do not change CMS admin branding
 
 ## WebBlocks UI Assets
 

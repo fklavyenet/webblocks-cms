@@ -5,6 +5,8 @@
 - Separate fixed WebBlocks CMS admin product identity from editable public site branding and metadata.
 - Move `Settings` navigation under `System` while keeping `Maintenance` focused on operational tools.
 - Add site-level Branding and SEO Defaults fields, including public favicon and site-scoped head metadata fallbacks.
+- Add locale-aware page SEO overrides on `page_translations`, with public metadata resolving page overrides before site defaults.
+- Include page SEO translation metadata in page revisions, duplication, move workflows, and site portability paths where page translations are transferred.
 
 
 ## 1.15.0

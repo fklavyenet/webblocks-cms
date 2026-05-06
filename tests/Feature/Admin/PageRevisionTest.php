@@ -207,13 +207,41 @@ class PageRevisionTest extends TestCase
         ]);
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
         $page = $this->pageFor($site, Page::STATUS_DRAFT);
+        $ogImage = \App\Models\Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'seo/translation-og.png',
+            'filename' => 'translation-og.png',
+            'original_name' => 'translation-og.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 100,
+            'kind' => \App\Models\Asset::KIND_IMAGE,
+            'visibility' => 'public',
+            'uploaded_by' => $user->id,
+        ]);
 
         $response = $this->actingAs($user)->post(route('admin.pages.translations.store', [$page, $turkish]), [
             'name' => 'Hakkinda',
             'slug' => 'hakkinda',
+            'seo_title' => 'TR SEO',
+            'seo_description' => 'TR SEO description',
+            'seo_keywords' => 'tr,seo',
+            'og_title' => 'TR OG',
+            'og_description' => 'TR OG description',
+            'og_image_asset_id' => $ogImage->id,
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'locale_id' => $turkish->id,
+            'seo_title' => 'TR SEO',
+            'seo_description' => 'TR SEO description',
+            'seo_keywords' => 'tr,seo',
+            'og_title' => 'TR OG',
+            'og_description' => 'TR OG description',
+            'og_image_asset_id' => $ogImage->id,
+        ]);
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
@@ -367,6 +395,8 @@ class PageRevisionTest extends TestCase
             'name' => 'Hakkinda',
             'slug' => 'hakkinda',
             'path' => '/p/hakkinda',
+            'seo_title' => 'TR SEO Original',
+            'seo_description' => 'TR SEO Original Description',
         ]);
         PageSlot::create([
             'page_id' => $page->id,
@@ -422,6 +452,8 @@ class PageRevisionTest extends TestCase
             'name' => 'Degisti',
             'slug' => 'degisti',
             'path' => '/p/degisti',
+            'seo_title' => 'TR SEO Changed',
+            'seo_description' => 'TR SEO Changed Description',
         ]);
         $page->slots()->delete();
         PageSlot::create([
@@ -463,6 +495,8 @@ class PageRevisionTest extends TestCase
         $this->assertSame('about', $page->slug);
         $this->assertSame(Page::STATUS_ARCHIVED, $page->status);
         $this->assertSame('Hakkinda', $page->translations->firstWhere('locale_id', $turkish->id)?->name);
+        $this->assertSame('TR SEO Original', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_title);
+        $this->assertSame('TR SEO Original Description', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_description);
         $this->assertCount(1, $page->slots);
         $this->assertSame($main->id, $page->slots->first()->slot_type_id);
         $this->assertSame(2, $page->blocks->count());

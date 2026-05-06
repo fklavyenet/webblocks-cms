@@ -65,6 +65,21 @@ class Asset extends Model
         return $this->hasMany(BlockAsset::class);
     }
 
+    public function sitesUsingAsFavicon(): HasMany
+    {
+        return $this->hasMany(Site::class, 'favicon_asset_id');
+    }
+
+    public function sitesUsingAsSocialImage(): HasMany
+    {
+        return $this->hasMany(Site::class, 'social_image_asset_id');
+    }
+
+    public function pageTranslationsUsingAsOgImage(): HasMany
+    {
+        return $this->hasMany(PageTranslation::class, 'og_image_asset_id');
+    }
+
     public function url(): ?string
     {
         if ($this->visibility !== 'public') {

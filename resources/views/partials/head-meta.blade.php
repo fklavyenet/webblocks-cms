@@ -11,7 +11,7 @@
     $faviconUrl = trim((string) ($faviconUrl ?? ''));
     $ogTitle = trim((string) ($ogTitle ?? $fullTitle));
     $ogDescription = trim((string) ($ogDescription ?? $metaDescription));
-    $ogImage = trim((string) ($ogImage ?? asset('brand/og-image.png')));
+    $ogImage = trim((string) ($ogImage ?? ''));
     $ogSiteName = trim((string) ($ogSiteName ?? $siteName));
 @endphp
 

@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
+use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -21,10 +23,18 @@ class PageTranslationRequest extends FormRequest
         $name = (string) $this->input('name');
         $slug = (string) $this->input('slug');
         $normalizedSlug = Str::slug($slug !== '' ? $slug : $name);
+        $authorization = app(AdminAuthorization::class);
+        $user = $this->user();
 
         $this->merge([
             'slug' => $normalizedSlug,
             'path' => PageTranslation::pathFromSlug($normalizedSlug),
+            'seo_title' => $this->nullableTrimmed('seo_title'),
+            'seo_description' => $this->nullableTrimmed('seo_description'),
+            'seo_keywords' => $this->nullableTrimmed('seo_keywords'),
+            'og_title' => $this->nullableTrimmed('og_title'),
+            'og_description' => $this->nullableTrimmed('og_description'),
+            'og_image_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('og_image_asset_id') ?: null) : null,
         ]);
     }
 
@@ -65,6 +75,12 @@ class PageTranslationRequest extends FormRequest
                         ->where('locale_id', $localeId)
                     ),
             ],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:1000'],
+            'seo_keywords' => ['nullable', 'string', 'max:500'],
+            'og_title' => ['nullable', 'string', 'max:255'],
+            'og_description' => ['nullable', 'string', 'max:1000'],
+            'og_image_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
         ];
     }
 
@@ -86,6 +102,19 @@ class PageTranslationRequest extends FormRequest
             'name' => $data['name'],
             'slug' => $data['slug'],
             'path' => PageTranslation::pathFromSlug($data['slug']),
+            'seo_title' => $data['seo_title'] ?? null,
+            'seo_description' => $data['seo_description'] ?? null,
+            'seo_keywords' => $data['seo_keywords'] ?? null,
+            'og_title' => $data['og_title'] ?? null,
+            'og_description' => $data['og_description'] ?? null,
+            'og_image_asset_id' => $data['og_image_asset_id'] ?? null,
         ];
+    }
+
+    private function nullableTrimmed(string $key): ?string
+    {
+        $value = trim((string) $this->input($key));
+
+        return $value !== '' ? $value : null;
     }
 }

@@ -63,6 +63,14 @@ class SiteCloneServiceTest extends TestCase
         $this->assertDatabaseHas('page_translations', [
             'page_id' => $aboutPage->id,
             'slug' => 'hakkinda',
+            'seo_title' => 'Hakkinda SEO',
+            'og_title' => 'Hakkinda OG',
+        ]);
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $aboutPage->id,
+            'slug' => 'about',
+            'seo_title' => 'About SEO',
+            'og_title' => 'About OG',
         ]);
 
         $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();

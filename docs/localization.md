@@ -5,7 +5,7 @@ WebBlocks CMS stores localized content in translation tables for pages and block
 ## Model
 
 - `locales` defines the available locales.
-- `page_translations` owns localized page identity such as title, slug, and path.
+- `page_translations` owns localized page identity such as title, slug, path, and page-level SEO overrides.
 - block translation tables own localized block content.
 
 ## URL Behavior
@@ -19,6 +19,7 @@ WebBlocks CMS stores localized content in translation tables for pages and block
 - The default locale should always have the canonical translation row.
 - Shared block settings remain shared across locales.
 - User-facing translated copy should live in translation rows, not shared settings.
+- Page SEO title, description, keywords, and Open Graph overrides are locale-aware editorial content and belong on the translation row for the locale that owns them.
 
 ## Related Docs
 

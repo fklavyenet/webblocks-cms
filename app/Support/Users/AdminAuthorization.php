@@ -129,7 +129,10 @@ class AdminAuthorization
             $assetQuery
                 ->where('uploaded_by', $user->id)
                 ->orWhereHas('blocks.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
-                ->orWhereHas('blockAssets.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
+                ->orWhereHas('blockAssets.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()))
+                ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn('sites.id', $user->accessibleSiteIds()))
+                ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn('sites.id', $user->accessibleSiteIds()))
+                ->orWhereHas('pageTranslationsUsingAsOgImage.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
         });
     }
 

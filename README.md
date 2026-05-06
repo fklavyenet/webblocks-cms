@@ -16,7 +16,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - media library and site-scoped navigation management
 - install wizard for first-run setup
 - system updates, backups, and site export/import tools
-- site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support
+- site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
 - site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, can be assigned per page slot from the Edit Page screen, now have dedicated Shared Slot revision history and restore, and participate in site export/import and site clone workflows
 
 ## Installation
@@ -94,7 +94,7 @@ See `docs/installation.md` for the complete install guide.
 
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
 
-On the Edit Site screen, keep internal site routing fields such as `Name`, `Handle`, `Domain`, and `Primary` separate from public identity. Public-facing `Branding` and `SEO Defaults` now live on the site itself. Use `display_name`, `tagline`, favicon, social image, and site-level SEO defaults there for public metadata fallbacks. Page-level SEO overrides are intentionally not part of this phase.
+On the Edit Site screen, keep internal site routing fields such as `Name`, `Handle`, `Domain`, and `Primary` separate from public identity. Public-facing `Branding` and `SEO Defaults` live on the site itself. Use `display_name`, `tagline`, favicon, social image, and site-level SEO defaults there for public metadata fallbacks. Locale-aware page-level SEO overrides now live on each page translation, where editors can override title, description, keywords, and Open Graph fields for one locale without changing the fixed WebBlocks CMS admin product identity.
 
 In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a compact one-row-per-block table with block type, a single primary summary, a dedicated children-count column, status, and actions. The Block Picker supports search, category filtering, and sortable catalog-style rows so larger block catalogs remain manageable. On narrow screens the table remains one-row-per-block and scrolls horizontally instead of collapsing labels into vertical letter stacks. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
 
@@ -148,7 +148,10 @@ See `docs/getting-started.md` for the first-use workflow.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Admin chrome product identity is fixed to `WebBlocks CMS`, `A modern block-based CMS`, and `WebBlocks CMS v{VERSION}` from `App\Support\WebBlocks`. System Settings and editable site fields do not change those labels.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.
-- Site-level public metadata now comes from the currently resolved site. `display_name`, `tagline`, favicon, social image, and SEO Defaults provide public `<head>` fallbacks by site and host context. Page titles still come from the current page when available. Page-level SEO override fields are not part of this version.
+- Site-level public metadata now comes from the currently resolved site. `display_name`, `tagline`, favicon, social image, and SEO Defaults provide public `<head>` fallbacks by site and host context.
+- Page-level SEO overrides live on `page_translations`, stay locale-aware, and affect public `<head>` metadata plus social metadata only.
+- Metadata precedence is now: page translation SEO override, page translation title where applicable, site SEO defaults, then safe CMS fallback when no site or page context exists.
+- Page-level SEO does not change CMS admin product identity, does not replace page body content, and is not treated as public search body content by default.
 - `default` uses standard semantic wrappers such as `header`, `main`, `aside`, and `footer`. `docs` automatically maps header, sidebar, and main slots to the docs navbar, sidebar, and main wrappers.
 - Existing pages remain site-scoped after creation. The normal `Edit Page` form shows the current site as read-only context and does not move pages between sites.
 - Existing pages can also be copied through a dedicated `Duplicate page` admin action. Duplicate creates a new page and leaves the source page unchanged.

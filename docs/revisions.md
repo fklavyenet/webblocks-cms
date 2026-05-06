@@ -27,6 +27,8 @@ Revision snapshots include:
 - block translation rows
 - asset ID references
 
+For page translations, the snapshot includes locale-aware SEO override fields as part of the editorial translation state. Restoring a page revision restores those page SEO values alongside localized name, slug, and path data.
+
 ## Automatic Capture Points
 
 Revisions are created automatically when these areas change:

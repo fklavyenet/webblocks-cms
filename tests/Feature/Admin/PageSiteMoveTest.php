@@ -90,6 +90,8 @@ class PageSiteMoveTest extends TestCase
             'name' => $title,
             'slug' => $slug,
             'path' => '/p/'.$slug,
+            'seo_title' => $title.' SEO',
+            'seo_description' => $title.' SEO Description',
         ]);
 
         PageSlot::query()->create([
@@ -233,6 +235,8 @@ class PageSiteMoveTest extends TestCase
             'name' => 'Hakkinda',
             'slug' => 'hakkinda',
             'path' => '/tr/p/hakkinda',
+            'seo_title' => 'Hakkinda SEO',
+            'seo_description' => 'Hakkinda SEO Description',
         ]);
         $targetSite->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
 
@@ -251,6 +255,8 @@ class PageSiteMoveTest extends TestCase
         $this->assertSame($blockCount, $page->fresh()->blocks()->count());
         $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about']);
         $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda']);
+        $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about', 'seo_title' => 'About SEO']);
+        $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda', 'seo_title' => 'Hakkinda SEO']);
         $this->assertDatabaseMissing('page_translations', ['page_id' => $page->id, 'site_id' => $this->defaultSite()->id, 'slug' => 'about']);
         $this->assertDatabaseHas('block_text_translations', ['block_id' => $page->blocks()->firstOrFail()->id, 'title' => 'Body']);
         $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'label' => 'Page moved to another site']);

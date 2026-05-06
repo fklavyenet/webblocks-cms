@@ -38,7 +38,7 @@ class PublicSiteMetadataTest extends TestCase
         $response->assertOk();
         $response->assertSee('<meta name="description" content="Default site description.">', false);
         $response->assertSee('<meta name="keywords" content="alpha,beta,gamma">', false);
-        $response->assertSee('<meta property="og:title" content="Marketing Default Title">', false);
+        $response->assertSee('<meta property="og:title" content="Home">', false);
         $response->assertSee('<meta property="og:description" content="Default site description.">', false);
     }
 
@@ -88,9 +88,138 @@ class PublicSiteMetadataTest extends TestCase
         $response->assertSee('<title>Campaign Home</title>', false);
         $response->assertSee('<meta name="description" content="Campaign description.">', false);
         $response->assertSee('<meta name="keywords" content="campaign">', false);
-        $response->assertSee('<meta property="og:title" content="Campaign Meta Title">', false);
+        $response->assertSee('<meta property="og:title" content="Campaign Home">', false);
         $response->assertDontSee('Primary description.');
         $response->assertDontSee('Primary Meta Title');
+    }
+
+    #[Test]
+    public function page_translation_seo_overrides_take_precedence_over_site_defaults(): void
+    {
+        [$site, $locale] = $this->seedPublicSite();
+        $page = Page::query()->firstOrFail();
+        $ogImage = $this->imageAsset('social/page-og.png', 'page-og.png');
+
+        $site->update([
+            'display_name' => 'Marketing Site',
+            'seo_title' => 'Site Default Title',
+            'seo_description' => 'Site default description.',
+            'seo_keywords' => 'site,keywords',
+        ]);
+
+        $page->translationForLocale($locale)->update([
+            'seo_title' => 'Page SEO Title',
+            'seo_description' => 'Page SEO Description',
+            'seo_keywords' => 'page,keywords',
+            'og_title' => 'Page OG Title',
+            'og_description' => 'Page OG Description',
+            'og_image_asset_id' => $ogImage->id,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<title>Page SEO Title</title>', false);
+        $response->assertSee('<meta name="description" content="Page SEO Description">', false);
+        $response->assertSee('<meta name="keywords" content="page,keywords">', false);
+        $response->assertSee('<meta property="og:title" content="Page OG Title">', false);
+        $response->assertSee('<meta property="og:description" content="Page OG Description">', false);
+        $response->assertSee('<meta property="og:image" content="'.$ogImage->url().'">', false);
+        $response->assertDontSee('Site Default Title');
+        $response->assertDontSee('Site default description.');
+    }
+
+    #[Test]
+    public function localized_routes_render_locale_specific_page_seo_overrides(): void
+    {
+        [$site, $locale, $slotType, $headerType] = $this->seedPublicSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+        $page = Page::query()->firstOrFail();
+        $trOgImage = $this->imageAsset('social/page-og-tr.png', 'page-og-tr.png');
+
+        $site->update([
+            'domain' => 'primary.example.test',
+            'seo_title' => 'Site Default Title',
+            'seo_description' => 'Site default description.',
+        ]);
+
+        $page->translations()->create([
+            'site_id' => $site->id,
+            'locale_id' => $turkish->id,
+            'name' => 'Ana Sayfa',
+            'slug' => 'anasayfa',
+            'path' => '/p/anasayfa',
+            'seo_title' => 'TR SEO Baslik',
+            'seo_description' => 'TR SEO Aciklama',
+            'seo_keywords' => 'tr,anahtar',
+            'og_title' => 'TR OG Baslik',
+            'og_description' => 'TR OG Aciklama',
+            'og_image_asset_id' => $trOgImage->id,
+        ]);
+
+        $response = $this->get('http://primary.example.test/tr/p/anasayfa');
+
+        $response->assertOk();
+        $response->assertSee('<title>TR SEO Baslik</title>', false);
+        $response->assertSee('<meta name="description" content="TR SEO Aciklama">', false);
+        $response->assertSee('<meta name="keywords" content="tr,anahtar">', false);
+        $response->assertSee('<meta property="og:title" content="TR OG Baslik">', false);
+        $response->assertSee('<meta property="og:description" content="TR OG Aciklama">', false);
+        $response->assertSee('<meta property="og:image" content="'.$trOgImage->url().'">', false);
+    }
+
+    #[Test]
+    public function blank_page_seo_fields_fall_back_to_page_title_and_site_defaults_safely(): void
+    {
+        [$site, $locale] = $this->seedPublicSite();
+        $page = Page::query()->firstOrFail();
+
+        $site->update([
+            'display_name' => 'Marketing Site',
+            'seo_title' => 'Site Default Title',
+            'seo_description' => 'Site default description.',
+            'seo_keywords' => 'site,keywords',
+        ]);
+
+        $page->translationForLocale($locale)->update([
+            'seo_title' => null,
+            'seo_description' => null,
+            'seo_keywords' => null,
+            'og_title' => null,
+            'og_description' => null,
+            'og_image_asset_id' => null,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<title>Home</title>', false);
+        $response->assertSee('<meta name="description" content="Site default description.">', false);
+        $response->assertSee('<meta name="keywords" content="site,keywords">', false);
+        $response->assertSee('<meta property="og:title" content="Home">', false);
+        $response->assertSee('<meta property="og:description" content="Site default description.">', false);
+        $response->assertDontSee('<meta property="og:image"', false);
+    }
+
+    #[Test]
+    public function metadata_renders_without_description_or_keywords_when_no_site_or_page_values_exist(): void
+    {
+        $this->seedPublicSite();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<title>Home</title>', false);
+        $response->assertDontSee('<meta name="description"', false);
+        $response->assertDontSee('<meta name="keywords"', false);
+        $response->assertSee('<meta property="og:title" content="Home">', false);
+        $response->assertDontSee('<meta property="og:description"', false);
     }
 
     private function seedPublicSite(): array

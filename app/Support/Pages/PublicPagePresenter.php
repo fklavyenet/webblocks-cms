@@ -4,6 +4,7 @@ namespace App\Support\Pages;
 
 use App\Models\Block;
 use App\Models\Page;
+use App\Models\PageTranslation;
 use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\PublicRendering\SlotWrapperResolver;
@@ -37,6 +38,50 @@ class PublicPagePresenter
         return [
             'page' => $page,
             'slots' => $slots,
+            'publicMeta' => $this->publicMeta($page),
+        ];
+    }
+
+    public function publicMeta(?Page $page = null): array
+    {
+        $site = $page?->site;
+        $translation = $page?->currentTranslation;
+        $siteName = $site?->publicDisplayName() ?? $site?->name ?? config('app.name');
+        $siteSeoTitle = trim((string) ($site?->seo_title ?? ''));
+        $siteSeoDescription = trim((string) ($site?->seo_description ?? ''));
+        $siteSeoKeywords = trim((string) ($site?->seo_keywords ?? ''));
+        $pageTitle = $this->trimmed($translation?->name);
+        $seoTitle = $this->trimmed($translation?->seo_title);
+        $seoDescription = $this->trimmed($translation?->seo_description);
+        $seoKeywords = $this->trimmed($translation?->seo_keywords);
+        $ogTitle = $this->trimmed($translation?->og_title);
+        $ogDescription = $this->trimmed($translation?->og_description);
+        $ogImage = $this->trimmed($translation?->ogImage?->url())
+            ?? $this->trimmed($site?->socialImageAsset?->url());
+        $title = $seoTitle
+            ?? $pageTitle
+            ?? $siteSeoTitle
+            ?? $this->trimmed($siteName)
+            ?? config('app.name');
+
+        return [
+            'site_name' => $siteName,
+            'site_tagline' => trim((string) ($site?->tagline ?? config('app.slogan'))),
+            'title' => $title,
+            'meta_description' => $seoDescription ?? $siteSeoDescription,
+            'meta_keywords' => $seoKeywords ?? $siteSeoKeywords,
+            'favicon_url' => $this->trimmed($site?->faviconAsset?->url()),
+            'og_title' => $ogTitle
+                ?? $seoTitle
+                ?? $pageTitle
+                ?? $siteSeoTitle
+                ?? $this->trimmed($siteName)
+                ?? config('app.name'),
+            'og_description' => $ogDescription
+                ?? $seoDescription
+                ?? $siteSeoDescription,
+            'og_image' => $ogImage,
+            'og_site_name' => $siteName,
         ];
     }
 
@@ -91,5 +136,12 @@ class PublicPagePresenter
                 return $block;
             })
             ->values();
+    }
+
+    private function trimmed(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : null;
     }
 }

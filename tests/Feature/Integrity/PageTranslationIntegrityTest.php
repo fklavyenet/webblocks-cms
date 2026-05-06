@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Integrity;
 
+use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
@@ -239,5 +240,42 @@ class PageTranslationIntegrityTest extends TestCase
 
         $response->assertRedirect(route('admin.pages.edit', $other));
         $response->assertSessionHasErrors(['path' => 'This path is already used in this site for this locale.']);
+    }
+
+    #[Test]
+    public function inaccessible_translation_og_image_ids_are_normalized_to_null(): void
+    {
+        $user = User::factory()->siteAdmin()->create();
+        $site = $this->defaultSite();
+        $locale = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+        $user->sites()->sync([$site->id]);
+        $page = $this->createPage($site, 'About', 'about');
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'seo/blocked.png',
+            'filename' => 'blocked.png',
+            'original_name' => 'blocked.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 10,
+            'kind' => Asset::KIND_IMAGE,
+            'visibility' => 'public',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('admin.pages.translations.store', [$page, $locale]), [
+                'name' => 'Hakkinda',
+                'slug' => 'hakkinda',
+                'og_image_asset_id' => $asset->id,
+            ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertDatabaseHas('page_translations', [
+            'page_id' => $page->id,
+            'locale_id' => $locale->id,
+            'slug' => 'hakkinda',
+            'og_image_asset_id' => null,
+        ]);
     }
 }

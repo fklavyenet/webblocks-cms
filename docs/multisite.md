@@ -19,6 +19,7 @@ Each site also owns its own public identity fallback layer:
 - Content is scoped by site.
 - Public routing resolves the active site from the current host.
 - Public `<head>` metadata and favicon output resolve from that same current host-matched site.
+- Page-level SEO overrides still resolve from the current host-matched site and the currently resolved page translation; they do not fall back to another site's defaults.
 - Admin users with site-scoped roles can work only inside their assigned sites.
 - Navigation, pages, media usage, and reporting remain site-aware.
 

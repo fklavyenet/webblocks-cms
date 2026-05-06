@@ -1,3 +1,4 @@
 @extends('layouts.public', [
-    'title' => $page->title,
+    'title' => $publicMeta['title'] ?? $page->title,
+    'publicMeta' => $publicMeta,
 ])

@@ -50,7 +50,7 @@ class ImportDataMapper
 
                 $folderMap = $this->importAssetFolders($payload, $output);
                 $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
-                $pageMap = $this->importPages($site, $payload, $localeMap, $output);
+                $pageMap = $this->importPages($site, $payload, $localeMap, $assetMap, $output);
                 ['shared_slots' => $sharedSlots, 'handle_map' => $sharedSlotHandleMap, 'source_page_map' => $sharedSlotSourcePageMap] = $this->importSharedSlots($site, $payload, $output);
                 $allPageMap = array_replace($pageMap, $sharedSlotSourcePageMap);
                 $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
@@ -253,7 +253,7 @@ class ImportDataMapper
         return $map;
     }
 
-    private function importPages(Site $site, array $payload, array $localeMap, array &$output): array
+    private function importPages(Site $site, array $payload, array $localeMap, array $assetMap, array &$output): array
     {
         $map = [];
 
@@ -298,6 +298,12 @@ class ImportDataMapper
                 'name' => $translationData['name'] ?? null,
                 'slug' => $translationData['slug'] ?? null,
                 'path' => $translationData['path'] ?? null,
+                'seo_title' => $translationData['seo_title'] ?? null,
+                'seo_description' => $translationData['seo_description'] ?? null,
+                'seo_keywords' => $translationData['seo_keywords'] ?? null,
+                'og_title' => $translationData['og_title'] ?? null,
+                'og_description' => $translationData['og_description'] ?? null,
+                'og_image_asset_id' => $assetMap[(int) ($translationData['og_image_asset_id'] ?? 0)] ?? null,
                 'created_at' => $translationData['created_at'] ?? null,
                 'updated_at' => $translationData['updated_at'] ?? null,
             ]);

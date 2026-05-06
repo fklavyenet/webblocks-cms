@@ -79,7 +79,7 @@ class SiteCloneService
             ];
 
             $assetMap = [];
-            $pageMap = $this->clonePages($sourceSite, $targetSite, $options, $counts);
+            $pageMap = $this->clonePages($sourceSite, $targetSite, $assetMap, $options, $counts);
             $sharedSlotClone = $this->cloneSharedSlots($sourceSite, $targetSite, $counts);
             $allPageMap = array_replace($pageMap, $sharedSlotClone['source_page_map']);
             $this->cloneBlocks($allPageMap, $assetMap, $options, $counts);
@@ -210,7 +210,7 @@ class SiteCloneService
             || NavigationItem::query()->where('site_id', $targetSite->id)->exists();
     }
 
-    private function clonePages(Site $sourceSite, Site $targetSite, SiteCloneOptions $options, array &$counts): array
+    private function clonePages(Site $sourceSite, Site $targetSite, array &$assetMap, SiteCloneOptions $options, array &$counts): array
     {
         $pageMap = [];
 
@@ -257,6 +257,14 @@ class SiteCloneService
                     'name' => $translation->name,
                     'slug' => $translation->slug,
                     'path' => $translation->path,
+                    'seo_title' => $translation->seo_title,
+                    'seo_description' => $translation->seo_description,
+                    'seo_keywords' => $translation->seo_keywords,
+                    'og_title' => $translation->og_title,
+                    'og_description' => $translation->og_description,
+                    'og_image_asset_id' => $options->withMedia && $translation->og_image_asset_id
+                        ? $this->clonedAssetId($translation->og_image_asset_id, $assetMap, $options, $counts)
+                        : null,
                     'created_at' => $translation->created_at,
                     'updated_at' => $translation->updated_at,
                 ]);
