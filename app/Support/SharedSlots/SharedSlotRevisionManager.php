@@ -7,6 +7,7 @@ use App\Models\Locale;
 use App\Models\SharedSlot;
 use App\Models\SharedSlotRevision;
 use App\Models\User;
+use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,7 @@ class SharedSlotRevisionManager
         private readonly SharedSlotSourcePageManager $sourcePages,
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly SharedSlotSchema $schema,
+        private readonly CurrentActorResolver $currentActorResolver,
     ) {}
 
     public function canView(User $user, SharedSlot $sharedSlot): bool
@@ -48,6 +50,7 @@ class SharedSlotRevisionManager
         ?string $summary = null,
         ?SharedSlotRevision $restoredFrom = null,
         bool $force = false,
+        ?string $source = null,
     ): SharedSlotRevision {
         if (! $this->revisionsTableExists()) {
             throw new \RuntimeException('Shared Slot revisions are not ready. Run the latest migrations before using revisions.');
@@ -67,10 +70,15 @@ class SharedSlotRevisionManager
             }
         }
 
+        $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
+
         return SharedSlotRevision::query()->create([
             'shared_slot_id' => $sharedSlot->id,
             'site_id' => $sharedSlot->site_id,
-            'user_id' => $actor?->id,
+            'user_id' => $resolvedActor['user_id'],
+            'created_by_user_id' => $resolvedActor['user_id'],
+            'source' => $resolvedActor['source'],
+            'event' => $sourceEvent,
             'source_event' => $sourceEvent,
             'label' => $label,
             'summary' => $summary,
@@ -99,6 +107,7 @@ class SharedSlotRevisionManager
                 'Pre-restore safety snapshot',
                 'Current Shared Slot state was saved before restore.',
                 force: true,
+                source: 'restore',
             );
 
             $this->applySnapshot($lockedSharedSlot, $lockedRevision->snapshot ?? []);
@@ -111,6 +120,7 @@ class SharedSlotRevisionManager
                 'Shared Slot content was restored from revision #'.$lockedRevision->id.'.',
                 $lockedRevision,
                 true,
+                'restore',
             );
         });
     }

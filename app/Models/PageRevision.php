@@ -14,6 +14,9 @@ class PageRevision extends Model
         'page_id',
         'site_id',
         'created_by',
+        'created_by_user_id',
+        'source',
+        'event',
         'label',
         'reason',
         'snapshot',
@@ -39,7 +42,12 @@ class PageRevision extends Model
 
     public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
     public function restoredFrom(): BelongsTo
@@ -50,5 +58,19 @@ class PageRevision extends Model
     public function labelText(): string
     {
         return $this->label ?: 'Page revision';
+    }
+
+    public function eventText(): string
+    {
+        return $this->event
+            ? str($this->event)->replace('_', ' ')->headline()->toString()
+            : 'Not recorded';
+    }
+
+    public function sourceText(): string
+    {
+        return $this->source
+            ? str($this->source)->replace('_', ' ')->headline()->toString()
+            : 'Not recorded';
     }
 }

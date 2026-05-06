@@ -270,6 +270,11 @@ class ImportDataMapper
                 'layout_id' => $layoutSlug ? Layout::query()->where('slug', $layoutSlug)->value('id') : null,
                 'status' => $pageData['status'] ?? 'draft',
                 'settings' => $pageData['settings'] ?? null,
+                'created_by_user_id' => null,
+                'updated_by_user_id' => null,
+                'published_by_user_id' => null,
+                'archived_by_user_id' => null,
+                'review_requested_by_user_id' => null,
                 'created_at' => $pageData['created_at'] ?? null,
                 'updated_at' => $pageData['updated_at'] ?? null,
             ]);
@@ -326,6 +331,8 @@ class ImportDataMapper
                 'slot_name' => $sharedSlotData['slot_name'] ?? null,
                 'public_shell' => $sharedSlotData['public_shell'] ?? null,
                 'is_active' => (bool) ($sharedSlotData['is_active'] ?? true),
+                'created_by_user_id' => null,
+                'updated_by_user_id' => null,
                 'created_at' => $sharedSlotData['created_at'] ?? null,
                 'updated_at' => $sharedSlotData['updated_at'] ?? null,
             ]);

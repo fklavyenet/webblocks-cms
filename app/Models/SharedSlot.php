@@ -40,6 +40,8 @@ class SharedSlot extends Model
         'slot_name',
         'public_shell',
         'is_active',
+        'created_by_user_id',
+        'updated_by_user_id',
     ];
 
     protected function casts(): array
@@ -76,6 +78,16 @@ class SharedSlot extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(SharedSlotRevision::class)->latest('created_at');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function updatedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id');
     }
 
     public function statusLabel(): string

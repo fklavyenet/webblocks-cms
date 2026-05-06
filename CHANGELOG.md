@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Add nullable page audit attribution fields for who created, last edited, published, archived, or submitted a page for review.
+- Add compact actor, source, and event metadata to page revisions and Shared Slot revisions, and surface it in admin revision history screens.
+- Add nullable created/updated audit attribution to Shared Slots.
+- Update the Pages index Page Details modal to show actor metadata when available while keeping old, deleted-user, imported, and console-created records safe with `Not recorded` fallback.
 - Pages index Page Details now uses the standard modal pattern instead of the old drawer.
 - Removed the ambiguous Edit Blocks action from Page Details.
 - Add Search V1 as a core CMS feature with a database-backed `public_search_index`, public `/search` and localized search routes, and site plus locale scoped published-only results.

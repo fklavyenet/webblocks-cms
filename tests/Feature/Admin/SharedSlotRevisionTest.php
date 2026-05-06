@@ -132,9 +132,14 @@ class SharedSlotRevisionTest extends TestCase
         $this->assertDatabaseHas('shared_slot_revisions', [
             'shared_slot_id' => $sharedSlot->id,
             'user_id' => $user->id,
+            'created_by_user_id' => $user->id,
+            'source' => 'admin',
+            'event' => 'created',
             'source_event' => 'created',
             'label' => 'Shared Slot created',
         ]);
+        $this->assertSame($user->id, $sharedSlot->fresh()->created_by_user_id);
+        $this->assertSame($user->id, $sharedSlot->fresh()->updated_by_user_id);
     }
 
     #[Test]
@@ -157,6 +162,8 @@ class SharedSlotRevisionTest extends TestCase
 
         $this->assertDatabaseHas('shared_slot_revisions', [
             'shared_slot_id' => $sharedSlot->id,
+            'source' => 'admin',
+            'event' => 'metadata_updated',
             'source_event' => 'metadata_updated',
         ]);
 
@@ -194,6 +201,8 @@ class SharedSlotRevisionTest extends TestCase
 
         $this->assertDatabaseHas('shared_slot_revisions', [
             'shared_slot_id' => $sharedSlot->id,
+            'source' => 'admin',
+            'event' => 'status_updated',
             'source_event' => 'status_updated',
         ]);
     }
@@ -285,6 +294,7 @@ class SharedSlotRevisionTest extends TestCase
         $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_created']);
         $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'block_updated']);
         $this->assertDatabaseHas('shared_slot_revisions', ['shared_slot_id' => $sharedSlot->id, 'source_event' => 'blocks_reordered']);
+        $this->assertSame($user->id, $sharedSlot->fresh()->updated_by_user_id);
         $this->assertSame('Reusable Header', data_get($latestRevision->snapshot, 'shared_slot.name'));
         $this->assertCount(3, $blocks);
         $snapshotChild = collect($blocks)->firstWhere('snapshot_id', $child->id);
@@ -341,6 +351,9 @@ class SharedSlotRevisionTest extends TestCase
             'shared_slot_id' => $sharedSlot->id,
             'site_id' => $site->id,
             'user_id' => $siteAdmin->id,
+            'created_by_user_id' => $siteAdmin->id,
+            'source' => 'admin',
+            'event' => 'metadata_updated',
             'source_event' => 'metadata_updated',
             'label' => 'Seed revision',
             'summary' => 'Seeded for access test.',
@@ -352,6 +365,9 @@ class SharedSlotRevisionTest extends TestCase
         $history->assertOk();
         $history->assertSee('Revision History');
         $history->assertSee('View only');
+        $history->assertSee('Source: Admin');
+        $history->assertSee('Event: Metadata Updated');
+        $history->assertSee($siteAdmin->name);
 
         $revision = $sharedSlot->revisions()->firstOrFail();
 
@@ -549,6 +565,35 @@ class SharedSlotRevisionTest extends TestCase
 
         $this->get(route('pages.show', $sourcePage->slug))
             ->assertNotFound();
+    }
+
+    #[Test]
+    public function shared_slot_revision_history_renders_not_recorded_for_legacy_rows_without_actor_metadata(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $sharedSlot = $this->sharedSlotFor($site);
+        $user = User::factory()->superAdmin()->create();
+
+        SharedSlotRevision::query()->create([
+            'shared_slot_id' => $sharedSlot->id,
+            'site_id' => $site->id,
+            'user_id' => null,
+            'created_by_user_id' => null,
+            'source' => null,
+            'event' => null,
+            'source_event' => 'metadata_updated',
+            'label' => 'Legacy shared slot revision',
+            'summary' => 'Older revision metadata was incomplete.',
+            'snapshot' => ['schema_version' => 1, 'shared_slot' => ['name' => $sharedSlot->name]],
+        ]);
+
+        $history = $this->actingAs($user)->get(route('admin.shared-slots.revisions.index', $sharedSlot));
+
+        $history->assertOk();
+        $history->assertSee('Legacy shared slot revision');
+        $history->assertSee('Not recorded');
     }
 
     #[Test]

@@ -107,6 +107,11 @@ class Page extends Model
         'status',
         'published_at',
         'review_requested_at',
+        'created_by_user_id',
+        'updated_by_user_id',
+        'published_by_user_id',
+        'archived_by_user_id',
+        'review_requested_by_user_id',
     ];
 
     protected $appends = [
@@ -260,6 +265,31 @@ class Page extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(PageRevision::class)->latest('created_at');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function updatedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id');
+    }
+
+    public function publishedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'published_by_user_id');
+    }
+
+    public function archivedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'archived_by_user_id');
+    }
+
+    public function reviewRequestedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'review_requested_by_user_id');
     }
 
     public function defaultTranslation(): ?PageTranslation

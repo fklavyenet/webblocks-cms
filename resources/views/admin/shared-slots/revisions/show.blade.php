@@ -20,8 +20,9 @@
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
                 <div><strong>Shared Slot:</strong> {{ $sharedSlot->name }}</div>
                 <div><strong>Created:</strong> {{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                <div><strong>Source:</strong> {{ $revision->sourceText() }}</div>
                 <div><strong>Event:</strong> {{ $revision->eventText() }}</div>
-                <div><strong>User:</strong> {{ $revision->actor?->name ?? 'System' }}</div>
+                <div><strong>User:</strong> @include('admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
                 <div><strong>Summary:</strong> {{ $revision->summary ?? 'None' }}</div>
                 @if ($revision->restoredFrom)
                     <div><strong>Restored From:</strong> Revision #{{ $revision->restoredFrom->id }}</div>

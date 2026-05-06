@@ -236,6 +236,9 @@ class ReconstructionIntegrityTest extends TestCase
             'page_id' => $page->id,
             'site_id' => $site->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'source' => 'admin',
+            'event' => 'page_updated',
             'label' => 'Legacy snapshot',
             'snapshot' => [
                 'schema_version' => 1,

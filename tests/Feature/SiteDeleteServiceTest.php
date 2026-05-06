@@ -109,6 +109,9 @@ class SiteDeleteServiceTest extends TestCase
         $revision = PageRevision::query()->create([
             'page_id' => $page->id,
             'site_id' => $site->id,
+            'created_by_user_id' => null,
+            'source' => 'system',
+            'event' => 'page_updated',
             'label' => 'Initial import',
             'reason' => 'Regression coverage',
             'snapshot' => ['page' => ['id' => $page->id, 'site_id' => $site->id]],

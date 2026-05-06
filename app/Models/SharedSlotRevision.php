@@ -15,6 +15,9 @@ class SharedSlotRevision extends Model
         'shared_slot_id',
         'site_id',
         'user_id',
+        'created_by_user_id',
+        'source',
+        'event',
         'source_event',
         'label',
         'summary',
@@ -41,7 +44,12 @@ class SharedSlotRevision extends Model
 
     public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
     public function restoredFrom(): BelongsTo
@@ -51,12 +59,23 @@ class SharedSlotRevision extends Model
 
     public function labelText(): string
     {
-        return $this->label ?: str($this->source_event)->replace('_', ' ')->headline()->toString();
+        return $this->label ?: $this->eventText();
     }
 
     public function eventText(): string
     {
-        return str($this->source_event)->replace('_', ' ')->headline()->toString();
+        $value = $this->event ?: $this->source_event;
+
+        return $value
+            ? str($value)->replace('_', ' ')->headline()->toString()
+            : 'Not recorded';
+    }
+
+    public function sourceText(): string
+    {
+        return $this->source
+            ? str($this->source)->replace('_', ' ')->headline()->toString()
+            : 'Not recorded';
     }
 
     public function resolveRouteBinding($value, $field = null): ?Model

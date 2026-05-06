@@ -233,6 +233,11 @@ class SiteCloneService
                 'page_type' => $page->page_type,
                 'status' => $page->status,
                 'settings' => $page->getRawOriginal('settings'),
+                'created_by_user_id' => null,
+                'updated_by_user_id' => null,
+                'published_by_user_id' => null,
+                'archived_by_user_id' => null,
+                'review_requested_by_user_id' => null,
             ]);
 
             $pageMap[$page->id] = $newPage->id;
@@ -295,6 +300,8 @@ class SiteCloneService
                 'slot_name' => $sourceSharedSlot->slot_name,
                 'public_shell' => $sourceSharedSlot->public_shell,
                 'is_active' => $sourceSharedSlot->is_active,
+                'created_by_user_id' => null,
+                'updated_by_user_id' => null,
                 'created_at' => $sourceSharedSlot->created_at,
                 'updated_at' => $sourceSharedSlot->updated_at,
             ]);

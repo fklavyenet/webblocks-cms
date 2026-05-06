@@ -158,6 +158,7 @@ class BlockController extends Controller
 
             if ($sharedSlot) {
                 $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $sharedSlot->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->sharedSlotRevisionManager->capture(
                     $sharedSlot->fresh(),
                     request()->user(),
@@ -166,11 +167,13 @@ class BlockController extends Controller
                     'Shared Slot block structure or content was updated by adding a block.',
                 );
             } else {
+                $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->revisionManager->capture(
-                    $block->page()->firstOrFail(),
+                    $page->fresh(),
                     request()->user(),
                     'Block created',
                     'Page block structure or content was updated by adding a block.',
+                    event: 'block_created',
                 );
             }
 
@@ -295,6 +298,7 @@ class BlockController extends Controller
 
             if ($sharedSlot) {
                 $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $sharedSlot->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->sharedSlotRevisionManager->capture(
                     $sharedSlot->fresh(),
                     request()->user(),
@@ -303,11 +307,13 @@ class BlockController extends Controller
                     'Shared Slot block structure or content was updated.',
                 );
             } else {
+                $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->revisionManager->capture(
-                    $block->page()->firstOrFail(),
+                    $page->fresh(),
                     request()->user(),
                     'Block updated',
                     'Page block structure or content was updated.',
+                    event: 'block_updated',
                 );
             }
         });
@@ -352,6 +358,7 @@ class BlockController extends Controller
 
             if ($sharedSlot) {
                 $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $sharedSlot->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
                 $this->sharedSlotRevisionManager->capture(
                     $sharedSlot->fresh(),
                     $request->user(),
@@ -360,11 +367,13 @@ class BlockController extends Controller
                     'Shared Slot block structure or content was updated by removing a block.',
                 );
             } else {
+                $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
                 $this->revisionManager->capture(
                     $page->fresh(),
                     $request->user(),
                     'Block deleted',
                     'Page block structure or content was updated by removing a block.',
+                    event: 'block_deleted',
                 );
             }
         });
@@ -425,6 +434,7 @@ class BlockController extends Controller
 
             if ($sharedSlot) {
                 $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
+                $sharedSlot->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->sharedSlotRevisionManager->capture(
                     $sharedSlot->fresh(),
                     request()->user(),
@@ -433,11 +443,14 @@ class BlockController extends Controller
                     'Shared Slot block order was changed.',
                 );
             } else {
+                $page = $block->page()->firstOrFail();
+                $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->revisionManager->capture(
-                    $block->page()->firstOrFail(),
+                    $page->fresh(),
                     request()->user(),
                     'Block order updated',
                     'Page block order was changed.',
+                    event: 'block_reordered',
                 );
             }
 

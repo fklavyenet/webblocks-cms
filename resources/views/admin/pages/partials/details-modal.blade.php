@@ -103,8 +103,43 @@
 
                 <div class="wb-list-item">
                     <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Created by</span>
+                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->createdByUser])</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Last edited by</span>
+                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
                         <span class="wb-list-item-title">Published</span>
                         <span class="wb-list-item-sub">{{ $publishedLabel }}</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Published by</span>
+                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Archived by</span>
+                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span>
+                    </div>
+                </div>
+
+                <div class="wb-list-item">
+                    <div class="wb-list-item-text">
+                        <span class="wb-list-item-title">Review requested by</span>
+                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span>
                     </div>
                 </div>
 

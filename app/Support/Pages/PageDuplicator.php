@@ -173,6 +173,7 @@ class PageDuplicator
                 $actor,
                 'Page duplicated',
                 'Page was duplicated from page #'.$lockedPage->id.' into site '.$targetSite->name.'.',
+                event: 'page_created',
             );
 
             return new PageDuplicateResult(

@@ -61,6 +61,14 @@ This role cannot publish or archive pages, and cannot access install-level syste
 
 This site boundary applies across major content areas such as pages, navigation, media, visitor reports, and contact messages.
 
+## Audit References
+
+Pages, page revisions, Shared Slots, and Shared Slot revisions can store nullable references back to CMS users for audit attribution.
+
+- These references are system-managed and are not editable page fields.
+- Content records stay intact if a referenced user is deleted.
+- Audit foreign keys use null-on-delete behavior, so old admin UI can fall back to `Not recorded` for deleted or unknown actors.
+
 ## What Each Role Can And Cannot Do
 
 ### `super_admin`

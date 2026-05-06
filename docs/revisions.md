@@ -8,6 +8,14 @@ They are designed for recovering the content and structure of one page without t
 
 Shared Slot revisions are separate site-scoped editorial safety snapshots for reusable Shared Slot content.
 
+Both revision types can also carry compact audit metadata alongside the snapshot itself:
+
+- actor user reference when a real admin user is known
+- `source` such as `admin`, `console`, `project_import`, `system`, or `restore`
+- `event` such as `page_created`, `page_updated`, `workflow_changed`, `block_created`, `block_updated`, `block_deleted`, `block_reordered`, `slot_changed`, or `revision_restored`
+
+Older revisions may not have this metadata. The admin UI renders those rows as `Not recorded` instead of guessing.
+
 ## What Gets Captured
 
 Revision snapshots include:
@@ -29,6 +37,8 @@ Revisions are created automatically when these areas change:
 - slot structure
 - block creation, updates, deletion, and ordering
 
+When possible, the revision entry also records who triggered the change and what kind of workflow produced it.
+
 ## Restore Behavior
 
 Restore works in place on the current page.
@@ -49,6 +59,7 @@ Shared Slot revisions are intentionally separate from page revisions.
 - They capture Shared Slot metadata plus the reusable Shared Slot block tree, including nested structure, translation rows, and asset references.
 - They do not capture unrelated editorial pages that reference the Shared Slot.
 - They do not store page slot assignments as part of the Shared Slot revision snapshot.
+- They carry the same compact actor, source, and event metadata pattern used by page revisions when the caller can provide it.
 
 ### Shared Slot Restore Behavior
 

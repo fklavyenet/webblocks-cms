@@ -34,11 +34,16 @@ class PageSlotController extends Controller
                 'sort_order' => $nextSortOrder,
             ]);
 
+            $page->forceFill([
+                'updated_by_user_id' => $request->user()?->id,
+            ])->save();
+
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
                 'Slot added',
                 'Page slot structure was updated by adding a slot.',
+                event: 'slot_changed',
             );
         });
 
@@ -60,12 +65,14 @@ class PageSlotController extends Controller
         DB::transaction(function () use ($page, $slot): void {
             $slot->delete();
             $this->normalizeSortOrder($page);
+            $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
 
             $this->revisionManager->capture(
                 $page->fresh(),
                 request()->user(),
                 'Slot deleted',
                 'Page slot structure was updated by removing a slot.',
+                event: 'slot_changed',
             );
         });
 
@@ -90,12 +97,14 @@ class PageSlotController extends Controller
 
         DB::transaction(function () use ($request, $page, $slot): void {
             $slot->update($request->validatedData());
+            $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
 
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
                 'Slot source updated',
                 'Page slot source was updated.',
+                event: 'slot_changed',
             );
         });
 
@@ -143,11 +152,14 @@ class PageSlotController extends Controller
                 $orderedSlot->update(['sort_order' => $index]);
             }
 
+            $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
+
             $this->revisionManager->capture(
                 $page->fresh(),
                 request()->user(),
                 'Slot order updated',
                 'Page slot order was changed.',
+                event: 'slot_changed',
             );
 
             return true;

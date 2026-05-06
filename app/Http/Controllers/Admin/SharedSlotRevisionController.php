@@ -32,7 +32,7 @@ class SharedSlotRevisionController extends Controller
 
         return view('admin.shared-slots.revisions.index', [
             'sharedSlot' => $sharedSlot->loadMissing('site'),
-            'revisions' => $sharedSlot->revisions()->with(['actor', 'restoredFrom'])->get(),
+            'revisions' => $sharedSlot->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->get(),
             'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $sharedSlot),
         ]);
     }
@@ -54,7 +54,7 @@ class SharedSlotRevisionController extends Controller
 
         return view('admin.shared-slots.revisions.show', [
             'sharedSlot' => $sharedSlot->loadMissing('site'),
-            'revision' => $revision->loadMissing(['actor', 'restoredFrom']),
+            'revision' => $revision->loadMissing(['actor', 'createdByUser', 'restoredFrom']),
             'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $sharedSlot),
             'snapshotMetadata' => data_get($snapshot, 'shared_slot', []),
             'snapshotBlocks' => $this->flattenSnapshotBlocks(data_get($snapshot, 'blocks', [])),

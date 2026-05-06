@@ -47,6 +47,7 @@ class PageSiteMover
                 $actor,
                 'Pre-move safety snapshot',
                 'Page state was captured before moving from '.$sourceSite->name.' to '.$targetSite->name.'.',
+                event: 'workflow_changed',
             );
 
             $translationPayloads = $lockedPage->translations
@@ -103,6 +104,7 @@ class PageSiteMover
                 $actor,
                 'Page moved to another site',
                 'Page site ownership was moved from '.$sourceSite->name.' to '.$targetSite->name.'.',
+                event: 'workflow_changed',
             );
 
             $movedPage = $lockedPage->fresh(['site', 'translations.locale', 'slots.sharedSlot', 'slots.slotType']);

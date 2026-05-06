@@ -41,7 +41,7 @@
                             <tr>
                                 <th>Created</th>
                                 <th>Revision</th>
-                                <th>Triggered By</th>
+                                <th>Audit</th>
                                 <th>Restore</th>
                             </tr>
                         </thead>
@@ -60,7 +60,13 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td>{{ $revision->actor?->name ?? 'System' }}</td>
+                                    <td>
+                                        <div class="wb-stack wb-gap-1 wb-text-sm">
+                                            <span>@include('admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
+                                            <span class="wb-text-muted">Source: {{ $revision->sourceText() }}</span>
+                                            <span class="wb-text-muted">Event: {{ $revision->eventText() }}</span>
+                                        </div>
+                                    </td>
                                     <td>
                                         @if ($canRestoreRevisions)
                                             <form method="POST" action="{{ route('admin.pages.revisions.restore', [$page, $revision]) }}" onsubmit="return confirm('Restore this page revision? A safety revision will be created first.');">

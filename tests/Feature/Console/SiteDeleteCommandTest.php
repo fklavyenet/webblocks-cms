@@ -74,6 +74,9 @@ class SiteDeleteCommandTest extends TestCase
         $revision = PageRevision::query()->create([
             'page_id' => $page->id,
             'site_id' => $site->id,
+            'created_by_user_id' => null,
+            'source' => 'console',
+            'event' => 'page_updated',
             'label' => 'Imported revision',
             'reason' => 'CLI delete regression',
             'snapshot' => ['page' => ['id' => $page->id, 'site_id' => $site->id]],

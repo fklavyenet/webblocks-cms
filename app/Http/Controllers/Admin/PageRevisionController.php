@@ -31,7 +31,7 @@ class PageRevisionController extends Controller
 
         return view('admin.pages.revisions.index', [
             'page' => $page->loadMissing('site'),
-            'revisions' => $page->revisions()->with(['actor', 'restoredFrom'])->get(),
+            'revisions' => $page->revisions()->with(['actor', 'createdByUser', 'restoredFrom'])->get(),
             'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $page),
         ]);
     }

@@ -221,6 +221,9 @@ class SiteExportImportTest extends TestCase
                 ->where('slug', 'about'))
             ->firstOrFail();
 
+        $this->assertNull($aboutPage->created_by_user_id);
+        $this->assertNull($aboutPage->updated_by_user_id);
+
         $this->assertDatabaseHas('page_translations', ['page_id' => $aboutPage->id, 'slug' => 'hakkinda']);
 
         $header = Block::query()->where('page_id', $aboutPage->id)->where('type', 'header')->firstOrFail();
@@ -239,6 +242,8 @@ class SiteExportImportTest extends TestCase
         $this->assertSame($importedSharedSlot->id, $headerSlot->shared_slot_id);
         $this->assertNotSame($sourceSharedSlot->id, $importedSharedSlot->id);
         $this->assertSame($importedSite->id, $importedSharedSlot->site_id);
+        $this->assertNull($importedSharedSlot->created_by_user_id);
+        $this->assertNull($importedSharedSlot->updated_by_user_id);
         $this->assertSame(1, Page::query()->where('site_id', $importedSite->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
         $presented = app(PublicPagePresenter::class)->present($aboutPage->fresh([
             'site',

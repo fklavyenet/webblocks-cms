@@ -8,6 +8,7 @@ use App\Models\Page;
 use App\Models\PageRevision;
 use App\Models\PageSlot;
 use App\Models\User;
+use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
@@ -23,6 +24,7 @@ class PageRevisionManager
     public function __construct(
         private readonly PageWorkflowManager $workflowManager,
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly CurrentActorResolver $currentActorResolver,
     ) {}
 
     public function canView(User $user, Page $page): bool
@@ -47,7 +49,15 @@ class PageRevisionManager
         }
     }
 
-    public function capture(Page $page, ?User $actor = null, ?string $label = null, ?string $reason = null, ?PageRevision $restoredFrom = null): PageRevision
+    public function capture(
+        Page $page,
+        ?User $actor = null,
+        ?string $label = null,
+        ?string $reason = null,
+        ?PageRevision $restoredFrom = null,
+        ?string $event = null,
+        ?string $source = null,
+    ): PageRevision
     {
         if (! $this->revisionsTableExists()) {
             throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
@@ -69,10 +79,15 @@ class PageRevisionManager
                 ->orderBy('id'),
         ]);
 
+        $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
+
         return PageRevision::create([
             'page_id' => $page->id,
             'site_id' => $page->site_id,
-            'created_by' => $actor?->id,
+            'created_by' => $resolvedActor['user_id'],
+            'created_by_user_id' => $resolvedActor['user_id'],
+            'source' => $resolvedActor['source'],
+            'event' => $event,
             'label' => $label,
             'reason' => $reason,
             'snapshot' => $this->snapshot($page),
@@ -95,6 +110,8 @@ class PageRevisionManager
                 $actor,
                 'Pre-restore safety snapshot',
                 'Current page state was saved before restore.',
+                event: 'revision_restored',
+                source: 'restore',
             );
 
             $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
@@ -105,6 +122,8 @@ class PageRevisionManager
                 'Revision restored',
                 'Page content was restored from revision #'.$revision->id.'.',
                 $revision,
+                'revision_restored',
+                'restore',
             );
         });
     }

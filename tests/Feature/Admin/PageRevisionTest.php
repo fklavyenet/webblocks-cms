@@ -121,6 +121,9 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'source' => 'admin',
+            'event' => 'page_updated',
             'label' => 'Page updated',
         ]);
 
@@ -147,6 +150,8 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'event' => 'slot_changed',
             'label' => 'Slot added',
         ]);
 
@@ -169,6 +174,8 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'event' => 'slot_changed',
             'label' => 'Slot order updated',
         ]);
 
@@ -181,6 +188,8 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'event' => 'slot_changed',
             'label' => 'Slot deleted',
         ]);
     }
@@ -208,6 +217,8 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'event' => 'page_updated',
             'label' => 'Translation added',
         ]);
     }
@@ -256,8 +267,11 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'event' => 'block_updated',
             'label' => 'Block updated',
         ]);
+        $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
     }
 
     #[Test]
@@ -272,6 +286,9 @@ class PageRevisionTest extends TestCase
             'page_id' => $page->id,
             'site_id' => $site->id,
             'created_by' => $siteAdmin->id,
+            'created_by_user_id' => $siteAdmin->id,
+            'source' => 'admin',
+            'event' => 'page_updated',
             'label' => 'Manual seed revision',
             'reason' => 'Seeded for access test.',
             'snapshot' => ['schema_version' => 1],
@@ -281,6 +298,9 @@ class PageRevisionTest extends TestCase
         $history->assertOk();
         $history->assertSee('Revision History');
         $history->assertSee('View only');
+        $history->assertSee('Source: Admin');
+        $history->assertSee('Event: Page Updated');
+        $history->assertSee($siteAdmin->name);
         $history->assertDontSee('Restore this page revision?');
 
         $revision = $page->revisions()->firstOrFail();
@@ -458,16 +478,86 @@ class PageRevisionTest extends TestCase
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'label' => 'Pre-restore safety snapshot',
+            'event' => 'revision_restored',
+            'source' => 'restore',
         ]);
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,
             'label' => 'Revision restored',
+            'event' => 'revision_restored',
+            'source' => 'restore',
             'restored_from_page_revision_id' => $revisionToRestore->id,
         ]);
 
         $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
         $history->assertOk();
         $history->assertSee('Restored from revision #'.$revisionToRestore->id);
+    }
+
+    #[Test]
+    public function revision_history_renders_not_recorded_for_legacy_rows_without_actor_metadata(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'legacy-revision');
+
+        PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'created_by' => null,
+            'created_by_user_id' => null,
+            'source' => null,
+            'event' => null,
+            'label' => 'Legacy revision',
+            'reason' => 'Predates audit metadata.',
+            'snapshot' => ['schema_version' => 1],
+        ]);
+
+        $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
+
+        $history->assertOk();
+        $history->assertSee('Legacy revision');
+        $history->assertSee('Not recorded');
+    }
+
+    #[Test]
+    public function deleting_a_referenced_user_keeps_page_and_revision_history_renderable(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $viewer = User::factory()->superAdmin()->create();
+        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'audit-delete');
+        $page->forceFill([
+            'created_by_user_id' => $user->id,
+            'updated_by_user_id' => $user->id,
+            'published_by_user_id' => $user->id,
+        ])->save();
+
+        PageRevision::query()->create([
+            'page_id' => $page->id,
+            'site_id' => $site->id,
+            'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'source' => 'admin',
+            'event' => 'page_updated',
+            'label' => 'User-linked revision',
+            'reason' => 'Seeded for deletion safety.',
+            'snapshot' => ['schema_version' => 1],
+        ]);
+
+        $user->delete();
+
+        $this->assertDatabaseHas('pages', ['id' => $page->id]);
+        $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'label' => 'User-linked revision']);
+
+        $details = $this->actingAs($viewer)->get(route('admin.pages.index', ['details' => $page->id]));
+        $details->assertOk();
+        $details->assertSee('Not recorded');
+
+        $history = $this->actingAs($viewer)->get(route('admin.pages.revisions.index', $page));
+        $history->assertOk();
+        $history->assertSee('User-linked revision');
+        $history->assertSee('Not recorded');
     }
 
     #[Test]
@@ -557,6 +647,9 @@ class PageRevisionTest extends TestCase
             'page_id' => $page->id,
             'site_id' => $site->id,
             'created_by' => $user->id,
+            'created_by_user_id' => $user->id,
+            'source' => 'admin',
+            'event' => 'slot_changed',
             'label' => 'Legacy slot settings snapshot',
             'reason' => 'Seeded for restore sanitization.',
             'snapshot' => [

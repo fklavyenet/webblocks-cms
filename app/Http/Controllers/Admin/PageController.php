@@ -17,6 +17,7 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Audit\CurrentActorResolver;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -36,6 +37,7 @@ class PageController extends Controller
     public function __construct(
         private readonly BlockPayloadWriter $blockPayloadWriter,
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -67,7 +69,15 @@ class PageController extends Controller
             ->pluck('locales_count', 'id');
 
         $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
-                ->with(['site', 'translations.locale'])
+                ->with([
+                    'site',
+                    'translations.locale',
+                    'createdByUser',
+                    'updatedByUser',
+                    'publishedByUser',
+                    'archivedByUser',
+                    'reviewRequestedByUser',
+                ])
                 ->with('slots.slotType')
                 ->withCount(['slots', 'blocks'])
                 ->when($search !== '', function ($query) use ($search, $defaultLocaleId) {
@@ -154,7 +164,11 @@ class PageController extends Controller
             $data = $request->validatedData();
             $blocks = $data['blocks'] ?? [];
             $translation = $data['translation'];
+            $actor = $this->currentActorResolver->resolve($request->user());
             unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
+
+            $data['created_by_user_id'] = $actor['user_id'];
+            $data['updated_by_user_id'] = $actor['user_id'];
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
@@ -170,6 +184,7 @@ class PageController extends Controller
                 $request->user(),
                 'Page created',
                 'Initial page state was captured when the page was created.',
+                event: 'page_created',
             );
 
             return $page;
@@ -254,6 +269,8 @@ class PageController extends Controller
             $translation = $data['translation'];
             unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
+            $data['updated_by_user_id'] = $this->currentActorResolver->resolve($request->user())['user_id'];
+
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
             $this->revisionManager->capture(
@@ -261,6 +278,7 @@ class PageController extends Controller
                 $request->user(),
                 'Page updated',
                 'Page fields and the default translation were updated.',
+                event: 'page_updated',
             );
         });
 
@@ -352,6 +370,7 @@ class PageController extends Controller
                 $request->user(),
                 'Workflow updated',
                 'Page workflow changed from '.$fromStatus.' to '.$updatedPage->status.'.',
+                event: 'workflow_changed',
             );
 
             return $message;
@@ -458,6 +477,7 @@ class PageController extends Controller
                 $request->user(),
                 'Block order updated',
                 'Page block order was changed.',
+                event: 'block_reordered',
             );
         });
 

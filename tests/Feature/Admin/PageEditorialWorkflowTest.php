@@ -11,6 +11,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Models\PageRevision;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -89,6 +90,10 @@ class PageEditorialWorkflowTest extends TestCase
         $page->forceFill([
             'review_requested_at' => now()->subDay(),
             'published_at' => now()->subHour(),
+            'created_by_user_id' => $user->id,
+            'updated_by_user_id' => $user->id,
+            'published_by_user_id' => $user->id,
+            'review_requested_by_user_id' => $user->id,
         ])->save();
 
         PageTranslation::query()->updateOrCreate(
@@ -144,6 +149,11 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertSee('Status');
         $response->assertSee('Published');
         $response->assertSee('Review Requested');
+        $response->assertSee('Created by');
+        $response->assertSee('Last edited by');
+        $response->assertSee('Published by');
+        $response->assertSee($user->name);
+        $response->assertSee($user->email);
         $response->assertSee('Slot count');
         $response->assertSee('1');
         $response->assertSee('Block count');
@@ -181,6 +191,8 @@ class PageEditorialWorkflowTest extends TestCase
         $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
         $this->assertNull($page->fresh()->published_at);
         $this->assertNull($page->fresh()->review_requested_at);
+        $this->assertSame($user->id, $page->fresh()->created_by_user_id);
+        $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
 
         $this->actingAs($user)
             ->post(route('admin.pages.slots.store', $page), ['slot_type_id' => $main->id])
@@ -246,6 +258,8 @@ class PageEditorialWorkflowTest extends TestCase
         $publish->assertSessionHas('status', 'Page published.');
         $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
         $this->assertNotNull($page->fresh()->published_at);
+        $this->assertSame($user->id, $page->fresh()->published_by_user_id);
+        $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
 
         $archive = $this->actingAs($user)->post(route('admin.pages.workflow', $page), [
             'action' => 'archive',
@@ -254,6 +268,7 @@ class PageEditorialWorkflowTest extends TestCase
         $archive->assertRedirect(route('admin.pages.edit', $page));
         $archive->assertSessionHas('status', 'Page archived.');
         $this->assertSame(Page::STATUS_ARCHIVED, $page->fresh()->status);
+        $this->assertSame($user->id, $page->fresh()->archived_by_user_id);
 
         $restore = $this->actingAs($user)->post(route('admin.pages.workflow', $page), [
             'action' => 'restore_draft',
@@ -262,6 +277,23 @@ class PageEditorialWorkflowTest extends TestCase
         $restore->assertRedirect(route('admin.pages.edit', $page));
         $restore->assertSessionHas('status', 'Page moved back to draft.');
         $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    }
+
+    #[Test]
+    public function page_details_modal_renders_missing_audit_metadata_safely(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'missing-audit');
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', ['details' => $page->id]));
+
+        $response->assertOk();
+        $response->assertSee('Created by');
+        $response->assertSee('Last edited by');
+        $response->assertSee('Published by');
+        $response->assertSee('Not recorded');
+        $response->assertDontSee('Edit Blocks');
     }
 
     #[Test]

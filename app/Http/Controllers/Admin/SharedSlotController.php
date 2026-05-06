@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Audit\CurrentActorResolver;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\SharedSlots\SharedSlotRevisionManager;
 use App\Support\SharedSlots\SharedSlotSchema;
@@ -31,6 +32,7 @@ class SharedSlotController extends Controller
 
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
         private readonly SharedSlotRevisionManager $revisionManager,
@@ -121,7 +123,11 @@ class SharedSlotController extends Controller
         $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
 
         $sharedSlot = DB::transaction(function () use ($request): SharedSlot {
-            $sharedSlot = SharedSlot::query()->create($request->validatedData());
+            $actor = $this->currentActorResolver->resolve($request->user());
+            $sharedSlot = SharedSlot::query()->create($request->validatedData() + [
+                'created_by_user_id' => $actor['user_id'],
+                'updated_by_user_id' => $actor['user_id'],
+            ]);
             $this->sourcePages->ensureFor($sharedSlot);
 
             if ($this->revisionManager->revisionsTableExists()) {
@@ -132,6 +138,7 @@ class SharedSlotController extends Controller
                     'Shared Slot created',
                     'Shared Slot metadata was created.',
                     force: true,
+                    source: 'admin',
                 );
             }
 
@@ -169,7 +176,9 @@ class SharedSlotController extends Controller
 
         DB::transaction(function () use ($request, $sharedSlot): void {
             $before = $sharedSlot->fresh();
-            $sharedSlot->update($request->validatedData());
+            $sharedSlot->update($request->validatedData() + [
+                'updated_by_user_id' => $request->user()?->id,
+            ]);
             $freshSharedSlot = $sharedSlot->fresh();
             $this->sourcePages->ensureFor($freshSharedSlot);
             $this->sourcePages->rebuildAssignments($freshSharedSlot);
@@ -381,6 +390,7 @@ class SharedSlotController extends Controller
 
             $this->sourcePages->rebuildAssignments($sharedSlot);
             if ($this->revisionManager->revisionsTableExists()) {
+                $sharedSlot->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
                 $this->revisionManager->capture(
                     $sharedSlot->fresh(),
                     request()->user(),

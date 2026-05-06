@@ -4,10 +4,15 @@ namespace App\Support\Pages;
 
 use App\Models\Page;
 use App\Models\User;
+use App\Support\Audit\CurrentActorResolver;
 use Illuminate\Validation\ValidationException;
 
 class PageWorkflowManager
 {
+    public function __construct(
+        private readonly CurrentActorResolver $currentActorResolver,
+    ) {}
+
     public const ACTION_SUBMIT_REVIEW = 'submit_review';
 
     public const ACTION_PUBLISH = 'publish';
@@ -73,10 +78,10 @@ class PageWorkflowManager
         }
 
         return match ($normalizedAction) {
-            self::ACTION_SUBMIT_REVIEW => $this->transition($page, Page::STATUS_IN_REVIEW, 'Page submitted for review.'),
-            self::ACTION_PUBLISH => $this->transition($page, Page::STATUS_PUBLISHED, 'Page published.'),
-            self::ACTION_RESTORE_DRAFT => $this->transition($page, Page::STATUS_DRAFT, 'Page moved back to draft.'),
-            self::ACTION_ARCHIVE => $this->transition($page, Page::STATUS_ARCHIVED, 'Page archived.'),
+            self::ACTION_SUBMIT_REVIEW => $this->transition($page, $user, Page::STATUS_IN_REVIEW, 'Page submitted for review.'),
+            self::ACTION_PUBLISH => $this->transition($page, $user, Page::STATUS_PUBLISHED, 'Page published.'),
+            self::ACTION_RESTORE_DRAFT => $this->transition($page, $user, Page::STATUS_DRAFT, 'Page moved back to draft.'),
+            self::ACTION_ARCHIVE => $this->transition($page, $user, Page::STATUS_ARCHIVED, 'Page archived.'),
         };
     }
 
@@ -85,13 +90,27 @@ class PageWorkflowManager
         return $this->roleAllowsAction($user, $action) && $this->statusAllowsAction($page, $action);
     }
 
-    private function transition(Page $page, string $status, string $message): string
+    private function transition(Page $page, User $user, string $status, string $message): string
     {
+        $actor = $this->currentActorResolver->resolve($user);
         $attributes = [
             'status' => $status,
             'review_requested_at' => $status === Page::STATUS_IN_REVIEW ? now() : null,
             'published_at' => $status === Page::STATUS_PUBLISHED ? now() : null,
+            'updated_by_user_id' => $actor['user_id'],
         ];
+
+        if ($status === Page::STATUS_IN_REVIEW) {
+            $attributes['review_requested_by_user_id'] = $actor['user_id'];
+        }
+
+        if ($status === Page::STATUS_PUBLISHED) {
+            $attributes['published_by_user_id'] = $actor['user_id'];
+        }
+
+        if ($status === Page::STATUS_ARCHIVED) {
+            $attributes['archived_by_user_id'] = $actor['user_id'];
+        }
 
         $page->forceFill($attributes)->save();
 
