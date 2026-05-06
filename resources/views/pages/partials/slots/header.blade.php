@@ -75,7 +75,7 @@
     };
 
     $brandLabel = $branding?->title ?: ($branding?->content ?: config('app.name'));
-    $brandContext = $branding?->typeSlug() === 'heading'
+    $brandContext = $branding?->typeSlug() === 'header'
         ? null
         : ($branding?->content ?: config('app.slogan'));
     $brandImage = $branding?->typeSlug() === 'image' ? $branding?->asset?->url() : null;

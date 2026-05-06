@@ -756,7 +756,7 @@ class FullShowcaseSeeder extends Seeder
                 'slots' => [
                     'main' => [
                         ['type' => 'breadcrumb'],
-                        ['type' => 'heading', 'variant' => 'h1', 'title' => 'Launching a governed content platform without creating process drag'],
+                        ['type' => 'header', 'variant' => 'h1', 'title' => 'Launching a governed content platform without creating process drag'],
                         ['type' => 'image', 'title' => 'Governance models', 'subtitle' => 'Person writing on laptop', 'asset_key' => $this->preferredAssetKey('blog-writing-01', 'blog-governance')],
                         ['type' => 'rich-text', 'content' => "The best pilot sites make structure visible. Editors should understand where content belongs, how it is labeled, and which blocks are most appropriate for each message.\n\nIn this showcase, the blog post becomes a natural place to demonstrate share actions, reader comments, related content, and pagination while still reading like a real article."],
                         ['type' => 'quote', 'title' => 'Priya Sen', 'subtitle' => 'Design Systems Lead', 'content' => 'When a demo site is coherent, stakeholders stop asking what the CMS cannot do and start discussing how they want to use it.'],

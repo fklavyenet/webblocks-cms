@@ -57,7 +57,7 @@ class BlockAdminSummary
             'rich-text' => [$this->content($block) ?? 'Rich Text', null],
             'plain_text' => [$this->content($block) ?? 'Plain Text', null],
             'text' => [$this->content($block) ?? 'Text', null],
-            'header', 'heading' => [$this->title($block) ?? 'Heading', $this->subtitle($block)],
+            'header' => [$this->title($block) ?? 'Header', $this->subtitle($block)],
             'content_header', 'content-header' => $this->contentHeaderLines($block),
             'code' => $this->codeLines($block),
             'button_link', 'button-link', 'button' => $this->buttonLines($block),

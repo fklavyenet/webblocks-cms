@@ -93,11 +93,15 @@ See `docs/installation.md` for the complete install guide.
 8. Publish the page as a `site_admin` or `super_admin`.
 9. Open the public URL or preview link to confirm the live result.
 
+For common editorial choices, `Table`, `TOC`, and `Quote` are available as first-class block picker options. Use `Header` as the canonical heading or title block, including optional anchor IDs for direct links and TOC targets. Do not use the legacy `Heading` block type.
+
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
 
 On the Edit Site screen, keep internal site routing fields such as `Name`, `Handle`, `Domain`, and `Primary` separate from public identity. Public-facing `Branding` and `SEO Defaults` live on the site itself. Use `display_name`, `tagline`, favicon, social image, and site-level SEO defaults there for public metadata fallbacks. Locale-aware page-level SEO overrides now live on each page translation, where editors can override title, description, keywords, and Open Graph fields for one locale without changing the fixed WebBlocks CMS admin product identity.
 
 In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a compact one-row-per-block table with block type, a single primary summary, a dedicated children-count column, status, and actions. The Block Picker supports search, category filtering, and sortable catalog-style rows so larger block catalogs remain manageable. On narrow screens the table remains one-row-per-block and scrolls horizontally instead of collapsing labels into vertical letter stacks. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
+
+The slot editor block picker follows the published block catalog directly. `Table`, `TOC`, `Quote`, and `Header` appear when their catalog rows are published. The legacy `Heading` catalog row is removed rather than kept hidden, so it does not appear in normal picker or editor availability.
 
 `Admin -> System -> Settings` now also owns Project Identity. `Project Name` and `Project Tagline` are admin-only context labels used in the topbar and admin browser titles so teams can distinguish one install from another. They do not change the fixed WebBlocks CMS sidebar brand or version footer, and they do not affect public site metadata, favicon, SEO defaults, search scope, or locale-aware page metadata.
 
@@ -147,7 +151,7 @@ See `docs/getting-started.md` for the first-use workflow.
 
 ## Developer Notes
 
-- Refresh the product block catalog on an existing install with `ddev artisan db:seed --class=BlockTypeSeeder`. The seeder safely upserts product-owned block types such as `Rich Text` without duplicating rows.
+- Refresh the product block catalog on an existing install with `ddev artisan db:seed --class=BlockTypeSeeder`. The seeder safely upserts product-owned block types such as `Header`, `Table`, `TOC`, `Quote`, and `Rich Text` without duplicating rows, and removes the legacy `heading` catalog row only when no live published blocks still reference it.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Admin chrome product identity is fixed to `WebBlocks CMS`, `A modern block-based CMS`, and `WebBlocks CMS v{VERSION}` from `App\Support\WebBlocks`. System Settings and editable site fields do not change those labels.
 - Public rendering ownership is split intentionally: page controls the outer shell (`default` or `docs`), slot name controls the public region wrapper semantics, and blocks render content inside those slot wrappers.

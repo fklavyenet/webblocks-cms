@@ -87,6 +87,7 @@ class BlockRequest extends FormRequest
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
+            'anchor' => [$isHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'name' => [($isLayoutPrimitive || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
@@ -207,6 +208,14 @@ class BlockRequest extends FormRequest
             if ($selectedBlockType?->slug === 'search-form') {
                 if (blank($this->input('content'))) {
                     $validator->errors()->add('content', 'Search placeholder is required.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'header') {
+                $anchor = trim((string) $this->input('anchor', ''));
+
+                if ($anchor !== '' && ! preg_match('/^[A-Za-z][A-Za-z0-9\-_:.]*$/', $anchor)) {
+                    $validator->errors()->add('anchor', 'Anchor ID must start with a letter and may contain letters, numbers, dashes, underscores, colons, or periods.');
                 }
             }
 
@@ -603,6 +612,7 @@ class BlockRequest extends FormRequest
                 $existingSettings = is_array($existingSettings) ? $existingSettings : [];
                 $settings = $existingSettings;
                 $alignment = trim((string) ($data['alignment'] ?? ''));
+                $anchor = trim((string) ($data['anchor'] ?? ''));
 
                 if (! $isTranslatedHeaderEdit) {
                     if (in_array($alignment, ['left', 'center', 'right'], true)) {
@@ -610,12 +620,20 @@ class BlockRequest extends FormRequest
                     } else {
                         unset($settings['alignment']);
                     }
+
+                    if ($anchor !== '') {
+                        $settings['anchor'] = $anchor;
+                    } else {
+                        unset($settings['anchor']);
+                    }
                 }
 
                 $data['title'] = trim((string) ($data['text'] ?? '')) ?: null;
                 $data['subtitle'] = null;
                 $data['content'] = null;
-                $data['url'] = null;
+                $data['url'] = $isTranslatedHeaderEdit
+                    ? ($this->route('block')?->getRawOriginal('url'))
+                    : ($anchor !== '' ? $anchor : null);
                 $data['asset_id'] = null;
                 $data['meta'] = null;
                 $data['settings'] = $settings === []
@@ -1116,7 +1134,7 @@ class BlockRequest extends FormRequest
         unset($data['title_tag']);
         unset($data['language']);
         unset($data['navigation_menu_key']);
-        unset($data['text'], $data['level']);
+        unset($data['text'], $data['level'], $data['anchor']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);

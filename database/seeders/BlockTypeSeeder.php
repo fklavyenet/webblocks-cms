@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Block;
 use App\Models\BlockType;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class BlockTypeSeeder extends Seeder
 {
@@ -132,6 +134,28 @@ class BlockTypeSeeder extends Seeder
                 'status' => 'published',
             ],
             [
+                'name' => 'Table',
+                'slug' => 'table',
+                'category' => 'content',
+                'description' => 'Structured table rows with optional header-row formatting.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 10,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Quote',
+                'slug' => 'quote',
+                'category' => 'content',
+                'description' => 'Editorial quote or testimonial with optional attribution.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 11,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Link List',
                 'slug' => 'link-list',
                 'category' => 'navigation',
@@ -139,7 +163,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 11,
+                'sort_order' => 12,
                 'status' => 'published',
             ],
             [
@@ -150,7 +174,18 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 12,
+                'sort_order' => 13,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'TOC',
+                'slug' => 'toc',
+                'category' => 'navigation',
+                'description' => 'Table of contents built from anchored Header blocks on the same page.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 14,
                 'status' => 'published',
             ],
             [
@@ -161,7 +196,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 10,
+                'sort_order' => 15,
                 'status' => 'published',
             ],
             [
@@ -172,7 +207,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => true,
                 'is_container' => false,
-                'sort_order' => 13,
+                'sort_order' => 16,
                 'status' => 'published',
             ],
             [
@@ -183,7 +218,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => true,
                 'is_container' => false,
-                'sort_order' => 14,
+                'sort_order' => 17,
                 'status' => 'published',
             ],
             [
@@ -194,7 +229,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 15,
+                'sort_order' => 18,
                 'status' => 'published',
             ],
             [
@@ -205,7 +240,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 16,
+                'sort_order' => 19,
                 'status' => 'published',
             ],
             [
@@ -216,7 +251,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 17,
+                'sort_order' => 20,
                 'status' => 'published',
             ],
             [
@@ -227,7 +262,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 18,
+                'sort_order' => 21,
                 'status' => 'published',
             ],
             [
@@ -238,7 +273,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 20,
+                'sort_order' => 23,
                 'status' => 'published',
             ],
             [
@@ -249,7 +284,7 @@ class BlockTypeSeeder extends Seeder
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 19,
+                'sort_order' => 22,
                 'status' => 'published',
             ],
         ];
@@ -266,14 +301,13 @@ class BlockTypeSeeder extends Seeder
             ['name', 'category', 'description', 'source_type', 'is_system', 'is_container', 'sort_order', 'status'],
         );
 
+        $this->deleteLegacyHeadingBlockType();
+
         collect([
-            'heading' => 'Heading',
             'text' => 'Text',
-            'quote' => 'Quote',
             'callout' => 'Callout',
             'code' => 'Code',
             'list' => 'List',
-            'table' => 'Table',
             'accordion' => 'Accordion',
             'tabs' => 'Tabs',
             'faq' => 'FAQ',
@@ -286,7 +320,6 @@ class BlockTypeSeeder extends Seeder
             'map' => 'Map',
             'menu' => 'Menu',
             'pagination' => 'Pagination',
-            'toc' => 'TOC',
             'form' => 'Form',
             'button' => 'Button',
             'input' => 'Input',
@@ -343,5 +376,28 @@ class BlockTypeSeeder extends Seeder
                 ],
             );
         });
+    }
+
+    private function deleteLegacyHeadingBlockType(): void
+    {
+        $headingBlockType = BlockType::query()->where('slug', 'heading')->first();
+
+        if (! $headingBlockType) {
+            return;
+        }
+
+        $liveHeadingCount = Block::query()
+            ->where(function ($query) use ($headingBlockType): void {
+                $query->where('type', 'heading')
+                    ->orWhere('block_type_id', $headingBlockType->id);
+            })
+            ->where('status', 'published')
+            ->count();
+
+        if ($liveHeadingCount > 0) {
+            throw new RuntimeException('Cannot remove legacy block type [heading] because '.$liveHeadingCount.' live block(s) still reference it. Move those blocks to the canonical [header] type before running BlockTypeSeeder again.');
+        }
+
+        $headingBlockType->delete();
     }
 }

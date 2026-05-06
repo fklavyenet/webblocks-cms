@@ -85,7 +85,7 @@
           },
           {
             "key": "theme-axes-heading",
-            "type": "heading",
+            "type": "header",
             "variant": "h2",
             "url": "theme-axes",
             "translations": {
@@ -146,7 +146,7 @@
           },
           {
             "key": "token-groups-heading",
-            "type": "heading",
+            "type": "header",
             "variant": "h2",
             "url": "token-groups",
             "translations": {
@@ -237,7 +237,7 @@
           },
           {
             "key": "spacing-scale-heading",
-            "type": "heading",
+            "type": "header",
             "variant": "h2",
             "url": "spacing-scale",
             "translations": {
@@ -325,7 +325,7 @@
           },
           {
             "key": "base-element-styling-heading",
-            "type": "heading",
+            "type": "header",
             "variant": "h2",
             "url": "base-element-styling",
             "translations": {
@@ -433,7 +433,7 @@
           },
           {
             "key": "theme-controls-heading",
-            "type": "heading",
+            "type": "header",
             "variant": "h2",
             "url": "theme-controls",
             "translations": {

@@ -161,15 +161,15 @@ Public pages now use explicit layout composition modes:
 
 ## Core Content Blocks
 
-### `heading`
+### `header`
 
-- CMS block slug: `heading`
-- Admin fields: `title`, `variant`, `url`
-- Translatable fields: `title`
-- Shared fields: `variant`, `url`
-- Intended WebBlocks UI output: semantic `<h1>`-`<h6>` based on `variant`; optional `id` from `url`/anchor; no invented wrapper beyond the public block wrapper unless needed by children.
+- CMS block slug: `header`
+- Admin fields: `text`, `level`, `anchor`
+- Translatable fields: `title` text
+- Shared fields: `variant`/level, alignment setting, anchor
+- Intended WebBlocks UI output: semantic `<h1>`-`<h6>` based on `level`; optional `id` from the shared anchor; no invented wrapper beyond the heading element.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: normalize anchor IDs, keep child content optional, and avoid adding decorative heading wrappers.
+- Notes for later renderer/admin improvements: keep anchor behavior explicit, preserve wrapper-free output, and keep heading semantics owned by `Header` rather than a parallel legacy block.
 
 ### `text`
 
@@ -443,9 +443,9 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `title`
 - Translatable fields: `title`
 - Shared fields: none
-- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `heading` blocks on the same page.
+- Intended WebBlocks UI output: `wb-link-list` built from existing anchored `header` blocks on the same page.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: the Phase 3 implementation stays intentionally minimal. It only renders when headings already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
+- Notes for later renderer/admin improvements: the Phase 3 implementation stays intentionally minimal. It only renders when `Header` blocks already expose explicit anchor IDs and does not attempt complex heading parsing or auto-generated anchors.
 
 ### `navigation-auto`
 
@@ -495,7 +495,7 @@ Public pages now use explicit layout composition modes:
 | `testimonial` | first-class alias | should merge into Quote | The public renderer now delegates to the quote testimonial variant. |
 | `timeline` | fallback-only | should become first-class | Promote only with structured milestones and a clear shipped UI pattern. |
 | `pricing` | fallback-only | should become first-class | A pricing block needs structured plan, feature, and CTA fields to be worth promoting. |
-| `toc` | first-class public renderer | acceptable | Minimal TOC rendering now uses existing heading anchors and `wb-link-list`; active-section behavior is still deferred. |
+| `toc` | first-class public renderer | acceptable | Minimal TOC rendering now uses existing `Header` anchors and `wb-link-list`; active-section behavior is still deferred. |
 | `breadcrumb` | fallback-only | should become first-class | Only add when the public shell truly requires breadcrumb navigation. |
 | `cookie-notice` | fallback-only | should stay fallback/custom | Public consent UI already lives in the layout shell, so this block should not compete with the shared privacy pattern. |
 

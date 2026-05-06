@@ -1,12 +1,13 @@
 @php
-    $headingBlocks = \App\Models\Block::query()
-        ->where('page_id', $block->renderPageId())
+    $headingBlocks = collect($block->renderPage()?->blocks ?? [])
         ->where('status', 'published')
-        ->where('type', 'heading')
+        ->where('type', 'header')
         ->whereIn('variant', ['h2', 'h3'])
-        ->orderBy('sort_order')
-        ->get(['title', 'content', 'url', 'variant'])
-        ->filter(fn ($heading) => filled($heading->url))
+        ->sortBy(fn ($heading) => sprintf('%010d-%010d', (int) $heading->sort_order, (int) $heading->id))
+        ->values();
+    $headingBlocks = app(\App\Support\Blocks\BlockTranslationResolver::class)
+        ->resolveCollection($headingBlocks, $block->renderLocaleCode())
+        ->filter(fn ($heading) => filled($heading->setting('anchor', $heading->url)))
         ->values();
 @endphp
 
@@ -18,7 +19,7 @@
 
         <div class="wb-link-list">
             @foreach ($headingBlocks as $headingBlock)
-                <a class="wb-link-list-item" href="#{{ $headingBlock->url }}">
+                <a class="wb-link-list-item" href="#{{ $headingBlock->setting('anchor', $headingBlock->url) }}">
                     <div class="wb-link-list-main">
                         <span class="wb-link-list-title">{{ $headingBlock->title ?: $headingBlock->content }}</span>
                         @if ($headingBlock->variant === 'h3')

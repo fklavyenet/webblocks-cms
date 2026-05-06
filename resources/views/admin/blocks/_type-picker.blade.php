@@ -17,7 +17,6 @@
     $groups = $availableBlockTypes->groupBy(fn ($blockType) => $blockType->is_system ? 'System Blocks' : 'Content Blocks');
 
     $labelMap = [
-        'heading' => 'Hero',
         'callout' => 'CTA',
         'gallery' => 'Features',
         'section' => 'Section',

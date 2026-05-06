@@ -101,7 +101,8 @@ class WebBlocksUiFoundationImportTest extends TestCase
         $this->assertSame(
             ['theme-axes', 'token-groups', 'spacing-scale', 'base-element-styling', 'theme-controls'],
             $foundationPage->blocks
-                ->where('type', 'heading')
+                ->where('type', 'header')
+                ->filter(fn (Block $block) => filled($block->url))
                 ->sortBy('sort_order')
                 ->pluck('url')
                 ->values()

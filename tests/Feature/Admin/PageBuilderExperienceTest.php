@@ -629,7 +629,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Button Link');
         $response->assertSee('Card');
         $response->assertSee('Stat Card');
+        $response->assertSee('Table');
+        $response->assertSee('Quote');
         $response->assertSee('Alert');
+        $response->assertSee('TOC');
         $response->assertSee('Rich Text');
         $response->assertSee('data-block-type-slug="rich-text"', false);
         $response->assertSee('Link List');
@@ -638,6 +641,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Sidebar Brand');
         $response->assertSee('Sidebar Navigation');
         $response->assertSee('Sidebar Footer');
+        $response->assertDontSee('Heading');
         $response->assertDontSee('Sidebar Nav Item');
         $response->assertDontSee('Sidebar Nav Group');
         $response->assertDontSee('Hero');
@@ -829,9 +833,12 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('>Button Link</strong>', $listMarkup);
         $this->assertStringContainsString('>Card</strong>', $listMarkup);
         $this->assertStringContainsString('>Stat Card</strong>', $listMarkup);
+        $this->assertStringContainsString('>Table</strong>', $listMarkup);
+        $this->assertStringContainsString('>Quote</strong>', $listMarkup);
         $this->assertStringContainsString('>Alert</strong>', $listMarkup);
         $this->assertStringContainsString('>Link List</strong>', $listMarkup);
         $this->assertStringContainsString('>Link List Item</strong>', $listMarkup);
+        $this->assertStringContainsString('>TOC</strong>', $listMarkup);
         $this->assertStringContainsString('>Breadcrumb</strong>', $listMarkup);
         $response->assertSeeInOrder([
             '>Content Header</strong>',
@@ -845,9 +852,12 @@ class PageBuilderExperienceTest extends TestCase
             '>Button Link</strong>',
             '>Card</strong>',
             '>Stat Card</strong>',
-            '>Alert</strong>',
+            '>Table</strong>',
+            '>Quote</strong>',
             '>Link List</strong>',
             '>Link List Item</strong>',
+            '>TOC</strong>',
+            '>Alert</strong>',
             '>Breadcrumb</strong>',
         ], false);
     }
@@ -2064,8 +2074,111 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Add Block: Header');
         $response->assertSee('name="text"', false);
         $response->assertSee('name="level"', false);
+        $response->assertSee('name="anchor"', false);
         $response->assertDontSee('Heading Text');
-        $response->assertDontSee('Anchor ID');
+        $response->assertSee('Anchor ID');
+    }
+
+    #[Test]
+    public function table_toc_and_quote_block_forms_open_from_the_slot_picker(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $tableType = BlockType::query()->where('slug', 'table')->firstOrFail();
+        $tocType = BlockType::query()->where('slug', 'toc')->firstOrFail();
+        $quoteType = BlockType::query()->where('slug', 'quote')->firstOrFail();
+
+        $tableResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $tableType->id]));
+        $tocResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $tocType->id]));
+        $quoteResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $quoteType->id]));
+
+        $tableResponse->assertOk();
+        $tableResponse->assertSee('Add Block: Table');
+        $tableResponse->assertSee('name="content"', false);
+        $tableResponse->assertSee('name="variant"', false);
+
+        $tocResponse->assertOk();
+        $tocResponse->assertSee('Add Block: TOC');
+        $tocResponse->assertSee('name="title"', false);
+        $tocResponse->assertDontSee('Generic Block Form');
+
+        $quoteResponse->assertOk();
+        $quoteResponse->assertSee('Add Block: Quote');
+        $quoteResponse->assertSee('name="content"', false);
+        $quoteResponse->assertSee('name="variant"', false);
+    }
+
+    #[Test]
+    public function header_anchor_is_saved_and_toc_related_block_types_can_be_created(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $tableType = BlockType::query()->where('slug', 'table')->firstOrFail();
+        $tocType = BlockType::query()->where('slug', 'toc')->firstOrFail();
+        $quoteType = BlockType::query()->where('slug', 'quote')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $headerType->id,
+            'sort_order' => 0,
+            'text' => 'Overview',
+            'level' => 'h2',
+            'anchor' => 'overview',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $tableType->id,
+            'sort_order' => 1,
+            'title' => 'Plans',
+            'content' => "Plan | Seats\nStarter | 3",
+            'variant' => 'header-row',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $tocType->id,
+            'sort_order' => 2,
+            'title' => 'On this page',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $quoteType->id,
+            'sort_order' => 3,
+            'content' => 'Quoted support text.',
+            'title' => 'Editor',
+            'subtitle' => 'CMS Team',
+            'variant' => 'testimonial',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $this->assertDatabaseHas('blocks', [
+            'page_id' => $page->id,
+            'type' => 'header',
+            'url' => 'overview',
+        ]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'table']);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'toc']);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'quote']);
     }
 
     #[Test]

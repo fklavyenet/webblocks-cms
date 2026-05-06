@@ -3,6 +3,8 @@
     $text = (string) ($block->title ?? '');
     $class = $block->headerAlignmentClass();
     $classAttribute = $class ? ' class="'.$class.'"' : '';
+    $anchor = trim((string) ($block->setting('anchor', $block->url) ?? ''));
+    $anchorAttribute = $anchor !== '' ? ' id="'.e($anchor).'"' : '';
 @endphp
 
-<{{ $level }}{!! $classAttribute !!} data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">{{ $text }}</{{ $level }}>
+<{{ $level }}{!! $classAttribute !!}{!! $anchorAttribute !!} data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">{{ $text }}</{{ $level }}>

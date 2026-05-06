@@ -2,12 +2,18 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use Tests\TestCase;
 
 class BlockTypesIndexTest extends TestCase
@@ -130,6 +136,98 @@ class BlockTypesIndexTest extends TestCase
         $renderResponse->assertOk();
         $renderResponse->assertSee('Rich Text');
         $renderResponse->assertDontSee('Textarea');
+    }
+
+    #[Test]
+    public function seeder_publishes_table_toc_quote_and_header_and_removes_heading_when_unused(): void
+    {
+        $this->seedFoundation();
+
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'table',
+            'name' => 'Table',
+            'category' => 'content',
+            'status' => 'published',
+        ]);
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'toc',
+            'name' => 'TOC',
+            'category' => 'navigation',
+            'status' => 'published',
+        ]);
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'quote',
+            'name' => 'Quote',
+            'category' => 'content',
+            'status' => 'published',
+        ]);
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'header',
+            'name' => 'Header',
+            'category' => 'content',
+            'status' => 'published',
+        ]);
+        $this->assertDatabaseMissing('block_types', ['slug' => 'heading']);
+    }
+
+    #[Test]
+    public function seeder_refuses_to_delete_heading_when_live_blocks_still_reference_it(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = \App\Models\Site::query()->where('is_primary', true)->firstOrFail();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => \App\Models\Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+
+        $slotType = SlotType::query()->updateOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        $headingType = BlockType::query()->updateOrCreate([
+            'slug' => 'heading',
+        ], [
+            'name' => 'Heading',
+            'category' => 'legacy',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 100,
+            'status' => 'published',
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'heading',
+            'block_type_id' => $headingType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Legacy heading',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot remove legacy block type [heading] because 1 live block(s) still reference it.');
+
+        $this->seed(BlockTypeSeeder::class);
     }
 
     #[Test]

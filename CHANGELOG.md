@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Publish `Table`, `TOC`, and `Quote` in the block picker and remove the legacy `Heading` block type in favor of `Header`.
+
 ## 1.16.0
 
 ### Admin Identity

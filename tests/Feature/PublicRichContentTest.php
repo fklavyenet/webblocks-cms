@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
@@ -155,35 +157,43 @@ class PublicRichContentTest extends TestCase
             'is_system' => false,
         ]);
 
-        Block::query()->create([
+        $overview = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'heading',
-            'block_type_id' => $this->blockType('heading', 'Heading', 2)->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 1,
-            'title' => 'Overview',
             'variant' => 'h2',
             'url' => 'overview',
+            'settings' => json_encode(['anchor' => 'overview'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
+        app(BlockTranslationWriter::class)->sync($overview, [
+            'title' => 'Overview',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($overview->fresh(['textTranslations']));
 
-        Block::query()->create([
+        $details = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'heading',
-            'block_type_id' => $this->blockType('heading', 'Heading', 2)->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 2,
-            'title' => 'Details',
             'variant' => 'h3',
             'url' => 'details',
+            'settings' => json_encode(['anchor' => 'details'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
+        app(BlockTranslationWriter::class)->sync($details, [
+            'title' => 'Details',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($details->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
@@ -219,6 +229,78 @@ class PublicRichContentTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('wb-link-list', false);
         $response->assertDontSee('On this page');
+    }
+
+    #[Test]
+    public function toc_uses_translated_header_titles_and_canonical_header_anchors(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $french = \App\Models\Locale::query()->updateOrCreate(
+            ['code' => 'fr'],
+            ['name' => 'French', 'is_default' => false, 'is_enabled' => true],
+        );
+        $site->locales()->syncWithoutDetaching([$french->id]);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'About',
+            'slug' => 'about',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
+        );
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $french->id],
+            ['site_id' => $site->id, 'name' => 'A propos', 'slug' => 'a-propos', 'path' => '/p/a-propos'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'toc',
+            'block_type_id' => $this->blockType('toc', 'TOC', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'On this page',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'variant' => 'h2',
+            'url' => 'overview',
+            'settings' => json_encode(['anchor' => 'overview'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($header, ['title' => 'Overview'], null, true);
+        app(BlockTranslationWriter::class)->sync($header, ['title' => 'Vue d\'ensemble'], 'fr');
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+
+        $response = $this->get('/fr/p/a-propos');
+
+        $response->assertOk();
+        $response->assertSee('<a class="wb-link-list-item" href="#overview">', false);
+        $response->assertSee('<span class="wb-link-list-title">Vue d&#039;ensemble</span>', false);
     }
 
     #[Test]
