@@ -127,10 +127,13 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertOk();
         $response->assertSee('details='.$page->id);
         $response->assertSee('aria-controls="pageDetailsModal-'.$page->id.'"', false);
-        $response->assertSee('class="wb-modal wb-modal-lg is-open" id="pageDetailsModal-'.$page->id.'"', false);
+        $response->assertSee('class="wb-modal wb-modal-xl is-open" id="pageDetailsModal-'.$page->id.'"', false);
         $response->assertDontSee('wb-drawer wb-drawer-right wb-drawer-sm', false);
         $response->assertSee('Page Details');
         $response->assertSee('Review page metadata without leaving the index.');
+        $response->assertSee('Page');
+        $response->assertSee('Status &amp; Audit', false);
+        $response->assertSee('Structure');
         $response->assertSee('ID');
         $response->assertSee((string) $page->id);
         $response->assertSee('Name');
@@ -152,6 +155,8 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertSee('Created by');
         $response->assertSee('Last edited by');
         $response->assertSee('Published by');
+        $response->assertSee('Archived by');
+        $response->assertSee('Review requested by');
         $response->assertSee($user->name);
         $response->assertSee($user->email);
         $response->assertSee('Slot count');
@@ -289,10 +294,16 @@ class PageEditorialWorkflowTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.index', ['details' => $page->id]));
 
         $response->assertOk();
+        $response->assertSee('Page');
+        $response->assertSee('Status &amp; Audit', false);
+        $response->assertSee('Structure');
         $response->assertSee('Created by');
         $response->assertSee('Last edited by');
         $response->assertSee('Published by');
+        $response->assertSee('Archived by');
+        $response->assertSee('Review requested by');
         $response->assertSee('Not recorded');
+        $response->assertSee('Edit Page');
         $response->assertDontSee('Edit Blocks');
     }
 

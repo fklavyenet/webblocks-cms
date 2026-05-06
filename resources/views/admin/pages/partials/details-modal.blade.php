@@ -14,12 +14,14 @@
     $reviewRequestedLabel = $reviewRequestedAt instanceof \Illuminate\Support\Carbon
         ? $reviewRequestedAt->format('Y-m-d H:i')
         : ($reviewRequestedAt ?: 'Not recorded');
+    $localeSummaries = collect($page->translationStatusForSite())
+        ->map(fn (array $translationStatus) => strtoupper($translationStatus['locale']->code).': '.($translationStatus['translation']?->slug ?? 'Missing').($translationStatus['public_path'] ? ' | '.$translationStatus['public_path'] : ''));
 @endphp
 
 <div class="wb-overlay-layer wb-overlay-layer--dialog">
     <div class="wb-overlay-backdrop"></div>
 
-    <div class="wb-modal wb-modal-lg is-open" id="{{ $drawerId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $drawerTitleId }}">
+    <div class="wb-modal wb-modal-xl is-open" id="{{ $drawerId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $drawerTitleId }}">
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
@@ -33,144 +35,107 @@
 
             <div class="wb-modal-body">
                 <div class="wb-stack wb-gap-4">
-            <div class="wb-list wb-list-sm">
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">ID</span>
-                        <span class="wb-list-item-sub">{{ $page->id }}</span>
-                    </div>
-                </div>
+                    <div class="wb-grid wb-grid-2">
+                        <div class="wb-card">
+                            <div class="wb-card-header"><strong>Page</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>ID</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $page->id }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Name</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $page->title }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Slug</strong></div>
+                                    <div class="wb-settings-row-control"><span><code>{{ $page->slug }}</code></span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Path</strong></div>
+                                    <div class="wb-settings-row-control"><span><code>{{ $defaultPublicPath ?? 'Missing' }}</code></span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Site</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $page->site?->name }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Default URL</strong></div>
+                                    <div class="wb-settings-row-control"><span><code>{{ $defaultPublicUrl ?? 'Missing' }}</code></span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Locales</strong></div>
+                                    <div class="wb-settings-row-control">
+                                        <div class="wb-stack wb-gap-1">
+                                            @foreach ($localeSummaries as $localeSummary)
+                                                <span>{{ $localeSummary }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Name</span>
-                        <span class="wb-list-item-sub">{{ $page->title }}</span>
+                        <div class="wb-card">
+                            <div class="wb-card-header"><strong>Status &amp; Audit</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Status</strong></div>
+                                    <div class="wb-settings-row-control"><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Review Requested</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $reviewRequestedLabel }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Published</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $publishedLabel }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Created by</strong></div>
+                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->createdByUser])</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Last edited by</strong></div>
+                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Published by</strong></div>
+                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Archived by</strong></div>
+                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Review requested by</strong></div>
+                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Created</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $page->created_at?->format('Y-m-d H:i') }}</span></div>
+                                </div>
+                                <div class="wb-settings-row">
+                                    <div class="wb-settings-row-label"><strong>Updated</strong></div>
+                                    <div class="wb-settings-row-control"><span>{{ $page->updated_at?->format('Y-m-d H:i') }}</span></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Path</span>
-                        <span class="wb-list-item-sub">{{ $defaultPublicPath ?? 'Missing' }}</span>
+                    <div class="wb-card">
+                        <div class="wb-card-header"><strong>Structure</strong></div>
+                        <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
+                            <div class="wb-settings-row">
+                                <div class="wb-settings-row-label"><strong>Slot count</strong></div>
+                                <div class="wb-settings-row-control"><span>{{ $slotCount }}</span></div>
+                            </div>
+                            <div class="wb-settings-row">
+                                <div class="wb-settings-row-label"><strong>Block count</strong></div>
+                                <div class="wb-settings-row-control"><span>{{ $blockCount }}</span></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Site</span>
-                        <span class="wb-list-item-sub">{{ $page->site?->name }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Default URL</span>
-                        <span class="wb-list-item-sub">{{ $defaultPublicUrl ?? 'Missing' }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Slug</span>
-                        <span class="wb-list-item-sub">{{ $page->slug }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Locales</span>
-                        <span class="wb-list-item-sub">
-                            @foreach ($page->translationStatusForSite() as $translationStatus)
-                                {{ strtoupper($translationStatus['locale']->code) }}: {{ $translationStatus['translation']?->slug ?? 'Missing' }}{{ $translationStatus['public_path'] ? ' | '.$translationStatus['public_path'] : '' }}@if (! $loop->last); @endif
-                            @endforeach
-                        </span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Status</span>
-                        <span class="wb-list-item-sub"><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Review Requested</span>
-                        <span class="wb-list-item-sub">{{ $reviewRequestedLabel }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Created by</span>
-                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->createdByUser])</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Last edited by</span>
-                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Published</span>
-                        <span class="wb-list-item-sub">{{ $publishedLabel }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Published by</span>
-                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Archived by</span>
-                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Review requested by</span>
-                        <span class="wb-list-item-sub">@include('admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Slot count</span>
-                        <span class="wb-list-item-sub">{{ $slotCount }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Block count</span>
-                        <span class="wb-list-item-sub">{{ $blockCount }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Created</span>
-                        <span class="wb-list-item-sub">{{ $page->created_at?->format('Y-m-d H:i') }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-list-item">
-                    <div class="wb-list-item-text">
-                        <span class="wb-list-item-title">Updated</span>
-                        <span class="wb-list-item-sub">{{ $page->updated_at?->format('Y-m-d H:i') }}</span>
-                    </div>
-                </div>
-            </div>
 
                 </div>
             </div>
