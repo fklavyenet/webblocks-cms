@@ -21,6 +21,12 @@
       "title": "Layout",
       "source_url": "https://webblocksui.com/docs/layout.html",
       "requested_public_path": "/docs/layout.html"
+    },
+    "docs-primitives": {
+      "file": "docs-primitives.json",
+      "title": "Primitives",
+      "source_url": "https://webblocksui.com/docs/primitives.html",
+      "requested_public_path": "/docs/primitives.html"
     }
   }
 }
