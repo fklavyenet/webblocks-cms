@@ -315,7 +315,7 @@ class Block extends Model
 
         $anchor = ltrim($anchor, '#');
 
-        return preg_match('/^[A-Za-z][A-Za-z0-9\-_:.]*$/', $anchor) === 1
+        return preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', $anchor) === 1
             ? $anchor
             : null;
     }

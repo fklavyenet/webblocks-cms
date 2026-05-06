@@ -15,6 +15,12 @@
       "title": "Foundation",
       "source_url": "https://webblocksui.com/docs/foundation.html",
       "requested_public_path": "/docs/foundation.html"
+    },
+    "docs-layout": {
+      "file": "docs-layout.json",
+      "title": "Layout",
+      "source_url": "https://webblocksui.com/docs/layout.html",
+      "requested_public_path": "/docs/layout.html"
     }
   }
 }

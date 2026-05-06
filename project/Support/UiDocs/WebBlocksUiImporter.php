@@ -217,25 +217,7 @@ class WebBlocksUiImporter
                 $duplicateSlot->delete();
             }
 
-            $sourceType = PageSlot::normalizeRuntimeSourceType($slotPayload['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
-            $sharedSlotId = null;
-
-            if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
-                $sharedSlotHandle = trim((string) ($slotPayload['shared_slot_handle'] ?? ''));
-
-                if ($sharedSlotHandle === '') {
-                    throw new RuntimeException("Page slot [{$slotSlug}] requires a shared_slot_handle.");
-                }
-
-                $sharedSlotId = SharedSlot::query()
-                    ->where('site_id', $site->id)
-                    ->where('handle', $sharedSlotHandle)
-                    ->value('id');
-
-                if (! $sharedSlotId) {
-                    throw new RuntimeException("Shared slot [{$sharedSlotHandle}] was not found for slot [{$slotSlug}].");
-                }
-            }
+            [$sourceType, $sharedSlotId] = $this->resolvedSlotSource($page, $slotSlug, $slotPayload, $site, $slot);
 
             $slot->fill([
                 'page_id' => $page->id,
@@ -247,6 +229,50 @@ class WebBlocksUiImporter
             ]);
             $slot->save();
         }
+    }
+
+    private function resolvedSlotSource(Page $page, string $slotSlug, array $slotPayload, Site $site, ?PageSlot $existingSlot = null): array
+    {
+        $sourceType = PageSlot::normalizeRuntimeSourceType($slotPayload['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
+
+        if ($page->publicShellPreset() === 'docs' && in_array($slotSlug, ['header', 'sidebar'], true)) {
+            $sharedSlotHandle = trim((string) ($slotPayload['shared_slot_handle'] ?? ($slotSlug === 'header' ? 'docs-header' : 'docs-sidebar')));
+            $sharedSlotId = $this->sharedSlotIdByHandle($site, $sharedSlotHandle);
+
+            if ($sharedSlotId) {
+                return [PageSlot::SOURCE_TYPE_SHARED_SLOT, $sharedSlotId];
+            }
+
+            if ($existingSlot?->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT && $existingSlot->shared_slot_id) {
+                return [PageSlot::SOURCE_TYPE_SHARED_SLOT, $existingSlot->shared_slot_id];
+            }
+        }
+
+        if ($sourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+            return [$sourceType, null];
+        }
+
+        $sharedSlotHandle = trim((string) ($slotPayload['shared_slot_handle'] ?? ''));
+
+        if ($sharedSlotHandle === '') {
+            throw new RuntimeException("Page slot [{$slotSlug}] requires a shared_slot_handle.");
+        }
+
+        $sharedSlotId = $this->sharedSlotIdByHandle($site, $sharedSlotHandle);
+
+        if (! $sharedSlotId) {
+            throw new RuntimeException("Shared slot [{$sharedSlotHandle}] was not found for slot [{$slotSlug}].");
+        }
+
+        return [PageSlot::SOURCE_TYPE_SHARED_SLOT, $sharedSlotId];
+    }
+
+    private function sharedSlotIdByHandle(Site $site, string $handle): ?int
+    {
+        return SharedSlot::query()
+            ->where('site_id', $site->id)
+            ->where('handle', $handle)
+            ->value('id');
     }
 
     private function syncPageBlocks(Page $page, array $pagePayload, string $defaultLocaleCode, array $localeMap, array $blockTypeIds, array $slotTypes, Site $site): void

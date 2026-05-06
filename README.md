@@ -141,12 +141,15 @@ See `docs/getting-started.md` for the first-use workflow.
 - If the default site's docs-shell dependency pages do not exist yet, create or reconcile them with `ddev artisan project:webblocksui-setup-site`.
 - Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
 - Import the WebBlocks UI Foundation page with `ddev artisan project:webblocksui-import docs-foundation`.
+- Import the WebBlocks UI Layout page with `ddev artisan project:webblocksui-import docs-layout`.
 - Repair project-layer WebBlocks UI docs slot assignments and clean proven local debug artifacts with `ddev artisan project:webblocksui-repair`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
 - The Foundation payload source is `https://webblocksui.com/docs/foundation.html` and the imported page metadata preserves the requested website path `/docs/foundation.html` while the current CMS route model serves the page at `/p/foundation`.
+- The Layout payload source is `https://webblocksui.com/docs/layout.html` and the imported page metadata preserves the requested website path `/docs/layout.html` while the current CMS route model serves the page at `/p/layout`.
 - Default local preview host: `webblocks-cms.ddev.site`.
 - Full local preview URL: `https://webblocks-cms.ddev.site/p/architecture`.
 - Foundation local preview URL: `https://webblocks-cms.ddev.site/p/foundation`.
+- Layout local preview URL: `https://webblocks-cms.ddev.site/p/layout`.
 - Before database-affecting import or repair work, create a safety dump such as `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`.
 - WebBlocks CMS blocks destructive database reset commands in normal local, development, and production environments. The guard blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe`, including normal console execution and `Artisan::call(...)` paths where Laravel emits the command start event.
 - Use `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` only when you intentionally need to bypass that safety guard.
