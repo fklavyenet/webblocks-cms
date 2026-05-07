@@ -144,6 +144,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - Import the WebBlocks UI Layout page with `ddev artisan project:webblocksui-import docs-layout`.
 - Import the WebBlocks UI Primitives page with `ddev artisan project:webblocksui-import docs-primitives`.
 - Import the WebBlocks UI Icons page with `ddev artisan project:webblocksui-import docs-icons`.
+- The Icons payload now preserves the source page's visual shipped-icon grid using shipped WebBlocks UI icon classes through one trusted static HTML block in the project-layer payload.
 - Repair project-layer WebBlocks UI docs slot assignments and clean proven local debug artifacts with `ddev artisan project:webblocksui-repair`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
 - The Foundation payload source is `https://webblocksui.com/docs/foundation.html` and the imported page metadata preserves the requested website path `/docs/foundation.html` while the current CMS route model serves the page at `/p/foundation`.
