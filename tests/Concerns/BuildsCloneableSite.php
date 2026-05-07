@@ -21,10 +21,6 @@ trait BuildsCloneableSite
 {
     protected function seedCloneableSite(bool $withFile = false): array
     {
-        if ($withFile) {
-            Storage::fake('public');
-        }
-
         $sourceSite = Site::query()->create([
             'name' => 'WebBlocks UI',
             'handle' => 'webblocks-ui',

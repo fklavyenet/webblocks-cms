@@ -33,6 +33,12 @@ class RequireInternalApiToken
             return $bearer;
         }
 
+        $documentedHeader = trim((string) $request->header('X-WebBlocks-Internal-Token', ''));
+
+        if ($documentedHeader !== '') {
+            return $documentedHeader;
+        }
+
         return trim((string) $request->header('X-WebBlocks-Internal-Api-Token', ''));
     }
 

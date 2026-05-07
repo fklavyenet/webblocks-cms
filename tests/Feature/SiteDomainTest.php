@@ -168,6 +168,11 @@ class SiteDomainTest extends TestCase
             ->getJson('/admin-api/sites')
             ->assertOk()
             ->assertJsonPath('sites.0.primary_domain', 'primary.example.test');
+
+        $this->withHeader('X-WebBlocks-Internal-Token', 'secret-token')
+            ->getJson('/admin-api/sites')
+            ->assertOk()
+            ->assertJsonPath('sites.0.primary_domain', 'primary.example.test');
     }
 
     #[Test]
