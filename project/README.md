@@ -31,13 +31,14 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `project:webblocksui-local-resolver` prepares the local DDEV router alias for the WebBlocks UI docs preview host by writing `.ddev/config.webblocksui.local-resolver.yaml` with `additional_hostnames`.
 - `project:webblocksui-setup-site` now targets the CMS default site and ensures the docs Home, Getting Started, and sidebar-navigation dependencies needed by the JSON-backed imports.
 - WebBlocks UI project import payloads live under `storage/project/webblocksui.com`.
-- The manifest and page payloads now use an explicit site convention of `{ "target": "default_site" }` so Architecture, Foundation, Layout, and future docs/page imports reconcile against the CMS default site by default.
+- The manifest and page payloads now use an explicit site convention of `{ "target": "default_site" }` so Architecture, Foundation, Layout, Primitives, Icons, and future docs/page imports reconcile against the CMS default site by default.
 - `project:webblocksui-local-resolver` edits DDEV config only. It does not touch CMS core routing and it does not edit the hosts file.
 - After `project:webblocksui-local-resolver` updates DDEV config, run `ddev restart` to apply the router alias.
 - `project:webblocksui-import docs-architecture` imports the Architecture page from the project payload in `storage/project/webblocksui.com/docs-architecture.json` sourced from `https://webblocksui.com/docs/architecture.html`.
 - `project:webblocksui-import docs-foundation` imports the Foundation page from the project payload in `storage/project/webblocksui.com/docs-foundation.json` sourced from `https://webblocksui.com/docs/foundation.html`.
 - `project:webblocksui-import docs-layout` imports the Layout page from the project payload in `storage/project/webblocksui.com/docs-layout.json` sourced from `https://webblocksui.com/docs/layout.html`.
 - `project:webblocksui-import docs-primitives` imports the Primitives page from the project payload in `storage/project/webblocksui.com/docs-primitives.json` sourced from `https://webblocksui.com/docs/primitives.html`.
+- `project:webblocksui-import docs-icons` imports the Icons page from the project payload in `storage/project/webblocksui.com/docs-icons.json` sourced from `https://webblocksui.com/docs/icons.html`.
 - Safe local workflow:
 - `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`
 - `ddev artisan project:webblocksui-setup-site`
@@ -45,22 +46,27 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `ddev artisan project:webblocksui-import docs-foundation`
 - `ddev artisan project:webblocksui-import docs-layout`
 - `ddev artisan project:webblocksui-import docs-primitives`
+- `ddev artisan project:webblocksui-import docs-icons`
 - Open `https://webblocks-cms.ddev.site/p/architecture`
 - Or open `https://webblocks-cms.ddev.site/p/foundation`
 - Or open `https://webblocks-cms.ddev.site/p/layout`
 - Or open `https://webblocks-cms.ddev.site/p/primitives`
+- Or open `https://webblocks-cms.ddev.site/p/icons`
 - Canonical source page URL: `https://webblocksui.com/docs/architecture.html`.
 - Canonical Foundation source page URL: `https://webblocksui.com/docs/foundation.html`.
 - Canonical Layout source page URL: `https://webblocksui.com/docs/layout.html`.
 - Canonical Primitives source page URL: `https://webblocksui.com/docs/primitives.html`.
+- Canonical Icons source page URL: `https://webblocksui.com/docs/icons.html`.
 - CMS local Architecture path: `/p/architecture`.
 - CMS local Foundation path: `/p/foundation`.
 - CMS local Layout path: `/p/layout`.
 - CMS local Primitives path: `/p/primitives`.
+- CMS local Icons path: `/p/icons`.
 - Default local preview URL: `https://webblocks-cms.ddev.site/p/architecture`.
 - Default Foundation preview URL: `https://webblocks-cms.ddev.site/p/foundation`.
 - Default Layout preview URL: `https://webblocks-cms.ddev.site/p/layout`.
 - Default Primitives preview URL: `https://webblocks-cms.ddev.site/p/primitives`.
-- Source page URL and CMS preview URL are separate: source content comes from `https://webblocksui.com/docs/architecture.html`, `https://webblocksui.com/docs/foundation.html`, `https://webblocksui.com/docs/layout.html`, and `https://webblocksui.com/docs/primitives.html`, while local CMS preview uses the default site host and current CMS path model.
+- Default Icons preview URL: `https://webblocks-cms.ddev.site/p/icons`.
+- Source page URL and CMS preview URL are separate: source content comes from `https://webblocksui.com/docs/architecture.html`, `https://webblocksui.com/docs/foundation.html`, `https://webblocksui.com/docs/layout.html`, `https://webblocksui.com/docs/primitives.html`, and `https://webblocksui.com/docs/icons.html`, while local CMS preview uses the default site host and current CMS path model.
 - Destructive database reset commands are blocked by the CMS safety guard in normal local, development, and production environments. The blocked commands include `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe`.
 - Set `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` only when you intentionally need to bypass that guard.

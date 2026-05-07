@@ -143,16 +143,19 @@ See `docs/getting-started.md` for the first-use workflow.
 - Import the WebBlocks UI Foundation page with `ddev artisan project:webblocksui-import docs-foundation`.
 - Import the WebBlocks UI Layout page with `ddev artisan project:webblocksui-import docs-layout`.
 - Import the WebBlocks UI Primitives page with `ddev artisan project:webblocksui-import docs-primitives`.
+- Import the WebBlocks UI Icons page with `ddev artisan project:webblocksui-import docs-icons`.
 - Repair project-layer WebBlocks UI docs slot assignments and clean proven local debug artifacts with `ddev artisan project:webblocksui-repair`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
 - The Foundation payload source is `https://webblocksui.com/docs/foundation.html` and the imported page metadata preserves the requested website path `/docs/foundation.html` while the current CMS route model serves the page at `/p/foundation`.
 - The Layout payload source is `https://webblocksui.com/docs/layout.html` and the imported page metadata preserves the requested website path `/docs/layout.html` while the current CMS route model serves the page at `/p/layout`.
 - The Primitives payload source is `https://webblocksui.com/docs/primitives.html` and the imported page metadata preserves the requested website path `/docs/primitives.html` while the current CMS route model serves the page at `/p/primitives`.
+- The Icons payload source is `https://webblocksui.com/docs/icons.html` and the imported page metadata preserves the requested website path `/docs/icons.html` while the current CMS route model serves the page at `/p/icons`.
 - Default local preview host: `webblocks-cms.ddev.site`.
 - Full local preview URL: `https://webblocks-cms.ddev.site/p/architecture`.
 - Foundation local preview URL: `https://webblocks-cms.ddev.site/p/foundation`.
 - Layout local preview URL: `https://webblocks-cms.ddev.site/p/layout`.
 - Primitives local preview URL: `https://webblocks-cms.ddev.site/p/primitives`.
+- Icons local preview URL: `https://webblocks-cms.ddev.site/p/icons`.
 - Before database-affecting import or repair work, create a safety dump such as `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`.
 - WebBlocks CMS blocks destructive database reset commands in normal local, development, and production environments. The guard blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe`, including normal console execution and `Artisan::call(...)` paths where Laravel emits the command start event.
 - Use `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` only when you intentionally need to bypass that safety guard.

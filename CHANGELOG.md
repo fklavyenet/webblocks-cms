@@ -12,6 +12,9 @@
 - Add a project-layer `docs-primitives` payload/import key for `https://webblocksui.com/docs/primitives.html`, with idempotent default-site import and a first-class CMS block mapping for the Primitives docs page.
 - Reconcile the docs sidebar navigation idempotently during Primitives import, including the imported `Primitives` page link and the fuller WebBlocks UI docs sidebar order.
 - Preserve existing docs header and sidebar Shared Slot assignments during Primitives import and re-import while keeping the page main slot page-owned.
+- Add a project-layer `docs-icons` payload/import key for `https://webblocksui.com/docs/icons.html`, with idempotent default-site import and a first-class CMS block mapping for the Icons docs page.
+- Reconcile the docs sidebar navigation idempotently during Icons import so one `Icons` item points to the imported CMS page without duplicating other docs entries.
+- Preserve existing docs header and sidebar Shared Slot assignments during Icons import and re-import while keeping the page main slot page-owned.
 
 ## 1.16.0
 
