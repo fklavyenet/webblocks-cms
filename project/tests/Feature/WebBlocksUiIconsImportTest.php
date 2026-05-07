@@ -134,15 +134,23 @@ class WebBlocksUiIconsImportTest extends TestCase
         $this->assertTrue($iconsPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'stat-card' && $block->translatedTextFieldValue('subtitle') === 'Valid icon classes'));
         $this->assertTrue($iconsPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'callout' && (($block->translatedTextFieldValue('title') ?? $block->title) === 'Aliases ship as real classes')));
         $this->assertTrue($iconsPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'callout' && (($block->translatedTextFieldValue('title') ?? $block->title) === 'Missing classes stay visible')));
+        $this->assertSame(
+            1,
+            $iconsPage->blocks->filter(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, '<div class="wb-grid-auto">'))->count(),
+        );
 
         $basicUsageCode = $iconsPage->blocks
             ->first(fn (Block $block) => $block->typeSlug() === 'code' && str_contains((string) $block->content, 'webblocks-icons.css'));
-        $rawHtmlBlob = $iconsPage->blocks
-            ->first(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'wb-icon-home'));
+        $iconGridHtml = $iconsPage->blocks
+            ->first(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, '<div class="wb-grid-auto">'));
 
         $this->assertNotNull($basicUsageCode);
         $this->assertSame('html', $basicUsageCode->setting('language'));
-        $this->assertNull($rawHtmlBlob);
+        $this->assertNotNull($iconGridHtml);
+        $this->assertStringContainsString('<i class="wb-icon wb-icon-activity" aria-hidden="true"></i>', (string) $iconGridHtml->content);
+        $this->assertStringContainsString('<i class="wb-icon wb-icon-home" aria-hidden="true"></i>', (string) $iconGridHtml->content);
+        $this->assertStringContainsString('<i class="wb-icon wb-icon-settings" aria-hidden="true"></i>', (string) $iconGridHtml->content);
+        $this->assertStringContainsString('<i class="wb-icon wb-icon-youtube" aria-hidden="true"></i>', (string) $iconGridHtml->content);
 
         $searchableContent = $iconsPage->blocks
             ->map(fn (Block $block) => implode("\n", array_filter([
@@ -160,15 +168,44 @@ class WebBlocksUiIconsImportTest extends TestCase
         $this->assertStringContainsString('wb-icon-repeat', $searchableContent);
         $this->assertStringContainsString('wb-icon-*', $searchableContent);
         $this->assertStringContainsString('help-circle', $searchableContent);
-        $this->assertStringContainsString('activity | wb-icon-activity', $searchableContent);
-        $this->assertStringContainsString('home | wb-icon-home', $searchableContent);
-        $this->assertStringContainsString('settings | wb-icon-settings', $searchableContent);
-        $this->assertStringContainsString('refresh | wb-icon-refresh', $searchableContent);
-        $this->assertStringContainsString('refresh-cw | wb-icon-refresh-cw', $searchableContent);
-        $this->assertStringContainsString('rotate-cw | wb-icon-rotate-cw', $searchableContent);
-        $this->assertStringContainsString('sync | wb-icon-sync', $searchableContent);
-        $this->assertStringContainsString('repeat | wb-icon-repeat', $searchableContent);
-        $this->assertStringContainsString('youtube | wb-icon-youtube', $searchableContent);
+        $this->assertStringContainsString('activity', $searchableContent);
+        $this->assertStringContainsString('wb-icon-activity', $searchableContent);
+        $this->assertStringContainsString('home', $searchableContent);
+        $this->assertStringContainsString('wb-icon-home', $searchableContent);
+        $this->assertStringContainsString('settings', $searchableContent);
+        $this->assertStringContainsString('wb-icon-settings', $searchableContent);
+        $this->assertStringContainsString('refresh', $searchableContent);
+        $this->assertStringContainsString('wb-icon-refresh', $searchableContent);
+        $this->assertStringContainsString('refresh-cw', $searchableContent);
+        $this->assertStringContainsString('wb-icon-refresh-cw', $searchableContent);
+        $this->assertStringContainsString('rotate-cw', $searchableContent);
+        $this->assertStringContainsString('wb-icon-rotate-cw', $searchableContent);
+        $this->assertStringContainsString('sync', $searchableContent);
+        $this->assertStringContainsString('wb-icon-sync', $searchableContent);
+        $this->assertStringContainsString('repeat', $searchableContent);
+        $this->assertStringContainsString('wb-icon-repeat', $searchableContent);
+        $this->assertStringContainsString('youtube', $searchableContent);
+        $this->assertStringContainsString('wb-icon-youtube', $searchableContent);
+
+        $response = $this->get('/p/icons');
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-grid-auto">', false);
+        $response->assertSee('class="wb-icon wb-icon-activity"', false);
+        $response->assertSee('class="wb-icon wb-icon-home"', false);
+        $response->assertSee('class="wb-icon wb-icon-settings"', false);
+        $response->assertSee('class="wb-icon wb-icon-refresh"', false);
+        $response->assertSee('class="wb-icon wb-icon-refresh-cw"', false);
+        $response->assertSee('class="wb-icon wb-icon-rotate-cw"', false);
+        $response->assertSee('class="wb-icon wb-icon-sync"', false);
+        $response->assertSee('class="wb-icon wb-icon-repeat"', false);
+        $response->assertSee('class="wb-icon wb-icon-youtube"', false);
+        $response->assertSee('activity');
+        $response->assertSee('wb-icon-activity');
+        $response->assertSee('youtube');
+        $response->assertSee('wb-icon-youtube');
+        $response->assertSee('<pre><code data-language="html">', false);
+        $response->assertDontSee('<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v/packages/webblocks/dist/webblocks-icons.css">', false);
 
         $this->assertSame(0, $iconsPage->blocks->where('slot', 'header')->count());
         $this->assertSame(0, $iconsPage->blocks->where('slot', 'sidebar')->count());
@@ -239,6 +276,15 @@ class WebBlocksUiIconsImportTest extends TestCase
         $this->assertSame(
             1,
             NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Icons')->count(),
+        );
+        $this->assertSame(
+            1,
+            Block::query()
+                ->where('page_id', $iconsPage->id)
+                ->where('type', 'html')
+                ->get()
+                ->filter(fn (Block $block) => str_contains((string) $block->content, '<div class="wb-grid-auto">'))
+                ->count(),
         );
 
         $slotsAfterRerun = $iconsPage->fresh(['slots.slotType'])->slots->sortBy('sort_order')->values();

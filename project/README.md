@@ -39,6 +39,7 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - `project:webblocksui-import docs-layout` imports the Layout page from the project payload in `storage/project/webblocksui.com/docs-layout.json` sourced from `https://webblocksui.com/docs/layout.html`.
 - `project:webblocksui-import docs-primitives` imports the Primitives page from the project payload in `storage/project/webblocksui.com/docs-primitives.json` sourced from `https://webblocksui.com/docs/primitives.html`.
 - `project:webblocksui-import docs-icons` imports the Icons page from the project payload in `storage/project/webblocksui.com/docs-icons.json` sourced from `https://webblocksui.com/docs/icons.html`.
+- The Icons payload preserves the source page's visual shipped-icon grid using shipped WebBlocks UI icon classes through one trusted static HTML block in the project-layer payload.
 - Safe local workflow:
 - `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`
 - `ddev artisan project:webblocksui-setup-site`

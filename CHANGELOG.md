@@ -15,6 +15,7 @@
 - Add a project-layer `docs-icons` payload/import key for `https://webblocksui.com/docs/icons.html`, with idempotent default-site import and a first-class CMS block mapping for the Icons docs page.
 - Reconcile the docs sidebar navigation idempotently during Icons import so one `Icons` item points to the imported CMS page without duplicating other docs entries.
 - Preserve existing docs header and sidebar Shared Slot assignments during Icons import and re-import while keeping the page main slot page-owned.
+- Improve the project-layer Icons docs import so the CMS page renders a visual shipped-icon grid instead of a text-only icon class list.
 
 ## 1.16.0
 
