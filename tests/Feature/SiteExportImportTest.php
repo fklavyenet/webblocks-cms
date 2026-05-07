@@ -143,6 +143,26 @@ class SiteExportImportTest extends TestCase
     }
 
     #[Test]
+    public function export_includes_page_public_shell_in_portable_page_payload(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $aboutPage = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+        $aboutPage->update(['settings' => ['public_shell' => 'docs']]);
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
+        $archive->close();
+
+        $exportedPage = collect($pages)->firstWhere('slug', 'about');
+
+        $this->assertSame('docs', $exportedPage['public_shell'] ?? null);
+        $this->assertSame('docs', data_get($exportedPage, 'settings.public_shell'));
+    }
+
+    #[Test]
     public function export_excludes_media_files_when_media_not_selected(): void
     {
         Storage::fake('site-exports');
@@ -282,6 +302,129 @@ class SiteExportImportTest extends TestCase
         $this->assertSame('default', $mainSlot['wrapper']['preset']);
         $this->assertCount(0, $sidebarSlot['blocks']);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
+    }
+
+    #[Test]
+    public function import_restores_docs_public_shell_and_keeps_compatible_docs_shared_slots_compatible(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+
+        $site = Site::query()->create([
+            'name' => 'Docs Site',
+            'handle' => 'docs-site',
+            'domain' => 'docs-site.example.test',
+            'is_primary' => false,
+        ]);
+
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $site->locales()->sync([$defaultLocale->id => ['is_enabled' => true]]);
+
+        $headerSlotType = \App\Models\SlotType::query()->firstOrCreate(
+            ['slug' => 'header'],
+            ['name' => 'Header', 'status' => 'published', 'sort_order' => 0, 'is_system' => true],
+        );
+        $sidebarSlotType = \App\Models\SlotType::query()->firstOrCreate(
+            ['slug' => 'sidebar'],
+            ['name' => 'Sidebar', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        );
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Docs',
+            'slug' => 'docs',
+            'status' => Page::STATUS_PUBLISHED,
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        $headerSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Header',
+            'handle' => 'docs-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+        $sidebarSharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Sidebar',
+            'handle' => 'docs-sidebar',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $headerSlotType->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $headerSharedSlot->id,
+            'sort_order' => 0,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebarSlotType->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sidebarSharedSlot->id,
+            'sort_order' => 1,
+        ]);
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Docs Site',
+            'site_handle' => 'imported-docs-site',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedPage = Page::query()->where('site_id', $importedSite->id)->whereHas('translations', fn ($query) => $query->where('slug', 'docs'))->firstOrFail();
+        $importedSlots = PageSlot::query()->where('page_id', $importedPage->id)->with('sharedSlot')->orderBy('sort_order')->get();
+
+        $this->assertSame('docs', $importedPage->publicShellPreset());
+        $this->assertSame([], $importedSlots[0]->sharedSlotCompatibilityIssues($importedSlots[0]->sharedSlot));
+        $this->assertSame([], $importedSlots[1]->sharedSlotCompatibilityIssues($importedSlots[1]->sharedSlot));
+        $this->assertNull($importedSlots[0]->sharedSlotWarning());
+        $this->assertNull($importedSlots[1]->sharedSlotWarning());
+    }
+
+    #[Test]
+    public function legacy_import_without_page_public_shell_still_succeeds_and_falls_back_to_default(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $aboutPage = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+        $aboutPage->update(['settings' => ['public_shell' => 'docs']]);
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $archivePath = Storage::disk('site-exports')->path($siteExport->archive_path);
+        $archive = new ZipArchive;
+        $archive->open($archivePath);
+        $pages = json_decode((string) $archive->getFromName('data/pages.json'), true);
+        $pages = collect($pages)->map(function (array $page): array {
+            unset($page['public_shell'], $page['settings']);
+
+            return $page;
+        })->all();
+        $archive->addFromString('data/pages.json', json_encode($pages, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
+        $archive->close();
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile($archivePath, $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Legacy Site',
+            'site_handle' => 'imported-legacy-site',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedPage = Page::query()->where('site_id', $importedSite->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+
+        $this->assertSame('default', $importedPage->publicShellPreset());
     }
 
     #[Test]

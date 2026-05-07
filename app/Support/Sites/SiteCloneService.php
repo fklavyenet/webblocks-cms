@@ -232,7 +232,7 @@ class SiteCloneService
                 'slug' => $canonicalSlug,
                 'page_type' => $page->page_type,
                 'status' => $page->status,
-                'settings' => $page->getRawOriginal('settings'),
+                'settings' => Page::sanitizeSettings($page->settings),
                 'created_by_user_id' => null,
                 'updated_by_user_id' => null,
                 'published_by_user_id' => null,

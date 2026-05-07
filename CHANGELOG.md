@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix site export/import so page Public Shell settings such as Docs are preserved, preventing compatible Shared Slots from being falsely marked incompatible after import.
+
 ## 1.17.0
 
 - Improve the Edit Slot Block Picker with server-rendered `Common`, `Layout`, `Content`, `Navigation`, `Advanced`, and `All` tabs, cross-catalog search results, and advanced-tab visibility that still keeps `HTML (Trusted)` super-admin-only.

@@ -31,6 +31,13 @@ class SiteCloneServiceTest extends TestCase
     public function it_clones_site_content_translations_navigation_and_media_references_into_a_new_target_site(): void
     {
         [$sourceSite, $heroAsset, $sourceSharedSlot] = $this->seedCloneableSite();
+        $sourceAbout = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', Locale::query()->where('is_default', true)->value('id'))
+                ->where('slug', 'about'))
+            ->firstOrFail();
+        $sourceAbout->update(['settings' => ['public_shell' => 'docs']]);
 
         $result = app(SiteCloneService::class)->clone(
             $sourceSite->id,
@@ -114,7 +121,8 @@ class SiteCloneServiceTest extends TestCase
         $this->assertStringContainsString('Shared About Header', $headerSerialized);
         $this->assertSame('English paragraph content', $presentedBlock->content);
         $this->assertSame('main', $mainSlot['wrapper']['element']);
-        $this->assertSame('default', $mainSlot['wrapper']['preset']);
+        $this->assertSame('docs', $aboutPage->publicShellPreset());
+        $this->assertSame('docs-main', $mainSlot['wrapper']['preset']);
         $this->assertCount(0, $sidebarSlot['blocks']);
         $this->assertDatabaseHas('navigation_items', [
             'site_id' => $targetSite->id,

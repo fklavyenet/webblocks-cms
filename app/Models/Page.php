@@ -152,6 +152,24 @@ class Page extends Model
         };
     }
 
+    public static function sanitizeSettings(mixed $settings, mixed $publicShell = null): ?array
+    {
+        if (is_string($settings)) {
+            $decoded = json_decode($settings, true);
+            $settings = is_array($decoded) ? $decoded : null;
+        }
+
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        if ($publicShell !== null || array_key_exists('public_shell', $settings)) {
+            $settings['public_shell'] = self::normalizePublicShellPreset($publicShell ?? $settings['public_shell'] ?? 'default');
+        }
+
+        return $settings === [] ? null : $settings;
+    }
+
     public function publicShellPreset(): string
     {
         return self::normalizePublicShellPreset($this->setting('public_shell', 'default'));
