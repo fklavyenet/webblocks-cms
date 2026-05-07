@@ -34,7 +34,7 @@ class SiteController extends Controller
         return view('admin.sites.index', [
             'sites' => Site::query()
                 ->with(['locales' => fn ($query) => $query->orderBy('name')])
-                ->withCount('pages')
+                ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
                 ->primaryFirst()
                 ->orderBy('name')
                 ->paginate(15),
@@ -126,7 +126,7 @@ class SiteController extends Controller
     {
         return view('admin.sites.clone', [
             'sourceSite' => $site,
-            'sites' => Site::query()->withCount('pages')->primaryFirst()->orderBy('name')->get(),
+            'sites' => Site::query()->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])->primaryFirst()->orderBy('name')->get(),
         ]);
     }
 

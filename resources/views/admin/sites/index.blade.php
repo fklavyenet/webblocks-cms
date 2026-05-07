@@ -28,7 +28,7 @@
                     <tbody>
                         @foreach ($sites as $site)
                             @php($deleteReport = $siteDeleteReports[$site->id] ?? null)
-                            <tr>
+                            <tr data-site-id="{{ $site->id }}">
                                 <td><strong>{{ $site->name }}</strong></td>
                                 <td><code>{{ $site->handle }}</code></td>
                                 <td>
@@ -46,7 +46,7 @@
                                         @endforeach
                                     </div>
                                 </td>
-                                <td>{{ $site->pages_count }}</td>
+                                <td data-column="pages">{{ $site->pages_count }}</td>
                                 <td>
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? 'Primary' : 'Standard' }}</span>
                                 </td>

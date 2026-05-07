@@ -9,9 +9,11 @@ use App\Models\BlockTextTranslation;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\User;
 use App\Support\Locales\LocaleResolver;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +45,62 @@ class SiteLocaleManagementTest extends TestCase
         $response->assertSee($site->name);
         $response->assertSee('Primary');
         $response->assertSee('tr');
+    }
+
+    #[Test]
+    public function sites_index_page_count_excludes_hidden_shared_slot_source_pages(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->create([
+            'name' => 'Docs',
+            'handle' => 'docs',
+            'domain' => 'docs.example.test',
+            'is_primary' => false,
+        ]);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $site->locales()->sync([$defaultLocale->id => ['is_enabled' => true]]);
+
+        $ordinaryPages = collect(range(1, 3))->map(function (int $index) use ($site): Page {
+            return Page::query()->create([
+                'site_id' => $site->id,
+                'title' => 'Page '.$index,
+                'slug' => 'page-'.$index,
+                'status' => Page::STATUS_PUBLISHED,
+            ]);
+        });
+
+        $sharedSlots = collect(['docs-header', 'docs-sidebar'])->map(function (string $handle) use ($site): SharedSlot {
+            return SharedSlot::query()->create([
+                'site_id' => $site->id,
+                'name' => str($handle)->headline()->toString(),
+                'handle' => $handle,
+                'slot_name' => str($handle)->contains('sidebar') ? 'sidebar' : 'header',
+                'public_shell' => 'docs',
+                'is_active' => true,
+            ]);
+        });
+
+        $sourcePages = $sharedSlots->map(fn (SharedSlot $sharedSlot) => app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot));
+        $expectedVisiblePageCount = $ordinaryPages->count();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.index'));
+
+        $response->assertOk();
+        $response->assertSee('<tr data-site-id="'.$site->id.'">', false);
+        $response->assertSee('<td data-column="pages">'.$expectedVisiblePageCount.'</td>', false);
+
+        $this->assertSame($expectedVisiblePageCount, Page::query()->where('site_id', $site->id)->visibleInAdmin()->count());
+        $this->assertCount(2, $sourcePages);
+        $this->assertSame(2, Page::query()->where('site_id', $site->id)->where('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->count());
+        $this->assertSame($expectedVisiblePageCount + $sourcePages->count(), Page::query()->where('site_id', $site->id)->count());
+
+        $pagesIndexResponse = $this->actingAs($user)->get(route('admin.pages.index', ['site' => $site->id]));
+
+        $pagesIndexResponse->assertOk();
+
+        foreach ($sourcePages as $sourcePage) {
+            $pagesIndexResponse->assertDontSee($sourcePage->slug);
+        }
     }
 
     #[Test]

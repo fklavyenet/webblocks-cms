@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Fix the Sites index Pages count so hidden Shared Slot source pages are excluded from ordinary site page totals.
 - Fix site export/import so page Public Shell settings such as Docs are preserved, preventing compatible Shared Slots from being falsely marked incompatible after import.
 
 ## 1.17.0
