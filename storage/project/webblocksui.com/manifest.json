@@ -27,6 +27,12 @@
       "title": "Primitives",
       "source_url": "https://webblocksui.com/docs/primitives.html",
       "requested_public_path": "/docs/primitives.html"
+    },
+    "docs-icons": {
+      "file": "docs-icons.json",
+      "title": "Icons",
+      "source_url": "https://webblocksui.com/docs/icons.html",
+      "requested_public_path": "/docs/icons.html"
     }
   }
 }

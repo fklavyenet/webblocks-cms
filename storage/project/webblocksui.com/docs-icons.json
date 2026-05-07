@@ -1,0 +1,624 @@
+{
+  "site": {
+    "target": "default_site"
+  },
+  "page": {
+    "key": "docs-icons",
+    "status": "published",
+    "page_type": "default",
+    "public_shell": "docs",
+    "source_url": "https://webblocksui.com/docs/icons.html",
+    "requested_public_path": "/docs/icons.html",
+    "current_public_path": "/p/icons",
+    "translations": {
+      "en": {
+        "name": "Icons",
+        "slug": "icons"
+      }
+    },
+    "slots": {
+      "header": {
+        "sort_order": 0,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "sidebar": {
+        "sort_order": 1,
+        "source_type": "page",
+        "settings": null,
+        "blocks": []
+      },
+      "main": {
+        "sort_order": 2,
+        "source_type": "page",
+        "settings": null,
+        "blocks": [
+          {
+            "key": "icons-intro-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Icons intro"
+            },
+            "children": [
+              {
+                "key": "icons-intro-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Icons intro container"
+                },
+                "children": [
+                  {
+                    "key": "icons-title",
+                    "type": "header",
+                    "variant": "h1",
+                    "url": "icons",
+                    "settings": {
+                      "anchor": "icons"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Icons"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icons-intro-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>This page documents the shipped mask-image path only: <code>webblocks-icons.css</code> plus <code>&lt;i class=\"wb-icon wb-icon-...\"&gt;</code>. The grid below reflects the current shipped icon class surface.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icons-stats-grid",
+                    "type": "grid",
+                    "settings": {
+                      "columns": "3",
+                      "gap": "4"
+                    },
+                    "children": [
+                      {
+                        "key": "icons-valid-class-count",
+                        "type": "stat-card",
+                        "translations": {
+                          "en": {
+                            "title": "180",
+                            "subtitle": "Valid icon classes",
+                            "content": "Current shipped class surface, including alias classes."
+                          }
+                        }
+                      },
+                      {
+                        "key": "icons-base-glyph-count",
+                        "type": "stat-card",
+                        "translations": {
+                          "en": {
+                            "title": "177",
+                            "subtitle": "Base glyphs plus aliases",
+                            "content": "Source page metadata is preserved as imported docs content."
+                          }
+                        }
+                      },
+                      {
+                        "key": "icons-mask-image-path",
+                        "type": "stat-card",
+                        "translations": {
+                          "en": {
+                            "title": "Mask-image",
+                            "subtitle": "Shipped path",
+                            "content": "Use <code>wb-icon</code> with <code>wb-icon-...</code> from <code>webblocks-icons.css</code>."
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "key": "icons-toc",
+                    "type": "toc",
+                    "translations": {
+                      "en": {
+                        "title": "On this page"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "mask-image-reference-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Mask-image reference"
+            },
+            "children": [
+              {
+                "key": "mask-image-reference-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Mask-image reference container"
+                },
+                "children": [
+                  {
+                    "key": "mask-image-reference-heading",
+                    "type": "header",
+                    "variant": "h3",
+                    "url": "mask-image-reference",
+                    "settings": {
+                      "anchor": "mask-image-reference"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Mask-image reference"
+                      }
+                    }
+                  },
+                  {
+                    "key": "mask-image-reference-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>This guide intentionally keeps the shipped <code>&lt;i class=\"wb-icon wb-icon-...\"&gt;</code> usage that the package already supports. No older alternate icon docs are used here.</p>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "basic-usage-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Basic usage"
+            },
+            "children": [
+              {
+                "key": "basic-usage-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Basic usage container"
+                },
+                "children": [
+                  {
+                    "key": "basic-usage-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "basic-usage",
+                    "settings": {
+                      "anchor": "basic-usage"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Basic usage"
+                      }
+                    }
+                  },
+                  {
+                    "key": "basic-usage-code",
+                    "type": "code",
+                    "settings": {
+                      "language": "html"
+                    },
+                    "translations": {
+                      "en": {
+                        "content": "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v/packages/webblocks/dist/webblocks-icons.css\">\n\n<i class=\"wb-icon wb-icon-home\" aria-hidden=\"true\"></i>\n<i class=\"wb-icon wb-icon-settings wb-icon-lg\" aria-hidden=\"true\"></i>"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "important-notes-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Important notes"
+            },
+            "children": [
+              {
+                "key": "important-notes-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Important notes container"
+                },
+                "children": [
+                  {
+                    "key": "important-notes-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "important-notes",
+                    "settings": {
+                      "anchor": "important-notes"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "Important notes"
+                      }
+                    }
+                  },
+                  {
+                    "key": "important-notes-aliases",
+                    "type": "callout",
+                    "variant": "info",
+                    "translations": {
+                      "en": {
+                        "title": "Aliases ship as real classes",
+                        "content": "<code>wb-icon-refresh</code> and <code>wb-icon-refresh-cw</code> map to the canonical <code>wb-icon-rotate-cw</code> glyph. <code>wb-icon-sync</code> maps to <code>wb-icon-repeat</code>."
+                      }
+                    }
+                  },
+                  {
+                    "key": "important-notes-fallback",
+                    "type": "callout",
+                    "variant": "warning",
+                    "translations": {
+                      "en": {
+                        "title": "Missing classes stay visible",
+                        "content": "Unknown <code>wb-icon-*</code> classes fall back to <code>help-circle</code> instead of rendering a blank square."
+                      }
+                    }
+                  },
+                  {
+                    "key": "important-notes-find",
+                    "type": "callout",
+                    "variant": "info",
+                    "translations": {
+                      "en": {
+                        "title": "Use browser find for speed",
+                        "content": "Because this page is intentionally static and source-accurate, <code>Cmd/Ctrl + F</code> is the fastest way to jump to a name."
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "all-shipped-icon-classes-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "All shipped icon classes"
+            },
+            "children": [
+              {
+                "key": "all-shipped-icon-classes-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "All shipped icon classes container"
+                },
+                "children": [
+                  {
+                    "key": "all-shipped-icon-classes-heading",
+                    "type": "header",
+                    "variant": "h2",
+                    "url": "all-shipped-icon-classes",
+                    "settings": {
+                      "anchor": "all-shipped-icon-classes"
+                    },
+                    "translations": {
+                      "en": {
+                        "title": "All shipped icon classes"
+                      }
+                    }
+                  },
+                  {
+                    "key": "all-shipped-icon-classes-copy",
+                    "type": "rich-text",
+                    "translations": {
+                      "en": {
+                        "content": "<p>The list is alphabetized and shows every current shipped icon class, including semantic alias classes.</p>"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-a-c",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "A - C",
+                        "content": "Name | Class\nactivity | wb-icon-activity\narea-chart | wb-icon-area-chart\narrow-left | wb-icon-arrow-left\narrow-down | wb-icon-arrow-down\narrow-up | wb-icon-arrow-up\narrow-up-down | wb-icon-arrow-up-down\narrow-right | wb-icon-arrow-right\narrow-up-circle | wb-icon-arrow-up-circle\nat-sign | wb-icon-at-sign\nbadge-check | wb-icon-badge-check\nbadge-percent | wb-icon-badge-percent\nban | wb-icon-ban\nbanknote | wb-icon-banknote\nbar-chart | wb-icon-bar-chart\nbar-chart2 | wb-icon-bar-chart2\nbar-chart3 | wb-icon-bar-chart3\nbell | wb-icon-bell\nbell-ring | wb-icon-bell-ring\nbook | wb-icon-book\nbook-open | wb-icon-book-open\nbookmark | wb-icon-bookmark\nbriefcase | wb-icon-briefcase\nbug | wb-icon-bug\nbuilding2 | wb-icon-building2\ncalculator | wb-icon-calculator\ncalendar | wb-icon-calendar\ncamera | wb-icon-camera\ncheck | wb-icon-check\nchevron-down | wb-icon-chevron-down\nchevron-left | wb-icon-chevron-left\nchevron-right | wb-icon-chevron-right\nchevron-up | wb-icon-chevron-up\ncircle | wb-icon-circle\ncircle-help | wb-icon-circle-help\nclapperboard | wb-icon-clapperboard\ncloud | wb-icon-cloud\ncode | wb-icon-code\ncolumns2 | wb-icon-columns2\ncontact | wb-icon-contact\ncopy | wb-icon-copy\ncpu | wb-icon-cpu"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-d-h",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "D - H",
+                        "content": "Name | Class\ncredit-card | wb-icon-credit-card\ndatabase | wb-icon-database\ndownload | wb-icon-download\nexternal-link | wb-icon-external-link\neye | wb-icon-eye\neye-off | wb-icon-eye-off\nfile | wb-icon-file\nfile-archive | wb-icon-file-archive\nfile-code | wb-icon-file-code\nfile-image | wb-icon-file-image\nfile-lock | wb-icon-file-lock\nfile-plus | wb-icon-file-plus\nfile-search | wb-icon-file-search\nfile-text | wb-icon-file-text\nfile-x | wb-icon-file-x\nfiles | wb-icon-files\nfilm | wb-icon-film\nfingerprint | wb-icon-fingerprint\nfolder | wb-icon-folder\nfolder-open | wb-icon-folder-open\nfolder-plus | wb-icon-folder-plus\nfolder-tree | wb-icon-folder-tree\ngauge | wb-icon-gauge\ngithub | wb-icon-github\nglobe | wb-icon-globe\ngrip-vertical | wb-icon-grip-vertical\nhammer | wb-icon-hammer\nhand-coins | wb-icon-hand-coins\nheading | wb-icon-heading\nheart | wb-icon-heart\nhelp-circle | wb-icon-help-circle\nhistory | wb-icon-history\nhome | wb-icon-home"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-i-m",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "I - M",
+                        "content": "Name | Class\nimage | wb-icon-image\ninbox | wb-icon-inbox\ninfo | wb-icon-info\ninstagram | wb-icon-instagram\nkey-round | wb-icon-key-round\nlanguages | wb-icon-languages\nlaptop | wb-icon-laptop\nlayers | wb-icon-layers\nlayout | wb-icon-layout\nlayout-dashboard | wb-icon-layout-dashboard\nlayout-grid | wb-icon-layout-grid\nline-chart | wb-icon-line-chart\nlinkedin | wb-icon-linkedin\nlist | wb-icon-list\nlist-ordered | wb-icon-list-ordered\nlock | wb-icon-lock\nlock-open | wb-icon-lock-open\nlog-out | wb-icon-log-out\nmail | wb-icon-mail\nmap-pin | wb-icon-map-pin\nmaximize2 | wb-icon-maximize2\nmemory-stick | wb-icon-memory-stick\nmenu | wb-icon-menu\nmessage-square | wb-icon-message-square\nmessages-square | wb-icon-messages-square\nmic | wb-icon-mic\nminimize2 | wb-icon-minimize2\nminus | wb-icon-minus\nmonitor | wb-icon-monitor\nmoon | wb-icon-moon\nmouse-pointer2 | wb-icon-mouse-pointer2\nmusic | wb-icon-music"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-n-r",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "N - R",
+                        "content": "Name | Class\nnewspaper | wb-icon-newspaper\noctagon-alert | wb-icon-octagon-alert\npackage | wb-icon-package\npalette | wb-icon-palette\npanel-left | wb-icon-panel-left\npanel-right | wb-icon-panel-right\npause | wb-icon-pause\npen-tool | wb-icon-pen-tool\npencil | wb-icon-pencil\nphone | wb-icon-phone\npie-chart | wb-icon-pie-chart\nplay | wb-icon-play\nplug | wb-icon-plug\nplus | wb-icon-plus\nprinter | wb-icon-printer\nquote | wb-icon-quote\nreceipt | wb-icon-receipt\nreceipt-text | wb-icon-receipt-text\nrectangle-horizontal | wb-icon-rectangle-horizontal\nrefresh | wb-icon-refresh\nrefresh-cw | wb-icon-refresh-cw\nrepeat | wb-icon-repeat\nrocket | wb-icon-rocket\nrotate-ccw | wb-icon-rotate-ccw\nrotate-cw | wb-icon-rotate-cw\nrouter | wb-icon-router\nrows2 | wb-icon-rows2"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-s",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "S",
+                        "content": "Name | Class\nsave | wb-icon-save\nsearch | wb-icon-search\nsend | wb-icon-send\nserver | wb-icon-server\nsettings | wb-icon-settings\nshare2 | wb-icon-share2\nshield | wb-icon-shield\nshield-check | wb-icon-shield-check\nshopping-bag | wb-icon-shopping-bag\nshopping-cart | wb-icon-shopping-cart\nsidebar | wb-icon-sidebar\nsliders-horizontal | wb-icon-sliders-horizontal\nsmartphone | wb-icon-smartphone\nsparkles | wb-icon-sparkles\nsquare | wb-icon-square\nsquare-terminal | wb-icon-square-terminal\nstar | wb-icon-star\nsticky-note | wb-icon-sticky-note\nstore | wb-icon-store\nsun | wb-icon-sun\nsun-moon | wb-icon-sun-moon\nsync | wb-icon-sync"
+                      }
+                    }
+                  },
+                  {
+                    "key": "icon-classes-table-t-z",
+                    "type": "table",
+                    "variant": "header-row",
+                    "translations": {
+                      "en": {
+                        "title": "T - Z",
+                        "content": "Name | Class\ntablet | wb-icon-tablet\ntablet-smartphone | wb-icon-tablet-smartphone\ntarget | wb-icon-target\nterminal | wb-icon-terminal\ntoggle-left | wb-icon-toggle-left\ntoggle-right | wb-icon-toggle-right\ntrash | wb-icon-trash\ntrash2 | wb-icon-trash2\ntrending-up | wb-icon-trending-up\ntriangle-alert | wb-icon-triangle-alert\ntwitter | wb-icon-twitter\ntype | wb-icon-type\nupload | wb-icon-upload\nuser | wb-icon-user\nuser-plus | wb-icon-user-plus\nuser-round | wb-icon-user-round\nusers | wb-icon-users\nvideo | wb-icon-video\nvolume2 | wb-icon-volume2\nwallet | wb-icon-wallet\nwatch | wb-icon-watch\nwifi | wb-icon-wifi\nwrench | wb-icon-wrench\nx | wb-icon-x\nyoutube | wb-icon-youtube"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "icons-previous-next-section",
+            "type": "section",
+            "settings": {
+              "layout_name": "Icons previous and next"
+            },
+            "children": [
+              {
+                "key": "icons-previous-next-container",
+                "type": "container",
+                "settings": {
+                  "width": "lg",
+                  "layout_name": "Icons previous and next container"
+                },
+                "children": [
+                  {
+                    "key": "icons-previous-next-links",
+                    "type": "link-list",
+                    "children": [
+                      {
+                        "key": "icons-previous-link",
+                        "type": "link-list-item",
+                        "url": "/p/primitives",
+                        "translations": {
+                          "en": {
+                            "title": "Previous",
+                            "subtitle": "Primitives",
+                            "meta": "/docs/primitives.html"
+                          }
+                        }
+                      },
+                      {
+                        "key": "icons-next-link",
+                        "type": "link-list-item",
+                        "url": "patterns.html",
+                        "translations": {
+                          "en": {
+                            "title": "Next",
+                            "subtitle": "Patterns",
+                            "meta": "patterns.html"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "navigation": {
+    "menu_key": "docs",
+    "items": [
+      {
+        "key": "home",
+        "title": "Home",
+        "link_type": "page",
+        "page_ref": "home",
+        "icon": "home",
+        "position": 1,
+        "visibility": "visible"
+      },
+      {
+        "key": "getting-started",
+        "title": "Getting Started",
+        "link_type": "page",
+        "page_ref": "getting-started",
+        "icon": "rocket",
+        "position": 2,
+        "visibility": "visible"
+      },
+      {
+        "key": "architecture",
+        "title": "Architecture",
+        "link_type": "page",
+        "page_ref": "docs-architecture",
+        "icon": "layers",
+        "position": 3,
+        "visibility": "visible"
+      },
+      {
+        "key": "foundation",
+        "title": "Foundation",
+        "link_type": "page",
+        "page_ref": "docs-foundation",
+        "icon": "palette",
+        "position": 4,
+        "visibility": "visible"
+      },
+      {
+        "key": "layout",
+        "title": "Layout",
+        "link_type": "page",
+        "page_ref": "docs-layout",
+        "icon": "layout",
+        "position": 5,
+        "visibility": "visible"
+      },
+      {
+        "key": "primitives",
+        "title": "Primitives",
+        "link_type": "page",
+        "page_ref": "docs-primitives",
+        "icon": "box",
+        "position": 6,
+        "visibility": "visible"
+      },
+      {
+        "key": "icons",
+        "title": "Icons",
+        "link_type": "page",
+        "page_ref": "docs-icons",
+        "icon": "star",
+        "position": 7,
+        "visibility": "visible"
+      },
+      {
+        "key": "patterns-overview",
+        "title": "Patterns / Overview",
+        "match_titles": [
+          "Patterns"
+        ],
+        "link_type": "custom_url",
+        "url": "patterns.html",
+        "icon": "grid",
+        "position": 8,
+        "visibility": "visible"
+      },
+      {
+        "key": "dashboard-shell",
+        "title": "Dashboard Shell",
+        "link_type": "custom_url",
+        "url": "pattern-dashboard-shell.html",
+        "icon": "grid",
+        "position": 9,
+        "visibility": "visible"
+      },
+      {
+        "key": "settings-shell",
+        "title": "Settings Shell",
+        "link_type": "custom_url",
+        "url": "pattern-settings-shell.html",
+        "icon": "grid",
+        "position": 10,
+        "visibility": "visible"
+      },
+      {
+        "key": "auth-shell",
+        "title": "Auth Shell",
+        "link_type": "custom_url",
+        "url": "pattern-auth-shell.html",
+        "icon": "grid",
+        "position": 11,
+        "visibility": "visible"
+      },
+      {
+        "key": "content-shell",
+        "title": "Content Shell",
+        "link_type": "custom_url",
+        "url": "pattern-content-shell.html",
+        "icon": "grid",
+        "position": 12,
+        "visibility": "visible"
+      },
+      {
+        "key": "breadcrumb",
+        "title": "Breadcrumb",
+        "link_type": "custom_url",
+        "url": "pattern-breadcrumb.html",
+        "icon": "grid",
+        "position": 13,
+        "visibility": "visible"
+      },
+      {
+        "key": "gallery",
+        "title": "Gallery",
+        "link_type": "custom_url",
+        "url": "pattern-gallery.html",
+        "icon": "grid",
+        "position": 14,
+        "visibility": "visible"
+      },
+      {
+        "key": "cookie-consent",
+        "title": "Cookie Consent",
+        "link_type": "custom_url",
+        "url": "pattern-cookie-consent.html",
+        "icon": "grid",
+        "position": 15,
+        "visibility": "visible"
+      },
+      {
+        "key": "marketing",
+        "title": "Marketing",
+        "link_type": "custom_url",
+        "url": "pattern-marketing.html",
+        "icon": "grid",
+        "position": 16,
+        "visibility": "visible"
+      },
+      {
+        "key": "utilities",
+        "title": "Utilities",
+        "link_type": "custom_url",
+        "url": "utilities.html",
+        "icon": "wrench",
+        "position": 17,
+        "visibility": "visible"
+      },
+      {
+        "key": "javascript",
+        "title": "JavaScript",
+        "link_type": "custom_url",
+        "url": "javascript.html",
+        "icon": "terminal",
+        "position": 18,
+        "visibility": "visible"
+      },
+      {
+        "key": "playground",
+        "title": "Playground",
+        "link_type": "custom_url",
+        "url": "../playground/",
+        "icon": "code",
+        "position": 19,
+        "visibility": "visible"
+      }
+    ]
+  }
+}
