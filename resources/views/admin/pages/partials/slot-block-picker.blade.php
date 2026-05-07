@@ -2,14 +2,19 @@
     $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
     $pickerCategory = filled($pickerCategory ?? null) ? trim((string) $pickerCategory) : null;
     $pickerSort = trim((string) request('block_type_sort', 'default'));
+    $pickerTab = trim((string) request('block_type_tab', 'common'));
     $pickerParentId = request()->integer('parent_id') ?: null;
     $allowedPickerSorts = ['default', 'name', 'category'];
+    $allowedPickerTabs = ['common', 'layout', 'content', 'navigation', 'advanced', 'all'];
     if (! in_array($pickerSort, $allowedPickerSorts, true)) {
         $pickerSort = 'default';
     }
+    if (! in_array($pickerTab, $allowedPickerTabs, true)) {
+        $pickerTab = 'common';
+    }
     $showPickerModal = $isPickerOpen && $slotModalMode !== 'create';
 
-    $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
+    $slotBlockRoute = $slotBlockRoute ?? function (array $parameters = []) use ($page, $slot, $activeLocale) {
         $resolved = $parameters;
 
         if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
@@ -19,7 +24,7 @@
         return route('admin.pages.slots.blocks', [$page, $slot] + $resolved);
     };
 
-    $slotBlockBaseRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
+    $slotBlockBaseRoute = $slotBlockBaseRoute ?? function (array $parameters = []) use ($page, $slot, $activeLocale) {
         $resolved = $parameters;
 
         if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
@@ -50,7 +55,9 @@
         'legacy' => 5,
     ];
 
-    $availableCategories = ($pickerBlockTypes ?? $blockTypes)
+    $eligibleBlockTypes = ($pickerBlockTypes ?? $blockTypes)->values();
+
+    $availableCategories = $eligibleBlockTypes
         ->map(fn ($blockType) => trim((string) ($blockType->category ?? '')))
         ->filter()
         ->unique()
@@ -64,22 +71,19 @@
         })
         ->values();
 
-    $matchingBlockTypes = ($pickerBlockTypes ?? $blockTypes)
-        ->filter(function ($blockType) use ($pickerSearchTerm, $pickerCategory) {
-            if ($pickerCategory !== null && (string) ($blockType->category ?? '') !== $pickerCategory) {
-                return false;
-            }
+    $matchesSearch = function ($blockType) use ($pickerSearchTerm) {
+        if ($pickerSearchTerm === '') {
+            return true;
+        }
 
-            if ($pickerSearchTerm === '') {
-                return true;
-            }
+        return str_contains(strtolower($blockType->name), $pickerSearchTerm)
+            || str_contains(strtolower((string) $blockType->description), $pickerSearchTerm)
+            || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
+            || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
+    };
 
-            return str_contains(strtolower($blockType->name), $pickerSearchTerm)
-                || str_contains(strtolower((string) $blockType->description), $pickerSearchTerm)
-                || str_contains(strtolower((string) $blockType->category), $pickerSearchTerm)
-                || str_contains(strtolower($blockType->slug), $pickerSearchTerm);
-        })
-        ->sort(function ($left, $right) use ($pickerSort) {
+    $sortBlockTypes = function ($blockTypes) use ($pickerSort) {
+        return $blockTypes->sort(function ($left, $right) use ($pickerSort) {
             $compare = static fn ($a, $b) => $a <=> $b;
 
             return match ($pickerSort) {
@@ -93,6 +97,81 @@
             };
         })
         ->values();
+    };
+
+    $slugMatches = function ($blockType, array $slugs): bool {
+        $normalizedSlug = strtolower(str_replace('_', '-', (string) $blockType->slug));
+
+        return in_array($normalizedSlug, $slugs, true);
+    };
+
+    $commonSlugs = ['header', 'rich-text', 'text', 'button', 'button-link', 'image', 'card', 'code', 'table', 'quote', 'alert'];
+    $layoutSlugs = ['section', 'container', 'grid', 'cluster', 'card'];
+    $contentSlugs = ['header', 'text', 'plain-text', 'rich-text', 'button', 'button-link', 'code', 'table', 'quote', 'alert', 'stat-card', 'image', 'gallery', 'file', 'video', 'audio', 'map'];
+    $navigationSlugs = ['link-list', 'link-list-item', 'toc', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-group', 'sidebar-nav-item', 'sidebar-footer', 'search-form', 'navigation-auto', 'menu'];
+    $advancedSlugs = ['html'];
+
+    $tabDefinitions = collect([
+        'common' => [
+            'label' => 'Common',
+            'filter' => fn ($blockType) => $slugMatches($blockType, $commonSlugs),
+            'emptyTitle' => 'No common block types',
+            'emptyText' => 'No common shortcuts are available for this picker context.',
+        ],
+        'layout' => [
+            'label' => 'Layout',
+            'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'layout' || $slugMatches($blockType, $layoutSlugs),
+            'emptyTitle' => 'No layout block types',
+            'emptyText' => 'No layout or container block types are eligible here.',
+        ],
+        'content' => [
+            'label' => 'Content',
+            'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'content' || $slugMatches($blockType, $contentSlugs),
+            'emptyTitle' => 'No content block types',
+            'emptyText' => 'No editorial content block types are eligible here.',
+        ],
+        'navigation' => [
+            'label' => 'Navigation',
+            'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'navigation' || $slugMatches($blockType, $navigationSlugs),
+            'emptyTitle' => 'No navigation block types',
+            'emptyText' => 'No navigation or docs-shell utility blocks are eligible here.',
+        ],
+        'advanced' => [
+            'label' => 'Advanced',
+            'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'advanced' || $slugMatches($blockType, $advancedSlugs),
+            'emptyTitle' => 'No advanced block types',
+            'emptyText' => 'No advanced block types are eligible here.',
+        ],
+        'all' => [
+            'label' => 'All',
+            'filter' => fn () => true,
+            'emptyTitle' => 'No block types',
+            'emptyText' => 'No block types are eligible for this picker context.',
+        ],
+    ]);
+
+    $tabBlockTypes = $tabDefinitions
+        ->map(function (array $definition) use ($eligibleBlockTypes, $sortBlockTypes) {
+            return $sortBlockTypes($eligibleBlockTypes->filter($definition['filter']));
+        })
+        ->filter(fn ($blockTypes, $tabKey) => $tabKey !== 'advanced' || $blockTypes->isNotEmpty());
+
+    if (! $tabBlockTypes->has($pickerTab)) {
+        $pickerTab = 'common';
+    }
+
+    $showSearchResults = $pickerSearchTerm !== '';
+    $matchingBlockTypes = $sortBlockTypes(
+        $eligibleBlockTypes
+            ->filter($matchesSearch)
+            ->when($showSearchResults && $pickerCategory !== null, fn ($blockTypes) => $blockTypes->filter(fn ($blockType) => (string) ($blockType->category ?? '') === $pickerCategory))
+    );
+
+    $visibleBlockTypes = $showSearchResults
+        ? $matchingBlockTypes
+        : ($tabBlockTypes->get($pickerTab) ?? collect());
+
+    $activeTab = $showSearchResults ? 'all' : $pickerTab;
 
     $kindLabel = function ($blockType) {
         if (filled($blockType->category)) {
@@ -127,6 +206,25 @@
 
         return $categoryLabels[$resolved] ?? str($resolved)->replace('-', ' ')->title()->toString();
     };
+
+    $tabUrl = function (string $tabKey) use ($slotBlockRoute, $pickerParentId, $pickerSearch, $pickerSort) {
+        return $slotBlockRoute([
+            'picker' => 1,
+            'parent_id' => $pickerParentId ?: null,
+            'block_type_tab' => $tabKey !== 'common' ? $tabKey : null,
+            'block_type_search' => $pickerSearch ?: null,
+            'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null,
+        ]);
+    };
+
+    $pickerStateRouteParams = [
+        'picker' => 1,
+        'parent_id' => $pickerParentId ?: null,
+        'block_type_tab' => $pickerTab !== 'common' ? $pickerTab : null,
+        'block_type_search' => $pickerSearch ?: null,
+        'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null,
+        'block_type_category' => $showSearchResults && $pickerCategory !== null ? $pickerCategory : null,
+    ];
 @endphp
 
 @if ($showPickerModal)
@@ -148,7 +246,7 @@
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
                     @include('admin.partials.listing-filters', [
-                        'action' => route('admin.pages.slots.blocks', [$page, $slot]),
+                        'action' => $slotBlockRoute(),
                         'search' => [
                             'id' => 'slot_block_type_search',
                             'name' => 'block_type_search',
@@ -157,7 +255,7 @@
                             'placeholder' => 'Search by name, intent, or slug',
                         ],
                         'selects' => [
-                            [
+                            ...($showSearchResults ? [[
                                 'id' => 'slot_block_type_category',
                                 'name' => 'block_type_category',
                                 'label' => 'Category',
@@ -166,7 +264,7 @@
                                 'options' => $availableCategories
                                     ->mapWithKeys(fn ($category) => [$category => $categoryDisplay($category)])
                                     ->all(),
-                            ],
+                            ]] : []),
                             [
                                 'id' => 'slot_block_type_sort',
                                 'name' => 'block_type_sort',
@@ -183,6 +281,7 @@
                             'picker' => 1,
                             'locale' => $activeLocale->is_default ? null : $activeLocale->code,
                             'parent_id' => $pickerParentId,
+                            'block_type_tab' => $pickerTab !== 'common' ? $pickerTab : null,
                         ],
                         'showReset' => true,
                         'resetUrl' => $resetUrl,
@@ -190,8 +289,37 @@
                         'resetFirst' => true,
                     ])
 
-                    @if ($matchingBlockTypes->isNotEmpty())
-                        <div class="wb-table-wrap">
+                    @if ($showSearchResults)
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                                <div class="wb-stack wb-gap-1">
+                                    <strong>Search results</strong>
+                                    <span class="wb-text-sm wb-text-muted">Showing matches across the full eligible catalog.</span>
+                                </div>
+                                <span class="wb-text-sm wb-text-muted">{{ $matchingBlockTypes->count() }} result{{ $matchingBlockTypes->count() === 1 ? '' : 's' }}</span>
+                            </div>
+                        </div>
+                    @else
+                        <div class="wb-tabs" data-wb-tabs>
+                            <div class="wb-tabs-nav" role="tablist" aria-label="Block type catalog groups">
+                                @foreach ($tabBlockTypes as $tabKey => $blockTypes)
+                                    <a
+                                        href="{{ $tabUrl($tabKey) }}"
+                                        id="slot-block-picker-tab-{{ $tabKey }}"
+                                        role="tab"
+                                        aria-controls="slot-block-picker-panel-{{ $tabKey }}"
+                                        aria-selected="{{ $activeTab === $tabKey ? 'true' : 'false' }}"
+                                        class="wb-tabs-btn {{ $activeTab === $tabKey ? 'is-active' : '' }}"
+                                    >
+                                        {{ $tabDefinitions[$tabKey]['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($visibleBlockTypes->isNotEmpty())
+                        <div class="wb-table-wrap" @if (! $showSearchResults) role="tabpanel" id="slot-block-picker-panel-{{ $activeTab }}" aria-labelledby="slot-block-picker-tab-{{ $activeTab }}" @endif>
                             <table class="wb-table wb-table-striped wb-table-hover">
                                 <thead>
                                     <tr>
@@ -201,14 +329,14 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($matchingBlockTypes as $blockType)
+                                    @foreach ($visibleBlockTypes as $blockType)
                                         <tr data-block-type-slug="{{ $blockType->slug }}">
                                             <td>
                                                 <a
-                                                    href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_category' => $pickerCategory, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                                    href="{{ $slotBlockRoute($pickerStateRouteParams + ['block_type_id' => $blockType->id]) }}"
                                                     class="wb-link"
                                                     data-wb-slot-block-link
-                                                    data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $pickerParentId ?: null, 'block_type_id' => $blockType->id, 'block_type_search' => $pickerSearch ?: null, 'block_type_category' => $pickerCategory, 'block_type_sort' => $pickerSort !== 'default' ? $pickerSort : null]) }}"
+                                                    data-base-url="{{ $slotBlockBaseRoute($pickerStateRouteParams + ['block_type_id' => $blockType->id]) }}"
                                                 >
                                                     <strong>{{ $blockType->name }}</strong>
                                                 </a>
@@ -224,8 +352,8 @@
                         </div>
                     @else
                         <div class="wb-empty">
-                            <div class="wb-empty-title">No matching block types</div>
-                            <div class="wb-empty-text">Try a different search term or category.</div>
+                            <div class="wb-empty-title">{{ $showSearchResults ? 'No matching block types' : $tabDefinitions[$activeTab]['emptyTitle'] }}</div>
+                            <div class="wb-empty-text">{{ $showSearchResults ? 'Try a different search term or category.' : $tabDefinitions[$activeTab]['emptyText'] }}</div>
                         </div>
                     @endif
                 </div>

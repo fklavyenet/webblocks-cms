@@ -62,7 +62,7 @@
                             $locale = $translationStatus['locale'];
                             $isActiveLocale = $locale->id === $activeLocale->id;
                         @endphp
-                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ strtoupper($locale->code) }}</a>
+                        <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_tab' => request('block_type_tab'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ strtoupper($locale->code) }}</a>
                     @endforeach
                 </div>
                 <span class="wb-text-sm wb-text-muted">Shared Slot translations use the same block translation behavior as page-owned slot content.</span>
@@ -120,6 +120,8 @@
         'page' => $sourcePage,
         'slot' => $slot,
         'blockTypes' => $blockTypes,
+        'slotBlockRoute' => $slotBlockRoute,
+        'slotBlockBaseRoute' => $slotBlockBaseRoute,
         'pickerSearch' => $pickerSearch,
         'pickerCategory' => $pickerCategory,
         'isPickerOpen' => $isPickerOpen,
