@@ -8,6 +8,7 @@ use App\Models\PageTranslation;
 use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\PublicRendering\SlotWrapperResolver;
+use App\Support\Pages\PageRouteResolver;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,7 @@ class PublicPagePresenter
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PublicSharedSlotResolver $publicSharedSlotResolver,
         private readonly SlotWrapperResolver $slotWrapperResolver,
+        private readonly PageRouteResolver $pageRouteResolver,
     ) {}
 
     public function present(Page $page): array
@@ -72,6 +74,7 @@ class PublicPagePresenter
             'site_tagline' => trim((string) ($site?->tagline ?? config('app.slogan'))),
             'site_label' => $siteLabel,
             'title' => $title,
+            'canonical_url' => $page ? $this->pageRouteResolver->canonicalUrlFor($page, $translation?->locale?->code, $site) : null,
             'meta_description' => $seoDescription ?? $siteSeoDescription,
             'meta_keywords' => $seoKeywords ?? $siteSeoKeywords,
             'favicon_url' => $this->trimmed($site?->faviconAsset?->url()),
@@ -80,6 +83,7 @@ class PublicPagePresenter
                 ?? $seoDescription
                 ?? $siteSeoDescription,
             'og_image' => $ogImage,
+            'og_url' => $page ? $this->pageRouteResolver->canonicalUrlFor($page, $translation?->locale?->code, $site) : null,
             'og_site_name' => $siteName,
         ];
     }

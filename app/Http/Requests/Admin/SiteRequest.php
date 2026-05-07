@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Asset;
 use App\Models\Locale;
 use App\Models\Site;
+use App\Models\SiteDomain;
 use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
@@ -54,7 +55,7 @@ class SiteRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'handle' => ['required', 'string', 'max:255', Rule::unique(Site::class, 'handle')->ignore($site?->id)],
-            'domain' => ['nullable', 'string', 'max:255', Rule::unique(Site::class, 'domain')->ignore($site?->id)],
+            'domain' => ['nullable', 'string', 'max:255', Rule::unique(SiteDomain::class, 'domain')->ignore($site?->primaryDomain()?->id)],
             'is_primary' => ['nullable', 'boolean'],
             'display_name' => ['nullable', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],

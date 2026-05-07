@@ -2,7 +2,7 @@
     $siteContext = $activeSite?->name ?? 'All sites';
     $siteContextDescription = $showAllSites
         ? 'Showing pages across all sites. Choose a site to return to the normal editorial flow.'
-        : 'Showing pages for '.$activeSite->name.($activeSite->domain ? ' ('.$activeSite->domain.')' : '').'.';
+        : 'Showing pages for '.$activeSite->name.($activeSite->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '').'.';
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
     $detailsBaseQuery = array_filter([
@@ -162,8 +162,8 @@
                                                 <strong>{{ $page->title }}</strong>
                                                 @if ($showAllSites)
                                                     <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
-                                                    @if ($page->site?->domain)
-                                                        <span class="wb-text-sm wb-text-muted">{{ $page->site->domain }}</span>
+                                                    @if ($page->site?->canonicalDomain())
+                                                        <span class="wb-text-sm wb-text-muted">{{ $page->site->canonicalDomain() }}</span>
                                                     @endif
                                                 @endif
                                             </div>

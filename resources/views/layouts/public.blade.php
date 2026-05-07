@@ -15,12 +15,14 @@
             'site_label' => trim((string) ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name'))),
             'site_tagline' => trim((string) ($resolvedSite?->tagline ?? config('app.slogan'))),
             'title' => trim((string) ($title ?? ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name')))),
+            'canonical_url' => trim((string) ($canonicalUrl ?? '')),
             'meta_description' => trim((string) ($metaDescription ?? ($resolvedSite?->seo_description ?? ''))),
             'meta_keywords' => trim((string) ($metaKeywords ?? ($resolvedSite?->seo_keywords ?? ''))),
             'favicon_url' => $resolvedSite?->faviconAsset?->url(),
             'og_title' => trim((string) ($ogTitle ?? $title ?? ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name')))),
             'og_description' => trim((string) ($ogDescription ?? ($metaDescription ?? $resolvedSite?->seo_description ?? ''))),
             'og_image' => trim((string) ($ogImage ?? ($resolvedSite?->socialImageAsset?->url() ?? ''))),
+            'og_url' => trim((string) ($ogUrl ?? ($canonicalUrl ?? ''))),
             'og_site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
         ];
     @endphp
@@ -35,12 +37,14 @@
             'siteName' => $publicMeta['site_name'] ?? null,
             'siteTagline' => $publicMeta['site_tagline'] ?? null,
             'title' => $publicMeta['title'] ?? null,
+            'canonicalUrl' => $publicMeta['canonical_url'] ?? null,
             'metaDescription' => $publicMeta['meta_description'] ?? null,
             'metaKeywords' => $publicMeta['meta_keywords'] ?? null,
             'faviconUrl' => $publicMeta['favicon_url'] ?? null,
             'ogTitle' => $publicMeta['og_title'] ?? null,
             'ogDescription' => $publicMeta['og_description'] ?? null,
             'ogImage' => $publicMeta['og_image'] ?? null,
+            'ogUrl' => $publicMeta['og_url'] ?? null,
             'ogSiteName' => $publicMeta['og_site_name'] ?? null,
         ])
 

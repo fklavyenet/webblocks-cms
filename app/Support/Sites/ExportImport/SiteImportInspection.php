@@ -28,4 +28,9 @@ class SiteImportInspection
     {
         return $this->manifest['source_site_domain'] ?? null;
     }
+
+    public function sourceSiteDomains(): array
+    {
+        return (array) ($this->manifest['source_site_domains'] ?? []);
+    }
 }

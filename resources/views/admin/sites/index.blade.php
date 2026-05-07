@@ -18,7 +18,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Handle</th>
-                            <th>Domain</th>
+                            <th>Domains</th>
                             <th>Locales</th>
                             <th>Pages</th>
                             <th>Status</th>
@@ -33,9 +33,13 @@
                                 <td><code>{{ $site->handle }}</code></td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <span>{{ $site->domain ?: 'Not set' }}</span>
-                                        @if ($site->domain)
-                                            <span class="wb-text-sm wb-text-muted">https://{{ $site->domain }}</span>
+                                        <span>{{ $site->canonicalDomain() ?: 'Not set' }}</span>
+                                        @if ($site->canonicalDomain())
+                                            <span class="wb-text-sm wb-text-muted">https://{{ $site->canonicalDomain() }}</span>
+                                        @endif
+                                        @php($aliasCount = $site->siteDomains()->where('is_primary', false)->count())
+                                        @if ($aliasCount > 0)
+                                            <span class="wb-text-sm wb-text-muted">+{{ $aliasCount }} alias{{ $aliasCount === 1 ? '' : 'es' }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -57,6 +61,9 @@
                                         </a>
                                         <a href="{{ route('admin.sites.edit', $site) }}" class="wb-action-btn wb-action-btn-edit" title="Edit site" aria-label="Edit site">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                        </a>
+                                        <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-action-btn" title="Manage domains" aria-label="Manage domains">
+                                            <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                         </a>
                                         <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
                                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>

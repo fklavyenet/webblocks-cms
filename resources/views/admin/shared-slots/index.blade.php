@@ -2,7 +2,7 @@
     $siteContext = $activeSite?->name ?? 'All sites';
     $siteContextDescription = $showAllSites
         ? 'Showing Shared Slots across all allowed sites.'
-        : 'Showing Shared Slots for '.$activeSite->name.($activeSite?->domain ? ' ('.$activeSite->domain.')' : '').'.';
+        : 'Showing Shared Slots for '.$activeSite->name.($activeSite?->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '').'.';
     $sharedSlotsReady = $sharedSlotsReady ?? true;
     $newSharedSlotUrl = $activeSite ? route('admin.shared-slots.create', ['site' => $activeSite->id]) : route('admin.shared-slots.create');
     $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);

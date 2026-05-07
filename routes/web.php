@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\SharedSlotRevisionController;
 use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
+use App\Http\Controllers\Admin\SiteDomainController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
 use App\Http\Controllers\Admin\SystemSearchController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\VisitorReportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AdminApi\SiteDomainApiController;
 use App\Http\Controllers\Install\InstallWizardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\PageController as PublicPageController;
@@ -61,6 +63,14 @@ Route::middleware('install.required')->get('/{locale}/search', PublicSearchContr
 Route::middleware('install.required')->get('/{locale}/search.json', [PublicSearchController::class, 'json'])
     ->where('locale', Locale::routePattern())
     ->name('localized.search.json');
+
+Route::middleware(['install.required', 'internal-api.token'])->prefix('admin-api')->name('admin-api.')->group(function () {
+    Route::get('/sites', [SiteDomainApiController::class, 'indexSites'])->name('sites.index');
+    Route::get('/sites/{site}/domains', [SiteDomainApiController::class, 'indexDomains'])->name('sites.domains.index');
+    Route::post('/sites/{site}/domains', [SiteDomainApiController::class, 'storeDomain'])->name('sites.domains.store');
+    Route::delete('/sites/{site}/domains/{domain}', [SiteDomainApiController::class, 'destroyDomain'])->name('sites.domains.destroy');
+    Route::get('/domains/{domain}/status', [SiteDomainApiController::class, 'domainStatus'])->name('domains.status');
+});
 
 Route::middleware(['install.required', 'auth'])->group(function () {
     Route::redirect('/dashboard', '/admin')->name('dashboard');
@@ -156,6 +166,11 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
         Route::post('sites/clone', [SiteController::class, 'cloneStore'])->name('sites.clone.store');
         Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
+        Route::get('sites/{site}/domains', [SiteDomainController::class, 'index'])->name('sites.domains.index');
+        Route::post('sites/{site}/domains', [SiteDomainController::class, 'store'])->name('sites.domains.store');
+        Route::put('sites/{site}/domains/{domain}', [SiteDomainController::class, 'update'])->name('sites.domains.update');
+        Route::delete('sites/{site}/domains/{domain}', [SiteDomainController::class, 'destroy'])->name('sites.domains.destroy');
+        Route::post('sites/{site}/domains/{domain}/primary', [SiteDomainController::class, 'setPrimary'])->name('sites.domains.primary');
         Route::resource('sites', SiteController::class)->except(['show']);
         Route::resource('locales', LocaleController::class)->except(['show', 'destroy']);
         Route::post('locales/{locale}/enable', [LocaleController::class, 'enable'])->name('locales.enable');

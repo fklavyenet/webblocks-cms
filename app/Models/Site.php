@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Support\Sites\SiteDomainNormalizer;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class Site extends Model
 {
@@ -52,12 +54,46 @@ class Site extends Model
 
         static::saved(function (self $site): void {
             self::enforcePrimaryInvariant($site);
+            $site->syncPrimaryDomainRecord();
         });
+    }
+
+    protected function domain(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value, array $attributes) {
+                if (! Schema::hasTable('site_domains')) {
+                    return $attributes['domain'] ?? null;
+                }
+
+                if ($this->relationLoaded('siteDomains')) {
+                    $primaryDomain = $this->siteDomains
+                        ->first(fn (SiteDomain $domain) => $domain->is_primary)
+                        ?->domain;
+
+                    if ($primaryDomain !== null) {
+                        return $primaryDomain;
+                    }
+                }
+
+                $primaryDomain = $this->siteDomains()
+                    ->where('is_primary', true)
+                    ->value('domain');
+
+                return $primaryDomain ?? ($attributes['domain'] ?? null);
+            },
+            set: fn ($value) => ['domain' => app(SiteDomainNormalizer::class)->normalize($value)],
+        );
     }
 
     public function pages(): HasMany
     {
         return $this->hasMany(Page::class);
+    }
+
+    public function siteDomains(): HasMany
+    {
+        return $this->hasMany(SiteDomain::class)->orderByDesc('is_primary')->orderBy('domain');
     }
 
     public function navigationItems(): HasMany
@@ -138,6 +174,47 @@ class Site extends Model
         return static::query()->primaryFirst()->first();
     }
 
+    public function primaryDomain(): ?SiteDomain
+    {
+        if ($this->relationLoaded('siteDomains')) {
+            return $this->siteDomains->first(fn (SiteDomain $domain) => $domain->is_primary);
+        }
+
+        return $this->siteDomains()->where('is_primary', true)->first();
+    }
+
+    public function activeDomains()
+    {
+        return $this->siteDomains()->active()->orderByDesc('is_primary')->orderBy('domain');
+    }
+
+    public function activeDomainRecords()
+    {
+        return $this->relationLoaded('siteDomains')
+            ? $this->siteDomains->where('status', SiteDomain::STATUS_ACTIVE)->sortByDesc(fn (SiteDomain $domain) => $domain->is_primary)->values()
+            : $this->activeDomains()->get();
+    }
+
+    public function canonicalDomain(): ?string
+    {
+        return $this->primaryDomain()?->domain ?? $this->getRawOriginal('domain');
+    }
+
+    public function domainRecordFor(?string $domain): ?SiteDomain
+    {
+        $domain = app(SiteDomainNormalizer::class)->normalize($domain);
+
+        if ($domain === null || ! Schema::hasTable('site_domains')) {
+            return null;
+        }
+
+        if ($this->relationLoaded('siteDomains')) {
+            return $this->siteDomains->first(fn (SiteDomain $siteDomain) => $siteDomain->domain === $domain);
+        }
+
+        return $this->siteDomains()->where('domain', $domain)->first();
+    }
+
     public function publicDisplayName(): string
     {
         $displayName = trim((string) $this->display_name);
@@ -155,6 +232,81 @@ class Site extends Model
 
         if (static::query()->where('is_primary', true)->whereKeyNot($site->id)->doesntExist()) {
             $site->forceFill(['is_primary' => true])->saveQuietly();
+        }
+    }
+
+    public function syncPrimaryDomainRecord(): void
+    {
+        if (! $this->exists || ! Schema::hasTable('site_domains')) {
+            return;
+        }
+
+        $domain = app(SiteDomainNormalizer::class)->normalize($this->attributes['domain'] ?? $this->getRawOriginal('domain'));
+
+        if ($domain === null) {
+            $this->siteDomains()->where('is_primary', true)->delete();
+            $this->unsetRelation('siteDomains');
+
+            return;
+        }
+
+        $existing = SiteDomain::query()->where('domain', $domain)->first();
+
+        if ($existing && (int) $existing->site_id !== (int) $this->id) {
+            throw new \RuntimeException('That domain is already assigned to another site.');
+        }
+
+        $siteDomain = $existing ?? new SiteDomain;
+        $siteDomain->forceFill([
+            'site_id' => $this->id,
+            'domain' => $domain,
+            'is_primary' => true,
+            'redirect_to_primary' => $siteDomain->exists ? $siteDomain->redirect_to_primary : false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ])->saveQuietly();
+
+        $this->siteDomains()
+            ->whereKeyNot($siteDomain->id)
+            ->where('is_primary', true)
+            ->update(['is_primary' => false]);
+
+        $this->unsetRelation('siteDomains');
+
+        if (($this->attributes['domain'] ?? $this->getRawOriginal('domain')) !== $domain) {
+            static::query()->whereKey($this->id)->update(['domain' => $domain]);
+            $this->forceFill(['domain' => $domain]);
+            $this->syncOriginalAttribute('domain');
+        }
+    }
+
+    public function markDomainAsPrimary(SiteDomain $siteDomain): void
+    {
+        abort_unless((int) $siteDomain->site_id === (int) $this->id, 404);
+
+        $this->siteDomains()->update(['is_primary' => false]);
+
+        $siteDomain->forceFill([
+            'is_primary' => true,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ])->saveQuietly();
+
+        $this->unsetRelation('siteDomains');
+        $this->syncLegacyDomainFromPrimaryRecord();
+    }
+
+    public function syncLegacyDomainFromPrimaryRecord(): void
+    {
+        if (! $this->exists || ! Schema::hasTable('site_domains')) {
+            return;
+        }
+
+        $primaryDomain = $this->siteDomains()->where('is_primary', true)->first();
+        $domain = $primaryDomain?->domain;
+
+        if (($this->attributes['domain'] ?? $this->getRawOriginal('domain')) !== $domain) {
+            static::query()->whereKey($this->id)->update(['domain' => $domain]);
+            $this->forceFill(['domain' => $domain]);
+            $this->syncOriginalAttribute('domain');
         }
     }
 }

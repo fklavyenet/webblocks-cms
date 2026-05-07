@@ -18,7 +18,7 @@
                 </div>
 
                 <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>Domain:</strong> {{ $site->domain ?: 'Not set' }}</div>
+                    <div><strong>Domain:</strong> {{ $site->canonicalDomain() ?: 'Not set' }}</div>
                     <div><strong>Pages:</strong> {{ $report->count('pages') }}</div>
                     <div><strong>Blocks:</strong> {{ $report->count('blocks') }}</div>
                     <div><strong>Navigation items:</strong> {{ $report->count('navigation_items') }}</div>

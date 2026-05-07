@@ -106,6 +106,12 @@ class SiteExportManager
             'source_site_name' => $site->name,
             'source_site_handle' => $site->handle,
             'source_site_domain' => $site->domain,
+            'source_site_domains' => collect($payload['site_domains'] ?? [])->map(fn (array $domain) => [
+                'domain' => $domain['domain'] ?? null,
+                'is_primary' => (bool) ($domain['is_primary'] ?? false),
+                'redirect_to_primary' => (bool) ($domain['redirect_to_primary'] ?? false),
+                'status' => $domain['status'] ?? 'active',
+            ])->values()->all(),
             'locales' => collect($payload['locales'])->pluck('code')->values()->all(),
             'counts_summary' => $payload['counts'],
             'includes_media' => $includesMedia,

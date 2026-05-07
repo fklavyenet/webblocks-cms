@@ -3,7 +3,9 @@
 namespace App\Support\Sites;
 
 use App\Models\Site;
+use App\Models\SiteDomain;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SiteResolver
@@ -23,18 +25,21 @@ class SiteResolver
         $host = $this->domainNormalizer->normalize($request->getHost());
 
         if ($host !== null) {
-            $site = Site::query()
-                ->whereNotNull('domain')
-                ->where('domain', $host)
-                ->first();
+            $siteDomain = $this->resolveActiveSiteDomain($host);
+
+            if ($siteDomain) {
+                return new ResolvedSite($siteDomain->site, $siteDomain, true, $host, false);
+            }
+
+            $site = $this->resolveLegacySite($host);
 
             if ($site) {
-                return new ResolvedSite($site, true, $host, false);
+                return new ResolvedSite($site, null, true, $host, false);
             }
         }
 
         if ($this->shouldFallbackForUnknownHost()) {
-            return new ResolvedSite($this->primary(), false, $host, true);
+            return new ResolvedSite($this->primary(), null, false, $host, true);
         }
 
         throw new NotFoundHttpException('Unknown site host.');
@@ -51,6 +56,56 @@ class SiteResolver
     public function normalizeDomain(?string $domain): ?string
     {
         return $this->domainNormalizer->normalize($domain);
+    }
+
+    public function activeSiteDomainFor(Site $site, ?string $domain): ?SiteDomain
+    {
+        $domain = $this->normalizeDomain($domain);
+
+        if ($domain === null || ! Schema::hasTable('site_domains')) {
+            return null;
+        }
+
+        if ($site->relationLoaded('siteDomains')) {
+            return $site->siteDomains
+                ->first(fn (SiteDomain $siteDomain) => $siteDomain->domain === $domain && $siteDomain->isActive());
+        }
+
+        return $site->siteDomains()->active()->where('domain', $domain)->first();
+    }
+
+    public function primaryDomainFor(Site $site): ?SiteDomain
+    {
+        $primary = $site->primaryDomain();
+
+        if ($primary?->isActive()) {
+            return $primary;
+        }
+
+        return Schema::hasTable('site_domains')
+            ? $site->activeDomains()->first()
+            : null;
+    }
+
+    private function resolveActiveSiteDomain(string $host): ?SiteDomain
+    {
+        if (! Schema::hasTable('site_domains')) {
+            return null;
+        }
+
+        return SiteDomain::query()
+            ->with('site')
+            ->active()
+            ->where('domain', $host)
+            ->first();
+    }
+
+    private function resolveLegacySite(string $host): ?Site
+    {
+        return Site::query()
+            ->whereNotNull('domain')
+            ->where('domain', $host)
+            ->first();
     }
 
     private function shouldFallbackForUnknownHost(): bool
