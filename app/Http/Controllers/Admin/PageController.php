@@ -16,6 +16,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
+use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Pages\PageRevisionManager;
@@ -36,6 +37,7 @@ class PageController extends Controller
 
     public function __construct(
         private readonly BlockPayloadWriter $blockPayloadWriter,
+        private readonly BlockDeletionManager $blockDeletionManager,
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageRevisionManager $revisionManager,
@@ -322,6 +324,7 @@ class PageController extends Controller
         $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
         $pickerCategory = $this->pickerCategory($pickerBlockTypes);
         $modalState = $this->slotBlockModalState($page, $slot, $blocks, $blockTypes, $pickerBlockTypes, $pickerParentId);
+        $deleteModalState = $this->slotBlockDeleteModalState($resolvedBlocks);
         $rootBlocks = $this->blockTranslationResolver
             ->resolveCollection($blocks->whereNull('parent_id')->values(), $activeLocale)
             ->values();
@@ -352,6 +355,8 @@ class PageController extends Controller
             'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
             'expandedBlockIds' => $expandedBlockIds,
             'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+            'slotDeleteModalBlock' => $deleteModalState['block'],
+            'slotDeleteModalMeta' => $deleteModalState['meta'],
         ]);
     }
 
@@ -744,6 +749,21 @@ class PageController extends Controller
                 'slot_page_id' => $this->pageSlotRouteId($block->page_id, $block->slot_type_id),
             ])
             ->values();
+    }
+
+    private function slotBlockDeleteModalState($blocks): array
+    {
+        $deleteBlockId = request()->integer('delete');
+        $deleteBlock = $deleteBlockId > 0 ? $blocks->firstWhere('id', $deleteBlockId) : null;
+
+        if (! $deleteBlock) {
+            return ['block' => null, 'meta' => null];
+        }
+
+        return [
+            'block' => $deleteBlock,
+            'meta' => $this->blockDeletionManager->metadata($deleteBlock),
+        ];
     }
 
     private function pickerBlockTypes($blocks, $blockTypes, ?int $parentId = null)

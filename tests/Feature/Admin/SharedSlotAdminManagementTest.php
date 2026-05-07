@@ -507,6 +507,87 @@ class SharedSlotAdminManagementTest extends TestCase
     }
 
     #[Test]
+    public function recursive_delete_in_shared_slot_context_removes_only_the_selected_shared_slot_subtree(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $otherSite = $this->secondarySite();
+        $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'main']);
+        $otherSharedSlot = $this->sharedSlotFor($otherSite, ['name' => 'Other Shared Slot', 'handle' => 'other-shared-slot', 'slot_name' => 'main']);
+        $mainSlotType = $this->slotType('main', 'Main', 2);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $otherSourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($otherSharedSlot);
+        $user = User::factory()->superAdmin()->create();
+
+        $parent = Block::query()->create([
+            'page_id' => $sourcePage->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $child = Block::query()->create([
+            'page_id' => $sourcePage->id,
+            'parent_id' => $parent->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 0,
+            'content' => 'Shared child',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sibling = Block::query()->create([
+            'page_id' => $sourcePage->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 1,
+            'content' => 'Shared sibling',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $otherSharedBlock = Block::query()->create([
+            'page_id' => $otherSourcePage->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 0,
+            'content' => 'Other shared slot block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
+        app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->rebuildAssignments($otherSharedSlot);
+
+        $response = $this->actingAs($user)
+            ->delete(route('admin.blocks.destroy', $parent), [
+                'shared_slot_id' => $sharedSlot->id,
+                'delete_descendants' => '1',
+            ]);
+
+        $response->assertRedirect(route('admin.shared-slots.blocks.edit', $sharedSlot));
+        $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
+        $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
+        $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $sibling->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $otherSharedBlock->id]);
+    }
+
+    #[Test]
     public function users_cannot_forge_shared_slot_context_for_a_source_page_from_another_site(): void
     {
         $this->seedFoundation();

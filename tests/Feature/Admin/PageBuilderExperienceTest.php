@@ -1459,8 +1459,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('title="Move block down"', false);
         $response->assertSee('title="Edit block"', false);
         $response->assertSee('title="Add child block"', false);
-        $response->assertSee('action="'.route('admin.blocks.destroy', $section).'"', false);
-        $response->assertSee('name="_method" value="DELETE"', false);
+        $response->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete' => $section->id]).'" class="wb-action-btn wb-action-btn-delete"', false);
+        $response->assertDontSee('onsubmit="return confirm(\'Delete this block?\');"', false);
         $response->assertDontSee('name="expanded"', false);
         $response->assertDontSee('?expanded=', false);
         $response->assertDontSee('&expanded=', false);
@@ -1549,6 +1549,255 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('>Plain Text</strong></a>', false);
         $response->assertDontSee('Compact row content that should stay in the collapsed summary only.', false);
         $response->assertSee('>-<', false);
+    }
+
+    #[Test]
+    public function slot_block_delete_modal_shows_recursive_delete_details_for_nested_blocks(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $containerType->id,
+            'type' => 'container',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Nested copy',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete' => $section->id]));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-delete-modal"', false);
+        $response->assertSee('Also delete all nested child blocks');
+        $response->assertSee('This block currently contains 1 direct child and 2 nested descendants.');
+        $response->assertSee('Delete block and children');
+        $response->assertSee('Delete block');
+        $response->assertSee('Recursive deletion cannot be undone except by restoring a revision or backup.');
+    }
+
+    #[Test]
+    public function deleting_a_parent_block_without_recursive_delete_preserves_children(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $parent = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $parent->id,
+            'block_type_id' => $containerType->id,
+            'type' => 'container',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $grandchild = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $child->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Grandchild content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->delete(route('admin.blocks.destroy', $parent), ['locale' => $this->defaultLocale()->code]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
+        $response->assertSessionHas('status', 'Block deleted.');
+        $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $child->id, 'parent_id' => null]);
+        $this->assertDatabaseHas('blocks', ['id' => $grandchild->id, 'parent_id' => $child->id]);
+    }
+
+    #[Test]
+    public function deleting_a_parent_block_with_recursive_delete_removes_only_that_subtree(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        [$otherPage] = $this->pageWithSlot($main, 'Other', 'other');
+        $otherPageSidebar = PageSlot::query()->create([
+            'page_id' => $otherPage->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 1,
+        ]);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $parent = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $parent->id,
+            'block_type_id' => $containerType->id,
+            'type' => 'container',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $grandchild = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $child->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Nested subtree content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sibling = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'content' => 'Sibling content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $otherSlotBlock = Block::query()->create([
+            'page_id' => $otherPage->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 0,
+            'content' => 'Other slot content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->delete(route('admin.blocks.destroy', $parent), [
+                'locale' => $this->defaultLocale()->code,
+                'delete_descendants' => '1',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
+        $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
+        $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
+        $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
+        $this->assertDatabaseMissing('blocks', ['id' => $grandchild->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $sibling->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $otherSlotBlock->id]);
+        $this->assertNotNull($otherPageSidebar);
+    }
+
+    #[Test]
+    public function recursive_delete_still_deletes_a_block_without_children(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Solo block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->delete(route('admin.blocks.destroy', $block), [
+                'locale' => $this->defaultLocale()->code,
+                'delete_descendants' => '1',
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => $this->defaultLocale()->code]));
+        $response->assertSessionHas('status', 'Block and nested child blocks deleted.');
+        $this->assertDatabaseMissing('blocks', ['id' => $block->id]);
     }
 
     #[Test]

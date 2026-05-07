@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Replace slot-block browser confirm deletion with a WebBlocks admin modal that keeps single-block deletion as the safe default and adds an explicit recursive `Delete block and children` option with child and descendant counts.
+- Add server-side scoped recursive block deletion for page-owned and Shared Slot-backed slot editors, including boolean request validation, deepest-first deletes in one transaction, preserved existing single-delete behavior, and clearer flash messaging.
+
 ## 1.17.1
 
 - Fix the Sites index Pages count so hidden Shared Slot source pages are excluded from ordinary site page totals.
