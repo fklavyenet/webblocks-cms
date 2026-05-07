@@ -171,6 +171,26 @@ class BlockTypesIndexTest extends TestCase
     }
 
     #[Test]
+    public function seeder_publishes_html_as_a_trusted_advanced_block(): void
+    {
+        $this->seedFoundation();
+
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'html',
+            'name' => 'HTML (Trusted)',
+            'category' => 'advanced',
+            'status' => 'published',
+        ]);
+
+        $htmlType = BlockType::query()->where('slug', 'html')->firstOrFail();
+
+        $this->assertSame(
+            'Render trusted static HTML. Use Rich Text for normal body copy and Code for escaped snippets. Do not paste untrusted scripts or third-party embeds here.',
+            $htmlType->description,
+        );
+    }
+
+    #[Test]
     public function seeder_refuses_to_delete_heading_when_live_blocks_still_reference_it(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

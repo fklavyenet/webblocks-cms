@@ -748,6 +748,8 @@ class PageController extends Controller
 
     private function pickerBlockTypes($blocks, $blockTypes, ?int $parentId = null)
     {
+        $blockTypes = $this->visiblePickerBlockTypesFor(request()->user(), $blockTypes);
+
         if (! $parentId) {
             return $blockTypes
                 ->reject(fn (BlockType $blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group'], true))
@@ -762,6 +764,17 @@ class PageController extends Controller
 
         return $blockTypes
             ->filter(fn (BlockType $blockType) => $parentBlock->canAcceptChildType($blockType->slug))
+            ->values();
+    }
+
+    private function visiblePickerBlockTypesFor(?\App\Models\User $user, $blockTypes)
+    {
+        if ($user?->isSuperAdmin()) {
+            return $blockTypes;
+        }
+
+        return $blockTypes
+            ->reject(fn (BlockType $blockType) => $blockType->slug === 'html')
             ->values();
     }
 

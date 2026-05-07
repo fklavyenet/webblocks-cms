@@ -96,6 +96,8 @@ See `docs/installation.md` for the complete install guide.
 
 For common editorial choices, `Code`, `Table`, `TOC`, and `Quote` are available as first-class block picker options and remain editable from the slot editor. Use `Header` as the canonical heading or title block, including optional shared anchor IDs for direct links and TOC targets. `TOC` renders links from explicit anchored `Header` blocks on the same public page, including nested headers inside layout wrappers such as `Section`, `Container`, `Grid`, `Cluster`, or `Card`. Do not use the legacy `Heading` block type.
 
+`HTML (Trusted)` is also available in the block picker as an advanced escape hatch for `super_admin` users only. Use it only for deliberate static trusted markup that cannot be represented cleanly with first-class blocks. For normal editorial work, prefer `Rich Text` for safe formatted copy and `Code` for escaped code samples.
+
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
 
 On the Edit Site screen, keep internal site routing fields such as `Name`, `Handle`, `Domain`, and `Primary` separate from public identity. Public-facing `Branding` and `SEO Defaults` live on the site itself. Use `display_name`, `tagline`, favicon, social image, and site-level SEO defaults there for public metadata fallbacks. Locale-aware page-level SEO overrides now live on each page translation, where editors can override title, description, keywords, and Open Graph fields for one locale without changing the fixed WebBlocks CMS admin product identity.
@@ -138,6 +140,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - These WebBlocks UI website files are project-specific migration assets, not CMS core release content.
 - CMS core stays generic; native export/import-style payloads remain the portability mechanism for website content.
 - WebBlocks UI docs imports now target the CMS default site by default through the payload convention `{ "target": "default_site" }`.
+- Project-layer imports may create `HTML (Trusted)` blocks when a source page needs static trusted markup that should render exactly as imported, such as WebBlocks UI reference content.
 - If the default site's docs-shell dependency pages do not exist yet, create or reconcile them with `ddev artisan project:webblocksui-setup-site`.
 - Import the WebBlocks UI Architecture page with `ddev artisan project:webblocksui-import docs-architecture`.
 - Import the WebBlocks UI Foundation page with `ddev artisan project:webblocksui-import docs-foundation`.

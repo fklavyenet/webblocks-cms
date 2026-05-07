@@ -37,6 +37,7 @@
         'layout' => 'Layout',
         'pattern' => 'Pattern',
         'navigation' => 'Navigation',
+        'advanced' => 'Advanced',
         'legacy' => 'Legacy',
     ];
 
@@ -45,7 +46,8 @@
         'layout' => 1,
         'pattern' => 2,
         'navigation' => 3,
-        'legacy' => 4,
+        'advanced' => 4,
+        'legacy' => 5,
     ];
 
     $availableCategories = ($pickerBlockTypes ?? $blockTypes)
@@ -104,6 +106,7 @@
         return match ($kindLabel($blockType)) {
             'system' => 'wb-badge-primary',
             'layout' => 'wb-badge-warning',
+            'advanced' => 'wb-badge-primary',
             default => 'wb-badge-success',
         };
     };

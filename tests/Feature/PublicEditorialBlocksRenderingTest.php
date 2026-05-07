@@ -1227,6 +1227,33 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function html_block_renders_trusted_static_icon_markup_without_public_javascript(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'html',
+            'block_type_id' => $this->blockType('html', 'HTML (Trusted)', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '<div class="wb-card"><div class="wb-card-body wb-stack wb-gap-2"><i class="wb-icon wb-icon-home" aria-hidden="true"></i><strong>Home</strong></div></div>',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<i class="wb-icon wb-icon-home" aria-hidden="true"></i>', false);
+        $response->assertSee('<strong>Home</strong>', false);
+        $response->assertDontSee('data-wb-rich-text-editor', false);
+        $response->assertDontSee('<script>', false);
+    }
+
+    #[Test]
     public function rich_text_block_supports_safe_html_rendering_without_raw_html_passthrough(): void
     {
         $page = $this->pageWithMainSlot();

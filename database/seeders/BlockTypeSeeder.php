@@ -298,6 +298,17 @@ class BlockTypeSeeder extends Seeder
                 'sort_order' => 22,
                 'status' => 'published',
             ],
+            [
+                'name' => 'HTML (Trusted)',
+                'slug' => 'html',
+                'category' => 'advanced',
+                'description' => 'Render trusted static HTML. Use Rich Text for normal body copy and Code for escaped snippets. Do not paste untrusted scripts or third-party embeds here.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 99,
+                'status' => 'published',
+            ],
         ];
 
         $activeSlugs = collect($productBlockTypes)->pluck('slug')->all();
@@ -358,7 +369,6 @@ class BlockTypeSeeder extends Seeder
             'comparison' => 'Comparison',
             'team' => 'Team',
             'faq-list' => 'FAQ List',
-            'html' => 'HTML',
             'hero' => 'Hero',
             'cta' => 'CTA',
             'columns' => 'Columns',
