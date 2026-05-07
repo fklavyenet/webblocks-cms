@@ -2,10 +2,11 @@
 
 ## [Unreleased]
 
+## 1.19.0
+
 - Add the CMS domain alias foundation with dedicated `site_domains` records, primary-domain canonical URL handling, alias-aware public host resolution, and conservative unknown-host behavior for multisite installs.
 - Add admin site-domain management, token-gated `/admin-api/*` domain endpoints, export/import domain metadata handling with conflict skips, and clone behavior that avoids copying live domains by default.
 - Add focused test coverage for domain resolution, admin management, internal API auth, portability flows, and alias-aware public URL metadata.
-
 ## 1.18.0
 
 - Replace slot-block browser confirm deletion with a WebBlocks admin modal that keeps single-block deletion as the safe default and adds an explicit recursive `Delete block and children` option with child and descendant counts.
