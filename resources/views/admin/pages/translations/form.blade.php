@@ -31,7 +31,7 @@
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label>Site</label>
-                            <input class="wb-input" type="text" value="{{ $page->site?->name }}{{ $page->site?->domain ? ' | '.$page->site->domain : '' }}" disabled>
+                            <input class="wb-input" type="text" value="{{ $page->site?->name }}{{ $page->site?->canonicalDomain() ? ' | '.$page->site->canonicalDomain() : '' }}" disabled>
                         </div>
 
                         <div class="wb-stack-2 wb-field">

@@ -37,10 +37,10 @@
                     <span class="wb-text-sm wb-text-muted">Workflow</span>
                     <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
                 </div>
-                @if ($page->site?->domain)
+                @if ($page->site?->canonicalDomain())
                     <div class="wb-stack wb-gap-1">
                         <span class="wb-text-sm wb-text-muted">Domain</span>
-                        <span>{{ $page->site->domain }}</span>
+                        <span>{{ $page->site->canonicalDomain() }}</span>
                     </div>
                 @endif
             </div>

@@ -8,6 +8,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Support\Locales\LocaleResolver;
 use App\Support\Sites\ResolvedSite;
+use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Sites\SiteResolver;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class PageRouteResolver
     public function __construct(
         private readonly SiteResolver $siteResolver,
         private readonly LocaleResolver $localeResolver,
+        private readonly SiteDomainNormalizer $siteDomainNormalizer,
     ) {}
 
     public function currentSite(?Request $request = null): Site
@@ -98,13 +100,54 @@ class PageRouteResolver
             return null;
         }
 
-        if (! $resolvedSite?->domain) {
+        $domain = $this->canonicalDomainFor($resolvedSite);
+
+        if (! $domain) {
             return url($path);
         }
 
         $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
 
-        return $scheme.'://'.$resolvedSite->domain.$path;
+        return $scheme.'://'.$domain.$path;
+    }
+
+    public function canonicalUrlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
+    {
+        return $this->urlFor($page, $locale, $site);
+    }
+
+    public function currentHostUrlFor(Page $page, Locale|string|null $locale = null, ?Request $request = null): ?string
+    {
+        $request ??= request();
+        $resolvedSite = $page->site;
+        $path = $this->pathFor($page, $locale, $resolvedSite);
+
+        if (! $path) {
+            return null;
+        }
+
+        $requestedHost = $this->siteDomainNormalizer->normalize($request?->getHost());
+        $host = $requestedHost && $this->siteResolver->activeSiteDomainFor($resolvedSite, $requestedHost)
+            ? $requestedHost
+            : $this->canonicalDomainFor($resolvedSite);
+
+        if (! $host) {
+            return url($path);
+        }
+
+        $scheme = $request?->getScheme() ?: (parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'http');
+
+        return $scheme.'://'.$host.$path;
+    }
+
+    public function canonicalDomainFor(?Site $site = null): ?string
+    {
+        if (! $site) {
+            return null;
+        }
+
+        return $this->siteResolver->primaryDomainFor($site)?->domain
+            ?? $site->domain;
     }
 
     public function findPublishedPage(Request $request, ?string $slug = null): ?Page

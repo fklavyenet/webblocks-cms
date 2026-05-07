@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\SiteDomain;
 use App\Models\Site;
 use App\Support\Sites\SiteDomainNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,7 +28,7 @@ class SiteImportRunRequest extends FormRequest
         return [
             'site_name' => ['required', 'string', 'max:255'],
             'site_handle' => ['nullable', 'string', 'max:255'],
-            'site_domain' => ['nullable', 'string', 'max:255', Rule::unique(Site::class, 'domain')],
+            'site_domain' => ['nullable', 'string', 'max:255', Rule::unique(SiteDomain::class, 'domain')],
         ];
     }
 }

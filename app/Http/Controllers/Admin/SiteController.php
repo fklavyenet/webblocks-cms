@@ -82,7 +82,7 @@ class SiteController extends Controller
         $deleteReport = $this->siteDeleteService->inspect($site);
 
         return view('admin.sites.form', [
-            'site' => $site->loadMissing(['locales', 'faviconAsset', 'socialImageAsset']),
+            'site' => $site->loadMissing(['locales', 'faviconAsset', 'socialImageAsset', 'siteDomains']),
             'locales' => Locale::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'pageTitle' => 'Edit Site: '.$site->name,
             'formAction' => route('admin.sites.update', $site),

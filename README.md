@@ -15,6 +15,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - database-backed public site search scoped by site and locale, with a header-triggered modal UX, `/search` fallback page, Search Form block support, and a System > Search rebuild screen
 - page revisions and in-place restore with actor, source, and event metadata when available
 - media library and site-scoped navigation management
+- site-scoped primary domains and alias domains for one-install multi-domain public routing
 - install wizard for first-run setup
 - system updates, backups, and site export/import tools
 - site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
@@ -113,6 +114,17 @@ The slot editor block picker follows the published block catalog directly. `Tabl
 Admin index and listing screens such as `Block Types`, `Blocks`, `Pages`, `Media`, `Contact Messages`, and `Users` should use the shared compact listing filter toolbar partial at `resources/views/admin/partials/listing-filters.blade.php`. The contract is: Search stays on the far left and grows to fill the remaining horizontal space, compact select and other small filter inputs sit to the right of Search, and Apply or Reset actions stay right-aligned on the same toolbar row on wide screens. Admin list pagination should use the shared `admin.partials.pagination` partial, and dense admin listings should enable its compact mode so the page links and compact summary render together in one row using the `from-to/total` format instead of a separate verbose summary line. The super-admin-only `Blocks` index is linked directly from the main sidebar under `Pages` and is intended for cross-site block maintenance, especially after imports or other bulk content changes. Its first compact filter set is limited to `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale`. On the `Pages` index, the row-level `Page Details` action opens the standard admin modal pattern with grouped `Page` and `Status & Audit` cards and keeps only `Edit Page` plus `Open Public Page` when a public URL exists. Page Details also shows system-managed audit attribution for who created, last edited, published, archived, or submitted the page for review when that metadata exists; older, deleted-user, console, and imported records safely show `Not recorded` instead of guessing a user.
 
 See `docs/getting-started.md` for the first-use workflow.
+
+## Multisite Domains
+
+- Public host resolution now prefers active `site_domains` records, then falls back to the legacy `sites.domain` value when needed, and only uses unknown-host fallback behavior where `cms.multisite.unknown_host_fallback` is intentionally enabled for local or compatibility scenarios.
+- In production, an unknown host should not silently render the default site. Point only the domains and subdomains you intend to serve at the CMS install.
+- Each site can have one primary domain plus additional active alias domains. Canonical public URLs use the site's primary domain.
+- Domain values are normalized lowercase hostnames only. Do not store protocols, paths, or query strings.
+- WebBlocks CMS owns site and domain resolution inside the application. Project or infrastructure code must still own DNS, SSL, web-server, reverse-proxy, and hostname routing setup.
+- Site export and import packages include domain metadata for inspection and portability, but imports skip conflicting live domains instead of taking them over automatically.
+- Site clone clears copied live domains by default. Provide an explicit `target_domain` only when the clone should claim a new hostname.
+- Internal domain automation endpoints live under `/admin-api/*` and are disabled unless `WEBBLOCKS_CMS_INTERNAL_API_TOKEN` is configured. Requests must send `X-WebBlocks-Internal-Token: <token>`.
 
 ## Documentation
 

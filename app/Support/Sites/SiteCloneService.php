@@ -118,7 +118,10 @@ class SiteCloneService
         return Site::query()
             ->where('handle', str($normalized)->slug()->toString())
             ->orWhere('name', $normalized)
-            ->when($domain !== null, fn ($query) => $query->orWhere('domain', $domain))
+            ->when($domain !== null, function ($query) use ($domain) {
+                $query->orWhere('domain', $domain)
+                    ->orWhereHas('siteDomains', fn ($domainQuery) => $domainQuery->where('domain', $domain));
+            })
             ->first();
     }
 
@@ -187,6 +190,12 @@ class SiteCloneService
 
         if ($updates !== []) {
             $targetSite->update($updates);
+            $targetSite->refresh();
+        }
+
+        if ($options->targetDomain === null) {
+            $targetSite->siteDomains()->delete();
+            $targetSite->forceFill(['domain' => null])->saveQuietly();
             $targetSite->refresh();
         }
 

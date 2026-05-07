@@ -24,7 +24,7 @@ class SiteExportDataBuilder
 
     public function build(Site $site, bool $includesMedia): array
     {
-        $site = $site->loadMissing(['siteLocales', 'locales']);
+        $site = $site->loadMissing(['siteLocales', 'locales', 'siteDomains']);
         $sharedSlots = SharedSlot::query()
             ->where('site_id', $site->id)
             ->orderBy('id')
@@ -90,6 +90,16 @@ class SiteExportDataBuilder
                 'created_at' => $site->created_at?->toDateTimeString(),
                 'updated_at' => $site->updated_at?->toDateTimeString(),
             ],
+            'site_domains' => $site->siteDomains->sortBy(fn ($siteDomain) => sprintf('%d-%s', $siteDomain->is_primary ? 0 : 1, $siteDomain->domain))->values()->map(fn ($siteDomain) => [
+                'id' => $siteDomain->id,
+                'site_id' => $siteDomain->site_id,
+                'domain' => $siteDomain->domain,
+                'is_primary' => (bool) $siteDomain->is_primary,
+                'redirect_to_primary' => (bool) $siteDomain->redirect_to_primary,
+                'status' => $siteDomain->status,
+                'created_at' => $siteDomain->created_at?->toDateTimeString(),
+                'updated_at' => $siteDomain->updated_at?->toDateTimeString(),
+            ])->all(),
             'locales' => $locales->map(fn (Locale $locale) => [
                 'id' => $locale->id,
                 'code' => $locale->code,

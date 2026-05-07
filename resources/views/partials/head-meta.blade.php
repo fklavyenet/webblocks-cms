@@ -12,6 +12,8 @@
     $ogTitle = trim((string) ($ogTitle ?? $fullTitle));
     $ogDescription = trim((string) ($ogDescription ?? $metaDescription));
     $ogImage = trim((string) ($ogImage ?? ''));
+    $canonicalUrl = trim((string) ($canonicalUrl ?? ''));
+    $ogUrl = trim((string) ($ogUrl ?? $canonicalUrl));
     $ogSiteName = trim((string) ($ogSiteName ?? $siteName));
 @endphp
 
@@ -21,6 +23,9 @@
 @endif
 @if ($metaKeywords !== '')
     <meta name="keywords" content="{{ $metaKeywords }}">
+@endif
+@if ($canonicalUrl !== '')
+    <link rel="canonical" href="{{ $canonicalUrl }}">
 @endif
 @if ($faviconUrl !== '')
     <link rel="icon" href="{{ $faviconUrl }}">
@@ -40,6 +45,9 @@
 @endif
 @if ($ogImage !== '')
     <meta property="og:image" content="{{ $ogImage }}">
+@endif
+@if ($ogUrl !== '')
+    <meta property="og:url" content="{{ $ogUrl }}">
 @endif
 <meta property="og:type" content="website">
 @if ($ogSiteName !== '')

@@ -386,6 +386,16 @@ class Page extends Model
         return app(PageRouteResolver::class)->urlFor($this, $localeCode, $this->site);
     }
 
+    public function currentHostPublicUrl(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->currentHostUrlFor($this, $localeCode);
+    }
+
+    public function canonicalUrl(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->canonicalUrlFor($this, $localeCode, $this->site);
+    }
+
     public function publicPath(?string $localeCode = null): ?string
     {
         return app(PageRouteResolver::class)->pathFor($this, $localeCode, $this->site);

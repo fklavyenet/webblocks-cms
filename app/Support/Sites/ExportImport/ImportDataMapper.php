@@ -16,11 +16,13 @@ use App\Models\PageTranslation;
 use App\Models\PageType;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SiteDomain;
 use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Sites\SiteDomainManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -33,6 +35,7 @@ class ImportDataMapper
     public function __construct(
         private readonly DatabaseManager $db,
         private readonly SiteDomainNormalizer $domainNormalizer,
+        private readonly SiteDomainManager $siteDomainManager,
         private readonly SiteTransferPathGuard $pathGuard,
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
@@ -46,6 +49,7 @@ class ImportDataMapper
             $site = $this->db->transaction(function () use ($siteImport, $options, $archive, $payload, &$output, &$copiedFiles): Site {
                 $localeMap = $this->importLocales($payload, $output);
                 $site = $this->createSite($payload['site'], $options, $output);
+                $this->importSiteDomains($site, $payload, $options, $output);
                 $this->syncSiteLocales($site, $payload, $localeMap, $output);
 
                 $folderMap = $this->importAssetFolders($payload, $output);
@@ -123,7 +127,7 @@ class ImportDataMapper
             ? $this->domainNormalizer->normalize($options->siteDomain)
             : null;
 
-        if ($domain !== null && Site::query()->where('domain', $domain)->exists()) {
+        if ($domain !== null && SiteDomain::query()->where('domain', $domain)->exists()) {
             throw new RuntimeException('Selected site domain already exists locally. Choose a different domain or leave it blank.');
         }
 
@@ -133,6 +137,71 @@ class ImportDataMapper
             'domain' => $domain,
             'is_primary' => false,
         ]);
+    }
+
+    private function importSiteDomains(Site $site, array $payload, SiteImportOptions $options, array &$output): void
+    {
+        $importedDomains = collect($payload['site_domains'] ?? []);
+
+        if ($options->siteDomain !== null) {
+            $site->refresh();
+            $output[] = 'Applied explicit target site domain ['.$site->domain.'] and skipped package domain claims.';
+
+            return;
+        }
+
+        if ($importedDomains->isEmpty()) {
+            $legacyDomain = $this->domainNormalizer->normalize($payload['site']['domain'] ?? null);
+
+            if ($legacyDomain === null) {
+                return;
+            }
+
+            $importedDomains = collect([[
+                'domain' => $legacyDomain,
+                'is_primary' => true,
+                'redirect_to_primary' => false,
+                'status' => SiteDomain::STATUS_ACTIVE,
+            ]]);
+        }
+
+        $attached = 0;
+        $skipped = 0;
+
+        foreach ($importedDomains as $domainData) {
+            $domain = $this->domainNormalizer->normalize($domainData['domain'] ?? null);
+
+            if ($domain === null) {
+                continue;
+            }
+
+            $conflict = SiteDomain::query()->where('domain', $domain)->first();
+
+            if ($conflict && (int) $conflict->site_id !== (int) $site->id) {
+                $skipped++;
+                $output[] = 'Skipped imported domain ['.$domain.'] because it already exists locally.';
+
+                continue;
+            }
+
+            $this->siteDomainManager->addDomain(
+                $site,
+                $domain,
+                (bool) ($domainData['is_primary'] ?? false),
+                (bool) ($domainData['redirect_to_primary'] ?? false),
+                (string) ($domainData['status'] ?? SiteDomain::STATUS_ACTIVE),
+            );
+
+            $attached++;
+        }
+
+        if ($attached > 0) {
+            $output[] = 'Imported '.$attached.' site domain record(s).';
+        }
+
+        if ($skipped > 0) {
+            $output[] = 'Skipped '.$skipped.' conflicting site domain record(s).';
+        }
     }
 
     private function syncSiteLocales(Site $site, array $payload, array $localeMap, array &$output): void
