@@ -15,6 +15,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
+use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
@@ -31,6 +32,7 @@ class BlockController extends Controller
 {
     public function __construct(
         private readonly BlockPayloadWriter $blockPayloadWriter,
+        private readonly BlockDeletionManager $blockDeletionManager,
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
@@ -367,13 +369,24 @@ class BlockController extends Controller
         [$sharedSlot, $page] = $this->editingContext($block);
         $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot ?? $block);
         abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        $validated = $request->validate([
+            'delete_descendants' => ['nullable', 'boolean'],
+        ]);
+        $deleteDescendants = (bool) ($validated['delete_descendants'] ?? false);
         $pageId = $block->page_id;
         $slotTypeId = $block->slot_type_id;
         $pageSlotId = $this->pageSlotRouteId($pageId, $slotTypeId);
 
-        DB::transaction(function () use ($block, $request, $sharedSlot): void {
+        DB::transaction(function () use ($block, $request, $sharedSlot, $deleteDescendants): void {
             $page = $block->page()->firstOrFail();
-            $block->delete();
+
+            if ($deleteDescendants) {
+                $this->blockDeletionManager
+                    ->recursiveDeleteOrder($block)
+                    ->each(fn (Block $candidate) => $candidate->delete());
+            } else {
+                $block->delete();
+            }
 
             if ($sharedSlot) {
                 $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);
@@ -401,13 +414,13 @@ class BlockController extends Controller
             return redirect()
                 ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
                 ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
-                ->with('status', 'Block deleted successfully.');
+                ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
         }
 
         return redirect()
             ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request())])
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
-            ->with('status', 'Block deleted successfully.');
+            ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
     }
 
     private function move(Block $block, string $direction): RedirectResponse

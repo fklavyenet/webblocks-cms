@@ -102,17 +102,7 @@
                 @if ($canAddChildren)
                     <a href="{{ $slotBlockRoute(['picker' => 1, 'parent_id' => $block->id]) }}" class="wb-action-btn" title="Add child block" aria-label="Add child block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1, 'parent_id' => $block->id]) }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
                 @endif
-                <form method="POST" action="{{ route('admin.blocks.destroy', $block) }}" onsubmit="return confirm('Delete this block?');">
-                    @csrf
-                    @method('DELETE')
-                    @if ($sharedSlot)
-                        <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
-                    @endif
-                    @unless ($activeLocale->is_default)
-                        <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                    @endunless
-                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                </form>
+                <a href="{{ $slotBlockRoute(['delete' => $block->id]) }}" class="wb-action-btn wb-action-btn-delete" title="Delete block" aria-label="Delete block" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['delete' => $block->id]) }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
             </div>
         </td>
     </tr>

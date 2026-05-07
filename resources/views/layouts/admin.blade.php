@@ -257,6 +257,9 @@
         @if (is_file($adminJsAssets['page-builder-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-builder-modals.js') }}?v={{ filemtime($adminJsAssets['page-builder-modals']) }}" defer></script>
         @endif
+        @if (is_file(public_path('assets/webblocks-cms/js/admin/slot-block-delete-modal.js')))
+            <script src="{{ asset('assets/webblocks-cms/js/admin/slot-block-delete-modal.js') }}?v={{ filemtime(public_path('assets/webblocks-cms/js/admin/slot-block-delete-modal.js')) }}" defer></script>
+        @endif
         @if (is_file($adminJsAssets['page-slot-source-modals']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/page-slot-source-modals.js') }}?v={{ filemtime($adminJsAssets['page-slot-source-modals']) }}" defer></script>
         @endif

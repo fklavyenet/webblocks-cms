@@ -145,6 +145,16 @@
         'slotModalSelectedAttachmentAsset' => $slotModalSelectedAttachmentAsset,
         'slotParentBlocks' => $slotParentBlocks,
     ])
+
+    @include('admin.pages.partials.slot-block-delete-modal', [
+        'page' => $sourcePage,
+        'slot' => $slot,
+        'sharedSlot' => $sharedSlot,
+        'slotBlockRoute' => $slotBlockRoute,
+        'slotDeleteModalBlock' => $slotDeleteModalBlock,
+        'slotDeleteModalMeta' => $slotDeleteModalMeta,
+        'activeLocale' => $activeLocale,
+    ])
 @endpush
 
 @push('scripts')

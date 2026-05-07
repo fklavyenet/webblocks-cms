@@ -12,6 +12,7 @@ use App\Models\Locale;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\SharedSlots\SharedSlotRevisionManager;
@@ -32,6 +33,7 @@ class SharedSlotController extends Controller
 
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly BlockDeletionManager $blockDeletionManager,
         private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -278,6 +280,7 @@ class SharedSlotController extends Controller
         $pickerBlockTypes = $this->pickerBlockTypes($resolvedBlocks, $blockTypes, $pickerParentId);
         $pickerCategory = $this->pickerCategory($pickerBlockTypes);
         $modalState = $this->slotBlockModalState($sourcePage, $slot, $allBlocks, $blockTypes, $pickerBlockTypes, $pickerParentId);
+        $deleteModalState = $this->slotBlockDeleteModalState($resolvedBlocks);
         $expandedBlockIds = $this->slotExpandedBlockIds($resolvedBlocks, $modalState['block']);
 
         return view('admin.shared-slots.slot-blocks', [
@@ -306,6 +309,8 @@ class SharedSlotController extends Controller
             'expandedBlockIds' => $expandedBlockIds,
             'activeLocale' => $activeLocale,
             'availableLocales' => $sourcePage->translationStatusForSite(),
+            'slotDeleteModalBlock' => $deleteModalState['block'],
+            'slotDeleteModalMeta' => $deleteModalState['meta'],
         ]);
     }
 
@@ -589,6 +594,21 @@ class SharedSlotController extends Controller
                 'label' => str_repeat('— ', $this->blockDepth($block)).$block->parentCandidateLabel(),
             ])
             ->values();
+    }
+
+    private function slotBlockDeleteModalState($blocks): array
+    {
+        $deleteBlockId = request()->integer('delete');
+        $deleteBlock = $deleteBlockId > 0 ? $blocks->firstWhere('id', $deleteBlockId) : null;
+
+        if (! $deleteBlock) {
+            return ['block' => null, 'meta' => null];
+        }
+
+        return [
+            'block' => $deleteBlock,
+            'meta' => $this->blockDeletionManager->metadata($deleteBlock),
+        ];
     }
 
     private function pickerBlockTypes($blocks, $blockTypes, ?int $parentId = null)
