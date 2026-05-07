@@ -881,6 +881,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('>Link List Item</strong>', $listMarkup);
         $this->assertStringContainsString('>TOC</strong>', $listMarkup);
         $this->assertStringContainsString('>Breadcrumb</strong>', $listMarkup);
+        $this->assertStringContainsString('>HTML (Trusted)</strong>', $listMarkup);
+        $this->assertStringContainsString('advanced', strtolower($listMarkup));
         $response->assertSeeInOrder([
             '>Content Header</strong>',
             '>Section</strong>',
@@ -900,7 +902,82 @@ class PageBuilderExperienceTest extends TestCase
             '>TOC</strong>',
             '>Alert</strong>',
             '>Breadcrumb</strong>',
+            '>HTML (Trusted)</strong>',
         ], false);
+    }
+
+    #[Test]
+    public function trusted_html_is_hidden_from_the_picker_for_editors(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->editor()->create();
+        $site = \App\Models\Site::query()->firstOrFail();
+        $user->sites()->sync([$site->id]);
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $page->update(['status' => 'draft']);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $response->assertOk();
+        $response->assertDontSee('HTML (Trusted)');
+    }
+
+    #[Test]
+    public function trusted_html_form_and_create_flow_are_available_to_super_admins(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $htmlType = BlockType::query()->where('slug', 'html')->firstOrFail();
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $htmlType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: HTML (Trusted)');
+        $formResponse->assertSee('Trusted HTML');
+        $formResponse->assertSee('Trusted HTML only.');
+        $formResponse->assertSee('Use Rich Text for normal formatted copy and Code for escaped snippets.');
+
+        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $htmlType->id,
+            'sort_order' => 0,
+            'content' => '<div class="wb-card"><div class="wb-card-body"><i class="wb-icon wb-icon-home" aria-hidden="true"></i><strong>Home</strong></div></div>',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertDatabaseHas('blocks', [
+            'page_id' => $page->id,
+            'type' => 'html',
+            'content' => '<div class="wb-card"><div class="wb-card-body"><i class="wb-icon wb-icon-home" aria-hidden="true"></i><strong>Home</strong></div></div>',
+        ]);
+    }
+
+    #[Test]
+    public function trusted_html_direct_create_request_does_not_open_for_editors(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->editor()->create();
+        $site = \App\Models\Site::query()->firstOrFail();
+        $user->sites()->sync([$site->id]);
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $page->update(['status' => 'draft']);
+        $htmlType = BlockType::query()->where('slug', 'html')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $htmlType->id]));
+
+        $response->assertOk();
+        $response->assertDontSee('Add Block: HTML (Trusted)');
+        $response->assertDontSee('Trusted HTML only.');
     }
 
     #[Test]
