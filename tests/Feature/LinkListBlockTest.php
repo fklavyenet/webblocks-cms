@@ -92,7 +92,7 @@ class LinkListBlockTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         [$page, $pageSlot] = $this->pageWithSlot();
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_tab' => 'navigation']));
 
         $response->assertOk();
         $response->assertSee('Link List');

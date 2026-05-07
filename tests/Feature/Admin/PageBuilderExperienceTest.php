@@ -615,7 +615,7 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_tab' => 'all']));
 
         $response->assertOk();
         $response->assertSee('Block Types');
@@ -658,6 +658,30 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function slot_block_picker_defaults_to_the_common_tab(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-picker-tab-common"', false);
+        $response->assertSee('aria-selected="true"', false);
+        $response->assertSee('>Header</strong>', false);
+        $response->assertSee('>Rich Text</strong>', false);
+        $response->assertSee('>Card</strong>', false);
+        $response->assertSee('>Table</strong>', false);
+        $response->assertDontSee('>Section</strong>', false);
+        $response->assertDontSee('>Container</strong>', false);
+        $response->assertDontSee('>Link List</strong>', false);
+        $response->assertDontSee('>Breadcrumb</strong>', false);
+    }
+
+    #[Test]
     public function slot_block_picker_real_html_includes_rich_text_and_code_rows_when_both_are_published(): void
     {
         $this->seedFoundation();
@@ -685,8 +709,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Block Types');
         $response->assertSee('Rich Text');
-        $response->assertSee('Plain Text');
         $response->assertSee('Code');
+        $response->assertDontSee('Plain Text');
         $response->assertSee('data-block-type-slug="rich-text"', false);
         $response->assertSee('data-block-type-slug="code"', false);
     }
@@ -815,7 +839,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function slot_block_picker_renders_catalog_headers_and_filter_controls(): void
+    public function slot_block_picker_renders_tabbed_catalog_headers_and_filter_controls(): void
     {
         $this->seedFoundation();
 
@@ -834,28 +858,28 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-admin-listing-filters-actions', false);
         $response->assertSee('id="slot_block_type_search"', false);
         $response->assertSee('name="block_type_search"', false);
-        $response->assertSee('id="slot_block_type_category"', false);
-        $response->assertSee('name="block_type_category"', false);
         $response->assertSee('id="slot_block_type_sort"', false);
         $response->assertSee('name="block_type_sort"', false);
         $response->assertSee('name="picker" value="1"', false);
         $response->assertSee('Search block types', false);
         $response->assertSee('>Reset</a>', false);
         $response->assertSee('>Search</button>', false);
-        $response->assertSee('All categories');
-        $response->assertSee('>Content</option>', false);
-        $response->assertSee('>Layout</option>', false);
-        $response->assertSee('>Pattern</option>', false);
-        $response->assertSee('>Navigation</option>', false);
         $response->assertSee('<option value="default" selected>Default order</option>', false);
+        $response->assertDontSee('id="slot_block_type_category"', false);
+        $response->assertDontSee('name="block_type_category"', false);
+        $response->assertSee('role="tablist"', false);
+        $response->assertSee('id="slot-block-picker-tab-common"', false);
+        $response->assertSee('id="slot-block-picker-tab-layout"', false);
+        $response->assertSee('id="slot-block-picker-tab-content"', false);
+        $response->assertSee('id="slot-block-picker-tab-navigation"', false);
+        $response->assertSee('id="slot-block-picker-tab-advanced"', false);
+        $response->assertSee('id="slot-block-picker-tab-all"', false);
         $response->assertSee('<th>Name</th>', false);
         $response->assertSee('<th>Category</th>', false);
         $response->assertSee('<th>Description</th>', false);
         $this->assertNotFalse($content);
-        $this->assertFalse(strpos($content, 'slot-block-picker-recommended-title'));
-        $this->assertFalse(strpos($content, 'slot-block-picker-all-title'));
 
-        $listStart = strpos($content, '<div class="wb-table-wrap">');
+        $listStart = strpos($content, '<div class="wb-table-wrap"');
         $footerStart = strpos($content, '<div class="wb-modal-footer');
 
         $this->assertNotFalse($listStart);
@@ -863,46 +887,24 @@ class PageBuilderExperienceTest extends TestCase
 
         $listMarkup = substr($content, $listStart, $footerStart - $listStart);
 
-        $this->assertStringContainsString('>Content Header</strong>', $listMarkup);
-        $this->assertStringContainsString('>Section</strong>', $listMarkup);
-        $this->assertStringContainsString('>Container</strong>', $listMarkup);
-        $this->assertStringContainsString('>Cluster</strong>', $listMarkup);
-        $this->assertStringContainsString('>Grid</strong>', $listMarkup);
         $this->assertStringContainsString('>Header</strong>', $listMarkup);
-        $this->assertStringContainsString('>Plain Text</strong>', $listMarkup);
         $this->assertStringContainsString('>Rich Text</strong>', $listMarkup);
         $this->assertStringContainsString('>Button Link</strong>', $listMarkup);
         $this->assertStringContainsString('>Card</strong>', $listMarkup);
-        $this->assertStringContainsString('>Stat Card</strong>', $listMarkup);
         $this->assertStringContainsString('>Table</strong>', $listMarkup);
         $this->assertStringContainsString('>Quote</strong>', $listMarkup);
         $this->assertStringContainsString('>Alert</strong>', $listMarkup);
-        $this->assertStringContainsString('>Link List</strong>', $listMarkup);
-        $this->assertStringContainsString('>Link List Item</strong>', $listMarkup);
-        $this->assertStringContainsString('>TOC</strong>', $listMarkup);
-        $this->assertStringContainsString('>Breadcrumb</strong>', $listMarkup);
-        $this->assertStringContainsString('>HTML (Trusted)</strong>', $listMarkup);
-        $this->assertStringContainsString('advanced', strtolower($listMarkup));
+        $this->assertStringNotContainsString('>Section</strong>', $listMarkup);
+        $this->assertStringNotContainsString('>Link List</strong>', $listMarkup);
+        $this->assertStringNotContainsString('>HTML (Trusted)</strong>', $listMarkup);
         $response->assertSeeInOrder([
-            '>Content Header</strong>',
-            '>Section</strong>',
-            '>Container</strong>',
-            '>Cluster</strong>',
-            '>Grid</strong>',
             '>Header</strong>',
-            '>Plain Text</strong>',
             '>Rich Text</strong>',
             '>Button Link</strong>',
             '>Card</strong>',
-            '>Stat Card</strong>',
             '>Table</strong>',
             '>Quote</strong>',
-            '>Link List</strong>',
-            '>Link List Item</strong>',
-            '>TOC</strong>',
             '>Alert</strong>',
-            '>Breadcrumb</strong>',
-            '>HTML (Trusted)</strong>',
         ], false);
     }
 
@@ -922,6 +924,24 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('HTML (Trusted)');
+        $response->assertDontSee('id="slot-block-picker-tab-advanced"', false);
+    }
+
+    #[Test]
+    public function advanced_tab_includes_trusted_html_for_super_admins(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_tab' => 'advanced']));
+
+        $response->assertOk();
+        $response->assertSee('id="slot-block-picker-tab-advanced"', false);
+        $response->assertSee('aria-selected="true"', false);
+        $response->assertSee('>HTML (Trusted)</strong>', false);
     }
 
     #[Test]
@@ -1086,13 +1106,13 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $navigation->id]))
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $navigation->id, 'block_type_tab' => 'navigation']))
             ->assertOk()
             ->assertSee('Sidebar Nav Item')
             ->assertSee('Sidebar Nav Group');
 
         $this->actingAs($user)
-            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $group->id]))
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $group->id, 'block_type_tab' => 'all']))
             ->assertOk()
             ->assertSee('Sidebar Nav Item');
 
@@ -2014,6 +2034,7 @@ class PageBuilderExperienceTest extends TestCase
             $page,
             $pageSlot,
             'picker' => 1,
+            'block_type_tab' => 'all',
             'block_type_sort' => 'name',
         ]));
 
@@ -2048,6 +2069,7 @@ class PageBuilderExperienceTest extends TestCase
             $page,
             $pageSlot,
             'picker' => 1,
+            'block_type_tab' => 'all',
             'block_type_sort' => 'category',
         ]));
 
@@ -2121,10 +2143,11 @@ class PageBuilderExperienceTest extends TestCase
         $sortedSearchResponse->assertOk();
         $sortedSearchResponse->assertSee('Button Link');
         $sortedSearchResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
+        $sortedSearchResponse->assertSee('Search results');
     }
 
     #[Test]
-    public function slot_block_picker_can_filter_by_category_and_combine_filters(): void
+    public function slot_block_picker_searches_across_tabs_even_when_a_different_tab_is_selected(): void
     {
         $this->seedFoundation();
 
@@ -2132,48 +2155,49 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
 
-        $contentResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
             $page,
             $pageSlot,
             'picker' => 1,
-            'block_type_category' => 'content',
+            'block_type_tab' => 'content',
+            'block_type_search' => 'breadcrumb',
         ]));
 
-        $contentResponse->assertOk();
-        $contentResponse->assertSee('<option value="content" selected>Content</option>', false);
-        $contentResponse->assertSee('Rich Text');
-        $contentResponse->assertSee('data-block-type-slug="rich-text"', false);
-        $contentResponse->assertDontSee('Section');
-        $contentResponse->assertDontSee('Grid');
+        $response->assertOk();
+        $response->assertSee('Search results');
+        $response->assertSee('Showing matches across the full eligible catalog.');
+        $response->assertSee('Breadcrumb');
+        $response->assertSee('id="slot_block_type_category"', false);
+        $response->assertSee('name="block_type_category"', false);
+    }
 
-        $layoutResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+    #[Test]
+    public function slot_block_picker_reset_returns_to_the_common_tab(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+
+        $filteredResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
             $page,
             $pageSlot,
             'picker' => 1,
-            'block_type_category' => 'layout',
-        ]));
-
-        $layoutResponse->assertOk();
-        $layoutResponse->assertSee('Section');
-        $layoutResponse->assertDontSee('Rich Text');
-
-        $combinedResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
-            $page,
-            $pageSlot,
-            'picker' => 1,
-            'block_type_category' => 'content',
-            'block_type_search' => 'rich',
+            'block_type_tab' => 'layout',
+            'block_type_search' => 'section',
             'block_type_sort' => 'name',
         ]));
 
-        $combinedResponse->assertOk();
-        $combinedResponse->assertSee('Rich Text');
-        $combinedResponse->assertSee('data-block-type-slug="rich-text"', false);
-        $combinedResponse->assertSee('<option value="content" selected>Content</option>', false);
-        $combinedResponse->assertSee('<option value="name" selected>Name A-Z</option>', false);
-        $combinedResponse->assertDontSee('Plain Text');
+        $filteredResponse->assertOk();
+        $filteredResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
 
-        $combinedResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
+        $resetResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $resetResponse->assertOk();
+        $resetResponse->assertSee('id="slot-block-picker-tab-common"', false);
+        $resetResponse->assertSee('>Header</strong>', false);
+        $resetResponse->assertDontSee('>Section</strong>', false);
     }
 
     #[Test]
@@ -2203,7 +2227,8 @@ class PageBuilderExperienceTest extends TestCase
             $pageSlot,
             'picker' => 1,
             'parent_id' => $card->id,
-            'block_type_search' => 'rich',
+            'block_type_tab' => 'all',
+            'block_type_search' => 'button',
             'block_type_category' => 'content',
             'block_type_sort' => 'name',
         ]));
@@ -2211,14 +2236,16 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('name="picker" value="1"', false);
         $response->assertSee('name="parent_id" value="'.$card->id.'"', false);
-        $response->assertSee('value="rich"', false);
+        $response->assertSee('name="block_type_tab" value="all"', false);
+        $response->assertSee('value="button"', false);
         $response->assertSee('<option value="content" selected>Content</option>', false);
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
         $response->assertSee('href="'.e(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id])).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
         $response->assertSee('data-base-url="', false);
         $response->assertSee('picker=1', false);
         $response->assertSee('parent_id='.$card->id, false);
-        $response->assertSee('block_type_search=rich', false);
+        $response->assertSee('block_type_tab=all', false);
+        $response->assertSee('block_type_search=button', false);
         $response->assertSee('block_type_category=content', false);
         $response->assertSee('block_type_sort=name', false);
     }
@@ -2960,13 +2987,19 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Showing block types allowed inside Card.');
         $response->assertDontSee('data-block-type-slug="rich-text"', false);
-        $response->assertSee('>Cluster</strong>', false);
         $response->assertSee('>Button Link</strong>', false);
+        $response->assertDontSee('>Cluster</strong>', false);
         $response->assertDontSee('>Header</strong>', false);
         $response->assertDontSee('>Plain Text</strong>', false);
         $response->assertDontSee('>Rich Text</strong>', false);
         $response->assertDontSee('>Content Header</strong>', false);
         $response->assertDontSee('>Grid</strong>', false);
+
+        $allResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'block_type_tab' => 'all']));
+
+        $allResponse->assertOk();
+        $allResponse->assertSee('>Cluster</strong>', false);
+        $allResponse->assertSee('>Button Link</strong>', false);
     }
 
     #[Test]

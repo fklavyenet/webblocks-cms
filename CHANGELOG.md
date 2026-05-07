@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Improve the Edit Slot Block Picker with server-rendered `Common`, `Layout`, `Content`, `Navigation`, `Advanced`, and `All` tabs, cross-catalog search results, and advanced-tab visibility that still keeps `HTML (Trusted)` super-admin-only.
 - Publish `Table`, `TOC`, and `Quote` in the block picker and remove the legacy `Heading` block type in favor of `Header`.
 - Expose the existing `HTML` block in the admin Block Picker as a clearly labeled `HTML (Trusted)` advanced block for super admins when static trusted markup is needed.
 - Add a super-admin global Blocks index link under `Pages` and give the Blocks listing compact `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale` filters.
