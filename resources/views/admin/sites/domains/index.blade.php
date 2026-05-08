@@ -1,5 +1,12 @@
 @extends('layouts.admin', ['title' => 'Site Domains', 'heading' => 'Site Domains'])
 
+@php
+    $indexUrl = route('admin.sites.domains.index', $site);
+    $requestedModal = old('_site_domain_modal', request('modal'));
+    $requestedSiteDomainId = (int) old('_site_domain_id', request('site_domain'));
+    $activeModalDomain = $requestedSiteDomainId > 0 ? $domains->firstWhere('id', $requestedSiteDomainId) : null;
+@endphp
+
 @section('content')
     @include('admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">Sites</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">Domains</span></li></ol></nav>',
@@ -92,41 +99,27 @@
                                             <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ ucfirst($domain->status) }}</span>
                                         </td>
                                         <td>
-                                            <div class="wb-stack wb-gap-2">
-                                                <form method="POST" action="{{ route('admin.sites.domains.update', ['site' => $site, 'domain' => $domain]) }}" class="wb-cluster wb-cluster-2 wb-items-end wb-flex-wrap">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <input type="hidden" name="domain" value="{{ $domain->domain }}">
-                                                    <input type="hidden" name="is_primary" value="{{ $domain->is_primary ? 1 : 0 }}">
-
-                                                    <div class="wb-stack-2 wb-field">
-                                                        <label for="domain_status_{{ $domain->id }}">Status</label>
-                                                        <select id="domain_status_{{ $domain->id }}" name="status" class="wb-select wb-w-auto">
-                                                            <option value="active" @selected($domain->status === 'active')>Active</option>
-                                                            <option value="inactive" @selected($domain->status === 'inactive')>Inactive</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <label class="wb-nowrap"><input type="checkbox" name="redirect_to_primary" value="1" @checked($domain->redirect_to_primary)> <span>Redirect</span></label>
-                                                    <button type="submit" class="wb-btn wb-btn-secondary">Save</button>
-                                                </form>
-
-                                                <div class="wb-cluster wb-cluster-2">
-                                                    @if (! $domain->is_primary)
-                                                        <form method="POST" action="{{ route('admin.sites.domains.primary', ['site' => $site, 'domain' => $domain]) }}">
-                                                            @csrf
-                                                            <button type="submit" class="wb-btn wb-btn-secondary">Make Primary</button>
-                                                        </form>
-                                                    @endif
-
-                                                    @if (! $domain->is_primary)
-                                                        <form method="POST" action="{{ route('admin.sites.domains.destroy', ['site' => $site, 'domain' => $domain]) }}">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="wb-btn wb-btn-danger">Remove</button>
-                                                        </form>
-                                                    @endif
-                                                </div>
+                                            <div class="wb-action-group">
+                                                <a
+                                                    href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $domain->id]) }}"
+                                                    class="wb-action-btn wb-action-btn-edit"
+                                                    title="Manage domain settings"
+                                                    aria-label="Manage domain settings"
+                                                    aria-haspopup="dialog"
+                                                    aria-controls="siteDomainManageModal-{{ $domain->id }}"
+                                                >
+                                                    <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                                </a>
+                                                <a
+                                                    href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $domain->id]) }}"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    title="Remove domain"
+                                                    aria-label="Remove domain"
+                                                    aria-haspopup="dialog"
+                                                    aria-controls="siteDomainRemoveModal-{{ $domain->id }}"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
@@ -138,4 +131,20 @@
             </div>
         </div>
     </div>
+
+    @if ($requestedModal === 'manage-domain' && $activeModalDomain)
+        @include('admin.sites.domains.partials.manage-modal', [
+            'site' => $site,
+            'domain' => $activeModalDomain,
+            'closeUrl' => $indexUrl,
+        ])
+    @endif
+
+    @if ($requestedModal === 'remove-domain' && $activeModalDomain)
+        @include('admin.sites.domains.partials.remove-modal', [
+            'site' => $site,
+            'domain' => $activeModalDomain,
+            'closeUrl' => $indexUrl,
+        ])
+    @endif
 @endsection

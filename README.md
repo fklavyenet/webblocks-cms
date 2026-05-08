@@ -122,7 +122,7 @@ See `docs/getting-started.md` for the first-use workflow.
 
 - Public host resolution now prefers active `site_domains` records, then falls back to the legacy `sites.domain` value when needed, and only uses unknown-host fallback behavior where `cms.multisite.unknown_host_fallback` is intentionally enabled for local or compatibility scenarios.
 - In the admin sidebar, `Sites` is a primary area directly under `Dashboard`, while `System -> Domains` owns public host and domain resolution management for sites.
-- The site Domains screen stacks `Add Domain` first and `Assigned Domains` below it so both cards use the full admin content width.
+- The site Domains screen stacks `Add Domain` first and `Assigned Domains` below it so both cards use the full admin content width. Assigned domain rows use compact action icons, and domain status, alias redirect behavior, primary-domain changes, and removal are managed through modal workflows instead of inline table forms.
 - `System -> Domains` opens the current site's domain screen when the admin already has a site context. If no current site context is available across multiple accessible sites, it shows a compact site list with `Manage Domains` actions.
 - In production, an unknown host should not silently render the default site. Point only the domains and subdomains you intend to serve at the CMS install.
 - Each site can have one primary domain plus additional active alias domains. Canonical public URLs use the site's primary domain.

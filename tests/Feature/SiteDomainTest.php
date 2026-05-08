@@ -150,6 +150,275 @@ class SiteDomainTest extends TestCase
     }
 
     #[Test]
+    public function assigned_domains_table_uses_compact_actions_and_no_inline_row_forms(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => true,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.sites.domains.index', $site));
+
+        $response->assertOk();
+        $response->assertSee('class="wb-action-group"', false);
+        $response->assertSee('aria-label="Manage domain settings"', false);
+        $response->assertSee('aria-label="Remove domain"', false);
+        $response->assertDontSee('id="domain_status_', false);
+        $response->assertDontSee('>Save<', false);
+        $response->assertDontSee('>Make Primary<', false);
+        $response->assertDontSee('class="wb-cluster wb-cluster-2 wb-items-end wb-flex-wrap"', false);
+        $response->assertDontSee('action="'.route('admin.sites.domains.update', ['site' => $site, 'domain' => $alias]).'"', false);
+    }
+
+    #[Test]
+    public function manage_domain_modal_renders_status_redirect_and_primary_controls(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.sites.domains.index', [
+            'site' => $site,
+            'modal' => 'manage-domain',
+            'site_domain' => $alias->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Manage Domain: alias.example.test');
+        $response->assertSee('id="manage_domain_status_'.$alias->id.'"', false);
+        $response->assertSee('Redirect alias to primary');
+        $response->assertSee('Make primary domain');
+        $response->assertSee('Active domains participate in host resolution.');
+        $response->assertSee('Primary domain is used for canonical public URLs.');
+    }
+
+    #[Test]
+    public function updating_domain_status_through_the_manage_modal_flow_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $alias->id]))
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $alias]), [
+                '_site_domain_modal' => 'manage-domain',
+                '_site_domain_id' => $alias->id,
+                'domain' => $alias->domain,
+                'status' => SiteDomain::STATUS_INACTIVE,
+                'is_primary' => 0,
+            ])
+            ->assertRedirect(route('admin.sites.domains.index', $site));
+
+        $this->assertDatabaseHas('site_domains', [
+            'id' => $alias->id,
+            'status' => SiteDomain::STATUS_INACTIVE,
+        ]);
+    }
+
+    #[Test]
+    public function updating_domain_redirect_alias_behavior_through_the_manage_modal_flow_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $alias->id]))
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $alias]), [
+                '_site_domain_modal' => 'manage-domain',
+                '_site_domain_id' => $alias->id,
+                'domain' => $alias->domain,
+                'status' => SiteDomain::STATUS_ACTIVE,
+                'redirect_to_primary' => 1,
+                'is_primary' => 0,
+            ])
+            ->assertRedirect(route('admin.sites.domains.index', $site));
+
+        $this->assertDatabaseHas('site_domains', [
+            'id' => $alias->id,
+            'redirect_to_primary' => true,
+        ]);
+    }
+
+    #[Test]
+    public function making_an_alias_primary_through_the_manage_modal_flow_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $alias->id]))
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $alias]), [
+                '_site_domain_modal' => 'manage-domain',
+                '_site_domain_id' => $alias->id,
+                'domain' => $alias->domain,
+                'status' => SiteDomain::STATUS_ACTIVE,
+                'redirect_to_primary' => 0,
+                'is_primary' => 1,
+            ])
+            ->assertRedirect(route('admin.sites.domains.index', $site));
+
+        $this->assertSame('alias.example.test', $site->fresh()->canonicalDomain());
+        $this->assertDatabaseHas('site_domains', [
+            'id' => $alias->id,
+            'is_primary' => true,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+    }
+
+    #[Test]
+    public function remove_confirmation_modal_renders_and_removable_alias_delete_still_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.sites.domains.index', [
+            'site' => $site,
+            'modal' => 'remove-domain',
+            'site_domain' => $alias->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Remove Domain: alias.example.test');
+        $response->assertSee('Confirm whether this alias domain should be removed from the site.');
+        $response->assertSee('Remove domain');
+
+        $this->actingAs($user)
+            ->from(route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $alias->id]))
+            ->delete(route('admin.sites.domains.destroy', ['site' => $site, 'domain' => $alias]), [
+                '_site_domain_modal' => 'remove-domain',
+                '_site_domain_id' => $alias->id,
+            ])
+            ->assertRedirect(route('admin.sites.domains.index', $site));
+
+        $this->assertDatabaseMissing('site_domains', ['id' => $alias->id]);
+    }
+
+    #[Test]
+    public function invalid_manage_modal_updates_redirect_back_to_the_same_modal_url(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $alias = $site->siteDomains()->create([
+            'domain' => 'alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+        $modalUrl = route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $alias->id]);
+
+        $this->actingAs($user)
+            ->followingRedirects()
+            ->from($modalUrl)
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $alias]), [
+                '_site_domain_modal' => 'manage-domain',
+                '_site_domain_id' => $alias->id,
+                'domain' => $alias->domain,
+                'status' => 'broken',
+                'is_primary' => 0,
+            ])
+            ->assertSee('Validation Error')
+            ->assertSee('Manage Domain: alias.example.test');
+    }
+
+    #[Test]
+    public function primary_domain_delete_validation_redirects_back_to_the_remove_modal(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $primary = $site->siteDomains()->where('is_primary', true)->firstOrFail();
+        $modalUrl = route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $primary->id]);
+
+        $response = $this->actingAs($user)
+            ->from($modalUrl)
+            ->delete(route('admin.sites.domains.destroy', ['site' => $site, 'domain' => $primary]), [
+                '_site_domain_modal' => 'remove-domain',
+                '_site_domain_id' => $primary->id,
+            ]);
+
+        $response->assertRedirect($modalUrl);
+        $response->assertSessionHasErrors('domain');
+        $this->followRedirects($response)->assertSee('Removal Blocked');
+    }
+
+    #[Test]
+    public function cross_site_domain_mutation_is_rejected(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $otherSite->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+        $otherDomain = $otherSite->siteDomains()->create([
+            'domain' => 'other-alias.example.test',
+            'is_primary' => false,
+            'redirect_to_primary' => false,
+            'status' => SiteDomain::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $otherDomain]), [
+                'domain' => $otherDomain->domain,
+                'status' => SiteDomain::STATUS_ACTIVE,
+                'is_primary' => 0,
+            ])
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function site_domain_mutation_requires_system_access(): void
+    {
+        $user = User::factory()->editor()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $domain = $site->siteDomains()->where('is_primary', true)->firstOrFail();
+
+        $this->actingAs($user)
+            ->put(route('admin.sites.domains.update', ['site' => $site, 'domain' => $domain]), [
+                'domain' => $domain->domain,
+                'status' => SiteDomain::STATUS_ACTIVE,
+                'is_primary' => 1,
+            ])
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function domains_landing_redirects_to_the_current_site_domain_screen_when_site_context_exists(): void
     {
         $user = User::factory()->superAdmin()->create();

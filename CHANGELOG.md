@@ -7,6 +7,7 @@
 - Fix public sidebar navigation group clicks so CMS no longer double-toggles the shipped WebBlocks UI nav-group contract and instead syncs child-container `hidden` state from the authoritative open or close events.
 - Clarify Domains admin and README copy so CMS Domains are described as host-to-site mapping only, while DNS, SSL, and server routing stay outside CMS.
 - Improve the site Domains admin screen so `Add Domain` and `Assigned Domains` render as full-width stacked cards, and move admin navigation so `Sites` is a primary sidebar item while `Domains` is the first child under `System` with a generic landing flow.
+- Refine the site Domains assigned-row workflow by replacing crowded inline forms with compact action icons plus modal-based manage and remove flows.
 - Improve Navigation admin UX with standard WebBlocks modals for add/edit flows, clearer `Add Group` and `Parent Group` behavior for docs menus, group-only nesting validation, and public docs sidebar rendering that opens parent groups when a child page is active.
 
 ## 1.19.0
