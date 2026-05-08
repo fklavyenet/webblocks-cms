@@ -5,16 +5,8 @@
     $requestedModal = request('modal');
     $requestedNavigationId = request()->integer('navigation');
     $editModalItem = $editableItems->firstWhere('id', $requestedNavigationId);
-    $menuSelector = '<form method="GET" action="'.route('admin.navigation.index').'" class="wb-cluster wb-cluster-2">'
-        .'<select name="site_id" class="wb-select" onchange="this.form.submit()">'
-        .collect($sites)->map(fn ($candidate) => '<option value="'.$candidate->id.'" '.($site->id === $candidate->id ? 'selected' : '').'>'.$candidate->name.'</option>')->implode('')
-        .'</select>'
-        .'<select name="menu_key" class="wb-select" onchange="this.form.submit()">'
-        .collect($menuOptions)->map(fn ($label, $key) => '<option value="'.$key.'" '.($activeMenuKey === $key ? 'selected' : '').'>'.$label.'</option>')->implode('')
-        .'</select>'
-        .'<a href="'.route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])).'" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">Add Item</a>'
-        .'<a href="'.route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])).'" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">Add Group</a>'
-        .'</form>';
+    $showDocsGroupHelp = $activeMenuKey === \App\Models\NavigationItem::MENU_DOCS;
+    $contextLabel = 'Site: '.$site->name.' · '.$menuOptions[$activeMenuKey];
 
     $flattenTree = function ($items) use (&$flattenTree) {
         $flat = [];
@@ -39,29 +31,65 @@
     @include('admin.partials.page-header', [
         'title' => 'Navigation Items',
         'description' => 'Manage site menus, dropdowns, and footer links.',
-        'count' => $allItems->count(),
-        'actions' => $menuSelector,
     ])
 
     @include('admin.partials.flash')
 
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            @include('admin.partials.listing-filters', [
+                'action' => route('admin.navigation.index'),
+                'selects' => [
+                    [
+                        'id' => 'navigation_site_id',
+                        'name' => 'site_id',
+                        'label' => 'Site',
+                        'selected' => (string) $site->id,
+                        'placeholder' => null,
+                        'submitOnChange' => true,
+                        'options' => collect($sites)->mapWithKeys(fn ($candidate) => [$candidate->id => $candidate->name])->all(),
+                    ],
+                    [
+                        'id' => 'navigation_menu_key',
+                        'name' => 'menu_key',
+                        'label' => 'Menu',
+                        'selected' => $activeMenuKey,
+                        'placeholder' => null,
+                        'submitOnChange' => true,
+                        'options' => $menuOptions,
+                    ],
+                ],
+                'showActions' => false,
+            ])
+        </div>
+    </div>
+
     <div class="wb-card" data-navigation-tree-editor data-site-id="{{ $site->id }}" data-menu-key="{{ $activeMenuKey }}" data-reorder-url="{{ route('admin.navigation.reorder') }}">
-        <div class="wb-card-body wb-stack wb-gap-3">
-            <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-                <div class="wb-cluster wb-cluster-2">
-                    <span class="wb-status-pill wb-status-info">{{ $site->name }}</span>
-                    <span class="wb-status-pill wb-status-active">{{ $menuOptions[$activeMenuKey] }}</span>
-                    <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">Drag items by the handle. Changes save automatically.</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-stack wb-gap-1">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $contextLabel }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $allItems->count() }}</span>
                 </div>
-                <div class="wb-cluster wb-cluster-2">
-                    <span class="wb-text-sm wb-text-muted" data-navigation-save-status aria-live="polite">Idle</span>
-                </div>
+
+                @if ($showDocsGroupHelp)
+                    <div class="wb-text-sm wb-text-muted">
+                        Use <code>Add Group</code> for collapsible docs sidebar groups. Then use <code>Parent Group</code> in item modals to nest child links inside that group.
+                    </div>
+                @endif
             </div>
 
-            <div class="wb-card wb-card-subtle">
-                <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                    <strong>Docs menu groups</strong>
-                    <span class="wb-text-muted">Use <code>Add Group</code> for collapsible sidebar sections like <code>Patterns</code>. Then use <code>Parent Group</code> in item modals to nest the child links shown inside that section.</span>
+            <div class="wb-cluster wb-cluster-2">
+                <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">Add Item</a>
+                <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">Add Group</a>
+            </div>
+        </div>
+
+        <div class="wb-card-body wb-stack wb-gap-3">
+            <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
+                <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">Drag items by the handle. Changes save automatically.</span>
+                <div class="wb-cluster wb-cluster-2">
+                    <span class="wb-text-sm wb-text-muted" data-navigation-save-status aria-live="polite" hidden></span>
                 </div>
             </div>
 
@@ -153,6 +181,15 @@
                         return;
                     }
 
+                    if (!text) {
+                        status.textContent = '';
+                        status.hidden = true;
+                        status.className = 'wb-text-sm';
+
+                        return;
+                    }
+
+                    status.hidden = false;
                     status.textContent = text;
                     status.className = 'wb-text-sm';
 
@@ -243,11 +280,11 @@
                             }
 
                             saveTimer = window.setTimeout(function () {
-                                setStatus('Idle', 'muted');
+                                setStatus('', 'muted');
                             }, 1500);
                         })
-                        .catch(function (error) {
-                            setStatus(error.message || 'Save failed', 'error');
+                        .catch(function () {
+                            setStatus('Could not save order.', 'error');
                             restore();
                             window.setTimeout(function () {
                                 window.location.reload();
@@ -337,7 +374,7 @@
 
                             if (newDepth > 3) {
                                 restore();
-                                setStatus('Navigation depth cannot exceed 3 levels.', 'error');
+                                setStatus('Could not save order.', 'error');
                                 return;
                             }
 

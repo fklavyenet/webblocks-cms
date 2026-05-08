@@ -65,10 +65,18 @@ class NavigationTreeEditorTest extends TestCase
         $response->assertOk();
         $response->assertSee('Navigation Items');
         $response->assertSee('Manage site menus, dropdowns, and footer links.');
+        $response->assertSee('data-admin-listing-filters', false);
+        $response->assertSee('>Site</label>', false);
+        $response->assertSee('>Menu</label>', false);
+        $response->assertDontSee('Idle');
         $response->assertSee('Footer About Link');
         $response->assertDontSee('Primary Home Link');
-        $response->assertSee('href="'.route('admin.navigation.index', ['site_id' => $siteId, 'menu_key' => 'footer', 'modal' => 'create-item']).'" class="wb-btn wb-btn-primary"', false);
-        $response->assertSee('href="'.route('admin.navigation.index', ['site_id' => $siteId, 'menu_key' => 'footer', 'modal' => 'create-group']).'" class="wb-btn wb-btn-secondary"', false);
+        $response->assertSee('site_id='.$siteId);
+        $response->assertSee('menu_key=footer');
+        $response->assertSee('modal=create-item');
+        $response->assertSee('modal=create-group');
+        $response->assertSee('aria-controls="navigationCreateItemModal"', false);
+        $response->assertSee('aria-controls="navigationCreateGroupModal"', false);
     }
 
     #[Test]

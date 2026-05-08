@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.
+
 ## 1.20.0
 
 - Pin runtime WebBlocks UI CDN assets to `v2.7.0` for CSS, icons CSS, and JS so CMS layouts no longer depend on unstable `@master` assets.
