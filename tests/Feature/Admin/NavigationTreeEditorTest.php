@@ -208,6 +208,59 @@ class NavigationTreeEditorTest extends TestCase
     }
 
     #[Test]
+    public function navigation_icon_picker_only_lists_active_navigation_context_icons(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        \App\Models\IconCatalogItem::query()->updateOrCreate([
+            'source' => 'webblocks-ui',
+            'slug' => 'images',
+        ], [
+            'label' => 'Images',
+            'css_class' => 'wb-icon-images',
+            'contexts' => ['navigation'],
+            'categories' => ['media'],
+            'is_active' => true,
+            'sort_order' => 999,
+        ]);
+        \App\Models\IconCatalogItem::query()->updateOrCreate([
+            'source' => 'webblocks-ui',
+            'slug' => 'hidden-icon',
+        ], [
+            'label' => 'Hidden Icon',
+            'css_class' => 'wb-icon-hidden-icon',
+            'contexts' => ['navigation'],
+            'categories' => ['navigation'],
+            'is_active' => false,
+            'sort_order' => 1000,
+        ]);
+        \App\Models\IconCatalogItem::query()->updateOrCreate([
+            'source' => 'webblocks-ui',
+            'slug' => 'marketing-only',
+        ], [
+            'label' => 'Marketing Only',
+            'css_class' => 'wb-icon-marketing-only',
+            'contexts' => ['marketing'],
+            'categories' => ['marketing'],
+            'is_active' => true,
+            'sort_order' => 1001,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.navigation.index', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'modal' => 'create-group',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('value="images"', false);
+        $response->assertSee('>Images</option>', false);
+        $response->assertDontSee('value="hidden-icon"', false);
+        $response->assertDontSee('value="marketing-only"', false);
+    }
+
+    #[Test]
     public function navigation_item_icon_validation_rejects_invalid_slugs(): void
     {
         $user = User::factory()->superAdmin()->create();

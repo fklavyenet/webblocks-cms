@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Pin runtime WebBlocks UI CDN assets to `v2.7.0` for CSS, icons CSS, and JS so CMS layouts no longer depend on unstable `@master` assets.
+- Default `icons:sync-webblocks-ui` to the matching WebBlocks UI `v2.7.0` icon manifest and keep `--manifest` overrides for local files or alternate URLs.
+- Resolve fallback icon rendering for newly shipped WebBlocks UI icons by loading the released `v2.7.0` icon bundle instead of the moving `@master` CDN path.
 - Add install-level icon catalog management with `System -> Icons`, WebBlocks UI manifest sync from the default CDN or `--manifest=` override, and filtered navigation-context icon pickers for Navigation and Sidebar Navigation editing.
 - Fix sidebar-nav item and group admin validation so new block create flows validate icon catalog selections without crashing, and add focused coverage for icon sync, admin visibility, edit-modal reopen behavior, and public `wb-icon-{slug}` rendering.
 - Fix navigation item icon persistence for add/edit modal workflows and restore public docs sidebar group toggle interaction.

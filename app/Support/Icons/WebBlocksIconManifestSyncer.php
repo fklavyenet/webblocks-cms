@@ -3,6 +3,7 @@
 namespace App\Support\Icons;
 
 use App\Models\IconCatalogItem;
+use App\Support\WebBlocks;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -10,7 +11,7 @@ use RuntimeException;
 
 class WebBlocksIconManifestSyncer
 {
-    public const DEFAULT_MANIFEST = 'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.json';
+    public const DEFAULT_MANIFEST = WebBlocks::ICONS_MANIFEST_URL;
 
     public function sync(?string $manifest = null, bool $deactivateMissing = false): array
     {

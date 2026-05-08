@@ -126,6 +126,20 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
+    public function admin_layout_uses_pinned_webblocks_ui_v270_assets_and_not_master_urls(): void
+    {
+        $user = User::factory()->editor()->create();
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertOk();
+        $response->assertSee(WebBlocks::uiCssUrl(), false);
+        $response->assertSee(WebBlocks::iconsCssUrl(), false);
+        $response->assertSee(WebBlocks::uiJsUrl(), false);
+        $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
+    }
+
+    #[Test]
     public function admin_layout_places_sidebar_backdrop_inside_dashboard_shell_for_webblocks_ui_sidebar_close_behavior(): void
     {
         $user = User::factory()->editor()->create();

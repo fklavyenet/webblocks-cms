@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
+        use App\Support\WebBlocks;
+
         $guestCssPath = public_path('site/css/guest.css');
     @endphp
 
@@ -14,8 +16,8 @@
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
+        <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($guestCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/guest.css') }}?v={{ filemtime($guestCssPath) }}">
         @endif
@@ -25,7 +27,7 @@
             {{ $slot }}
         </main>
 
-        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
         <script>
             document.addEventListener('click', function (event) {
                 var button = event.target.closest('[data-password-toggle]');

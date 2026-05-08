@@ -49,8 +49,8 @@
             'ogSiteName' => $publicMeta['og_site_name'] ?? null,
         ])
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
+        <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($cmsPublicCssPath))
             <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
         @endif
@@ -107,7 +107,7 @@
 
         @include('search.partials.modal')
 
-        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
         @if (is_file($publicJsAssets['header-actions']))
             <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($publicJsAssets['header-actions']) }}" defer></script>
         @endif

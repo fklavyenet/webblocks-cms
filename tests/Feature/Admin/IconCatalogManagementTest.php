@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\IconCatalogItem;
 use App\Models\User;
+use App\Support\Icons\WebBlocksIconManifestSyncer;
 use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -99,5 +100,50 @@ class IconCatalogManagementTest extends TestCase
         $response->assertSee('Validation Error');
         $response->assertSee('id="iconEditModal-'.$icon->id.'"', false);
         $response->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+    }
+
+    #[Test]
+    public function icons_index_can_render_newly_shipped_v270_icon_classes(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        foreach ([
+            'images' => 'wb-icon-images',
+            'cookie' => 'wb-icon-cookie',
+            'megaphone' => 'wb-icon-megaphone',
+            'route' => 'wb-icon-route',
+            'circle-dot' => 'wb-icon-circle-dot',
+            'box' => 'wb-icon-box',
+        ] as $slug => $cssClass) {
+            IconCatalogItem::query()->create([
+                'source' => 'webblocks-ui',
+                'slug' => $slug,
+                'label' => str($slug)->replace('-', ' ')->title()->toString(),
+                'css_class' => $cssClass,
+                'contexts' => ['navigation'],
+                'categories' => ['navigation'],
+                'is_active' => true,
+                'sort_order' => 1,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.system.icons.index'));
+
+        $response->assertOk();
+        $response->assertSee('wb-icon-images', false);
+        $response->assertSee('wb-icon-cookie', false);
+        $response->assertSee('wb-icon-megaphone', false);
+        $response->assertSee('wb-icon-route', false);
+        $response->assertSee('wb-icon-circle-dot', false);
+        $response->assertSee('wb-icon-box', false);
+    }
+
+    #[Test]
+    public function default_icon_sync_manifest_is_pinned_to_webblocks_ui_v270(): void
+    {
+        $this->assertSame(
+            'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.0/packages/webblocks/dist/webblocks-icons.json',
+            WebBlocksIconManifestSyncer::DEFAULT_MANIFEST,
+        );
     }
 }

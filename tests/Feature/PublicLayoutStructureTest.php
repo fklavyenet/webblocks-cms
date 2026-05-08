@@ -10,6 +10,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -44,6 +45,20 @@ class PublicLayoutStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('assets/webblocks-cms/css/public.css', false);
+    }
+
+    #[Test]
+    public function public_layout_uses_pinned_webblocks_ui_v270_assets_and_not_master_urls(): void
+    {
+        $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee(WebBlocks::uiCssUrl(), false);
+        $response->assertSee(WebBlocks::iconsCssUrl(), false);
+        $response->assertSee(WebBlocks::uiJsUrl(), false);
+        $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
     }
 
     #[Test]

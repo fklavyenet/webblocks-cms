@@ -28,8 +28,8 @@
             'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
         ])
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
+        <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($adminCssPath))
             <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/admin.css') }}?v={{ filemtime($adminCssPath) }}">
         @endif
@@ -245,7 +245,7 @@
             @stack('overlays')
         </div>
 
-        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
         @if (is_file($adminJsAssets['core']))
             <script src="{{ asset('assets/webblocks-cms/js/admin/core.js') }}?v={{ filemtime($adminJsAssets['core']) }}" defer></script>
         @endif

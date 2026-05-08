@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+@php
+    use App\Support\WebBlocks;
+@endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -10,8 +13,8 @@
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-icons.css">
+        <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
+        <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
     </head>
     <body>
         <div class="wb-section">
@@ -20,6 +23,6 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master/packages/webblocks/dist/webblocks-ui.js"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
     </body>
 </html>

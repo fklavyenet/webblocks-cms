@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Support\WebBlocks;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +16,10 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
+        $response->assertSee(WebBlocks::uiCssUrl(), false);
+        $response->assertSee(WebBlocks::iconsCssUrl(), false);
+        $response->assertSee(WebBlocks::uiJsUrl(), false);
+        $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
