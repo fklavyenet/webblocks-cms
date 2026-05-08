@@ -154,6 +154,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
         $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
+        $response->assertSee('aria-expanded="true"', false);
         $response->assertSee('data-wb-nav-group-toggle', false);
         $response->assertSee('aria-controls="wb-nav-group-items-'.$group->id.'"', false);
         $response->assertSee('class="wb-nav-group-items"', false);
@@ -239,6 +240,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('id="wb-nav-group-items-'.$patterns->id.'" hidden', false);
         $response->assertSee('href="/p/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="/p/overview" class="wb-nav-group-item"', false);
+    }
+
+    #[Test]
+    public function public_sidebar_navigation_script_defers_click_toggling_to_webblocks_ui_and_only_syncs_hidden_state(): void
+    {
+        $script = file_get_contents(public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'));
+
+        $this->assertIsString($script);
+        $this->assertStringNotContainsString("addEventListener('click'", $script);
+        $this->assertStringContainsString("addEventListener('wb:navgroup:open'", $script);
+        $this->assertStringContainsString("addEventListener('wb:navgroup:close'", $script);
+        $this->assertStringContainsString("items.hidden = !group.classList.contains('is-open');", $script);
     }
 
     #[Test]
@@ -573,6 +586,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('assets/webblocks-cms/js/public/header-actions.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+        $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/sidebar-navigation.js'));
     }
 
     #[Test]

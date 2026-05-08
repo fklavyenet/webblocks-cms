@@ -4,6 +4,7 @@
 
 - Fix navigation item icon persistence for add/edit modal workflows and restore public docs sidebar group toggle interaction.
 - Fix project-imported docs sidebar navigation so legacy flat `Patterns / Overview` payloads normalize into real collapsible `Patterns` groups at runtime.
+- Fix public sidebar navigation group clicks so CMS no longer double-toggles the shipped WebBlocks UI nav-group contract and instead syncs child-container `hidden` state from the authoritative open or close events.
 - Clarify Domains admin and README copy so CMS Domains are described as host-to-site mapping only, while DNS, SSL, and server routing stay outside CMS.
 - Improve the site Domains admin screen so `Add Domain` and `Assigned Domains` render as full-width stacked cards, and move admin navigation so `Sites` is a primary sidebar item while `Domains` is the first child under `System` with a generic landing flow.
 - Improve Navigation admin UX with standard WebBlocks modals for add/edit flows, clearer `Add Group` and `Parent Group` behavior for docs menus, group-only nesting validation, and public docs sidebar rendering that opens parent groups when a child page is active.
