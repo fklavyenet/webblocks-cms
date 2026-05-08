@@ -8,6 +8,7 @@
         $publicJsAssets = [
             'header-actions' => public_path('assets/webblocks-cms/js/public/header-actions.js'),
             'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
+            'sidebar-navigation' => public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'),
         ];
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
         $publicMeta = $publicMeta ?? [
@@ -112,6 +113,9 @@
         @endif
         @if (is_file($publicJsAssets['public-search-modal']))
             <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
+        @endif
+        @if (is_file($publicJsAssets['sidebar-navigation']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
         @endif
     </body>
 </html>

@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\Site;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,10 +14,21 @@ class NavigationTreeEditorTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function createPageForSite(Site $site, string $title, string $slug): Page
+    {
+        return Page::query()->create([
+            'site_id' => $site->id,
+            'title' => $title,
+            'slug' => $slug,
+            'status' => 'published',
+        ]);
+    }
+
     #[Test]
     public function admin_navigation_items_screen_loads_with_menu_filtering(): void
     {
         $user = User::factory()->create();
+        $siteId = Site::query()->where('is_primary', true)->value('id');
         $home = Page::create(['title' => 'Home', 'slug' => 'home', 'status' => 'published']);
         $about = Page::create(['title' => 'About', 'slug' => 'about', 'status' => 'published']);
 
@@ -45,8 +57,238 @@ class NavigationTreeEditorTest extends TestCase
         $response->assertSee('Manage site menus, dropdowns, and footer links.');
         $response->assertSee('Footer About Link');
         $response->assertDontSee('Primary Home Link');
-        $response->assertSee('Add Item');
-        $response->assertSee('Add Group');
+        $response->assertSee('href="'.route('admin.navigation.index', ['site_id' => $siteId, 'menu_key' => 'footer', 'modal' => 'create-item']).'" class="wb-btn wb-btn-primary"', false);
+        $response->assertSee('href="'.route('admin.navigation.index', ['site_id' => $siteId, 'menu_key' => 'footer', 'modal' => 'create-group']).'" class="wb-btn wb-btn-secondary"', false);
+    }
+
+    #[Test]
+    public function add_navigation_item_opens_in_a_modal_instead_of_a_drawer(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.navigation.index', [
+            'site_id' => Site::query()->where('is_primary', true)->value('id'),
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'modal' => 'create-item',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('id="navigationCreateItemModal"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+        $response->assertDontSee('wb-drawer', false);
+        $response->assertSee('Parent Group', false);
+        $response->assertSee('Groups render as collapsible parent sections and can contain child navigation items.', false);
+    }
+
+    #[Test]
+    public function creating_a_normal_navigation_item_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $page = $this->createPageForSite($site, 'Docs Overview', 'docs-overview');
+
+        $response = $this->actingAs($user)->post(route('admin.navigation.store'), [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+        $this->assertDatabaseHas('navigation_items', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'page_id' => $page->id,
+            'link_type' => NavigationItem::LINK_PAGE,
+            'title' => 'Docs Overview',
+        ]);
+    }
+
+    #[Test]
+    public function creating_a_group_navigation_item_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.navigation.store'), [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+        $this->assertDatabaseHas('navigation_items', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'page_id' => null,
+            'url' => null,
+        ]);
+    }
+
+    #[Test]
+    public function nesting_a_child_item_under_a_group_works(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $page = $this->createPageForSite($site, 'Overview', 'overview');
+        $group = NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.navigation.store'), [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'parent_id' => $group->id,
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+        $this->assertDatabaseHas('navigation_items', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'page_id' => $page->id,
+            'parent_id' => $group->id,
+        ]);
+    }
+
+    #[Test]
+    public function create_request_rejects_non_group_and_circular_parent_relationships(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $page = $this->createPageForSite($site, 'Overview', 'overview');
+        $leaf = NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Leaf',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+        $group = NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+        $child = NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'parent_id' => $group->id,
+            'title' => 'Child',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $nonGroupParent = $this->actingAs($user)
+            ->from(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'create-item']))
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'parent_id' => $leaf->id,
+                'title' => 'Nested wrong',
+                'link_type' => NavigationItem::LINK_CUSTOM_URL,
+                'url' => '/docs/wrong',
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+                '_navigation_modal' => 'navigationCreateItemModal',
+            ]);
+
+        $nonGroupParent->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'create-item']));
+        $nonGroupParent->assertSessionHasErrors(['parent_id' => 'Only navigation groups can be selected as a parent.']);
+
+        $circular = $this->actingAs($user)
+            ->from(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'edit-item', 'navigation' => $group->id]))
+            ->put(route('admin.navigation.update', $group), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'parent_id' => $child->id,
+                'title' => 'Patterns',
+                'link_type' => NavigationItem::LINK_GROUP,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+                '_navigation_modal' => 'navigationEditModal-'.$group->id,
+            ]);
+
+        $circular->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'edit-item', 'navigation' => $group->id]));
+        $circular->assertSessionHasErrors(['parent_id' => 'A navigation item cannot be moved under its own child tree.']);
+    }
+
+    #[Test]
+    public function navigation_writes_respect_site_scoping_for_site_admins_and_editors(): void
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $otherSite = Site::query()->create([
+            'name' => 'Secondary Site',
+            'handle' => 'secondary-site',
+            'domain' => 'secondary.example.test',
+            'is_primary' => false,
+        ]);
+        $allowedPage = $this->createPageForSite($site, 'Allowed', 'allowed');
+        $forbiddenPage = $this->createPageForSite($otherSite, 'Forbidden', 'forbidden');
+
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $siteAdmin->sites()->sync([$site->id]);
+        $editor = User::factory()->editor()->create();
+        $editor->sites()->sync([$site->id]);
+
+        $this->actingAs($siteAdmin)
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'link_type' => NavigationItem::LINK_PAGE,
+                'page_id' => $allowedPage->id,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+            ])
+            ->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+
+        $this->actingAs($editor)
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'link_type' => NavigationItem::LINK_PAGE,
+                'page_id' => $allowedPage->id,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+            ])
+            ->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+
+        $this->assertSame(2, NavigationItem::query()->where('site_id', $site->id)->where('menu_key', NavigationItem::MENU_DOCS)->count());
+
+        $this->actingAs($siteAdmin)
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $otherSite->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'link_type' => NavigationItem::LINK_PAGE,
+                'page_id' => $forbiddenPage->id,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($editor)
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $otherSite->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'link_type' => NavigationItem::LINK_PAGE,
+                'page_id' => $forbiddenPage->id,
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(0, NavigationItem::query()->where('site_id', $otherSite->id)->count());
     }
 
     #[Test]
@@ -54,11 +296,10 @@ class NavigationTreeEditorTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $home = NavigationItem::create([
+        $group = NavigationItem::create([
             'menu_key' => NavigationItem::MENU_PRIMARY,
-            'title' => 'Home',
-            'link_type' => NavigationItem::LINK_CUSTOM_URL,
-            'url' => '/',
+            'title' => 'Group',
+            'link_type' => NavigationItem::LINK_GROUP,
             'position' => 1,
             'visibility' => NavigationItem::VISIBILITY_VISIBLE,
         ]);
@@ -85,8 +326,8 @@ class NavigationTreeEditorTest extends TestCase
             'menu_key' => 'primary',
             'items' => [
                 ['id' => $contact->id, 'parent_id' => null, 'position' => 1],
-                ['id' => $home->id, 'parent_id' => null, 'position' => 2],
-                ['id' => $about->id, 'parent_id' => $home->id, 'position' => 1],
+                ['id' => $group->id, 'parent_id' => null, 'position' => 2],
+                ['id' => $about->id, 'parent_id' => $group->id, 'position' => 1],
             ],
         ]);
 
@@ -98,8 +339,8 @@ class NavigationTreeEditorTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('navigation_items', ['id' => $contact->id, 'parent_id' => null, 'position' => 1]);
-        $this->assertDatabaseHas('navigation_items', ['id' => $home->id, 'parent_id' => null, 'position' => 2]);
-        $this->assertDatabaseHas('navigation_items', ['id' => $about->id, 'parent_id' => $home->id, 'position' => 1]);
+        $this->assertDatabaseHas('navigation_items', ['id' => $group->id, 'parent_id' => null, 'position' => 2]);
+        $this->assertDatabaseHas('navigation_items', ['id' => $about->id, 'parent_id' => $group->id, 'position' => 1]);
     }
 
     #[Test]
@@ -215,6 +456,41 @@ class NavigationTreeEditorTest extends TestCase
                 ['id' => $levelTwo->id, 'parent_id' => $levelOne->id, 'position' => 1],
                 ['id' => $levelThree->id, 'parent_id' => $levelTwo->id, 'position' => 1],
                 ['id' => $levelFour->id, 'parent_id' => $levelThree->id, 'position' => 1],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['items']);
+    }
+
+    #[Test]
+    public function reorder_endpoint_rejects_nesting_under_non_group_items(): void
+    {
+        $user = User::factory()->create();
+
+        $leaf = NavigationItem::create([
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Leaf',
+            'link_type' => NavigationItem::LINK_CUSTOM_URL,
+            'url' => '/leaf',
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $child = NavigationItem::create([
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Child',
+            'link_type' => NavigationItem::LINK_CUSTOM_URL,
+            'url' => '/child',
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('admin.navigation.reorder'), [
+            'menu_key' => 'primary',
+            'items' => [
+                ['id' => $leaf->id, 'parent_id' => null, 'position' => 1],
+                ['id' => $child->id, 'parent_id' => $leaf->id, 'position' => 1],
             ],
         ]);
 

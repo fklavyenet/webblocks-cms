@@ -90,6 +90,12 @@ class NavigationItemRequest extends FormRequest
                 return;
             }
 
+            if ($parent->link_type !== NavigationItem::LINK_GROUP) {
+                $validator->errors()->add('parent_id', 'Only navigation groups can be selected as a parent.');
+
+                return;
+            }
+
             $depth = 2;
             $cursor = $parent->parent;
 

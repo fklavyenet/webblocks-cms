@@ -33,6 +33,7 @@ class NavigationItemController extends Controller
         }
 
         $site = $sites->firstWhere('id', $siteId) ?? abort(403);
+        $parentOptions = $this->tree->parentOptions($menuKey, $site);
 
         return view('admin.navigation.index', [
             'site' => $site,
@@ -43,24 +44,21 @@ class NavigationItemController extends Controller
             'pages' => Page::query()->visibleInAdmin()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
             'newItem' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'newGroup' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
+            'parentOptions' => $parentOptions,
             'editableItems' => NavigationItem::query()->forSite($site)->forMenu($menuKey)->with('page')->ordered()->get(),
         ]);
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
         $menuKey = request('menu_key', NavigationItem::MENU_PRIMARY);
         $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get();
         $site = $sites->firstWhere('id', request()->integer('site_id')) ?? $sites->first() ?? abort(403);
 
-        return view('admin.navigation.create', [
-            'item' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
-            'pages' => Page::query()->visibleInAdmin()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
-            'parents' => $this->tree->parentOptions($menuKey, $site),
-            'menuOptions' => NavigationItem::menuOptions(),
-            'linkTypes' => NavigationItem::linkTypes(),
-            'site' => $site,
-            'sites' => $sites,
+        return redirect()->route('admin.navigation.index', [
+            'site_id' => $site->id,
+            'menu_key' => $menuKey,
+            'modal' => 'create-item',
         ]);
     }
 
@@ -74,18 +72,15 @@ class NavigationItemController extends Controller
             ->with('status', 'Navigation item created successfully.');
     }
 
-    public function edit(NavigationItem $navigation): View
+    public function edit(NavigationItem $navigation): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $navigation);
 
-        return view('admin.navigation.edit', [
-            'item' => $navigation,
-            'pages' => Page::query()->visibleInAdmin()->where('site_id', $navigation->site_id)->with('translations')->orderByDefaultTranslation('name')->get(),
-            'parents' => $this->tree->parentOptions($navigation->menu_key, $navigation->site_id, $navigation->id),
-            'menuOptions' => NavigationItem::menuOptions(),
-            'linkTypes' => NavigationItem::linkTypes(),
-            'site' => $navigation->site,
-            'sites' => $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), request()->user())->get(),
+        return redirect()->route('admin.navigation.index', [
+            'site_id' => $navigation->site_id,
+            'menu_key' => $navigation->menu_key,
+            'modal' => 'edit-item',
+            'navigation' => $navigation->id,
         ]);
     }
 

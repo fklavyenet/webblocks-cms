@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Improve Navigation admin UX with standard WebBlocks modals for add/edit flows, clearer `Add Group` and `Parent Group` behavior for docs menus, group-only nesting validation, and public docs sidebar rendering that opens parent groups when a child page is active.
+
 ## 1.19.0
 
 - Add the CMS domain alias foundation with dedicated `site_domains` records, primary-domain canonical URL handling, alias-aware public host resolution, and conservative unknown-host behavior for multisite installs.

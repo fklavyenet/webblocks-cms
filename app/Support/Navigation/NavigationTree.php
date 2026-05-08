@@ -33,8 +33,9 @@ class NavigationTree
             ->get();
 
         $nested = $this->nestItems($items);
+        $ignoredIds = $ignoreId ? $this->ignoredParentIds($nested, $ignoreId) : [];
 
-        return $this->flattenOptions($nested, '', $ignoreId);
+        return $this->flattenOptions($nested, '', $ignoredIds);
     }
 
     public function validateAndNormalizeTreePayload(string $menuKey, Site|int|null $site, array $items): array
@@ -43,7 +44,7 @@ class NavigationTree
             ->forSite($site)
             ->forMenu($menuKey)
             ->ordered()
-            ->get(['id', 'menu_key']);
+            ->get(['id', 'menu_key', 'link_type']);
 
         $expectedIds = $existing->pluck('id')->map(fn ($id) => (int) $id)->all();
         $payloadIds = collect($items)->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -92,6 +93,16 @@ class NavigationTree
                 ]);
             }
 
+            if ($parentId !== null) {
+                $parentItem = $existing->firstWhere('id', $parentId);
+
+                if ($parentItem && $parentItem->link_type !== NavigationItem::LINK_GROUP) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Only navigation groups can contain child items.',
+                    ]);
+                }
+            }
+
             $depth = 1;
             $cursor = $parentId;
             $visited = [$id];
@@ -137,17 +148,53 @@ class NavigationTree
             });
     }
 
-    private function flattenOptions(Collection $items, string $prefix = '', ?int $ignoreId = null): Collection
+    private function flattenOptions(Collection $items, string $prefix = '', array $ignoredIds = []): Collection
     {
-        return $items->flatMap(function (NavigationItem $item) use ($prefix, $ignoreId) {
-            if ($ignoreId && $item->id === $ignoreId) {
+        return $items->flatMap(function (NavigationItem $item) use ($prefix, $ignoredIds) {
+            if (in_array($item->id, $ignoredIds, true)) {
                 return collect();
             }
 
             $label = $prefix === '' ? $item->resolvedTitle() : $prefix.' > '.$item->resolvedTitle();
-            $current = collect([['id' => $item->id, 'label' => $label]]);
+            $current = $item->link_type === NavigationItem::LINK_GROUP
+                ? collect([['id' => $item->id, 'label' => $label]])
+                : collect();
 
-            return $current->merge($this->flattenOptions($item->children, $label, $ignoreId));
+            return $current->merge($this->flattenOptions($item->children, $label, $ignoredIds));
         });
+    }
+
+    private function ignoredParentIds(Collection $items, int $ignoreId): array
+    {
+        $ignored = [];
+
+        $collect = function (Collection $nodes) use (&$collect, &$ignored, $ignoreId): bool {
+            foreach ($nodes as $node) {
+                if ($node->id === $ignoreId) {
+                    $ignored[] = $node->id;
+                    $this->collectDescendantIds($node->children, $ignored);
+
+                    return true;
+                }
+
+                if ($collect($node->children)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $collect($items);
+
+        return $ignored;
+    }
+
+    private function collectDescendantIds(Collection $items, array &$ignored): void
+    {
+        foreach ($items as $item) {
+            $ignored[] = $item->id;
+            $this->collectDescendantIds($item->children, $ignored);
+        }
     }
 }

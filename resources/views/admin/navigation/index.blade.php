@@ -1,6 +1,10 @@
 @extends('layouts.admin', ['title' => 'Navigation Items', 'heading' => 'Navigation Items'])
 
 @php
+    $baseQuery = ['site_id' => $site->id, 'menu_key' => $activeMenuKey];
+    $requestedModal = request('modal');
+    $requestedNavigationId = request()->integer('navigation');
+    $editModalItem = $editableItems->firstWhere('id', $requestedNavigationId);
     $menuSelector = '<form method="GET" action="'.route('admin.navigation.index').'" class="wb-cluster wb-cluster-2">'
         .'<select name="site_id" class="wb-select" onchange="this.form.submit()">'
         .collect($sites)->map(fn ($candidate) => '<option value="'.$candidate->id.'" '.($site->id === $candidate->id ? 'selected' : '').'>'.$candidate->name.'</option>')->implode('')
@@ -8,8 +12,8 @@
         .'<select name="menu_key" class="wb-select" onchange="this.form.submit()">'
         .collect($menuOptions)->map(fn ($label, $key) => '<option value="'.$key.'" '.($activeMenuKey === $key ? 'selected' : '').'>'.$label.'</option>')->implode('')
         .'</select>'
-        .'<button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="drawer" data-wb-target="#navigationCreateItemDrawer">Add Item</button>'
-        .'<button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="drawer" data-wb-target="#navigationCreateGroupDrawer">Add Group</button>'
+        .'<a href="'.route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])).'" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">Add Item</a>'
+        .'<a href="'.route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])).'" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">Add Group</a>'
         .'</form>';
 
     $flattenTree = function ($items) use (&$flattenTree) {
@@ -54,6 +58,13 @@
                 </div>
             </div>
 
+            <div class="wb-card wb-card-subtle">
+                <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
+                    <strong>Docs menu groups</strong>
+                    <span class="wb-text-muted">Use <code>Add Group</code> for collapsible sidebar sections like <code>Patterns</code>. Then use <code>Parent Group</code> in item modals to nest the child links shown inside that section.</span>
+                </div>
+            </div>
+
             @if ($items->isEmpty())
                 <div class="wb-empty">
                     <div class="wb-empty-title">No navigation items yet</div>
@@ -67,43 +78,55 @@
 @endsection
 
 @push('overlays')
-    @include('admin.navigation.partials.drawer', [
-        'drawerId' => 'navigationCreateItemDrawer',
-        'drawerTitle' => 'Add Navigation Item',
+    @include('admin.navigation.partials.modal', [
+        'modalId' => 'navigationCreateItemModal',
+        'modalTitle' => 'Add Navigation Item',
+        'modalDescription' => 'Create a normal navigation link for this menu.',
         'item' => $newItem,
         'pages' => $pages,
-        'parents' => [],
+        'parents' => $parentOptions,
         'menuOptions' => $menuOptions,
-        'linkTypes' => \App\Models\NavigationItem::linkTypes(),
+        'site' => $site,
+        'activeMenuKey' => $activeMenuKey,
         'formAction' => route('admin.navigation.store'),
         'formMethod' => 'POST',
+        'closeUrl' => route('admin.navigation.index', $baseQuery),
+        'show' => $requestedModal === 'create-item',
     ])
 
-    @include('admin.navigation.partials.drawer', [
-        'drawerId' => 'navigationCreateGroupDrawer',
-        'drawerTitle' => 'Add Navigation Group',
+    @include('admin.navigation.partials.modal', [
+        'modalId' => 'navigationCreateGroupModal',
+        'modalTitle' => 'Add Navigation Group',
+        'modalDescription' => 'Create a collapsible parent section that can contain child navigation items.',
         'item' => $newGroup,
         'pages' => $pages,
-        'parents' => [],
+        'parents' => $parentOptions,
         'menuOptions' => $menuOptions,
-        'linkTypes' => \App\Models\NavigationItem::linkTypes(),
+        'site' => $site,
+        'activeMenuKey' => $activeMenuKey,
         'formAction' => route('admin.navigation.store'),
         'formMethod' => 'POST',
+        'closeUrl' => route('admin.navigation.index', $baseQuery),
+        'show' => $requestedModal === 'create-group',
     ])
 
-    @foreach ($editableItems as $editableItem)
-        @include('admin.navigation.partials.drawer', [
-            'drawerId' => 'navigationEditDrawer-'.$editableItem->id,
-            'drawerTitle' => 'Edit Navigation Item: '.$editableItem->resolvedTitle(),
-            'item' => $editableItem,
+    @if ($editModalItem)
+        @include('admin.navigation.partials.modal', [
+            'modalId' => 'navigationEditModal-'.$editModalItem->id,
+            'modalTitle' => 'Edit Navigation Item: '.$editModalItem->resolvedTitle(),
+            'modalDescription' => 'Update the menu, parent group, and link settings for this item.',
+            'item' => $editModalItem,
             'pages' => $pages,
-            'parents' => app(\App\Support\Navigation\NavigationTree::class)->parentOptions($editableItem->menu_key, $editableItem->site_id, $editableItem->id),
+            'parents' => app(\App\Support\Navigation\NavigationTree::class)->parentOptions($editModalItem->menu_key, $editModalItem->site_id, $editModalItem->id),
             'menuOptions' => $menuOptions,
-            'linkTypes' => \App\Models\NavigationItem::linkTypes(),
-            'formAction' => route('admin.navigation.update', $editableItem),
+            'site' => $site,
+            'activeMenuKey' => $activeMenuKey,
+            'formAction' => route('admin.navigation.update', $editModalItem),
             'formMethod' => 'PUT',
+            'closeUrl' => route('admin.navigation.index', $baseQuery),
+            'show' => $requestedModal === 'edit-item',
         ])
-    @endforeach
+    @endif
 @endpush
 
 @push('scripts')
@@ -293,6 +316,10 @@
                             var targetParent = toList.closest('[data-navigation-item]');
 
                             if (targetParent && targetParent.getAttribute('data-item-id') === draggedId) {
+                                return false;
+                            }
+
+                            if (targetParent && targetParent.getAttribute('data-item-link-type') !== 'group') {
                                 return false;
                             }
 

@@ -160,6 +160,76 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('class="wb-nav-group-item"', false);
         $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
         $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
+        $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+    }
+
+    #[Test]
+    public function docs_sidebar_group_opens_when_a_child_page_is_active(): void
+    {
+        $page = $this->pageWithMainSlot('Overview', 'overview');
+        $childPage = $this->pageWithMainSlot('Dashboard Shell', 'dashboard-shell');
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+        $childPage->update(['settings' => ['public_shell' => 'docs']]);
+
+        $block = Block::query()->create([
+            'page_id' => $childPage->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $this->blockType('sidebar-navigation', 'Sidebar Navigation', 16)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'show_icons' => false,
+                'active_matching' => 'current-page',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Documentation navigation',
+        ]);
+
+        $patterns = NavigationItem::query()->create([
+            'site_id' => $childPage->site_id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $childPage->site_id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'parent_id' => $patterns->id,
+            'title' => 'Overview',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $childPage->site_id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'parent_id' => $patterns->id,
+            'title' => 'Dashboard Shell',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $childPage->id,
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get(route('pages.show', 'dashboard-shell'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
+        $response->assertSee('aria-expanded="true"', false);
+        $response->assertSee('href="/p/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
+        $response->assertSee('href="/p/overview" class="wb-nav-group-item"', false);
     }
 
     #[Test]

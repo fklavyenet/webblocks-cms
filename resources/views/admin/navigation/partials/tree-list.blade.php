@@ -2,7 +2,7 @@
 
 <ul class="{{ $depth === 1 ? 'wb-navigation-tree' : 'wb-navigation-children' }}" {{ $listAttribute }}>
     @foreach ($items as $item)
-        <li class="wb-navigation-tree-item" data-navigation-item data-item-id="{{ $item->id }}" data-depth="{{ $depth }}">
+        <li class="wb-navigation-tree-item" data-navigation-item data-item-id="{{ $item->id }}" data-depth="{{ $depth }}" data-item-link-type="{{ $item->link_type }}">
             <div class="wb-navigation-row">
                 <button type="button" class="wb-navigation-handle" data-navigation-handle title="Drag to reorder" aria-label="Drag to reorder">
                     <span aria-hidden="true">⋮⋮</span>
@@ -23,15 +23,14 @@
                 </div>
 
                 <div class="wb-navigation-actions">
-                    <button
-                        type="button"
+                    <a
+                        href="{{ route('admin.navigation.index', ['site_id' => $item->site_id, 'menu_key' => $item->menu_key, 'modal' => 'edit-item', 'navigation' => $item->id]) }}"
                         class="wb-action-btn wb-action-btn-edit"
-                        data-wb-toggle="drawer"
-                        data-wb-target="#navigationEditDrawer-{{ $item->id }}"
-                        aria-controls="navigationEditDrawer-{{ $item->id }}"
+                        aria-haspopup="dialog"
+                        aria-controls="navigationEditModal-{{ $item->id }}"
                         title="Edit navigation item"
                         aria-label="Edit navigation item"
-                    ><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></button>
+                    ><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
 
                     <form method="POST" action="{{ route('admin.navigation.visibility', $item) }}">
                         @csrf
