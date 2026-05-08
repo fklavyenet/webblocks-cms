@@ -41,6 +41,7 @@ class NavigationItem extends Model
         'link_type',
         'url',
         'target',
+        'icon',
         'position',
         'visibility',
         'is_system',

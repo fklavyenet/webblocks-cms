@@ -154,6 +154,10 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<nav class="wb-sidebar-nav" aria-label="Documentation navigation">', false);
         $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
+        $response->assertSee('data-wb-nav-group-toggle', false);
+        $response->assertSee('aria-controls="wb-nav-group-items-'.$group->id.'"', false);
+        $response->assertSee('class="wb-nav-group-items"', false);
+        $response->assertSee('id="wb-nav-group-items-'.$group->id.'"', false);
         $response->assertSee('Guides', false);
         $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="https://example.com/docs"', false);
@@ -228,6 +232,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
         $response->assertSee('aria-expanded="true"', false);
+        $response->assertSee('aria-controls="wb-nav-group-items-'.$patterns->id.'"', false);
+        $response->assertSee('class="wb-nav-group-items"', false);
+        $response->assertSee('id="wb-nav-group-items-'.$patterns->id.'"', false);
         $response->assertSee('href="/p/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="/p/overview" class="wb-nav-group-item"', false);
     }
@@ -563,6 +570,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-search-json-path="/search.json"', false);
         $response->assertSee('assets/webblocks-cms/js/public/header-actions.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
+        $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
     }
 
     #[Test]

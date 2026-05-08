@@ -16,11 +16,12 @@
 
         return $hrefPath === $currentPath;
     });
+    $groupItemsId = 'wb-sidebar-nav-group-items-'.$block->id;
 @endphp
 
 @if ($label !== null && $items->isNotEmpty())
     <div class="wb-nav-group{{ $isOpen ? ' is-open' : '' }}" data-wb-nav-group>
-        <button type="button" class="wb-nav-group-toggle{{ $isOpen ? ' is-active' : '' }}" aria-expanded="{{ $isOpen ? 'true' : 'false' }}" data-wb-nav-group-toggle>
+        <button type="button" class="wb-nav-group-toggle{{ $isOpen ? ' is-active' : '' }}" aria-expanded="{{ $isOpen ? 'true' : 'false' }}" aria-controls="{{ $groupItemsId }}" data-wb-nav-group-toggle>
             @if ($icon !== null)
                 <span class="wb-nav-group-icon"><i class="wb-icon wb-icon-{{ $icon }}" aria-hidden="true"></i></span>
             @endif
@@ -28,7 +29,7 @@
             <span class="wb-nav-group-arrow" aria-hidden="true"></span>
         </button>
 
-        <div class="wb-nav-group-items">
+        <div class="wb-nav-group-items" id="{{ $groupItemsId }}" @if (! $isOpen) hidden @endif>
             @foreach ($items as $item)
                 @php
                     $href = $item->sidebarLinkUrl();

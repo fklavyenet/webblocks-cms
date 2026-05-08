@@ -131,6 +131,95 @@ class NavigationTreeEditorTest extends TestCase
     }
 
     #[Test]
+    public function creating_a_group_navigation_item_with_an_icon_persists_the_icon(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.navigation.store'), [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'layout',
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+        $this->assertDatabaseHas('navigation_items', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'layout',
+        ]);
+    }
+
+    #[Test]
+    public function editing_a_group_item_icon_persists_and_reopens_selected(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $group = NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'layers',
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $this->actingAs($user)->put(route('admin.navigation.update', $group), [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'title' => 'Patterns',
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'layout',
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ])->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS]));
+
+        $this->assertDatabaseHas('navigation_items', [
+            'id' => $group->id,
+            'icon' => 'layout',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.navigation.index', [
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_DOCS,
+            'modal' => 'edit-item',
+            'navigation' => $group->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('id="navigationEditModal-'.$group->id.'"', false);
+        $response->assertSee('<option value="layout" selected>Layout</option>', false);
+        $response->assertDontSee('<option value="layers" selected>Layers</option>', false);
+    }
+
+    #[Test]
+    public function navigation_item_icon_validation_rejects_invalid_slugs(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'create-group']))
+            ->post(route('admin.navigation.store'), [
+                'site_id' => $site->id,
+                'menu_key' => NavigationItem::MENU_DOCS,
+                'title' => 'Patterns',
+                'link_type' => NavigationItem::LINK_GROUP,
+                'icon' => 'not-a-real-icon',
+                'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+                '_navigation_modal' => 'navigationCreateGroupModal',
+            ]);
+
+        $response->assertRedirect(route('admin.navigation.index', ['site_id' => $site->id, 'menu_key' => NavigationItem::MENU_DOCS, 'modal' => 'create-group']));
+        $response->assertSessionHasErrors(['icon']);
+    }
+
+    #[Test]
     public function nesting_a_child_item_under_a_group_works(): void
     {
         $user = User::factory()->superAdmin()->create();

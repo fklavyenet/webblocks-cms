@@ -9,6 +9,8 @@
 
             toggle.addEventListener('click', function () {
                 var group = toggle.closest('.wb-nav-group');
+                var targetId = toggle.getAttribute('aria-controls');
+                var items = targetId ? document.getElementById(targetId) : group ? group.querySelector('.wb-nav-group-items') : null;
 
                 if (!group) {
                     return;
@@ -16,6 +18,10 @@
 
                 var isOpen = group.classList.toggle('is-open');
                 toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+                if (items) {
+                    items.hidden = !isOpen;
+                }
             });
         });
     }
