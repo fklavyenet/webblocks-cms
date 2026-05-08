@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 - Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.
+- Add a project-layer `remaining-docs-html` WebBlocks UI import path that preserves curated docs imports, fetches the remaining static docs pages from `ui.webblocksui.com`, extracts only each page's trusted `<main>` content, and imports that fragment into the docs shell as one `HTML (Trusted)` block per page.
+- Keep the fast WebBlocks UI HTML docs migration project-only through `project/` and `storage/project/webblocksui.com`, with a dedicated remaining-pages manifest, docs-shell Shared Slot preservation, idempotent docs navigation reconciliation, and focused extractor/import coverage.
 
 ## 1.20.1
 

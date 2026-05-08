@@ -171,6 +171,12 @@ See `docs/getting-started.md` for the first-use workflow.
 - Import the WebBlocks UI Layout page with `ddev artisan project:webblocksui-import docs-layout`.
 - Import the WebBlocks UI Primitives page with `ddev artisan project:webblocksui-import docs-primitives`.
 - Import the WebBlocks UI Icons page with `ddev artisan project:webblocksui-import docs-icons`.
+- Import the remaining WebBlocks UI docs pages quickly with `ddev artisan project:webblocksui-import remaining-docs-html`.
+- The fast remaining-docs workflow reads `storage/project/webblocksui.com/docs-html-remaining.json`, fetches the source pages from `https://ui.webblocksui.com`, extracts only each page's `<main>` docs content, strips static shell markup and scripts, rewrites internal docs links to local CMS page paths, and stores that fragment as one project-imported `HTML (Trusted)` block in the page-owned `main` slot.
+- The fast remaining-docs workflow preserves the docs-shell page structure: pages stay on `Public Shell = Docs`, `header` and `sidebar` stay assigned to the existing `docs-header` and `docs-sidebar` Shared Slots when present, and the imported `main` content stays page-owned.
+- Existing curated docs imports such as `docs-architecture`, `docs-foundation`, `docs-layout`, `docs-primitives`, and `docs-icons` are preserved and skipped by the fast remaining-docs workflow by default.
+- `ddev artisan project:webblocksui-import remaining-docs-html --force-html` is an explicit project-only rerun path for the fast HTML batch. It remains conservative and does not replace the known curated/native docs pages.
+- The fast HTML path is an intentional migration bridge, not the long-term editorial model. Later refinement should replace imported trusted HTML fragments with first-class CMS blocks such as `Header`, `Rich Text`, `Callout`, `Table`, `Code`, `Grid`, and `Card`.
 - The Icons payload now preserves the source page's visual shipped-icon grid using shipped WebBlocks UI icon classes through one trusted static HTML block in the project-layer payload.
 - Repair project-layer WebBlocks UI docs slot assignments and clean proven local debug artifacts with `ddev artisan project:webblocksui-repair`.
 - The Architecture payload source is `https://webblocksui.com/docs/architecture.html` and the imported page metadata preserves the requested website path `/docs/architecture.html` while the current CMS route model serves the page at `/p/architecture`.
@@ -185,6 +191,7 @@ See `docs/getting-started.md` for the first-use workflow.
 - Primitives local preview URL: `https://webblocks-cms.ddev.site/p/primitives`.
 - Icons local preview URL: `https://webblocks-cms.ddev.site/p/icons`.
 - Before database-affecting import or repair work, create a safety dump such as `ddev export-db --file=before-webblocksui-docs-reimport-and-db-guard.sql.gz`.
+- Before running the fast remaining-docs HTML import against a local database, create a safety dump such as `ddev export-db --file=before-webblocksui-fast-html-docs-import.sql.gz`.
 - WebBlocks CMS blocks destructive database reset commands in normal local, development, and production environments. The guard blocks `migrate:fresh`, `migrate:reset`, `migrate:refresh`, and `db:wipe`, including normal console execution and `Artisan::call(...)` paths where Laravel emits the command start event.
 - Use `WEBBLOCKS_ALLOW_DESTRUCTIVE_DB_COMMANDS=true` only when you intentionally need to bypass that safety guard.
 
