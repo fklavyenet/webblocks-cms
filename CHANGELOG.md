@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.20.0
+
 - Pin runtime WebBlocks UI CDN assets to `v2.7.0` for CSS, icons CSS, and JS so CMS layouts no longer depend on unstable `@master` assets.
 - Default `icons:sync-webblocks-ui` to the matching WebBlocks UI `v2.7.0` icon manifest and keep `--manifest` overrides for local files or alternate URLs.
 - Resolve fallback icon rendering for newly shipped WebBlocks UI icons by loading the released `v2.7.0` icon bundle instead of the moving `@master` CDN path.
