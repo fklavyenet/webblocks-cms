@@ -13,22 +13,6 @@
         'direction' => $filters['direction'] !== 'desc' ? $filters['direction'] : null,
         'page' => $pages->currentPage() > 1 ? $pages->currentPage() : null,
     ], fn ($value) => $value !== null && $value !== '');
-    $headerActions = '<form method="GET" action="'.route('admin.pages.index').'" class="wb-inline-flex wb-items-center wb-gap-2 wb-flex-wrap">'
-        .'<span class="wb-text-sm wb-text-muted wb-nowrap">Site</span>'
-        .'<select id="pages_site_context" name="site" class="wb-select wb-w-auto" aria-label="Site" onchange="this.form.submit()">'
-        .collect($sites)->map(function ($site) use ($filters) {
-            $selected = $filters['site'] === (string) $site->id ? ' selected' : '';
-
-            return '<option value="'.$site->id.'"'.$selected.'>'.$site->name.'</option>';
-        })->implode('')
-        .'<option value="all"'.($filters['site'] === 'all' ? ' selected' : '').'>All sites</option>'
-        .'</select>'
-        .($filters['search'] !== '' ? '<input type="hidden" name="search" value="'.e($filters['search']).'">' : '')
-        .($filters['status'] !== '' ? '<input type="hidden" name="status" value="'.e($filters['status']).'">' : '')
-        .($filters['sort'] !== 'created_at' ? '<input type="hidden" name="sort" value="'.e($filters['sort']).'">' : '')
-        .($filters['direction'] !== 'desc' ? '<input type="hidden" name="direction" value="'.e($filters['direction']).'">' : '')
-        .'<a href="'.$newPageUrl.'" class="wb-btn wb-btn-primary">New Page</a>'
-        .'</form>';
 @endphp
 
 @extends('layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
@@ -39,7 +23,6 @@
         'description' => null,
         'context' => '<span>'.e($siteContextDescription).'</span>',
         'count' => $pages->total(),
-        'actions' => $headerActions,
     ])
 
     @include('admin.partials.flash')
@@ -56,6 +39,14 @@
                     'placeholder' => 'Search by title, slug, or page type',
                 ],
                 'selects' => [
+                    [
+                        'id' => 'pages_site_context',
+                        'name' => 'site',
+                        'label' => 'Site',
+                        'selected' => $filters['site'],
+                        'placeholder' => null,
+                        'options' => collect($sites)->mapWithKeys(fn ($site) => [$site->id => $site->name])->all() + ['all' => 'All sites'],
+                    ],
                     [
                         'id' => 'pages_status',
                         'name' => 'status',
@@ -93,9 +84,6 @@
                         ],
                     ],
                 ],
-                'hidden' => [
-                    'site' => $filters['site'],
-                ],
                 'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
                 'resetUrl' => $clearUrl,
                 'applyLabel' => 'Apply',
@@ -105,6 +93,15 @@
 
     @if ($pages->isEmpty())
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Pages for {{ $siteContext }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
+                </div>
+
+                <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+            </div>
+
             <div class="wb-card-body">
                     <div class="wb-empty">
                         <div class="wb-empty-title">No pages found</div>
@@ -117,6 +114,15 @@
         </div>
     @else
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Pages for {{ $siteContext }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
+                </div>
+
+                <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+            </div>
+
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">

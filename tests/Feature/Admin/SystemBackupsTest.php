@@ -59,9 +59,9 @@ class SystemBackupsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Upload backup');
         $response->assertSee(route('admin.system.backups.upload'), false);
-        $this->assertStringContainsString('<div class="wb-page-actions">', $content);
+        $this->assertStringContainsString('<strong>Backups</strong>', $content);
         $this->assertStringContainsString(route('admin.system.backups.upload'), $content);
-        $this->assertStringNotContainsString('<div class="wb-page-actions"><div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.index'), $content);
+        $this->assertStringNotContainsString('<div class="wb-page-actions">', $content);
         $this->assertSame(1, substr_count($content, 'Upload backup'));
     }
 

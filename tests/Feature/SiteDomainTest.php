@@ -134,7 +134,7 @@ class SiteDomainTest extends TestCase
     }
 
     #[Test]
-    public function site_domains_admin_screen_stacks_add_domain_above_assigned_domains_full_width(): void
+    public function site_domains_admin_screen_uses_assigned_domains_card_header_action_and_create_modal(): void
     {
         $user = User::factory()->superAdmin()->create();
         [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
@@ -143,10 +143,11 @@ class SiteDomainTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<div class="wb-stack wb-gap-4">', false);
-        $response->assertSeeInOrder([
-            '<div class="wb-card-header"><strong>Add Domain</strong></div>',
-            '<div class="wb-card-header"><strong>Assigned Domains</strong></div>',
-        ], false);
+        $response->assertSee('<strong>Assigned Domains</strong>', false);
+        $response->assertSee('aria-controls="siteDomainCreateModal"', false);
+        $response->assertSee('href="'.route('admin.sites.domains.index', ['site' => $site, 'modal' => 'create-domain']).'"', false);
+        $response->assertSee('id="siteDomainCreateModal"', false);
+        $response->assertDontSee('<div class="wb-card-header"><strong>Add Domain</strong></div>', false);
     }
 
     #[Test]

@@ -1,11 +1,15 @@
 @extends('layouts.admin', ['title' => 'Backups', 'heading' => 'Backups'])
 
+@php
+    $filters = $filters ?? ['search' => '', 'type' => '', 'status' => ''];
+    $hasActiveFilters = $filters['search'] !== '' || $filters['type'] !== '' || $filters['status'] !== '';
+@endphp
+
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Backups',
         'description' => 'Create a local backup before updates or other risky maintenance, then review history, upload a downloaded backup archive, and restore through the normal backup flow.',
         'count' => $backups->total(),
-        'actions' => '<div class="wb-cluster wb-cluster-2"><form method="POST" action="'.route('admin.system.backups.store').'">'.csrf_field().'<button type="submit" class="wb-btn wb-btn-primary"'.(! $backupTableExists ? ' disabled' : '').'>Create backup</button></form><a href="'.route('admin.system.backups.upload').'" class="wb-btn wb-btn-secondary">Upload backup</a></div>',
     ])
 
     @include('admin.partials.flash')
@@ -19,6 +23,51 @@
                 </div>
             </div>
         @endif
+
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body">
+                @include('admin.partials.listing-filters', [
+                    'action' => route('admin.system.backups.index'),
+                    'search' => [
+                        'id' => 'backups_search',
+                        'name' => 'search',
+                        'label' => 'Search',
+                        'value' => $filters['search'],
+                        'placeholder' => 'Search archive, source, summary, type, or status',
+                    ],
+                    'selects' => [
+                        [
+                            'id' => 'backups_type',
+                            'name' => 'type',
+                            'label' => 'Type',
+                            'selected' => $filters['type'],
+                            'placeholder' => 'All types',
+                            'options' => [
+                                \App\Models\SystemBackup::TYPE_MANUAL => 'Manual',
+                                \App\Models\SystemBackup::TYPE_UPLOADED => 'Uploaded',
+                                \App\Models\SystemBackup::TYPE_RESTORE_SAFETY => 'Restore safety',
+                                \App\Models\SystemBackup::TYPE_PRE_UPDATE => 'Pre update',
+                            ],
+                        ],
+                        [
+                            'id' => 'backups_status',
+                            'name' => 'status',
+                            'label' => 'Status',
+                            'selected' => $filters['status'],
+                            'placeholder' => 'All statuses',
+                            'options' => [
+                                \App\Models\SystemBackup::STATUS_COMPLETED => 'Completed',
+                                \App\Models\SystemBackup::STATUS_RUNNING => 'Running',
+                                \App\Models\SystemBackup::STATUS_FAILED => 'Failed',
+                            ],
+                        ],
+                    ],
+                    'showReset' => $hasActiveFilters,
+                    'resetUrl' => route('admin.system.backups.index'),
+                    'applyLabel' => 'Apply',
+                ])
+            </div>
+        </div>
 
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
@@ -92,6 +141,21 @@
 
         @if ($backups->isEmpty())
             <div class="wb-card">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>Backups</strong>
+                        <span class="wb-status-pill wb-status-info">{{ $backups->total() }}</span>
+                    </div>
+
+                    <div class="wb-cluster wb-cluster-2">
+                        <form method="POST" action="{{ route('admin.system.backups.store') }}">
+                            @csrf
+                            <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
+                        </form>
+                        <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">Upload backup</a>
+                    </div>
+                </div>
+
                 <div class="wb-card-body">
                     <div class="wb-empty">
                         <div class="wb-empty-title">No backup history yet</div>
@@ -101,6 +165,21 @@
             </div>
         @else
             <div class="wb-card">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>Backups</strong>
+                        <span class="wb-status-pill wb-status-info">{{ $backups->total() }}</span>
+                    </div>
+
+                    <div class="wb-cluster wb-cluster-2">
+                        <form method="POST" action="{{ route('admin.system.backups.store') }}">
+                            @csrf
+                            <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
+                        </form>
+                        <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">Upload backup</a>
+                    </div>
+                </div>
+
                 <div class="wb-card-body">
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">

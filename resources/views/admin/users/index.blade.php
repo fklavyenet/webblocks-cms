@@ -9,7 +9,6 @@
         'title' => 'Users',
         'description' => 'Manage CMS users, admin access, and active account state without leaving the admin workspace.',
         'count' => $users->total(),
-        'actions' => '<a href="'.route('admin.users.create').'" class="wb-btn wb-btn-primary">Add User</a>',
     ])
 
     @include('admin.partials.flash')
@@ -27,17 +26,6 @@
                 ],
                 'selects' => [
                     [
-                        'id' => 'users_status',
-                        'name' => 'status',
-                        'label' => 'Status',
-                        'selected' => $filters['status'],
-                        'placeholder' => 'All statuses',
-                        'options' => [
-                            'active' => 'Active',
-                            'inactive' => 'Inactive',
-                        ],
-                    ],
-                    [
                         'id' => 'users_role',
                         'name' => 'role',
                         'label' => 'Role',
@@ -47,6 +35,17 @@
                             'super_admin' => 'Super admins',
                             'site_admin' => 'Site admins',
                             'editor' => 'Editors',
+                        ],
+                    ],
+                    [
+                        'id' => 'users_status',
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'selected' => $filters['status'],
+                        'placeholder' => 'All statuses',
+                        'options' => [
+                            'active' => 'Active',
+                            'inactive' => 'Inactive',
                         ],
                     ],
                 ],
@@ -59,6 +58,15 @@
 
     @if ($users->isEmpty())
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Users</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $users->total() }}</span>
+                </div>
+
+                <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">Add User</a>
+            </div>
+
             <div class="wb-card-body">
                 <div class="wb-empty">
                     <div class="wb-empty-title">No users found</div>
@@ -76,6 +84,15 @@
         </div>
     @else
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Users</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $users->total() }}</span>
+                </div>
+
+                <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">Add User</a>
+            </div>
+
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">

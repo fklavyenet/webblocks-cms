@@ -14,10 +14,6 @@
         'view' => $viewMode !== 'list' ? $viewMode : null,
     ]);
     $previewBaseQuery = array_merge($baseQuery, ['page' => $assets->currentPage() > 1 ? $assets->currentPage() : null]);
-    $headerActions = '<div class="wb-cluster wb-cluster-2">'
-        .'<a href="'.route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])).'" class="wb-btn wb-btn-primary">Upload Asset</a>'
-        .'<a href="'.route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])).'" class="wb-btn wb-btn-secondary">New Folder</a>'
-        .'</div>';
 @endphp
 
 @section('content')
@@ -25,7 +21,6 @@
         'title' => 'Media',
         'description' => 'Review, filter, preview, and manage the shared media library from one compact screen.',
         'count' => $assetCount,
-        'actions' => $headerActions,
     ])
 
     @include('admin.partials.flash')
@@ -79,6 +74,18 @@
     </div>
 
     <div class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <strong>Media Library</strong>
+                <span class="wb-status-pill wb-status-info">{{ $assetCount }}</span>
+            </div>
+
+            <div class="wb-cluster wb-cluster-2">
+                <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">Upload Asset</a>
+                <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])) }}" class="wb-btn wb-btn-secondary">New Folder</a>
+            </div>
+        </div>
+
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
                 <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">

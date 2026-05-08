@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Standardize admin listing layouts so search-first filters live in the shared compact toolbar, site or context selectors follow Search, and create or upload actions move into the relevant listing card headers across Sites, Pages, Shared Slots, Media, Domains, Users, Locales, Block Types, and Backups.
 - Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.
 
 ## 1.20.0

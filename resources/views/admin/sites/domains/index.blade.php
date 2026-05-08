@@ -5,6 +5,10 @@
     $requestedModal = old('_site_domain_modal', request('modal'));
     $requestedSiteDomainId = (int) old('_site_domain_id', request('site_domain'));
     $activeModalDomain = $requestedSiteDomainId > 0 ? $domains->firstWhere('id', $requestedSiteDomainId) : null;
+    $createModalId = 'siteDomainCreateModal';
+    $createModalTitleId = $createModalId.'Title';
+    $createModalDescriptionId = $createModalId.'Description';
+    $showCreateModal = $requestedModal === 'create-domain';
 @endphp
 
 @section('content')
@@ -29,41 +33,21 @@
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Add Domain</strong></div>
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.sites.domains.store', $site) }}" class="wb-stack wb-gap-3">
-                    @csrf
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Assigned Domains</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $domains->count() }}</span>
+                </div>
 
-                    <div class="wb-stack-2 wb-field">
-                        <label for="site_domain_domain">Domain</label>
-                        <input id="site_domain_domain" name="domain" class="wb-input" type="text" value="{{ old('domain') }}" required>
-                        <div class="wb-text-sm wb-text-muted">Store the host only, for example <code>www.example.com</code> or <code>docs.example.com</code>.</div>
-                    </div>
-
-                    <div class="wb-grid wb-grid-2">
-                        <div class="wb-stack-2 wb-field">
-                            <label for="site_domain_status">Status</label>
-                            <select id="site_domain_status" name="status" class="wb-select">
-                                <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
-                                <option value="inactive" @selected(old('status') === 'inactive')>Inactive</option>
-                            </select>
-                        </div>
-
-                        <div class="wb-stack wb-gap-2 wb-field">
-                            <label class="wb-nowrap"><input type="checkbox" name="is_primary" value="1" @checked(old('is_primary'))> <span>Make primary</span></label>
-                            <label class="wb-nowrap"><input type="checkbox" name="redirect_to_primary" value="1" @checked(old('redirect_to_primary'))> <span>Redirect alias to primary</span></label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <button type="submit" class="wb-btn wb-btn-primary">Add Domain</button>
-                    </div>
-                </form>
+                <a
+                    href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'create-domain']) }}"
+                    class="wb-btn wb-btn-primary"
+                    aria-haspopup="dialog"
+                    aria-controls="{{ $createModalId }}"
+                >
+                    Add Domain
+                </a>
             </div>
-        </div>
-
-        <div class="wb-card">
-            <div class="wb-card-header"><strong>Assigned Domains</strong></div>
             <div class="wb-card-body">
                 @if ($domains->isEmpty())
                     <div class="wb-empty">
@@ -128,6 +112,67 @@
                         </table>
                     </div>
                 @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="wb-overlay-layer wb-overlay-layer--dialog" @if (! $showCreateModal) hidden @endif>
+        <div class="wb-overlay-backdrop"></div>
+
+        <div class="wb-modal wb-modal-lg {{ $showCreateModal ? 'is-open' : '' }}" id="{{ $createModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $createModalTitleId }}" aria-describedby="{{ $createModalDescriptionId }}">
+            <div class="wb-modal-dialog">
+                <div class="wb-modal-header">
+                    <div class="wb-stack wb-gap-1">
+                        <h2 class="wb-modal-title" id="{{ $createModalTitleId }}">Add Domain</h2>
+                        <span class="wb-text-sm wb-text-muted" id="{{ $createModalDescriptionId }}">Store the host only, then choose whether it should resolve as an alias or become the primary canonical domain.</span>
+                    </div>
+
+                    <a href="{{ $indexUrl }}" class="wb-modal-close" aria-label="Close add domain modal">
+                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                <form method="POST" action="{{ route('admin.sites.domains.store', $site) }}" class="wb-stack wb-gap-4">
+                    @csrf
+                    <input type="hidden" name="_site_domain_modal" value="create-domain">
+
+                    <div class="wb-modal-body wb-stack wb-gap-4">
+                        @if ($errors->any() && $showCreateModal)
+                            <div class="wb-alert wb-alert-danger">
+                                <div>
+                                    <div class="wb-alert-title">Validation Error</div>
+                                    <div>{{ $errors->first() }}</div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="site_domain_domain">Domain</label>
+                            <input id="site_domain_domain" name="domain" class="wb-input" type="text" value="{{ old('domain') }}" required>
+                            <div class="wb-text-sm wb-text-muted">Store the host only, for example <code>www.example.com</code> or <code>docs.example.com</code>.</div>
+                        </div>
+
+                        <div class="wb-grid wb-grid-2">
+                            <div class="wb-stack-2 wb-field">
+                                <label for="site_domain_status">Status</label>
+                                <select id="site_domain_status" name="status" class="wb-select">
+                                    <option value="active" @selected(old('status', 'active') === 'active')>Active</option>
+                                    <option value="inactive" @selected(old('status') === 'inactive')>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="wb-stack wb-gap-2 wb-field">
+                                <label class="wb-nowrap"><input type="checkbox" name="is_primary" value="1" @checked(old('is_primary'))> <span>Make primary</span></label>
+                                <label class="wb-nowrap"><input type="checkbox" name="redirect_to_primary" value="1" @checked(old('redirect_to_primary'))> <span>Redirect alias to primary</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                        <a href="{{ $indexUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <button type="submit" class="wb-btn wb-btn-primary">Add Domain</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -79,7 +79,8 @@ class MediaManagementTest extends TestCase
         $response->assertSee('<div class="wb-card wb-card-muted">', false);
         $response->assertSee('data-admin-listing-filters', false);
         $response->assertSee('<div class="wb-table-wrap">', false);
-        $response->assertSee('<div class="wb-page-actions">', false);
+        $response->assertDontSee('<div class="wb-page-actions">', false);
+        $response->assertSee('<strong>Media Library</strong>', false);
         $response->assertSee('name="view" value="list"', false);
     }
 

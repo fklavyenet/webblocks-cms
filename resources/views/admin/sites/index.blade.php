@@ -5,12 +5,23 @@
         'title' => 'Sites',
         'description' => 'Manage the small multisite foundation and the locales available on each site.',
         'count' => $sites->total(),
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.sites.clone').'" class="wb-btn wb-btn-secondary">Clone Site</a><a href="'.route('admin.sites.create').'" class="wb-btn wb-btn-primary">Add Site</a></div>',
     ])
 
     @include('admin.partials.flash')
 
     <div class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <strong>Sites</strong>
+                <span class="wb-status-pill wb-status-info">{{ $sites->total() }}</span>
+            </div>
+
+            <div class="wb-cluster wb-cluster-2">
+                <a href="{{ route('admin.sites.clone') }}" class="wb-btn wb-btn-secondary">Clone Site</a>
+                <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">Add Site</a>
+            </div>
+        </div>
+
         <div class="wb-card-body">
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped wb-table-hover">
