@@ -2,8 +2,14 @@
 
 ## [Unreleased]
 
-- Standardize admin listing layouts so search-first filters live in the shared compact toolbar, site or context selectors follow Search, and create or upload actions move into the relevant listing card headers across Sites, Pages, Shared Slots, Media, Domains, Users, Locales, Block Types, and Backups.
 - Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.
+
+## 1.20.1
+
+- Standardize admin listing action placement by moving create/upload actions from page headers into listing card headers across core admin index screens.
+- Move Pages and Shared Slots site selection into the compact filter toolbar with Search-first ordering.
+- Convert the Site Domains add flow to a modal launched from the Assigned Domains card header.
+- Add real search, type, and status filters to the Backups admin screen.
 
 ## 1.20.0
 
