@@ -1,0 +1,287 @@
+{
+  "source_site": "webblocksui.com",
+  "pages": [
+    {
+      "key": "docs-patterns",
+      "title": "Patterns",
+      "slug": "patterns",
+      "source_url": "https://ui.webblocksui.com/docs/patterns.html",
+      "requested_public_path": "/docs/patterns.html",
+      "navigation_label": "Patterns",
+      "navigation_icon": "grid",
+      "navigation_position": 8
+    },
+    {
+      "key": "docs-pattern-dashboard-shell",
+      "title": "Dashboard Shell",
+      "slug": "pattern-dashboard-shell",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-dashboard-shell.html",
+      "requested_public_path": "/docs/pattern-dashboard-shell.html",
+      "navigation_label": "Dashboard Shell",
+      "navigation_position": 2,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-settings-shell",
+      "title": "Settings Shell",
+      "slug": "pattern-settings-shell",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-settings-shell.html",
+      "requested_public_path": "/docs/pattern-settings-shell.html",
+      "navigation_label": "Settings Shell",
+      "navigation_position": 3,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-admin-standards",
+      "title": "Admin Standards",
+      "slug": "pattern-admin-standards",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-admin-standards.html",
+      "requested_public_path": "/docs/pattern-admin-standards.html",
+      "navigation_label": "Admin Standards",
+      "navigation_position": 4,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-auth-shell",
+      "title": "Auth Shell",
+      "slug": "pattern-auth-shell",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-auth-shell.html",
+      "requested_public_path": "/docs/pattern-auth-shell.html",
+      "navigation_label": "Auth Shell",
+      "navigation_position": 5,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-content-shell",
+      "title": "Content Shell",
+      "slug": "pattern-content-shell",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-content-shell.html",
+      "requested_public_path": "/docs/pattern-content-shell.html",
+      "navigation_label": "Content Shell",
+      "navigation_position": 6,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-breadcrumb",
+      "title": "Breadcrumb",
+      "slug": "pattern-breadcrumb",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-breadcrumb.html",
+      "requested_public_path": "/docs/pattern-breadcrumb.html",
+      "navigation_label": "Breadcrumb",
+      "navigation_position": 7,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-gallery",
+      "title": "Gallery",
+      "slug": "pattern-gallery",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-gallery.html",
+      "requested_public_path": "/docs/pattern-gallery.html",
+      "navigation_label": "Gallery",
+      "navigation_position": 8,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-cookie-consent",
+      "title": "Cookie Consent",
+      "slug": "pattern-cookie-consent",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-cookie-consent.html",
+      "requested_public_path": "/docs/pattern-cookie-consent.html",
+      "navigation_label": "Cookie Consent",
+      "navigation_position": 9,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-pattern-marketing",
+      "title": "Marketing",
+      "slug": "pattern-marketing",
+      "source_url": "https://ui.webblocksui.com/docs/pattern-marketing.html",
+      "requested_public_path": "/docs/pattern-marketing.html",
+      "navigation_label": "Marketing",
+      "navigation_position": 10,
+      "navigation_parent": "patterns"
+    },
+    {
+      "key": "docs-utilities",
+      "title": "Utilities",
+      "slug": "utilities",
+      "source_url": "https://ui.webblocksui.com/docs/utilities.html",
+      "requested_public_path": "/docs/utilities.html",
+      "navigation_label": "Utilities",
+      "navigation_position": 9
+    },
+    {
+      "key": "docs-javascript",
+      "title": "JavaScript",
+      "slug": "javascript",
+      "source_url": "https://ui.webblocksui.com/docs/javascript.html",
+      "requested_public_path": "/docs/javascript.html",
+      "navigation_label": "JavaScript",
+      "navigation_position": 10
+    }
+  ],
+  "navigation": {
+    "menu_key": "docs",
+    "items": [
+      {
+        "key": "home",
+        "title": "Home",
+        "link_type": "page",
+        "page_ref": "home",
+        "icon": "home",
+        "position": 1
+      },
+      {
+        "key": "getting-started",
+        "title": "Getting Started",
+        "link_type": "page",
+        "page_ref": "getting-started",
+        "icon": "rocket",
+        "position": 2
+      },
+      {
+        "key": "docs-architecture",
+        "title": "Architecture",
+        "link_type": "page",
+        "page_ref": "docs-architecture",
+        "icon": "layers",
+        "position": 3
+      },
+      {
+        "key": "docs-foundation",
+        "title": "Foundation",
+        "link_type": "page",
+        "page_ref": "docs-foundation",
+        "icon": "palette",
+        "position": 4
+      },
+      {
+        "key": "docs-layout",
+        "title": "Layout",
+        "link_type": "page",
+        "page_ref": "docs-layout",
+        "icon": "layout",
+        "position": 5
+      },
+      {
+        "key": "docs-primitives",
+        "title": "Primitives",
+        "link_type": "page",
+        "page_ref": "docs-primitives",
+        "icon": "box",
+        "position": 6
+      },
+      {
+        "key": "docs-icons",
+        "title": "Icons",
+        "link_type": "page",
+        "page_ref": "docs-icons",
+        "icon": "star",
+        "position": 7
+      },
+      {
+        "key": "patterns-overview",
+        "title": "Patterns / Overview",
+        "link_type": "page",
+        "page_ref": "docs-patterns",
+        "icon": "circle-dot",
+        "position": 8
+      },
+      {
+        "key": "dashboard-shell",
+        "title": "Dashboard Shell",
+        "link_type": "page",
+        "page_ref": "docs-pattern-dashboard-shell",
+        "icon": "layout-dashboard",
+        "position": 9
+      },
+      {
+        "key": "settings-shell",
+        "title": "Settings Shell",
+        "link_type": "page",
+        "page_ref": "docs-pattern-settings-shell",
+        "icon": "settings",
+        "position": 10
+      },
+      {
+        "key": "admin-standards",
+        "title": "Admin Standards",
+        "link_type": "page",
+        "page_ref": "docs-pattern-admin-standards",
+        "position": 11
+      },
+      {
+        "key": "auth-shell",
+        "title": "Auth Shell",
+        "link_type": "page",
+        "page_ref": "docs-pattern-auth-shell",
+        "icon": "shield-check",
+        "position": 12
+      },
+      {
+        "key": "content-shell",
+        "title": "Content Shell",
+        "link_type": "page",
+        "page_ref": "docs-pattern-content-shell",
+        "icon": "file-text",
+        "position": 13
+      },
+      {
+        "key": "breadcrumb",
+        "title": "Breadcrumb",
+        "link_type": "page",
+        "page_ref": "docs-pattern-breadcrumb",
+        "icon": "route",
+        "position": 14
+      },
+      {
+        "key": "gallery",
+        "title": "Gallery",
+        "link_type": "page",
+        "page_ref": "docs-pattern-gallery",
+        "icon": "images",
+        "position": 15
+      },
+      {
+        "key": "cookie-consent",
+        "title": "Cookie Consent",
+        "link_type": "page",
+        "page_ref": "docs-pattern-cookie-consent",
+        "icon": "cookie",
+        "position": 16
+      },
+      {
+        "key": "marketing",
+        "title": "Marketing",
+        "link_type": "page",
+        "page_ref": "docs-pattern-marketing",
+        "icon": "megaphone",
+        "position": 17
+      },
+      {
+        "key": "docs-utilities",
+        "title": "Utilities",
+        "link_type": "page",
+        "page_ref": "docs-utilities",
+        "icon": "wrench",
+        "position": 18
+      },
+      {
+        "key": "docs-javascript",
+        "title": "JavaScript",
+        "link_type": "page",
+        "page_ref": "docs-javascript",
+        "icon": "code",
+        "position": 19
+      },
+      {
+        "key": "playground",
+        "title": "Playground",
+        "link_type": "custom_url",
+        "url": "../playground/",
+        "icon": "code",
+        "position": 20
+      }
+    ]
+  }
+}

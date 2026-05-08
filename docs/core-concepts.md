@@ -168,6 +168,8 @@ WebBlocks CMS core contains reusable CMS functionality.
 - Treat `project/` as the update-safe extension boundary for one install.
 - Keep reusable product behavior such as blocks, layouts, admin UI, public renderers, workflow, backup/restore, export/import, and generic project-layer support in core.
 - Keep site migration/import helpers and install-specific content sync tooling in `project/`.
+- Fast website migration bridges can live in `project/` when they are intentionally temporary and website-specific. The WebBlocks UI remaining-docs importer is one example: it stores fetched docs `<main>` fragments as trusted HTML in project payload form without teaching CMS core about that website.
+- That kind of bridge should preserve existing curated CMS content, keep shell or navigation behavior owned by the CMS, and make the temporary trusted HTML boundary explicit so later refinement into first-class blocks stays possible.
 - Core release packages do not ship `project/` content.
 
 See `../DEVELOPMENT.md` for the full development and release workflow.

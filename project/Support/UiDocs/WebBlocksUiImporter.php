@@ -13,14 +13,14 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
-use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class WebBlocksUiImporter
 {
-    private const SOURCE = 'webblocksui.com';
+    public const SOURCE = 'webblocksui.com';
 
     private const STORAGE_ROOT = 'storage/project/webblocksui.com';
 
@@ -52,10 +52,17 @@ class WebBlocksUiImporter
         }
 
         $payload = $this->loadJson(base_path(self::STORAGE_ROOT.'/'.$payloadFile));
+
+        return $this->runGenerated($key, $payload, $payloadMeta);
+    }
+
+    public function runGenerated(string $key, array $payload, array $payloadMeta = []): array
+    {
+        $manifest = $this->loadJson(base_path(self::STORAGE_ROOT.'/manifest.json'));
         $pagePayload = $payload['page'] ?? null;
 
         if (! is_array($pagePayload) || ($pagePayload['key'] ?? null) !== $key) {
-            throw new RuntimeException("Payload [{$payloadFile}] does not match requested key [{$key}].");
+            throw new RuntimeException("Generated payload does not match requested key [{$key}].");
         }
 
         $payloadTitle = trim((string) ($payloadMeta['title'] ?? ''));
@@ -63,7 +70,7 @@ class WebBlocksUiImporter
         $sourceUrl = trim((string) ($pagePayload['source_url'] ?? ''));
 
         if ($expectedSourceUrl === '') {
-            throw new RuntimeException("Manifest entry for [{$key}] is missing a source URL.");
+            throw new RuntimeException("Payload metadata for [{$key}] is missing a source URL.");
         }
 
         if ($sourceUrl !== $expectedSourceUrl) {
@@ -124,6 +131,16 @@ class WebBlocksUiImporter
         return $result;
     }
 
+    public function syncNavigationForSite(Site $site, array $navigationPayload, array $pageRefs): int
+    {
+        return $this->syncNavigation($site, $navigationPayload, $pageRefs);
+    }
+
+    public function syncSidebarNavigationBlocksForSite(Site $site): int
+    {
+        return $this->syncSidebarNavigationBlocks($site);
+    }
+
     private function syncPage(Site $site, array $pagePayload, string $key, array $localeMap): Page
     {
         $page = Page::query()
@@ -148,6 +165,7 @@ class WebBlocksUiImporter
             'status' => $pagePayload['status'] ?? Page::STATUS_PUBLISHED,
             'settings' => array_merge(
                 is_array($page->settings) ? $page->settings : [],
+                is_array($pagePayload['settings'] ?? null) ? $pagePayload['settings'] : [],
                 [
                     'public_shell' => $pagePayload['public_shell'] ?? 'docs',
                     'project_source' => self::SOURCE,
@@ -459,7 +477,7 @@ class WebBlocksUiImporter
                 continue;
             }
 
-            if (in_array($key, ['dashboard-shell', 'settings-shell', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
+            if (in_array($key, ['dashboard-shell', 'settings-shell', 'admin-standards', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
                 $patternsChildren[] = array_merge($item, [
                     'position' => count($patternsChildren) + 1,
                 ]);
@@ -492,7 +510,7 @@ class WebBlocksUiImporter
 
             $key = trim((string) ($item['key'] ?? ''));
 
-            if ($key === 'patterns-overview' || in_array($key, ['dashboard-shell', 'settings-shell', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
+            if ($key === 'patterns-overview' || in_array($key, ['dashboard-shell', 'settings-shell', 'admin-standards', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
                 continue;
             }
 
