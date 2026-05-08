@@ -213,6 +213,7 @@ class WebBlocksUiIconsImportTest extends TestCase
         $navigationTitles = NavigationItem::query()
             ->forSite($site->id)
             ->forMenu(NavigationItem::MENU_DOCS)
+            ->whereNull('parent_id')
             ->orderBy('position')
             ->pluck('title')
             ->all();
@@ -225,19 +226,25 @@ class WebBlocksUiIconsImportTest extends TestCase
             'Layout',
             'Primitives',
             'Icons',
-            'Patterns / Overview',
-            'Dashboard Shell',
-            'Settings Shell',
-            'Auth Shell',
-            'Content Shell',
-            'Breadcrumb',
-            'Gallery',
-            'Cookie Consent',
-            'Marketing',
+            'Patterns',
             'Utilities',
             'JavaScript',
             'Playground',
         ], $navigationTitles);
+
+        $patternsGroup = NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns')->first();
+        $this->assertNotNull($patternsGroup);
+        $this->assertSame(NavigationItem::LINK_GROUP, $patternsGroup->link_type);
+        $this->assertSame(9, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('parent_id', $patternsGroup->id)->count());
+        $this->assertSame(0, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns / Overview')->count());
+        $homeResponse = $this->get('/');
+        $homeResponse->assertOk();
+        $homeResponse->assertSee('data-wb-nav-group-toggle', false);
+        $homeResponse->assertSee('aria-controls="wb-nav-group-items-', false);
+        $homeResponse->assertSee('>Patterns<', false);
+        $homeResponse->assertSee('>Overview<', false);
+        $homeResponse->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+        $homeResponse->assertSee('data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar"', false);
 
         $this->assertSame(
             NavigationItem::MENU_DOCS,

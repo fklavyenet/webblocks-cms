@@ -127,7 +127,8 @@ See `docs/getting-started.md` for the first-use workflow.
 - In production, an unknown host should not silently render the default site. Point only the domains and subdomains you intend to serve at the CMS install.
 - Each site can have one primary domain plus additional active alias domains. Canonical public URLs use the site's primary domain.
 - Domain values are normalized lowercase hostnames only. Do not store protocols, paths, or query strings.
-- WebBlocks CMS owns site and domain resolution inside the application. Project or infrastructure code must still own DNS, SSL, web-server, reverse-proxy, and hostname routing setup.
+- Herne Panel or your server operator must own DNS, SSL, Nginx or virtual-host setup, and inbound server routing before a host reaches the CMS.
+- WebBlocks CMS Domains only map an incoming host to a CMS Site, choose the primary canonical host, and optionally redirect alias hosts to that primary domain.
 - Site export and import packages include domain metadata for inspection and portability, but imports skip conflicting live domains instead of taking them over automatically.
 - Site clone clears copied live domains by default. Provide an explicit `target_domain` only when the clone should claim a new hostname.
 - Internal domain automation endpoints live under `/admin-api/*` and are disabled unless `WEBBLOCKS_CMS_INTERNAL_API_TOKEN` is configured. Requests must send `X-WebBlocks-Internal-Token: <token>`.

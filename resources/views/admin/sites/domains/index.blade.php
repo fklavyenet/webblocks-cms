@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">Sites</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">Domains</span></li></ol></nav>',
         'title' => 'Domains',
-        'description' => 'Assign one primary public domain plus optional aliases for this site. DNS, Nginx, SSL, and server routing are managed outside CMS by Herne Panel or the server operator.',
+        'description' => 'Map incoming hosts to this CMS site after DNS, SSL, and server routing are already configured in Herne Panel or by the server operator.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">Back to Site</a></div>',
     ])
 
@@ -13,9 +13,10 @@
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header"><strong>Host Resolution</strong></div>
         <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-            <div>The CMS resolves the incoming host to this site through active site domains.</div>
+            <div>Configure DNS, SSL, Nginx, Herne Panel, virtual hosts, and server routing outside CMS first.</div>
+            <div>Then add the same host here so WebBlocks CMS can resolve the incoming request to this site.</div>
             <div>Unknown hosts return a not found response unless local or development fallback is explicitly enabled.</div>
-            <div>The primary domain is used for canonical public URLs. Alias domains can serve the site directly or redirect to the primary domain.</div>
+            <div>The primary domain is used for canonical public URLs. Alias domains can serve this site directly or redirect to the primary domain.</div>
         </div>
     </div>
 

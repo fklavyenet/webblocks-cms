@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Domains',
-        'description' => 'Manage public host and domain routing for accessible sites. Choose a site to review primary and alias domains.',
+        'description' => 'Choose a site to map incoming hosts inside CMS after DNS, SSL, and server routing are already handled outside CMS.',
     ])
 
     @include('admin.partials.flash')

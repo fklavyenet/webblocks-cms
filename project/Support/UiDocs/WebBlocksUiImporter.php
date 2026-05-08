@@ -416,7 +416,7 @@ class WebBlocksUiImporter
     private function syncNavigation(Site $site, array $navigationPayload, array $pageRefs): int
     {
         $menuKey = trim((string) ($navigationPayload['menu_key'] ?? NavigationItem::MENU_DOCS));
-        $items = $navigationPayload['items'] ?? null;
+        $items = $this->normalizeNavigationItems($navigationPayload['items'] ?? null);
 
         if (! is_array($items)) {
             throw new RuntimeException('Navigation payload is missing items.');
@@ -429,6 +429,79 @@ class WebBlocksUiImporter
         }
 
         return $count;
+    }
+
+    private function normalizeNavigationItems(mixed $items): ?array
+    {
+        if (! is_array($items)) {
+            return null;
+        }
+
+        $normalized = array_values($items);
+        $patternsIndex = null;
+        $patternsChildren = [];
+
+        foreach ($normalized as $index => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $key = trim((string) ($item['key'] ?? ''));
+
+            if ($key === 'patterns-overview') {
+                $patternsIndex = $index;
+                $patternsChildren[] = array_merge($item, [
+                    'title' => 'Overview',
+                    'key' => 'patterns-overview-child',
+                    'position' => 1,
+                ]);
+
+                continue;
+            }
+
+            if (in_array($key, ['dashboard-shell', 'settings-shell', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
+                $patternsChildren[] = array_merge($item, [
+                    'position' => count($patternsChildren) + 1,
+                ]);
+            }
+        }
+
+        if ($patternsIndex === null || $patternsChildren === []) {
+            return $normalized;
+        }
+
+        $patternsGroup = [
+            'key' => 'patterns',
+            'title' => 'Patterns',
+            'match_titles' => ['Patterns / Overview'],
+            'link_type' => NavigationItem::LINK_GROUP,
+            'icon' => 'grid',
+            'position' => $normalized[$patternsIndex]['position'] ?? ($patternsIndex + 1),
+            'visibility' => $normalized[$patternsIndex]['visibility'] ?? NavigationItem::VISIBILITY_VISIBLE,
+            'children' => $patternsChildren,
+        ];
+
+        $filtered = [];
+
+        foreach ($normalized as $item) {
+            if (! is_array($item)) {
+                $filtered[] = $item;
+
+                continue;
+            }
+
+            $key = trim((string) ($item['key'] ?? ''));
+
+            if ($key === 'patterns-overview' || in_array($key, ['dashboard-shell', 'settings-shell', 'auth-shell', 'content-shell', 'breadcrumb', 'gallery', 'cookie-consent', 'marketing'], true)) {
+                continue;
+            }
+
+            $filtered[] = $item;
+        }
+
+        array_splice($filtered, $patternsIndex, 0, [$patternsGroup]);
+
+        return array_values($filtered);
     }
 
     private function createNavigationItem(
@@ -457,6 +530,8 @@ class WebBlocksUiImporter
             if (! $pageId) {
                 throw new RuntimeException("Navigation item [{$payload['title']}] references missing page ref [{$pageRef}].");
             }
+        } elseif ($linkType === NavigationItem::LINK_GROUP) {
+            $url = null;
         } elseif ($linkType === NavigationItem::LINK_CUSTOM_URL) {
             $url = $this->normalizeNavigationUrl($site, $payload['url'] ?? null);
         }

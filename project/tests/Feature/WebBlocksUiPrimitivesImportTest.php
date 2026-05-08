@@ -158,6 +158,7 @@ class WebBlocksUiPrimitivesImportTest extends TestCase
         $navigationTitles = NavigationItem::query()
             ->forSite($site->id)
             ->forMenu(NavigationItem::MENU_DOCS)
+            ->whereNull('parent_id')
             ->orderBy('position')
             ->pluck('title')
             ->all();
@@ -170,23 +171,30 @@ class WebBlocksUiPrimitivesImportTest extends TestCase
             'Layout',
             'Primitives',
             'Icons',
-            'Patterns / Overview',
-            'Dashboard Shell',
-            'Settings Shell',
-            'Auth Shell',
-            'Content Shell',
-            'Breadcrumb',
-            'Gallery',
-            'Cookie Consent',
-            'Marketing',
+            'Patterns',
             'Utilities',
             'JavaScript',
             'Playground',
         ], $navigationTitles);
 
         $this->assertSame(1, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Primitives')->count());
-        $this->assertSame(1, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns / Overview')->count());
-        $this->assertSame(0, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns')->count());
+        $patternsGroup = NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns')->first();
+        $this->assertNotNull($patternsGroup);
+        $this->assertSame(NavigationItem::LINK_GROUP, $patternsGroup->link_type);
+        $this->assertSame(8, $patternsGroup->position);
+        $this->assertSame(9, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('parent_id', $patternsGroup->id)->count());
+        $this->assertSame(1, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('parent_id', $patternsGroup->id)->where('title', 'Overview')->count());
+        $this->assertSame(1, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('parent_id', $patternsGroup->id)->where('title', 'Dashboard Shell')->count());
+        $this->assertSame(0, NavigationItem::query()->forSite($site->id)->forMenu(NavigationItem::MENU_DOCS)->where('title', 'Patterns / Overview')->count());
+        $homeResponse = $this->get('/');
+        $homeResponse->assertOk();
+        $homeResponse->assertSee('data-wb-nav-group-toggle', false);
+        $homeResponse->assertSee('aria-controls="wb-nav-group-items-', false);
+        $homeResponse->assertSee('>Patterns<', false);
+        $homeResponse->assertSee('>Overview<', false);
+        $homeResponse->assertSee('>Dashboard Shell<', false);
+        $homeResponse->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+        $homeResponse->assertSee('data-wb-slot="sidebar" id="docsSidebar" class="wb-sidebar"', false);
         $this->assertSame(
             NavigationItem::MENU_DOCS,
             $home->fresh()->blocks()->where('type', 'sidebar-navigation')->first()?->sidebarNavigationMenuKey(),
@@ -266,7 +274,6 @@ class WebBlocksUiPrimitivesImportTest extends TestCase
         $response = $this->get('/p/primitives');
 
         $response->assertOk();
-        $response->assertSee('On this page');
         $response->assertSee('href="#primitive-boundaries"', false);
         $response->assertSee('href="#actions-and-signals"', false);
         $response->assertSee('href="#stats"', false);

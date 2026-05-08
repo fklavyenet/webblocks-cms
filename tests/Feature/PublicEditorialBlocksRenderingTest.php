@@ -158,6 +158,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('aria-controls="wb-nav-group-items-'.$group->id.'"', false);
         $response->assertSee('class="wb-nav-group-items"', false);
         $response->assertSee('id="wb-nav-group-items-'.$group->id.'"', false);
+        $response->assertSee('hidden', false);
         $response->assertSee('Guides', false);
         $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="https://example.com/docs"', false);
@@ -235,6 +236,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('aria-controls="wb-nav-group-items-'.$patterns->id.'"', false);
         $response->assertSee('class="wb-nav-group-items"', false);
         $response->assertSee('id="wb-nav-group-items-'.$patterns->id.'"', false);
+        $response->assertDontSee('id="wb-nav-group-items-'.$patterns->id.'" hidden', false);
         $response->assertSee('href="/p/dashboard-shell" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="/p/overview" class="wb-nav-group-item"', false);
     }
