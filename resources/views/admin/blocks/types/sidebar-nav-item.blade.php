@@ -1,7 +1,7 @@
 @php
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
-    $allowedIcons = ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'];
+    $allowedIcons = app(\App\Support\Icons\IconCatalog::class)->navigationPickerOptions(old('sidebar_nav_item_icon', $settings['icon'] ?? ''), $settings['icon'] ?? null);
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -29,7 +29,7 @@
             <select id="sidebar_nav_item_icon" name="sidebar_nav_item_icon" class="wb-select">
                 <option value="">No icon</option>
                 @foreach ($allowedIcons as $icon)
-                    <option value="{{ $icon }}" @selected(old('sidebar_nav_item_icon', $settings['icon'] ?? '') === $icon)>{{ $icon }}</option>
+                    <option value="{{ $icon['slug'] }}" @selected(old('sidebar_nav_item_icon', $settings['icon'] ?? '') === $icon['slug'])>{{ $icon['label'] }}</option>
                 @endforeach
             </select>
         </div>

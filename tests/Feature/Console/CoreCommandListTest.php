@@ -38,6 +38,7 @@ class CoreCommandListTest extends TestCase
             ->doesntExpectOutputToContain($removedHomeMainCommand)
             ->doesntExpectOutputToContain($projectGettingStartedCommand)
             ->doesntExpectOutputToContain($projectNavigationCommand)
+            ->expectsOutputToContain('icons:sync-webblocks-ui')
             ->expectsOutputToContain('search:rebuild')
             ->expectsOutputToContain('project:init')
             ->assertExitCode(0);
@@ -45,13 +46,14 @@ class CoreCommandListTest extends TestCase
 
     private function isolateProjectLayerBeforeBoot(): void
     {
-        $projectPath = base_path('project');
+        $repoRoot = dirname(__DIR__, 3);
+        $projectPath = $repoRoot.'/project';
 
         if (! is_dir($projectPath)) {
             return;
         }
 
-        $backupPath = storage_path('app/testing-project-layer/core-command-list-backup');
+        $backupPath = $repoRoot.'/storage/app/testing-project-layer/core-command-list-backup';
         if (! is_dir(dirname($backupPath)) && ! @mkdir(dirname($backupPath), 0755, true) && ! is_dir(dirname($backupPath))) {
             throw new \RuntimeException('Failed to create the temporary project-layer backup directory.');
         }
@@ -69,7 +71,7 @@ class CoreCommandListTest extends TestCase
 
     private function restoreProjectLayerAfterBoot(): void
     {
-        $projectPath = base_path('project');
+        $projectPath = dirname(__DIR__, 3).'/project';
 
         if (is_dir($projectPath)) {
             $this->deleteDirectory($projectPath);

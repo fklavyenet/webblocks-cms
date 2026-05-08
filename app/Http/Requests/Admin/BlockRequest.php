@@ -8,6 +8,7 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Support\Icons\IconCatalog;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Users\AdminAuthorization;
@@ -167,10 +168,10 @@ class BlockRequest extends FormRequest
             'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
             'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'current-page', 'exact'])],
-            'sidebar_nav_item_icon' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
+            'sidebar_nav_item_icon' => [$isSidebarNavItem ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'sidebar_nav_item_active_mode' => [$isSidebarNavItem ? 'nullable' : 'prohibited', Rule::in(['exact', 'path', 'current-page', 'manual'])],
             'sidebar_nav_item_manual_active' => [$isSidebarNavItem ? 'nullable' : 'prohibited', 'boolean'],
-            'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', Rule::in(['', 'home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'])],
+            'sidebar_nav_group_icon' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'show_button' => [$isSearchForm ? 'nullable' : 'prohibited', 'boolean'],
@@ -191,6 +192,8 @@ class BlockRequest extends FormRequest
             $parentId = $this->has('parent_id')
                 ? $this->integer('parent_id')
                 : (int) ($this->route('block')?->parent_id ?: 0);
+            $existingBlock = $this->route('block');
+            $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
             $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
             $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
             $isColumns = $selectedBlockType?->slug === 'columns';
@@ -240,6 +243,24 @@ class BlockRequest extends FormRequest
 
                 if (! $asset?->isImage()) {
                     $validator->errors()->add('asset_id', 'Sidebar brand logo must be an image from Media.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'sidebar-nav-item') {
+                $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_item_icon'));
+                $currentIcon = $existingBlock ? app(IconCatalog::class)->normalizeSlug($existingBlock->sidebarNavItemIcon()) : null;
+
+                if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
+                    $validator->errors()->add('sidebar_nav_item_icon', 'Select an active navigation icon from the catalog.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'sidebar-nav-group') {
+                $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_group_icon'));
+                $currentIcon = $existingBlock ? app(IconCatalog::class)->normalizeSlug($existingBlock->sidebarNavItemIcon()) : null;
+
+                if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
+                    $validator->errors()->add('sidebar_nav_group_icon', 'Select an active navigation icon from the catalog.');
                 }
             }
 
@@ -882,7 +903,7 @@ class BlockRequest extends FormRequest
                 $settings = $existingSettings;
 
                 if (! $isTranslatedSidebarNavItemEdit) {
-                    $icon = trim((string) ($data['sidebar_nav_item_icon'] ?? ''));
+                    $icon = app(IconCatalog::class)->normalizeSlug($data['sidebar_nav_item_icon'] ?? null);
                     $activeMode = trim((string) ($data['sidebar_nav_item_active_mode'] ?? 'path'));
 
                     $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
@@ -892,7 +913,7 @@ class BlockRequest extends FormRequest
                         : 'path';
                     $settings['manual_active'] = (bool) ($data['sidebar_nav_item_manual_active'] ?? false);
 
-                    if ($icon !== '') {
+                    if ($icon !== null) {
                         $settings['icon'] = $icon;
                     } else {
                         unset($settings['icon']);
@@ -919,12 +940,12 @@ class BlockRequest extends FormRequest
                 $settings = $existingSettings;
 
                 if (! $isTranslatedSidebarNavGroupEdit) {
-                    $icon = trim((string) ($data['sidebar_nav_group_icon'] ?? ''));
+                    $icon = app(IconCatalog::class)->normalizeSlug($data['sidebar_nav_group_icon'] ?? null);
                     $layoutName = trim((string) ($data['name'] ?? ''));
 
                     $settings['initially_open'] = (bool) ($data['sidebar_nav_group_initially_open'] ?? false);
 
-                    if ($icon !== '') {
+                    if ($icon !== null) {
                         $settings['icon'] = $icon;
                     } else {
                         unset($settings['icon']);

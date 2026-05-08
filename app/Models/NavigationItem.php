@@ -115,11 +115,6 @@ class NavigationItem extends Model
         return self::menuKeys();
     }
 
-    public static function sidebarIconKeys(): array
-    {
-        return ['home', 'rocket', 'layers', 'palette', 'layout', 'box', 'star', 'grid', 'wrench', 'code', 'terminal'];
-    }
-
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);
@@ -204,11 +199,7 @@ class NavigationItem extends Model
 
     public function sidebarIcon(): ?string
     {
-        $icon = trim((string) ($this->icon ?? ''));
-
-        return in_array($icon, self::sidebarIconKeys(), true)
-            ? $icon
-            : null;
+        return IconCatalogItem::normalizeSlug($this->icon);
     }
 
     public function typeLabel(): string

@@ -319,6 +319,39 @@ class AdminSidebarNavigationTest extends TestCase
     }
 
     #[Test]
+    public function icons_page_marks_system_group_and_item_active(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.icons.index'));
+
+        $response->assertOk();
+        $response->assertSee('>System<', false);
+        $response->assertSee('href="'.route('admin.system.icons.index').'"', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+    }
+
+    #[Test]
+    public function icons_navigation_item_is_visible_only_to_super_admin_users(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $editor = User::factory()->editor()->create();
+
+        $superAdminResponse = $this->actingAs($superAdmin)->get(route('admin.dashboard'));
+        $superAdminResponse->assertOk();
+        $superAdminResponse->assertSee('href="'.route('admin.system.icons.index').'"', false);
+
+        $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+        $siteAdminResponse->assertOk();
+        $siteAdminResponse->assertDontSee('href="'.route('admin.system.icons.index').'"', false);
+
+        $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+        $editorResponse->assertOk();
+        $editorResponse->assertDontSee('href="'.route('admin.system.icons.index').'"', false);
+    }
+
+    #[Test]
     public function backups_page_marks_maintenance_group_and_item_active(): void
     {
         $user = User::factory()->superAdmin()->create();

@@ -6,6 +6,8 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Site;
 use App\Models\User;
+use Database\Seeders\FoundationSiteLocaleSeeder;
+use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -13,6 +15,14 @@ use Tests\TestCase;
 class NavigationTreeEditorTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(IconCatalogSeeder::class);
+    }
 
     private function createPageForSite(Site $site, string $title, string $slug): Page
     {

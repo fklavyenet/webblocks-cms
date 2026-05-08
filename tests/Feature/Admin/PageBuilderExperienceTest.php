@@ -15,6 +15,7 @@ use App\Models\Asset;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
+use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
@@ -1248,6 +1249,77 @@ class PageBuilderExperienceTest extends TestCase
 
         $invalid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $invalid->assertSessionHasErrors('asset_id');
+    }
+
+    #[Test]
+    public function sidebar_navigation_icon_validation_uses_the_catalog_without_throwing_for_new_blocks(): void
+    {
+        $this->seedFoundation();
+        $this->seed(IconCatalogSeeder::class);
+
+        $user = User::factory()->superAdmin()->create();
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($sidebar, 'Docs', 'docs');
+        $navigationType = BlockType::query()->where('slug', 'sidebar-navigation')->firstOrFail();
+        $itemType = BlockType::query()->where('slug', 'sidebar-nav-item')->firstOrFail();
+        $groupType = BlockType::query()->where('slug', 'sidebar-nav-group')->firstOrFail();
+
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-navigation',
+            'block_type_id' => $navigationType->id,
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $invalidItem = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => $navigation->id,
+                'slot_type_id' => $sidebar->id,
+                'block_type_id' => $itemType->id,
+                'sort_order' => 0,
+                'title' => 'Bad icon item',
+                'url' => '/p/docs',
+                'sidebar_nav_item_icon' => 'not-a-real-icon',
+                'sidebar_nav_item_active_mode' => 'path',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalidItem->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidItem->assertSessionHasErrors('sidebar_nav_item_icon');
+
+        $validGroup = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'parent_id' => $navigation->id,
+            'slot_type_id' => $sidebar->id,
+            'block_type_id' => $groupType->id,
+            'sort_order' => 1,
+            'title' => 'Guides',
+            'name' => 'guides',
+            'sidebar_nav_group_icon' => 'layout',
+            'sidebar_nav_group_initially_open' => true,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $validGroup->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $group = Block::query()
+            ->where('page_id', $page->id)
+            ->where('parent_id', $navigation->id)
+            ->where('type', 'sidebar-nav-group')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame('layout', $group->sidebarNavItemIcon());
+        $this->assertTrue($group->sidebarNavGroupInitiallyOpen());
     }
 
     #[Test]

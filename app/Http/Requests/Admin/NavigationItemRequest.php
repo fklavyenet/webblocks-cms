@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Site;
+use App\Support\Icons\IconCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -14,6 +15,13 @@ class NavigationItemRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'icon' => app(IconCatalog::class)->normalizeSlug($this->input('icon')),
+        ]);
     }
 
     public function rules(): array
@@ -40,7 +48,7 @@ class NavigationItemRequest extends FormRequest
             'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
             'url' => ['nullable', 'string', 'max:2048'],
             'target' => ['nullable', 'string', Rule::in(['_self', '_blank'])],
-            'icon' => ['nullable', 'string', Rule::in(array_merge([''], NavigationItem::sidebarIconKeys()))],
+            'icon' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'integer', 'min:1'],
             'visibility' => ['required', 'string', Rule::in(NavigationItem::visibilities())],
         ];
@@ -57,6 +65,8 @@ class NavigationItemRequest extends FormRequest
             $url = trim((string) $this->input('url'));
             $menuKey = (string) $this->input('menu_key');
             $siteId = $this->integer('site_id') ?: Site::primary()?->id;
+            $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon'));
+            $currentIcon = app(IconCatalog::class)->normalizeSlug($navigation?->icon);
 
             if ($linkType === NavigationItem::LINK_PAGE && ! $pageId) {
                 $validator->errors()->add('page_id', 'Select a page for page links.');
@@ -76,6 +86,10 @@ class NavigationItemRequest extends FormRequest
 
             if ($linkType !== NavigationItem::LINK_PAGE && $title === '') {
                 $validator->errors()->add('title', 'A title is required for this link type.');
+            }
+
+            if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
+                $validator->errors()->add('icon', 'Select an active navigation icon from the catalog.');
             }
 
             if (! $parentId) {

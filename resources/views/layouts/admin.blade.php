@@ -75,6 +75,7 @@
                     'icon' => 'wb-icon-palette',
                         'items' => [
                             ['label' => 'Domains', 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*']],
+                            ['label' => 'Icons', 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*']],
                             ['label' => 'Users', 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
                             ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
                             ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],

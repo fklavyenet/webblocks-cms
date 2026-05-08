@@ -9,6 +9,7 @@ class CoreCatalogSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            IconCatalogSeeder::class,
             PageTypeSeeder::class,
             LayoutTypeSeeder::class,
             SlotTypeSeeder::class,

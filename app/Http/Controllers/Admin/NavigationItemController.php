@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\NavigationItemRequest;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Site;
+use App\Support\Icons\IconCatalog;
 use App\Support\Navigation\NavigationTree;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,7 @@ class NavigationItemController extends Controller
 {
     public function __construct(
         private readonly NavigationTree $tree,
+        private readonly IconCatalog $iconCatalog,
         private readonly AdminAuthorization $authorization,
     ) {}
 
@@ -46,6 +48,7 @@ class NavigationItemController extends Controller
             'newGroup' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
             'parentOptions' => $parentOptions,
             'editableItems' => NavigationItem::query()->forSite($site)->forMenu($menuKey)->with('page')->ordered()->get(),
+            'iconCatalog' => $this->iconCatalog,
         ]);
     }
 
@@ -152,9 +155,7 @@ class NavigationItemController extends Controller
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
         $data['url'] = trim((string) ($data['url'] ?? '')) ?: null;
         $data['target'] = trim((string) ($data['target'] ?? '')) ?: null;
-        $data['icon'] = in_array(trim((string) ($data['icon'] ?? '')), NavigationItem::sidebarIconKeys(), true)
-            ? trim((string) ($data['icon'] ?? ''))
-            : null;
+        $data['icon'] = $this->iconCatalog->normalizeSlug($data['icon'] ?? null);
         $data['parent_id'] = $data['parent_id'] ?? null;
         $data['position'] = (int) ($data['position'] ?? 1);
         $data['visibility'] = $data['visibility'] ?? NavigationItem::VISIBILITY_VISIBLE;

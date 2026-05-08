@@ -161,6 +161,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('id="wb-nav-group-items-'.$group->id.'"', false);
         $response->assertSee('hidden', false);
         $response->assertSee('Guides', false);
+        $response->assertSee('wb-icon-layers', false);
+        $response->assertSee('wb-icon-rocket', false);
+        $response->assertSee('wb-icon-home', false);
         $response->assertSee('href="/p/about" class="wb-nav-group-item is-active" aria-current="page"', false);
         $response->assertSee('href="https://example.com/docs"', false);
         $response->assertSee('class="wb-nav-group-item"', false);

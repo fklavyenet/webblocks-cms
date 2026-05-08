@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add install-level icon catalog management with `System -> Icons`, WebBlocks UI manifest sync from the default CDN or `--manifest=` override, and filtered navigation-context icon pickers for Navigation and Sidebar Navigation editing.
+- Fix sidebar-nav item and group admin validation so new block create flows validate icon catalog selections without crashing, and add focused coverage for icon sync, admin visibility, edit-modal reopen behavior, and public `wb-icon-{slug}` rendering.
 - Fix navigation item icon persistence for add/edit modal workflows and restore public docs sidebar group toggle interaction.
 - Fix project-imported docs sidebar navigation so legacy flat `Patterns / Overview` payloads normalize into real collapsible `Patterns` groups at runtime.
 - Fix public sidebar navigation group clicks so CMS no longer double-toggles the shipped WebBlocks UI nav-group contract and instead syncs child-container `hidden` state from the authoritative open or close events.
