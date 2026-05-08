@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <div class="wb-grid wb-grid-2">
+    <div class="wb-stack wb-gap-4">
         <div class="wb-card">
             <div class="wb-card-header"><strong>Add Domain</strong></div>
             <div class="wb-card-body">

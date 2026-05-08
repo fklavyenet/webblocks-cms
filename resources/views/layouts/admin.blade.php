@@ -45,19 +45,24 @@
                 ->implode('');
 
             $menuItems = [
-                ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'wb-icon-layout-dashboard'],
-                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => 'admin.pages.*', 'icon' => 'wb-icon-file-text'],
-                ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => 'admin.shared-slots.*', 'icon' => 'wb-icon-layers'],
-                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => 'admin.navigation.*', 'icon' => 'wb-icon-menu'],
-                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => 'admin.media.*', 'icon' => 'wb-icon-image'],
-                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'icon' => 'wb-icon-mail'],
+                ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
+                ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
+                ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
+                ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
+                ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],
+                ['label' => 'Media', 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
+                ['label' => 'Contact Messages', 'route' => 'admin.contact-messages.index', 'active' => ['admin.contact-messages.*'], 'icon' => 'wb-icon-mail'],
             ];
 
+            if (! $user?->can('access-system')) {
+                $menuItems = array_values(array_filter($menuItems, fn (array $item) => $item['route'] !== 'admin.sites.index'));
+            }
+
             if ($user?->can('access-system')) {
-                array_splice($menuItems, 2, 0, [[
+                array_splice($menuItems, 3, 0, [[
                     'label' => 'Blocks',
                     'route' => 'admin.blocks.index',
-                    'active' => 'admin.blocks.index',
+                    'active' => ['admin.blocks.index'],
                     'icon' => 'wb-icon-box',
                 ]]);
             }
@@ -69,12 +74,12 @@
                     'label' => 'System',
                     'icon' => 'wb-icon-palette',
                         'items' => [
-                            ['label' => 'Users', 'route' => 'admin.users.index', 'active' => 'admin.users.*'],
-                            ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => 'admin.sites.*'],
-                            ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => 'admin.locales.*'],
-                            ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => 'admin.slot-types.*'],
-                            ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => 'admin.block-types.*'],
-                            ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => 'admin.system.settings.*'],
+                            ['label' => 'Domains', 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*']],
+                            ['label' => 'Users', 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
+                            ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
+                            ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
+                            ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
+                            ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],
                         ],
                     ];
 
@@ -82,14 +87,18 @@
                     'label' => 'Maintenance',
                     'icon' => 'wb-icon-file',
                     'items' => [
-                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => 'admin.reports.visitors.*'],
-                        ['label' => 'Search', 'route' => 'admin.system.search.index', 'active' => 'admin.system.search.*'],
-                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => 'admin.system.backups.*'],
-                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => 'admin.site-transfers.*'],
-                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => 'admin.system.updates.*'],
+                        ['label' => 'Visitor Reports', 'route' => 'admin.reports.visitors.index', 'active' => ['admin.reports.visitors.*']],
+                        ['label' => 'Search', 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*']],
+                        ['label' => 'Backups', 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*']],
+                        ['label' => 'Export / Import', 'route' => 'admin.site-transfers.exports.index', 'active' => ['admin.site-transfers.*']],
+                        ['label' => 'Update', 'route' => 'admin.system.updates.index', 'active' => ['admin.system.updates.*']],
                     ],
                 ];
             }
+
+            $matchesActiveRoute = static fn (array $item): bool => collect($item['active'] ?? [])->contains(
+                fn (string $pattern) => request()->routeIs($pattern)
+            );
         @endphp
 
         <div class="wb-dashboard-shell">
@@ -109,8 +118,8 @@
                         @foreach ($menuItems as $item)
                             <a
                                 href="{{ route($item['route']) }}"
-                                class="wb-sidebar-link {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
-                                @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                                class="wb-sidebar-link {{ $matchesActiveRoute($item) ? 'is-active' : '' }}"
+                                @if ($matchesActiveRoute($item)) aria-current="page" @endif
                             >
                                 <i class="wb-icon {{ $item['icon'] }} wb-sidebar-icon" aria-hidden="true"></i>
                                 <span>{{ $item['label'] }}</span>
@@ -121,7 +130,7 @@
                     <hr class="wb-divider">
 
                     @foreach ($sidebarGroups as $group)
-                        @php($groupIsActive = collect($group['items'])->contains(fn ($item) => request()->routeIs($item['active'])))
+                        @php($groupIsActive = collect($group['items'])->contains(fn ($item) => $matchesActiveRoute($item)))
                         <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}">
                             <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}" data-wb-nav-group-toggle>
                                 <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
@@ -133,8 +142,8 @@
                                 @foreach ($group['items'] as $item)
                                     <a
                                         href="{{ route($item['route']) }}"
-                                        class="wb-nav-group-item {{ request()->routeIs($item['active']) ? 'is-active' : '' }}"
-                                        @if (request()->routeIs($item['active'])) aria-current="page" @endif
+                                        class="wb-nav-group-item {{ $matchesActiveRoute($item) ? 'is-active' : '' }}"
+                                        @if ($matchesActiveRoute($item)) aria-current="page" @endif
                                     >
                                         {{ $item['label'] }}
                                     </a>

@@ -134,6 +134,71 @@ class SiteDomainTest extends TestCase
     }
 
     #[Test]
+    public function site_domains_admin_screen_stacks_add_domain_above_assigned_domains_full_width(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+
+        $response = $this->actingAs($user)->get(route('admin.sites.domains.index', $site));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-stack wb-gap-4">', false);
+        $response->assertSeeInOrder([
+            '<div class="wb-card-header"><strong>Add Domain</strong></div>',
+            '<div class="wb-card-header"><strong>Assigned Domains</strong></div>',
+        ], false);
+    }
+
+    #[Test]
+    public function domains_landing_redirects_to_the_current_site_domain_screen_when_site_context_exists(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedPublicSiteWithDomain('primary.example.test');
+
+        $response = $this->actingAs($user)
+            ->withSession(['admin.pages.site' => (string) $site->id])
+            ->get(route('admin.domains.index'));
+
+        $response->assertRedirect(route('admin.sites.domains.index', $site));
+    }
+
+    #[Test]
+    public function domains_landing_lists_accessible_sites_when_no_current_site_context_exists(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        [$primarySite] = $this->seedPublicSiteWithDomain('primary.example.test');
+        $otherSite = Site::query()->create([
+            'name' => 'Docs Site',
+            'handle' => 'docs-site',
+            'domain' => 'docs.example.test',
+            'is_primary' => false,
+        ]);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $otherSite->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['admin.domains.site' => 'all'])
+            ->get(route('admin.domains.index'));
+
+        $response->assertOk();
+        $response->assertSee('Select a site');
+        $response->assertSee($primarySite->name);
+        $response->assertSee($otherSite->name);
+        $response->assertSee('href="'.route('admin.sites.domains.index', $primarySite).'"', false);
+        $response->assertSee('href="'.route('admin.sites.domains.index', $otherSite).'"', false);
+    }
+
+    #[Test]
+    public function domains_landing_requires_system_access(): void
+    {
+        $user = User::factory()->editor()->create();
+
+        $this->actingAs($user)
+            ->get(route('admin.domains.index'))
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function canonical_url_uses_primary_domain_even_when_requested_from_alias(): void
     {
         [$site, $page] = $this->seedPublicSiteWithDomain('primary.example.test');

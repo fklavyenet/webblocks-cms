@@ -21,6 +21,7 @@ class AdminSidebarNavigationTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('admin.dashboard'));
         $content = $response->getContent();
+        $domainsHref = 'href="'.route('admin.domains.index').'"';
         $reportsHref = 'href="'.route('admin.reports.visitors.index').'"';
         $settingsHref = 'href="'.route('admin.system.settings.edit').'"';
         $searchHref = 'href="'.route('admin.system.search.index').'"';
@@ -42,6 +43,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('href="'.route('admin.contact-messages.index').'"', false);
         $response->assertSee('>System<', false);
         $response->assertSee('>Maintenance<', false);
+        $response->assertSee('href="'.route('admin.domains.index').'"', false);
         $response->assertSee('href="'.route('admin.reports.visitors.index').'"', false);
         $response->assertSee('href="'.route('admin.system.settings.edit').'"', false);
         $response->assertSee('href="'.route('admin.system.search.index').'"', false);
@@ -57,6 +59,11 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertDontSee('>Access<', false);
         $response->assertDontSee('>Structure<', false);
         $this->assertSame(1, substr_count($content, $usersHref));
+        $response->assertSeeInOrder([
+            'href="'.route('admin.dashboard').'"',
+            $sitesHref,
+            'href="'.route('admin.pages.index').'"',
+        ], false);
         $this->assertTrue(
             strpos($content, $reportsHref) < strpos($content, $searchHref)
             && strpos($content, $searchHref) < strpos($content, $backupsHref)
@@ -64,8 +71,8 @@ class AdminSidebarNavigationTest extends TestCase
             && strpos($content, $transfersHref) < strpos($content, $updatesHref)
         );
         $this->assertTrue(
-            strpos($content, $usersHref) < strpos($content, $sitesHref)
-            && strpos($content, $sitesHref) < strpos($content, $localesHref)
+            strpos($content, $domainsHref) < strpos($content, $usersHref)
+            && strpos($content, $usersHref) < strpos($content, $localesHref)
             && strpos($content, $localesHref) < strpos($content, $slotTypesHref)
             && strpos($content, $slotTypesHref) < strpos($content, $blockTypesHref)
             && strpos($content, $blockTypesHref) < strpos($content, $settingsHref)
@@ -131,6 +138,22 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('>System<', false);
         $response->assertSee('href="'.route('admin.locales.index').'"', false);
         $response->assertSee('class="wb-nav-group-item is-active"', false);
+    }
+
+    #[Test]
+    public function domains_page_marks_system_group_and_domains_item_active(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.domains.index', $site));
+
+        $response->assertOk();
+        $response->assertSee('>System<', false);
+        $response->assertSee('href="'.route('admin.domains.index').'"', false);
+        $response->assertSee('wb-nav-group-toggle is-active', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+        $response->assertDontSee('href="'.route('admin.sites.index').'" class="wb-sidebar-link is-active"', false);
     }
 
     #[Test]
@@ -237,7 +260,7 @@ class AdminSidebarNavigationTest extends TestCase
     }
 
     #[Test]
-    public function sites_page_is_grouped_under_system_and_not_listed_as_a_top_level_item(): void
+    public function sites_page_is_a_top_level_item_and_not_listed_under_system(): void
     {
         $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
@@ -247,9 +270,39 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertOk();
         $response->assertSee('>System<', false);
         $response->assertSee('href="'.route('admin.sites.index').'"', false);
-        $response->assertSee('class="wb-nav-group-item is-active"', false);
-        $response->assertDontSee('class="wb-sidebar-link is-active"', false);
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertDontSee('href="'.route('admin.sites.index').'" class="wb-nav-group-item', false);
         $response->assertSee($site->name);
+    }
+
+    #[Test]
+    public function site_edit_page_keeps_sites_top_level_item_active(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.edit', $site));
+
+        $response->assertOk();
+        $response->assertSee('class="wb-sidebar-link is-active"', false);
+        $response->assertDontSee('class="wb-nav-group-item is-active"', false);
+    }
+
+    #[Test]
+    public function inaccessible_system_links_are_hidden_for_users_without_system_access(): void
+    {
+        $siteAdmin = User::factory()->siteAdmin()->create();
+        $editor = User::factory()->editor()->create();
+
+        $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+        $siteAdminResponse->assertOk();
+        $siteAdminResponse->assertDontSee('href="'.route('admin.sites.index').'"', false);
+        $siteAdminResponse->assertDontSee('href="'.route('admin.domains.index').'"', false);
+
+        $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+        $editorResponse->assertOk();
+        $editorResponse->assertDontSee('href="'.route('admin.sites.index').'"', false);
+        $editorResponse->assertDontSee('href="'.route('admin.domains.index').'"', false);
     }
 
     #[Test]

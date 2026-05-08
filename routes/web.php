@@ -166,6 +166,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
         Route::post('sites/clone', [SiteController::class, 'cloneStore'])->name('sites.clone.store');
         Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
+        Route::get('domains', [SiteDomainController::class, 'landing'])->name('domains.index');
         Route::get('sites/{site}/domains', [SiteDomainController::class, 'index'])->name('sites.domains.index');
         Route::post('sites/{site}/domains', [SiteDomainController::class, 'store'])->name('sites.domains.store');
         Route::put('sites/{site}/domains/{domain}', [SiteDomainController::class, 'update'])->name('sites.domains.update');

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Improve the site Domains admin screen so `Add Domain` and `Assigned Domains` render as full-width stacked cards, and move admin navigation so `Sites` is a primary sidebar item while `Domains` is the first child under `System` with a generic landing flow.
 - Improve Navigation admin UX with standard WebBlocks modals for add/edit flows, clearer `Add Group` and `Parent Group` behavior for docs menus, group-only nesting validation, and public docs sidebar rendering that opens parent groups when a child page is active.
 
 ## 1.19.0

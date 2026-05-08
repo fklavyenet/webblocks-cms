@@ -16,6 +16,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - page revisions and in-place restore with actor, source, and event metadata when available
 - media library and site-scoped navigation management
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
+- primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`
 - install wizard for first-run setup
 - system updates, backups, and site export/import tools
 - site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
@@ -120,6 +121,9 @@ See `docs/getting-started.md` for the first-use workflow.
 ## Multisite Domains
 
 - Public host resolution now prefers active `site_domains` records, then falls back to the legacy `sites.domain` value when needed, and only uses unknown-host fallback behavior where `cms.multisite.unknown_host_fallback` is intentionally enabled for local or compatibility scenarios.
+- In the admin sidebar, `Sites` is a primary area directly under `Dashboard`, while `System -> Domains` owns public host and domain resolution management for sites.
+- The site Domains screen stacks `Add Domain` first and `Assigned Domains` below it so both cards use the full admin content width.
+- `System -> Domains` opens the current site's domain screen when the admin already has a site context. If no current site context is available across multiple accessible sites, it shows a compact site list with `Manage Domains` actions.
 - In production, an unknown host should not silently render the default site. Point only the domains and subdomains you intend to serve at the CMS install.
 - Each site can have one primary domain plus additional active alias domains. Canonical public URLs use the site's primary domain.
 - Domain values are normalized lowercase hostnames only. Do not store protocols, paths, or query strings.
