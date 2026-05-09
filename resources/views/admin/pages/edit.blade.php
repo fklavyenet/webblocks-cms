@@ -1,6 +1,6 @@
 @php
     $pageTitle = 'Edit Page: '.$page->title;
-    $settingsTab = old('_page_settings_tab', 'general');
+    $settingsTab = old('_page_settings_tab', request('tab') === 'page-assets' ? 'page-assets' : 'general');
     $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
@@ -112,6 +112,7 @@
                                 @include('admin.pages.partials.page-assets-tab', [
                                     'page' => $page,
                                     'canManagePageAssets' => $canManagePageAssets,
+                                    'pageAssetsTab' => $pageAssetsTab,
                                 ])
                             </div>
                         @endif
@@ -198,3 +199,13 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())
+        @include('admin.pages.partials.page-assets-modals', [
+            'page' => $page,
+            'canManagePageAssets' => $canManagePageAssets,
+            'pageAssetsTab' => $pageAssetsTab,
+        ])
+    @endif
+@endpush

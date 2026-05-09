@@ -19,7 +19,6 @@ use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Pages\PageAssetSyncService;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -41,7 +40,6 @@ class PageController extends Controller
         private readonly BlockDeletionManager $blockDeletionManager,
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly CurrentActorResolver $currentActorResolver,
-        private readonly PageAssetSyncService $pageAssetSyncService,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -260,6 +258,7 @@ class PageController extends Controller
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
             'canCreateSharedSlots' => ! request()->user()->isEditor(),
             'canManagePageAssets' => request()->user()->isSuperAdmin(),
+            'pageAssetsTab' => $this->pageAssetsTabState($page),
         ]);
     }
 
@@ -273,29 +272,24 @@ class PageController extends Controller
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
             $translation = $data['translation'];
-            $pageAssets = $data['page_assets'] ?? [];
-            unset($data['title'], $data['slug'], $data['blocks'], $data['translation'], $data['page_assets']);
+            unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
             $data['updated_by_user_id'] = $this->currentActorResolver->resolve($request->user())['user_id'];
 
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
 
-            if ($request->user()->isSuperAdmin()) {
-                $this->pageAssetSyncService->sync($page, $pageAssets);
-            }
-
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
                 'Page updated',
-                'Page fields, default translation, and page assets were updated.',
+                'Page fields and the default translation were updated.',
                 event: 'page_updated',
             );
         });
 
         $redirect = redirect()
-            ->route('admin.pages.edit', $page)
+            ->route('admin.pages.edit', ['page' => $page, 'tab' => $request->input('_page_settings_tab') === 'page-assets' ? 'page-assets' : null])
             ->with('status', 'Page updated successfully.');
 
         if ($page->isPublished() && $page->publicUrl()) {
@@ -306,6 +300,24 @@ class PageController extends Controller
         }
 
         return $redirect;
+    }
+
+    private function pageAssetsTabState(Page $page): array
+    {
+        $requestedModal = old('_page_asset_modal', request()->string('modal')->toString());
+        $requestedAssetId = (int) old('_page_asset_id', request()->integer('page_asset'));
+        $requestedType = old('_page_asset_type', request()->string('asset_type')->toString());
+        $closeUrl = route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
+        $selectedAsset = $requestedAssetId > 0
+            ? ($page->pageAssets->firstWhere('id', $requestedAssetId) ?? $page->pageAssets()->find($requestedAssetId))
+            : null;
+
+        return [
+            'requestedModal' => $requestedModal,
+            'requestedType' => in_array($requestedType, ['css', 'js'], true) ? $requestedType : '',
+            'selectedAsset' => $selectedAsset,
+            'closeUrl' => $closeUrl,
+        ];
     }
 
     public function editSlotBlocks(Page $page, PageSlot $slot): View

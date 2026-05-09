@@ -126,6 +126,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $editResponse->assertOk();
         $editResponse->assertSee('Page Settings');
+        $editResponse->assertSee('Page Assets');
         $editResponse->assertSee('Slots');
         $editResponse->assertSee('Translations');
         $editResponse->assertSee('Add Slot');
@@ -137,6 +138,8 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('<button type="submit" class="wb-dropdown-item">Sidebar</button>', false);
         $editResponse->assertDontSee('<button type="submit" class="wb-dropdown-item">Header</button>', false);
         $editResponse->assertDontSee('<button type="submit" class="wb-dropdown-item">Main</button>', false);
+        $editResponse->assertSee('No page assets yet.');
+        $editResponse->assertDontSee('name="page_assets[', false);
         $editResponse->assertSee('name="slot_type_id" value="'.$sidebar->id.'"', false);
         $editResponse->assertSee('<th>Actions</th>', false);
         $editResponse->assertDontSee('<th class="wb-text-end">Actions</th>', false);

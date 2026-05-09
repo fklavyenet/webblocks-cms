@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Refine the Edit Page `Page Assets` tab into a compact table with header actions plus Add/Edit/Delete modals, so long `/site/...` paths and JS options no longer require large inline asset forms.
+
 ## 1.22.0
 
 - Add relational page-scoped `page_assets` support for local `/site/...` CSS and JS files, with a tabbed `Edit Page -> Page Settings` card, super-admin-only asset management, public head and body-end rendering, and portability through revisions, duplicate, move, and site export or import.
