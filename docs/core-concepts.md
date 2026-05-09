@@ -9,11 +9,24 @@ The core structure is:
 `Page -> Layout -> Slots -> Blocks`
 
 - A page owns routing, site context, workflow state, and layout selection.
+- A page can also own relational page asset rows for page-scoped CSS and JS file references.
 - A layout defines the available structural regions.
 - Slots are named placement areas inside the layout, such as `header`, `main`, `sidebar`, and `footer`.
 - Blocks are the actual content units placed into slots and, when supported, nested under other blocks.
 
 Pages do not store free-form page-builder JSON. Content and relationships are kept in relational tables so structure stays explicit and reviewable.
+
+## Page Assets
+
+- Page Assets are a core CMS feature for page-scoped CSS and JS file references.
+- Page Assets are stored relationally in `page_assets`, not inside `pages.settings` JSON.
+- V1 accepts only local install paths under `/site/...`.
+- External URLs, inline CSS, inline JS, query strings, fragments, traversal, and non-matching extensions are rejected.
+- CSS currently renders only in the public document head.
+- JS currently renders only near the public body end.
+- Page Assets render only for the owning public page and are excluded from admin layouts and unrelated pages.
+- Page revisions, duplicate, move, and site export or import treat Page Assets as page-owned configuration.
+- Search indexing does not treat page asset paths as page body content.
 
 ## Page Site Scope
 

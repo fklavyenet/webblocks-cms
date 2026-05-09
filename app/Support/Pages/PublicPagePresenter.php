@@ -4,6 +4,7 @@ namespace App\Support\Pages;
 
 use App\Models\Block;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageTranslation;
 use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
@@ -16,6 +17,7 @@ class PublicPagePresenter
 {
     public function __construct(
         private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly PageAssetRenderer $pageAssetRenderer,
         private readonly PublicSharedSlotResolver $publicSharedSlotResolver,
         private readonly SlotWrapperResolver $slotWrapperResolver,
         private readonly PageRouteResolver $pageRouteResolver,
@@ -41,6 +43,8 @@ class PublicPagePresenter
         return [
             'page' => $page,
             'slots' => $slots,
+            'headPageAssets' => $this->pageAssetRenderer->headAssetsFor($page),
+            'bodyEndPageAssets' => $this->pageAssetRenderer->bodyEndAssetsFor($page),
             'publicMeta' => $this->publicMeta($page),
         ];
     }

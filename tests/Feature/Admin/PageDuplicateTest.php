@@ -8,6 +8,7 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
@@ -221,6 +222,15 @@ class PageDuplicateTest extends TestCase
             'page_id' => $page->id,
             'position' => 1,
             'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'css',
+            'path' => '/site/'.$site->handle.'/'.$slug.'/page.css',
+            'load_position' => 'head',
+            'is_enabled' => true,
+            'sort_order' => 0,
         ]);
 
         return $page->fresh(['translations.locale', 'slots.slotType', 'blocks.textTranslations', 'blocks.imageTranslations', 'navigationItems']);
@@ -446,6 +456,10 @@ class PageDuplicateTest extends TestCase
             'locale_id' => Locale::query()->where('code', 'tr')->value('id'),
             'seo_title' => 'About TR SEO',
             'og_title' => 'About TR OG',
+        ]);
+        $this->assertDatabaseHas('page_assets', [
+            'page_id' => $duplicate->id,
+            'path' => '/site/default/about/page.css',
         ]);
     }
 

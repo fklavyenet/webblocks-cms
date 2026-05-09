@@ -14,6 +14,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - editorial workflow for pages with review and publishing states
 - database-backed public site search scoped by site and locale, with a header-triggered modal UX, `/search` fallback page, Search Form block support, and a System > Search rebuild screen
 - page revisions and in-place restore with actor, source, and event metadata when available
+- relational page-scoped CSS and JS assets stored in `page_assets`, rendered only on the owning public page, and managed from the `Page Assets` tab on Edit Page
 - media library and site-scoped navigation management
 - install-level icon catalog management under `System -> Icons`, with WebBlocks UI manifest sync, catalog metadata editing, and filtered navigation-only icon pickers in admin forms
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
@@ -102,6 +103,8 @@ For common editorial choices, `Code`, `Table`, `TOC`, and `Quote` are available 
 `HTML (Trusted)` is also available in the block picker as an advanced escape hatch for `super_admin` users only. Use it only for deliberate static trusted markup that cannot be represented cleanly with first-class blocks. For normal editorial work, prefer `Rich Text` for safe formatted copy and `Code` for escaped code samples.
 
 On the Edit Page screen, page settings and slot structure are managed separately, slot additions are available from a compact `Add Slot` dropdown, and each slot keeps a compact source summary in the list with `Manage Source` modal settings for `Page Content`, `Shared Slot`, or `Disabled`. Shared Slot choices are limited to active compatible Shared Slots from the same site. When a slot uses a Shared Slot or is Disabled, the page-owned block tree is preserved and clearly labeled as not currently rendered.
+
+`Edit Page -> Page Settings` now has `General` and `Page Assets` tabs. `General` keeps the current page fields. `Page Assets` is an advanced page-scoped feature for local `/site/...` CSS and JS files only. In V1, Page Assets are stored relationally in `page_assets`, not in `pages.settings`, only `super_admin` users can change them, CSS renders in the public `<head>`, JS renders near the public body-end script area, and the configured files are loaded only on the owning public page. When site Export / Import runs with `Include media/assets`, referenced `/site/...` physical files are packaged and restored too. Without that option, the page asset rows still transfer but the target install must already have those public files.
 
 In the admin slot block tree, block deletion now uses a WebBlocks modal instead of a browser confirm dialog. The safe default still deletes only the selected block, which preserves the existing child promotion behavior when a wrapper such as `Section` or `Container` is removed. Editors can explicitly opt into `Also delete all nested child blocks` when they want to remove an entire nested subtree. The modal shows the selected block, whether it has children, direct child count, and total descendant count, and warns that recursive deletion is only recoverable through revision or backup restore flows.
 

@@ -38,6 +38,7 @@ class PageSiteMover
 
             $lockedPage->translations()->lockForUpdate()->get();
             $lockedPage->slots()->lockForUpdate()->get();
+            $lockedPage->pageAssets()->lockForUpdate()->get();
             NavigationItem::query()->where('page_id', $lockedPage->id)->lockForUpdate()->get();
 
             $this->validator->validate($lockedPage, $targetSite);

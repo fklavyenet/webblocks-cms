@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add relational page-scoped `page_assets` support for local `/site/...` CSS and JS files, with a tabbed `Edit Page -> Page Settings` card, super-admin-only asset management, public head and body-end rendering, and portability through revisions, duplicate, move, and site export or import.
+
 ## 1.21.0
 
 - Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.

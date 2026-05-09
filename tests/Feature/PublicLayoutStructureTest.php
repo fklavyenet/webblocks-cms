@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
@@ -45,6 +46,61 @@ class PublicLayoutStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('assets/webblocks-cms/css/public.css', false);
+    }
+
+    #[Test]
+    public function page_assets_render_only_on_the_owning_public_page(): void
+    {
+        $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'css',
+            'path' => '/site/default/home/home.css',
+            'load_position' => 'head',
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/default/home/home.js',
+            'load_position' => 'body_end',
+            'is_defer' => true,
+            'is_enabled' => true,
+            'sort_order' => 1,
+        ]);
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/default/home/disabled.js',
+            'load_position' => 'body_end',
+            'is_enabled' => false,
+            'sort_order' => 2,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('/site/default/home/home.css', false);
+        $response->assertSee('/site/default/home/home.js', false);
+        $response->assertDontSee('/site/default/home/disabled.js', false);
+
+        $otherPage = Page::query()->create([
+            'site_id' => $page->site_id,
+            'title' => 'Other',
+            'slug' => 'other',
+            'status' => 'published',
+        ]);
+        \App\Models\PageTranslation::query()->updateOrCreate(
+            ['page_id' => $otherPage->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $page->site_id, 'name' => 'Other', 'slug' => 'other', 'path' => '/p/other'],
+        );
+
+        $this->get('/p/other')
+            ->assertOk()
+            ->assertDontSee('/site/default/home/home.css', false)
+            ->assertDontSee('/site/default/home/home.js', false);
     }
 
     #[Test]

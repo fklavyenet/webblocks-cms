@@ -285,6 +285,11 @@ class Page extends Model
         return $this->hasMany(PageRevision::class)->latest('created_at');
     }
 
+    public function pageAssets(): HasMany
+    {
+        return $this->hasMany(PageAsset::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function createdByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');

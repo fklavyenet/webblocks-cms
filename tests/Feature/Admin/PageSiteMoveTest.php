@@ -7,6 +7,7 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
@@ -124,6 +125,15 @@ class PageSiteMoveTest extends TestCase
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Body',
             'content' => 'Body copy',
+        ]);
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/'.$site->handle.'/'.$slug.'/page.js',
+            'load_position' => 'body_end',
+            'is_enabled' => true,
+            'sort_order' => 0,
         ]);
 
         return $page->fresh(['translations.locale', 'slots.slotType', 'blocks.textTranslations']);
@@ -257,6 +267,7 @@ class PageSiteMoveTest extends TestCase
         $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda']);
         $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'about', 'seo_title' => 'About SEO']);
         $this->assertDatabaseHas('page_translations', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'slug' => 'hakkinda', 'seo_title' => 'Hakkinda SEO']);
+        $this->assertDatabaseHas('page_assets', ['page_id' => $page->id, 'path' => '/site/default/about/page.js']);
         $this->assertDatabaseMissing('page_translations', ['page_id' => $page->id, 'site_id' => $this->defaultSite()->id, 'slug' => 'about']);
         $this->assertDatabaseHas('block_text_translations', ['block_id' => $page->blocks()->firstOrFail()->id, 'title' => 'Body']);
         $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'site_id' => $targetSite->id, 'label' => 'Page moved to another site']);

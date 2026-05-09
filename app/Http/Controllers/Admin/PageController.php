@@ -19,6 +19,7 @@ use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Audit\CurrentActorResolver;
+use App\Support\Pages\PageAssetSyncService;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -40,6 +41,7 @@ class PageController extends Controller
         private readonly BlockDeletionManager $blockDeletionManager,
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly CurrentActorResolver $currentActorResolver,
+        private readonly PageAssetSyncService $pageAssetSyncService,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
@@ -207,6 +209,7 @@ class PageController extends Controller
             'site',
             'translations.locale',
             'slots.slotType',
+            'pageAssets',
             'blocks' => fn ($query) => $query
                 ->with('children')
                 ->whereNull('parent_id')
@@ -256,6 +259,7 @@ class PageController extends Controller
             'canMoveToAnotherSite' => $canMoveToAnotherSite,
             'workflowActions' => $this->workflowManager->workflowActionsFor(request()->user(), $page),
             'canCreateSharedSlots' => ! request()->user()->isEditor(),
+            'canManagePageAssets' => request()->user()->isSuperAdmin(),
         ]);
     }
 
@@ -269,17 +273,23 @@ class PageController extends Controller
         DB::transaction(function () use ($request, $page): void {
             $data = $request->validatedData();
             $translation = $data['translation'];
-            unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
+            $pageAssets = $data['page_assets'] ?? [];
+            unset($data['title'], $data['slug'], $data['blocks'], $data['translation'], $data['page_assets']);
 
             $data['updated_by_user_id'] = $this->currentActorResolver->resolve($request->user())['user_id'];
 
             $page->update($data);
             $this->syncDefaultTranslation($page, $translation);
+
+            if ($request->user()->isSuperAdmin()) {
+                $this->pageAssetSyncService->sync($page, $pageAssets);
+            }
+
             $this->revisionManager->capture(
                 $page->fresh(),
                 $request->user(),
                 'Page updated',
-                'Page fields and the default translation were updated.',
+                'Page fields, default translation, and page assets were updated.',
                 event: 'page_updated',
             );
         });

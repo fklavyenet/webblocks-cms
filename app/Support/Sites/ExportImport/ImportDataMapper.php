@@ -11,6 +11,7 @@ use App\Models\Layout;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\PageType;
@@ -20,6 +21,7 @@ use App\Models\SiteDomain;
 use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Pages\PageAssetPathValidator;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Sites\SiteDomainManager;
@@ -38,6 +40,7 @@ class ImportDataMapper
         private readonly SiteDomainManager $siteDomainManager,
         private readonly SiteTransferPathGuard $pathGuard,
         private readonly BlockTranslationWriter $blockTranslationWriter,
+        private readonly PageAssetPathValidator $pageAssetPathValidator,
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
     ) {}
 
@@ -55,6 +58,7 @@ class ImportDataMapper
                 $folderMap = $this->importAssetFolders($payload, $output);
                 $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
                 $pageMap = $this->importPages($site, $payload, $localeMap, $assetMap, $output);
+                $this->importPageAssets($archive, $payload, $pageMap, $copiedFiles, $output);
                 ['shared_slots' => $sharedSlots, 'handle_map' => $sharedSlotHandleMap, 'source_page_map' => $sharedSlotSourcePageMap] = $this->importSharedSlots($site, $payload, $output);
                 $allPageMap = array_replace($pageMap, $sharedSlotSourcePageMap);
                 $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
@@ -381,6 +385,69 @@ class ImportDataMapper
         $output[] = 'Imported '.count($map).' page(s).';
 
         return $map;
+    }
+
+    private function importPageAssets(ZipArchive $archive, array $payload, array $pageMap, array &$copiedFiles, array &$output): void
+    {
+        $count = 0;
+
+        foreach (($payload['page_assets'] ?? []) as $pageAssetData) {
+            $pageId = $pageMap[(int) ($pageAssetData['page_id'] ?? 0)] ?? null;
+
+            if (! $pageId) {
+                continue;
+            }
+
+            $path = $this->pageAssetPathValidator->normalizeForStorage((string) ($pageAssetData['type'] ?? ''), $pageAssetData['path'] ?? '');
+
+            if ($archive->locateName('files/public/'.$this->pageAssetPathValidator->relativePublicPath($path)) !== false) {
+                $this->restorePageAssetFile($archive, $path, $copiedFiles);
+            }
+
+            PageAsset::query()->create([
+                'page_id' => $pageId,
+                'type' => $pageAssetData['type'],
+                'path' => $path,
+                'load_position' => $pageAssetData['load_position'] ?? PageAsset::defaultLoadPositionFor((string) ($pageAssetData['type'] ?? 'css')),
+                'is_defer' => (bool) ($pageAssetData['is_defer'] ?? false),
+                'is_async' => (bool) ($pageAssetData['is_async'] ?? false),
+                'is_module' => (bool) ($pageAssetData['is_module'] ?? false),
+                'is_enabled' => (bool) ($pageAssetData['is_enabled'] ?? true),
+                'sort_order' => (int) ($pageAssetData['sort_order'] ?? 0),
+                'created_at' => $pageAssetData['created_at'] ?? null,
+                'updated_at' => $pageAssetData['updated_at'] ?? null,
+            ]);
+
+            $count++;
+        }
+
+        $output[] = 'Imported '.$count.' page asset row(s).';
+    }
+
+    private function restorePageAssetFile(ZipArchive $archive, string $path, array &$copiedFiles): void
+    {
+        $relativePath = $this->pageAssetPathValidator->relativePublicPath($path);
+        $archiveEntry = 'files/public/'.$relativePath;
+        $stream = $archive->getStream($archiveEntry);
+
+        if (! is_resource($stream)) {
+            throw new RuntimeException('Could not read page asset file '.$archiveEntry.' from import package.');
+        }
+
+        $targetPath = public_path($relativePath);
+        $targetDirectory = dirname($targetPath);
+
+        if (! str_starts_with($targetPath, public_path('site').DIRECTORY_SEPARATOR) && $targetPath !== public_path('site')) {
+            throw new RuntimeException('Page asset file path is invalid.');
+        }
+
+        if (! is_dir($targetDirectory)) {
+            mkdir($targetDirectory, 0775, true);
+        }
+
+        file_put_contents($targetPath, stream_get_contents($stream));
+        fclose($stream);
+        $copiedFiles[] = ['public', $relativePath];
     }
 
     private function importSharedSlots(Site $site, array $payload, array &$output): array

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\Site;
@@ -16,6 +17,7 @@ use App\Support\Sites\ExportImport\SiteImportOptions;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
@@ -32,7 +34,7 @@ class SiteExportImportTest extends TestCase
     {
         Storage::fake('site-exports');
         Storage::fake('backups');
-        [$site] = $this->seedCloneableSite();
+        [$site] = $this->seedCloneableSite(withFile: true);
 
         $siteExport = app(SiteExportManager::class)->export($site, false);
 
@@ -190,6 +192,53 @@ class SiteExportImportTest extends TestCase
 
         $this->assertNotFalse($archive->locateName('files/public/media/images/hero.jpg'));
         $archive->close();
+    }
+
+    #[Test]
+    public function export_and_import_include_page_asset_rows_and_optional_public_site_files(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $page = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+
+        File::ensureDirectoryExists(public_path('site/webblocks-ui/about'));
+        File::put(public_path('site/webblocks-ui/about/about.css'), 'body { color: red; }');
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'css',
+            'path' => '/site/webblocks-ui/about/about.css',
+            'load_position' => 'head',
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $pageAssets = json_decode((string) $archive->getFromName('data/page_assets.json'), true);
+        $this->assertCount(1, $pageAssets);
+        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/about/about.css'));
+        $archive->close();
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported With Page Assets',
+            'site_handle' => 'imported-page-assets',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedPage = Page::query()->where('site_id', $importedSite->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+
+        $this->assertDatabaseHas('page_assets', [
+            'page_id' => $importedPage->id,
+            'path' => '/site/webblocks-ui/about/about.css',
+        ]);
+        $this->assertFileExists(public_path('site/webblocks-ui/about/about.css'));
     }
 
     #[Test]
