@@ -56,15 +56,10 @@ class SiteCloneService
                 throw new RuntimeException('Target site already has content. Use overwrite to replace target content safely.');
             }
 
-            $this->syncTargetSiteMetadata($targetSite, $sourceSite, $target, $options);
-
-            if ($options->overwriteTarget) {
-                $this->clearTargetContent($targetSite);
-            }
-
             $counts = [
                 'sites_created' => $targetCreated ? 1 : 0,
                 'sites_updated' => 1,
+                'site_variables_cloned' => 0,
                 'pages_cloned' => 0,
                 'shared_slots_cloned' => 0,
                 'page_translations_cloned' => 0,
@@ -77,6 +72,14 @@ class SiteCloneService
                 'block_asset_links_cloned' => 0,
                 'files_copied' => 0,
             ];
+
+            $this->syncTargetSiteMetadata($targetSite, $sourceSite, $target, $options);
+
+            if ($options->overwriteTarget) {
+                $this->clearTargetContent($targetSite);
+            }
+
+            $this->syncSiteVariables($sourceSite, $targetSite, $counts);
 
             $assetMap = [];
             $pageMap = $this->clonePages($sourceSite, $targetSite, $assetMap, $options, $counts);
@@ -211,6 +214,26 @@ class SiteCloneService
     {
         NavigationItem::query()->where('site_id', $targetSite->id)->delete();
         Page::query()->where('site_id', $targetSite->id)->delete();
+        $targetSite->siteVariables()->delete();
+    }
+
+    private function syncSiteVariables(Site $sourceSite, Site $targetSite, array &$counts): void
+    {
+        $sourceSite->loadMissing('siteVariables');
+
+        $targetSite->siteVariables()->delete();
+
+        foreach ($sourceSite->siteVariables as $siteVariable) {
+            $targetSite->siteVariables()->create([
+                'key' => $siteVariable->key,
+                'label' => $siteVariable->label,
+                'value' => $siteVariable->value,
+                'sort_order' => $siteVariable->sort_order,
+                'is_enabled' => $siteVariable->is_enabled,
+            ]);
+
+            $counts['site_variables_cloned']++;
+        }
     }
 
     private function targetHasCloneableContent(Site $targetSite): bool
@@ -648,6 +671,7 @@ class SiteCloneService
         return [
             'sites_created' => 0,
             'sites_updated' => 1,
+            'site_variables_cloned' => $sourceSite->siteVariables()->count(),
             'pages_cloned' => $pageIds->count(),
             'shared_slots_cloned' => SharedSlot::query()->where('site_id', $sourceSite->id)->count(),
             'page_translations_cloned' => PageTranslation::query()

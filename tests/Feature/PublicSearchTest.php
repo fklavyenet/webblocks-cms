@@ -11,6 +11,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SlotType;
 use App\Models\Site;
+use App\Models\SiteVariable;
 use App\Models\SystemSetting;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Search\PublicSearchIndexer;
@@ -254,6 +255,30 @@ class PublicSearchTest extends TestCase
         $response->assertOk();
         $response->assertSee('Search published content in Campaign Public Name.');
         $response->assertDontSee('Admin Project');
+    }
+
+    #[Test]
+    public function search_indexes_resolved_site_variable_values_instead_of_raw_tokens(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        SiteVariable::query()->create([
+            'site_id' => $site->id,
+            'key' => 'support_email',
+            'label' => 'Support Email',
+            'value' => 'support@example.test',
+            'is_enabled' => true,
+        ]);
+
+        $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Alpha Title', 'alpha-title', 'Contact {{ site.support_email }} today');
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $this->get('/search?q=support@example.test')
+            ->assertOk()
+            ->assertSee('Alpha Title');
+
+        $this->get('/search?q=site.support_email')
+            ->assertOk()
+            ->assertSee('No results matched');
     }
 
     private function seedSearchFoundation(): array

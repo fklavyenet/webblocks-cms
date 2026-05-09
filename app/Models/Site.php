@@ -96,6 +96,11 @@ class Site extends Model
         return $this->hasMany(SiteDomain::class)->orderByDesc('is_primary')->orderBy('domain');
     }
 
+    public function siteVariables(): HasMany
+    {
+        return $this->hasMany(SiteVariable::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function navigationItems(): HasMany
     {
         return $this->hasMany(NavigationItem::class);

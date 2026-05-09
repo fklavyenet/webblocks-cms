@@ -32,7 +32,7 @@ class PublicPagePresenter
             ->values();
 
         $translatedTopLevelBlocks = $this->blockTranslationResolver
-            ->resolveCollection($topLevelBlocks)
+            ->resolveCollection($topLevelBlocks, site: $page->site)
             ->values();
 
         $slots = $page->slots

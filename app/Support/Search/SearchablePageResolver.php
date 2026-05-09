@@ -28,6 +28,7 @@ class SearchablePageResolver
     {
         $page->loadMissing([
             'site.locales',
+            'site.siteVariables',
             'translations.locale',
             'slots.slotType',
             'slots.sharedSlot.slotBlocks.block.blockType',

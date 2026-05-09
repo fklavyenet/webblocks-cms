@@ -31,6 +31,13 @@ class SiteCloneServiceTest extends TestCase
     public function it_clones_site_content_translations_navigation_and_media_references_into_a_new_target_site(): void
     {
         [$sourceSite, $heroAsset, $sourceSharedSlot] = $this->seedCloneableSite();
+        $sourceSite->siteVariables()->create([
+            'key' => 'support_email',
+            'label' => 'Support Email',
+            'value' => 'support@example.test',
+            'sort_order' => 0,
+            'is_enabled' => true,
+        ]);
         $sourceAbout = Page::query()
             ->where('site_id', $sourceSite->id)
             ->whereHas('translations', fn ($query) => $query
@@ -59,6 +66,7 @@ class SiteCloneServiceTest extends TestCase
         $this->assertSame('ui.docs.webblocksui.com.ddev.site', $targetSite->domain);
         $this->assertNotSame($sourceSite->id, $targetSite->id);
         $this->assertSame(2, $result->count('pages_cloned'));
+        $this->assertSame(1, $result->count('site_variables_cloned'));
 
         $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
         $aboutPage = Page::query()
@@ -129,6 +137,11 @@ class SiteCloneServiceTest extends TestCase
             'menu_key' => NavigationItem::MENU_PRIMARY,
             'title' => 'About',
             'page_id' => $aboutPage->id,
+        ]);
+        $this->assertDatabaseHas('site_variables', [
+            'site_id' => $targetSite->id,
+            'key' => 'support_email',
+            'value' => 'support@example.test',
         ]);
 
         $sourceAbout = Page::query()
@@ -284,6 +297,11 @@ class SiteCloneServiceTest extends TestCase
     public function dry_run_returns_summary_without_writing(): void
     {
         [$sourceSite] = $this->seedCloneableSite();
+        $sourceSite->siteVariables()->create([
+            'key' => 'support_email',
+            'value' => 'support@example.test',
+            'is_enabled' => true,
+        ]);
 
         $result = app(SiteCloneService::class)->clone(
             $sourceSite->id,
@@ -298,6 +316,7 @@ class SiteCloneServiceTest extends TestCase
         $this->assertTrue($result->dryRun);
         $this->assertSame(0, Site::query()->where('handle', 'ui-docs-preview')->count());
         $this->assertSame(2, $result->count('pages_cloned'));
+        $this->assertSame(1, $result->count('site_variables_cloned'));
     }
 
     #[Test]

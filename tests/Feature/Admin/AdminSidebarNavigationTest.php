@@ -293,6 +293,9 @@ class AdminSidebarNavigationTest extends TestCase
     {
         $siteAdmin = User::factory()->siteAdmin()->create();
         $editor = User::factory()->editor()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $siteAdmin->sites()->sync([$site->id]);
+        $editor->sites()->sync([$site->id]);
 
         $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
         $siteAdminResponse->assertOk();
@@ -303,6 +306,9 @@ class AdminSidebarNavigationTest extends TestCase
         $editorResponse->assertOk();
         $editorResponse->assertDontSee('href="'.route('admin.sites.index').'"', false);
         $editorResponse->assertDontSee('href="'.route('admin.domains.index').'"', false);
+
+        $this->actingAs($siteAdmin)->get(route('admin.sites.edit', $site))->assertOk();
+        $this->actingAs($editor)->get(route('admin.sites.edit', $site))->assertOk();
     }
 
     #[Test]

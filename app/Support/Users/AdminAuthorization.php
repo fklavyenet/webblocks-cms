@@ -9,6 +9,7 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SiteVariable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -28,6 +29,31 @@ class AdminAuthorization
         $siteId = $this->siteIdFor($resource);
 
         abort_unless($siteId && $user->hasSiteAccess($siteId), 403);
+    }
+
+    public function abortUnlessSiteSettingsView(User $user, Site $site): void
+    {
+        abort_unless($this->canViewSiteSettings($user, $site), 403);
+    }
+
+    public function abortUnlessSiteSettingsMutation(User $user, Site $site): void
+    {
+        abort_unless($this->canMutateSiteSettings($user, $site), 403);
+    }
+
+    public function abortUnlessSiteVariableMutation(User $user, Site $site): void
+    {
+        abort_unless($this->canMutateSiteSettings($user, $site), 403);
+    }
+
+    public function canViewSiteSettings(User $user, Site $site): bool
+    {
+        return $user->isSuperAdmin() || $user->hasSiteAccess($site);
+    }
+
+    public function canMutateSiteSettings(User $user, Site $site): bool
+    {
+        return $user->isSuperAdmin() || ($user->isSiteAdmin() && $user->hasSiteAccess($site));
     }
 
     public function abortUnlessAssetAccess(User $user, Asset $asset): void
@@ -145,7 +171,7 @@ class AdminAuthorization
         return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $user->accessibleSiteIds()));
     }
 
-    private function siteIdFor(Site|Page|NavigationItem|Block|ContactMessage|SharedSlot|int|null $resource): ?int
+    private function siteIdFor(Site|Page|NavigationItem|Block|ContactMessage|SharedSlot|SiteVariable|int|null $resource): ?int
     {
         return match (true) {
             $resource instanceof Site => $resource->id,
@@ -154,6 +180,7 @@ class AdminAuthorization
             $resource instanceof Block => $resource->page?->site_id ?? $resource->page()->value('site_id'),
             $resource instanceof ContactMessage => $resource->page?->site_id ?? $resource->page()->value('site_id'),
             $resource instanceof SharedSlot => $resource->site_id,
+            $resource instanceof SiteVariable => $resource->site_id,
             is_numeric($resource) => (int) $resource,
             default => null,
         };

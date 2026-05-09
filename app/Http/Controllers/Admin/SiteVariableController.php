@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SiteVariableRequest;
+use App\Models\Site;
+use App\Models\SiteVariable;
+use App\Support\Users\AdminAuthorization;
+use Illuminate\Http\RedirectResponse;
+
+class SiteVariableController extends Controller
+{
+    public function __construct(
+        private readonly AdminAuthorization $authorization,
+    ) {}
+
+    public function store(SiteVariableRequest $request, Site $site): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteVariableMutation($request->user(), $site);
+
+        $site->siteVariables()->create($request->siteVariableData());
+
+        return redirect()
+            ->to($request->input('_site_variable_close_url', route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])))
+            ->with('status', 'Site variable added.');
+    }
+
+    public function update(SiteVariableRequest $request, Site $site, SiteVariable $siteVariable): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteVariableMutation($request->user(), $site);
+        abort_unless((int) $siteVariable->site_id === (int) $site->id, 404);
+
+        $siteVariable->update($request->siteVariableData());
+
+        return redirect()
+            ->to($request->input('_site_variable_close_url', route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])))
+            ->with('status', 'Site variable updated.');
+    }
+
+    public function destroy(Site $site, SiteVariable $siteVariable): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteVariableMutation(request()->user(), $site);
+        abort_unless((int) $siteVariable->site_id === (int) $site->id, 404);
+
+        $siteVariable->delete();
+
+        return redirect()
+            ->route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])
+            ->with('status', 'Site variable deleted.');
+    }
+}

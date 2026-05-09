@@ -11,6 +11,7 @@ use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SiteVariable;
 use App\Models\User;
 use App\Support\Locales\LocaleResolver;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -181,7 +182,7 @@ class SiteLocaleManagementTest extends TestCase
             'locale_ids' => [$defaultLocale->id],
         ]);
 
-        $response->assertRedirect(route('admin.sites.edit', $site));
+        $response->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'site']));
         $this->assertSame('default-site', $site->fresh()->handle);
         $this->assertSame('primary.example.test', $site->fresh()->domain);
         $this->assertSame('Primary Public Site', $site->fresh()->display_name);
@@ -208,7 +209,7 @@ class SiteLocaleManagementTest extends TestCase
             'is_primary' => 1,
         ]);
 
-        $response->assertRedirect(route('admin.sites.edit', $site));
+        $response->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'site']));
         $this->assertSame('imported.example.test', $site->fresh()->domain);
         $this->assertTrue($site->fresh()->hasEnabledLocale($defaultLocale));
     }
@@ -234,7 +235,7 @@ class SiteLocaleManagementTest extends TestCase
             'locale_ids' => [$turkish->id],
         ]);
 
-        $response->assertRedirect(route('admin.sites.edit', $site));
+        $response->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'site']));
         $this->assertTrue($site->fresh()->hasEnabledLocale($defaultLocale));
         $this->assertTrue($site->fresh()->hasEnabledLocale($turkish));
     }
@@ -253,8 +254,92 @@ class SiteLocaleManagementTest extends TestCase
         $response->assertSee('disabled', false);
         $response->assertSee('Branding');
         $response->assertSee('SEO Defaults');
+        $response->assertSee('Variables');
+        $response->assertDontSee('<strong>Domains</strong>', false);
         $response->assertSee('Public display name');
         $response->assertSee('Default meta title');
+    }
+
+    #[Test]
+    public function site_admin_can_manage_site_variables_for_assigned_site(): void
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+
+        $createResponse = $this->actingAs($user)->post(route('admin.sites.variables.store', $site), [
+            'key' => 'Support Email',
+            'label' => 'Support Email',
+            'value' => 'help@example.test',
+            'sort_order' => 2,
+            'is_enabled' => 1,
+            '_site_tab' => 'variables',
+        ]);
+
+        $createResponse->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
+        $siteVariable = SiteVariable::query()->where('site_id', $site->id)->where('key', 'support_email')->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.sites.variables.update', ['site' => $site, 'site_variable' => $siteVariable]), [
+            'key' => 'support_email',
+            'label' => 'Support Inbox',
+            'value' => 'support@example.test',
+            'sort_order' => 3,
+            'is_enabled' => 0,
+            '_site_tab' => 'variables',
+        ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
+
+        $this->assertDatabaseHas('site_variables', [
+            'id' => $siteVariable->id,
+            'label' => 'Support Inbox',
+            'value' => 'support@example.test',
+            'sort_order' => 3,
+            'is_enabled' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('admin.sites.variables.destroy', ['site' => $site, 'site_variable' => $siteVariable]))
+            ->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
+
+        $this->assertDatabaseMissing('site_variables', ['id' => $siteVariable->id]);
+    }
+
+    #[Test]
+    public function editor_can_view_site_variables_but_cannot_mutate_site_settings(): void
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $site->siteVariables()->create([
+            'key' => 'support_email',
+            'label' => 'Support Email',
+            'value' => 'help@example.test',
+            'sort_order' => 0,
+            'is_enabled' => true,
+        ]);
+        $editor = User::factory()->editor()->create();
+        $editor->sites()->sync([$site->id]);
+
+        $viewResponse = $this->actingAs($editor)->get(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
+
+        $viewResponse->assertOk();
+        $viewResponse->assertSee('Read only');
+        $viewResponse->assertSee('{{ site.support_email }}');
+        $viewResponse->assertDontSee('Add Variable');
+        $viewResponse->assertDontSee('Manage Domains');
+
+        $this->actingAs($editor)
+            ->put(route('admin.sites.update', $site), [
+                'name' => 'Blocked update',
+                'handle' => $site->handle,
+                'domain' => $site->domain,
+                'is_primary' => 1,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($editor)
+            ->post(route('admin.sites.variables.store', $site), [
+                'key' => 'blocked_key',
+                'value' => 'blocked',
+            ])
+            ->assertForbidden();
     }
 
     private function imageAsset(string $path, string $filename): Asset

@@ -54,6 +54,7 @@ class ImportDataMapper
                 $site = $this->createSite($payload['site'], $options, $output);
                 $this->importSiteDomains($site, $payload, $options, $output);
                 $this->syncSiteLocales($site, $payload, $localeMap, $output);
+                $this->importSiteVariables($site, $payload, $output);
 
                 $folderMap = $this->importAssetFolders($payload, $output);
                 $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
@@ -233,6 +234,35 @@ class ImportDataMapper
 
         $site->locales()->sync($sync);
         $output[] = 'Imported '.count($sync).' site locale assignment(s).';
+    }
+
+    private function importSiteVariables(Site $site, array $payload, array &$output): void
+    {
+        $site->siteVariables()->delete();
+
+        $rows = collect($payload['site_variables'] ?? [])
+            ->map(function (array $siteVariable) use ($site): array {
+                return [
+                    'site_id' => $site->id,
+                    'key' => str((string) ($siteVariable['key'] ?? ''))->trim()->snake()->replace('-', '_')->lower()->toString(),
+                    'label' => $siteVariable['label'] ?? null,
+                    'value' => $siteVariable['value'] ?? null,
+                    'sort_order' => max(0, (int) ($siteVariable['sort_order'] ?? 0)),
+                    'is_enabled' => (bool) ($siteVariable['is_enabled'] ?? true),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })
+            ->filter(fn (array $siteVariable) => preg_match('/^[a-z][a-z0-9_]*$/', $siteVariable['key']) === 1)
+            ->unique('key')
+            ->values();
+
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $site->siteVariables()->insert($rows->all());
+        $output[] = 'Imported '.$rows->count().' site variable record(s).';
     }
 
     private function importAssetFolders(array $payload, array &$output): array

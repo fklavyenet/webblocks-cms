@@ -59,6 +59,7 @@ Use it to move one site's content between installs.
 Export / Import covers site-scoped content such as:
 
 - site record and locale assignments
+- site variables stored in `site_variables`
 - pages and page translations
 - page assets stored in `page_assets`
 - slots and blocks
@@ -83,6 +84,12 @@ Shared Slots are exported and imported as first-class site content:
 - Page payloads preserve each page's `Public Shell` so docs-shell pages keep compatible docs Shared Slot assignments after import.
 - Hidden Shared Slot source pages are kept internal and are not treated as ordinary user-facing pages in the package.
 - Shared Slot revision history is excluded from export/import, matching the current page revision portability boundary.
+
+Site Variables are also portable site content:
+
+- `site_variables` rows are exported and imported with the site package.
+- Variable keys, labels, values, sort order, and enabled state are preserved.
+- Public token behavior is not evaluated during export or import; raw values are transferred as stored.
 
 It does not include install-global runtime data such as users, backups, update history, sessions, or contact submissions.
 
@@ -171,6 +178,7 @@ Site Clone is different from Export / Import:
 - Site Clone works inside the current install
 - Export / Import is for moving a site package between installs
 - Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, media references, and page-level `Public Shell` settings, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind
+- Both Site Clone and Export / Import also include site-scoped `site_variables`.
 - Shared Slot revision history is not cloned, matching the current page revision clone boundary.
 
 ## When To Use Which Tool

@@ -43,6 +43,7 @@ class SiteRequest extends FormRequest
             'seo_keywords' => trim((string) $this->input('seo_keywords')),
             'favicon_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('favicon_asset_id') ?: null) : null,
             'social_image_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('social_image_asset_id') ?: null) : null,
+            '_site_tab' => trim((string) $this->input('_site_tab', 'site')),
         ]);
     }
 
@@ -69,7 +70,19 @@ class SiteRequest extends FormRequest
                 ->where(fn ($enabled) => $enabled
                     ->where('is_enabled', true)
                     ->when($preservedLocaleIds !== [], fn ($preserved) => $preserved->orWhereIn('id', $preservedLocaleIds))))],
+            '_site_tab' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        $site = $this->route('site');
+
+        if ($site instanceof Site) {
+            return route('admin.sites.edit', ['site' => $site, 'tab' => $this->input('_site_tab', 'site')]);
+        }
+
+        return parent::getRedirectUrl();
     }
 
     private function normalizedLocaleIds(Collection $submittedLocaleIds, ?Site $site, int $defaultLocaleId): Collection

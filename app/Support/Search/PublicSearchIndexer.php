@@ -193,7 +193,7 @@ class PublicSearchIndexer
                         ->values();
 
                     return $this->extractBlockTree(
-                        $this->blockTranslationResolver->resolveCollection($blocks, $locale),
+                        $this->blockTranslationResolver->resolveCollection($blocks, $locale, $page->site),
                     );
                 }
 
