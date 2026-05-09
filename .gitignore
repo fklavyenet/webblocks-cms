@@ -49,6 +49,7 @@ Thumbs.db
 /storage/app/public/media/*
 /storage/app/public/releases/*
 /storage/app/releases/*
+/storage/project/block-render-snapshots/
 
 # Keep public repo files
 !README.md
