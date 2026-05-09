@@ -100,6 +100,7 @@ class BlockController extends Controller
                     'block_type_id' => $request->integer('block_type_id') ?: null,
                     'picker' => $request->integer('block_type_id') ? 1 : null,
                     'locale' => $this->requestedLocaleCode($request),
+                    'return_url' => $request->input('return_url'),
                 ], fn ($value) => $value !== null))->throwResponse();
             }
 
@@ -110,6 +111,7 @@ class BlockController extends Controller
                     'page' => $request->integer('page_id'),
                     'slot' => $pageSlotId,
                     'block_type_id' => $request->integer('block_type_id') ?: null,
+                    'return_url' => $request->input('return_url'),
                 ])->throwResponse();
             }
         }
@@ -203,7 +205,7 @@ class BlockController extends Controller
 
         if ($sharedSlot) {
             return redirect()
-                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode])
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
                 ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
                 ->with('status', 'Block created successfully.');
         }
@@ -212,7 +214,7 @@ class BlockController extends Controller
         $previewUrl = $block->page->publicUrl($localeCode);
 
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block created successfully.');
 
@@ -241,6 +243,7 @@ class BlockController extends Controller
             return redirect()->route('admin.shared-slots.blocks.edit', [
                 'shared_slot' => $sharedSlot,
                 'edit' => $block->id,
+                'return_url' => $request->input('return_url'),
             ])->throwResponse();
         }
 
@@ -252,6 +255,7 @@ class BlockController extends Controller
                     'page' => $block->page_id,
                     'slot' => $pageSlotId,
                     'edit' => $block->id,
+                    'return_url' => $request->input('return_url'),
                 ])->throwResponse();
             }
         }
@@ -341,7 +345,7 @@ class BlockController extends Controller
 
         if ($sharedSlot) {
             return redirect()
-                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode])
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
                 ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
                 ->with('status', 'Block updated successfully.');
         }
@@ -350,7 +354,7 @@ class BlockController extends Controller
         $previewUrl = $block->page->publicUrl($localeCode);
 
         $redirect = redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode])
+            ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
             ->with('status', 'Block updated successfully.');
 
@@ -412,13 +416,13 @@ class BlockController extends Controller
 
         if ($sharedSlot) {
             return redirect()
-                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
                 ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
                 ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
         }
 
         return redirect()
-            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request())])
+            ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
             ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
             ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
     }
@@ -492,13 +496,13 @@ class BlockController extends Controller
         if ($sharedSlot) {
             if (! $moved) {
                 return redirect()
-                    ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                    ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
                     ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
                     ->with('status', 'Block is already at the edge of its group.');
             }
 
             return redirect()
-                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request())])
+                ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
                 ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
                 ->with('status', 'Block order updated successfully.');
         }
@@ -1040,6 +1044,7 @@ class BlockController extends Controller
             'page' => $block->page_id,
             'slot' => $pageSlotId ?: $block->slot_type_id,
             'locale' => $this->requestedLocaleCode(request()),
+            'return_url' => request('return_url'),
         ];
     }
 

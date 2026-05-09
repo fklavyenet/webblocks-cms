@@ -7,6 +7,7 @@
     $slotSharedSlotOptions = $slotSharedSlotOptions ?? collect();
     $canCreateSharedSlots = $canCreateSharedSlots ?? false;
     $sharedSlotSourcesAvailable = $sharedSlotSourcesAvailable ?? false;
+    $pageReturnUrl = $pageReturnUrl ?? route('admin.pages.index', ['site' => $page->site_id]);
 @endphp
 
 <div class="wb-card">
@@ -34,6 +35,7 @@
                         <form method="POST" action="{{ route('admin.pages.slots.store', $page) }}">
                             @csrf
                             <input type="hidden" name="slot_type_id" value="{{ $slotType->id }}">
+                            <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                             <button type="submit" class="wb-dropdown-item">{{ $slotType->name }}</button>
                         </form>
                     @empty
@@ -152,10 +154,10 @@
                                             @endif
 
                                             @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
-                                                <a href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>
+                                                <a href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>
                                             @else
                                                 <a
-                                                    href="{{ route('admin.pages.slots.blocks', [$page, $pageSlot]) }}"
+                                                    href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}"
                                                     class="wb-btn wb-btn-secondary wb-btn-sm"
                                                     title="Preserved page-owned blocks, not currently rendered"
                                                     aria-label="Edit preserved page-owned blocks"
@@ -167,15 +169,18 @@
                                             <div class="wb-action-group">
                                                 <form method="POST" action="{{ route('admin.pages.slots.move-up', [$page, $pageSlot]) }}">
                                                     @csrf
+                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                                                     <button type="submit" class="wb-action-btn" title="Move slot up" aria-label="Move slot up" @disabled($loop->first)><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.pages.slots.move-down', [$page, $pageSlot]) }}">
                                                     @csrf
+                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                                                     <button type="submit" class="wb-action-btn" title="Move slot down" aria-label="Move slot down" @disabled($loop->last)><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.pages.slots.destroy', [$page, $pageSlot]) }}">
                                                     @csrf
                                                     @method('DELETE')
+                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                                                     <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete slot" aria-label="Delete slot"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                                 </form>
                                             </div>
@@ -242,6 +247,7 @@
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="slot_id" value="{{ $pageSlot->id }}">
+                            <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
                             <div class="wb-modal-body wb-stack wb-gap-4">
                                 <div class="wb-stack wb-gap-1">

@@ -32,6 +32,7 @@
                 <input type="hidden" name="_page_asset_type" value="{{ $asset->type }}">
                 <input type="hidden" name="_page_asset_close_url" value="{{ $closeUrl }}">
                 <input type="hidden" name="_page_settings_tab" value="page-assets">
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
                     @if ($errors->any())

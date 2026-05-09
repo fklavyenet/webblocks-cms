@@ -51,7 +51,12 @@
                 <strong>Blocks</strong>
                 <span class="wb-text-sm wb-text-muted">Editing content for {{ strtoupper($activeLocale->code) }}. Structure and ordering remain canonical for this Shared Slot.</span>
             </div>
-            <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+            <div class="wb-cluster wb-cluster-2">
+                @if (! $blocks->isEmpty())
+                    <a href="{{ $slotBlockRoute(['delete_all' => 1]) }}" class="wb-btn wb-btn-ghost wb-text-danger" aria-haspopup="dialog">Delete All Blocks</a>
+                @endif
+                <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+            </div>
         </div>
 
         <div class="wb-card-body wb-border-b">
@@ -153,6 +158,7 @@
         'slotBlockRoute' => $slotBlockRoute,
         'slotDeleteModalBlock' => $slotDeleteModalBlock,
         'slotDeleteModalMeta' => $slotDeleteModalMeta,
+        'slotDeleteAllModalMeta' => $slotDeleteAllModalMeta,
         'activeLocale' => $activeLocale,
     ])
 @endpush

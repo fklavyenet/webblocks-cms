@@ -139,8 +139,10 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->name('reports.visitors.index');
     Route::get('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'editSlotBlocks'])->name('pages.slots.blocks');
     Route::post('/pages/{page}/slots/{slot}/blocks/reorder', [PageController::class, 'reorderSlotBlocks'])->name('pages.slots.blocks.reorder');
+    Route::delete('/pages/{page}/slots/{slot}/blocks', [PageController::class, 'destroySlotBlocks'])->name('pages.slots.blocks.destroy-all');
     Route::get('/shared-slots/{shared_slot}/blocks', [SharedSlotController::class, 'editBlocks'])->name('shared-slots.blocks.edit')->missing($missingSharedSlot);
     Route::post('/shared-slots/{shared_slot}/blocks/reorder', [SharedSlotController::class, 'reorderBlocks'])->name('shared-slots.blocks.reorder')->missing($missingSharedSlot);
+    Route::delete('/shared-slots/{shared_slot}/blocks', [SharedSlotController::class, 'destroyBlocks'])->name('shared-slots.blocks.destroy-all')->missing($missingSharedSlot);
     Route::get('/pages/{page}/translations/{locale}/create', [PageTranslationController::class, 'create'])->name('pages.translations.create');
     Route::post('/pages/{page}/translations/{locale}', [PageTranslationController::class, 'store'])->name('pages.translations.store');
     Route::get('/pages/{page}/translations/{translation}/edit', [PageTranslationController::class, 'edit'])->name('pages.translations.edit');

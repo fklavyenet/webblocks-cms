@@ -1,6 +1,7 @@
 @php
     $translationPublicUrl = $translation->exists ? $page->publicUrl($locale->code) : null;
-    $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
+    $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
+    $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $siteName = $page->site?->name ?? 'Site';
     $selectedOgImage = old('og_image_asset_id')
         ? $assetPickerAssets->firstWhere('id', (int) old('og_image_asset_id'))
@@ -11,7 +12,7 @@
 
 @section('content')
     @include('admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.strtoupper($locale->code).'</span></li></ol></nav>',
         'title' => $pageTitle,
         'description' => 'Edit page name, routing, and SEO overrides for this locale. Block content stays shared in this phase.',
         'actions' => $translationPublicUrl ? '<a href="'.$translationPublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>Open</span></a>' : '',
@@ -24,6 +25,7 @@
         @if ($formMethod !== 'POST')
             @method($formMethod)
         @endif
+        <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
         <div class="wb-card">
             <div class="wb-card-body">
@@ -123,6 +125,6 @@
             </div>
         </div>
 
-        <x-admin.form-actions :cancel-url="route('admin.pages.edit', $page)" />
+        <x-admin.form-actions :cancel-url="route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl])" />
     </form>
 @endsection

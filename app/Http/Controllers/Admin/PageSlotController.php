@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Support\Pages\PageRevisionManager;
+use App\Support\Pages\PageIndexState;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,7 @@ class PageSlotController extends Controller
 {
     public function __construct(
         private readonly PageRevisionManager $revisionManager,
+        private readonly PageIndexState $pageIndexState,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -192,7 +194,10 @@ class PageSlotController extends Controller
     private function redirectToEdit(Page $page, string $status): RedirectResponse
     {
         $redirect = redirect()
-            ->route('admin.pages.edit', $page)
+            ->route('admin.pages.edit', array_filter([
+                'page' => $page,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest(request()),
+            ], fn (mixed $value) => $value !== null && $value !== ''))
             ->with('status', $status);
 
         if ($page->isPublished() && $page->publicUrl()) {

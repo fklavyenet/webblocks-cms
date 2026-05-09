@@ -8,6 +8,7 @@
     $slotCount = $page->slots_count ?? ($page->relationLoaded('slots') ? $page->slots->count() : $page->slots()->count());
     $blockCount = $page->blocks_count ?? ($page->relationLoaded('blocks') ? $page->blocks->count() : $page->blocks()->count());
     $closeUrl = $closeUrl ?? route('admin.pages.edit', $page);
+    $pageReturnUrl = $pageReturnUrl ?? route('admin.pages.index');
     $publishedLabel = $publishedAt instanceof \Illuminate\Support\Carbon
         ? $publishedAt->format('Y-m-d H:i')
         : ($publishedAt ?: 'Not recorded');
@@ -136,7 +137,7 @@
 
             <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2">
-                    <a href="{{ route('admin.pages.edit', $page) }}" class="wb-btn wb-btn-primary">Edit Page</a>
+                    <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-primary">Edit Page</a>
 
                     @if ($page->isPublished() && $defaultPublicUrl)
                         <a href="{{ $defaultPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary">Open Public Page</a>
