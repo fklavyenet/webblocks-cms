@@ -19,6 +19,7 @@ class SiteTransferPackage
         'data/pages.json',
         'data/page_translations.json',
         'data/page_slots.json',
+        'data/page_assets.json',
         'data/blocks.json',
         'data/block_assets.json',
         'data/block_text_translations.json',

@@ -9,6 +9,7 @@ use App\Models\BlockContactFormTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
@@ -58,6 +59,7 @@ class PageDuplicator
 
             $lockedPage->translations()->lockForUpdate()->get();
             $lockedPage->slots()->lockForUpdate()->get();
+            $lockedPage->pageAssets()->lockForUpdate()->get();
             $blocks = Block::query()
                 ->where('page_id', $lockedPage->id)
                 ->with(['blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
@@ -122,6 +124,20 @@ class PageDuplicator
                     'shared_slot_id' => $sharedSlotId,
                     'sort_order' => $slot->sort_order,
                     'settings' => PageSlot::sanitizeSettings($slot->settings),
+                ]);
+            }
+
+            foreach ($lockedPage->pageAssets()->orderBy('sort_order')->orderBy('id')->get() as $pageAsset) {
+                PageAsset::query()->create([
+                    'page_id' => $newPage->id,
+                    'type' => $pageAsset->type,
+                    'path' => $pageAsset->path,
+                    'load_position' => $pageAsset->load_position,
+                    'is_defer' => $pageAsset->is_defer,
+                    'is_async' => $pageAsset->is_async,
+                    'is_module' => $pageAsset->is_module,
+                    'is_enabled' => $pageAsset->is_enabled,
+                    'sort_order' => $pageAsset->sort_order,
                 ]);
             }
 

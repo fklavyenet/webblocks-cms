@@ -18,6 +18,18 @@ Install-specific or site-specific public overrides remain under:
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
+## Page Assets
+
+Page-scoped CSS and JS files can now be referenced relationally from `page_assets`.
+
+- V1 accepts only local `/site/...` paths such as `/site/webblocksui/playground/playground.css` or `/site/webblocksui/playground/playground.js`
+- CSS page assets render in the public `<head>`
+- JS page assets render near the public body-end script area
+- Only the owning public page renders its configured page assets
+- Page Assets are not rendered in admin layouts
+- Page Assets are stored in `page_assets`, not in `pages.settings`
+- When site Export / Import includes media or assets, referenced `/site/...` physical files are also packaged and restored
+
 ## Site Branding Assets
 
 Public favicon and social sharing artwork are now selected from the shared Media library on each Site.

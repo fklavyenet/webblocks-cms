@@ -5,6 +5,7 @@ namespace App\Support\Pages;
 use App\Models\Block;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageRevision;
 use App\Models\PageSlot;
 use App\Models\User;
@@ -67,6 +68,7 @@ class PageRevisionManager
             'site',
             'translations.locale',
             'slots.slotType',
+            'pageAssets',
             'blocks' => fn ($query) => $query
                 ->with([
                     'blockAssets',
@@ -172,6 +174,20 @@ class PageRevisionManager
                     'slot_type_id' => $slot->slot_type_id,
                     'sort_order' => $slot->sort_order,
                     'settings' => PageSlot::sanitizeSettings($slot->settings),
+                ])
+                ->all(),
+            'page_assets' => $page->pageAssets
+                ->sortBy(fn (PageAsset $asset) => sprintf('%010d-%010d', (int) $asset->sort_order, (int) $asset->id))
+                ->values()
+                ->map(fn (PageAsset $asset) => [
+                    'type' => $asset->type,
+                    'path' => $asset->path,
+                    'load_position' => $asset->load_position,
+                    'is_defer' => $asset->is_defer,
+                    'is_async' => $asset->is_async,
+                    'is_module' => $asset->is_module,
+                    'is_enabled' => $asset->is_enabled,
+                    'sort_order' => $asset->sort_order,
                 ])
                 ->all(),
             'blocks' => $blocks
@@ -286,6 +302,21 @@ class PageRevisionManager
                 'slot_type_id' => $slot['slot_type_id'],
                 'sort_order' => $slot['sort_order'],
                 'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
+            ]);
+        }
+
+        $page->pageAssets()->delete();
+
+        foreach (Arr::get($snapshot, 'page_assets', []) as $pageAsset) {
+            $page->pageAssets()->create([
+                'type' => $pageAsset['type'],
+                'path' => $pageAsset['path'],
+                'load_position' => $pageAsset['load_position'] ?? PageAsset::defaultLoadPositionFor($pageAsset['type']),
+                'is_defer' => (bool) ($pageAsset['is_defer'] ?? false),
+                'is_async' => (bool) ($pageAsset['is_async'] ?? false),
+                'is_module' => (bool) ($pageAsset['is_module'] ?? false),
+                'is_enabled' => (bool) ($pageAsset['is_enabled'] ?? true),
+                'sort_order' => (int) ($pageAsset['sort_order'] ?? 0),
             ]);
         }
 

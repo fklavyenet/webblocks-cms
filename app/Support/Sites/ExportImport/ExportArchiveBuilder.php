@@ -4,6 +4,7 @@ namespace App\Support\Sites\ExportImport;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Pages\PageAssetPathValidator;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -12,6 +13,7 @@ class ExportArchiveBuilder
 {
     public function __construct(
         private readonly SiteTransferPathGuard $pathGuard,
+        private readonly PageAssetPathValidator $pageAssetPathValidator,
     ) {}
 
     public function build(string $archivePath, array $manifest, array $payload, bool $includesMedia, array &$output = []): int
@@ -52,6 +54,22 @@ class ExportArchiveBuilder
                     $archiveEntry = 'files/'.$diskName.'/'.$sourcePath;
                     $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive file path');
                     $archive->addFile($disk->path($sourcePath), $archiveEntry);
+                    $fileCount++;
+                }
+
+                foreach ($payload['page_assets'] ?? [] as $pageAsset) {
+                    $sourcePath = $this->pageAssetPathValidator->relativePublicPath((string) ($pageAsset['path'] ?? ''));
+                    $absolutePath = public_path($sourcePath);
+
+                    if (! is_file($absolutePath)) {
+                        $output[] = 'Skipped missing page asset file '.$sourcePath.'.';
+
+                        continue;
+                    }
+
+                    $archiveEntry = 'files/public/'.$sourcePath;
+                    $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive file path');
+                    $archive->addFile($absolutePath, $archiveEntry);
                     $fileCount++;
                 }
             }

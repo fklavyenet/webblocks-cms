@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SlotType;
@@ -191,6 +192,28 @@ class PublicSearchTest extends TestCase
             ->assertOk()
             ->assertSee('Foundation')
             ->assertSee('/p/foundation');
+    }
+
+    #[Test]
+    public function page_asset_paths_are_not_indexed_as_search_content(): void
+    {
+        [$site, $locale, $slotType, $plainTextType] = $this->seedSearchFoundation();
+        $page = $this->pageWithText($site, $locale, $slotType, $plainTextType, 'Alpha Title', 'alpha-title', 'Alpha content');
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/webblocksui/playground/playground.js',
+            'load_position' => 'body_end',
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        app(PublicSearchIndexer::class)->rebuild();
+
+        $this->get('/search?q=playground.js')
+            ->assertOk()
+            ->assertSee('No results matched');
     }
 
     #[Test]

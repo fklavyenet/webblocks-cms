@@ -57,6 +57,9 @@
         @if (is_file($siteCssPath))
             <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
         @endif
+        @foreach (($headPageAssets ?? collect()) as $pageAsset)
+            <link rel="stylesheet" href="{{ $pageAsset->path }}">
+        @endforeach
     </head>
     <body class="wb-public-body">
         @if (! isset($page))
@@ -117,5 +120,8 @@
         @if (is_file($publicJsAssets['sidebar-navigation']))
             <script src="{{ asset('assets/webblocks-cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
         @endif
+        @foreach (($bodyEndPageAssets ?? collect()) as $pageAsset)
+            <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @endif @if ($pageAsset->is_defer && ! $pageAsset->is_async) defer @endif></script>
+        @endforeach
     </body>
 </html>

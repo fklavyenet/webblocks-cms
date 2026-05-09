@@ -51,6 +51,7 @@ class PageController extends Controller
             'site',
             'translations.locale',
             'slots.slotType',
+            'pageAssets',
             'blocks' => fn ($query) => $query
                 ->where('status', 'published')
                 ->with($this->publishedBlockRelations())

@@ -9,17 +9,20 @@ use App\Models\BlockAsset;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageAsset;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
+use App\Support\Pages\PageAssetPathValidator;
 use Illuminate\Support\Collection;
 
 class SiteExportDataBuilder
 {
     public function __construct(
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
+        private readonly PageAssetPathValidator $pageAssetPathValidator,
     ) {}
 
     public function build(Site $site, bool $includesMedia): array
@@ -55,6 +58,7 @@ class SiteExportDataBuilder
             ->where('site_id', $site->id)
             ->orderBy('id')
             ->get();
+        $pageAssets = PageAsset::query()->whereIn('page_id', $pageIds)->orderBy('sort_order')->orderBy('id')->get();
 
         $assetIds = $includesMedia
             ? collect()
@@ -161,6 +165,20 @@ class SiteExportDataBuilder
                 'settings' => $slot->getRawOriginal('settings'),
                 'created_at' => $slot->created_at?->toDateTimeString(),
                 'updated_at' => $slot->updated_at?->toDateTimeString(),
+            ])->all(),
+            'page_assets' => $pageAssets->map(fn (PageAsset $pageAsset) => [
+                'id' => $pageAsset->id,
+                'page_id' => $pageAsset->page_id,
+                'type' => $pageAsset->type,
+                'path' => $pageAsset->path,
+                'load_position' => $pageAsset->load_position,
+                'is_defer' => (bool) $pageAsset->is_defer,
+                'is_async' => (bool) $pageAsset->is_async,
+                'is_module' => (bool) $pageAsset->is_module,
+                'is_enabled' => (bool) $pageAsset->is_enabled,
+                'sort_order' => $pageAsset->sort_order,
+                'created_at' => $pageAsset->created_at?->toDateTimeString(),
+                'updated_at' => $pageAsset->updated_at?->toDateTimeString(),
             ])->all(),
             'shared_slots' => $sharedSlots->map(function (SharedSlot $sharedSlot) use ($sharedSlotSourcePages) {
                 $sourcePage = $sharedSlotSourcePages->get($sharedSlot->id);
@@ -306,6 +324,7 @@ class SiteExportDataBuilder
                 'pages' => $pages->count(),
                 'page_translations' => PageTranslation::query()->whereIn('page_id', $pageIds)->count(),
                 'page_slots' => PageSlot::query()->whereIn('page_id', $pageIds)->count(),
+                'page_assets' => $pageAssets->count(),
                 'shared_slots' => $sharedSlots->count(),
                 'blocks' => $blocks->count(),
                 'block_assets' => $includesMedia ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() : 0,
@@ -316,6 +335,17 @@ class SiteExportDataBuilder
                 'navigation_items' => $navigationItems->count(),
                 'asset_folders' => $assetFolders->count(),
                 'assets' => $assets->count(),
+                'page_asset_files' => $includesMedia
+                    ? $pageAssets->filter(function (PageAsset $pageAsset): bool {
+                        try {
+                            $this->pageAssetPathValidator->relativePublicPath($pageAsset->path);
+
+                            return true;
+                        } catch (\InvalidArgumentException) {
+                            return false;
+                        }
+                    })->count()
+                    : 0,
             ],
         ];
     }

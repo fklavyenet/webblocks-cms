@@ -1,5 +1,6 @@
 @php
     $pageTitle = 'Edit Page: '.$page->title;
+    $settingsTab = old('_page_settings_tab', 'general');
     $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
     $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
     $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
@@ -82,14 +83,40 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <strong>Page Settings</strong>
-            <span class="wb-text-sm wb-text-muted">Update core page fields only</span>
+            <span class="wb-text-sm wb-text-muted">Manage general settings and optional page-specific assets</span>
         </div>
         <div class="wb-card-body">
             <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-4">
                 @csrf
                 @method('PUT')
 
-                @include('admin.pages._form', ['canEditContent' => $canEditContent])
+                <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
+
+                <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
+                    <div class="wb-tabs-nav" role="tablist" aria-label="Page settings sections">
+                        <button type="button" class="wb-tabs-btn {{ $settingsTab === 'general' ? 'is-active' : '' }}" data-wb-tab="page-settings-general-panel" aria-selected="{{ $settingsTab === 'general' ? 'true' : 'false' }}" @if ($settingsTab !== 'general') tabindex="-1" @endif>General</button>
+                        @if ($canManagePageAssets)
+                            <button type="button" class="wb-tabs-btn {{ $settingsTab === 'page-assets' ? 'is-active' : '' }}" data-wb-tab="page-settings-assets-panel" aria-selected="{{ $settingsTab === 'page-assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'page-assets') tabindex="-1" @endif>Page Assets</button>
+                        @elseif ($page->pageAssets->isNotEmpty())
+                            <button type="button" class="wb-tabs-btn {{ $settingsTab === 'page-assets' ? 'is-active' : '' }}" data-wb-tab="page-settings-assets-panel" aria-selected="{{ $settingsTab === 'page-assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'page-assets') tabindex="-1" @endif>Page Assets</button>
+                        @endif
+                    </div>
+
+                    <div class="wb-tabs-panels">
+                        <div class="wb-tabs-panel {{ $settingsTab === 'general' ? 'is-active' : '' }}" id="page-settings-general-panel">
+                            @include('admin.pages._form', ['canEditContent' => $canEditContent])
+                        </div>
+
+                        @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())
+                            <div class="wb-tabs-panel {{ $settingsTab === 'page-assets' ? 'is-active' : '' }}" id="page-settings-assets-panel">
+                                @include('admin.pages.partials.page-assets-tab', [
+                                    'page' => $page,
+                                    'canManagePageAssets' => $canManagePageAssets,
+                                ])
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </form>
         </div>
     </div>

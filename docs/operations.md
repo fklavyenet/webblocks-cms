@@ -60,12 +60,20 @@ Export / Import covers site-scoped content such as:
 
 - site record and locale assignments
 - pages and page translations
+- page assets stored in `page_assets`
 - slots and blocks
 - Shared Slots and Shared Slot block trees
 - page-level Public Shell settings such as `default` and `docs`
 - block translations
 - navigation items
 - optional media/assets
+
+Page Assets travel through site portability in two layers:
+
+- `page_assets` rows are always included in site export and import payloads.
+- When `Include media/assets` is enabled, referenced `/site/...` public files are also packaged under the export archive and restored back into `public/site/...` on import.
+- When `Include media/assets` is disabled, page asset metadata still imports, but the referenced physical files must already exist on the target install.
+- Missing page asset files are reported during export and skipped rather than crashing the full package build in the current version.
 
 Shared Slots are exported and imported as first-class site content:
 
