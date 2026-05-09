@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Normalize public named JavaScript asset loading so WebBlocks UI, CMS public JS, and page-scoped public JS render from the document `<head>` with `defer` instead of appending normal public scripts at the end of `<body>`.
+- Standardize site handle normalization to canonical lowercase hyphenated handles, preserving separators such as dots and underscores as hyphens instead of collapsing them away.
+- Standardize `public/site` override conventions around `public/site/{site_handle}/...`, including `css/site.css` and `pages/{page_slug}/page.{css,js}` site and page asset paths.
+- Fix tests that generated `public/site/webblocks-ui/` artifacts so test-created public site files are tracked and cleaned up without touching preexisting local transfer content.
+
 ## 1.23.0
 
 - Add relational site-scoped `site_variables`, a tabbed `Edit Site` screen (`Site`, `Locales`, `Branding`, `SEO Defaults`, `Variables`), and controlled public-only `{{ site.variable_key }}` token replacement that preserves raw admin content and keeps variable values plain text in HTML-capable contexts.

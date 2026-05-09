@@ -11,6 +11,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\View;
@@ -590,6 +591,14 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
         $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/sidebar-navigation.js'));
+        $response->assertSeeInOrder([
+            '<head>',
+            WebBlocks::uiJsUrl(),
+            'assets/webblocks-cms/js/public/header-actions.js',
+            'assets/webblocks-cms/js/public/public-search-modal.js',
+            'assets/webblocks-cms/js/public/sidebar-navigation.js',
+            '</head>',
+        ], false);
     }
 
     #[Test]

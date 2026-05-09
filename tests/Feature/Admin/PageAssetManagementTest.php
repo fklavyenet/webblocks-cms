@@ -22,7 +22,7 @@ class PageAssetManagementTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/playground/playground.css',
+            'path' => '/site/default/pages/playground/page.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -41,7 +41,7 @@ class PageAssetManagementTest extends TestCase
         $response->assertSee('<th>Status</th>', false);
         $response->assertSee('<th>Sort</th>', false);
         $response->assertSee('<th>Actions</th>', false);
-        $response->assertSee('/site/default/playground/playground.css', false);
+        $response->assertSee('/site/default/pages/playground/page.css', false);
         $response->assertDontSee('name="page_assets[', false);
         $response->assertDontSee('Remove row');
         $response->assertDontSee('name="page_assets[0][type]"', false);
@@ -68,7 +68,7 @@ class PageAssetManagementTest extends TestCase
 
         $response = $this->actingAs(User::factory()->superAdmin()->create())
             ->post(route('admin.pages.assets.store', ['page' => $page, 'type' => 'css']), [
-                'path' => '/site/webblocksui/playground/playground.css',
+                'path' => '/site/webblocks-ui/pages/playground/page.css',
                 'sort_order' => 3,
                 'is_enabled' => '1',
                 '_page_asset_close_url' => route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']),
@@ -78,7 +78,7 @@ class PageAssetManagementTest extends TestCase
         $this->assertDatabaseHas('page_assets', [
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/webblocksui/playground/playground.css',
+            'path' => '/site/webblocks-ui/pages/playground/page.css',
             'sort_order' => 3,
             'is_enabled' => true,
             'is_defer' => false,
@@ -94,7 +94,7 @@ class PageAssetManagementTest extends TestCase
 
         $response = $this->actingAs(User::factory()->superAdmin()->create())
             ->post(route('admin.pages.assets.store', ['page' => $page, 'type' => 'js']), [
-                'path' => '/site/webblocksui/playground/playground.js',
+                'path' => '/site/webblocks-ui/pages/playground/page.js',
                 'sort_order' => 1,
                 'is_enabled' => '1',
                 '_page_asset_close_url' => route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']),
@@ -104,7 +104,7 @@ class PageAssetManagementTest extends TestCase
         $this->assertDatabaseHas('page_assets', [
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/webblocksui/playground/playground.js',
+            'path' => '/site/webblocks-ui/pages/playground/page.js',
             'is_defer' => true,
             'is_async' => false,
             'is_module' => false,
@@ -118,7 +118,7 @@ class PageAssetManagementTest extends TestCase
         $asset = PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/default/playground/original.js',
+            'path' => '/site/default/pages/playground/original.js',
             'load_position' => 'body_end',
             'is_enabled' => true,
             'is_defer' => true,
@@ -129,7 +129,7 @@ class PageAssetManagementTest extends TestCase
 
         $response = $this->actingAs(User::factory()->superAdmin()->create())
             ->put(route('admin.pages.assets.update', ['page' => $page, 'page_asset' => $asset]), [
-                'path' => '/site/default/playground/updated.js',
+                'path' => '/site/default/pages/playground/updated.js',
                 'sort_order' => 8,
                 'is_enabled' => '0',
                 'is_defer' => '0',
@@ -141,7 +141,7 @@ class PageAssetManagementTest extends TestCase
         $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
         $this->assertDatabaseHas('page_assets', [
             'id' => $asset->id,
-            'path' => '/site/default/playground/updated.js',
+            'path' => '/site/default/pages/playground/updated.js',
             'sort_order' => 8,
             'is_enabled' => false,
             'is_defer' => false,
@@ -157,7 +157,7 @@ class PageAssetManagementTest extends TestCase
         $asset = PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/playground/original.css',
+            'path' => '/site/default/pages/playground/original.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'is_defer' => false,
@@ -168,7 +168,7 @@ class PageAssetManagementTest extends TestCase
 
         $this->actingAs(User::factory()->superAdmin()->create())
             ->put(route('admin.pages.assets.update', ['page' => $page, 'page_asset' => $asset]), [
-                'path' => '/site/default/playground/updated.css',
+                'path' => '/site/default/pages/playground/updated.css',
                 'sort_order' => 2,
                 'is_enabled' => '1',
                 'is_defer' => '1',
@@ -181,7 +181,7 @@ class PageAssetManagementTest extends TestCase
         $this->assertDatabaseHas('page_assets', [
             'id' => $asset->id,
             'type' => 'css',
-            'path' => '/site/default/playground/updated.css',
+            'path' => '/site/default/pages/playground/updated.css',
             'is_defer' => false,
             'is_async' => false,
             'is_module' => false,
@@ -195,7 +195,7 @@ class PageAssetManagementTest extends TestCase
         $asset = PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/playground/delete-me.css',
+            'path' => '/site/default/pages/playground/delete-me.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -237,7 +237,7 @@ class PageAssetManagementTest extends TestCase
         $asset = PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/default/playground/locked.js',
+            'path' => '/site/default/pages/playground/locked.js',
             'load_position' => 'body_end',
             'is_enabled' => true,
             'is_defer' => true,
@@ -248,13 +248,13 @@ class PageAssetManagementTest extends TestCase
 
         $this->actingAs($siteAdmin)
             ->post(route('admin.pages.assets.store', ['page' => $page, 'type' => 'js']), [
-                'path' => '/site/default/playground/new.js',
+                'path' => '/site/default/pages/playground/new.js',
             ])
             ->assertForbidden();
 
         $this->actingAs($siteAdmin)
             ->put(route('admin.pages.assets.update', ['page' => $page, 'page_asset' => $asset]), [
-                'path' => '/site/default/playground/updated.js',
+                'path' => '/site/default/pages/playground/updated.js',
             ])
             ->assertForbidden();
 
@@ -262,7 +262,7 @@ class PageAssetManagementTest extends TestCase
             ->delete(route('admin.pages.assets.destroy', ['page' => $page, 'page_asset' => $asset]))
             ->assertForbidden();
 
-        $this->assertDatabaseHas('page_assets', ['id' => $asset->id, 'path' => '/site/default/playground/locked.js']);
+        $this->assertDatabaseHas('page_assets', ['id' => $asset->id, 'path' => '/site/default/pages/playground/locked.js']);
     }
 
     #[Test]
@@ -272,7 +272,7 @@ class PageAssetManagementTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/playground/readonly.css',
+            'path' => '/site/default/pages/playground/readonly.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -285,7 +285,7 @@ class PageAssetManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Only super admins can manage page assets.');
-        $response->assertSee('/site/default/playground/readonly.css', false);
+        $response->assertSee('/site/default/pages/playground/readonly.css', false);
         $response->assertDontSee('Add CSS asset');
         $response->assertDontSee('Add JS asset');
         $response->assertDontSee('wb-action-btn-edit', false);

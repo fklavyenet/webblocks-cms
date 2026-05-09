@@ -99,13 +99,14 @@
                                 <div class="wb-card-body wb-stack wb-gap-3">
                                     <div class="wb-stack-2 wb-field">
                                         <label for="site_name">Name</label>
-                                        <input id="site_name" name="name" class="wb-input" type="text" value="{{ old('name', $site->name) }}" required @disabled($isReadOnly)>
+                                        <input id="site_name" name="name" class="wb-input" type="text" value="{{ old('name', $site->name) }}" required data-site-name-input @disabled($isReadOnly)>
                                         <div class="wb-text-sm wb-text-muted">Internal admin name for this site record.</div>
                                     </div>
 
                                     <div class="wb-stack-2 wb-field">
                                         <label for="site_handle">Handle</label>
-                                        <input id="site_handle" name="handle" class="wb-input" type="text" value="{{ old('handle', $site->handle) }}" required @disabled($isReadOnly)>
+                                        <input id="site_handle" name="handle" class="wb-input" type="text" value="{{ old('handle', $site->handle) }}" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" inputmode="text" data-site-handle-input data-site-handle-autosuggest="{{ $site->exists ? 'off' : 'on' }}" @disabled($isReadOnly)>
+                                        <div class="wb-text-sm wb-text-muted">Lowercase letters, numbers, and hyphens only. New sites auto-suggest from Name until you edit Handle manually.</div>
                                     </div>
 
                                     <div class="wb-stack-2 wb-field">

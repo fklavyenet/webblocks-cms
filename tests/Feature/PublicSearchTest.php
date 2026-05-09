@@ -204,7 +204,7 @@ class PublicSearchTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/webblocksui/playground/playground.js',
+            'path' => '/site/webblocks-ui/pages/playground/page.js',
             'load_position' => 'body_end',
             'is_enabled' => true,
             'sort_order' => 0,

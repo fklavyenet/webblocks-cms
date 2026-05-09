@@ -4,13 +4,22 @@
         use App\Support\WebBlocks;
 
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
-        $siteCssPath = public_path('site/css/site.css');
         $publicJsAssets = [
             'header-actions' => public_path('assets/webblocks-cms/js/public/header-actions.js'),
             'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'),
         ];
+        $headPageAssets = collect($headPageAssets ?? collect());
+        $bodyEndPageAssets = collect($bodyEndPageAssets ?? collect());
+        $headCssPageAssets = $headPageAssets->where('type', 'css')->values();
+        $headJsPageAssets = $headPageAssets->where('type', 'js')->values();
+        $deferredHeadJsPageAssets = $headJsPageAssets
+            ->concat($bodyEndPageAssets->where('type', 'js')->values())
+            ->values();
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
+        $siteHandle = $resolvedSite?->handle;
+        $siteCssRelativePath = $siteHandle ? 'site/'.$siteHandle.'/css/site.css' : null;
+        $siteCssPath = $siteCssRelativePath ? public_path($siteCssRelativePath) : null;
         $publicMeta = $publicMeta ?? [
             'site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
             'site_label' => trim((string) ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name'))),
@@ -49,16 +58,32 @@
             'ogSiteName' => $publicMeta['og_site_name'] ?? null,
         ])
 
+        {{-- Public CSS assets --}}
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($cmsPublicCssPath))
             <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
         @endif
-        @if (is_file($siteCssPath))
-            <link rel="stylesheet" href="{{ asset('site/css/site.css') }}?v={{ filemtime($siteCssPath) }}">
+        @if ($siteCssPath && is_file($siteCssPath))
+            <link rel="stylesheet" href="{{ asset($siteCssRelativePath) }}?v={{ filemtime($siteCssPath) }}">
         @endif
-        @foreach (($headPageAssets ?? collect()) as $pageAsset)
+        @foreach ($headCssPageAssets as $pageAsset)
             <link rel="stylesheet" href="{{ $pageAsset->path }}">
+        @endforeach
+
+        {{-- Public JS assets --}}
+        <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
+        @if (is_file($publicJsAssets['header-actions']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($publicJsAssets['header-actions']) }}" defer></script>
+        @endif
+        @if (is_file($publicJsAssets['public-search-modal']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
+        @endif
+        @if (is_file($publicJsAssets['sidebar-navigation']))
+            <script src="{{ asset('assets/webblocks-cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+        @endif
+        @foreach ($deferredHeadJsPageAssets as $pageAsset)
+            <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>
         @endforeach
     </head>
     <body class="wb-public-body">
@@ -109,19 +134,5 @@
         @endif
 
         @include('search.partials.modal')
-
-        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
-        @if (is_file($publicJsAssets['header-actions']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($publicJsAssets['header-actions']) }}" defer></script>
-        @endif
-        @if (is_file($publicJsAssets['public-search-modal']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
-        @endif
-        @if (is_file($publicJsAssets['sidebar-navigation']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
-        @endif
-        @foreach (($bodyEndPageAssets ?? collect()) as $pageAsset)
-            <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @endif @if ($pageAsset->is_defer && ! $pageAsset->is_async) defer @endif></script>
-        @endforeach
     </body>
 </html>

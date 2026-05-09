@@ -94,7 +94,7 @@ class SiteDeleteService
         $domain = $this->domainNormalizer->normalize($normalized);
 
         return Site::query()
-            ->where('handle', str($normalized)->slug()->toString())
+            ->where('handle', SiteHandle::normalize($normalized))
             ->orWhere('name', $normalized)
             ->when($domain !== null, fn ($query) => $query->orWhere('domain', $domain))
             ->first();

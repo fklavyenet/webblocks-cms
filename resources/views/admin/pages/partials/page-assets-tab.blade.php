@@ -2,7 +2,7 @@
     $pageAssets = $page->pageAssets->sortBy(fn ($asset) => sprintf('%010d-%010d', (int) $asset->sort_order, (int) $asset->id))->values();
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
-    $suggestedBase = '/site/'.$siteHandle.'/'.$pageSlug.'/';
+    $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
     $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
 @endphp
 
@@ -66,7 +66,7 @@
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2 wb-text-sm">
-                                        <span>{{ $pageAsset->type === 'js' ? 'body end' : 'head' }}</span>
+                                        <span>{{ $pageAsset->type === 'js' ? 'head (legacy body_end accepted)' : 'head' }}</span>
                                         @if ($pageAsset->type === 'js' && $pageAsset->is_defer)
                                             <span class="wb-status-pill wb-status-info">defer</span>
                                         @endif

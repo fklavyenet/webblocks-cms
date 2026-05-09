@@ -79,11 +79,55 @@
         });
     }
 
+    function normalizeSiteHandle(value) {
+        return String(value || '')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^A-Za-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/-{2,}/g, '-')
+            .toLowerCase();
+    }
+
+    function bindSiteHandleAutosuggest() {
+        var handleInput = document.querySelector('[data-site-handle-input]');
+        var nameInput = document.querySelector('[data-site-name-input]');
+
+        if (!handleInput || !nameInput) {
+            return;
+        }
+
+        if (handleInput.dataset.siteHandleAutosuggest !== 'on') {
+            return;
+        }
+
+        var manuallyEdited = String(handleInput.value || '').trim() !== '';
+
+        handleInput.addEventListener('input', function () {
+            manuallyEdited = true;
+            handleInput.value = normalizeSiteHandle(handleInput.value);
+        });
+
+        nameInput.addEventListener('input', function () {
+            if (manuallyEdited) {
+                return;
+            }
+
+            handleInput.value = normalizeSiteHandle(nameInput.value);
+        });
+
+        if (!manuallyEdited) {
+            handleInput.value = normalizeSiteHandle(nameInput.value);
+        }
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
     admin.redirectToLoginFromAdmin = redirectToLoginFromAdmin;
+    admin.normalizeSiteHandle = normalizeSiteHandle;
 
     bindAdminTransientUiReset();
     bindNavGroupToggles();
+    bindSiteHandleAutosuggest();
 }());

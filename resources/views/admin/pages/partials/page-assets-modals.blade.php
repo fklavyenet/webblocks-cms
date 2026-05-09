@@ -5,7 +5,7 @@
     $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
-    $suggestedBase = '/site/'.$siteHandle.'/'.$pageSlug.'/';
+    $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
     $createType = in_array($requestedType, ['css', 'js'], true) ? $requestedType : 'css';
     $showCreateModal = $canManagePageAssets && $requestedModal === 'create-page-asset';
     $showEditModal = $canManagePageAssets && $requestedModal === 'edit-page-asset' && $selectedAsset;

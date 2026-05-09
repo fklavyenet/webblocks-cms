@@ -119,7 +119,7 @@ class SiteCloneService
         $domain = $this->domainNormalizer->normalize($normalized);
 
         return Site::query()
-            ->where('handle', str($normalized)->slug()->toString())
+            ->where('handle', SiteHandle::normalize($normalized))
             ->orWhere('name', $normalized)
             ->when($domain !== null, function ($query) use ($domain) {
                 $query->orWhere('domain', $domain)
@@ -160,7 +160,7 @@ class SiteCloneService
     private function createTargetSite(Site $sourceSite, string|int $target, SiteCloneOptions $options): Site
     {
         $handle = $options->targetHandle
-            ?? (is_string($target) ? str($target)->slug()->toString() : null)
+            ?? (is_string($target) ? SiteHandle::normalize($target) : null)
             ?? throw new RuntimeException('Target handle is required when creating a new site.');
 
         if (Site::query()->where('handle', $handle)->exists()) {

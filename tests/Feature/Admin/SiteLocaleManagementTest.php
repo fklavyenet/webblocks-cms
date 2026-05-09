@@ -196,6 +196,100 @@ class SiteLocaleManagementTest extends TestCase
     }
 
     #[Test]
+    public function creating_site_without_handle_generates_canonical_hyphenated_handle_from_name(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->post(route('admin.sites.store'), [
+            'name' => 'ui.webblocksui.com',
+            'handle' => '',
+            'domain' => '',
+            'is_primary' => 0,
+            'locale_ids' => [$defaultLocale->id],
+        ]);
+
+        $site = Site::query()->where('name', 'ui.webblocksui.com')->firstOrFail();
+
+        $response->assertRedirect(route('admin.sites.edit', $site));
+        $this->assertSame('ui-webblocksui-com', $site->handle);
+    }
+
+    #[Test]
+    public function manually_supplied_valid_handle_is_preserved_on_create(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.sites.store'), [
+            'name' => 'WebBlocks UI',
+            'handle' => 'docs-site',
+            'domain' => '',
+            'is_primary' => 0,
+            'locale_ids' => [$defaultLocale->id],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('sites', [
+            'name' => 'WebBlocks UI',
+            'handle' => 'docs-site',
+        ]);
+    }
+
+    #[Test]
+    public function editing_name_does_not_mutate_existing_handle_when_handle_is_unchanged(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => 'Docs Site',
+            'handle' => $site->handle,
+            'domain' => $site->domain,
+            'is_primary' => 1,
+            'locale_ids' => [$defaultLocale->id],
+        ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'site']));
+
+        $this->assertSame('default', $site->fresh()->handle);
+    }
+
+    #[Test]
+    public function canonical_handle_normalization_collapses_separator_runs_to_single_hyphens(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => $site->name,
+            'handle' => '___Docs...///Site___',
+            'domain' => $site->domain,
+            'is_primary' => 1,
+            'locale_ids' => [$defaultLocale->id],
+        ])->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'site']));
+
+        $this->assertSame('docs-site', $site->fresh()->handle);
+    }
+
+    #[Test]
+    public function site_create_form_exposes_handle_autosuggest_only_for_new_sites(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $createResponse = $this->actingAs($user)->get(route('admin.sites.create'));
+        $editResponse = $this->actingAs($user)->get(route('admin.sites.edit', $site));
+
+        $createResponse->assertOk();
+        $createResponse->assertSee('data-site-name-input', false);
+        $createResponse->assertSee('data-site-handle-input', false);
+        $createResponse->assertSee('data-site-handle-autosuggest="on"', false);
+
+        $editResponse->assertOk();
+        $editResponse->assertSee('data-site-handle-autosuggest="off"', false);
+    }
+
+    #[Test]
     public function site_can_be_saved_without_explicit_locale_ids_and_preserves_default_locale(): void
     {
         $user = User::factory()->superAdmin()->create();

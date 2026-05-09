@@ -9,12 +9,28 @@ WebBlocks CMS core public assets live under:
 
 These paths are for CMS-owned runtime behavior and styling that should ship with the product itself.
 
-## Install-Level Override Assets
+## Site Handle Convention
 
-Install-specific or site-specific public overrides remain under:
+Site handles are filesystem-safe identifiers used for site-scoped public asset folders.
 
-- `public/site/css/site.css`
-- `public/site/js/site.js`
+- Handles are lowercase.
+- Handles are ASCII-safe where possible.
+- Spaces, dots, slashes, underscores, and repeated punctuation normalize to a single hyphen.
+- Only `a-z`, `0-9`, and `-` remain.
+- Repeated hyphens collapse to one, and leading or trailing hyphens are trimmed.
+- Example normalizations:
+  - `ui.webblocksui.com` -> `ui-webblocksui-com`
+  - `WebBlocks UI` -> `webblocks-ui`
+  - `Docs Site` -> `docs-site`
+
+Hyphen is the canonical separator for site handles and `public/site/{site_handle}/...` folders.
+
+## Install-Level And Site Override Assets
+
+Install-specific or site-specific public overrides live under the resolved site handle:
+
+- `public/site/{site_handle}/css/site.css`
+- `public/site/{site_handle}/js/site.js`
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
@@ -22,13 +38,25 @@ These files are override space for the current install and should not be used fo
 
 Page-scoped CSS and JS files can now be referenced relationally from `page_assets`.
 
-- V1 accepts only local `/site/...` paths such as `/site/webblocksui/playground/playground.css` or `/site/webblocksui/playground/playground.js`
+- V1 accepts only local `/site/...` paths such as `/site/webblocks-ui/pages/playground/page.css` or `/site/webblocks-ui/pages/playground/page.js`
+- Canonical page asset paths are:
+  - `public/site/{site_handle}/pages/{page_slug}/page.css`
+  - `public/site/{site_handle}/pages/{page_slug}/page.js`
 - CSS page assets render in the public `<head>`
-- JS page assets render near the public body-end script area
+- JS page assets render in the public `<head>` with `defer`
 - Only the owning public page renders its configured page assets
 - Page Assets are not rendered in admin layouts
 - Page Assets are stored in `page_assets`, not in `pages.settings`
 - When site Export / Import includes media or assets, referenced `/site/...` physical files are also packaged and restored
+
+## Public Asset Convention
+
+- CSS stays in the public `<head>`
+- Named public JS stays in the public `<head>` with `defer`
+- Legacy named JS rows stored with `body_end` are still accepted, but public named JS is normalized to `<head defer>` output
+- Public block renderers must not emit inline scripts
+- CMS-owned public JS belongs under `public/assets/webblocks-cms/js/`
+- Site-level override JS belongs under `public/site/{site_handle}/js/site.js`
 
 ## Site Branding Assets
 

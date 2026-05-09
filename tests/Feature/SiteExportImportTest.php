@@ -202,14 +202,14 @@ class SiteExportImportTest extends TestCase
         Storage::fake('site-transfers');
         [$site] = $this->seedCloneableSite();
         $page = Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'about'))->firstOrFail();
+        $legacyDirectoryExisted = is_dir(public_path('site/webblocks-ui/about'));
 
-        File::ensureDirectoryExists(public_path('site/webblocks-ui/about'));
-        File::put(public_path('site/webblocks-ui/about/about.css'), 'body { color: red; }');
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/pages/about/page.css', 'body { color: red; }');
 
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/webblocks-ui/about/about.css',
+            'path' => '/site/webblocks-ui/pages/about/page.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -220,7 +220,7 @@ class SiteExportImportTest extends TestCase
         $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
         $pageAssets = json_decode((string) $archive->getFromName('data/page_assets.json'), true);
         $this->assertCount(1, $pageAssets);
-        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/about/about.css'));
+        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/pages/about/page.css'));
         $archive->close();
 
         $siteImport = app(SiteImportManager::class)->inspectUpload(
@@ -237,9 +237,13 @@ class SiteExportImportTest extends TestCase
 
         $this->assertDatabaseHas('page_assets', [
             'page_id' => $importedPage->id,
-            'path' => '/site/webblocks-ui/about/about.css',
+            'path' => '/site/webblocks-ui/pages/about/page.css',
         ]);
-        $this->assertFileExists(public_path('site/webblocks-ui/about/about.css'));
+        $this->assertFileExists(public_path('site/webblocks-ui/pages/about/page.css'));
+
+        if (! $legacyDirectoryExisted) {
+            $this->assertDirectoryDoesNotExist(public_path('site/webblocks-ui/about'));
+        }
     }
 
     #[Test]

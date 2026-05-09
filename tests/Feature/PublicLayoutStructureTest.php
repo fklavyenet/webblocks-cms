@@ -56,7 +56,7 @@ class PublicLayoutStructureTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/home/home.css',
+            'path' => '/site/default/pages/home/page.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -64,7 +64,7 @@ class PublicLayoutStructureTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/default/home/home.js',
+            'path' => '/site/default/pages/home/page.js',
             'load_position' => 'body_end',
             'is_defer' => true,
             'is_enabled' => true,
@@ -73,18 +73,23 @@ class PublicLayoutStructureTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/default/home/disabled.js',
+            'path' => '/site/default/pages/home/disabled.js',
             'load_position' => 'body_end',
             'is_enabled' => false,
             'sort_order' => 2,
         ]);
 
         $response = $this->get('/');
+        $headHtml = $this->headHtml($response->getContent());
+        $bodyHtml = $this->bodyHtml($response->getContent());
 
         $response->assertOk();
-        $response->assertSee('/site/default/home/home.css', false);
-        $response->assertSee('/site/default/home/home.js', false);
-        $response->assertDontSee('/site/default/home/disabled.js', false);
+        $response->assertSee('/site/default/pages/home/page.css', false);
+        $response->assertSee('/site/default/pages/home/page.js', false);
+        $response->assertDontSee('/site/default/pages/home/disabled.js', false);
+        $this->assertStringContainsString('/site/default/pages/home/page.css', $headHtml);
+        $this->assertStringContainsString('/site/default/pages/home/page.js', $headHtml);
+        $this->assertStringNotContainsString('/site/default/pages/home/page.js', $bodyHtml);
 
         $otherPage = Page::query()->create([
             'site_id' => $page->site_id,
@@ -99,8 +104,8 @@ class PublicLayoutStructureTest extends TestCase
 
         $this->get('/p/other')
             ->assertOk()
-            ->assertDontSee('/site/default/home/home.css', false)
-            ->assertDontSee('/site/default/home/home.js', false);
+            ->assertDontSee('/site/default/pages/home/page.css', false)
+            ->assertDontSee('/site/default/pages/home/page.js', false);
     }
 
     #[Test]
@@ -114,7 +119,60 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertSee(WebBlocks::uiCssUrl(), false);
         $response->assertSee(WebBlocks::iconsCssUrl(), false);
         $response->assertSee(WebBlocks::uiJsUrl(), false);
+        $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
         $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
+    }
+
+    #[Test]
+    public function public_named_javascript_assets_render_in_head_with_defer_in_dependency_safe_order(): void
+    {
+        $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/default/pages/home/page-head.js',
+            'load_position' => 'head',
+            'is_enabled' => true,
+            'is_defer' => true,
+            'sort_order' => 0,
+        ]);
+        PageAsset::query()->create([
+            'page_id' => $page->id,
+            'type' => 'js',
+            'path' => '/site/default/pages/home/page-body-end.js',
+            'load_position' => 'body_end',
+            'is_enabled' => true,
+            'is_defer' => true,
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->get('/');
+        $html = $response->getContent();
+        $headHtml = $this->headHtml($html);
+        $bodyHtml = $this->bodyHtml($html);
+
+        $response->assertOk();
+        $this->assertStringContainsString('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', $headHtml);
+        $this->assertMatchesRegularExpression('/assets\/webblocks-cms\/js\/public\/header-actions\.js\?v=\d+" defer><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/assets\/webblocks-cms\/js\/public\/public-search-modal\.js\?v=\d+" defer><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/assets\/webblocks-cms\/js\/public\/sidebar-navigation\.js\?v=\d+" defer><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/<script src="\/site\/default\/pages\/home\/page-head\.js"[^>]*defer\s*><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/<script src="\/site\/default\/pages\/home\/page-body-end\.js"[^>]*defer\s*><\/script>/', $headHtml);
+        $this->assertStringNotContainsString(WebBlocks::uiJsUrl(), $bodyHtml);
+        $this->assertStringNotContainsString('assets/webblocks-cms/js/public/header-actions.js', $bodyHtml);
+        $this->assertStringNotContainsString('assets/webblocks-cms/js/public/public-search-modal.js', $bodyHtml);
+        $this->assertStringNotContainsString('assets/webblocks-cms/js/public/sidebar-navigation.js', $bodyHtml);
+        $this->assertStringNotContainsString('/site/default/pages/home/page-head.js', $bodyHtml);
+        $this->assertStringNotContainsString('/site/default/pages/home/page-body-end.js', $bodyHtml);
+        $this->assertStringContainsInOrder($headHtml, [
+            WebBlocks::uiJsUrl(),
+            'assets/webblocks-cms/js/public/header-actions.js',
+            'assets/webblocks-cms/js/public/public-search-modal.js',
+            'assets/webblocks-cms/js/public/sidebar-navigation.js',
+            '/site/default/pages/home/page-head.js',
+            '/site/default/pages/home/page-body-end.js',
+        ]);
     }
 
     #[Test]
@@ -437,5 +495,40 @@ class PublicLayoutStructureTest extends TestCase
             ['slug' => $slug],
             ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder],
         );
+    }
+
+    private function headHtml(string $html): string
+    {
+        $start = strpos($html, '<head>');
+        $end = strpos($html, '</head>');
+
+        $this->assertNotFalse($start, 'Failed asserting that the response contains a <head> element.');
+        $this->assertNotFalse($end, 'Failed asserting that the response contains a </head> element.');
+
+        return substr($html, $start, $end - $start);
+    }
+
+    private function bodyHtml(string $html): string
+    {
+        $start = strpos($html, '<body');
+        $end = strpos($html, '</body>');
+
+        $this->assertNotFalse($start, 'Failed asserting that the response contains a <body> element.');
+        $this->assertNotFalse($end, 'Failed asserting that the response contains a </body> element.');
+
+        return substr($html, $start, $end - $start);
+    }
+
+    private function assertStringContainsInOrder(string $haystack, array $needles): void
+    {
+        $offset = 0;
+
+        foreach ($needles as $needle) {
+            $position = strpos($haystack, $needle, $offset);
+
+            $this->assertNotFalse($position, "Failed asserting that [{$needle}] appears after the previous asset.");
+
+            $offset = $position + strlen($needle);
+        }
     }
 }

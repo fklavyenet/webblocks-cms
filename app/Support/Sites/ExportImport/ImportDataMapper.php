@@ -22,6 +22,7 @@ use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Pages\PageAssetPathValidator;
+use App\Support\Sites\SiteHandle;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Sites\SiteDomainManager;
@@ -121,7 +122,7 @@ class ImportDataMapper
 
     private function createSite(array $siteData, SiteImportOptions $options, array &$output): Site
     {
-        $requestedHandle = str($options->siteHandle ?: (string) ($siteData['handle'] ?? 'imported-site'))->slug()->toString();
+        $requestedHandle = SiteHandle::normalize($options->siteHandle ?: (string) ($siteData['handle'] ?? 'imported-site'));
         $handle = $this->availableHandle($requestedHandle !== '' ? $requestedHandle : 'imported-site');
 
         if ($handle !== $requestedHandle) {
@@ -487,7 +488,7 @@ class ImportDataMapper
         $sourcePageMap = [];
 
         foreach (($payload['shared_slots'] ?? []) as $sharedSlotData) {
-            $handle = str((string) ($sharedSlotData['handle'] ?? ''))->slug()->toString();
+            $handle = SiteHandle::normalize((string) ($sharedSlotData['handle'] ?? ''));
 
             if ($handle === '') {
                 throw new RuntimeException('Import package contains a shared slot without a valid handle.');

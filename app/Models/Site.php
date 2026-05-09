@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Sites\SiteHandle;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,7 +41,7 @@ class Site extends Model
     protected static function booted(): void
     {
         static::saving(function (self $site): void {
-            $site->handle = str((string) $site->handle)->slug()->toString();
+            $site->handle = SiteHandle::normalize($site->handle);
             $site->domain = app(SiteDomainNormalizer::class)->normalize($site->domain);
         });
 

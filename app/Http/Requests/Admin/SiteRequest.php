@@ -7,6 +7,7 @@ use App\Models\Locale;
 use App\Models\Site;
 use App\Models\SiteDomain;
 use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Sites\SiteHandle;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
@@ -30,10 +31,16 @@ class SiteRequest extends FormRequest
             ->filter(fn ($id) => $id > 0);
         $authorization = app(AdminAuthorization::class);
         $user = $this->user();
+        $rawHandle = trim((string) $this->input('handle'));
+        $name = trim((string) $this->input('name'));
+        $normalizedHandle = $rawHandle !== ''
+            ? SiteHandle::normalize($rawHandle)
+            : ($site?->exists ? (string) $site->handle : SiteHandle::normalize($name));
 
         $this->merge([
             'is_primary' => $this->boolean('is_primary'),
-            'handle' => str((string) $this->input('handle'))->slug()->toString(),
+            'name' => $name,
+            'handle' => $normalizedHandle,
             'domain' => $domain,
             'locale_ids' => $this->normalizedLocaleIds($submittedLocaleIds, $site, $defaultLocaleId)->all(),
             'display_name' => trim((string) $this->input('display_name')),
@@ -55,7 +62,7 @@ class SiteRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'handle' => ['required', 'string', 'max:255', Rule::unique(Site::class, 'handle')->ignore($site?->id)],
+            'handle' => ['required', 'string', 'max:255', 'regex:'.SiteHandle::validationPattern(), Rule::unique(Site::class, 'handle')->ignore($site?->id)],
             'domain' => ['nullable', 'string', 'max:255', Rule::unique(SiteDomain::class, 'domain')->ignore($site?->primaryDomain()?->id)],
             'is_primary' => ['nullable', 'boolean'],
             'display_name' => ['nullable', 'string', 'max:255'],

@@ -227,7 +227,7 @@ class PageDuplicateTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/'.$site->handle.'/'.$slug.'/page.css',
+            'path' => '/site/'.$site->handle.'/pages/'.$slug.'/page.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -459,7 +459,7 @@ class PageDuplicateTest extends TestCase
         ]);
         $this->assertDatabaseHas('page_assets', [
             'page_id' => $duplicate->id,
-            'path' => '/site/default/about/page.css',
+            'path' => '/site/default/pages/about/page.css',
         ]);
     }
 

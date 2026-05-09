@@ -394,7 +394,7 @@ class PageRevisionTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'css',
-            'path' => '/site/default/about/about.css',
+            'path' => '/site/default/pages/about/page.css',
             'load_position' => 'head',
             'is_enabled' => true,
             'sort_order' => 0,
@@ -469,7 +469,7 @@ class PageRevisionTest extends TestCase
         PageAsset::query()->create([
             'page_id' => $page->id,
             'type' => 'js',
-            'path' => '/site/default/about/about.js',
+            'path' => '/site/default/pages/about/page.js',
             'load_position' => 'body_end',
             'is_enabled' => true,
             'sort_order' => 1,
@@ -515,7 +515,7 @@ class PageRevisionTest extends TestCase
         $this->assertSame('Hakkinda', $page->translations->firstWhere('locale_id', $turkish->id)?->name);
         $this->assertSame('TR SEO Original', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_title);
         $this->assertSame('TR SEO Original Description', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_description);
-        $this->assertSame('/site/default/about/about.css', $page->pageAssets()->first()?->path);
+        $this->assertSame('/site/default/pages/about/page.css', $page->pageAssets()->first()?->path);
         $this->assertCount(1, $page->slots);
         $this->assertSame($main->id, $page->slots->first()->slot_type_id);
         $this->assertSame(2, $page->blocks->count());

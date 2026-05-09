@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Site;
 use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Sites\SiteHandle;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SiteCloneRequest extends FormRequest
@@ -33,6 +34,7 @@ class SiteCloneRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'target_handle' => SiteHandle::normalize($this->input('target_handle')),
             'target_domain' => app(SiteDomainNormalizer::class)->normalize($this->input('target_domain')),
             'with_navigation' => $this->boolean('with_navigation'),
             'with_media' => $this->boolean('with_media'),

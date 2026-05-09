@@ -23,7 +23,7 @@ class PublicModeCompatibilityTest extends TestCase
     #[Test]
     public function site_public_css_uses_webblocks_tokens_instead_of_hardcoded_colors(): void
     {
-        $css = File::get(public_path('site/css/site.css'));
+        $css = File::get(public_path('site/default/css/site.css'));
 
         $this->assertStringContainsString('var(--wb-text)', $css);
         $this->assertStringContainsString('var(--wb-bg)', $css);
