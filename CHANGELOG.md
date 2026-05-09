@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.24.0
+
 - Add slot-editor `Delete All Blocks` actions for page-owned slots and Shared Slots, with confirmation, scoped recursive deletion, preserved other slots, and revision capture through the existing block-deletion audit flow.
 - Preserve Pages index site, search, status, sort, direction, and pagination state through Edit Page, slot editing, translation editing, and save flows by carrying a safe admin-only `return_url` plus session-backed Pages index state.
 - Replace the broken slot block drag-handle icon dependency with an accessible fallback handle so sortable slot rows still show a clear grip affordance when the missing icon class is unavailable.
