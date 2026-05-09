@@ -23,7 +23,8 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - V1 accepts only local install paths under `/site/...`.
 - External URLs, inline CSS, inline JS, query strings, fragments, traversal, and non-matching extensions are rejected.
 - CSS currently renders only in the public document head.
-- JS currently renders only near the public body end.
+- JS currently renders only in the public document head with `defer`.
+- Canonical public asset paths are `public/site/{site_handle}/css/site.css`, `public/site/{site_handle}/js/site.js`, `public/site/{site_handle}/pages/{page_slug}/page.css`, and `public/site/{site_handle}/pages/{page_slug}/page.js`.
 - Page Assets render only for the owning public page and are excluded from admin layouts and unrelated pages.
 - Page revisions, duplicate, move, and site export or import treat Page Assets as page-owned configuration.
 - Search indexing does not treat page asset paths as page body content.

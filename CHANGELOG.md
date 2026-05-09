@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.23.1
+
 - Normalize public named JavaScript asset loading so WebBlocks UI, CMS public JS, and page-scoped public JS render from the document `<head>` with `defer` instead of appending normal public scripts at the end of `<body>`.
 - Standardize site handle normalization to canonical lowercase hyphenated handles, preserving separators such as dots and underscores as hyphens instead of collapsing them away.
 - Standardize `public/site` override conventions around `public/site/{site_handle}/...`, including `css/site.css` and `pages/{page_slug}/page.{css,js}` site and page asset paths.
