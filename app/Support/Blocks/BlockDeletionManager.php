@@ -7,6 +7,18 @@ use Illuminate\Support\Collection;
 
 class BlockDeletionManager
 {
+    public function slotMetadata(int $pageId, int $slotTypeId): array
+    {
+        $scopedBlocks = $this->scopedBlocksForSlot($pageId, $slotTypeId);
+        $topLevelCount = $scopedBlocks->whereNull('parent_id')->count();
+
+        return [
+            'top_level_count' => $topLevelCount,
+            'descendant_count' => max($scopedBlocks->count() - $topLevelCount, 0),
+            'total_count' => $scopedBlocks->count(),
+        ];
+    }
+
     public function metadata(Block $block): array
     {
         $scopedBlocks = $this->scopedBlocks($block);
@@ -68,9 +80,14 @@ class BlockDeletionManager
 
     public function scopedBlocks(Block $block): Collection
     {
+        return $this->scopedBlocksForSlot((int) $block->page_id, (int) $block->slot_type_id);
+    }
+
+    public function scopedBlocksForSlot(int $pageId, int $slotTypeId): Collection
+    {
         return Block::query()
-            ->where('page_id', $block->page_id)
-            ->where('slot_type_id', $block->slot_type_id)
+            ->where('page_id', $pageId)
+            ->where('slot_type_id', $slotTypeId)
             ->get(['id', 'parent_id', 'page_id', 'slot_type_id']);
     }
 

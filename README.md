@@ -25,6 +25,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - relational site-scoped `site_variables` with controlled `{{ site.variable_key }}` public token replacement, tabbed `Edit Site` sections, and portability through site clone and site export/import
 - site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, can be assigned per page slot from the Edit Page screen, now have dedicated Shared Slot revision history and restore, and participate in site export/import and site clone workflows
 - super-admin global Blocks index under `Pages` for cross-CMS block maintenance with compact `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale` filters
+- Pages index filters and sort state persist across Edit Page, slot editor, translation editor, and save flows so editors can return to the same filtered list context without rebuilding it manually
 
 ## Installation
 
@@ -116,6 +117,10 @@ Site `Handle` uses the canonical filesystem-safe CMS format: lowercase ASCII-saf
 Site Variables are stored relationally in `site_variables`, not JSON. They are intended for simple reusable public text tokens such as support email addresses, repeated product labels, or legal copy. The only supported token format is `{{ site.variable_key }}` with optional inner whitespace. Unknown tokens, disabled variables, invalid keys, and non-site tokens remain unchanged. Replacement happens only in shared public rendering and public search indexing; admin forms always keep the raw stored token text.
 
 In the admin slot editor, the Edit Slot Blocks list stays structure-focused as a compact one-row-per-block table with block type, a single primary summary, a dedicated children-count column, status, and actions. The Block Picker now opens with a default `Common` shortcut tab and additional `Layout`, `Content`, `Navigation`, `Advanced`, and `All` tabs so larger catalogs stay navigable without one long mixed list. `Advanced` only appears when the current user has eligible advanced block types such as `HTML (Trusted)`. Search works across the full eligible picker catalog instead of only the active tab, sort still applies within the currently visible tab or search result set, reset returns the picker to the default `Common` tab, and the modal keeps the same compact shared admin filter toolbar pattern. On narrow screens the table remains one-row-per-block and scrolls horizontally instead of collapsing labels into vertical letter stacks. Full content should be edited in the block edit modal or block edit page instead of being previewed in the slot list.
+
+When a slot already contains blocks, the slot editor header now also exposes `Delete All Blocks`. This action is scoped to the current page slot or current Shared Slot only, requires explicit confirmation, shows top-level and nested block counts before submit, and records the change through the normal revision history flow.
+
+Pages index list state is now preserved through the main editorial loop. When editors open a page, slot editor, translation form, or page-assets modal from a filtered Pages list, the admin keeps the same safe Pages return URL so `Back to Pages` and later save redirects return to the same list context.
 
 The slot editor block picker follows the published block catalog directly. `Table`, `TOC`, `Quote`, and `Header` appear when their catalog rows are published. The legacy `Heading` catalog row is removed rather than kept hidden, so it does not appear in normal picker or editor availability.
 

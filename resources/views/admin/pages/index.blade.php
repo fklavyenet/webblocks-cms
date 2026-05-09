@@ -4,7 +4,7 @@
         ? 'Showing pages across all sites. Choose a site to return to the normal editorial flow.'
         : 'Showing pages for '.$activeSite->name.($activeSite->canonicalDomain() ? ' ('.$activeSite->canonicalDomain().')' : '').'.';
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
-    $clearUrl = route('admin.pages.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
+    $clearUrl = route('admin.pages.index', ['reset' => 1]);
     $detailsBaseQuery = array_filter([
         'site' => $filters['site'],
         'search' => $filters['search'] !== '' ? $filters['search'] : null,
@@ -227,7 +227,7 @@
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('admin.pages.edit', $page) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit page" aria-label="Edit page"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <form method="POST" action="{{ route('admin.pages.destroy', $page) }}" onsubmit="return confirm('Delete this page?');">
                                                 @csrf
                                                 @method('DELETE')
@@ -254,6 +254,7 @@
             'page' => $detailsPage,
             'drawerId' => 'pageDetailsModal-'.$detailsPage->id,
             'closeUrl' => route('admin.pages.index', $detailsBaseQuery),
+            'pageReturnUrl' => $pageReturnUrl,
         ])
     @endpush
 @endif

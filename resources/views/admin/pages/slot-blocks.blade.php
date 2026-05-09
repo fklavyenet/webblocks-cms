@@ -1,7 +1,8 @@
 @php
     $slotTitle = 'Edit Slot: '.($slot->slotType?->name ?? 'Slot').' ('.$page->title.')';
     $activePreviewUrl = $page->isPublished() ? $page->publicUrl($activeLocale->code) : null;
-    $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
+    $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
+    $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $siteName = $page->site?->name ?? 'Site';
     $slotBlockTreeScriptPath = public_path('assets/webblocks-cms/js/admin/slot-block-tree.js');
 @endphp
@@ -10,8 +11,12 @@
 
 @section('content')
     @php
-        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
+        $slotBlockRoute = function (array $parameters = []) use ($page, $slot, $activeLocale, $pageReturnUrl) {
             $resolved = $parameters;
+
+            if (! array_key_exists('return_url', $resolved)) {
+                $resolved['return_url'] = $pageReturnUrl;
+            }
 
             if (! array_key_exists('locale', $resolved) && ! $activeLocale->is_default) {
                 $resolved['locale'] = $activeLocale->code;
@@ -20,7 +25,11 @@
             return route('admin.pages.slots.blocks', [$page, $slot] + $resolved);
         };
 
-        $slotBlockBaseRoute = function (array $parameters = []) use ($page, $slot, $activeLocale) {
+        $slotBlockBaseRoute = function (array $parameters = []) use ($page, $slot, $activeLocale, $pageReturnUrl) {
+            if (! array_key_exists('return_url', $parameters)) {
+                $parameters['return_url'] = $pageReturnUrl;
+            }
+
             if (! array_key_exists('locale', $parameters) && ! $activeLocale->is_default) {
                 $parameters['locale'] = $activeLocale->code;
             }
@@ -30,9 +39,9 @@
     @endphp
 
     @include('admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', $page).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.($slot->slotType?->name ?? 'Slot').'</span></li></ol></nav>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.($slot->slotType?->name ?? 'Slot').'</span></li></ol></nav>',
         'title' => $slotTitle,
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', $page).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
     ])
 
     @include('admin.partials.flash')
@@ -55,7 +64,12 @@
                 <strong>Blocks</strong>
                 <span class="wb-text-sm wb-text-muted">Editing content for {{ strtoupper($activeLocale->code) }}. Structure, ordering, and shared block config remain canonical.</span>
             </div>
-            <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+            <div class="wb-cluster wb-cluster-2">
+                @if (! $blocks->isEmpty())
+                    <a href="{{ $slotBlockRoute(['delete_all' => 1]) }}" class="wb-btn wb-btn-ghost wb-text-danger" aria-haspopup="dialog">Delete All Blocks</a>
+                @endif
+                <a href="{{ $slotBlockRoute(['picker' => 1]) }}" class="wb-btn wb-btn-secondary" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['picker' => 1]) }}">Add Block</a>
+            </div>
         </div>
 
         <div class="wb-card-body wb-border-b">
@@ -155,6 +169,7 @@
         'slotBlockRoute' => $slotBlockRoute,
         'slotDeleteModalBlock' => $slotDeleteModalBlock,
         'slotDeleteModalMeta' => $slotDeleteModalMeta,
+        'slotDeleteAllModalMeta' => $slotDeleteAllModalMeta,
         'activeLocale' => $activeLocale,
     ])
 @endpush

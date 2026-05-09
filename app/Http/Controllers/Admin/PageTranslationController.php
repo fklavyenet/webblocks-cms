@@ -10,6 +10,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Support\Pages\PageRevisionManager;
+use App\Support\Pages\PageIndexState;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class PageTranslationController extends Controller
 {
     public function __construct(
         private readonly AdminAuthorization $authorization,
+        private readonly PageIndexState $pageIndexState,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageWorkflowManager $workflowManager,
     ) {}
@@ -46,6 +48,8 @@ class PageTranslationController extends Controller
             'formAction' => route('admin.pages.translations.store', [$page, $locale]),
             'formMethod' => 'POST',
             'pageTitle' => 'Add Translation: '.$page->title.' / '.strtoupper($locale->code),
+            'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
+            'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
         ]);
     }
 
@@ -73,7 +77,12 @@ class PageTranslationController extends Controller
             );
         });
 
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation added successfully.');
+        return redirect()
+            ->route('admin.pages.edit', array_filter([
+                'page' => $page,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+            ], fn (mixed $value) => $value !== null && $value !== ''))
+            ->with('status', 'Translation added successfully.');
     }
 
     public function edit(Page $page, PageTranslation $translation): View
@@ -93,6 +102,8 @@ class PageTranslationController extends Controller
             'formAction' => route('admin.pages.translations.update', [$page, $translation]),
             'formMethod' => 'PUT',
             'pageTitle' => 'Edit Translation: '.$page->title.' / '.strtoupper($translation->locale->code),
+            'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
+            'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
         ]);
     }
 
@@ -117,7 +128,12 @@ class PageTranslationController extends Controller
             );
         });
 
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Translation updated successfully.');
+        return redirect()
+            ->route('admin.pages.edit', array_filter([
+                'page' => $page,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+            ], fn (mixed $value) => $value !== null && $value !== ''))
+            ->with('status', 'Translation updated successfully.');
     }
 
     private function assetPickerAssets()

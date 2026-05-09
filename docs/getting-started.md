@@ -37,6 +37,14 @@ At a high level, you can:
 
 Media and navigation are managed separately from the page editor, but they work together with page content.
 
+In the slot editor:
+
+- the block picker opens on a curated `Common` tab by default
+- the drag handle uses a plain fallback grip marker so sortable rows remain usable even if an icon font entry is unavailable
+- `Delete All Blocks` appears only when the current page slot or Shared Slot already contains blocks, and the confirmation modal shows how many top-level and nested blocks will be removed
+
+When you reach a page from a filtered `Pages` list, the admin now keeps that Pages list context while you move through Edit Page, slot editing, translation editing, and save flows, so returning to `Pages` takes you back to the same filters and sort order.
+
 ## Workflow Basics
 
 Pages move through these statuses:

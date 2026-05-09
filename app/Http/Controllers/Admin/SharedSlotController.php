@@ -311,7 +311,62 @@ class SharedSlotController extends Controller
             'availableLocales' => $sourcePage->translationStatusForSite(),
             'slotDeleteModalBlock' => $deleteModalState['block'],
             'slotDeleteModalMeta' => $deleteModalState['meta'],
+            'slotDeleteAllModalMeta' => $this->blockDeletionManager->slotMetadata($sourcePage->id, $slot->slot_type_id),
         ]);
+    }
+
+    public function destroyBlocks(Request $request, SharedSlot $sharedSlot): RedirectResponse
+    {
+        if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
+            return $this->sharedSlotsNotReadyRedirect(
+                route('admin.shared-slots.index'),
+                'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.'
+            );
+        }
+
+        $this->authorization->abortUnlessSiteAccess($request->user(), $sharedSlot);
+        abort_unless($this->canEditSharedSlot($request->user(), $sharedSlot), 403);
+
+        $validated = $request->validate([
+            'confirm_delete_all_blocks' => ['accepted'],
+            'locale' => ['nullable', 'string'],
+        ], [
+            'confirm_delete_all_blocks.accepted' => 'Confirm that all blocks in this Shared Slot should be deleted.',
+        ]);
+
+        $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
+        $slot = $sourcePage->slots()->firstOrFail();
+
+        DB::transaction(function () use ($sharedSlot, $sourcePage, $slot, $request): void {
+            $this->blockDeletionManager
+                ->scopedBlocksForSlot($sourcePage->id, $slot->slot_type_id)
+                ->whereNull('parent_id')
+                ->values()
+                ->flatMap(fn (Block $block) => $this->blockDeletionManager->recursiveDeleteOrder($block))
+                ->unique('id')
+                ->each(fn (Block $block) => $block->delete());
+
+            $this->sourcePages->rebuildAssignments($sharedSlot);
+
+            if ($this->revisionManager->revisionsTableExists()) {
+                $sharedSlot->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
+                $this->revisionManager->capture(
+                    $sharedSlot->fresh(),
+                    $request->user(),
+                    'block_deleted',
+                    'Shared Slot blocks deleted',
+                    'Shared Slot block structure or content was updated by removing every block from the slot.',
+                );
+            }
+        });
+
+        return redirect()
+            ->route('admin.shared-slots.blocks.edit', [
+                'shared_slot' => $sharedSlot,
+                'locale' => $validated['locale'] ?? null,
+                'return_url' => $request->input('return_url'),
+            ])
+            ->with('status', 'Deleted all blocks from '.($slot->slotType?->name ?? 'slot').'.');
     }
 
     public function reorderBlocks(Request $request, SharedSlot $sharedSlot): JsonResponse

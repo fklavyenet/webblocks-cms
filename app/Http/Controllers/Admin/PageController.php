@@ -20,6 +20,7 @@ use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Pages\PageRevisionManager;
+use App\Support\Pages\PageIndexState;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -41,13 +42,29 @@ class PageController extends Controller
         private readonly BlockTranslationResolver $blockTranslationResolver,
         private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageRevisionManager $revisionManager,
+        private readonly PageIndexState $pageIndexState,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
 
     public function index(Request $request): View
     {
+        if ($request->boolean('reset')) {
+            $this->pageIndexState->forget($request);
+
+            return redirect()->route('admin.pages.index')->throwResponse();
+        }
+
         $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
+        $storedQuery = $this->pageIndexState->storedQuery($request);
+
+        if (! $this->hasMeaningfulPageIndexQuery($request) && $storedQuery !== []) {
+            return redirect()->route('admin.pages.index', array_filter([
+                ...$storedQuery,
+                'details' => $request->integer('details') ?: null,
+            ], fn (mixed $value) => $value !== null && $value !== ''))->throwResponse();
+        }
+
         $search = trim((string) $request->string('search'));
         $status = $request->string('status')->toString();
         $detailsPageId = $request->integer('details');
@@ -116,6 +133,15 @@ class PageController extends Controller
                 ->paginate(15)
                 ->withQueryString();
 
+        $this->pageIndexState->remember($request, array_filter([
+            'site' => $siteFilterValue,
+            'search' => $search,
+            'status' => $status,
+            'sort' => $sort !== 'created_at' ? $sort : null,
+            'direction' => $direction !== 'desc' ? $direction : null,
+            'page' => $pages->currentPage() > 1 ? (string) $pages->currentPage() : null,
+        ], fn (mixed $value) => $value !== null && $value !== ''));
+
         return view('admin.pages.index', [
             'pages' => $pages,
             'sites' => $sites,
@@ -131,6 +157,8 @@ class PageController extends Controller
             ],
             'detailsPage' => $detailsPageId > 0 ? $pages->getCollection()->firstWhere('id', $detailsPageId) : null,
             'siteLocaleCounts' => $siteLocaleCounts,
+            'pagesIndexUrl' => $this->pageIndexState->storedUrl($request),
+            'pageReturnUrl' => $this->pageIndexState->storedUrl($request),
         ]);
     }
 
@@ -259,6 +287,8 @@ class PageController extends Controller
             'canCreateSharedSlots' => ! request()->user()->isEditor(),
             'canManagePageAssets' => request()->user()->isSuperAdmin(),
             'pageAssetsTab' => $this->pageAssetsTabState($page),
+            'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
+            'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
         ]);
     }
 
@@ -289,7 +319,11 @@ class PageController extends Controller
         });
 
         $redirect = redirect()
-            ->route('admin.pages.edit', ['page' => $page, 'tab' => $request->input('_page_settings_tab') === 'page-assets' ? 'page-assets' : null])
+            ->route('admin.pages.edit', array_filter([
+                'page' => $page,
+                'tab' => $request->input('_page_settings_tab') === 'page-assets' ? 'page-assets' : null,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+            ], fn (mixed $value) => $value !== null && $value !== ''))
             ->with('status', 'Page updated successfully.');
 
         if ($page->isPublished() && $page->publicUrl()) {
@@ -307,7 +341,11 @@ class PageController extends Controller
         $requestedModal = old('_page_asset_modal', request()->string('modal')->toString());
         $requestedAssetId = (int) old('_page_asset_id', request()->integer('page_asset'));
         $requestedType = old('_page_asset_type', request()->string('asset_type')->toString());
-        $closeUrl = route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
+        $closeUrl = route('admin.pages.edit', array_filter([
+            'page' => $page,
+            'tab' => 'page-assets',
+            'return_url' => $this->pageIndexState->safeReturnUrlFromRequest(request()),
+        ], fn (mixed $value) => $value !== null && $value !== ''));
         $selectedAsset = $requestedAssetId > 0
             ? ($page->pageAssets->firstWhere('id', $requestedAssetId) ?? $page->pageAssets()->find($requestedAssetId))
             : null;
@@ -379,7 +417,52 @@ class PageController extends Controller
             'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
             'slotDeleteModalBlock' => $deleteModalState['block'],
             'slotDeleteModalMeta' => $deleteModalState['meta'],
+            'slotDeleteAllModalMeta' => $this->blockDeletionManager->slotMetadata($page->id, $slot->slot_type_id),
+            'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
+            'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
         ]);
+    }
+
+    public function destroySlotBlocks(Request $request, Page $page, PageSlot $slot): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+        abort_unless($slot->page_id === $page->id, 404);
+
+        $validated = $request->validate([
+            'confirm_delete_all_blocks' => ['accepted'],
+            'locale' => ['nullable', 'string'],
+        ], [
+            'confirm_delete_all_blocks.accepted' => 'Confirm that all blocks in this slot should be deleted.',
+        ]);
+
+        DB::transaction(function () use ($page, $slot, $request): void {
+            $this->blockDeletionManager
+                ->scopedBlocksForSlot($page->id, $slot->slot_type_id)
+                ->whereNull('parent_id')
+                ->values()
+                ->flatMap(fn (Block $block) => $this->blockDeletionManager->recursiveDeleteOrder($block))
+                ->unique('id')
+                ->each(fn (Block $block) => $block->delete());
+
+            $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
+            $this->revisionManager->capture(
+                $page->fresh(),
+                $request->user(),
+                'All slot blocks deleted',
+                'Page block structure or content was updated by removing every block from the slot.',
+                event: 'block_deleted',
+            );
+        });
+
+        return redirect()
+            ->route('admin.pages.slots.blocks', [
+                'page' => $page,
+                'slot' => $slot,
+                'locale' => $validated['locale'] ?? null,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+            ])
+            ->with('status', 'Deleted all blocks from '.($slot->slotType?->name ?? 'slot').'.');
     }
 
     public function updateWorkflow(Request $request, Page $page): RedirectResponse
@@ -405,7 +488,10 @@ class PageController extends Controller
         $page = $page->fresh();
 
         $redirect = redirect()
-            ->route('admin.pages.edit', $page)
+            ->route('admin.pages.edit', array_filter([
+                'page' => $page,
+                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
+            ], fn (mixed $value) => $value !== null && $value !== ''))
             ->with('status', $message);
 
         if ($page->isPublished() && $page->publicUrl()) {
@@ -570,13 +656,19 @@ class PageController extends Controller
     public function destroy(Page $page): RedirectResponse
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
-        $siteId = $page->site_id;
+        $request = request();
 
         $page->delete();
 
         return redirect()
-            ->route('admin.pages.index', $siteId ? ['site' => $siteId] : [])
+            ->to($this->pageIndexState->storedUrl($request, $page->site_id))
             ->with('status', 'Page deleted successfully.');
+    }
+
+    private function hasMeaningfulPageIndexQuery(Request $request): bool
+    {
+        return collect(['site', 'site_id', 'search', 'status', 'sort', 'direction', 'page'])
+            ->contains(fn (string $key) => $request->query($key) !== null && trim((string) $request->query($key)) !== '');
     }
 
     private function syncBlocks(Page $page, array $submittedBlocks): void

@@ -2,10 +2,11 @@
     $pageTitle = 'Edit Page: '.$page->title;
     $settingsTab = old('_page_settings_tab', request('tab') === 'page-assets' ? 'page-assets' : 'general');
     $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
-    $pagesIndexUrl = route('admin.pages.index', ['site' => $page->site_id]);
+    $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
+    $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $pageRevisionsUrl = $canViewRevisions ? route('admin.pages.revisions.index', $page) : null;
-    $pageDuplicateUrl = $canDuplicatePage ? route('admin.pages.duplicate.create', $page) : null;
-    $pageMoveUrl = $canMoveToAnotherSite ? route('admin.pages.move-site.create', $page) : null;
+    $pageDuplicateUrl = $canDuplicatePage ? route('admin.pages.duplicate.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
+    $pageMoveUrl = $canMoveToAnotherSite ? route('admin.pages.move-site.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
     $siteName = $page->site?->name ?? 'Site';
     $headerActions = collect([
         $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">Duplicate page</a>' : null,
@@ -71,6 +72,7 @@
                             <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
                                 @csrf
                                 <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
+                                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
                                 <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
                             </form>
                         @endforeach
@@ -91,6 +93,7 @@
                 @method('PUT')
 
                 <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
+                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
                 <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
                     <div class="wb-tabs-nav" role="tablist" aria-label="Page settings sections">
@@ -130,6 +133,7 @@
         'sharedSlotSourcesAvailable' => $sharedSlotSourcesAvailable,
         'canEditContent' => $canEditContent,
         'canCreateSharedSlots' => $canCreateSharedSlots,
+        'pageReturnUrl' => $pageReturnUrl,
     ])
 
     <div class="wb-card wb-card-muted">
@@ -186,9 +190,9 @@
                                     @if (! $canEditContent)
                                         <span class="wb-text-sm wb-text-muted">Locked by workflow</span>
                                     @elseif ($translation)
-                                        <a href="{{ route('admin.pages.translations.edit', [$page, $translation]) }}" class="wb-btn wb-btn-secondary">Edit translation</a>
+                                        <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">Edit translation</a>
                                     @else
-                                        <a href="{{ route('admin.pages.translations.create', [$page, $locale]) }}" class="wb-btn wb-btn-secondary">Add translation</a>
+                                        <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">Add translation</a>
                                     @endif
                                 </td>
                             </tr>

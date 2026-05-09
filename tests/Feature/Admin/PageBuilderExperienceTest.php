@@ -120,6 +120,7 @@ class PageBuilderExperienceTest extends TestCase
             'slot_type_id' => $main->id,
             'sort_order' => 1,
         ]);
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
         $editResponse = $this->actingAs($user)->get(route('admin.pages.edit', $page));
         $content = $editResponse->getContent();
@@ -146,7 +147,7 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('<div class="wb-action-group">', false);
         $editResponse->assertDontSee('<td class="wb-text-end">', false);
         $editResponse->assertSee('name="public_shell"', false);
-        $editResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'"', false);
+        $editResponse->assertSee('href="'.route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]).'"', false);
         $editResponse->assertSee('action="'.route('admin.pages.update', $page).'"', false);
         $editResponse->assertSee('action="'.route('admin.pages.slots.store', $page).'"', false);
         $editResponse->assertSee('action="'.route('admin.pages.slots.move-up', [$page, $page->slots()->firstOrFail()]).'"', false);
@@ -794,8 +795,9 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $this->seed(BlockTypeSeeder::class);
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $codeBlock->id]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $codeBlock->id, 'return_url' => $pageReturnUrl]));
 
         $response->assertOk();
         $response->assertSee('id="slot-block-editor-modal"', false);
@@ -808,7 +810,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('name="language"', false);
         $response->assertSee('ddev composer install');
         $response->assertSee('value="bash"', false);
-        $response->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $codeBlock->id]).'" class="wb-action-btn wb-action-btn-edit"', false);
+        $response->assertSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'edit' => $codeBlock->id, 'return_url' => $pageReturnUrl])).'" class="wb-action-btn wb-action-btn-edit"', false);
     }
 
     #[Test]
@@ -1454,11 +1456,12 @@ class PageBuilderExperienceTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
         $this->actingAs($user)
             ->get(route('admin.pages.edit', $page))
             ->assertOk()
-            ->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot]).'" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>', false);
+            ->assertSee('href="'.route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-primary wb-btn-sm">Edit Blocks</a>', false);
     }
 
     #[Test]
@@ -1477,6 +1480,7 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $alertType = BlockType::query()->where('slug', 'alert')->firstOrFail();
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
         $section = Block::query()->create([
             'page_id' => $page->id,
@@ -1503,7 +1507,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'return_url' => $pageReturnUrl]));
 
         $response->assertOk();
         $response->assertSee('data-admin-sortable-list', false);
@@ -1519,7 +1523,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-slot-type-id="'.$main->id.'"', false);
         $response->assertSee('draggable="true"', false);
         $response->assertSee('data-admin-sortable-handle', false);
-        $response->assertSee('wb-icon-grip-vertical', false);
+        $response->assertDontSee('wb-icon-grip-vertical', false);
+        $response->assertSee('<span aria-hidden="true">::</span>', false);
         $response->assertSee('<div class="wb-table-wrap wb-admin-slot-blocks-table-wrap">', false);
         $response->assertSee('class="wb-table wb-table-striped wb-table-hover wb-admin-slot-blocks-table"', false);
         $response->assertSee('class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell"', false);
@@ -1534,7 +1539,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('title="Move block down"', false);
         $response->assertSee('title="Edit block"', false);
         $response->assertSee('title="Add child block"', false);
-        $response->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete' => $section->id]).'" class="wb-action-btn wb-action-btn-delete"', false);
+        $response->assertSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'delete' => $section->id, 'return_url' => $pageReturnUrl])).'" class="wb-action-btn wb-action-btn-delete"', false);
         $response->assertDontSee('onsubmit="return confirm(\'Delete this block?\');"', false);
         $response->assertDontSee('name="expanded"', false);
         $response->assertDontSee('?expanded=', false);
@@ -1684,6 +1689,184 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Delete block and children');
         $response->assertSee('Delete block');
         $response->assertSee('Recursive deletion cannot be undone except by restoring a revision or backup.');
+    }
+
+    #[Test]
+    public function delete_all_blocks_action_only_appears_when_slot_has_blocks(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main, 'Filled', 'filled');
+        [$emptyPage, $emptySlot] = $this->pageWithSlot($main, 'Empty', 'empty');
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $filledResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $emptyResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$emptyPage, $emptySlot]));
+
+        $filledResponse->assertOk();
+        $filledResponse->assertSee('Delete All Blocks');
+
+        $emptyResponse->assertOk();
+        $emptyResponse->assertDontSee('Delete All Blocks');
+    }
+
+    #[Test]
+    public function delete_all_blocks_modal_shows_slot_counts_and_requires_confirmation(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $section->id,
+            'block_type_id' => $containerType->id,
+            'type' => 'container',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete_all' => 1]));
+
+        $response->assertOk();
+        $response->assertSee('Delete All Blocks');
+        $response->assertSee('Page: '.$page->title);
+        $response->assertSee('Slot: Main');
+        $response->assertSee('Top-level blocks:</strong> 2', false);
+        $response->assertSee('Nested descendants:</strong> 1', false);
+        $response->assertSee('I understand that this deletes every block in this slot.');
+        $response->assertSee('Recovery is only possible through revisions or backups.');
+
+        $failure = $this->actingAs($user)->from(route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete_all' => 1]))
+            ->delete(route('admin.pages.slots.blocks.destroy-all', [$page, $pageSlot]));
+
+        $failure->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'delete_all' => 1]));
+        $failure->assertSessionHasErrors('confirm_delete_all_blocks');
+    }
+
+    #[Test]
+    public function delete_all_blocks_removes_only_selected_slot_tree_and_creates_page_revision(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 1,
+        ]);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $parent = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $parent->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $sibling = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $otherSlotBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'sidebar',
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.pages.slots.blocks.destroy-all', [$page, $pageSlot]), [
+            'confirm_delete_all_blocks' => '1',
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $response->assertSessionHas('status', 'Deleted all blocks from Main.');
+        $this->assertDatabaseMissing('blocks', ['id' => $parent->id]);
+        $this->assertDatabaseMissing('blocks', ['id' => $child->id]);
+        $this->assertDatabaseMissing('blocks', ['id' => $sibling->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $otherSlotBlock->id]);
+        $this->assertDatabaseHas('page_revisions', [
+            'page_id' => $page->id,
+            'event' => 'block_deleted',
+            'label' => 'All slot blocks deleted',
+        ]);
     }
 
     #[Test]
@@ -2503,6 +2686,7 @@ class PageBuilderExperienceTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
         $filteredResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
             $page,
@@ -2511,12 +2695,13 @@ class PageBuilderExperienceTest extends TestCase
             'block_type_tab' => 'layout',
             'block_type_search' => 'section',
             'block_type_sort' => 'name',
+            'return_url' => $pageReturnUrl,
         ]));
 
         $filteredResponse->assertOk();
-        $filteredResponse->assertSee('href="'.route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
+        $filteredResponse->assertSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'picker' => 1, 'return_url' => $pageReturnUrl])).'"', false);
 
-        $resetResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+        $resetResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'return_url' => $pageReturnUrl]));
 
         $resetResponse->assertOk();
         $resetResponse->assertSee('id="slot-block-picker-tab-common"', false);
@@ -2533,6 +2718,7 @@ class PageBuilderExperienceTest extends TestCase
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $pageReturnUrl = route('admin.pages.index', ['site' => $page->site_id]);
 
         $card = Block::query()->create([
             'page_id' => $page->id,
@@ -2555,6 +2741,7 @@ class PageBuilderExperienceTest extends TestCase
             'block_type_search' => 'button',
             'block_type_category' => 'content',
             'block_type_sort' => 'name',
+            'return_url' => $pageReturnUrl,
         ]));
 
         $response->assertOk();
@@ -2564,7 +2751,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('value="button"', false);
         $response->assertSee('<option value="content" selected>Content</option>', false);
         $response->assertSee('<option value="name" selected>Name A-Z</option>', false);
-        $response->assertSee('href="'.e(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id])).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
+        $response->assertSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'return_url' => $pageReturnUrl])).'" class="wb-btn wb-btn-secondary">Reset</a>', false);
         $response->assertSee('data-base-url="', false);
         $response->assertSee('picker=1', false);
         $response->assertSee('parent_id='.$card->id, false);
@@ -2572,6 +2759,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('block_type_search=button', false);
         $response->assertSee('block_type_category=content', false);
         $response->assertSee('block_type_sort=name', false);
+        $response->assertSee('return_url='.urlencode($pageReturnUrl), false);
     }
 
     #[Test]

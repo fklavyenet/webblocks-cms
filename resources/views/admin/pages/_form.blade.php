@@ -58,5 +58,5 @@
 		</div>
 	@endif
 
-	<x-admin.form-actions :cancel-url="route('admin.pages.index', ['site' => $formSiteId])" :show-submit="$canEditContent" :submit-label="$page->exists ? 'Save Changes' : 'Save Draft'" />
+	<x-admin.form-actions :cancel-url="($pageReturnUrl ?? route('admin.pages.index', ['site' => $formSiteId]))" :show-submit="$canEditContent" :submit-label="$page->exists ? 'Save Changes' : 'Save Draft'" />
 </div>

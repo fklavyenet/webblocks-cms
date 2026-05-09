@@ -3,7 +3,8 @@
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
-    $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
+    $pageReturnUrl = $pageReturnUrl ?? request('return_url') ?? session('page_return_url');
+    $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'return_url' => $pageReturnUrl]));
 @endphp
 
 <div class="wb-card wb-card-muted">
@@ -15,8 +16,8 @@
 
         @if ($canManagePageAssets)
             <div class="wb-cluster wb-cluster-2">
-                <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css']) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add CSS asset</a>
-                <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js']) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add JS asset</a>
+                <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add CSS asset</a>
+                <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add JS asset</a>
             </div>
         @endif
     </div>
@@ -35,8 +36,8 @@
 
                 @if ($canManagePageAssets)
                     <div class="wb-cluster wb-cluster-2 wb-mt-3">
-                        <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css']) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add CSS asset</a>
-                        <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js']) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add JS asset</a>
+                        <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add CSS asset</a>
+                        <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add JS asset</a>
                     </div>
                 @endif
             </div>
@@ -85,11 +86,11 @@
                                 <td>
                                     @if ($canManagePageAssets)
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit asset" aria-label="Edit asset" aria-haspopup="dialog">
+                                            <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-edit" title="Edit asset" aria-label="Edit asset" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets', 'modal' => 'delete-page-asset', 'page_asset' => $pageAsset->id]) }}" class="wb-action-btn wb-action-btn-delete" title="Delete asset" aria-label="Delete asset" aria-haspopup="dialog">
+                                            <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'delete-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-delete" title="Delete asset" aria-label="Delete asset" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </a>
                                         </div>

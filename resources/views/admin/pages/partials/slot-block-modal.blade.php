@@ -44,6 +44,7 @@
 
                         <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
                         <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
+                        <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                         @if (! empty($sharedSlot ?? null))
                             <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
                         @endif

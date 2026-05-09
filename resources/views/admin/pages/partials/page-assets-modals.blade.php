@@ -2,7 +2,8 @@
     $requestedModal = $pageAssetsTab['requestedModal'] ?? '';
     $requestedType = $pageAssetsTab['requestedType'] ?? '';
     $selectedAsset = $pageAssetsTab['selectedAsset'] ?? null;
-    $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
+    $pageReturnUrl = $pageReturnUrl ?? request('return_url') ?? session('page_return_url');
+    $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'return_url' => $pageReturnUrl]));
     $siteHandle = $page->site?->handle ?: 'site';
     $pageSlug = $page->slug ?: 'page';
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';

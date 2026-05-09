@@ -164,7 +164,8 @@ class PageEditorialWorkflowTest extends TestCase
         $response->assertSee('Block count');
         $response->assertSee('Created');
         $response->assertSee('Updated');
-        $response->assertSee('href="'.route('admin.pages.edit', $page).'" class="wb-btn wb-btn-primary">Edit Page</a>', false);
+        $response->assertSee('class="wb-btn wb-btn-primary">Edit Page</a>', false);
+        $response->assertSee('return_url=', false);
         $response->assertSee('href="'.$page->publicUrl().'" target="_blank" rel="noopener noreferrer" class="wb-btn wb-btn-secondary">Open Public Page</a>', false);
         $response->assertSee('>Close</a>', false);
         $response->assertDontSee('Edit Blocks');
@@ -594,6 +595,80 @@ class PageEditorialWorkflowTest extends TestCase
             'direction' => 'asc',
             'page' => 1,
         ])), false);
+    }
+
+    #[Test]
+    public function pages_index_filters_are_persisted_through_page_edit_update_and_reset(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'persisted-state');
+
+        $indexUrl = route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'persisted',
+            'status' => Page::STATUS_DRAFT,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ]);
+
+        $index = $this->actingAs($user)->get($indexUrl);
+
+        $index->assertOk();
+        $edit = $this->actingAs($user)->get(route('admin.pages.edit', ['page' => $page, 'return_url' => $indexUrl]));
+
+        $edit->assertOk();
+        $edit->assertSee('href="'.$indexUrl.'"', false);
+
+        $update = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+            'site_id' => $site->id,
+            'title' => 'Persisted State Updated',
+            'slug' => 'persisted-state',
+            'public_shell' => 'default',
+            'return_url' => $indexUrl,
+        ]);
+
+        $update->assertRedirect(route('admin.pages.edit', ['page' => $page, 'return_url' => $indexUrl]));
+
+        $afterUpdate = $this->actingAs($user)->get(route('admin.pages.edit', ['page' => $page, 'return_url' => $indexUrl]));
+        $afterUpdate->assertOk();
+        $afterUpdate->assertSee('href="'.$indexUrl.'"', false);
+
+        $reset = $this->actingAs($user)->get(route('admin.pages.index', ['reset' => 1]));
+        $reset->assertRedirect(route('admin.pages.index'));
+
+        $cleanIndex = $this->actingAs($user)->get(route('admin.pages.index'));
+        $cleanIndex->assertOk();
+        $cleanIndex->assertDontSee('value="persisted"', false);
+        $cleanIndex->assertDontSee('page=2', false);
+        $cleanIndex->assertDontSee('return_url='.urlencode($indexUrl), false);
+    }
+
+    #[Test]
+    public function page_translation_update_returns_to_edit_with_safe_return_url_and_ignores_external_values(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'translated-page');
+        $translation = PageTranslation::query()->where('page_id', $page->id)->where('locale_id', $this->defaultLocale()->id)->firstOrFail();
+        $safeReturnUrl = route('admin.pages.index', ['site' => $site->id, 'search' => 'translated']);
+
+        $safeResponse = $this->actingAs($user)->put(route('admin.pages.translations.update', [$page, $translation]), [
+            'name' => 'Translated Page',
+            'slug' => 'translated-page',
+            'return_url' => $safeReturnUrl,
+        ]);
+
+        $safeResponse->assertRedirect(route('admin.pages.edit', ['page' => $page, 'return_url' => $safeReturnUrl]));
+
+        $unsafeResponse = $this->actingAs($user)->put(route('admin.pages.translations.update', [$page, $translation]), [
+            'name' => 'Translated Page',
+            'slug' => 'translated-page',
+            'return_url' => 'https://evil.example.test/admin/pages',
+        ]);
+
+        $unsafeResponse->assertRedirect(route('admin.pages.edit', $page));
     }
 
     #[Test]

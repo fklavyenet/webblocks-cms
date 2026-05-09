@@ -38,7 +38,7 @@
             <div class="wb-block-hierarchy">
                 <div class="wb-cms-block-tree-item">
                     <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="Drag to reorder block" title="Drag to reorder block">
-                        <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
+                        <span aria-hidden="true">::</span>
                     </button>
                     @if ($hasChildren)
                         <button
@@ -80,6 +80,7 @@
             <div class="wb-action-group">
                 <form method="POST" action="{{ route('admin.blocks.move-up', $block) }}">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                     @if ($sharedSlot)
                         <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
                     @endif
@@ -90,6 +91,7 @@
                 </form>
                 <form method="POST" action="{{ route('admin.blocks.move-down', $block) }}">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ request('return_url') }}">
                     @if ($sharedSlot)
                         <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
                     @endif
