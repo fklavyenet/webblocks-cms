@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Document a risk-based validation workflow in `DEVELOPMENT.md` so routine feature work uses focused fail-fast coverage first and reserves one full `ddev artisan test` run for the final release gate.
+
 ## 1.24.0
 
 - Add slot-editor `Delete All Blocks` actions for page-owned slots and Shared Slots, with confirmation, scoped recursive deletion, preserved other slots, and revision capture through the existing block-deletion audit flow.

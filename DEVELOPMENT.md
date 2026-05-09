@@ -98,6 +98,42 @@ Recommended sequence:
 
 GitHub Actions owns release note generation and release package creation. There are no local release helper scripts.
 
+## Risk-Based Validation
+
+Use the smallest validation that can credibly cover the change while still protecting release quality.
+
+During feature implementation:
+
+- run the smallest relevant focused tests that cover the changed behavior
+- prefer specific test classes or method filters over broad filters such as `--filter=Page` when possible
+- use `--stop-on-failure` during iteration so failures surface quickly
+- do not repeatedly run the full suite during implementation unless the change genuinely needs that breadth to make progress
+
+Before merge:
+
+- rerun the focused tests that cover the changed behavior
+- increase focused coverage for migrations, system updates, backup or restore flows, revisions, permissions, routing, portability, or other cross-cutting changes
+
+Before tagging a release:
+
+- run the full suite exactly once with `ddev artisan test`
+- if the full suite fails, rerun the specific failing test once to distinguish a real regression from a flaky or unrelated failure, then report the result clearly before proceeding
+
+Documentation-only changes:
+
+- no automated test run is normally required when only Markdown or workflow guidance changes and no executable behavior changes
+- a lightweight documentation check such as a careful diff review is acceptable for docs-only edits
+- if the documentation changes include commands, paths, or workflow steps, verify those references against the current repository files instead of running unrelated broad test suites
+
+Example commands:
+
+```bash
+ddev artisan test --filter=PageBuilderExperienceTest --stop-on-failure
+ddev artisan test --filter=SharedSlotAdminManagementTest --stop-on-failure
+ddev artisan test --filter=PageIndex --stop-on-failure
+ddev artisan test
+```
+
 Before creating a release:
 
 1. update `App\Support\WebBlocks::VERSION`
