@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Locale;
 use App\Models\Site;
+use App\Models\SiteVariable;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
 use App\Support\Sites\SiteDeleteService;
@@ -56,6 +57,14 @@ class SiteController extends Controller
             'formMethod' => 'POST',
             'assetPickerAssets' => $this->assetPickerAssets(),
             'assetPickerFolders' => $this->assetPickerFolders(),
+            'canManageSiteSettings' => true,
+            'canManageDomains' => false,
+            'siteTab' => trim((string) request()->query('tab', old('_site_tab', 'site'))),
+            'siteVariablesUi' => [
+                'requestedModal' => '',
+                'selectedVariable' => null,
+                'closeUrl' => route('admin.sites.create', ['tab' => 'variables']),
+            ],
         ]);
     }
 
@@ -79,10 +88,31 @@ class SiteController extends Controller
 
     public function edit(Site $site): View
     {
+        $this->authorization->abortUnlessSiteSettingsView(request()->user(), $site);
+
+        $site->loadMissing(['locales', 'faviconAsset', 'socialImageAsset', 'siteDomains', 'siteVariables']);
+
         $deleteReport = $this->siteDeleteService->inspect($site);
+        $canManageSiteSettings = $this->authorization->canMutateSiteSettings(request()->user(), $site);
+        $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
+
+        $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
+        $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'variables'], true)
+            ? $requestedTab
+            : 'site';
+        $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));
+        $selectedVariable = null;
+
+        if (request()->filled('site_variable')) {
+            $selectedVariable = $site->siteVariables->firstWhere('id', (int) request()->integer('site_variable'));
+        }
+
+        if (! $selectedVariable && old('_site_variable_id')) {
+            $selectedVariable = $site->siteVariables->firstWhere('id', (int) old('_site_variable_id'));
+        }
 
         return view('admin.sites.form', [
-            'site' => $site->loadMissing(['locales', 'faviconAsset', 'socialImageAsset', 'siteDomains']),
+            'site' => $site,
             'locales' => Locale::query()->orderByDesc('is_default')->orderBy('name')->get(),
             'pageTitle' => 'Edit Site: '.$site->name,
             'formAction' => route('admin.sites.update', $site),
@@ -90,6 +120,14 @@ class SiteController extends Controller
             'siteDeleteReport' => $deleteReport,
             'assetPickerAssets' => $this->assetPickerAssets(),
             'assetPickerFolders' => $this->assetPickerFolders(),
+            'canManageSiteSettings' => $canManageSiteSettings,
+            'canManageDomains' => $canManageDomains,
+            'siteTab' => $siteTab,
+            'siteVariablesUi' => [
+                'requestedModal' => $requestedModal,
+                'selectedVariable' => $selectedVariable,
+                'closeUrl' => route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']),
+            ],
         ]);
     }
 
@@ -160,6 +198,8 @@ class SiteController extends Controller
 
     public function update(SiteRequest $request, Site $site): RedirectResponse
     {
+        $this->authorization->abortUnlessSiteSettingsMutation($request->user(), $site);
+
         DB::transaction(function () use ($request, $site): void {
             $data = $request->validated();
             $localeIds = $data['locale_ids'];
@@ -171,7 +211,7 @@ class SiteController extends Controller
             $this->syncLocales($site, $localeIds);
         });
 
-        return redirect()->route('admin.sites.edit', $site)->with('status', 'Site updated successfully.');
+        return redirect()->route('admin.sites.edit', ['site' => $site, 'tab' => $request->input('_site_tab', 'site')])->with('status', 'Site updated successfully.');
     }
 
     private function syncLocales(Site $site, array $localeIds): void

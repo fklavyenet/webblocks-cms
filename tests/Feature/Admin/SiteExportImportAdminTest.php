@@ -162,7 +162,7 @@ class SiteExportImportAdminTest extends TestCase
             'is_primary' => 0,
         ]);
 
-        $updateResponse->assertRedirect(route('admin.sites.edit', $importedSite));
+        $updateResponse->assertRedirect(route('admin.sites.edit', ['site' => $importedSite, 'tab' => 'site']));
         $this->assertSame('imported.example.test', $importedSite->fresh()->domain);
         $this->assertTrue($importedSite->fresh()->hasEnabledLocale($defaultLocale));
     }

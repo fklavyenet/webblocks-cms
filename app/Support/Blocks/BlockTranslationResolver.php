@@ -4,7 +4,9 @@ namespace App\Support\Blocks;
 
 use App\Models\Block;
 use App\Models\Locale;
+use App\Models\Site;
 use App\Support\Locales\LocaleResolver;
+use App\Support\Sites\SiteTokenRenderer;
 use Illuminate\Support\Collection;
 
 class BlockTranslationResolver
@@ -12,14 +14,15 @@ class BlockTranslationResolver
     public function __construct(
         private readonly BlockTranslationRegistry $registry,
         private readonly LocaleResolver $localeResolver,
+        private readonly SiteTokenRenderer $siteTokenRenderer,
     ) {}
 
-    public function resolveCollection(Collection $blocks, Locale|string|null $locale = null): Collection
+    public function resolveCollection(Collection $blocks, Locale|string|null $locale = null, ?Site $site = null): Collection
     {
-        return $blocks->map(fn (Block $block) => $this->resolve($block, $locale));
+        return $blocks->map(fn (Block $block) => $this->resolve($block, $locale, $site));
     }
 
-    public function resolve(Block $block, Locale|string|null $locale = null): Block
+    public function resolve(Block $block, Locale|string|null $locale = null, ?Site $site = null): Block
     {
         $requestedLocale = $this->resolveLocale($locale);
         $defaultLocale = $this->localeResolver->default();
@@ -27,10 +30,11 @@ class BlockTranslationResolver
         $family = $this->registry->familyFor($block);
 
         if ($resolved->relationLoaded('children')) {
-            $resolved->setRelation('children', $this->resolveCollection($resolved->children, $requestedLocale));
+            $resolved->setRelation('children', $this->resolveCollection($resolved->children, $requestedLocale, $site));
         }
 
         if (! $family) {
+            $this->applySiteVariables($resolved, $site);
             $resolved->setAttribute('translation_state', 'shared');
             $resolved->setAttribute('resolved_locale_code', $requestedLocale->code);
 
@@ -45,6 +49,7 @@ class BlockTranslationResolver
         };
 
         $this->applyResolvedFields($resolved, $family, $translation);
+        $this->applySiteVariables($resolved, $site);
 
         $resolved->setAttribute('translation_state', $state);
         $resolved->setAttribute('resolved_locale_code', $resolvedLocale->code);
@@ -153,6 +158,37 @@ class BlockTranslationResolver
         foreach ($attributes as $key => $value) {
             $block->setAttribute($key, $value);
         }
+    }
+
+    private function applySiteVariables(Block $block, ?Site $site): void
+    {
+        if (! $site) {
+            return;
+        }
+
+        $slug = $block->typeSlug();
+
+        foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta', 'submit_label', 'success_message'] as $field) {
+            $value = $block->getAttribute($field);
+
+            if (! is_string($value) || $value === '') {
+                continue;
+            }
+
+            $block->setAttribute(
+                $field,
+                $this->siteTokenRenderer->render(
+                    $value,
+                    $site,
+                    escapeReplacement: $this->shouldEscapeReplacement($slug, $field),
+                ),
+            );
+        }
+    }
+
+    private function shouldEscapeReplacement(?string $slug, string $field): bool
+    {
+        return $field === 'content' && in_array($slug, ['html', 'rich-text'], true);
     }
 
     private function resolveLocale(Locale|string|null $locale = null): Locale

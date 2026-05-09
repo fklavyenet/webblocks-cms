@@ -61,8 +61,22 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - `tagline` is optional public-facing copy for the site.
 - `seo_title`, `seo_description`, and `seo_keywords` are site-level fallback metadata.
 - `favicon_asset_id` and `social_image_asset_id` are optional site-level media references for public head output.
+- `site_variables` are optional site-level reusable plain-text values for controlled public token replacement.
 - Page translation rows also own localized SEO override fields such as `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_asset_id`.
 - This keeps public page metadata locale-aware and out of shared page JSON settings.
+
+## Site Variables
+
+- Site Variables are stored relationally in `site_variables`.
+- They are site-scoped, ordered records with key, label, value, enabled state, and sort order.
+- The supported public token syntax is exactly `{{ site.variable_key }}` with optional inner whitespace.
+- Keys are normalized to lowercase snake_case and must match the conservative pattern `^[a-z][a-z0-9_]*$`.
+- Unknown tokens, disabled variables, invalid keys, and non-site tokens remain unchanged.
+- Replacement is text substitution only. It is not a general template engine.
+- No conditionals, loops, function calls, env access, config access, PHP execution, nested variables, or arbitrary expressions are supported.
+- Replacement happens only during shared public rendering and public search indexing.
+- Admin forms and admin previews keep the raw stored token text.
+- Variable values are treated as plain text. In HTML-capable public contexts they are inserted as escaped text, not executable markup.
 
 ## Page Builder
 

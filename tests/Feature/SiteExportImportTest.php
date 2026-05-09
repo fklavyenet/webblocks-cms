@@ -10,6 +10,7 @@ use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteExport;
+use App\Models\SiteVariable;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use App\Support\Sites\ExportImport\SiteImportManager;
@@ -351,6 +352,46 @@ class SiteExportImportTest extends TestCase
         $this->assertSame('default', $mainSlot['wrapper']['preset']);
         $this->assertCount(0, $sidebarSlot['blocks']);
         Storage::disk('public')->assertExists($imageBlock->asset->path);
+    }
+
+    #[Test]
+    public function export_and_import_include_site_variables(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $site->siteVariables()->create([
+            'key' => 'support_email',
+            'label' => 'Support Email',
+            'value' => 'support@example.test',
+            'sort_order' => 1,
+            'is_enabled' => true,
+        ]);
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $siteVariables = json_decode((string) $archive->getFromName('data/site_variables.json'), true);
+        $archive->close();
+
+        $this->assertCount(1, $siteVariables);
+        $this->assertSame('support_email', $siteVariables[0]['key']);
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Variables',
+            'site_handle' => 'imported-variables',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $this->assertDatabaseHas('site_variables', [
+            'site_id' => $importedSite->id,
+            'key' => 'support_email',
+            'value' => 'support@example.test',
+        ]);
     }
 
     #[Test]

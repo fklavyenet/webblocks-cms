@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add relational site-scoped `site_variables`, a tabbed `Edit Site` screen (`Site`, `Locales`, `Branding`, `SEO Defaults`, `Variables`), and controlled public-only `{{ site.variable_key }}` token replacement that preserves raw admin content and keeps variable values plain text in HTML-capable contexts.
+- Extend site clone and site export/import to include `site_variables`, and allow assigned `site_admin` users to manage Site settings and variables for their sites while assigned `editor` users can view the screen read-only.
+
 ## 1.22.1
 
 - Refine the Edit Page `Page Assets` tab into a compact table with header actions plus Add/Edit/Delete modals, so long `/site/...` paths and JS options no longer require large inline asset forms.

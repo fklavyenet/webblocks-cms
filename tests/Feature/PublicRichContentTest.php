@@ -579,6 +579,41 @@ class PublicRichContentTest extends TestCase
         $response->assertDontSee('wb-rich-text wb-rich-text-readable', false);
     }
 
+    #[Test]
+    public function rich_text_site_variable_values_are_rendered_as_plain_text_and_not_executed(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $page->site->siteVariables()->create([
+            'key' => 'promo_text',
+            'label' => 'Promo Text',
+            'value' => '<script>alert(1)</script><strong>Unsafe</strong>',
+            'is_enabled' => true,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($block, [
+            'content' => '<p>{{ site.promo_text }}</p>',
+        ], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;&lt;strong&gt;Unsafe&lt;/strong&gt;', false);
+        $response->assertDontSee('<script>alert(1)</script>', false);
+        $response->assertDontSee('<strong>Unsafe</strong>', false);
+    }
+
     private function pageWithMainSlot(): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

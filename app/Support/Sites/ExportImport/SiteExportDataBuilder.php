@@ -14,6 +14,7 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SiteVariable;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Pages\PageAssetPathValidator;
 use Illuminate\Support\Collection;
@@ -27,7 +28,7 @@ class SiteExportDataBuilder
 
     public function build(Site $site, bool $includesMedia): array
     {
-        $site = $site->loadMissing(['siteLocales', 'locales', 'siteDomains']);
+        $site = $site->loadMissing(['siteLocales', 'locales', 'siteDomains', 'siteVariables']);
         $sharedSlots = SharedSlot::query()
             ->where('site_id', $site->id)
             ->orderBy('id')
@@ -120,6 +121,17 @@ class SiteExportDataBuilder
                 'is_enabled' => (bool) $siteLocale->is_enabled,
                 'created_at' => $siteLocale->created_at?->toDateTimeString(),
                 'updated_at' => $siteLocale->updated_at?->toDateTimeString(),
+            ])->all(),
+            'site_variables' => $site->siteVariables->sortBy(fn (SiteVariable $siteVariable) => sprintf('%010d-%010d', (int) $siteVariable->sort_order, (int) $siteVariable->id))->values()->map(fn (SiteVariable $siteVariable) => [
+                'id' => $siteVariable->id,
+                'site_id' => $siteVariable->site_id,
+                'key' => $siteVariable->key,
+                'label' => $siteVariable->label,
+                'value' => $siteVariable->value,
+                'sort_order' => (int) $siteVariable->sort_order,
+                'is_enabled' => (bool) $siteVariable->is_enabled,
+                'created_at' => $siteVariable->created_at?->toDateTimeString(),
+                'updated_at' => $siteVariable->updated_at?->toDateTimeString(),
             ])->all(),
             'pages' => $pages->map(fn (Page $page) => [
                 'id' => $page->id,
@@ -321,6 +333,7 @@ class SiteExportDataBuilder
             'counts' => [
                 'locales' => $locales->count(),
                 'site_locales' => $site->siteLocales->count(),
+                'site_variables' => $site->siteVariables->count(),
                 'pages' => $pages->count(),
                 'page_translations' => PageTranslation::query()->whereIn('page_id', $pageIds)->count(),
                 'page_slots' => PageSlot::query()->whereIn('page_id', $pageIds)->count(),

@@ -44,7 +44,7 @@ class PublicSharedSlotResolver
 
         $childrenByParent = $assignments->groupBy('parent_id');
 
-        return $this->buildTree($childrenByParent, null, $locale)
+        return $this->buildTree($childrenByParent, null, $locale, $page?->site)
             ->values();
     }
 
@@ -59,16 +59,16 @@ class PublicSharedSlotResolver
         return $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug());
     }
 
-    private function buildTree(Collection $childrenByParent, ?int $parentId, Locale|string|null $locale = null): Collection
+    private function buildTree(Collection $childrenByParent, ?int $parentId, Locale|string|null $locale = null, ?\App\Models\Site $site = null): Collection
     {
         return $childrenByParent->get($parentId, collect())
             ->sortBy(fn (SharedSlotBlock $assignment) => sprintf('%010d-%010d', (int) $assignment->sort_order, (int) $assignment->id))
             ->values()
-            ->map(function (SharedSlotBlock $assignment) use ($childrenByParent, $locale) {
+            ->map(function (SharedSlotBlock $assignment) use ($childrenByParent, $locale, $site) {
                 $block = clone $assignment->block;
-                $block->setRelation('children', $this->buildTree($childrenByParent, $assignment->id, $locale));
+                $block->setRelation('children', $this->buildTree($childrenByParent, $assignment->id, $locale, $site));
 
-                return $this->blockTranslationResolver->resolve($block, $locale);
+                return $this->blockTranslationResolver->resolve($block, $locale, $site);
             });
     }
 

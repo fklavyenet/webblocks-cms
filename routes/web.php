@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SiteDomainController;
+use App\Http\Controllers\Admin\SiteVariableController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
 use App\Http\Controllers\Admin\SystemSearchController;
@@ -164,6 +165,11 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::post('/blocks/{block}/move-down', [BlockController::class, 'moveDown'])->name('blocks.move-down');
     Route::get('/blocks', [BlockController::class, 'index'])->name('blocks.index')->middleware('can:access-system');
     Route::resource('blocks', BlockController::class)->except(['show', 'index']);
+    Route::get('sites/{site}/edit', [SiteController::class, 'edit'])->name('sites.edit');
+    Route::put('sites/{site}', [SiteController::class, 'update'])->name('sites.update');
+    Route::post('sites/{site}/variables', [SiteVariableController::class, 'store'])->name('sites.variables.store');
+    Route::put('sites/{site}/variables/{site_variable}', [SiteVariableController::class, 'update'])->name('sites.variables.update');
+    Route::delete('sites/{site}/variables/{site_variable}', [SiteVariableController::class, 'destroy'])->name('sites.variables.destroy');
 
     Route::middleware('can:access-system')->group(function () {
         Route::resource('users', UserController::class)->except(['show'])->middleware('can:manage-users');
@@ -179,7 +185,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::put('sites/{site}/domains/{domain}', [SiteDomainController::class, 'update'])->name('sites.domains.update');
         Route::delete('sites/{site}/domains/{domain}', [SiteDomainController::class, 'destroy'])->name('sites.domains.destroy');
         Route::post('sites/{site}/domains/{domain}/primary', [SiteDomainController::class, 'setPrimary'])->name('sites.domains.primary');
-        Route::resource('sites', SiteController::class)->except(['show']);
+        Route::resource('sites', SiteController::class)->except(['show', 'edit', 'update']);
         Route::resource('locales', LocaleController::class)->except(['show', 'destroy']);
         Route::post('locales/{locale}/enable', [LocaleController::class, 'enable'])->name('locales.enable');
         Route::post('locales/{locale}/disable', [LocaleController::class, 'disable'])->name('locales.disable');
