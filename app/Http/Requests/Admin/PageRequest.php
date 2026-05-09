@@ -5,10 +5,8 @@ namespace App\Http\Requests\Admin;
 use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
-use App\Models\PageAsset;
 use App\Models\PageTranslation;
 use App\Models\Site;
-use App\Support\Pages\PageAssetPathValidator;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -83,14 +81,6 @@ class PageRequest extends FormRequest
             'blocks.*.status' => ['required', Rule::in(['draft', 'published'])],
             'blocks.*.is_system' => ['nullable', 'boolean'],
             'blocks.*._delete' => ['nullable', 'boolean'],
-            'page_assets' => ['nullable', 'array'],
-            'page_assets.*.type' => ['required_with:page_assets', 'string', Rule::in(PageAsset::allowedTypes())],
-            'page_assets.*.path' => ['required_with:page_assets', 'string', 'max:2048'],
-            'page_assets.*.sort_order' => ['nullable', 'integer', 'min:0'],
-            'page_assets.*.is_enabled' => ['nullable', 'boolean'],
-            'page_assets.*.is_defer' => ['nullable', 'boolean'],
-            'page_assets.*.is_async' => ['nullable', 'boolean'],
-            'page_assets.*.is_module' => ['nullable', 'boolean'],
         ];
     }
 
@@ -157,25 +147,6 @@ class PageRequest extends FormRequest
             ->values()
             ->all();
 
-        $pathValidator = app(PageAssetPathValidator::class);
-
-        $data['page_assets'] = collect($data['page_assets'] ?? [])
-            ->map(function (array $asset, int $index) use ($pathValidator) {
-                $type = $pathValidator->normalizeType($asset['type'] ?? null);
-
-                return [
-                    'type' => $type,
-                    'path' => $pathValidator->normalizeForStorage($type, $asset['path'] ?? ''),
-                    'sort_order' => isset($asset['sort_order']) ? max((int) $asset['sort_order'], 0) : $index,
-                    'is_enabled' => (bool) ($asset['is_enabled'] ?? false),
-                    'is_defer' => (bool) ($asset['is_defer'] ?? false),
-                    'is_async' => (bool) ($asset['is_async'] ?? false),
-                    'is_module' => (bool) ($asset['is_module'] ?? false),
-                ];
-            })
-            ->values()
-            ->all();
-
         unset($data['public_shell']);
 
         return $data;
@@ -196,21 +167,6 @@ class PageRequest extends FormRequest
                 $validator->errors()->add('site_id', 'Existing pages cannot be moved between sites from the Edit Page screen.');
 
                 return;
-            }
-
-            if (($this->input('page_assets') ?? []) !== [] && ! $this->user()?->isSuperAdmin()) {
-                $validator->errors()->add('page_assets', 'Only super admins can manage page assets.');
-            }
-
-            $pathValidator = app(PageAssetPathValidator::class);
-
-            foreach ((array) $this->input('page_assets', []) as $index => $asset) {
-                $type = $pathValidator->normalizeType($asset['type'] ?? null);
-                $message = $pathValidator->validate($type, $asset['path'] ?? '');
-
-                if ($message !== null) {
-                    $validator->errors()->add('page_assets.'.$index.'.path', $message);
-                }
             }
 
             if ($page->site_id === $siteId) {
