@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.22.1
+
 - Refine the Edit Page `Page Assets` tab into a compact table with header actions plus Add/Edit/Delete modals, so long `/site/...` paths and JS options no longer require large inline asset forms.
 
 ## 1.22.0
