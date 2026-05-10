@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
-- Standardize CMS admin form and modal footer actions to one shared WebBlocks UI pattern so card footers and modal footers both keep primary and cancel actions left-aligned, while destructive actions render last in a separate end-aligned danger group when present.
+## 1.25.0
+
+- Add Site Promotion V1 as a package-based workflow for dry-run-first promotion of site-owned content into an existing target site, including target preselection from Sites and safety-backup plus rebuild integration.
 - Add a per-site Sites `Manage` dropdown that replaces crowded row action icons, keeps `Export` available as a modal action, and exposes `Promote to this site` as a target-preselected workflow entry.
-- Refine `Export / Import` into one combined operational screen that shows export and import history together and moves `Run Export` and `Run Import` actions into listing card headers.
+- Add a direct Sites row `Export` modal workflow and refine `Export / Import` into one combined operational screen that shows export and import history together and moves `Run Export` and `Run Import` actions into listing card headers.
+- Standardize CMS admin form and modal footer actions to one shared WebBlocks UI pattern so card footers and modal footers both keep primary and cancel actions left-aligned, while destructive actions render last in a separate end-aligned danger group when present.
+- Refine the Users admin listing by removing the Created column and keeping row actions on one line with the shared nowrap action pattern.
 - Add a project-specific PHP indentation guard to enforce the 2-space indentation standard alongside Pint.
 - Add a codified AI and development standards foundation with `AGENTS.md`, a repository `.editorconfig`, `pint.json`, and Composer formatting scripts so future work can follow one shared project contract.
 - Document a risk-based validation workflow in `DEVELOPMENT.md` so routine feature work uses focused fail-fast coverage first and reserves one full `ddev artisan test` run for the final release gate.
