@@ -95,6 +95,9 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertSee('export_site='.$site->id);
         $response->assertSee('action="'.route('admin.sites.export', $site).'"', false);
         $response->assertSeeInOrder(['Export Site', 'Cancel'], false);
+        $response->assertSee('<div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap" data-admin-form-actions>', false);
+        $response->assertSee('data-admin-form-actions-main', false);
+        $response->assertDontSee('wb-justify-end', false);
     }
 
     #[Test]

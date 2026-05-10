@@ -47,10 +47,12 @@
                 </div>
             </div>
 
-            <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                <a href="{{ route('admin.sites.edit', $site) }}" class="wb-btn wb-btn-primary">Edit Site</a>
-                <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-btn wb-btn-secondary">Manage Domains</a>
-                <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+            <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                    <a href="{{ route('admin.sites.edit', $site) }}" class="wb-btn wb-btn-primary">Edit Site</a>
+                    <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-btn wb-btn-secondary">Manage Domains</a>
+                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+                </div>
             </div>
         </div>
     </div>

@@ -395,7 +395,7 @@
 
                         <x-admin.form-actions
                             :cancel-url="route('admin.media.index', $baseQuery)"
-                            container-class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap"
+                            container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />
                     </form>
                 </div>
@@ -452,7 +452,7 @@
 
                         <x-admin.form-actions
                             :cancel-url="route('admin.media.index', $baseQuery)"
-                            container-class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap"
+                            container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />
                     </form>
                 </div>

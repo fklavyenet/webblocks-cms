@@ -102,10 +102,13 @@
                         </div>
                     </div>
 
-                    <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                        <button type="submit" class="wb-btn wb-btn-danger">Delete asset</button>
-                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                    </div>
+                    <x-admin.form-actions
+                        :cancel-url="$closeUrl"
+                        :show-submit="false"
+                        :delete-submit="true"
+                        delete-label="Delete asset"
+                        container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+                    />
                 </form>
             </div>
         </div>

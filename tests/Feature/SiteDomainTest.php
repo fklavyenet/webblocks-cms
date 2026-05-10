@@ -314,7 +314,13 @@ class SiteDomainTest extends TestCase
         $response->assertOk();
         $response->assertSee('Remove Domain: alias.example.test');
         $response->assertSee('Confirm whether this alias domain should be removed from the site.');
-        $response->assertSee('Remove domain');
+        $response->assertSeeInOrder([
+            'data-admin-form-actions',
+            'data-admin-form-actions-main',
+            'Remove domain',
+            'Cancel',
+        ], false);
+        $response->assertDontSee('data-admin-form-actions-danger', false);
 
         $this->actingAs($user)
             ->from(route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $alias->id]))

@@ -4,6 +4,9 @@
     $isGroup = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_GROUP;
     $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]);
     $iconOptions = ($iconCatalog ?? app(\App\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
+    $cancelType = $cancelType ?? 'link';
+    $submitLabel = $submitLabel ?? ($item->exists ? 'Save Changes' : 'Create');
+    $formActionsContainerClass = $formActionsContainerClass ?? null;
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -186,4 +189,13 @@
             sync();
         })();
     </script>
+
+    @if ($formActionsContainerClass)
+        <x-admin.form-actions
+            :cancel-url="$cancelUrl"
+            :cancel-type="$cancelType"
+            :submit-label="$submitLabel"
+            :container-class="$formActionsContainerClass"
+        />
+    @endif
 </div>

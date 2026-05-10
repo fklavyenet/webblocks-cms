@@ -366,8 +366,11 @@ class SiteLocaleManagementTest extends TestCase
             '<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">',
             '<strong>Site Settings</strong>',
             '<div class="wb-card-footer">',
+            'data-admin-form-actions',
+            'data-admin-form-actions-main',
             'Save Changes',
             'Cancel',
+            'data-admin-form-actions-danger',
             'Delete',
         ], false);
         $response->assertDontSee('Save Site', false);

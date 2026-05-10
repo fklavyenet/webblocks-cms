@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Standardize CMS admin form and modal footer action order to the WebBlocks UI pattern so full-page forms and dialogs consistently render primary first, cancel second, and destructive actions last.
+- Standardize CMS admin form and modal footer actions to one shared WebBlocks UI pattern so card footers and modal footers both keep primary and cancel actions left-aligned, while destructive actions render last in a separate end-aligned danger group when present.
 - Add a per-site Sites `Manage` dropdown that replaces crowded row action icons, keeps `Export` available as a modal action, and exposes `Promote to this site` as a target-preselected workflow entry.
 - Refine `Export / Import` into one combined operational screen that shows export and import history together and moves `Run Export` and `Run Import` actions into listing card headers.
 - Add a project-specific PHP indentation guard to enforce the 2-space indentation standard alongside Pint.

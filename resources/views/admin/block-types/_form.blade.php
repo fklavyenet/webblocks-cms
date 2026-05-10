@@ -57,6 +57,4 @@
             <div>Core block types are product-owned catalog records. Use this form only for install-specific block types.</div>
         </div>
     </div>
-
-    <x-admin.form-actions :cancel-url="route('admin.block-types.index')" />
 </div>

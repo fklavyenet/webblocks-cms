@@ -8,7 +8,7 @@
     $cancelUrl = $cancelUrl ?? (($selectedPageId && $selectedSlotTypeId) ? route('admin.pages.slots.blocks', ['page' => $selectedPageId, 'slot' => $selectedSlotTypeId]) : ($selectedPageId ? route('admin.pages.edit', $selectedPageId) : route('admin.blocks.index')));
     $submitLabel = $submitLabel ?? 'Save';
     $modeLabel = $modeLabel ?? ($block->exists ? 'Edit' : 'Create');
-    $actionsContainerClass = $actionsContainerClass ?? 'wb-flex wb-items-center wb-gap-3 wb-flex-wrap';
+    $actionsContainerClass = $actionsContainerClass ?? null;
     $activeTab = $activeTab ?? old('_slot_block_tab', 'block-fields');
     $assetPickerAssets = $assetPickerAssets ?? collect();
     $assetPickerFolders = $assetPickerFolders ?? collect();
@@ -105,4 +105,12 @@
             </div>
         </div>
     </div>
+
+    @if ($actionsContainerClass)
+        <x-admin.form-actions
+            :cancel-url="$cancelUrl"
+            :submit-label="$submitLabel"
+            :container-class="$actionsContainerClass"
+        />
+    @endif
 </div>

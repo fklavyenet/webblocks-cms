@@ -75,10 +75,14 @@
                     @endif
                 </div>
 
-                <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                    <button type="submit" class="wb-btn wb-btn-danger" @disabled($removalBlockedMessage !== null)>Remove domain</button>
-                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                </div>
+                <x-admin.form-actions
+                    :cancel-url="$closeUrl"
+                    :show-submit="false"
+                    :delete-submit="true"
+                    delete-label="Remove domain"
+                    :delete-disabled="$removalBlockedMessage !== null"
+                    container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
+                />
             </form>
         </div>
     </div>
