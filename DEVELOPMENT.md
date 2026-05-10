@@ -106,15 +106,20 @@ Formatting sources of truth:
 
 - `.editorconfig` defines baseline whitespace, line ending, encoding, and indentation rules
 - `pint.json` defines the repository PHP formatting rules through Laravel Pint
+- `scripts/check-php-indentation.php` enforces the project-specific 2-space PHP indentation rule that Pint does not currently catch
 
 Standard development commands:
 
 - `ddev composer format` applies Pint fixes
-- `ddev composer format:test` checks Pint formatting without modifying files
+- `ddev composer format:test` checks Pint formatting without modifying files and runs the PHP indentation guard
 - `ddev artisan test --filter=...`
 - `ddev artisan test`
 
 Prefer DDEV-first commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
+
+When AI or automation writes PHP files, verify the actual file contents for 2-space indentation instead of assuming a successful Pint run proves indentation compliance.
+
+The current repository still contains historical 4-space PHP indentation in existing source files. Until a dedicated repo-wide 2-space indentation baseline is applied, the custom guard is wired for targeted enforcement so routine validation stays green while new and explicitly targeted files can still be checked against the 2-space standard.
 
 Repository-wide Pint compliance is not claimed yet. The current codebase still has historical formatting drift, and cleanup should be handled separately in a dedicated baseline formatting change.
 

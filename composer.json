@@ -51,7 +51,8 @@
             "vendor/bin/pint"
         ],
         "format:test": [
-            "vendor/bin/pint --test"
+            "vendor/bin/pint --test",
+            "@php scripts/check-php-indentation.php"
         ],
         "test": [
             "@php artisan config:clear --ansi",

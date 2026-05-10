@@ -4,6 +4,7 @@
 
 - Follow Laravel conventions unless this file says otherwise.
 - Use two spaces for indentation.
+- PHP files in this repository use 2-space indentation.
 - Use DDEV commands by default.
 - Use `ddev artisan`, not `php artisan`.
 - Do not include manual verification/check steps inside implementation commands.
@@ -65,3 +66,9 @@
 - Keep `CHANGELOG.md` current for meaningful changes.
 - Update relevant files under `docs/` when behavior, setup, architecture, or conventions change.
 - Do not bump the CMS version or create tags unless explicitly asked to prepare a release.
+
+## Formatting Enforcement
+
+- Laravel Pint remains the formatter for the PHP style rules it supports.
+- `scripts/check-php-indentation.php` enforces the project-specific 2-space PHP indentation rule that Pint does not currently catch.
+- Verify AI-generated code against the actual written file contents, not only against successful Pint output.
