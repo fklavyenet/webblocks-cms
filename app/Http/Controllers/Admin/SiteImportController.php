@@ -18,11 +18,9 @@ class SiteImportController extends Controller
         private readonly SiteImportManager $siteImportManager,
     ) {}
 
-    public function index(): View
+    public function index(): RedirectResponse
     {
-        return view('admin/site-transfers/imports/index', [
-            'imports' => SiteImport::query()->with(['targetSite', 'user'])->latest()->paginate(20),
-        ]);
+        return redirect()->route('admin.site-transfers.exports.index');
     }
 
     public function create(): View
@@ -72,7 +70,7 @@ class SiteImportController extends Controller
         $this->siteImportManager->delete($siteImport);
 
         return redirect()
-            ->route('admin.site-transfers.imports.index')
+            ->route('admin.site-transfers.exports.index')
             ->with('status', 'Site import record deleted. Imported site content remains intact.');
     }
 }

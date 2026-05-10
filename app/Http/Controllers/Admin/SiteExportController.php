@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiteExportRequest;
 use App\Models\Site;
 use App\Models\SiteExport;
+use App\Models\SiteImport;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -21,7 +22,16 @@ class SiteExportController extends Controller
     public function index(): View
     {
         return view('admin/site-transfers/exports/index', [
-            'exports' => SiteExport::query()->with(['site', 'user'])->latest()->paginate(20),
+            'exports' => SiteExport::query()
+                ->with(['site', 'user'])
+                ->latest()
+                ->paginate(20, ['*'], 'exports_page')
+                ->withQueryString(),
+            'imports' => SiteImport::query()
+                ->with(['targetSite', 'user'])
+                ->latest()
+                ->paginate(20, ['*'], 'imports_page')
+                ->withQueryString(),
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);
     }
@@ -30,7 +40,7 @@ class SiteExportController extends Controller
     {
         try {
             $site = Site::query()->findOrFail($request->integer('site_id'));
-            $siteExport = $this->siteExportManager->export($site, $request->boolean('includes_media'), $request->user()?->id);
+            $siteExport = $this->createExport($site, $request);
 
             return redirect()
                 ->route('admin.site-transfers.exports.show', $siteExport)
@@ -38,6 +48,25 @@ class SiteExportController extends Controller
         } catch (Throwable $throwable) {
             return redirect()
                 ->route('admin.site-transfers.exports.index')
+                ->withErrors(['site_export' => $throwable->getMessage()]);
+        }
+    }
+
+    public function storeFromSitesIndex(SiteExportRequest $request, Site $site): RedirectResponse
+    {
+        try {
+            $this->createExport($site, $request);
+
+            return redirect()
+                ->route('admin.sites.index')
+                ->with('status', 'Export package created for "'.$site->name.'".');
+        } catch (Throwable $throwable) {
+            return redirect()
+                ->route('admin.sites.index', [
+                    'modal' => 'export-site',
+                    'export_site' => $site->id,
+                ])
+                ->withInput()
                 ->withErrors(['site_export' => $throwable->getMessage()]);
         }
     }
@@ -61,5 +90,10 @@ class SiteExportController extends Controller
         return redirect()
             ->route('admin.site-transfers.exports.index')
             ->with('status', 'Site export record deleted.');
+    }
+
+    private function createExport(Site $site, SiteExportRequest $request): SiteExport
+    {
+        return $this->siteExportManager->export($site, $request->boolean('includes_media'), $request->user()?->id);
     }
 }

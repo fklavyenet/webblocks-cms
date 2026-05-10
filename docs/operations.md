@@ -56,6 +56,17 @@ Export / Import is the site portability tool.
 
 Use it to move one site's content between installs.
 
+The admin workflow now has two related entry points:
+
+- `Admin -> Sites` includes a per-site `Export` row action that opens a modal for the selected site, shows the site name and handle, and can include media or assets before creating the package.
+- `Admin -> Maintenance -> Export / Import` is the combined operational screen for transfer history and transfer actions. It shows `Site Exports` and `Site Imports` together, with `Run Export` and `Run Import` actions in the relevant listing card headers.
+
+Relationship between the tools:
+
+- Sites row `Export` creates a package for one selected site and returns to the Sites list with a success message.
+- `Export / Import` manages package history and the main export or import operations screen.
+- `Sites -> Promote` applies an export or promotion package to an existing target site with dry run, strategy, safety backup, and preserve rules.
+
 Export / Import covers site-scoped content such as:
 
 - site record and locale assignments
@@ -111,7 +122,7 @@ Use it when:
 
 How it differs from other tools:
 
-- Export / Import creates a new local site from a package by default
+- Export / Import creates or manages site transfer packages and creates a new local site from a package by default
 - Site Promotion applies package content into an existing target site
 - Site Clone duplicates site-owned content inside the current install without a package
 - Backup / Restore is environment recovery and can replace the current database or uploads

@@ -30,6 +30,12 @@ class SiteController extends Controller
     public function index(): View
     {
         $siteCount = Site::query()->count();
+        $user = request()->user();
+        $requestedModal = trim((string) request()->query('modal', old('_site_export_modal', '')));
+        $selectedExportSiteId = (int) request()->integer('export_site', old('site_id'));
+        $selectedExportSite = $selectedExportSiteId > 0
+            ? Site::query()->find($selectedExportSiteId)
+            : null;
 
         return view('admin.sites.index', [
             'sites' => Site::query()
@@ -43,6 +49,12 @@ class SiteController extends Controller
                 ->keyBy('id')
                 ->map(fn (Site $site) => $this->siteDeleteService->inspect($site)),
             'siteCount' => $siteCount,
+            'canExportSites' => $user?->isSuperAdmin() ?? false,
+            'siteExportUi' => [
+                'requestedModal' => $requestedModal,
+                'selectedSite' => $selectedExportSite,
+                'closeUrl' => route('admin.sites.index'),
+            ],
         ]);
     }
 

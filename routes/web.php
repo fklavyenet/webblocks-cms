@@ -179,6 +179,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');
         Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
         Route::post('sites/clone', [SiteController::class, 'cloneStore'])->name('sites.clone.store');
+        Route::post('sites/{site}/export', [SiteExportController::class, 'storeFromSitesIndex'])->name('sites.export');
         Route::get('sites/promote', [SitePromotionController::class, 'index'])->name('sites.promote');
         Route::post('sites/promote/dry-run', [SitePromotionController::class, 'dryRun'])->name('sites.promote.dry-run');
         Route::post('sites/promote/apply', [SitePromotionController::class, 'apply'])->name('sites.promote.apply');

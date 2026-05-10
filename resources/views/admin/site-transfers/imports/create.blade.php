@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Run Import',
         'description' => 'Upload a validated site export package, preview package metadata, then create a new local site from that package.',
-        'actions' => '<a href="'.route('admin.site-transfers.imports.index').'" class="wb-btn wb-btn-secondary">Back to Imports</a>',
+        'actions' => '<a href="'.route('admin.site-transfers.exports.index').'" class="wb-btn wb-btn-secondary">Back to Export / Import</a>',
     ])
 
     @include('admin.partials.flash')
@@ -26,7 +26,7 @@
 
                 <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                     <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                        <a href="{{ route('admin.site-transfers.imports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                        <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
                         <button type="submit" class="wb-btn wb-btn-primary">Validate Package</button>
                     </div>
                 </div>

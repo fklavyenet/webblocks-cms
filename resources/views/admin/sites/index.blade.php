@@ -1,5 +1,10 @@
 @extends('layouts.admin', ['title' => 'Sites', 'heading' => 'Sites'])
 
+@php
+    $siteExportUi = $siteExportUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
+    $showExportModal = $canExportSites && $siteExportUi['requestedModal'] === 'export-site' && $siteExportUi['selectedSite'];
+@endphp
+
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Sites',
@@ -80,6 +85,11 @@
                                         <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
                                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                                         </a>
+                                        @if ($canExportSites)
+                                            <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-action-btn" title="Export site" aria-label="Export site" aria-haspopup="dialog" aria-controls="siteIndexExportModal">
+                                                <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
+                                            </a>
+                                        @endif
                                         @if ($deleteReport?->canDelete)
                                             <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
@@ -100,4 +110,17 @@
 
         @include('admin.partials.pagination', ['paginator' => $sites])
     </div>
+
+    @if ($canExportSites)
+        @include('admin.site-transfers.partials.export-modal', [
+            'modalId' => 'siteIndexExportModal',
+            'modalTitle' => 'Export Site',
+            'modalDescription' => 'Create a portable site export package for the selected site without leaving the Sites list.',
+            'selectedSite' => $siteExportUi['selectedSite'],
+            'show' => $showExportModal,
+            'closeUrl' => $siteExportUi['closeUrl'],
+            'formAction' => $siteExportUi['selectedSite'] ? route('admin.sites.export', $siteExportUi['selectedSite']) : route('admin.sites.index'),
+            'modalKey' => 'export-site',
+        ])
+    @endif
 @endsection

@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => $siteImport->source_archive_name ?? 'Site Import #'.$siteImport->id,
         'description' => 'Review the package manifest, preview the import summary, and create a new site from the validated package.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.site-transfers.imports.index').'" class="wb-btn wb-btn-secondary">Back to Imports</a>'.($siteImport->targetSite ? '<a href="'.route('admin.sites.edit', $siteImport->targetSite).'" class="wb-btn wb-btn-secondary">Open Imported Site</a>' : '').'</div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.site-transfers.exports.index').'" class="wb-btn wb-btn-secondary">Back to Export / Import</a>'.($siteImport->targetSite ? '<a href="'.route('admin.sites.edit', $siteImport->targetSite).'" class="wb-btn wb-btn-secondary">Open Imported Site</a>' : '').'</div>',
     ])
 
     @include('admin.partials.flash')
@@ -102,7 +102,7 @@
 
                         <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <a href="{{ route('admin.site-transfers.imports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                                <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
                                 <button type="submit" class="wb-btn wb-btn-primary">Run Import</button>
                             </div>
                         </div>

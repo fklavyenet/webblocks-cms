@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Locale;
+use App\Models\Site;
 use App\Models\SiteExport;
 use App\Models\SiteImport;
 use App\Models\User;
@@ -74,6 +75,80 @@ class SiteExportImportAdminTest extends TestCase
     }
 
     #[Test]
+    public function sites_index_shows_export_action_for_super_admin_and_modal_context(): void
+    {
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.index', [
+            'modal' => 'export-site',
+            'export_site' => $site->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Export Site');
+        $response->assertSee($site->name);
+        $response->assertSee($site->handle);
+        $response->assertSee('Include media/assets');
+        $response->assertSee('aria-controls="siteIndexExportModal"', false);
+        $response->assertSee('modal=export-site');
+        $response->assertSee('export_site='.$site->id);
+        $response->assertSee('action="'.route('admin.sites.export', $site).'"', false);
+    }
+
+    #[Test]
+    public function sites_index_does_not_show_export_action_for_non_super_admin(): void
+    {
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+
+        $response = $this->actingAs($user)->post(route('admin.sites.export', $site), [
+            'includes_media' => '1',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    #[Test]
+    public function sites_index_export_creates_package_and_redirects_back_with_status(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('public');
+        [$site] = $this->seedCloneableSite(withFile: true);
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]))
+            ->post(route('admin.sites.export', $site), [
+                'includes_media' => '1',
+            ]);
+
+        $siteExport = SiteExport::query()->latest()->first();
+
+        $this->assertNotNull($siteExport);
+        $this->assertSame($site->id, $siteExport->site_id);
+        $this->assertTrue($siteExport->includes_media);
+        $response->assertRedirect(route('admin.sites.index'));
+        $response->assertSessionHas('status', 'Export package created for "'.$site->name.'".');
+    }
+
+    #[Test]
+    public function unauthorized_users_cannot_export_from_sites_index(): void
+    {
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+
+        $response = $this->actingAs($user)->post(route('admin.sites.export', $site), [
+            'includes_media' => '1',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseCount('site_exports', 0);
+    }
+
+    #[Test]
     public function admin_export_action_uses_clean_filename_without_random_prefix(): void
     {
         Storage::fake('site-exports');
@@ -124,6 +199,72 @@ class SiteExportImportAdminTest extends TestCase
 
         $runResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
         $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+    }
+
+    #[Test]
+    public function combined_transfer_screen_renders_exports_and_imports_sections_and_actions(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $exportSite = Site::query()->create([
+            'name' => 'Export Source',
+            'handle' => 'export-source',
+            'domain' => 'export-source.test',
+        ]);
+
+        $importTarget = Site::query()->create([
+            'name' => 'Import Target',
+            'handle' => 'import-target',
+            'domain' => 'import-target.test',
+        ]);
+
+        $siteExport = SiteExport::query()->create([
+            'site_id' => $exportSite->id,
+            'user_id' => $user->id,
+            'status' => SiteExport::STATUS_COMPLETED,
+            'includes_media' => true,
+            'archive_disk' => 'site-exports',
+            'archive_path' => 'example-export.zip',
+            'archive_name' => 'example-export.zip',
+            'archive_size_bytes' => 2048,
+        ]);
+
+        $siteImport = SiteImport::query()->create([
+            'user_id' => $user->id,
+            'status' => SiteImport::STATUS_COMPLETED,
+            'source_archive_name' => 'example-import.zip',
+            'archive_disk' => 'site-transfers',
+            'archive_path' => 'example-import.zip',
+            'target_site_id' => $importTarget->id,
+            'imported_site_handle' => $importTarget->handle,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.site-transfers.exports.index'));
+
+        $response->assertOk();
+        $response->assertSee('Site Exports');
+        $response->assertSee('Site Imports');
+        $response->assertSee('Run Export');
+        $response->assertSee('Run Import');
+        $response->assertDontSee('Back to Imports');
+        $response->assertDontSee('href="'.route('admin.site-transfers.imports.index').'" class="wb-btn wb-btn-secondary">Imports</a>', false);
+        $response->assertSee($exportSite->name);
+        $response->assertSee($siteImport->source_archive_name);
+        $response->assertSee(route('admin.site-transfers.exports.show', $siteExport), false);
+        $response->assertSee(route('admin.site-transfers.exports.download', $siteExport), false);
+        $response->assertSee(route('admin.site-transfers.exports.destroy', $siteExport), false);
+        $response->assertSee(route('admin.site-transfers.imports.show', $siteImport), false);
+        $response->assertSee(route('admin.site-transfers.imports.destroy', $siteImport), false);
+    }
+
+    #[Test]
+    public function legacy_imports_index_redirects_to_combined_transfer_screen(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.site-transfers.imports.index'));
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
     }
 
     #[Test]

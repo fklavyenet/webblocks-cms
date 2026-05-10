@@ -20,7 +20,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
 - primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`
 - install wizard for first-run setup
-- system updates, backups, site export/import tools, and package-based Site Promotion workflows
+- system updates, backups, site export/import tools with a direct Sites-list export shortcut, and package-based Site Promotion workflows
 - site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
 - relational site-scoped `site_variables` with controlled `{{ site.variable_key }}` public token replacement, tabbed `Edit Site` sections, and portability through site clone and site export/import
 - site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, can be assigned per page slot from the Edit Page screen, now have dedicated Shared Slot revision history and restore, and participate in site export/import and site clone workflows
@@ -152,6 +152,10 @@ See `docs/getting-started.md` for the first-use workflow.
 ## Site Promotion
 
 Site Promotion is the controlled one-way workflow for promoting site-owned content from a package into an existing target site.
+
+- `Admin -> Sites` now includes a per-site `Export` row action that opens a modal, shows the selected site name and handle, and can include media or assets without leaving the Sites list.
+- `Admin -> Maintenance -> Export / Import` now shows export history and import history together on one operational screen, with `Run Export` and `Run Import` actions in their listing card headers.
+- `Admin -> Sites -> Promote` stays focused on applying an existing export or promotion package into a selected target site with dry run, safety backup, strategy selection, and preserve rules.
 
 - Admin path: `Admin -> Sites -> Promote`
 - V1 is package-based only and super-admin-only
