@@ -155,6 +155,8 @@ See `docs/getting-started.md` for the first-use workflow.
 - `AGENTS.md` is the compact AI and project working contract for repository-specific implementation rules.
 - `DEVELOPMENT.md` defines the development and release workflow.
 - `.editorconfig` and `pint.json` define the repository formatting standards.
+- `ddev composer format:test` checks Pint formatting without modifying files, and `ddev composer format` applies Pint fixes.
+- Repository-wide Pint cleanup is still a separate baseline task because the current codebase has historical formatting drift.
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
 - [Core Concepts](docs/core-concepts.md)

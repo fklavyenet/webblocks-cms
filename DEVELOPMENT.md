@@ -109,12 +109,14 @@ Formatting sources of truth:
 
 Standard development commands:
 
-- `ddev composer format`
-- `ddev composer format:test`
+- `ddev composer format` applies Pint fixes
+- `ddev composer format:test` checks Pint formatting without modifying files
 - `ddev artisan test --filter=...`
 - `ddev artisan test`
 
 Prefer DDEV-first commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
+
+Repository-wide Pint compliance is not claimed yet. The current codebase still has historical formatting drift, and cleanup should be handled separately in a dedicated baseline formatting change.
 
 ## Risk-Based Validation
 
