@@ -152,6 +152,9 @@ See `docs/getting-started.md` for the first-use workflow.
 ## Documentation
 
 - See the full documentation in the `docs/` directory:
+- `AGENTS.md` is the compact AI and project working contract for repository-specific implementation rules.
+- `DEVELOPMENT.md` defines the development and release workflow.
+- `.editorconfig` and `pint.json` define the repository formatting standards.
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
 - [Core Concepts](docs/core-concepts.md)

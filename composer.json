@@ -47,6 +47,12 @@
         "dev": [
             "@php artisan serve"
         ],
+        "format": [
+            "vendor/bin/pint"
+        ],
+        "format:test": [
+            "vendor/bin/pint --test"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"

@@ -1,0 +1,16 @@
+{
+  "preset": "laravel",
+  "rules": {
+    "array_syntax": {
+      "syntax": "short"
+    },
+    "binary_operator_spaces": {
+      "default": "single_space"
+    },
+    "no_unused_imports": true,
+    "ordered_imports": {
+      "sort_algorithm": "alpha"
+    },
+    "single_quote": true
+  }
+}

@@ -98,6 +98,24 @@ Recommended sequence:
 
 GitHub Actions owns release note generation and release package creation. There are no local release helper scripts.
 
+## Coding Standards
+
+Use `AGENTS.md` as the compact AI and project working contract for routine implementation work.
+
+Formatting sources of truth:
+
+- `.editorconfig` defines baseline whitespace, line ending, encoding, and indentation rules
+- `pint.json` defines the repository PHP formatting rules through Laravel Pint
+
+Standard development commands:
+
+- `ddev composer format`
+- `ddev composer format:test`
+- `ddev artisan test --filter=...`
+- `ddev artisan test`
+
+Prefer DDEV-first commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
+
 ## Risk-Based Validation
 
 Use the smallest validation that can credibly cover the change while still protecting release quality.
@@ -145,6 +163,7 @@ Never reintroduce `APP_VERSION` into `.env` or `.env.example`.
 
 Agents working in this repository should follow these rules:
 
+- use `AGENTS.md` as the compact working contract before adding task-specific prompt detail
 - treat local development as source-first, not updater-first
 - assume unreleased code may exist in the working tree
 - do not use the admin updater to apply local work

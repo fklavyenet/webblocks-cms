@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Add a codified AI and development standards foundation with `AGENTS.md`, a repository `.editorconfig`, `pint.json`, and Composer formatting scripts so future work can follow one shared project contract.
 - Document a risk-based validation workflow in `DEVELOPMENT.md` so routine feature work uses focused fail-fast coverage first and reserves one full `ddev artisan test` run for the final release gate.
 
 ## 1.24.0
