@@ -94,6 +94,7 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertSee('modal=export-site');
         $response->assertSee('export_site='.$site->id);
         $response->assertSee('action="'.route('admin.sites.export', $site).'"', false);
+        $response->assertSeeInOrder(['Export Site', 'Cancel'], false);
     }
 
     #[Test]

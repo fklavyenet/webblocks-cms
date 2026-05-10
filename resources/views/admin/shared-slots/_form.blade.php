@@ -1,5 +1,4 @@
 @php
-    $cancelUrl = $cancelUrl ?? route('admin.shared-slots.index', ['site' => old('site_id', $sharedSlot->site_id)]);
     $isReadOnlySite = ($sharedSlot->exists && auth()->user()?->isEditor()) ?? false;
 @endphp
 
@@ -59,6 +58,4 @@
             </select>
         </div>
     </div>
-
-    <x-admin.form-actions :cancel-url="$cancelUrl" :submit-label="$sharedSlot->exists ? 'Save Shared Slot' : 'Create Shared Slot'" />
 </div>

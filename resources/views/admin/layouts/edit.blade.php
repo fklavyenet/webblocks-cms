@@ -8,5 +8,18 @@
 
     @include('admin.partials.flash')
 
-    <div class="wb-card"><div class="wb-card-body"><form method="POST" action="{{ route('admin.layouts.update', $layout) }}" class="wb-stack wb-gap-4">@csrf @method('PUT') @include('admin.layouts._form')</form></div></div>
+    <div class="wb-card">
+        <form method="POST" action="{{ route('admin.layouts.update', $layout) }}" class="wb-stack wb-gap-0">
+            @csrf
+            @method('PUT')
+
+            <div class="wb-card-body">
+                @include('admin.layouts._form')
+            </div>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions :cancel-url="route('admin.layouts.index')" submit-label="Save Changes" />
+            </div>
+        </form>
+    </div>
 @endsection

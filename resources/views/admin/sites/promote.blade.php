@@ -15,10 +15,10 @@
     <div class="wb-stack wb-gap-4">
         <div class="wb-card">
             <div class="wb-card-header"><strong>Upload / Select Package</strong></div>
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.sites.promote.dry-run') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4">
-                    @csrf
+            <form method="POST" action="{{ route('admin.sites.promote.dry-run') }}" enctype="multipart/form-data" class="wb-stack wb-gap-0">
+                @csrf
 
+                <div class="wb-card-body wb-stack wb-gap-4">
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-2">
                             <label for="archive">Upload promotion package</label>
@@ -66,13 +66,12 @@
                             </label>
                         </div>
                     </div>
+                </div>
 
-                    <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                        <a href="{{ route('admin.sites.index') }}" class="wb-btn wb-btn-secondary">Back to Sites</a>
-                        <button type="submit" class="wb-btn wb-btn-primary">Run Dry Run</button>
-                    </div>
-                </form>
-            </div>
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.sites.index')" submit-label="Run Dry Run" />
+                </div>
+            </form>
         </div>
 
         <div class="wb-card">
@@ -201,15 +200,18 @@
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Apply Promotion</strong></div>
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-text-sm wb-text-muted">Apply is only available after a successful dry run plan for the same package and options. A safety backup is created before content changes, and the target site search index is rebuilt after apply.</div>
+            <form method="POST" action="{{ route('admin.sites.promote.apply') }}" class="wb-stack wb-gap-0">
+                @csrf
+                <input type="hidden" name="plan_token" value="{{ $plan?->token }}">
 
-                <form method="POST" action="{{ route('admin.sites.promote.apply') }}">
-                    @csrf
-                    <input type="hidden" name="plan_token" value="{{ $plan?->token }}">
-                    <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $plan?->canApply())>Apply Promotion</button>
-                </form>
-            </div>
+                <div class="wb-card-body wb-stack wb-gap-3">
+                    <div class="wb-text-sm wb-text-muted">Apply is only available after a successful dry run plan for the same package and options. A safety backup is created before content changes, and the target site search index is rebuilt after apply.</div>
+                </div>
+
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.sites.index')" submit-label="Apply Promotion" :submit-disabled="! $plan?->canApply()" />
+                </div>
+            </form>
         </div>
     </div>
 @endsection

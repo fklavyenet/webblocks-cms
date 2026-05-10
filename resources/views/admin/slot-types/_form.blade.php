@@ -45,6 +45,4 @@
             </select>
         </div>
     </div>
-
-    <x-admin.form-actions :cancel-url="route('admin.slot-types.index')" />
 </div>

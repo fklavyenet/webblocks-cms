@@ -338,12 +338,10 @@
                                 <div class="wb-text-sm wb-text-muted">Page-owned blocks are preserved when switching sources.</div>
                             </div>
 
-                            <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                            <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
+                                <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
+                                <button type="button" class="wb-btn wb-btn-secondary" data-wb-page-slot-source-modal-close>Cancel</button>
                                 <span class="wb-text-sm wb-text-muted">Slot key: <code>{{ $pageSlot->slotSlug() }}</code></span>
-                                <div class="wb-cluster wb-cluster-2">
-                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-page-slot-source-modal-close>Cancel</button>
-                                    <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
-                                </div>
                             </div>
                         </form>
                     </div>

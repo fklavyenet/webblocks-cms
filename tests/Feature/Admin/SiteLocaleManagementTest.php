@@ -354,6 +354,26 @@ class SiteLocaleManagementTest extends TestCase
     }
 
     #[Test]
+    public function site_edit_form_renders_actions_in_site_settings_card_footer_in_standard_order(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.edit', $site));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">',
+            '<strong>Site Settings</strong>',
+            '<div class="wb-card-footer">',
+            'Save Changes',
+            'Cancel',
+            'Delete',
+        ], false);
+        $response->assertDontSee('Save Site', false);
+    }
+
+    #[Test]
     public function site_admin_can_manage_site_variables_for_assigned_site(): void
     {
         $site = Site::query()->where('is_primary', true)->firstOrFail();

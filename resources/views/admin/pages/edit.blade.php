@@ -87,14 +87,14 @@
             <strong>Page Settings</strong>
             <span class="wb-text-sm wb-text-muted">Manage general settings and optional page-specific assets</span>
         </div>
-        <div class="wb-card-body">
-            <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-4">
-                @csrf
-                @method('PUT')
+        <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-0">
+            @csrf
+            @method('PUT')
 
-                <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
-                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+            <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
+            <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
+            <div class="wb-card-body">
                 <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
                     <div class="wb-tabs-nav" role="tablist" aria-label="Page settings sections">
                         <button type="button" class="wb-tabs-btn {{ $settingsTab === 'general' ? 'is-active' : '' }}" data-wb-tab="page-settings-general-panel" aria-selected="{{ $settingsTab === 'general' ? 'true' : 'false' }}" @if ($settingsTab !== 'general') tabindex="-1" @endif>General</button>
@@ -121,8 +121,12 @@
                         @endif
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions :cancel-url="$pageReturnUrl" :show-submit="$canEditContent" submit-label="Save Changes" />
+            </div>
+        </form>
     </div>
 
     @include('admin.pages.partials.slots-card', [

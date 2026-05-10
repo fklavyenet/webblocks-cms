@@ -42,6 +42,8 @@ class SitePromotionTest extends TestCase
         $response->assertOk();
         $response->assertSee('Site Promotion');
         $response->assertSee('Upload / Select Package');
+        $response->assertSeeInOrder(['Run Dry Run', 'Cancel'], false);
+        $response->assertSeeInOrder(['Apply Promotion', 'Cancel'], false);
     }
 
     #[Test]

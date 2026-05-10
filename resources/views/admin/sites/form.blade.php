@@ -267,14 +267,12 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="wb-card">
-            <div class="wb-card-body">
+            <div class="wb-card-footer">
                 <x-admin.form-actions
                     :cancel-url="$site->exists ? route('admin.pages.index', ['site' => $site->id]) : route('admin.sites.index')"
                     :show-submit="$canManageSiteSettings"
-                    :submit-label="$site->exists ? 'Save Changes' : 'Save Site'"
+                    :submit-label="$site->exists ? 'Save Changes' : 'Create'"
                     :delete-href="$site->exists && isset($siteDeleteReport) && $canManageDomains ? route('admin.sites.delete', $site) : null"
                     :delete-disabled="$site->exists && isset($siteDeleteReport) ? ! $siteDeleteReport->canDelete : false"
                 />

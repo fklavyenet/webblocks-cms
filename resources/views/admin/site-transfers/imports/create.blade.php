@@ -14,23 +14,20 @@
     @endif
 
     <div class="wb-card">
-        <div class="wb-card-body">
-            <form method="POST" action="{{ route('admin.site-transfers.imports.inspect') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4">
-                @csrf
+        <form method="POST" action="{{ route('admin.site-transfers.imports.inspect') }}" enctype="multipart/form-data" class="wb-stack wb-gap-0">
+            @csrf
 
+            <div class="wb-card-body">
                 <div class="wb-stack wb-gap-2">
                     <label for="archive">Import package (.zip)</label>
                     <input id="archive" type="file" name="archive" class="wb-input" accept=".zip,application/zip" required>
                     <div class="wb-text-sm wb-text-muted">V1 imports create a new local site from the package. Overwrite and merge flows are intentionally out of scope for now.</div>
                 </div>
+            </div>
 
-                <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                    <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                        <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                        <button type="submit" class="wb-btn wb-btn-primary">Validate Package</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+            <div class="wb-card-footer">
+                <x-admin.form-actions :cancel-url="route('admin.site-transfers.exports.index')" submit-label="Validate Package" />
+            </div>
+        </form>
     </div>
 @endsection

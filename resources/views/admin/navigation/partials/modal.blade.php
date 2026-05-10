@@ -60,7 +60,7 @@
                         'site' => $site,
                         'cancelType' => 'link',
                         'cancelUrl' => $closeUrl,
-                        'formActionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
+                        'formActionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap',
                     ])
                 </div>
             </form>

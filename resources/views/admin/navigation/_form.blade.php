@@ -3,10 +3,7 @@
     $isUrl = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_CUSTOM_URL;
     $isGroup = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_GROUP;
     $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]);
-    $cancelType = $cancelType ?? 'link';
-    $cancelAttributes = $cancelAttributes ?? [];
     $iconOptions = ($iconCatalog ?? app(\App\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
-    $formActionsContainerClass = $formActionsContainerClass ?? 'wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap';
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -189,11 +186,4 @@
             sync();
         })();
     </script>
-
-    <x-admin.form-actions
-        :cancel-url="$cancelUrl"
-        :cancel-type="$cancelType"
-        :cancel-attributes="$cancelAttributes"
-        :container-class="$formActionsContainerClass"
-    />
 </div>

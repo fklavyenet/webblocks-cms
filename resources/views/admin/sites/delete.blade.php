@@ -44,24 +44,26 @@
         </div>
 
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.sites.destroy', $site) }}" class="wb-stack wb-gap-4">
-                    @csrf
-                    @method('DELETE')
+            <form method="POST" action="{{ route('admin.sites.destroy', $site) }}" class="wb-stack wb-gap-0">
+                @csrf
+                @method('DELETE')
 
+                <div class="wb-card-body wb-stack wb-gap-4">
                     <label class="wb-nowrap">
                         <input type="checkbox" name="confirm_delete" value="1" @checked(old('confirm_delete')) @disabled($report->hasBlockers())>
                         <span>I understand this will permanently delete this site.</span>
                     </label>
+                </div>
 
+                <div class="wb-card-footer">
                     <x-admin.form-actions
                         :cancel-url="route('admin.sites.index')"
                         :show-submit="false"
                         :delete-submit="true"
                         :delete-disabled="$report->hasBlockers()"
                     />
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 @endsection

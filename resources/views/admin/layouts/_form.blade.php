@@ -23,6 +23,4 @@
             <input id="slug" name="slug" class="wb-input" type="text" value="{{ old('slug', $layout->slug) }}">
         </div>
     </div>
-
-    <x-admin.form-actions :cancel-url="route('admin.layouts.index')" />
 </div>

@@ -12,11 +12,11 @@
         <div class="wb-card">
             <div class="wb-card-header"><strong>General</strong></div>
 
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-4">
-                    @csrf
-                    @method('PUT')
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+                @csrf
+                @method('PUT')
 
+                <div class="wb-card-body">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label for="settings_default_locale">Default locale</label>
@@ -36,24 +36,26 @@
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />
-                </form>
-            </div>
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
+            </form>
         </div>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Project</strong></div>
 
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-4">
-                    @csrf
-                    @method('PUT')
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+                @csrf
+                @method('PUT')
 
-                    <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
-                    <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
-                    <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
+                <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
+                <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+                <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
 
+                <div class="wb-card-body">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-text-sm wb-text-muted">
                             Project identity is shown only in the admin interface so users can distinguish this CMS project from other WebBlocks CMS installs.
@@ -75,25 +77,27 @@
                             These fields do not change the WebBlocks CMS product brand, do not change public site metadata, and do not replace Site Branding or Page SEO fields.
                         </div>
                     </div>
+                </div>
 
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />
-                </form>
-            </div>
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
+            </form>
         </div>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Cookie settings</strong></div>
 
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-4">
-                    @csrf
-                    @method('PUT')
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+                @csrf
+                @method('PUT')
 
-                    <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
-                    <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
-                    <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
-                    <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+                <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
+                <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
+                <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
+                <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
 
+                <div class="wb-card-body">
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-text-sm wb-text-muted">
                             The public cookie settings panel lets visitors accept or decline optional analytics tracking. Necessary Laravel, admin, CSRF, and security cookies remain separate. Visitors who decline still contribute privacy-safe anonymous page view counts.
@@ -113,10 +117,12 @@
                             </label>
                         </div>
                     </div>
+                </div>
 
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" />
-                </form>
-            </div>
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
+            </form>
         </div>
 
         <div class="wb-card wb-card-muted">

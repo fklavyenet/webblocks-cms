@@ -75,9 +75,9 @@
                     @endif
                 </div>
 
-                <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
                     <button type="submit" class="wb-btn wb-btn-danger" @disabled($removalBlockedMessage !== null)>Remove domain</button>
+                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>

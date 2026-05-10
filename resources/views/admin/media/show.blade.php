@@ -100,6 +100,9 @@
                 </div>
             </div>
 
+        </div>
+
+        <div class="wb-card-footer">
             <x-admin.form-actions
                 :cancel-url="$cancelUrl"
                 :show-submit="false"

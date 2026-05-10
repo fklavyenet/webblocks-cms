@@ -9,12 +9,14 @@
     @include('admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-body">
-            <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4">
-                @csrf
-                @if ($formMethod !== 'POST')
-                    @method($formMethod)
-                @endif
+        <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-0">
+            @csrf
+            @if ($formMethod !== 'POST')
+                @method($formMethod)
+            @endif
+
+            <div class="wb-card-body">
+                <div class="wb-stack wb-gap-4">
 
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-3">
@@ -111,11 +113,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <div class="wb-card-footer">
                 <x-admin.form-actions
                     :cancel-url="route('admin.users.index')"
                 />
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 @endsection

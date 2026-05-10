@@ -125,6 +125,8 @@
             </div>
         </div>
 
-        <x-admin.form-actions :cancel-url="route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl])" />
+        <div class="wb-card-footer">
+            <x-admin.form-actions :cancel-url="route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl])" />
+        </div>
     </form>
 @endsection

@@ -97,11 +97,11 @@
                         </div>
                     </div>
 
-                    <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                    <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
                         <button type="submit" class="wb-btn wb-btn-danger" data-wb-delete-submit data-default-label="Delete block" data-recursive-label="Delete block and children">
                             {{ old('delete_descendants') ? 'Delete block and children' : 'Delete block' }}
                         </button>
+                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -157,9 +157,9 @@
                         </label>
                     </div>
 
-                    <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                    <div class="wb-modal-footer wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
                         <button type="submit" class="wb-btn wb-btn-danger">Delete all blocks</button>
+                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

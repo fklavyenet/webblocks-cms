@@ -13,13 +13,15 @@
     @include('admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-body">
-            <form method="POST" action="{{ route('admin.media.update', $asset) }}" class="wb-stack wb-gap-4">
-                @csrf
-                @method('PUT')
-                @if ($showPreviewBackLink)
-                    <input type="hidden" name="back_to_preview" value="1">
-                @endif
+        <form method="POST" action="{{ route('admin.media.update', $asset) }}" class="wb-stack wb-gap-0">
+            @csrf
+            @method('PUT')
+            @if ($showPreviewBackLink)
+                <input type="hidden" name="back_to_preview" value="1">
+            @endif
+
+            <div class="wb-card-body">
+                <div class="wb-stack wb-gap-4">
 
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-1">
@@ -61,9 +63,11 @@
                         <textarea id="description" name="description" class="wb-textarea" rows="4">{{ old('description', $asset->description) }}</textarea>
                     </div>
                 </div>
+            </div>
 
+            <div class="wb-card-footer">
                 <x-admin.form-actions :cancel-url="route('admin.media.show', array_filter(['asset' => $asset, 'back_to_preview' => $showPreviewBackLink ? 1 : null]))" />
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 @endsection

@@ -77,10 +77,10 @@
             <div class="wb-card wb-card-accent">
                 <div class="wb-card-header"><strong>Create New Site From Package</strong></div>
 
-                <div class="wb-card-body">
-                    <form method="POST" action="{{ route('admin.site-transfers.imports.run', $siteImport) }}" class="wb-stack wb-gap-4">
-                        @csrf
+                <form method="POST" action="{{ route('admin.site-transfers.imports.run', $siteImport) }}" class="wb-stack wb-gap-0">
+                    @csrf
 
+                    <div class="wb-card-body">
                         <div class="wb-grid wb-grid-3">
                             <div class="wb-stack wb-gap-2">
                                 <label for="site_name">New site name</label>
@@ -99,15 +99,12 @@
                                 <div class="wb-text-sm wb-text-muted">Leave blank to avoid reusing an active domain from the source package.</div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                            <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <a href="{{ route('admin.site-transfers.exports.index') }}" class="wb-btn wb-btn-secondary">Cancel</a>
-                                <button type="submit" class="wb-btn wb-btn-primary">Run Import</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                    <div class="wb-card-footer">
+                        <x-admin.form-actions :cancel-url="route('admin.site-transfers.exports.index')" submit-label="Run Import" />
+                    </div>
+                </form>
             </div>
         @endif
 
