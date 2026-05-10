@@ -8,6 +8,9 @@ use App\Console\Commands\SiteCloneCommand;
 use App\Console\Commands\SiteDeleteCommand;
 use App\Console\Commands\SiteExportCommand;
 use App\Console\Commands\SiteImportCommand;
+use App\Console\Commands\SitePromotionApplyCommand;
+use App\Console\Commands\SitePromotionDryRunCommand;
+use App\Console\Commands\SitePromotionInspectCommand;
 use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -61,6 +64,9 @@ return Application::configure(basePath: dirname(__DIR__))
         SiteImportCommand::class,
         SiteCloneCommand::class,
         SiteDeleteCommand::class,
+        SitePromotionInspectCommand::class,
+        SitePromotionDryRunCommand::class,
+        SitePromotionApplyCommand::class,
         SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {

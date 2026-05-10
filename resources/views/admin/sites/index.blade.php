@@ -18,6 +18,7 @@
 
             <div class="wb-cluster wb-cluster-2">
                 <a href="{{ route('admin.sites.clone') }}" class="wb-btn wb-btn-secondary">Clone Site</a>
+                <a href="{{ route('admin.sites.promote') }}" class="wb-btn wb-btn-secondary">Promote</a>
                 <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">Add Site</a>
             </div>
         </div>

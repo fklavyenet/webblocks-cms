@@ -259,6 +259,7 @@
 
 ## 1.7.0
 
+- Add Site Promotion V1 under `Admin -> Sites -> Promote` with package inspection, required dry run, additive-update and mirror strategies, safety backup creation before apply, preserved runtime-data rules, and target search rebuild after promotion.
 - Header Actions now renders the missing theme preset controls in the public theme dropdown so the CMS output matches the static WebBlocks UI preset and accent contract.
 - Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.
 - Simplify the Backups screen actions by removing duplicate upload, cancel, and System Updates controls, and clarify failed stale backup messaging.

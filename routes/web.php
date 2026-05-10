@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SiteDomainController;
 use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
+use App\Http\Controllers\Admin\SitePromotionController;
 use App\Http\Controllers\Admin\SiteVariableController;
 use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
@@ -178,6 +179,9 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');
         Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');
         Route::post('sites/clone', [SiteController::class, 'cloneStore'])->name('sites.clone.store');
+        Route::get('sites/promote', [SitePromotionController::class, 'index'])->name('sites.promote');
+        Route::post('sites/promote/dry-run', [SitePromotionController::class, 'dryRun'])->name('sites.promote.dry-run');
+        Route::post('sites/promote/apply', [SitePromotionController::class, 'apply'])->name('sites.promote.apply');
         Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
         Route::get('domains', [SiteDomainController::class, 'landing'])->name('domains.index');
         Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');

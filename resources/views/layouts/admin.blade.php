@@ -47,7 +47,7 @@
 
             $menuItems = [
                 ['label' => 'Dashboard', 'route' => 'admin.dashboard', 'active' => ['admin.dashboard'], 'icon' => 'wb-icon-layout-dashboard'],
-                ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
+                ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => ['admin.sites.index', 'admin.sites.create', 'admin.sites.store', 'admin.sites.edit', 'admin.sites.update', 'admin.sites.clone', 'admin.sites.clone.prefill', 'admin.sites.clone.store', 'admin.sites.promote', 'admin.sites.promote.*', 'admin.sites.delete', 'admin.sites.destroy'], 'icon' => 'wb-icon-globe'],
                 ['label' => 'Pages', 'route' => 'admin.pages.index', 'active' => ['admin.pages.*'], 'icon' => 'wb-icon-file-text'],
                 ['label' => 'Shared Slots', 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-layers'],
                 ['label' => 'Navigation', 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-menu'],

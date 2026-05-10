@@ -99,6 +99,47 @@ It also does not require the derived public search index as portable content:
 - export/import payloads do not need search rows to recreate the site
 - use `ddev artisan search:rebuild` after import when you need fresh search rows immediately
 
+## Site Promotion
+
+Site Promotion is the package-based workflow for promoting site-owned content from a source package into an existing target site.
+
+Use it when:
+
+- the target site already exists
+- site-owned content needs controlled promotion into that site
+- install-level, environment-specific, and live-runtime data must be preserved
+
+How it differs from other tools:
+
+- Export / Import creates a new local site from a package by default
+- Site Promotion applies package content into an existing target site
+- Site Clone duplicates site-owned content inside the current install without a package
+- Backup / Restore is environment recovery and can replace the current database or uploads
+- Updates change CMS product code and installed version, not site-owned content
+
+V1 workflow:
+
+- admin path: `Admin -> Sites -> Promote`
+- commands: `site-promotion:inspect`, `site-promotion:dry-run`, `site-promotion:apply`
+- dry run is required before apply
+- apply creates a normal safety backup first
+- apply rebuilds the target site's derived search rows after success
+
+Preserved areas include:
+
+- users and roles
+- sessions, cache, jobs, and queues
+- backups and update history
+- visitor reports and contact submissions
+- live domains and site domain records
+- environment configuration, install secrets, and internal tokens
+- derived `public_search_index` rows
+
+Supported strategies:
+
+- `additive_update`: create missing source content and update matching target content without removing extra target content
+- `mirror`: create and update matching source content, then archive, deactivate, or remove absent target site-owned content where safe in V1
+
 ## Project Imports
 
 Install-specific migration and website import workflows belong in `project/`, not CMS core.

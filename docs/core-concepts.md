@@ -187,6 +187,14 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - Restoring a Shared Slot revision restores the Shared Slot in place. The Shared Slot id stays stable, existing `page_slots.shared_slot_id` references remain intact, and the restored content immediately affects every page that references that Shared Slot.
 - Shared Slot revisions do not treat page revisions as authoritative for Shared Slot content, and page revisions do not pretend to capture Shared Slot block trees.
 
+## Site Promotion Boundary
+
+- Site Promotion works on site-owned content, not on the whole install.
+- It can update safe site identity fields, locale assignments, site variables, pages, page translations, slots, blocks, Shared Slots, navigation, page assets, and optional package file assets.
+- It preserves install-level and live-runtime data such as users, sessions, backups, update history, contact submissions, visitor reporting, domains, environment settings, and secrets.
+- It does not treat `public_search_index` as portable content. Search rows are rebuilt from promoted content after apply.
+- It is a controlled package workflow, not raw database replication.
+
 ## Project Boundary
 
 WebBlocks CMS core contains reusable CMS functionality.
