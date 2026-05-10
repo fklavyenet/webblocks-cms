@@ -36,6 +36,13 @@ class SiteController extends Controller
         $selectedExportSite = $selectedExportSiteId > 0
             ? Site::query()->find($selectedExportSiteId)
             : null;
+        $selectedDetailSiteId = (int) request()->integer('details_site');
+        $selectedDetailSite = $selectedDetailSiteId > 0
+            ? Site::query()
+                ->with(['locales' => fn ($query) => $query->orderBy('name')])
+                ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
+                ->find($selectedDetailSiteId)
+            : null;
 
         return view('admin.sites.index', [
             'sites' => Site::query()
@@ -53,6 +60,11 @@ class SiteController extends Controller
             'siteExportUi' => [
                 'requestedModal' => $requestedModal,
                 'selectedSite' => $selectedExportSite,
+                'closeUrl' => route('admin.sites.index'),
+            ],
+            'siteDetailsUi' => [
+                'requestedModal' => $requestedModal,
+                'selectedSite' => $selectedDetailSite,
                 'closeUrl' => route('admin.sites.index'),
             ],
         ]);

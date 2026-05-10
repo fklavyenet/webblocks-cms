@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add a per-site `Export` modal action on the Sites index for super admins so site delivery packages are easier to start from the main site list.
+- Add a per-site Sites `Manage` dropdown that replaces crowded row action icons, keeps `Export` available as a modal action, and exposes `Promote to this site` as a target-preselected workflow entry.
 - Refine `Export / Import` into one combined operational screen that shows export and import history together and moves `Run Export` and `Run Import` actions into listing card headers.
 - Add a project-specific PHP indentation guard to enforce the 2-space indentation standard alongside Pint.
 - Add a codified AI and development standards foundation with `AGENTS.md`, a repository `.editorconfig`, `pint.json`, and Composer formatting scripts so future work can follow one shared project contract.

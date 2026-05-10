@@ -3,6 +3,8 @@
 @php
     $siteExportUi = $siteExportUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
     $showExportModal = $canExportSites && $siteExportUi['requestedModal'] === 'export-site' && $siteExportUi['selectedSite'];
+    $siteDetailsUi = $siteDetailsUi ?? ['requestedModal' => '', 'selectedSite' => null, 'closeUrl' => route('admin.sites.index')];
+    $showDetailsModal = $siteDetailsUi['requestedModal'] === 'site-details' && $siteDetailsUi['selectedSite'];
 @endphp
 
 @section('content')
@@ -22,8 +24,6 @@
             </div>
 
             <div class="wb-cluster wb-cluster-2">
-                <a href="{{ route('admin.sites.clone') }}" class="wb-btn wb-btn-secondary">Clone Site</a>
-                <a href="{{ route('admin.sites.promote') }}" class="wb-btn wb-btn-secondary">Promote</a>
                 <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">Add Site</a>
             </div>
         </div>
@@ -39,7 +39,7 @@
                             <th>Locales</th>
                             <th>Pages</th>
                             <th>Status</th>
-                            <th>Action</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,33 +72,31 @@
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? 'Primary' : 'Standard' }}</span>
                                 </td>
                                 <td>
-                                    <div class="wb-action-group">
-                                        <a href="{{ route('admin.pages.index', ['site' => $site->id]) }}" class="wb-action-btn wb-action-btn-view" title="Open site pages" aria-label="Open site pages">
-                                            <i class="wb-icon wb-icon-file-text" aria-hidden="true"></i>
-                                        </a>
-                                        <a href="{{ route('admin.sites.edit', $site) }}" class="wb-action-btn wb-action-btn-edit" title="Edit site" aria-label="Edit site">
-                                            <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
-                                        </a>
-                                        <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-action-btn" title="Manage domains" aria-label="Manage domains">
-                                            <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-                                        </a>
-                                        <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-action-btn" title="Clone site" aria-label="Clone site">
-                                            <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
-                                        </a>
-                                        @if ($canExportSites)
-                                            <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-action-btn" title="Export site" aria-label="Export site" aria-haspopup="dialog" aria-controls="siteIndexExportModal">
-                                                <i class="wb-icon wb-icon-upload" aria-hidden="true"></i>
-                                            </a>
-                                        @endif
-                                        @if ($deleteReport?->canDelete)
-                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site">
-                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                            </a>
-                                        @else
-                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-action-btn wb-action-btn-delete" title="Delete site" aria-label="Delete site" aria-disabled="true">
-                                                <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                            </a>
-                                        @endif
+                                    <div class="wb-dropdown wb-dropdown-end">
+                                        <button
+                                            class="wb-btn wb-btn-secondary"
+                                            type="button"
+                                            data-wb-toggle="dropdown"
+                                            data-wb-target="#site-actions-{{ $site->id }}"
+                                            aria-expanded="false"
+                                            title="Manage {{ $site->name }}"
+                                            aria-label="Manage {{ $site->name }}"
+                                        >
+                                            Manage
+                                        </button>
+
+                                        <div class="wb-dropdown-menu" id="site-actions-{{ $site->id }}">
+                                            <a href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteDetailsModal">View details</a>
+                                            <a href="{{ route('admin.sites.edit', $site) }}" class="wb-dropdown-item">Edit site</a>
+                                            <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">Manage domains</a>
+                                            <a href="{{ route('admin.sites.clone.prefill', $site) }}" class="wb-dropdown-item">Clone site</a>
+                                            @if ($canExportSites)
+                                                <a href="{{ route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]) }}" class="wb-dropdown-item" aria-haspopup="dialog" aria-controls="siteIndexExportModal">Export site</a>
+                                                <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">Promote to this site</a>
+                                            @endif
+                                            <hr class="wb-dropdown-divider">
+                                            <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>Delete site</a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -110,6 +108,13 @@
 
         @include('admin.partials.pagination', ['paginator' => $sites])
     </div>
+
+    @if ($showDetailsModal)
+        @include('admin.sites.partials.details-modal', [
+            'site' => $siteDetailsUi['selectedSite'],
+            'closeUrl' => $siteDetailsUi['closeUrl'],
+        ])
+    @endif
 
     @if ($canExportSites)
         @include('admin.site-transfers.partials.export-modal', [

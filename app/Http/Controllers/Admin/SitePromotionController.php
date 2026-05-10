@@ -33,10 +33,12 @@ class SitePromotionController extends Controller
         abort_unless(request()->user()?->isSuperAdmin(), 403);
 
         $plan = $this->planStore->load((string) request()->query('plan'));
+        $preselectedTargetSiteId = $this->resolvePreselectedTargetSiteId();
 
         return view('admin.sites.promote', [
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
             'plan' => $plan,
+            'preselectedTargetSiteId' => $preselectedTargetSiteId,
             'storedPackages' => collect(Storage::disk(SitePromotionPackageInspector::DISK)->allFiles('uploads'))
                 ->filter(fn (string $path) => str_ends_with(strtolower($path), '.zip'))
                 ->sort()
@@ -72,5 +74,21 @@ class SitePromotionController extends Controller
         } catch (RuntimeException $exception) {
             return back()->withErrors(['site_promotion' => $exception->getMessage()]);
         }
+    }
+
+    private function resolvePreselectedTargetSiteId(): ?int
+    {
+        $targetSiteId = (int) request()->integer('target_site_id');
+
+        if ($targetSiteId < 1) {
+            return null;
+        }
+
+        $allowedSite = $this->authorization
+            ->scopeSitesForUser(Site::query(), request()->user())
+            ->whereKey($targetSiteId)
+            ->value('id');
+
+        return $allowedSite ? (int) $allowedSite : null;
     }
 }

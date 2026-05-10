@@ -45,7 +45,7 @@
                                     <select id="target_site_id" name="target_site_id" class="wb-select" required>
                                         <option value="">Choose target site</option>
                                         @foreach ($sites as $site)
-                                            <option value="{{ $site->id }}" @selected((int) old('target_site_id', $plan->targetSite['id'] ?? 0) === $site->id)>
+                                            <option value="{{ $site->id }}" @selected((int) old('target_site_id', $plan->targetSite['id'] ?? $preselectedTargetSiteId ?? 0) === $site->id)>
                                                 {{ $site->name }} ({{ $site->handle }})
                                             </option>
                                         @endforeach

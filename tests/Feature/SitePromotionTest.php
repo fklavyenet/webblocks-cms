@@ -45,6 +45,43 @@ class SitePromotionTest extends TestCase
     }
 
     #[Test]
+    public function promote_screen_preselects_target_site_from_query_when_valid(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->create([
+            'name' => 'Target Site',
+            'handle' => 'target-site',
+            'domain' => 'target.example.test',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.sites.promote', [
+            'target_site_id' => $site->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('<option value="'.$site->id.'" selected>', false);
+    }
+
+    #[Test]
+    public function invalid_target_site_query_parameter_does_not_break_promotion_screen(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->create([
+            'name' => 'Target Site',
+            'handle' => 'target-site',
+            'domain' => 'target.example.test',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.sites.promote', [
+            'target_site_id' => 999999,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee('<option value="'.$site->id.'" selected>', false);
+        $response->assertSee('Target site');
+    }
+
+    #[Test]
     public function non_super_admin_cannot_apply_promotion_in_v1(): void
     {
         $user = User::factory()->siteAdmin()->create();

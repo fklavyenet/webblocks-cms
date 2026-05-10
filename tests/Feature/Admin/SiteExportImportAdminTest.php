@@ -97,6 +97,36 @@ class SiteExportImportAdminTest extends TestCase
     }
 
     #[Test]
+    public function sites_index_uses_manage_dropdown_and_simplified_header_actions(): void
+    {
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('>Clone Site<', false);
+        $response->assertDontSee('>Promote<', false);
+        $response->assertSee('>Add Site<', false);
+        $response->assertSee('<th>Actions</th>', false);
+        $response->assertSee('Manage', false);
+        $response->assertSee('Manage '.$site->name, false);
+        $response->assertSee('View details');
+        $response->assertSee('Edit site');
+        $response->assertSee('Manage domains');
+        $response->assertSee('Clone site');
+        $response->assertSee('Export site');
+        $response->assertSee('Promote to this site');
+        $response->assertSee('Delete site');
+        $response->assertSee('details_site='.$site->id);
+        $response->assertSee('modal=site-details');
+        $response->assertSee(route('admin.sites.clone.prefill', $site), false);
+        $response->assertSee(route('admin.sites.promote', ['target_site_id' => $site->id]), false);
+        $response->assertSee(route('admin.sites.delete', $site), false);
+        $response->assertDontSee('wb-action-group', false);
+    }
+
+    #[Test]
     public function sites_index_does_not_show_export_action_for_non_super_admin(): void
     {
         [$site] = $this->seedCloneableSite();
