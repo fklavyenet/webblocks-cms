@@ -5,13 +5,20 @@
     $showModeToggle = ($settings['show_mode_toggle'] ?? true) !== false;
     $showAccentToggle = ($settings['show_accent_toggle'] ?? true) !== false;
     $showSearch = ($settings['show_search'] ?? true) !== false;
-    $accentMenuId = 'wb-header-actions-accent-menu-'.$block->id;
+    $themeMenuId = 'wb-header-actions-theme-menu-'.$block->id;
     $searchPath = $routeResolver->searchPath($block->renderLocaleCode(), $block->renderSite());
+    $presets = [
+        'modern' => 'Modern',
+        'corporate' => 'Corporate',
+        'minimal' => 'Minimal',
+        'editorial' => 'Editorial',
+        'playful' => 'Playful',
+    ];
     $accents = [
         'ocean' => 'Ocean',
+        'royal' => 'Royal',
         'forest' => 'Forest',
         'sunset' => 'Sunset',
-        'royal' => 'Royal',
         'mint' => 'Mint',
         'amber' => 'Amber',
         'rose' => 'Rose',
@@ -55,18 +62,34 @@
                         type="button"
                         class="wb-topbar-action"
                         data-wb-toggle="dropdown"
-                        data-wb-target="#{{ $accentMenuId }}"
+                        data-wb-target="#{{ $themeMenuId }}"
                         data-wb-header-actions-accent-toggle
-                        aria-label="Change accent color"
+                        aria-label="Theme settings"
                         aria-expanded="false"
                         aria-haspopup="menu"
-                        aria-controls="{{ $accentMenuId }}"
-                        title="Change accent color"
+                        aria-controls="{{ $themeMenuId }}"
+                        title="Theme settings"
                     >
                         <i class="wb-icon wb-icon-palette" aria-hidden="true"></i>
                     </button>
 
-                    <div class="wb-dropdown-menu" id="{{ $accentMenuId }}" role="menu" aria-label="Accent color options">
+                    <div class="wb-dropdown-menu" id="{{ $themeMenuId }}" role="menu" aria-label="Theme settings">
+                        <div class="wb-dropdown-label">Presets</div>
+                        @foreach ($presets as $presetValue => $presetLabel)
+                            <button
+                                type="button"
+                                class="wb-dropdown-item"
+                                data-wb-header-actions-preset-option
+                                data-wb-preset-set="{{ $presetValue }}"
+                                role="menuitemradio"
+                                aria-checked="false"
+                            >
+                                {{ $presetLabel }}
+                            </button>
+                        @endforeach
+
+                        <hr class="wb-dropdown-divider">
+                        <div class="wb-dropdown-label">Accent</div>
                         @foreach ($accents as $accentValue => $accentLabel)
                             <button
                                 type="button"

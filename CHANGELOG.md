@@ -259,6 +259,7 @@
 
 ## 1.7.0
 
+- Header Actions now renders the missing theme preset controls in the public theme dropdown so the CMS output matches the static WebBlocks UI preset and accent contract.
 - Fix backup restore completion flow so successful full-system restores return to the backups index instead of a stale backup detail URL after the database is overwritten.
 - Simplify the Backups screen actions by removing duplicate upload, cancel, and System Updates controls, and clarify failed stale backup messaging.
 - Fix backup archive lifecycle so deleting backups removes stored archive files and restoring existing backups does not duplicate the source archive while preserving mandatory safety backups.

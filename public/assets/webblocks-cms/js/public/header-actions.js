@@ -35,6 +35,18 @@
     });
   }
 
+  function syncPresetMenus() {
+    if (!window.WBTheme || typeof window.WBTheme.getPreset !== 'function') return;
+
+    var preset = window.WBTheme.getPreset();
+
+    document.querySelectorAll('[data-wb-header-actions-preset-option]').forEach(function (option) {
+      var isActive = option.getAttribute('data-wb-preset-set') === preset;
+      option.classList.toggle('is-active', isActive);
+      option.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
+  }
+
   function syncAccentMenus() {
     if (!window.WBTheme || typeof window.WBTheme.getAccent !== 'function') return;
 
@@ -69,6 +81,7 @@
     }
 
     syncModeButtons();
+    syncPresetMenus();
     syncAccentMenus();
     syncAccentExpandedState();
   }
@@ -82,6 +95,12 @@
 
     var accentOption = event.target.closest('[data-wb-header-actions-accent-option]');
     if (accentOption) {
+      setTimeout(syncAll, 20);
+      return;
+    }
+
+    var presetOption = event.target.closest('[data-wb-header-actions-preset-option]');
+    if (presetOption) {
       setTimeout(syncAll, 20);
       return;
     }
