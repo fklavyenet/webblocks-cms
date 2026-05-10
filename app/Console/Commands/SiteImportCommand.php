@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\SiteImport;
 use App\Support\Sites\ExportImport\SiteImportManager;
 use App\Support\Sites\ExportImport\SiteImportOptions;
 use Illuminate\Console\Command;

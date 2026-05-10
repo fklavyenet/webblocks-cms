@@ -127,7 +127,7 @@ class SiteDeleteServiceTest extends TestCase
     }
 
     #[Test]
-    private function seedDeletableSite(): array
+    private function seed_deletable_site(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
         $slotType = SlotType::query()->firstOrCreate(

@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Support\System\InstalledVersionStore;
 use Database\Seeders\CoreCatalogSeeder;

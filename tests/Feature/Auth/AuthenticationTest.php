@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Support\WebBlocks;
 use App\Models\User;
+use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

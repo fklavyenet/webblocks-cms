@@ -3,13 +3,13 @@
 use Illuminate\Console\Application as ArtisanApplication;
 use Project\Console\Commands\BlockRenderSnapshotsCommand;
 use Project\Console\Commands\RepairWebBlocksUiDocsCommand;
-use Project\Console\Commands\SyncWebBlocksMainHomepageCommand;
+use Project\Console\Commands\SetupWebBlocksUiDocsSiteCommand;
 use Project\Console\Commands\SyncUiDocsGettingStartedCommand;
 use Project\Console\Commands\SyncUiDocsHomeMainCommand;
 use Project\Console\Commands\SyncUiDocsNavigationCommand;
-use Project\Console\Commands\SetupWebBlocksUiDocsSiteCommand;
-use Project\Console\Commands\WebBlocksUiLocalResolverCommand;
+use Project\Console\Commands\SyncWebBlocksMainHomepageCommand;
 use Project\Console\Commands\WebBlocksUiImportCommand;
+use Project\Console\Commands\WebBlocksUiLocalResolverCommand;
 
 require_once base_path('project/Console/Commands/SyncUiDocsNavigationCommand.php');
 require_once base_path('project/Console/Commands/BlockRenderSnapshotsCommand.php');

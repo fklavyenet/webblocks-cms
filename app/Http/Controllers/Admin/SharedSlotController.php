@@ -11,9 +11,10 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\SharedSlot;
 use App\Models\Site;
-use App\Support\Blocks\BlockTranslationResolver;
-use App\Support\Blocks\BlockDeletionManager;
+use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
+use App\Support\Blocks\BlockDeletionManager;
+use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\SharedSlots\SharedSlotRevisionManager;
 use App\Support\SharedSlots\SharedSlotSchema;
@@ -687,7 +688,7 @@ class SharedSlotController extends Controller
             ->values();
     }
 
-    private function visiblePickerBlockTypesFor(?\App\Models\User $user, $blockTypes)
+    private function visiblePickerBlockTypesFor(?User $user, $blockTypes)
     {
         if ($user?->isSuperAdmin()) {
             return $blockTypes;

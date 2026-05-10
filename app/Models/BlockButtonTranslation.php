@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BlockButtonTranslation extends Model
 {
     use HasFactory;
-    use ValidatesBlockTranslationLocale;
     use ReindexesPublicSearch;
+    use ValidatesBlockTranslationLocale;
 
     protected static function booted(): void
     {

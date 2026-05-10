@@ -3,8 +3,8 @@
 namespace Project\Console\Commands;
 
 use Illuminate\Console\Command;
-use RuntimeException;
 use Project\Support\UiDocs\RepairWebBlocksUiDocsEnvironment;
+use RuntimeException;
 
 class RepairWebBlocksUiDocsCommand extends Command
 {

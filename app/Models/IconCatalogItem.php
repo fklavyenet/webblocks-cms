@@ -127,7 +127,7 @@ class IconCatalogItem extends Model
         return $slug !== '' ? $slug : null;
     }
 
-    public static function normalizeCssClass(string|null $cssClass, string $slug): string
+    public static function normalizeCssClass(?string $cssClass, string $slug): string
     {
         $cssClass = trim((string) $cssClass);
         $slug = self::normalizeSlug($slug) ?? $slug;

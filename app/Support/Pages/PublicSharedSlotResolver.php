@@ -4,10 +4,10 @@ namespace App\Support\Pages;
 
 use App\Models\Block;
 use App\Models\Locale;
-use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\SharedSlotBlock;
+use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Support\Collection;
 
@@ -59,7 +59,7 @@ class PublicSharedSlotResolver
         return $sharedSlot->isCompatibleWithPageSlot($page, $slot->slotSlug());
     }
 
-    private function buildTree(Collection $childrenByParent, ?int $parentId, Locale|string|null $locale = null, ?\App\Models\Site $site = null): Collection
+    private function buildTree(Collection $childrenByParent, ?int $parentId, Locale|string|null $locale = null, ?Site $site = null): Collection
     {
         return $childrenByParent->get($parentId, collect())
             ->sortBy(fn (SharedSlotBlock $assignment) => sprintf('%010d-%010d', (int) $assignment->sort_order, (int) $assignment->id))

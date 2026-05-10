@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use App\Support\Search\ReindexesPublicSearch;
 use App\Support\Pages\PageRouteResolver;
+use App\Support\Search\PublicSearchIndexer;
+use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -68,7 +69,7 @@ class Page extends Model
         });
 
         static::deleted(function (self $page): void {
-            app(\App\Support\Search\PublicSearchIndexer::class)->deletePage($page);
+            app(PublicSearchIndexer::class)->deletePage($page);
         });
 
         static::created(function (self $page): void {

@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Support\Install\InstallState;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;

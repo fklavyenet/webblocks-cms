@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\IconCatalogItem;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\Site;
@@ -221,7 +222,7 @@ class NavigationTreeEditorTest extends TestCase
         $user = User::factory()->superAdmin()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
 
-        \App\Models\IconCatalogItem::query()->updateOrCreate([
+        IconCatalogItem::query()->updateOrCreate([
             'source' => 'webblocks-ui',
             'slug' => 'images',
         ], [
@@ -232,7 +233,7 @@ class NavigationTreeEditorTest extends TestCase
             'is_active' => true,
             'sort_order' => 999,
         ]);
-        \App\Models\IconCatalogItem::query()->updateOrCreate([
+        IconCatalogItem::query()->updateOrCreate([
             'source' => 'webblocks-ui',
             'slug' => 'hidden-icon',
         ], [
@@ -243,7 +244,7 @@ class NavigationTreeEditorTest extends TestCase
             'is_active' => false,
             'sort_order' => 1000,
         ]);
-        \App\Models\IconCatalogItem::query()->updateOrCreate([
+        IconCatalogItem::query()->updateOrCreate([
             'source' => 'webblocks-ui',
             'slug' => 'marketing-only',
         ], [

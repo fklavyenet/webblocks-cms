@@ -5,7 +5,6 @@ namespace App\Support\Pages;
 use App\Models\Page;
 use App\Models\SharedSlot;
 use App\Models\Site;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class PageSiteMoveValidator

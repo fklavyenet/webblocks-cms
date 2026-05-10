@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Integrity;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
@@ -12,6 +13,8 @@ use App\Models\SlotType;
 use App\Models\User;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Blocks\BlockTranslationWriter;
+use Database\Seeders\BlockTypeSeeder;
+use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -410,7 +413,7 @@ class BlockTranslationIntegrityTest extends TestCase
         $turkish = $this->createLocale('tr');
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
         $page = $this->pageWithMainSlot($site);
-        $asset = \App\Models\Asset::query()->create([
+        $asset = Asset::query()->create([
             'disk' => 'public',
             'path' => 'media/images/sidebar-brand.png',
             'filename' => 'sidebar-brand.png',
@@ -472,8 +475,8 @@ class BlockTranslationIntegrityTest extends TestCase
     #[Test]
     public function rich_text_block_type_exists_after_seeding(): void
     {
-        $this->seed(\Database\Seeders\FoundationSiteLocaleSeeder::class);
-        $this->seed(\Database\Seeders\BlockTypeSeeder::class);
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
 
         $this->assertDatabaseHas('block_types', [
             'slug' => 'rich-text',

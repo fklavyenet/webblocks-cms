@@ -7,6 +7,7 @@ use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
@@ -195,7 +196,7 @@ class BlockTypesIndexTest extends TestCase
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
 
-        $site = \App\Models\Site::query()->where('is_primary', true)->firstOrFail();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
         $page = Page::query()->create([
             'site_id' => $site->id,
             'title' => 'About',
@@ -204,7 +205,7 @@ class BlockTypesIndexTest extends TestCase
         ]);
 
         PageTranslation::query()->updateOrCreate(
-            ['page_id' => $page->id, 'locale_id' => \App\Models\Page::defaultLocaleId()],
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
             ['site_id' => $site->id, 'name' => 'About', 'slug' => 'about', 'path' => '/p/about'],
         );
 

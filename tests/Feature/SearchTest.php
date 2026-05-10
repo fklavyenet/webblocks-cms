@@ -14,6 +14,7 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Search\PublicSearchIndexer;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,7 +162,7 @@ class SearchTest extends TestCase
             'shared_slot_id' => $sharedSlot->id,
         ]);
 
-        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $sourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
         $sharedBlock = Block::query()->create([
             'page_id' => $sourcePage->id,
             'type' => 'plain_text',
@@ -175,7 +176,7 @@ class SearchTest extends TestCase
         ]);
         $sharedBlock->textTranslations()->create(['locale_id' => $locale->id, 'content' => 'Shared searchable phrase']);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($sharedBlock->fresh(['textTranslations']));
-        app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
+        app(SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
 
         app(PublicSearchIndexer::class)->rebuild();
 

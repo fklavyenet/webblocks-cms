@@ -21,8 +21,7 @@ class PageDuplicateValidator
         Site $targetSite,
         Collection $translations,
         bool $disableIncompatibleSharedSlots = false,
-    ): PageDuplicateValidationResult
-    {
+    ): PageDuplicateValidationResult {
         $result = $this->analyze($page, $targetSite, $translations, $disableIncompatibleSharedSlots);
 
         if ($result->errors !== []) {
@@ -37,8 +36,7 @@ class PageDuplicateValidator
         Site $targetSite,
         ?Collection $translations = null,
         bool $disableIncompatibleSharedSlots = false,
-    ): PageDuplicateValidationResult
-    {
+    ): PageDuplicateValidationResult {
         $page->loadMissing([
             'site',
             'translations.locale',

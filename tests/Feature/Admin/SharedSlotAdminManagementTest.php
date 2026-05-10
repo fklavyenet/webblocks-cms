@@ -12,6 +12,7 @@ use App\Models\SharedSlotBlock;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -446,7 +447,7 @@ class SharedSlotAdminManagementTest extends TestCase
         $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'sidebar']);
         $sidebarSlotType = $this->slotType('sidebar', 'Sidebar', 2);
         $brandType = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
-        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $sourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
         $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.blocks.create', [
@@ -471,7 +472,7 @@ class SharedSlotAdminManagementTest extends TestCase
         $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'sidebar']);
         $sidebarSlotType = $this->slotType('sidebar', 'Sidebar', 2);
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
-        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $sourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
         $user = User::factory()->superAdmin()->create();
 
         $create = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -518,8 +519,8 @@ class SharedSlotAdminManagementTest extends TestCase
         $mainSlotType = $this->slotType('main', 'Main', 2);
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
-        $sourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
-        $otherSourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($otherSharedSlot);
+        $sourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
+        $otherSourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($otherSharedSlot);
         $user = User::factory()->superAdmin()->create();
 
         $parent = Block::query()->create([
@@ -570,8 +571,8 @@ class SharedSlotAdminManagementTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
-        app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
-        app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->rebuildAssignments($otherSharedSlot);
+        app(SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
+        app(SharedSlotSourcePageManager::class)->rebuildAssignments($otherSharedSlot);
 
         $response = $this->actingAs($user)
             ->delete(route('admin.blocks.destroy', $parent), [
@@ -598,7 +599,7 @@ class SharedSlotAdminManagementTest extends TestCase
         $foreignSharedSlot = $this->sharedSlotFor($otherSite, ['name' => 'Foreign Slot', 'handle' => 'foreign-slot', 'slot_name' => 'header']);
         $headerSlotType = $this->slotType('header', 'Header', 1);
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
-        $foreignSourcePage = app(\App\Support\SharedSlots\SharedSlotSourcePageManager::class)->ensureFor($foreignSharedSlot);
+        $foreignSourcePage = app(SharedSlotSourcePageManager::class)->ensureFor($foreignSharedSlot);
         $user = $this->siteAdminFor($site);
 
         $this->actingAs($user)

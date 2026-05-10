@@ -130,7 +130,7 @@ class PublicColumnsRenderingTest extends TestCase
     {
         $block = new Block([
             'title' => 'Active sites',
-            'subtitle' => "   ",
+            'subtitle' => '   ',
             'content' => null,
         ]);
 

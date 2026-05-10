@@ -4,11 +4,10 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Asset;
 use App\Models\Block;
-use App\Models\BlockType;
 use App\Models\BlockTextTranslation;
+use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
-use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteVariable;

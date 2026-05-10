@@ -193,5 +193,4 @@ class WebBlocksUiFoundationImportTest extends TestCase
         $response->assertSee('href="#comfortable"', false);
         $response->assertDontSee('href="#heading-level-3"', false);
     }
-
 }

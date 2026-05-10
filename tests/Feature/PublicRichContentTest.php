@@ -237,7 +237,7 @@ class PublicRichContentTest extends TestCase
         $this->seed(FoundationSiteLocaleSeeder::class);
 
         $site = Site::query()->firstOrFail();
-        $french = \App\Models\Locale::query()->updateOrCreate(
+        $french = Locale::query()->updateOrCreate(
             ['code' => 'fr'],
             ['name' => 'French', 'is_default' => false, 'is_enabled' => true],
         );

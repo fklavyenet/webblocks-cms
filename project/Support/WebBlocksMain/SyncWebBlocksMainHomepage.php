@@ -12,7 +12,6 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockPayloadWriter;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Project\Support\UiDocs\SetupWebBlocksUiDocsSite;
 use RuntimeException;
@@ -99,7 +98,7 @@ class SyncWebBlocksMainHomepage
                     ->orWhere('name', self::SITE_NAME)
                     ->orWhere('handle', self::SITE_HANDLE);
             })
-            ->orderByRaw("case when domain = ? then 0 when name = ? then 1 when handle = ? then 2 else 3 end", [self::SITE_DOMAIN, self::SITE_NAME, self::SITE_HANDLE])
+            ->orderByRaw('case when domain = ? then 0 when name = ? then 1 when handle = ? then 2 else 3 end', [self::SITE_DOMAIN, self::SITE_NAME, self::SITE_HANDLE])
             ->get();
 
         if ($candidates->isEmpty()) {

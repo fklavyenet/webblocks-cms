@@ -3,9 +3,9 @@
 namespace Project\Console\Commands;
 
 use Illuminate\Console\Command;
-use RuntimeException;
 use Project\Support\UiDocs\SetupWebBlocksUiDocsSite;
 use Project\Support\UiDocs\WebBlocksUiLocalResolver;
+use RuntimeException;
 
 class WebBlocksUiLocalResolverCommand extends Command
 {

@@ -2,16 +2,16 @@
 
 namespace App\Providers;
 
-use App\Support\Locales\LocaleResolver;
-use App\Support\Install\InstallState;
-use App\Support\Pages\PageRouteResolver;
 use App\Support\Database\DestructiveDatabaseCommandGuard;
+use App\Support\Install\InstallState;
+use App\Support\Locales\LocaleResolver;
+use App\Support\Pages\PageRouteResolver;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\SystemSettings;
 use App\Support\Visitors\VisitorConsent;
-use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;

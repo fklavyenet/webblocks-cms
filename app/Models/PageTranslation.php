@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Search\PublicSearchIndexer;
 use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -65,7 +66,7 @@ class PageTranslation extends Model
             $page = $translation->page ?? $translation->page()->first();
 
             if ($page instanceof Page) {
-                app(\App\Support\Search\PublicSearchIndexer::class)->refreshPage($page);
+                app(PublicSearchIndexer::class)->refreshPage($page);
             }
         });
     }

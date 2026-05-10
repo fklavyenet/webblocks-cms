@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Locales\LocaleResolver;
 use App\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Stringable;
 use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 
 class Block extends Model
 {
@@ -376,7 +377,7 @@ class Block extends Model
         $translations = $this->relationLoaded('textTranslations')
             ? $this->getRelation('textTranslations')
             : $this->textTranslations()->get();
-        $defaultLocaleId = app(\App\Support\Locales\LocaleResolver::class)->default()->id;
+        $defaultLocaleId = app(LocaleResolver::class)->default()->id;
         $translation = $translations->firstWhere('locale_id', $defaultLocaleId) ?? $translations->first();
 
         return $this->stringValueOrNull($translation?->{$field}, $stripTags);
@@ -601,7 +602,7 @@ class Block extends Model
 
     public function alertVariantClass(): string
     {
-        return 'wb-alert-'. $this->alertVariant();
+        return 'wb-alert-'.$this->alertVariant();
     }
 
     public function slotPreviewLabel(): string

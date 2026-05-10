@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
@@ -11,14 +12,13 @@ use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
-use App\Models\Asset;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -920,7 +920,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->seedFoundation();
 
         $user = User::factory()->editor()->create();
-        $site = \App\Models\Site::query()->firstOrFail();
+        $site = Site::query()->firstOrFail();
         $user->sites()->sync([$site->id]);
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);
@@ -992,7 +992,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->seedFoundation();
 
         $user = User::factory()->editor()->create();
-        $site = \App\Models\Site::query()->firstOrFail();
+        $site = Site::query()->firstOrFail();
         $user->sites()->sync([$site->id]);
         $main = $this->slotType('main', 'Main', 1);
         [$page, $pageSlot] = $this->pageWithSlot($main);

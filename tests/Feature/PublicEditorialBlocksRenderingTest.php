@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -11,6 +13,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Pages\PageRouteResolver;
 use App\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -292,7 +295,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     public function sidebar_brand_renders_logo_and_copy_with_webblocks_contract(): void
     {
         $page = $this->pageWithMainSlot();
-        $asset = \App\Models\Asset::query()->create([
+        $asset = Asset::query()->create([
             'disk' => 'public',
             'path' => 'media/images/webblocks-ui-logo.png',
             'filename' => 'webblocks-ui-logo.png',
@@ -635,7 +638,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->seed(FoundationSiteLocaleSeeder::class);
 
         $site = Site::query()->firstOrFail();
-        $turkish = \App\Models\Locale::query()->updateOrCreate(
+        $turkish = Locale::query()->updateOrCreate(
             ['code' => 'tr'],
             ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
         );
@@ -694,7 +697,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $defaultResponse = $this->get('/p/about');
         $turkishResponse = $this->get('/tr/p/hakkinda');
-        $turkishHomePath = app(\App\Support\Pages\PageRouteResolver::class)->homePath('tr', $site);
+        $turkishHomePath = app(PageRouteResolver::class)->homePath('tr', $site);
 
         $defaultResponse->assertOk();
         $defaultResponse->assertSee('<a class="wb-breadcrumb-link" href="/">Home</a>', false);
@@ -1816,7 +1819,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'locale_id' => Page::defaultLocaleId(),
             'title' => 'See primitives',
         ]);
-        app(\App\Support\Blocks\BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
@@ -1831,7 +1834,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->seed(FoundationSiteLocaleSeeder::class);
 
         $site = Site::query()->firstOrFail();
-        $turkish = \App\Models\Locale::query()->updateOrCreate(
+        $turkish = Locale::query()->updateOrCreate(
             ['code' => 'tr'],
             ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
         );
@@ -1882,7 +1885,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'locale_id' => $turkish->id,
             'title' => 'Buradan basla',
         ]);
-        app(\App\Support\Blocks\BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
 
         $defaultResponse = $this->get('/p/about');
         $turkishResponse = $this->get('/tr/p/hakkinda');
@@ -1981,7 +1984,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->seed(FoundationSiteLocaleSeeder::class);
 
         $site = Site::query()->firstOrFail();
-        $turkish = \App\Models\Locale::query()->updateOrCreate(
+        $turkish = Locale::query()->updateOrCreate(
             ['code' => 'tr'],
             ['name' => 'Turkish', 'is_default' => false, 'is_enabled' => true],
         );
@@ -2404,7 +2407,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->seed(FoundationSiteLocaleSeeder::class);
 
         $site = Site::query()->firstOrFail();
-        $french = \App\Models\Locale::query()->updateOrCreate(
+        $french = Locale::query()->updateOrCreate(
             ['code' => 'fr'],
             ['name' => 'French', 'is_default' => false, 'is_enabled' => true],
         );

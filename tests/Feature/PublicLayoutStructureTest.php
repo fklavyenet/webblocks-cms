@@ -97,7 +97,7 @@ class PublicLayoutStructureTest extends TestCase
             'slug' => 'other',
             'status' => 'published',
         ]);
-        \App\Models\PageTranslation::query()->updateOrCreate(
+        PageTranslation::query()->updateOrCreate(
             ['page_id' => $otherPage->id, 'locale_id' => Page::defaultLocaleId()],
             ['site_id' => $page->site_id, 'name' => 'Other', 'slug' => 'other', 'path' => '/p/other'],
         );

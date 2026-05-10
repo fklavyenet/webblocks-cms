@@ -5,7 +5,6 @@ namespace Tests\Feature\Admin;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
-use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
 use App\Models\PageSlot;

@@ -12,7 +12,7 @@ return new class extends Migration
     {
         $primarySiteId = Site::query()->orderByDesc('is_primary')->orderBy('id')->value('id');
 
-        Schema::table('navigation_items', function (Blueprint $table) use ($primarySiteId) {
+        Schema::table('navigation_items', function (Blueprint $table) {
             $table->foreignId('site_id')
                 ->nullable()
                 ->after('id')
