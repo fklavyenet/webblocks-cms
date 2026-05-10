@@ -104,7 +104,6 @@
                                 <th>Site Access</th>
                                 <th>Status</th>
                                 <th>Last Login</th>
-                                <th>Created</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -130,9 +129,8 @@
                                     <td>{{ $managedUser->siteAccessSummary() }}</td>
                                     <td><span class="wb-status-pill {{ $managedUser->statusBadgeClass() }}">{{ $managedUser->statusLabel() }}</span></td>
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
-                                    <td>{{ $managedUser->created_at?->format('Y-m-d H:i') }}</td>
-                                    <td>
-                                        <div class="wb-action-group">
+                                    <td class="wb-whitespace-nowrap">
+                                        <div class="wb-action-group wb-whitespace-nowrap">
                                             <a href="{{ route('admin.users.edit', $managedUser) }}" class="wb-action-btn wb-action-btn-edit" title="Edit user" aria-label="Edit user">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>

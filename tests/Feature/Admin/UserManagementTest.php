@@ -31,6 +31,11 @@ class UserManagementTest extends TestCase
         $response->assertSee('id="users_status"', false);
         $response->assertSee('id="users_role"', false);
         $response->assertSee('Apply', false);
+        $response->assertDontSee('>Created<', false);
+        $response->assertSee('>Last Login<', false);
+        $response->assertSee('aria-label="Edit user"', false);
+        $response->assertSee('aria-label="Delete user"', false);
+        $response->assertSee('class="wb-action-group wb-whitespace-nowrap"', false);
     }
 
     #[Test]
