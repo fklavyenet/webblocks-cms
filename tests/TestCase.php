@@ -2,8 +2,8 @@
 
 namespace Tests;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\File;
 use Tests\Support\HtmlStructureAssertions;
 
 abstract class TestCase extends BaseTestCase
@@ -68,6 +68,7 @@ abstract class TestCase extends BaseTestCase
         foreach ($paths as $path) {
             if (is_file($path)) {
                 @unlink($path);
+
                 continue;
             }
 

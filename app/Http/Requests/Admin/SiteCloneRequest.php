@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Site;
 use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Sites\SiteHandle;
 use Illuminate\Foundation\Http\FormRequest;

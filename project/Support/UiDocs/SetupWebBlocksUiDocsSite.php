@@ -11,8 +11,8 @@ use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class SetupWebBlocksUiDocsSite
@@ -320,7 +320,7 @@ class SetupWebBlocksUiDocsSite
         $scheme = parse_url($appUrl, PHP_URL_SCHEME);
 
         if ($host !== '') {
-            return (($scheme ?: 'https').'://'.$host);
+            return ($scheme ?: 'https').'://'.$host;
         }
 
         if ($appUrl !== '') {

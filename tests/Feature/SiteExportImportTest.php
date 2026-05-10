@@ -10,7 +10,7 @@ use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteExport;
-use App\Models\SiteVariable;
+use App\Models\SlotType;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use App\Support\Sites\ExportImport\SiteImportManager;
@@ -18,7 +18,6 @@ use App\Support\Sites\ExportImport\SiteImportOptions;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
@@ -414,11 +413,11 @@ class SiteExportImportTest extends TestCase
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
         $site->locales()->sync([$defaultLocale->id => ['is_enabled' => true]]);
 
-        $headerSlotType = \App\Models\SlotType::query()->firstOrCreate(
+        $headerSlotType = SlotType::query()->firstOrCreate(
             ['slug' => 'header'],
             ['name' => 'Header', 'status' => 'published', 'sort_order' => 0, 'is_system' => true],
         );
-        $sidebarSlotType = \App\Models\SlotType::query()->firstOrCreate(
+        $sidebarSlotType = SlotType::query()->firstOrCreate(
             ['slug' => 'sidebar'],
             ['name' => 'Sidebar', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
         );

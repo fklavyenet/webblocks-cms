@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\System\SystemSettings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -115,7 +116,7 @@ class Locale extends Model
 
             if ($defaultLocale) {
                 SystemSetting::query()->updateOrCreate(
-                    ['key' => \App\Support\System\SystemSettings::DEFAULT_LOCALE],
+                    ['key' => SystemSettings::DEFAULT_LOCALE],
                     ['value' => $defaultLocale->code],
                 );
             }

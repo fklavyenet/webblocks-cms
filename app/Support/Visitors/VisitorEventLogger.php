@@ -5,8 +5,8 @@ namespace App\Support\Visitors;
 use App\Models\Page;
 use App\Models\VisitorEvent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Throwable;
 
 class VisitorEventLogger

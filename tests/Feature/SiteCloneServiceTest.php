@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Asset;
 use App\Models\Block;
-use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
@@ -12,7 +11,6 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
-use App\Models\SlotType;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
@@ -24,8 +22,8 @@ use Tests\TestCase;
 
 class SiteCloneServiceTest extends TestCase
 {
-    use RefreshDatabase;
     use BuildsCloneableSite;
+    use RefreshDatabase;
 
     #[Test]
     public function it_clones_site_content_translations_navigation_and_media_references_into_a_new_target_site(): void

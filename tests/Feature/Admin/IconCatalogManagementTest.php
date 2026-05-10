@@ -24,7 +24,7 @@ class IconCatalogManagementTest extends TestCase
     #[Test]
     public function icon_catalog_seeder_is_idempotent(): void
     {
-        $expected = count((new IconCatalogSeeder())->fallbackNavigationIcons());
+        $expected = count((new IconCatalogSeeder)->fallbackNavigationIcons());
 
         $this->seed(IconCatalogSeeder::class);
         $this->seed(IconCatalogSeeder::class);

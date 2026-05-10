@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Support\SharedSlots\SharedSlotSchema;
 use App\Support\Search\ReindexesPublicSearch;
+use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

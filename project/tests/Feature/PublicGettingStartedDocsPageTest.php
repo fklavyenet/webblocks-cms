@@ -10,7 +10,6 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationWriter;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

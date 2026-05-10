@@ -13,11 +13,17 @@ use Throwable;
 class SystemSettings
 {
     public const PROJECT_NAME = 'system.project_name';
+
     public const PROJECT_TAGLINE = 'system.project_tagline';
+
     public const APP_NAME = 'system.app_name';
+
     public const APP_SLOGAN = 'system.app_slogan';
+
     public const DEFAULT_LOCALE = 'system.default_locale';
+
     public const TIMEZONE = 'system.timezone';
+
     public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
     private const READABLE_KEYS = [

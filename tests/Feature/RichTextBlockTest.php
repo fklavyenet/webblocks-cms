@@ -71,7 +71,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_block_type_is_seeded_as_a_first_class_content_block(): void
+    public function rich_text_block_type_is_seeded_as_a_first_class_content_block(): void
     {
         $this->seedFoundation();
 
@@ -85,7 +85,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_seeder_upgrades_an_existing_legacy_catalog_entry_and_keeps_it_visible_on_rerun(): void
+    public function rich_text_seeder_upgrades_an_existing_legacy_catalog_entry_and_keeps_it_visible_on_rerun(): void
     {
         $this->seedFoundation();
 
@@ -111,7 +111,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_visibility_migration_normalizes_existing_legacy_catalog_rows(): void
+    public function rich_text_visibility_migration_normalizes_existing_legacy_catalog_rows(): void
     {
         $this->seedFoundation();
 
@@ -137,7 +137,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_admin_form_loads_safe_editor_toolbar_and_named_asset(): void
+    public function rich_text_admin_form_loads_safe_editor_toolbar_and_named_asset(): void
     {
         $this->seedFoundation();
 
@@ -198,7 +198,7 @@ class RichTextBlockTest extends TestCase
         $this->assertStringContainsString('init: initializeEditors,', $assetContents);
         $this->assertStringContainsString('data-wb-rich-text-surface', $partialContents);
         $this->assertStringContainsString('data-wb-rich-text-input', $partialContents);
-        $this->assertStringContainsString("button.dataset.wbRichTextAction", $assetContents);
+        $this->assertStringContainsString('button.dataset.wbRichTextAction', $assetContents);
         $this->assertStringNotContainsString('toggleWrap(textarea', $assetContents);
         $this->assertStringNotContainsString('getMarkdownLinkRange', $assetContents);
         $this->assertStringNotContainsString('**', $assetContents);
@@ -206,7 +206,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_is_stored_in_translation_backed_content_as_safe_html_fragment(): void
+    public function rich_text_is_stored_in_translation_backed_content_as_safe_html_fragment(): void
     {
         $this->seedFoundation();
 
@@ -235,7 +235,7 @@ class RichTextBlockTest extends TestCase
     }
 
     #[Test]
-    public function RichText_public_renderer_outputs_sanitized_safe_html_fragment(): void
+    public function rich_text_public_renderer_outputs_sanitized_safe_html_fragment(): void
     {
         $this->seedFoundation();
 

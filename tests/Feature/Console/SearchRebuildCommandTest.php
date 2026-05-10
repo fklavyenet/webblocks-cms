@@ -4,6 +4,7 @@ namespace Tests\Feature\Console;
 
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
@@ -85,7 +86,7 @@ class SearchRebuildCommandTest extends TestCase
         $this->seed(BlockTypeSeeder::class);
 
         $site = Site::query()->where('is_primary', true)->firstOrFail();
-        $turkish = \App\Models\Locale::query()->create([
+        $turkish = Locale::query()->create([
             'code' => 'tr',
             'name' => 'Turkish',
             'is_default' => false,

@@ -3,6 +3,7 @@
 namespace App\Support\Blocks;
 
 use App\Models\Block;
+use App\Support\Locales\LocaleResolver;
 use Illuminate\Support\Str;
 
 class BlockAdminSummary
@@ -210,7 +211,7 @@ class BlockAdminSummary
         $translations = $block->relationLoaded('textTranslations')
             ? $block->getRelation('textTranslations')
             : $block->textTranslations()->get();
-        $defaultLocaleId = app(\App\Support\Locales\LocaleResolver::class)->default()->id;
+        $defaultLocaleId = app(LocaleResolver::class)->default()->id;
         $translation = $translations->firstWhere('locale_id', $defaultLocaleId) ?? $translations->first();
         $translated = $translation?->{$field};
 

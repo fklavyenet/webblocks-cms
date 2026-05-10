@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\BlockType;
 use App\Models\Block;
+use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -11,7 +11,6 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
-use App\Models\PageRevision;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

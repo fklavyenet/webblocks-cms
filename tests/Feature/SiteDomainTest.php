@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\Page;
 use App\Models\Site;
 use App\Models\SiteDomain;
 use App\Models\SlotType;
-use App\Models\BlockType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;

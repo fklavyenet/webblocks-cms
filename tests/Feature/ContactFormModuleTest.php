@@ -4,12 +4,12 @@ namespace Tests\Feature;
 
 use App\Mail\ContactMessageNotification;
 use App\Models\Block;
-use App\Models\Locale;
 use App\Models\BlockType;
 use App\Models\ContactMessage;
+use App\Models\Locale;
 use App\Models\Page;
-use App\Models\PageTranslation;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;

@@ -9,9 +9,9 @@ use App\Models\SystemUpdateRun;
 use App\Support\System\SystemUpdateInspector;
 use App\Support\System\Updates\SystemUpdater;
 use App\Support\System\Updates\UpdateException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 

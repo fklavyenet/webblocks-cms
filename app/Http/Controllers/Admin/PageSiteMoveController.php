@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\MovePageSiteRequest;
 use App\Models\Page;
 use App\Models\Site;
 use App\Support\Pages\PageSiteMover;
-use App\Support\Pages\PageSiteMoveValidator;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

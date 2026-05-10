@@ -33,8 +33,7 @@ class PageDuplicator
         User $actor,
         Collection $translations,
         bool $disableIncompatibleSharedSlots = false,
-    ): PageDuplicateResult
-    {
+    ): PageDuplicateResult {
         $page->loadMissing([
             'site',
             'translations.locale',

@@ -3,6 +3,7 @@
 namespace App\Support\Search;
 
 use App\Models\Block;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
@@ -21,7 +22,7 @@ trait ReindexesPublicSearch
             return;
         }
 
-        $locale = $localeCode ? \App\Models\Locale::query()->where('code', $localeCode)->first() : null;
+        $locale = $localeCode ? Locale::query()->where('code', $localeCode)->first() : null;
         app(PublicSearchIndexer::class)->refreshPage($resolvedPage, $locale);
     }
 

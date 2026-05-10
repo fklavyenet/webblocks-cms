@@ -10,8 +10,8 @@ use App\Models\User;
 use App\Support\Users\UserLifecycleGuard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\View\View;
 
 class UserController extends Controller

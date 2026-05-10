@@ -13,7 +13,6 @@ use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -58,8 +57,7 @@ class PageRevisionManager
         ?PageRevision $restoredFrom = null,
         ?string $event = null,
         ?string $source = null,
-    ): PageRevision
-    {
+    ): PageRevision {
         if (! $this->revisionsTableExists()) {
             throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
         }
@@ -419,7 +417,7 @@ class PageRevisionManager
 
     private function ensureLegacySnapshotFallbackTranslations(Block $block, array $snapshotBlock): bool
     {
-            if (
+        if (
             ($snapshotBlock['text_translations'] ?? []) !== []
             || ($snapshotBlock['button_translations'] ?? []) !== []
             || ($snapshotBlock['image_translations'] ?? []) !== []

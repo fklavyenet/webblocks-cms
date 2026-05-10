@@ -1,5 +1,7 @@
 <?php
 
+use Project\Providers\ProjectServiceProvider;
+
 return [
-    Project\Providers\ProjectServiceProvider::class,
+    ProjectServiceProvider::class,
 ];

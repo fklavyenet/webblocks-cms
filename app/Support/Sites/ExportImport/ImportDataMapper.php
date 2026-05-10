@@ -6,6 +6,10 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
+use App\Models\BlockButtonTranslation;
+use App\Models\BlockContactFormTranslation;
+use App\Models\BlockImageTranslation;
+use App\Models\BlockTextTranslation;
 use App\Models\BlockType;
 use App\Models\Layout;
 use App\Models\Locale;
@@ -22,10 +26,10 @@ use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\Pages\PageAssetPathValidator;
-use App\Support\Sites\SiteHandle;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
-use App\Support\Sites\SiteDomainNormalizer;
 use App\Support\Sites\SiteDomainManager;
+use App\Support\Sites\SiteDomainNormalizer;
+use App\Support\Sites\SiteHandle;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -673,8 +677,8 @@ class ImportDataMapper
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
             if ($blockId && $localeId) {
-                
-                \App\Models\BlockTextTranslation::query()->create([
+
+                BlockTextTranslation::query()->create([
                     'block_id' => $blockId,
                     'locale_id' => $localeId,
                     'title' => $translationData['title'] ?? null,
@@ -694,7 +698,7 @@ class ImportDataMapper
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
             if ($blockId && $localeId) {
-                \App\Models\BlockButtonTranslation::query()->create([
+                BlockButtonTranslation::query()->create([
                     'block_id' => $blockId,
                     'locale_id' => $localeId,
                     'title' => $translationData['title'] ?? null,
@@ -710,7 +714,7 @@ class ImportDataMapper
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
             if ($blockId && $localeId) {
-                \App\Models\BlockImageTranslation::query()->create([
+                BlockImageTranslation::query()->create([
                     'block_id' => $blockId,
                     'locale_id' => $localeId,
                     'caption' => $translationData['caption'] ?? null,
@@ -727,7 +731,7 @@ class ImportDataMapper
             $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
 
             if ($blockId && $localeId) {
-                \App\Models\BlockContactFormTranslation::query()->create([
+                BlockContactFormTranslation::query()->create([
                     'block_id' => $blockId,
                     'locale_id' => $localeId,
                     'title' => $translationData['title'] ?? null,

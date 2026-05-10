@@ -10,7 +10,6 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\Locale;
 use App\Models\Site;
-use App\Models\SiteVariable;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
 use App\Support\Sites\SiteDeleteService;

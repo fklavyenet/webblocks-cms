@@ -6,6 +6,7 @@ use App\Http\Requests\ContactMessageRequest;
 use App\Mail\ContactMessageNotification;
 use App\Models\Block;
 use App\Models\ContactMessage;
+use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
 
@@ -16,7 +17,7 @@ class ContactMessageController extends Controller
         $payload = $request->payload();
         $block = Block::query()->with(['blockType', 'page'])->findOrFail($payload['block_id']);
         $block->page?->loadMissing('translations');
-        $block = app(\App\Support\Blocks\BlockTranslationResolver::class)->resolve($block, site: $block->page?->site);
+        $block = app(BlockTranslationResolver::class)->resolve($block, site: $block->page?->site);
 
         abort_unless($block->typeSlug() === 'contact_form', 404);
         abort_unless($block->status === 'published', 404);

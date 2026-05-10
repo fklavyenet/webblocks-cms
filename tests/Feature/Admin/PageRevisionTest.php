@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
@@ -208,7 +209,7 @@ class PageRevisionTest extends TestCase
         ]);
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
         $page = $this->pageFor($site, Page::STATUS_DRAFT);
-        $ogImage = \App\Models\Asset::query()->create([
+        $ogImage = Asset::query()->create([
             'disk' => 'public',
             'path' => 'seo/translation-og.png',
             'filename' => 'translation-og.png',
@@ -216,7 +217,7 @@ class PageRevisionTest extends TestCase
             'extension' => 'png',
             'mime_type' => 'image/png',
             'size' => 100,
-            'kind' => \App\Models\Asset::KIND_IMAGE,
+            'kind' => Asset::KIND_IMAGE,
             'visibility' => 'public',
             'uploaded_by' => $user->id,
         ]);

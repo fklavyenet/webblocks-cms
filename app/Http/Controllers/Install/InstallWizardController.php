@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Install;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Support\Install\InstallState;
 use App\Support\Install\Installer;
+use App\Support\Install\InstallState;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;

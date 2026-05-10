@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use App\Support\System\InstalledVersionStore;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 class DatabaseSeeder extends Seeder

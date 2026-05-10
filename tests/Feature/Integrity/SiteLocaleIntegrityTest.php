@@ -4,7 +4,6 @@ namespace Tests\Feature\Integrity;
 
 use App\Models\Locale;
 use App\Models\Page;
-use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;

@@ -10,6 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DuplicatePageRequest extends FormRequest
 {
@@ -94,7 +95,7 @@ class DuplicatePageRequest extends FormRequest
                 try {
                     $authorization->abortUnlessSiteAccess($this->user(), $page);
                     $authorization->abortUnlessSiteAccess($this->user(), $targetSite);
-                } catch (\Symfony\Component\HttpKernel\Exception\HttpException) {
+                } catch (HttpException) {
                     $validator->errors()->add('target_site_id', 'You must have access to both the current site and the target site to duplicate this page.');
 
                     return;

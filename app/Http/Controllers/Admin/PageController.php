@@ -15,16 +15,17 @@ use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
-use App\Support\Blocks\BlockPayloadWriter;
-use App\Support\Blocks\BlockDeletionManager;
-use App\Support\Blocks\BlockTranslationResolver;
+use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Pages\PageRevisionManager;
+use App\Support\Blocks\BlockDeletionManager;
+use App\Support\Blocks\BlockPayloadWriter;
+use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageIndexState;
+use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -88,50 +89,50 @@ class PageController extends Controller
             ->pluck('locales_count', 'id');
 
         $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
-                ->with([
-                    'site',
-                    'translations.locale',
-                    'createdByUser',
-                    'updatedByUser',
-                    'publishedByUser',
-                    'archivedByUser',
-                    'reviewRequestedByUser',
-                ])
-                ->with('slots.slotType')
-                ->withCount(['slots', 'blocks'])
-                ->when($search !== '', function ($query) use ($search, $defaultLocaleId) {
-                    $query->where(function ($inner) use ($search, $defaultLocaleId) {
-                        $inner->where('page_type', 'like', "%{$search}%")
-                            ->orWhereHas('blocks.textTranslations', fn ($translations) => $translations
-                                ->where('title', 'like', "%{$search}%")
-                                ->orWhere('subtitle', 'like', "%{$search}%")
-                                ->orWhere('content', 'like', "%{$search}%"))
-                            ->orWhereHas('blocks.buttonTranslations', fn ($translations) => $translations
-                                ->where('title', 'like', "%{$search}%"))
-                            ->orWhereHas('blocks.imageTranslations', fn ($translations) => $translations
-                                ->where('caption', 'like', "%{$search}%")
-                                ->orWhere('alt_text', 'like', "%{$search}%"))
-                            ->orWhereHas('blocks.contactFormTranslations', fn ($translations) => $translations
-                                ->where('title', 'like', "%{$search}%")
-                                ->orWhere('content', 'like', "%{$search}%")
-                                ->orWhere('submit_label', 'like', "%{$search}%")
-                                ->orWhere('success_message', 'like', "%{$search}%"))
-                            ->orWhereHas('translations', fn ($translations) => $translations
-                                ->when($defaultLocaleId, fn ($defaultTranslations) => $defaultTranslations->where('locale_id', $defaultLocaleId))
-                                ->where(function ($translationQuery) use ($search) {
-                                    $translationQuery->where('name', 'like', "%{$search}%")
-                                        ->orWhere('slug', 'like', "%{$search}%");
-                                }));
-                    });
-                })
-                ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
-                ->when($sort === 'title', fn ($query) => $query->orderByDefaultTranslation('name', $direction))
-                ->when($sort === 'slug', fn ($query) => $query->orderByDefaultTranslation('slug', $direction))
-                ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
-                ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
-                ->paginate(15)
-                ->withQueryString();
+            ->with([
+                'site',
+                'translations.locale',
+                'createdByUser',
+                'updatedByUser',
+                'publishedByUser',
+                'archivedByUser',
+                'reviewRequestedByUser',
+            ])
+            ->with('slots.slotType')
+            ->withCount(['slots', 'blocks'])
+            ->when($search !== '', function ($query) use ($search, $defaultLocaleId) {
+                $query->where(function ($inner) use ($search, $defaultLocaleId) {
+                    $inner->where('page_type', 'like', "%{$search}%")
+                        ->orWhereHas('blocks.textTranslations', fn ($translations) => $translations
+                            ->where('title', 'like', "%{$search}%")
+                            ->orWhere('subtitle', 'like', "%{$search}%")
+                            ->orWhere('content', 'like', "%{$search}%"))
+                        ->orWhereHas('blocks.buttonTranslations', fn ($translations) => $translations
+                            ->where('title', 'like', "%{$search}%"))
+                        ->orWhereHas('blocks.imageTranslations', fn ($translations) => $translations
+                            ->where('caption', 'like', "%{$search}%")
+                            ->orWhere('alt_text', 'like', "%{$search}%"))
+                        ->orWhereHas('blocks.contactFormTranslations', fn ($translations) => $translations
+                            ->where('title', 'like', "%{$search}%")
+                            ->orWhere('content', 'like', "%{$search}%")
+                            ->orWhere('submit_label', 'like', "%{$search}%")
+                            ->orWhere('success_message', 'like', "%{$search}%"))
+                        ->orWhereHas('translations', fn ($translations) => $translations
+                            ->when($defaultLocaleId, fn ($defaultTranslations) => $defaultTranslations->where('locale_id', $defaultLocaleId))
+                            ->where(function ($translationQuery) use ($search) {
+                                $translationQuery->where('name', 'like', "%{$search}%")
+                                    ->orWhere('slug', 'like', "%{$search}%");
+                            }));
+                });
+            })
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
+            ->when($sort === 'title', fn ($query) => $query->orderByDefaultTranslation('name', $direction))
+            ->when($sort === 'slug', fn ($query) => $query->orderByDefaultTranslation('slug', $direction))
+            ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
+            ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
+            ->paginate(15)
+            ->withQueryString();
 
         $this->pageIndexState->remember($request, array_filter([
             'site' => $siteFilterValue,
@@ -901,7 +902,7 @@ class PageController extends Controller
             ->values();
     }
 
-    private function visiblePickerBlockTypesFor(?\App\Models\User $user, $blockTypes)
+    private function visiblePickerBlockTypesFor(?User $user, $blockTypes)
     {
         if ($user?->isSuperAdmin()) {
             return $blockTypes;

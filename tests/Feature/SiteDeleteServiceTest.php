@@ -126,7 +126,6 @@ class SiteDeleteServiceTest extends TestCase
         $this->assertDatabaseHas('sites', ['id' => $otherSite->id]);
     }
 
-    #[Test]
     private function seedDeletableSite(): array
     {
         $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();

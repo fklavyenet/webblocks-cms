@@ -2,17 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
-use App\Models\User;
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\Seeder;

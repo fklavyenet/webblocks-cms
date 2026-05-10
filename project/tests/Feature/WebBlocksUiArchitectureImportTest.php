@@ -2,6 +2,8 @@
 
 namespace Project\Tests\Feature;
 
+use App\Console\Commands\SetupWebBlocksUiDocsSiteCommand;
+use App\Console\Commands\WebBlocksUiImportCommand;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\NavigationItem;
@@ -126,7 +128,7 @@ class WebBlocksUiArchitectureImportTest extends TestCase
             0,
             Site::query()->where('handle', 'ui-docs-webblocksui-com')->count(),
         );
-        $this->assertFalse(class_exists(\App\Console\Commands\WebBlocksUiImportCommand::class));
+        $this->assertFalse(class_exists(WebBlocksUiImportCommand::class));
     }
 
     #[Test]
@@ -163,7 +165,7 @@ class WebBlocksUiArchitectureImportTest extends TestCase
         $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'home'))->count());
         $this->assertSame(1, Page::query()->where('site_id', $site->id)->whereHas('translations', fn ($query) => $query->where('slug', 'getting-started'))->count());
         $this->assertSame('https://webblocks-cms.ddev.site/p/architecture', SetupWebBlocksUiDocsSite::architecturePreviewUrl());
-        $this->assertFalse(class_exists(\App\Console\Commands\SetupWebBlocksUiDocsSiteCommand::class));
+        $this->assertFalse(class_exists(SetupWebBlocksUiDocsSiteCommand::class));
     }
 
     #[Test]

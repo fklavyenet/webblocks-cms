@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BlockTextTranslation extends Model
 {
     use HasFactory;
-    use ValidatesBlockTranslationLocale;
     use ReindexesPublicSearch;
+    use ValidatesBlockTranslationLocale;
 
     protected static function booted(): void
     {

@@ -11,7 +11,6 @@ use App\Models\SlotType;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Support\System\InstalledVersionStore;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;

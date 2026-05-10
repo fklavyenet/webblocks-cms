@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BlockImageTranslation extends Model
 {
     use HasFactory;
-    use ValidatesBlockTranslationLocale;
     use ReindexesPublicSearch;
+    use ValidatesBlockTranslationLocale;
 
     protected $fillable = [
         'block_id',
