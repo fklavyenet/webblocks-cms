@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-- Fix site export/import so navigation item icon slugs are included in portable packages and restored on import, preserving Sidebar Navigation icon rendering across installs.
+## 1.25.1
+
+- Fix site export/import so navigation item icons stored on `navigation_items.icon` are included in export payloads and restored during import, preserving sidebar icon rendering after transfer.
 
 ## 1.25.0
 
