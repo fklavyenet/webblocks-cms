@@ -46,6 +46,40 @@ HTML;
     }
 
     #[Test]
+    public function extractor_hoists_referenced_modal_targets_outside_main_into_overlay_root(): void
+    {
+        $extractor = app(WebBlocksUiDocsMainHtmlExtractor::class);
+
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html>
+<body>
+  <main>
+    <section>
+      <button class="wb-btn wb-btn-outline" data-wb-toggle="modal" data-wb-target="#primitiveModal">Open modal</button>
+      <button class="wb-gallery-trigger" type="button" data-wb-gallery-target="#primitiveGalleryViewer" data-wb-gallery-full="https://example.com/full.jpg">Open viewer</button>
+    </section>
+  </main>
+  <div class="wb-modal wb-modal-sm" id="primitiveModal" role="dialog" aria-modal="true" aria-labelledby="primitiveModalTitle">
+    <div class="wb-modal-dialog"><div class="wb-modal-header"><h2 id="primitiveModalTitle">Primitive modal</h2></div></div>
+  </div>
+  <div class="wb-modal wb-modal-xl" id="primitiveGalleryViewer" role="dialog" aria-modal="true" aria-labelledby="primitiveGalleryViewerTitle">
+    <div class="wb-modal-dialog"><div class="wb-modal-body"><figcaption id="primitiveGalleryViewerTitle">Viewer</figcaption></div></div>
+  </div>
+</body>
+</html>
+HTML;
+
+        $fragment = $extractor->extract($html, 'https://ui.webblocksui.com/docs/primitives.html');
+
+        $this->assertStringContainsString('data-wb-target="#primitiveModal"', $fragment);
+        $this->assertStringContainsString('data-wb-gallery-target="#primitiveGalleryViewer"', $fragment);
+        $this->assertStringContainsString('id="wb-overlay-root"', $fragment);
+        $this->assertStringContainsString('id="primitiveModal"', $fragment);
+        $this->assertStringContainsString('id="primitiveGalleryViewer"', $fragment);
+    }
+
+    #[Test]
     public function extractor_throws_when_no_main_content_can_be_found(): void
     {
         $this->expectException(RuntimeException::class);

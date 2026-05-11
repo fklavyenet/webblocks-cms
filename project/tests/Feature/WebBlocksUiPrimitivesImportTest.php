@@ -3,12 +3,14 @@
 namespace Project\Tests\Feature;
 
 use App\Models\Block;
+use App\Models\BlockType;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SlotType;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -152,6 +154,9 @@ class WebBlocksUiPrimitivesImportTest extends TestCase
         $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'accordion' && $block->title === 'Primitive questions'));
         $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'stat-card' && $block->translatedTextFieldValue('subtitle') === 'MRR'));
         $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'button_link' && $block->translatedTextFieldValue('title') === 'Open Playground'));
+        $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'data-wb-toggle="modal"') && str_contains((string) $block->content, 'data-wb-target="#primitiveModal"')));
+        $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'data-wb-gallery-target="#primitiveGalleryViewer"')));
+        $this->assertTrue($primitivesPage->blocks->contains(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'id="primitiveModal"') && str_contains((string) $block->content, 'id="primitiveGalleryViewer"')));
         $this->assertSame(0, $primitivesPage->blocks->where('slot', 'header')->count());
         $this->assertSame(0, $primitivesPage->blocks->where('slot', 'sidebar')->count());
 
@@ -282,5 +287,94 @@ class WebBlocksUiPrimitivesImportTest extends TestCase
         $response->assertSee('href="#dropdown-popover-and-tabs"', false);
         $response->assertSee('href="#primitive-modal"', false);
         $response->assertDontSee('href="#primitives"', false);
+        $response->assertSee('data-wb-toggle="modal" data-wb-target="#primitiveModal"', false);
+        $response->assertSee('data-wb-gallery-target="#primitiveGalleryViewer"', false);
+        $response->assertSee('id="primitiveModal"', false);
+        $response->assertSee('id="primitiveGalleryViewer"', false);
+        $response->assertSee('<div id="wb-overlay-root" class="wb-overlay-root">', false);
+        $this->assertSame(1, substr_count($response->getContent(), 'id="wb-overlay-root"'));
+    }
+
+    #[Test]
+    public function primitives_import_replaces_legacy_trusted_html_page_with_structured_blocks(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(BlockTypeSeeder::class);
+
+        $this->artisan('project:webblocksui-setup-site')->assertExitCode(0);
+
+        $site = Site::query()->where('handle', 'default')->firstOrFail();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Primitives',
+            'slug' => 'primitives',
+            'status' => 'published',
+            'settings' => [
+                'project_source' => 'webblocksui.com',
+                'project_page_key' => 'docs-primitives',
+                'public_shell' => 'docs',
+                'source_url' => 'https://webblocksui.com/docs/primitives.html',
+                'requested_public_path' => '/docs/primitives.html',
+                'current_public_path' => '/p/primitives',
+            ],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Primitives', 'slug' => 'primitives', 'path' => '/p/primitives'],
+        );
+
+        $headerSlot = PageSlot::query()->create(['page_id' => $page->id, 'slot_type_id' => SlotType::query()->firstOrCreate(['slug' => 'header'], ['name' => 'Header', 'status' => 'published', 'sort_order' => 0])->id, 'sort_order' => 0]);
+        $sidebarSlot = PageSlot::query()->create(['page_id' => $page->id, 'slot_type_id' => SlotType::query()->firstOrCreate(['slug' => 'sidebar'], ['name' => 'Sidebar', 'status' => 'published', 'sort_order' => 1])->id, 'sort_order' => 1]);
+        $mainSlotType = SlotType::query()->firstOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published', 'sort_order' => 2]);
+        PageSlot::query()->create(['page_id' => $page->id, 'slot_type_id' => $mainSlotType->id, 'sort_order' => 2]);
+
+        $htmlType = BlockType::query()->firstOrCreate(
+            ['slug' => 'html'],
+            ['name' => 'HTML (Trusted)', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 99],
+        );
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'html',
+            'block_type_id' => $htmlType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlotType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+            'content' => '<section><button data-wb-toggle="modal" data-wb-target="#primitiveModal">Open modal</button></section><div id="wb-overlay-root"><div class="wb-modal" id="primitiveModal"></div></div>',
+        ]);
+
+        SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Header',
+            'handle' => 'docs-header',
+            'slot_name' => 'header',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+        SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Docs Sidebar',
+            'handle' => 'docs-sidebar',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        $importer = app(WebBlocksUiImporter::class);
+        $importer->run('docs-architecture');
+        $importer->run('docs-foundation');
+        $importer->run('docs-layout');
+        $importer->run('docs-primitives');
+
+        $page = $page->fresh(['blocks']);
+
+        $this->assertNotNull($page);
+        $this->assertTrue($page->blocks->contains(fn (Block $block) => $block->typeSlug() === 'accordion'));
+        $this->assertFalse($page->blocks->contains(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'Imported static main HTML')));
+        $this->assertTrue($page->blocks->contains(fn (Block $block) => $block->typeSlug() === 'html' && str_contains((string) $block->content, 'data-wb-toggle="modal"')));
     }
 }

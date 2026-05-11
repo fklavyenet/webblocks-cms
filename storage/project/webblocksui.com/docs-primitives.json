@@ -844,34 +844,12 @@
                   },
                   {
                     "key": "dropdown-popover-and-tabs-grid",
-                    "type": "grid",
-                    "settings": {
-                      "columns": "2",
-                      "gap": "4"
-                    },
-                    "children": [
-                      {
-                        "key": "dropdown-example-card",
-                        "type": "card",
-                        "translations": {
-                          "en": {
-                            "title": "Actions",
-                            "subtitle": "Project",
-                            "content": "Open. Duplicate. Archive."
-                          }
-                        }
-                      },
-                      {
-                        "key": "popover-example-card",
-                        "type": "card",
-                        "translations": {
-                          "en": {
-                            "title": "Info",
-                            "content": "Popover note"
-                          }
-                        }
+                    "type": "html",
+                    "translations": {
+                      "en": {
+                        "content": "<div class=\"wb-grid-2\"><div class=\"wb-card\"><div class=\"wb-card-body wb-stack-4\"><div class=\"wb-dropdown\"><button class=\"wb-btn wb-btn-secondary\" data-wb-toggle=\"dropdown\" data-wb-target=\"#primitiveActionsMenu\" aria-expanded=\"false\" aria-controls=\"primitiveActionsMenu\">Actions</button><div class=\"wb-dropdown-menu\" id=\"primitiveActionsMenu\"><div class=\"wb-dropdown-label\">Project</div><a href=\"#\" class=\"wb-dropdown-item\">Open</a><a href=\"#\" class=\"wb-dropdown-item\">Duplicate</a><hr class=\"wb-dropdown-divider\"><a href=\"#\" class=\"wb-dropdown-item\">Archive</a></div></div></div></div><div class=\"wb-card\"><div class=\"wb-card-body wb-stack-4\"><div class=\"wb-popover wb-popover-end\" data-wb-popover><button class=\"wb-btn wb-btn-outline\" data-wb-toggle=\"popover\" data-wb-target=\"#primitiveInfoPopover\" aria-controls=\"primitiveInfoPopover\">Info</button><div class=\"wb-popover-panel\" id=\"primitiveInfoPopover\"><div class=\"wb-popover-header\"><span class=\"wb-popover-title\">Popover note</span><button class=\"wb-popover-close\" data-wb-dismiss=\"popover\" aria-label=\"Close\"><i class=\"wb-icon wb-icon-x\"></i></button></div><div class=\"wb-popover-body\">Use popover for small contextual panels that should not become full dropdown menus or modals.</div></div></div><div class=\"wb-tabs wb-tabs-pills\"><div class=\"wb-tabs-list\" role=\"tablist\" aria-label=\"Primitive tabs\"><button class=\"wb-tabs-btn is-active\" role=\"tab\" type=\"button\" data-wb-tab=\"primitiveOverviewPanel\" aria-controls=\"primitiveOverviewPanel\" aria-selected=\"true\">Overview</button><button class=\"wb-tabs-btn\" role=\"tab\" type=\"button\" data-wb-tab=\"primitiveMarkupPanel\" aria-controls=\"primitiveMarkupPanel\" aria-selected=\"false\">Markup</button></div><div class=\"wb-tabs-panel is-active\" id=\"primitiveOverviewPanel\" role=\"tabpanel\"><p class=\"wb-m-0\">Tabs switch between matched panels by <code>data-wb-tab</code> and panel <code>id</code>.</p></div><div class=\"wb-tabs-panel\" id=\"primitiveMarkupPanel\" role=\"tabpanel\" hidden><code>&lt;button class=\"wb-tabs-btn\" data-wb-tab=\"panel-id\"&gt;Tab&lt;/button&gt;</code></div></div></div></div></div>"
                       }
-                    ]
+                    }
                   },
                   {
                     "key": "dropdown-popover-and-tabs-copy",
@@ -941,11 +919,10 @@
                   },
                   {
                     "key": "open-drawer-button",
-                    "type": "button",
-                    "variant": "secondary",
+                    "type": "html",
                     "translations": {
                       "en": {
-                        "title": "Open drawer"
+                        "content": "<div class=\"wb-cluster\"><button class=\"wb-btn wb-btn-secondary\" type=\"button\" data-wb-toggle=\"drawer\" data-wb-target=\"#primitiveDrawer\">Open drawer</button></div><div id=\"wb-overlay-root\"><div class=\"wb-drawer\" id=\"primitiveDrawer\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"primitiveDrawerTitle\"><div class=\"wb-drawer-header\"><h2 class=\"wb-drawer-title\" id=\"primitiveDrawerTitle\">Primitive checklist</h2><button class=\"wb-drawer-close\" data-wb-dismiss=\"drawer\" aria-label=\"Close\"><i class=\"wb-icon wb-icon-x\"></i></button></div><div class=\"wb-drawer-body\"><div class=\"wb-list wb-list-sm\"><div class=\"wb-list-item\"><div class=\"wb-list-item-text\"><span class=\"wb-list-item-title\">Use shipped classes</span><span class=\"wb-list-item-sub\">Do not invent presentation-only names.</span></div></div><div class=\"wb-list-item\"><div class=\"wb-list-item-text\"><span class=\"wb-list-item-title\">Use tokens indirectly</span><span class=\"wb-list-item-sub\">Stay inside package primitives and patterns when possible.</span></div></div><div class=\"wb-list-item\"><div class=\"wb-list-item-text\"><span class=\"wb-list-item-title\">Use data hooks for behavior</span><span class=\"wb-list-item-sub\">Let shipped JavaScript handle overlays and interaction state.</span></div></div></div></div><div class=\"wb-drawer-footer\"><button class=\"wb-btn wb-btn-secondary\" data-wb-dismiss=\"drawer\">Close</button></div></div></div>"
                       }
                     }
                   },
@@ -993,11 +970,10 @@
                   },
                   {
                     "key": "open-modal-button",
-                    "type": "button",
-                    "variant": "primary",
+                    "type": "html",
                     "translations": {
                       "en": {
-                        "title": "Open modal"
+                        "content": "<div class=\"wb-cluster\"><button class=\"wb-btn wb-btn-outline\" data-wb-toggle=\"modal\" data-wb-target=\"#primitiveModal\">Open modal</button></div>"
                       }
                     }
                   },
@@ -1013,10 +989,10 @@
                   },
                   {
                     "key": "media-viewer-modal-copy",
-                    "type": "rich-text",
+                    "type": "html",
                     "translations": {
                       "en": {
-                        "content": "<p>Use the same modal primitive for images and content previews. Both thumbnails below open one shared viewer modal.</p><ul><li>Workspace dashboard with charts and analytics cards.</li><li>Product planning session around a shared table with laptops and notes.</li></ul>"
+                        "content": "<div class=\"wb-stack-3\"><p class=\"wb-text-sm wb-text-muted wb-m-0\">Use the same modal primitive for images and content previews. Both thumbnails below open one shared viewer modal.</p><div class=\"wb-gallery\" aria-label=\"Primitive gallery example\"><div class=\"wb-gallery-grid\"><figure class=\"wb-gallery-item\"><button class=\"wb-gallery-trigger\" type=\"button\" data-wb-gallery-target=\"#primitiveGalleryViewer\" data-wb-gallery-full=\"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1600&amp;q=80\"><img class=\"wb-gallery-media\" src=\"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=900&amp;q=80\" alt=\"Workspace dashboard with charts and analytics cards\"></button><figcaption class=\"wb-gallery-caption\">Dashboard image opens the shared viewer modal</figcaption></figure><figure class=\"wb-gallery-item\"><button class=\"wb-gallery-trigger\" type=\"button\" data-wb-gallery-target=\"#primitiveGalleryViewer\" data-wb-gallery-full=\"https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&amp;fit=crop&amp;w=1600&amp;q=80\"><img class=\"wb-gallery-media\" src=\"https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&amp;fit=crop&amp;w=900&amp;q=80\" alt=\"Product planning session around a shared table with laptops and notes\"></button><figcaption class=\"wb-gallery-caption\">Planning image opens the same shared viewer modal</figcaption></figure></div></div></div>"
                       }
                     }
                   },
@@ -1056,32 +1032,12 @@
                   },
                   {
                     "key": "primitive-modal-actions",
-                    "type": "cluster",
-                    "settings": {
-                      "alignment": "start"
-                    },
-                    "children": [
-                      {
-                        "key": "primitive-modal-cancel-button",
-                        "type": "button",
-                        "variant": "secondary",
-                        "translations": {
-                          "en": {
-                            "title": "Cancel"
-                          }
-                        }
-                      },
-                      {
-                        "key": "primitive-modal-confirm-button",
-                        "type": "button",
-                        "variant": "primary",
-                        "translations": {
-                          "en": {
-                            "title": "Confirm"
-                          }
-                        }
+                    "type": "html",
+                    "translations": {
+                      "en": {
+                        "content": "<div id=\"wb-overlay-root\"><div class=\"wb-modal wb-modal-sm\" id=\"primitiveModal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"primitiveModalTitle\"><div class=\"wb-modal-dialog\"><div class=\"wb-modal-header\"><h2 class=\"wb-modal-title\" id=\"primitiveModalTitle\">Primitive modal</h2><button class=\"wb-modal-close\" data-wb-dismiss=\"modal\" aria-label=\"Close\"><i class=\"wb-icon wb-icon-x\" aria-hidden=\"true\"></i></button></div><div class=\"wb-modal-body\"><p class=\"wb-m-0\">Use <code>wb-modal</code> when the interaction is a real dialog with explicit structure, decisions, or footer actions.</p></div><div class=\"wb-modal-footer\"><button class=\"wb-btn wb-btn-secondary\" data-wb-dismiss=\"modal\">Cancel</button><button class=\"wb-btn wb-btn-primary\">Confirm</button></div></div></div><div class=\"wb-modal wb-modal-xl\" id=\"primitiveGalleryViewer\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"primitiveGalleryViewerTitle\"><div class=\"wb-modal-dialog\"><div class=\"wb-modal-body\"><div class=\"wb-gallery-viewer\"><div class=\"wb-gallery-viewer-toolbar\"><button class=\"wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-prev\" type=\"button\" aria-label=\"Previous image\"><i class=\"wb-icon wb-icon-chevron-left\" aria-hidden=\"true\"></i></button><div class=\"wb-gallery-viewer-counter\" aria-live=\"polite\">1 / 2</div><div class=\"wb-cluster wb-cluster-2\"><button class=\"wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-next\" type=\"button\" aria-label=\"Next image\"><i class=\"wb-icon wb-icon-chevron-right\" aria-hidden=\"true\"></i></button><button class=\"wb-btn wb-btn-secondary wb-btn-icon wb-gallery-viewer-close\" type=\"button\" data-wb-dismiss=\"modal\" aria-label=\"Close viewer\"><i class=\"wb-icon wb-icon-x\" aria-hidden=\"true\"></i></button></div></div><figure class=\"wb-gallery-viewer-media\"><img class=\"wb-gallery-viewer-image\" src=\"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&amp;fit=crop&amp;w=1600&amp;q=80\" alt=\"Workspace dashboard with charts and analytics cards\"><figcaption class=\"wb-gallery-viewer-caption\" id=\"primitiveGalleryViewerTitle\">Overview dashboard</figcaption></figure><p class=\"wb-gallery-viewer-meta wb-text-sm wb-text-muted wb-m-0\">Use <code>wb-modal</code> in a content-first mode for gallery viewing instead of inventing a separate public overlay or lightbox primitive.</p></div></div></div></div></div>"
                       }
-                    ]
+                    }
                   }
                 ]
               }

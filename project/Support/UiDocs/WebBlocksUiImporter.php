@@ -311,7 +311,22 @@ class WebBlocksUiImporter
                 ->filter(fn (Block $block) => $block->setting('project_source') === self::SOURCE && $block->setting('project_page_key') === $pagePayload['key'])
                 ->values();
 
-            foreach ($existingImportedBlocks as $block) {
+            $legacyTrustedHtmlBlocks = Block::query()
+                ->where('page_id', $page->id)
+                ->whereNull('parent_id')
+                ->where('slot_type_id', $slotType->id)
+                ->where('type', 'html')
+                ->orderBy('sort_order')
+                ->get()
+                ->filter(function (Block $block) use ($page, $pagePayload): bool {
+                    return $page->setting('project_source') === self::SOURCE
+                        && $page->setting('project_page_key') === $pagePayload['key']
+                        && blank($block->setting('project_import_group'))
+                        && blank($block->setting('project_block_key'));
+                })
+                ->values();
+
+            foreach ($existingImportedBlocks->concat($legacyTrustedHtmlBlocks)->unique('id') as $block) {
                 $this->deleteBlockTree($block);
             }
 

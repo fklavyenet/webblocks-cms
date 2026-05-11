@@ -26,7 +26,7 @@ class WebBlocksUiDocsMainHtmlExtractor
         $this->rewriteLinks($main, $sourceUrl);
 
         $fragment = $this->innerHtml($main);
-        $overlay = $this->overlayHtml($document, $sourceUrl);
+        $overlay = $this->overlayHtml($document, $main, $sourceUrl);
 
         if ($overlay !== null) {
             $fragment .= PHP_EOL.$overlay;
@@ -151,17 +151,122 @@ class WebBlocksUiDocsMainHtmlExtractor
         }
     }
 
-    private function overlayHtml(DOMDocument $document, string $sourceUrl): ?string
+    private function overlayHtml(DOMDocument $document, DOMElement $main, string $sourceUrl): ?string
     {
+        $overlayParts = [];
         $overlay = $document->getElementById('wb-overlay-root');
 
-        if (! $overlay instanceof DOMElement) {
+        if ($overlay instanceof DOMElement) {
+            $this->rewriteLinks($overlay, $sourceUrl);
+
+            $overlayContent = trim($this->innerHtml($overlay));
+
+            if ($overlayContent !== '') {
+                $overlayParts[] = $overlayContent;
+            }
+        }
+
+        foreach ($this->referencedTargetElements($document, $main, $overlay) as $target) {
+            $this->rewriteLinks($target, $sourceUrl);
+
+            $targetHtml = trim($document->saveHTML($target) ?: '');
+
+            if ($targetHtml !== '') {
+                $overlayParts[] = $targetHtml;
+            }
+        }
+
+        $overlayContent = trim(implode(PHP_EOL, $overlayParts));
+
+        if ($overlayContent === '') {
             return null;
         }
 
-        $this->rewriteLinks($overlay, $sourceUrl);
+        return '<div id="wb-overlay-root">'.$overlayContent.'</div>';
+    }
 
-        return trim($document->saveHTML($overlay) ?: '') ?: null;
+    /**
+     * @return array<int, DOMElement>
+     */
+    private function referencedTargetElements(DOMDocument $document, DOMElement $main, ?DOMElement $overlayRoot = null): array
+    {
+        $xpath = new DOMXPath($document);
+        $targets = [];
+        $seen = [];
+
+        foreach ($xpath->query('.//*[@data-wb-gallery-target or @data-wb-target or @aria-controls]', $main) ?: [] as $node) {
+            if (! $node instanceof DOMElement) {
+                continue;
+            }
+
+            foreach ($this->targetIdsForNode($node) as $targetId) {
+                if ($targetId === '' || isset($seen[$targetId])) {
+                    continue;
+                }
+
+                $target = $document->getElementById($targetId);
+
+                if (! $target instanceof DOMElement) {
+                    continue;
+                }
+
+                if ($this->isDescendantOf($target, $main)) {
+                    continue;
+                }
+
+                if ($overlayRoot instanceof DOMElement && $this->isDescendantOf($target, $overlayRoot)) {
+                    continue;
+                }
+
+                $seen[$targetId] = true;
+                $targets[] = $target;
+            }
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function targetIdsForNode(DOMElement $node): array
+    {
+        $targetIds = [];
+
+        foreach (['data-wb-gallery-target', 'data-wb-target'] as $attribute) {
+            $value = trim($node->getAttribute($attribute));
+
+            if ($value === '') {
+                continue;
+            }
+
+            $targetIds[] = ltrim($value, '#');
+        }
+
+        $ariaControls = preg_split('/\s+/', trim($node->getAttribute('aria-controls')));
+
+        foreach ($ariaControls ?: [] as $targetId) {
+            $targetId = trim($targetId);
+
+            if ($targetId === '') {
+                continue;
+            }
+
+            $targetIds[] = ltrim($targetId, '#');
+        }
+
+        return array_values(array_unique($targetIds));
+    }
+
+    private function isDescendantOf(DOMElement $element, DOMElement $ancestor): bool
+    {
+        for ($node = $element; $node !== null; $node = $node->parentNode instanceof DOMElement ? $node->parentNode : null) {
+            if ($node->isSameNode($ancestor)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function rewriteUrl(string $value, string $sourceUrl): ?string
