@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
-- Fix public gallery behavior so first-class Gallery blocks and imported trusted HTML docs content can use the shipped WebBlocks UI shared viewer contract through the page-owned `#wb-overlay-root`.
-- Fix public overlay root ownership so CMS public pages render exactly one canonical `#wb-overlay-root` and public search, gallery viewers, and hoisted trusted HTML overlays render inside it instead of creating competing overlay roots.
-- Fix imported WebBlocks UI docs modal, drawer, and gallery examples so trusted HTML extraction preserves referenced overlay targets outside `<main>` and the curated `docs-primitives` payload keeps the shipped interactive `data-wb-*` contract instead of flattening those examples into non-interactive content.
-- Remove the extra CMS `header-actions.js` public asset because shipped WebBlocks UI `data-wb-*` mode, preset, accent, and dropdown behavior already covers the Header Actions controls.
+
+## 1.25.2
+
 - Add a compact `Last edited` column to the Pages admin listing with the page `updated_at` timestamp and recorded editor name, and expose matching Pages index sorting by last edit time.
+- Remove temporary WebBlocks UI project migration, repair, and payload workflow source from the repository so the CMS keeps only reusable core behavior.
+- Fix public gallery and overlay rendering so first-class Gallery blocks and trusted HTML blocks share the canonical page-owned `#wb-overlay-root`, preserve detached overlay targets, and avoid duplicate overlay roots.
+- Remove the extra CMS `header-actions.js` public asset because shipped WebBlocks UI `data-wb-*` mode, preset, accent, and dropdown behavior already covers the Header Actions controls.
 
 ## 1.25.1
 
