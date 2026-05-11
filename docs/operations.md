@@ -77,7 +77,7 @@ Export / Import covers site-scoped content such as:
 - Shared Slots and Shared Slot block trees
 - page-level Public Shell settings such as `default` and `docs`
 - block translations
-- navigation items
+- navigation items, including optional navigation item icon slugs used by public Sidebar Navigation renderers
 - optional media/assets
 
 Page Assets travel through site portability in two layers:

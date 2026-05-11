@@ -796,6 +796,7 @@ class ImportDataMapper
                 'link_type' => $itemData['link_type'] ?? NavigationItem::LINK_CUSTOM_URL,
                 'url' => $itemData['url'] ?? null,
                 'target' => $itemData['target'] ?? null,
+                'icon' => $itemData['icon'] ?? null,
                 'position' => $itemData['position'] ?? 0,
                 'visibility' => $itemData['visibility'] ?? NavigationItem::VISIBILITY_VISIBLE,
                 'is_system' => (bool) ($itemData['is_system'] ?? false),

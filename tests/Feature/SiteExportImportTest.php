@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Block;
 use App\Models\Locale;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
 use App\Models\PageSlot;
@@ -395,6 +396,58 @@ class SiteExportImportTest extends TestCase
             'key' => 'support_email',
             'value' => 'support@example.test',
         ]);
+    }
+
+    #[Test]
+    public function export_and_import_preserve_navigation_item_icons_for_sidebar_navigation_rendering(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $sourceItem = NavigationItem::query()
+            ->where('site_id', $site->id)
+            ->where('title', 'About')
+            ->firstOrFail();
+
+        $sourceItem->update(['icon' => 'rocket']);
+
+        $siteExport = app(SiteExportManager::class)->export($site, false);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $navigationItems = json_decode((string) $archive->getFromName('data/navigation_items.json'), true);
+        $archive->close();
+
+        $exportedItem = collect($navigationItems)->firstWhere('title', 'About');
+
+        $this->assertSame('rocket', $exportedItem['icon'] ?? null);
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Navigation Icons',
+            'site_handle' => 'imported-navigation-icons',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedItem = NavigationItem::query()
+            ->where('site_id', $importedSite->id)
+            ->where('title', 'About')
+            ->firstOrFail();
+
+        $this->assertSame('rocket', $importedItem->icon);
+        $this->assertSame('rocket', $importedItem->sidebarIcon());
+
+        $rendered = view('pages.partials.blocks.sidebar-navigation-menu-item', [
+            'item' => $importedItem->load('children'),
+            'nested' => false,
+            'showIcons' => true,
+            'isNavigationItemActive' => fn (NavigationItem $item): bool => (int) $item->id === (int) $importedItem->id,
+        ])->render();
+
+        $this->assertStringContainsString('class="wb-icon wb-icon-rocket wb-sidebar-icon"', $rendered);
     }
 
     #[Test]

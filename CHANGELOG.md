@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix site export/import so navigation item icon slugs are included in portable packages and restored on import, preserving Sidebar Navigation icon rendering across installs.
+
 ## 1.25.0
 
 - Add Site Promotion V1 as a package-based workflow for dry-run-first promotion of site-owned content into an existing target site, including target preselection from Sites and safety-backup plus rebuild integration.

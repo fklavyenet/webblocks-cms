@@ -293,6 +293,7 @@ class SiteExportDataBuilder
                 'link_type' => $item->link_type,
                 'url' => $item->url,
                 'target' => $item->target,
+                'icon' => $item->icon,
                 'position' => $item->position,
                 'visibility' => $item->visibility,
                 'is_system' => (bool) $item->is_system,
