@@ -543,14 +543,17 @@ class PageEditorialWorkflowTest extends TestCase
 
         $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
         $editorEdit->assertOk();
+        $editorEdit->assertSee('Page Overview');
+        $editorEdit->assertSee('Site, workflow, and publication state at a glance.');
         $editorEdit->assertSee('Submit for Review');
-        $editorEdit->assertDontSee('Publish');
-        $editorEdit->assertDontSee('Archive');
+        $editorEdit->assertDontSee('name="action" value="publish"', false);
+        $editorEdit->assertDontSee('name="action" value="archive"', false);
 
         $siteAdminEdit = $this->actingAs($siteAdmin)->get(route('admin.pages.edit', $page));
         $siteAdminEdit->assertOk();
+        $siteAdminEdit->assertSee('Page Overview');
         $siteAdminEdit->assertSee('Submit for Review');
-        $siteAdminEdit->assertSee('Publish');
+        $siteAdminEdit->assertSee('name="action" value="publish"', false);
     }
 
     #[Test]

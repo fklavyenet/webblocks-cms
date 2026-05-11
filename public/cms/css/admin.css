@@ -328,6 +328,145 @@
     flex-wrap: nowrap;
 }
 
+.wb-admin-page-edit {
+    gap: var(--wb-s4);
+}
+
+.wb-admin-page-edit-overview-body,
+.wb-admin-page-edit-card-body {
+    padding-top: var(--wb-s3);
+    padding-bottom: var(--wb-s3);
+}
+
+.wb-admin-page-edit-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--wb-s3);
+}
+
+.wb-admin-page-edit-overview-item {
+    display: grid;
+    gap: 0.2rem;
+    line-height: 1.25;
+}
+
+.wb-admin-page-edit-overview-actions {
+    margin-top: var(--wb-s3);
+}
+
+.wb-admin-page-edit-overview-actions form,
+.wb-admin-page-edit-slot-actions .wb-action-group form {
+    margin: 0;
+}
+
+.wb-admin-page-edit-settings-form .wb-card-body {
+    padding-top: var(--wb-s3);
+    padding-bottom: var(--wb-s3);
+}
+
+.wb-admin-page-edit-tabs {
+    gap: var(--wb-s3);
+}
+
+.wb-admin-page-edit-tabs-nav {
+    margin-bottom: 0;
+}
+
+.wb-admin-page-edit-tabs-panels,
+.wb-admin-page-edit-tabs-panel,
+.wb-admin-page-edit-form {
+    display: grid;
+    gap: var(--wb-s3);
+}
+
+.wb-admin-page-edit-form-grid {
+    gap: var(--wb-s3);
+}
+
+.wb-admin-page-edit-field {
+    gap: 0.35rem;
+}
+
+.wb-admin-page-edit-field .wb-text-sm {
+    line-height: 1.25;
+}
+
+.wb-admin-page-edit-readonly {
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--wb-border) 82%, transparent);
+    border-radius: var(--wb-radius-md);
+    background: var(--wb-surface-2);
+    line-height: 1.25;
+}
+
+.wb-admin-page-edit-table-wrap {
+    overflow-x: auto;
+}
+
+.wb-admin-page-edit-slots-table,
+.wb-admin-page-edit-translations-table,
+.wb-admin-page-edit-assets-table {
+    min-width: 760px;
+}
+
+.wb-admin-page-edit-slots-table :is(th, td),
+.wb-admin-page-edit-translations-table :is(th, td),
+.wb-admin-page-edit-assets-table :is(th, td) {
+    vertical-align: middle;
+}
+
+.wb-admin-page-edit-slots-table tbody td,
+.wb-admin-page-edit-translations-table tbody td,
+.wb-admin-page-edit-assets-table tbody td {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.wb-admin-page-edit-table-cell {
+    line-height: 1.25;
+}
+
+.wb-admin-page-edit-slot-meta,
+.wb-admin-page-edit-slot-source {
+    gap: 0.2rem;
+}
+
+.wb-admin-page-edit-slot-blocks-cell,
+.wb-admin-page-edit-translation-status-cell,
+.wb-admin-page-edit-translation-open-cell,
+.wb-admin-page-edit-assets-type-cell,
+.wb-admin-page-edit-assets-status-cell,
+.wb-admin-page-edit-assets-sort-cell {
+    white-space: nowrap;
+}
+
+.wb-admin-page-edit-slot-actions-cell,
+.wb-admin-page-edit-translation-action-cell,
+.wb-admin-page-edit-assets-actions-cell {
+    white-space: nowrap;
+}
+
+.wb-admin-page-edit-slot-actions {
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.wb-admin-page-edit-slot-actions .wb-action-group {
+    flex-wrap: nowrap;
+}
+
+.wb-admin-page-edit-translation-locale,
+.wb-admin-page-edit-translations-note {
+    line-height: 1.2;
+}
+
+.wb-admin-page-edit-assets-table code {
+    line-height: 1.2;
+}
+
 .wb-cms-block-tree-toggle-icon {
     transition: transform var(--wb-t);
 }
