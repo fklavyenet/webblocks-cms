@@ -130,8 +130,12 @@
         @endif
 
         @php
+            $publicBodyEnd = app(\App\Support\Blocks\PublicBodyEndRegistry::class)->all();
             $publicOverlays = app(\App\Support\Blocks\PublicOverlayRegistry::class)->all();
         @endphp
+        @foreach ($publicBodyEnd as $bodyEndHtml)
+            {!! $bodyEndHtml !!}
+        @endforeach
         <div id="wb-overlay-root" class="wb-overlay-root">
             @include('search.partials.modal')
 

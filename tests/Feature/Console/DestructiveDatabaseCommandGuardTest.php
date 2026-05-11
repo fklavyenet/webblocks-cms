@@ -43,7 +43,7 @@ class DestructiveDatabaseCommandGuardTest extends TestCase
     {
         $guard = app(DestructiveDatabaseCommandGuard::class);
 
-        foreach (['migrate', 'migrate:status', 'db:seed', 'test', 'project:webblocksui-import'] as $command) {
+        foreach (['migrate', 'migrate:status', 'db:seed', 'test'] as $command) {
             $this->assertFalse($guard->shouldBlock($command, 'local', false));
         }
     }

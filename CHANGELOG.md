@@ -6,6 +6,7 @@
 - Fix public overlay root ownership so CMS public pages render exactly one canonical `#wb-overlay-root` and public search, gallery viewers, and hoisted trusted HTML overlays render inside it instead of creating competing overlay roots.
 - Fix imported WebBlocks UI docs modal, drawer, and gallery examples so trusted HTML extraction preserves referenced overlay targets outside `<main>` and the curated `docs-primitives` payload keeps the shipped interactive `data-wb-*` contract instead of flattening those examples into non-interactive content.
 - Remove the extra CMS `header-actions.js` public asset because shipped WebBlocks UI `data-wb-*` mode, preset, accent, and dropdown behavior already covers the Header Actions controls.
+- Add a compact `Last edited` column to the Pages admin listing with the page `updated_at` timestamp and recorded editor name, and expose matching Pages index sorting by last edit time.
 
 ## 1.25.1
 
@@ -51,8 +52,6 @@
 ## 1.21.0
 
 - Refine the admin Navigation screen so site and menu selectors use the shared compact filter bar, add actions stay in the navigation card header, docs-group help is quieter, and autosave state no longer shows a confusing default `Idle` label.
-- Add a project-layer `remaining-docs-html` WebBlocks UI import path that preserves curated docs imports, fetches the remaining static docs pages from `ui.webblocksui.com`, extracts only each page's trusted `<main>` content, and imports that fragment into the docs shell as one `HTML (Trusted)` block per page.
-- Keep the fast WebBlocks UI HTML docs migration project-only through `project/` and `storage/project/webblocksui.com`, with a dedicated remaining-pages manifest, docs-shell Shared Slot preservation, idempotent docs navigation reconciliation, and focused extractor/import coverage.
 
 ## 1.20.1
 
@@ -174,10 +173,6 @@
 
 ## 1.14.0
 
-- Add a project-layer `project:webblocksui-import` workflow with JSON payloads under `storage/project/webblocksui.com` for importing the WebBlocks UI Architecture docs page from `https://webblocksui.com/docs/architecture.html` without adding website-specific CMS core logic.
-- Add a project-layer `project:webblocksui-setup-site` command that explicitly prepares the target `ui.docs.webblocksui.com` site and required docs-shell dependency pages for those imports.
-- Improve the project-layer WebBlocks UI docs setup so local installs use the DDEV preview host `ui.docs.webblocksui.com.ddev.site` and setup/import commands report the Architecture preview URL clearly.
-- Fix the project-layer WebBlocks UI local preview resolver by adding a dedicated `project:webblocksui-local-resolver` command that writes a DDEV `additional_hostnames` override for `ui.docs.webblocksui.com.ddev.site` and points setup/import output at that local resolver workflow.
 - Guard existing page updates so the normal Edit Page form cannot move a page to another site; the Site field is now read-only for existing pages and forged site changes return a validation error instead of reaching a database integrity failure.
 - Add a dedicated admin `Move to another site` workflow for pages with transaction-safe site reassignment, translated path conflict checks, locale compatibility validation, Shared Slot remapping, and preserved page revisions/content state.
 - Add a dedicated admin `Duplicate page` workflow that creates draft page copies within the same site or another accessible site, preserves page-owned content state, validates translated path conflicts, and remaps compatible Shared Slots for cross-site duplicates.
@@ -267,7 +262,6 @@
 - Further compact the Edit Slot Blocks table to one visual row per block by removing secondary metadata/summary lines and adding a dedicated children-count column.
 - Fix block catalog reseeding so product block types like `Rich Text` are promoted back to their published metadata on existing installs, and fix the admin `Code` block editor locale flag crash.
 - Add a first-class `Rich Text` CMS block with a small dependency-free admin editor, translation-backed storage, server-side HTML sanitization, and safe public rendering.
-- Add a project-layer `webblocks:sync-ui-docs-getting-started` command that idempotently syncs the existing Getting Started page main slot from the WebBlocks UI docs source.
 - Clean up repository structure.
 - Move internal audit documents outside repository.
 - Refactor README and documentation structure.

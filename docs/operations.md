@@ -155,24 +155,6 @@ Supported strategies:
 
 Install-specific migration and website import workflows belong in `project/`, not CMS core.
 
-For the WebBlocks UI docs migration workflow:
-
-- prepare or reconcile the docs-shell dependency pages first with `ddev artisan project:webblocksui-setup-site`
-- create a safety dump before database-affecting project imports, for example `ddev export-db --file=before-webblocksui-fast-html-docs-import.sql.gz`
-- import curated native docs payloads explicitly when needed with `ddev artisan project:webblocksui-import docs-architecture`, `docs-foundation`, `docs-layout`, `docs-primitives`, and `docs-icons`
-- import the remaining static docs pages quickly with `ddev artisan project:webblocksui-import remaining-docs-html`
-
-The fast remaining-docs workflow is intentionally non-destructive and project-specific:
-
-- it reads `storage/project/webblocksui.com/docs-html-remaining.json`
-- it fetches source pages from `https://ui.webblocksui.com`
-- it extracts only the primary docs `<main>` content
-- it strips static shell markup such as navbar, sidebar, duplicate docs navigation, overlay roots, and scripts
-- it keeps the docs shell, header Shared Slot, sidebar Shared Slot, and docs navigation dynamic in CMS
-- it imports the extracted fragment as one trusted `html` block in the page-owned `main` slot
-- it skips existing pages by default and preserves the known curated/native docs imports
-- `--force-html` is explicit and conservative; it does not replace those curated/native docs pages
-
 ## Search Index
 
 Search V1 adds an install-level operational screen and command for the derived public search index.

@@ -67,7 +67,7 @@
                         'selected' => $filters['sort'],
                         'options' => [
                             'created_at' => 'Created at',
-                            'updated_at' => 'Updated at',
+                            'updated_at' => 'Last edited',
                             'title' => 'Title',
                             'slug' => 'Slug',
                             'status' => 'Status',
@@ -132,6 +132,7 @@
                                 <th>Page</th>
                                 <th>Blocks</th>
                                 <th>Status</th>
+                                <th>Last edited</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -209,11 +210,19 @@
                                         </div>
                                     </td>
                                     <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
-                                     <td>
+                                    <td>
                                         <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
                                             {{ $page->workflowLabel() }}
                                         </span>
-                                     </td>
+                                    </td>
+                                    <td>
+                                        <div class="wb-stack wb-gap-1 wb-text-sm">
+                                            <span>{{ $page->updated_at?->format('Y-m-d H:i') ?? '-' }}</span>
+                                            <span class="wb-text-muted">
+                                                {{ $page->updatedByUser?->name ?? 'Not recorded' }}
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div class="wb-action-group">
                                             <a

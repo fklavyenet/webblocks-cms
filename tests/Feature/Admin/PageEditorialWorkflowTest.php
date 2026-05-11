@@ -502,12 +502,26 @@ class PageEditorialWorkflowTest extends TestCase
         $editor = $this->editorFor($site);
         $siteAdmin = $this->siteAdminFor($site);
         $page = $this->pageFor($site, Page::STATUS_DRAFT);
+        $fallbackPage = $this->pageFor($site, Page::STATUS_IN_REVIEW, 'fallback-audit-page');
+        $page->forceFill([
+            'updated_at' => now()->setTime(14, 30),
+            'updated_by_user_id' => $editor->id,
+        ])->save();
+        $fallbackPage->forceFill([
+            'updated_at' => now()->setTime(9, 15),
+            'updated_by_user_id' => null,
+        ])->save();
 
         $index = $this->actingAs($editor)->get(route('admin.pages.index'));
         $index->assertOk();
         $index->assertSee('Draft');
         $index->assertSee('In Review');
         $index->assertSee('Archived');
+        $index->assertSee('Last edited');
+        $index->assertSee('14:30');
+        $index->assertSee('09:15');
+        $index->assertSee($editor->name);
+        $index->assertSee('Not recorded');
         $index->assertSee('data-admin-listing-filters', false);
         $index->assertSee('data-admin-listing-filters-search', false);
         $index->assertSee('data-admin-listing-filters-fields', false);
@@ -517,6 +531,10 @@ class PageEditorialWorkflowTest extends TestCase
         $index->assertSee('id="pages_sort"', false);
         $index->assertSee('id="pages_direction"', false);
         $index->assertSee('Apply', false);
+
+        $content = $index->getContent();
+        $this->assertIsString($content);
+        $this->assertTrue(strrpos($content, '<th>Actions</th>') > strrpos($content, '<th>Last edited</th>'));
 
         $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
         $editorEdit->assertOk();
@@ -594,6 +612,41 @@ class PageEditorialWorkflowTest extends TestCase
             'direction' => 'asc',
             'page' => 1,
         ])), false);
+    }
+
+    #[Test]
+    public function pages_index_can_sort_by_last_edited(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+        $editor = User::factory()->create(['name' => 'Recent Editor']);
+
+        $olderPage = $this->pageFor($site, Page::STATUS_DRAFT, 'older-page');
+        $newerPage = $this->pageFor($site, Page::STATUS_DRAFT, 'newer-page');
+
+        $olderPage->forceFill([
+            'title' => 'Older Page',
+            'updated_at' => now()->subDay(),
+            'updated_by_user_id' => null,
+        ])->save();
+
+        $newerPage->forceFill([
+            'title' => 'Newer Page',
+            'updated_at' => now(),
+            'updated_by_user_id' => $editor->id,
+        ])->save();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', [
+            'sort' => 'updated_at',
+            'direction' => 'desc',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Last edited');
+        $response->assertSee('Recent Editor');
+        $response->assertSee('Not recorded');
+        $response->assertSeeInOrder(['Newer Page', 'Older Page']);
+        $response->assertSee('value="updated_at" selected', false);
     }
 
     #[Test]

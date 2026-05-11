@@ -12,10 +12,11 @@ class TrustedHtmlOverlayExtractor
     {
         $html = trim($html);
 
-        if ($html === '' || ! str_contains($html, 'wb-overlay-root')) {
+        if ($html === '' || ! $this->mightContainDetachedMarkup($html)) {
             return [
                 'content' => $html,
                 'overlay' => null,
+                'body_end' => [],
             ];
         }
 
@@ -33,6 +34,7 @@ class TrustedHtmlOverlayExtractor
             return [
                 'content' => $html,
                 'overlay' => null,
+                'body_end' => [],
             ];
         }
 
@@ -42,8 +44,11 @@ class TrustedHtmlOverlayExtractor
             return [
                 'content' => $html,
                 'overlay' => null,
+                'body_end' => [],
             ];
         }
+
+        $bodyEndHtml = [];
 
         $overlayRoot = null;
 
@@ -55,24 +60,53 @@ class TrustedHtmlOverlayExtractor
             if ($child->getAttribute('id') === 'wb-overlay-root') {
                 $overlayRoot = $child;
 
-                break;
+                continue;
+            }
+
+            if ($this->shouldMoveToBodyEnd($child)) {
+                $bodyEndHtml[] = $document->saveHTML($child) ?: '';
+                $child->parentNode?->removeChild($child);
+
+                continue;
             }
         }
 
-        if (! $overlayRoot instanceof DOMElement) {
-            return [
-                'content' => $html,
-                'overlay' => null,
-            ];
-        }
+        $overlayHtml = null;
 
-        $overlayHtml = $this->innerHtml($overlayRoot);
-        $overlayRoot->parentNode?->removeChild($overlayRoot);
+        if ($overlayRoot instanceof DOMElement) {
+            $overlayHtml = $this->innerHtml($overlayRoot);
+            $overlayRoot->parentNode?->removeChild($overlayRoot);
+        }
 
         return [
             'content' => $this->innerHtml($root),
-            'overlay' => trim($overlayHtml) !== '' ? $overlayHtml : null,
+            'overlay' => is_string($overlayHtml) && trim($overlayHtml) !== '' ? $overlayHtml : null,
+            'body_end' => array_values(array_filter(array_map('trim', $bodyEndHtml))),
         ];
+    }
+
+    private function mightContainDetachedMarkup(string $html): bool
+    {
+        foreach (['wb-overlay-root', 'wb-modal', 'wb-drawer', 'wb-dropdown-menu', 'wb-popover-panel'] as $needle) {
+            if (str_contains($html, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function shouldMoveToBodyEnd(DOMElement $element): bool
+    {
+        $className = ' '.trim($element->getAttribute('class')).' ';
+
+        foreach ([' wb-modal ', ' wb-drawer ', ' wb-dropdown-menu ', ' wb-popover-panel '] as $candidate) {
+            if (str_contains($className, $candidate)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function innerHtml(DOMNode $node): string
