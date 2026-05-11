@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.25.3
+
+- Move CMS-owned public assets from `public/assets/webblocks-cms/`, `public/brand/`, and legacy handle-less `public/site/css/*` paths into `public/cms/`, leaving `public/site/{site_handle}/...` for real install/site/page overrides only.
+- Reduce `project/` to a minimal install-local boundary with generic documentation only, and remove leftover scaffold providers, routes, config, and tests from the repository.
 
 ## 1.25.2
 
@@ -345,7 +349,7 @@
 
 ### Changed
 
-- Extracted the large inline admin JavaScript block from the admin layout into named admin assets under `public/assets/webblocks-cms/js/admin/`.
+- Extracted the large inline admin JavaScript block from the admin layout into named admin assets under `public/cms/js/admin/`.
 - Organized Edit Slot and related admin behavior into page-safe modules covering core admin state reset, password fields, asset picking, inline block building, structured builder items, slot building, slot block expanded-state syncing, and page-builder modal handling.
 - Updated admin layout loading so WebBlocks UI is followed by versioned named admin JavaScript assets instead of injecting a monolithic inline script block into page HTML.
 - Updated admin-facing tests to validate named asset loading and current pages index behavior rather than the previous inline-script markup assumptions.

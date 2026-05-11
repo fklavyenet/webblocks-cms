@@ -24,6 +24,8 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - External URLs, inline CSS, inline JS, query strings, fragments, traversal, and non-matching extensions are rejected.
 - CSS currently renders only in the public document head.
 - JS currently renders only in the public document head with `defer`.
+- CMS-owned public assets live under `public/cms/`.
+- `public/storage` is the Laravel public storage symlink for `storage/app/public` and is separate from site/page override assets.
 - Canonical public asset paths are `public/site/{site_handle}/css/site.css`, `public/site/{site_handle}/js/site.js`, `public/site/{site_handle}/pages/{page_slug}/page.css`, and `public/site/{site_handle}/pages/{page_slug}/page.js`.
 - Page Assets render only for the owning public page and are excluded from admin layouts and unrelated pages.
 - Page revisions, duplicate, move, and site export or import treat Page Assets as page-owned configuration.

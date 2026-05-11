@@ -21,21 +21,28 @@ class PublicModeCompatibilityTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function site_public_css_uses_webblocks_tokens_instead_of_hardcoded_colors(): void
+    public function cms_public_css_only_contains_small_structural_public_mode_tweaks(): void
     {
-        $css = File::get(public_path('site/default/css/site.css'));
+        $css = File::get(public_path('cms/css/public.css'));
 
-        $this->assertStringContainsString('var(--wb-text)', $css);
-        $this->assertStringContainsString('var(--wb-bg)', $css);
-        $this->assertStringContainsString('var(--wb-surface)', $css);
-        $this->assertStringContainsString('var(--wb-border)', $css);
-        $this->assertStringContainsString('var(--wb-accent)', $css);
+        $this->assertStringContainsString('.wb-public-footer-fallback {', $css);
+        $this->assertStringContainsString('padding-top: 0;', $css);
+        $this->assertStringContainsString('.wb-public-footer .wb-footer-cookie-settings-link {', $css);
+        $this->assertStringContainsString('padding-inline: 0;', $css);
+        $this->assertStringContainsString('min-height: auto;', $css);
+        $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', $css);
+        $this->assertStringContainsString('width: 100%;', $css);
 
         $this->assertDoesNotMatchRegularExpression('/#[0-9a-fA-F]{3,8}/', $css);
         $this->assertStringNotContainsString('rgb(', $css);
         $this->assertStringNotContainsString('rgba(', $css);
         $this->assertStringNotContainsString('hsl(', $css);
         $this->assertStringNotContainsString('hsla(', $css);
+        $this->assertStringNotContainsString('var(--wb-text)', $css);
+        $this->assertStringNotContainsString('var(--wb-bg)', $css);
+        $this->assertStringNotContainsString('var(--wb-surface)', $css);
+        $this->assertStringNotContainsString('var(--wb-border)', $css);
+        $this->assertStringNotContainsString('var(--wb-accent)', $css);
     }
 
     #[Test]

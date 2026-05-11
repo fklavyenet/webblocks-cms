@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="{{ asset('site/css/email.css') }}">
+        <link rel="stylesheet" href="{{ asset('cms/css/email.css') }}">
     </head>
     <body class="wb-email-body">
         <h1 class="wb-email-title">New contact message</h1>

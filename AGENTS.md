@@ -40,14 +40,14 @@
 - Use the shared compact listing filter toolbar when a listing has real filters.
 - Keep create/upload/add actions in the relevant listing card header when that is the established screen pattern.
 - Avoid large inline Blade scripts.
-- Named CMS admin JavaScript belongs under `public/assets/webblocks-cms/js/admin/`.
+- Named CMS admin JavaScript belongs under `public/cms/js/admin/`.
 
 ## Public Rendering
 
 - Public block renderers should prefer shipped `wb-*` classes.
 - Do not invent one-off public CSS classes unless the gap is documented.
 - Public block renderers must not emit inline scripts.
-- CMS-owned public JS belongs under `public/assets/webblocks-cms/js/`.
+- CMS-owned public JS belongs under `public/cms/js/`.
 - Site/page override assets belong under `public/site/{site_handle}/...`.
 - Root-owning blocks should own their renderer root instead of receiving unnecessary wrapper markup.
 

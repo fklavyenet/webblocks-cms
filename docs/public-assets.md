@@ -4,8 +4,9 @@
 
 WebBlocks CMS core public assets live under:
 
-- `public/assets/webblocks-cms/js/`
-- `public/assets/webblocks-cms/css/`
+- `public/cms/css/`
+- `public/cms/js/`
+- `public/cms/brand/`
 
 These paths are for CMS-owned runtime behavior and styling that should ship with the product itself.
 
@@ -34,6 +35,12 @@ Install-specific or site-specific public overrides live under the resolved site 
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
+`public/storage` is separate from `public/site/...`. It is the Laravel public storage symlink created by `storage:link` for files under `storage/app/public`, and should not be treated as CMS asset space or site-override asset space.
+
+The canonical override convention requires a site handle segment. Handle-less site override paths are not canonical and should not be used for new runtime behavior.
+
+CMS-owned guest and email support styles now live under `public/cms/css/guest.css` and `public/cms/css/email.css`.
+
 ## Page Assets
 
 Page-scoped CSS and JS files can now be referenced relationally from `page_assets`.
@@ -55,7 +62,7 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Named public JS stays in the public `<head>` with `defer`
 - Legacy named JS rows stored with `body_end` are still accepted, but public named JS is normalized to `<head defer>` output
 - Public block renderers must not emit inline scripts
-- CMS-owned public JS belongs under `public/assets/webblocks-cms/js/`
+- CMS-owned public JS belongs under `public/cms/js/`
 - Site-level override JS belongs under `public/site/{site_handle}/js/site.js`
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
 - Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`

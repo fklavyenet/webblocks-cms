@@ -173,7 +173,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('class="wb-nav-group-item"', false);
         $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
         $response->assertSee('href="/p/about" class="wb-sidebar-link is-active" aria-current="page"', false);
-        $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+        $response->assertSee('cms/js/public/sidebar-navigation.js', false);
     }
 
     #[Test]
@@ -252,7 +252,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function public_sidebar_navigation_script_defers_click_toggling_to_webblocks_ui_and_only_syncs_hidden_state(): void
     {
-        $script = file_get_contents(public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'));
+        $script = file_get_contents(public_path('cms/js/public/sidebar-navigation.js'));
 
         $this->assertIsString($script);
         $this->assertStringNotContainsString("addEventListener('click'", $script);
@@ -621,16 +621,16 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-public-search-overlay', false);
         $response->assertSee('id="wb-public-search-modal"', false);
         $response->assertSee('data-search-json-path="/search.json"', false);
-        $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
-        $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
-        $response->assertDontSee('assets/webblocks-cms/js/public/header-actions.js', false);
+        $response->assertSee('cms/js/public/public-search-modal.js', false);
+        $response->assertSee('cms/js/public/sidebar-navigation.js', false);
+        $response->assertDontSee('cms/js/public/header-actions.js', false);
         $this->assertSame(1, substr_count($response->getContent(), 'class="wb-overlay-root"'));
-        $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/sidebar-navigation.js'));
+        $this->assertSame(1, substr_count($response->getContent(), 'cms/js/public/sidebar-navigation.js'));
         $response->assertSeeInOrder([
             '<head>',
             WebBlocks::uiJsUrl(),
-            'assets/webblocks-cms/js/public/public-search-modal.js',
-            'assets/webblocks-cms/js/public/sidebar-navigation.js',
+            'cms/js/public/public-search-modal.js',
+            'cms/js/public/sidebar-navigation.js',
             '</head>',
         ], false);
     }
@@ -1718,8 +1718,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('wb-cluster-end', false);
         $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
         $this->assertSame(1, substr_count($response->getContent(), '<div class="wb-card-footer">'));
-        $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('assets/webblocks-cms/css/public.css')));
-        $this->assertStringContainsString('width: 100%;', file_get_contents(public_path('assets/webblocks-cms/css/public.css')));
+        $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('cms/css/public.css')));
+        $this->assertStringContainsString('width: 100%;', file_get_contents(public_path('cms/css/public.css')));
     }
 
     #[Test]

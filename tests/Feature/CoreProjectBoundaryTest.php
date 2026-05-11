@@ -36,7 +36,7 @@ class CoreProjectBoundaryTest extends TestCase
             base_path('config'),
             base_path('database'),
             base_path('docs'),
-            base_path('public/assets/webblocks-cms'),
+            base_path('public/cms'),
             base_path('resources'),
             base_path('routes'),
             base_path('tests'),

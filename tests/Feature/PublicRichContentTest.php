@@ -547,7 +547,7 @@ class PublicRichContentTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertDontSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertDontSee('cms/js/admin/rich-text-editor.js', false);
         $response->assertDontSee('data-wb-rich-text-editor', false);
     }
 

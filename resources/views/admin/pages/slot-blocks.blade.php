@@ -4,7 +4,7 @@
     $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
     $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $siteName = $page->site?->name ?? 'Site';
-    $slotBlockTreeScriptPath = public_path('assets/webblocks-cms/js/admin/slot-block-tree.js');
+    $slotBlockTreeScriptPath = public_path('cms/js/admin/slot-block-tree.js');
 @endphp
 
 @extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -176,6 +176,6 @@
 
 @push('scripts')
     @if (is_file($slotBlockTreeScriptPath))
-        <script src="{{ asset('assets/webblocks-cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
+        <script src="{{ asset('cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
     @endif
 @endpush

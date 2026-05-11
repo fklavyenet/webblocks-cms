@@ -3,7 +3,7 @@
     @php
         use App\Support\WebBlocks;
 
-        $guestCssPath = public_path('site/css/guest.css');
+        $guestCssPath = public_path('cms/css/guest.css');
     @endphp
 
     <head>
@@ -19,7 +19,7 @@
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($guestCssPath))
-            <link rel="stylesheet" href="{{ asset('site/css/guest.css') }}?v={{ filemtime($guestCssPath) }}">
+            <link rel="stylesheet" href="{{ asset('cms/css/guest.css') }}?v={{ filemtime($guestCssPath) }}">
         @endif
     </head>
     <body>

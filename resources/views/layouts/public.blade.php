@@ -3,10 +3,10 @@
     @php
         use App\Support\WebBlocks;
 
-        $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
+        $cmsPublicCssPath = public_path('cms/css/public.css');
         $publicJsAssets = [
-            'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
-            'sidebar-navigation' => public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'),
+            'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
+            'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
         ];
         $headPageAssets = collect($headPageAssets ?? collect());
         $bodyEndPageAssets = collect($bodyEndPageAssets ?? collect());
@@ -61,7 +61,7 @@
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($cmsPublicCssPath))
-            <link rel="stylesheet" href="{{ asset('assets/webblocks-cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
+            <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
         @endif
         @if ($siteCssPath && is_file($siteCssPath))
             <link rel="stylesheet" href="{{ asset($siteCssRelativePath) }}?v={{ filemtime($siteCssPath) }}">
@@ -73,10 +73,10 @@
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
         @if (is_file($publicJsAssets['public-search-modal']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
+            <script src="{{ asset('cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
         @endif
         @if (is_file($publicJsAssets['sidebar-navigation']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+            <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
         @endif
         @foreach ($deferredHeadJsPageAssets as $pageAsset)
             <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>

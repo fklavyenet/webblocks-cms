@@ -1,7 +1,7 @@
 @php
     $slotTitle = 'Edit Shared Slot Blocks: '.$sharedSlot->name;
     $sharedSlotsIndexUrl = route('admin.shared-slots.index', ['site' => $sharedSlot->site_id]);
-    $slotBlockTreeScriptPath = public_path('assets/webblocks-cms/js/admin/slot-block-tree.js');
+    $slotBlockTreeScriptPath = public_path('cms/js/admin/slot-block-tree.js');
 @endphp
 
 @extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
@@ -165,6 +165,6 @@
 
 @push('scripts')
     @if (is_file($slotBlockTreeScriptPath))
-        <script src="{{ asset('assets/webblocks-cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
+        <script src="{{ asset('cms/js/admin/slot-block-tree.js') }}?v={{ filemtime($slotBlockTreeScriptPath) }}" defer></script>
     @endif
 @endpush

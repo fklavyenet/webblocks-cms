@@ -13,7 +13,7 @@
         @if ($panelTitle)
             <h1 class="wb-auth-panel-title">
                 @if ($showPanelLogo)
-                    <img src="{{ asset('brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
+                    <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
                 @endif
                 <span>{{ $panelTitle }}</span>
             </h1>
@@ -29,7 +29,7 @@
             <div class="wb-auth-header">
                 <h1 class="wb-auth-header-title">
                     @if ($showHeaderLogo)
-                        <img src="{{ asset('brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
+                        <img src="{{ asset('cms/brand/logo-64.png') }}" alt="{{ config('app.name') }} logo" width="32" height="32">
                     @endif
                     <span>{{ $heading }}</span>
                 </h1>

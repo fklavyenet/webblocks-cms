@@ -45,7 +45,7 @@ class PublicLayoutStructureTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('assets/webblocks-cms/css/public.css', false);
+        $response->assertSee('cms/css/public.css', false);
     }
 
     #[Test]
@@ -154,19 +154,19 @@ class PublicLayoutStructureTest extends TestCase
 
         $response->assertOk();
         $this->assertStringContainsString('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', $headHtml);
-        $this->assertMatchesRegularExpression('/assets\/webblocks-cms\/js\/public\/public-search-modal\.js\?v=\d+" defer><\/script>/', $headHtml);
-        $this->assertMatchesRegularExpression('/assets\/webblocks-cms\/js\/public\/sidebar-navigation\.js\?v=\d+" defer><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/cms\/js\/public\/public-search-modal\.js\?v=\d+" defer><\/script>/', $headHtml);
+        $this->assertMatchesRegularExpression('/cms\/js\/public\/sidebar-navigation\.js\?v=\d+" defer><\/script>/', $headHtml);
         $this->assertMatchesRegularExpression('/<script src="\/site\/default\/pages\/home\/page-head\.js"[^>]*defer\s*><\/script>/', $headHtml);
         $this->assertMatchesRegularExpression('/<script src="\/site\/default\/pages\/home\/page-body-end\.js"[^>]*defer\s*><\/script>/', $headHtml);
         $this->assertStringNotContainsString(WebBlocks::uiJsUrl(), $bodyHtml);
-        $this->assertStringNotContainsString('assets/webblocks-cms/js/public/public-search-modal.js', $bodyHtml);
-        $this->assertStringNotContainsString('assets/webblocks-cms/js/public/sidebar-navigation.js', $bodyHtml);
+        $this->assertStringNotContainsString('cms/js/public/public-search-modal.js', $bodyHtml);
+        $this->assertStringNotContainsString('cms/js/public/sidebar-navigation.js', $bodyHtml);
         $this->assertStringNotContainsString('/site/default/pages/home/page-head.js', $bodyHtml);
         $this->assertStringNotContainsString('/site/default/pages/home/page-body-end.js', $bodyHtml);
         $this->assertStringContainsInOrder($headHtml, [
             WebBlocks::uiJsUrl(),
-            'assets/webblocks-cms/js/public/public-search-modal.js',
-            'assets/webblocks-cms/js/public/sidebar-navigation.js',
+            'cms/js/public/public-search-modal.js',
+            'cms/js/public/sidebar-navigation.js',
             '/site/default/pages/home/page-head.js',
             '/site/default/pages/home/page-body-end.js',
         ]);

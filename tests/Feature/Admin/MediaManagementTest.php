@@ -182,8 +182,8 @@ class MediaManagementTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.media.index'));
 
         $response->assertOk();
-        $response->assertSee('assets/webblocks-cms/js/admin/core.js', false);
-        $response->assertSee('assets/webblocks-cms/js/admin/asset-picker.js', false);
+        $response->assertSee('cms/js/admin/core.js', false);
+        $response->assertSee('cms/js/admin/asset-picker.js', false);
         $response->assertDontSee("credentials: 'same-origin'", false);
         $response->assertDontSee('if (response.redirected)', false);
         $response->assertDontSee('response.status === 401 || response.status === 403 || response.status === 419', false);

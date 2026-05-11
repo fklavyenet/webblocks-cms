@@ -177,9 +177,9 @@ class RichTextBlockTest extends TestCase
         $response->assertSee('>1. List</button>', false);
         $response->assertSee('>Clear</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
-        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertSee('cms/js/admin/rich-text-editor.js', false);
 
-        $assetContents = file_get_contents(public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'));
+        $assetContents = file_get_contents(public_path('cms/js/admin/rich-text-editor.js'));
         $partialContents = file_get_contents(resource_path('views/admin/blocks/types/partials/rich-text-editor.blade.php'));
 
         $this->assertNotFalse($assetContents);

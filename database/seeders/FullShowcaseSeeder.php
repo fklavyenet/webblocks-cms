@@ -68,7 +68,7 @@ class FullShowcaseSeeder extends Seeder
     {
         $this->copyPublicImageAsset(
             'brand-logo',
-            'public/brand/logo-180.png',
+            'public/cms/brand/logo-180.png',
             'branding',
             'northstar-brand-mark.png',
             'Northstar Labs brand mark',
@@ -78,7 +78,7 @@ class FullShowcaseSeeder extends Seeder
 
         $this->copyPublicImageAsset(
             'brand-icon',
-            'public/brand/icon-192x192.png',
+            'public/cms/brand/icon-192x192.png',
             'branding',
             'northstar-icon.png',
             'Northstar Labs app icon',

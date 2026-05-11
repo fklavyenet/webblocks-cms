@@ -116,7 +116,7 @@ class AdminDashboardRouteTest extends TestCase
         $response = $this->actingAs($user)->get('/admin');
 
         $response->assertOk();
-        $response->assertSee('assets/webblocks-cms/js/admin/core.js', false);
+        $response->assertSee('cms/js/admin/core.js', false);
         $response->assertDontSee('function resetAdminTransientUiState()', false);
         $response->assertDontSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
         $response->assertDontSee("window.addEventListener('pageshow'", false);

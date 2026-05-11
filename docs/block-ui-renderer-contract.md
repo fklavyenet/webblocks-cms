@@ -508,7 +508,7 @@ Public pages now use explicit layout composition modes:
 - No new one-off public CSS classes unless documented as a WebBlocks UI gap.
 - No inline scripts in block renderers.
 - Interactive blocks must use shipped WebBlocks UI data hooks first.
-- CMS-specific JS belongs in `public/assets/webblocks-cms/js` only when necessary.
+- CMS-specific JS belongs in `public/cms/js` only when necessary.
 - Overlay, dialog, and modal content must use `#wb-overlay-root`.
 - Admin fields must not require editors to paste raw WebBlocks UI HTML for normal blocks.
 - Blocks should expose structured fields and variants, not raw HTML, whenever possible.

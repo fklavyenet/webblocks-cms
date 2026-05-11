@@ -4381,10 +4381,10 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-slot-toggle="'.$cluster->id.'"', false);
         $response->assertSee('class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell"', false);
         $response->assertSee('class="wb-block-hierarchy"', false);
-        $response->assertSee('assets/webblocks-cms/css/admin.css', false);
+        $response->assertSee('cms/css/admin.css', false);
         $response->assertDontSee('site/css/admin.css', false);
-        $response->assertSee('assets/webblocks-cms/js/admin/slot-block-tree.js', false);
-        $response->assertDontSee('assets/webblocks-cms/js/admin/slot-blocks.js', false);
+        $response->assertSee('cms/js/admin/slot-block-tree.js', false);
+        $response->assertDontSee('cms/js/admin/slot-blocks.js', false);
         $response->assertDontSee('— Cluster', false);
         $response->assertDontSee('>0.1<', false);
     }
@@ -4500,9 +4500,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('>1. List</button>', false);
         $response->assertSee('>Clear</button>', false);
         $response->assertSee('Headings should use Header blocks.', false);
-        $response->assertSee('assets/webblocks-cms/js/admin/rich-text-editor.js', false);
+        $response->assertSee('cms/js/admin/rich-text-editor.js', false);
 
-        $assetContents = file_get_contents(public_path('assets/webblocks-cms/js/admin/rich-text-editor.js'));
+        $assetContents = file_get_contents(public_path('cms/js/admin/rich-text-editor.js'));
 
         $partialContents = file_get_contents(resource_path('views/admin/blocks/types/partials/rich-text-editor.blade.php'));
 
@@ -4601,7 +4601,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Update Source');
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $pageSlot]).'"', false);
         $response->assertSee('action="'.route('admin.pages.slots.source.update', [$page, $disabledSlot]).'"', false);
-        $response->assertSee('assets/webblocks-cms/js/admin/page-slot-source-modals.js', false);
+        $response->assertSee('cms/js/admin/page-slot-source-modals.js', false);
         $response->assertSee('Edit Blocks');
         $response->assertSee('Page Blocks');
         $response->assertDontSee('Edit Shared Slot');
