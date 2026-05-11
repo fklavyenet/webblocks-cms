@@ -114,7 +114,8 @@ Public pages now use explicit layout composition modes:
 - Page `Public Shell` is the only source of truth for the outer public shell mode.
 - Major page regions should be built from shipped WebBlocks UI layout primitives first: `wb-public-main`, `wb-container`, `wb-section`, `wb-stack`, `wb-grid`.
 - `wb-content-shell`, `wb-content-header`, `wb-content-body`, and `wb-content-footer` belong inside the main content area when the page reads like article, guide, docs, or editorial content. They are not the site-wide header or footer chrome.
-- `#wb-overlay-root` is the shared mount point for public overlays such as the gallery viewer and cookie preference modal.
+- `#wb-overlay-root` is the single shared mount point for public overlays such as the gallery viewer, public search modal, and cookie preference modal.
+- Public layouts own that wrapper; blocks, partials, and trusted HTML may contribute overlay children but must not render competing overlay root containers.
 - `wb-sidebar` is reserved for a true docs/app navigation shell. Generic marketing or editorial sidebars should stay ordinary `aside` content composed from `wb-grid`, `wb-stack`, cards, callouts, and link lists.
 
 ### Slot wrappers

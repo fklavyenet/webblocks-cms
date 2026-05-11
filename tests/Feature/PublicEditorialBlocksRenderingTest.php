@@ -614,13 +614,17 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('id="wb-public-overlay-root"', false);
+        $response->assertSee('id="wb-overlay-root"', false);
+        $response->assertDontSee('id="wb-public-overlay-root"', false);
+        $response->assertDontSee('id="public-overlay-root"', false);
+        $response->assertDontSee('id="overlay-root"', false);
         $response->assertSee('data-wb-public-search-overlay', false);
         $response->assertSee('id="wb-public-search-modal"', false);
         $response->assertSee('data-search-json-path="/search.json"', false);
         $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
         $response->assertDontSee('assets/webblocks-cms/js/public/header-actions.js', false);
+        $this->assertSame(1, substr_count($response->getContent(), 'class="wb-overlay-root"'));
         $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/sidebar-navigation.js'));
         $response->assertSeeInOrder([
             '<head>',
@@ -1413,6 +1417,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-gallery-target="#trusted-viewer"', false);
         $response->assertSee('<div id="wb-overlay-root" class="wb-overlay-root">', false);
         $this->assertSame(1, substr_count($response->getContent(), 'id="wb-overlay-root"'));
+        $response->assertDontSee('id="wb-public-overlay-root"', false);
         $response->assertSee('<div class="wb-modal" id="trusted-viewer" role="dialog"></div>', false);
     }
 

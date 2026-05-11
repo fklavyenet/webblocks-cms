@@ -42,6 +42,7 @@ HTML;
         $this->assertStringNotContainsString('wb-navbar', $fragment);
         $this->assertStringNotContainsString('<script', $fragment);
         $this->assertStringContainsString('wb-overlay-root', $fragment);
+        $this->assertSame(1, substr_count($fragment, 'id="wb-overlay-root"'));
     }
 
     #[Test]

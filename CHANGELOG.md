@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Fix public gallery behavior so first-class Gallery blocks and imported trusted HTML docs content can use the shipped WebBlocks UI shared viewer contract through the page-owned `#wb-overlay-root`.
+- Fix public overlay root ownership so CMS public pages render exactly one canonical `#wb-overlay-root` and public search, gallery viewers, and hoisted trusted HTML overlays render inside it instead of creating competing overlay roots.
 - Remove the extra CMS `header-actions.js` public asset because shipped WebBlocks UI `data-wb-*` mode, preset, accent, and dropdown behavior already covers the Header Actions controls.
 
 ## 1.25.1

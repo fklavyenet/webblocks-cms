@@ -129,17 +129,15 @@
         @endif
         @endif
 
-        @include('search.partials.modal')
-
         @php
             $publicOverlays = app(\App\Support\Blocks\PublicOverlayRegistry::class)->all();
         @endphp
-        @if ($publicOverlays->isNotEmpty())
-            <div id="wb-overlay-root" class="wb-overlay-root">
-                @foreach ($publicOverlays as $overlayHtml)
-                    {!! $overlayHtml !!}
-                @endforeach
-            </div>
-        @endif
+        <div id="wb-overlay-root" class="wb-overlay-root">
+            @include('search.partials.modal')
+
+            @foreach ($publicOverlays as $overlayHtml)
+                {!! $overlayHtml !!}
+            @endforeach
+        </div>
     </body>
 </html>

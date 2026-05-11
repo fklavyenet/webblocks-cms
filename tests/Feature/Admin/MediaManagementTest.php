@@ -990,7 +990,10 @@ class MediaManagementTest extends TestCase
         $this->assertStringContainsString('wb-gallery', $galleryHtml);
         $this->assertStringContainsString('wb-gallery-trigger', $galleryHtml);
         $this->assertStringContainsString('id="wb-overlay-root"', $html);
+        $this->assertSame(1, substr_count($html, 'class="wb-overlay-root"'));
+        $this->assertStringNotContainsString('id="wb-public-overlay-root"', $html);
         $this->assertMatchesRegularExpression('/id="wb-gallery-viewer-\d+"/', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="wb-gallery-viewer-\d+"/s', $html);
         $this->assertMatchesRegularExpression('/data-wb-gallery-target="#wb-gallery-viewer-\d+"/', $galleryHtml);
         $this->assertStringContainsString('/storage/media/images/gallery-public-1.jpg', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-alt="Gallery image one alt"', $galleryHtml);

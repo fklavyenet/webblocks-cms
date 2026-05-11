@@ -173,6 +173,22 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function public_layout_renders_exactly_one_canonical_overlay_root(): void
+    {
+        $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        $response = $this->get('/');
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $this->assertSame(1, substr_count($html, 'class="wb-overlay-root"'));
+        $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+        $response->assertDontSee('id="wb-public-overlay-root"', false);
+        $response->assertDontSee('id="public-overlay-root"', false);
+        $response->assertDontSee('id="overlay-root"', false);
+    }
+
+    #[Test]
     public function slots_render_direct_primitive_block_output_without_extra_shell_wrappers(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();

@@ -57,7 +57,8 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Public block renderers must not emit inline scripts
 - CMS-owned public JS belongs under `public/assets/webblocks-cms/js/`
 - Site-level override JS belongs under `public/site/{site_handle}/js/site.js`
-- The public page shell owns the shared `#wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers
+- The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
+- Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`
 - CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode, preset, accent, and dropdown behavior now rely on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime
 
 ## Site Branding Assets
