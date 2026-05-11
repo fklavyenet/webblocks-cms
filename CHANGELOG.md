@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Fix public gallery behavior so first-class Gallery blocks and imported trusted HTML docs content can use the shipped WebBlocks UI shared viewer contract through the page-owned `#wb-overlay-root`.
+- Remove the extra CMS `header-actions.js` public asset because shipped WebBlocks UI `data-wb-*` mode, preset, accent, and dropdown behavior already covers the Header Actions controls.
+
 ## 1.25.1
 
 - Fix site export/import so navigation item icons stored on `navigation_items.icon` are included in export payloads and restored during import, preserving sidebar icon rendering after transfer.

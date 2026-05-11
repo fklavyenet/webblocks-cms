@@ -73,7 +73,7 @@ Public pages now use explicit layout composition modes:
 | `heading` | legacy removed | retired | P0 removed | do not reintroduce; `header` is the canonical heading/title block |
 | `text` | body copy in `wb-stack` rhythm | acceptable | P2 content quality | keep simple output and avoid bespoke typography wrappers |
 | `rich-text` | `wb-rich-text wb-rich-text-readable` | acceptable | P2 content quality | keep safe body copy scoped to the shipped rich text primitive |
-| `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage |
+| `html` | trusted raw HTML in public block wrapper | acceptable | P3 later/custom | keep restricted to trusted editorial/admin usage and hoist any shipped overlay content into the shared page overlay root |
 | `section` | `wb-section`, optional `wb-promo` | acceptable | P1 public marketing/docs | keep default section stable and reserve promo semantics for explicit variants |
 | `columns` | `wb-grid`, `wb-grid-2`, `wb-grid-3`, `wb-grid-4`, `wb-link-list` | acceptable | P1 public marketing/docs | keep parent-driven variants explicit and avoid reintroducing forced wrapper cards |
 | `column_item` | plain cell, `wb-card`, `wb-stat`, or link-list item | acceptable | P1 public marketing/docs | keep item rendering driven by the parent `columns.variant` mapping |
@@ -204,7 +204,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: none
 - Intended WebBlocks UI output: raw trusted HTML inside the normal public block wrapper.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep this block for trusted editorial/admin usage only, document the XSS risk clearly, and do not make ordinary editors rely on pasted WebBlocks HTML for normal content.
+- Notes for later renderer/admin improvements: keep this block for trusted editorial/admin usage only, document the XSS risk clearly, and do not make ordinary editors rely on pasted WebBlocks HTML for normal content. When trusted HTML includes shipped WebBlocks UI overlay markup, the public page shell should hoist that inner overlay content into the shared page-owned `#wb-overlay-root` instead of rendering duplicate overlay roots inline.
 
 ### `section`
 
@@ -365,7 +365,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `title`, `subtitle`, ordered gallery assets, legacy fallback settings when present
 - Intended WebBlocks UI output: WebBlocks gallery pattern with the viewer mounted under `#wb-overlay-root`; shipped WebBlocks UI gallery hooks should drive interaction first.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep CMS JavaScript limited to CMS-specific data plumbing only if the shipped hooks cannot cover a case.
+- Notes for later renderer/admin improvements: keep CMS JavaScript limited to CMS-specific data plumbing only if the shipped hooks cannot cover a case. Gallery items should emit `data-wb-gallery-target` for one shared viewer modal instead of inventing a separate CMS lightbox contract.
 
 ### `download`
 

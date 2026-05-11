@@ -41,7 +41,7 @@ HTML;
         $this->assertStringContainsString('src="https://ui.webblocksui.com/assets/example.png"', $fragment);
         $this->assertStringNotContainsString('wb-navbar', $fragment);
         $this->assertStringNotContainsString('<script', $fragment);
-        $this->assertStringNotContainsString('wb-overlay-root', $fragment);
+        $this->assertStringContainsString('wb-overlay-root', $fragment);
     }
 
     #[Test]

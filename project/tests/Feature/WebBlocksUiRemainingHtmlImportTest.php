@@ -133,7 +133,7 @@ class WebBlocksUiRemainingHtmlImportTest extends TestCase
         $this->assertStringNotContainsString('wb-navbar', (string) $mainBlocks[0]->content);
         $this->assertStringNotContainsString('wb-docs-breadcrumb', (string) $mainBlocks[0]->content);
         $this->assertStringNotContainsString('<script', (string) $mainBlocks[0]->content);
-        $this->assertStringNotContainsString('wb-overlay-root', (string) $mainBlocks[0]->content);
+        $this->assertStringContainsString('wb-overlay-root', (string) $mainBlocks[0]->content);
 
         foreach ($curatedBlockCount as $key => $count) {
             $page = Page::query()->where('site_id', $site->id)->get()->first(fn (Page $candidate) => $candidate->setting('project_page_key') === $key);

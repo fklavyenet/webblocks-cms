@@ -917,6 +917,7 @@ class MediaManagementTest extends TestCase
             ]
         );
         $slotType = $this->slotType();
+        $this->pageSlot($page, $slotType);
         $firstAsset = Asset::create([
             'disk' => 'public',
             'path' => 'media/images/gallery-public-1.jpg',
@@ -988,15 +989,15 @@ class MediaManagementTest extends TestCase
         $response->assertOk();
         $this->assertStringContainsString('wb-gallery', $galleryHtml);
         $this->assertStringContainsString('wb-gallery-trigger', $galleryHtml);
-        $this->assertStringNotContainsString('id="wb-overlay-root"', $html);
-        $this->assertStringNotContainsString('id="wb-gallery-viewer"', $html);
-        $this->assertStringNotContainsString('data-wb-gallery-target="#wb-gallery-viewer"', $galleryHtml);
+        $this->assertStringContainsString('id="wb-overlay-root"', $html);
+        $this->assertMatchesRegularExpression('/id="wb-gallery-viewer-\d+"/', $html);
+        $this->assertMatchesRegularExpression('/data-wb-gallery-target="#wb-gallery-viewer-\d+"/', $galleryHtml);
         $this->assertStringContainsString('/storage/media/images/gallery-public-1.jpg', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-alt="Gallery image one alt"', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-caption="First gallery caption"', $galleryHtml);
         $this->assertStringContainsString('data-wb-gallery-meta="First gallery meta"', $galleryHtml);
-        $this->assertStringNotContainsString('wb-gallery-viewer-prev', $html);
-        $this->assertStringNotContainsString('wb-gallery-viewer-next', $html);
+        $this->assertStringContainsString('wb-gallery-viewer-prev', $html);
+        $this->assertStringContainsString('wb-gallery-viewer-next', $html);
     }
 
     #[Test]

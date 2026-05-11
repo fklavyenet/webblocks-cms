@@ -5,7 +5,6 @@
 
         $cmsPublicCssPath = public_path('assets/webblocks-cms/css/public.css');
         $publicJsAssets = [
-            'header-actions' => public_path('assets/webblocks-cms/js/public/header-actions.js'),
             'public-search-modal' => public_path('assets/webblocks-cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('assets/webblocks-cms/js/public/sidebar-navigation.js'),
         ];
@@ -73,9 +72,6 @@
 
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
-        @if (is_file($publicJsAssets['header-actions']))
-            <script src="{{ asset('assets/webblocks-cms/js/public/header-actions.js') }}?v={{ filemtime($publicJsAssets['header-actions']) }}" defer></script>
-        @endif
         @if (is_file($publicJsAssets['public-search-modal']))
             <script src="{{ asset('assets/webblocks-cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
         @endif
@@ -134,5 +130,16 @@
         @endif
 
         @include('search.partials.modal')
+
+        @php
+            $publicOverlays = app(\App\Support\Blocks\PublicOverlayRegistry::class)->all();
+        @endphp
+        @if ($publicOverlays->isNotEmpty())
+            <div id="wb-overlay-root" class="wb-overlay-root">
+                @foreach ($publicOverlays as $overlayHtml)
+                    {!! $overlayHtml !!}
+                @endforeach
+            </div>
+        @endif
     </body>
 </html>

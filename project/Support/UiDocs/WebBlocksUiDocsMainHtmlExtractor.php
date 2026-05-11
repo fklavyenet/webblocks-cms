@@ -26,6 +26,12 @@ class WebBlocksUiDocsMainHtmlExtractor
         $this->rewriteLinks($main, $sourceUrl);
 
         $fragment = $this->innerHtml($main);
+        $overlay = $this->overlayHtml($document, $sourceUrl);
+
+        if ($overlay !== null) {
+            $fragment .= PHP_EOL.$overlay;
+        }
+
         $fragment = trim($fragment);
 
         if ($fragment === '') {
@@ -93,7 +99,6 @@ class WebBlocksUiDocsMainHtmlExtractor
             './/nav[contains(concat(" ", normalize-space(@class), " "), " wb-sidebar-nav ")]',
             './/nav[contains(concat(" ", normalize-space(@class), " "), " wb-docs-breadcrumb ")]',
             './/footer[contains(concat(" ", normalize-space(@class), " "), " wb-sidebar-footer ")]',
-            './/*[@id="wb-overlay-root"]',
         ];
 
         foreach ($queries as $query) {
@@ -144,6 +149,19 @@ class WebBlocksUiDocsMainHtmlExtractor
                 $node->setAttribute('src', $rewritten);
             }
         }
+    }
+
+    private function overlayHtml(DOMDocument $document, string $sourceUrl): ?string
+    {
+        $overlay = $document->getElementById('wb-overlay-root');
+
+        if (! $overlay instanceof DOMElement) {
+            return null;
+        }
+
+        $this->rewriteLinks($overlay, $sourceUrl);
+
+        return trim($document->saveHTML($overlay) ?: '') ?: null;
     }
 
     private function rewriteUrl(string $value, string $sourceUrl): ?string

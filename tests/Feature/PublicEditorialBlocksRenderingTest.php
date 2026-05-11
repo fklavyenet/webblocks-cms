@@ -618,14 +618,13 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-public-search-overlay', false);
         $response->assertSee('id="wb-public-search-modal"', false);
         $response->assertSee('data-search-json-path="/search.json"', false);
-        $response->assertSee('assets/webblocks-cms/js/public/header-actions.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/public-search-modal.js', false);
         $response->assertSee('assets/webblocks-cms/js/public/sidebar-navigation.js', false);
+        $response->assertDontSee('assets/webblocks-cms/js/public/header-actions.js', false);
         $this->assertSame(1, substr_count($response->getContent(), 'assets/webblocks-cms/js/public/sidebar-navigation.js'));
         $response->assertSeeInOrder([
             '<head>',
             WebBlocks::uiJsUrl(),
-            'assets/webblocks-cms/js/public/header-actions.js',
             'assets/webblocks-cms/js/public/public-search-modal.js',
             'assets/webblocks-cms/js/public/sidebar-navigation.js',
             '</head>',
@@ -1388,6 +1387,33 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('<strong>Home</strong>', false);
         $response->assertDontSee('data-wb-rich-text-editor', false);
         $response->assertDontSee('<script>', false);
+    }
+
+    #[Test]
+    public function html_block_hoists_embedded_overlay_root_markup_into_the_shared_public_overlay_root(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'html',
+            'block_type_id' => $this->blockType('html', 'HTML (Trusted)', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '<section><button class="wb-gallery-trigger" type="button" data-wb-gallery-target="#trusted-viewer" data-wb-gallery-full="/storage/example.jpg">Open</button></section><div id="wb-overlay-root"><div class="wb-modal" id="trusted-viewer" role="dialog"></div></div>',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-gallery-target="#trusted-viewer"', false);
+        $response->assertSee('<div id="wb-overlay-root" class="wb-overlay-root">', false);
+        $this->assertSame(1, substr_count($response->getContent(), 'id="wb-overlay-root"'));
+        $response->assertSee('<div class="wb-modal" id="trusted-viewer" role="dialog"></div>', false);
     }
 
     #[Test]

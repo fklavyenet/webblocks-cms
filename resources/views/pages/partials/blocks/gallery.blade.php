@@ -2,6 +2,7 @@
     $settings = is_array($block->settings)
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
+    $viewerId = 'wb-gallery-viewer-'.$block->id;
     $legacyAssetIds = collect($settings['asset_ids'] ?? $settings['gallery_asset_ids'] ?? [])
         ->map(fn ($id) => (int) $id)
         ->filter(fn ($id) => $id > 0)
@@ -91,6 +92,7 @@
                         <a
                             href="{{ $item['full_url'] }}"
                             class="wb-gallery-trigger"
+                            data-wb-gallery-target="#{{ $viewerId }}"
                             data-wb-gallery-full="{{ $item['full_url'] }}"
                             data-wb-gallery-alt="{{ $item['alt'] }}"
                             @if ($item['caption'] !== '') data-wb-gallery-caption="{{ $item['caption'] }}" @endif
@@ -118,6 +120,14 @@
                 @endforeach
             </div>
         </section>
+
+        @php
+            $galleryViewerHtml = view('pages.partials.blocks.gallery-viewer', [
+                'viewerId' => $viewerId,
+                'galleryItems' => $galleryItems,
+            ])->render();
+            app(\App\Support\Blocks\PublicOverlayRegistry::class)->push($galleryViewerHtml);
+        @endphp
     @endif
 </div>
 
