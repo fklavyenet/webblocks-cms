@@ -253,6 +253,81 @@
     flex-wrap: nowrap;
 }
 
+.wb-admin-pages-table {
+    min-width: 760px;
+}
+
+.wb-admin-pages-table :is(th, td) {
+    vertical-align: middle;
+}
+
+.wb-admin-pages-table tbody td {
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.wb-admin-pages-table-cell {
+    line-height: 1.25;
+}
+
+.wb-admin-pages-page-cell {
+    min-width: 0;
+}
+
+.wb-admin-pages-page-meta {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.wb-admin-pages-title-row {
+    align-items: center;
+    row-gap: 0.2rem;
+}
+
+.wb-admin-pages-title-row strong {
+    line-height: 1.2;
+}
+
+.wb-admin-pages-locale-row,
+.wb-admin-pages-path-row {
+    row-gap: 0.2rem;
+}
+
+.wb-admin-pages-path-row {
+    font-size: 0.8125rem;
+}
+
+.wb-admin-pages-path-link,
+.wb-admin-pages-path-text {
+    line-height: 1.2;
+}
+
+.wb-admin-pages-count-cell,
+.wb-admin-pages-status-cell,
+.wb-admin-pages-view-cell,
+.wb-admin-pages-actions-cell {
+    white-space: nowrap;
+}
+
+.wb-admin-pages-count-cell,
+.wb-admin-pages-status-cell {
+    text-align: center;
+}
+
+.wb-admin-pages-last-edited-cell {
+    white-space: nowrap;
+}
+
+.wb-admin-pages-last-edited {
+    display: grid;
+    gap: 0.15rem;
+    line-height: 1.2;
+}
+
+.wb-admin-pages-actions-cell .wb-action-group {
+    flex-wrap: nowrap;
+}
+
 .wb-cms-block-tree-toggle-icon {
     transition: transform var(--wb-t);
 }

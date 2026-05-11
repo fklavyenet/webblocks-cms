@@ -124,8 +124,8 @@
             </div>
 
             <div class="wb-card-body">
-                <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                <div class="wb-table-wrap wb-admin-pages-table-wrap">
+                    <table class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table">
                         <thead>
                             <tr>
                                 <th>View</th>
@@ -145,7 +145,7 @@
                                     $defaultPublicUrl = $page->publicUrl();
                                 @endphp
                                 <tr>
-                                    <td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-view-cell">
                                         @if ($page->isPublished() && $defaultPublicUrl)
                                             <a
                                                 href="{{ $defaultPublicUrl }}"
@@ -163,9 +163,9 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1">
-                                            <div class="wb-cluster wb-cluster-2">
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
+                                        <div class="wb-admin-pages-page-meta">
+                                            <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
                                                 <strong>{{ $page->title }}</strong>
                                                 @if ($showAllSites)
                                                     <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
@@ -175,7 +175,7 @@
                                                 @endif
                                             </div>
 
-                                            <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
+                                            <div class="wb-admin-pages-locale-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm wb-text-muted">
                                                 @foreach ($translations as $translation)
                                                     <span class="wb-status-pill {{ $translation->locale?->is_default ? 'wb-status-info' : 'wb-status-active' }}">
                                                         {{ $translation->locale?->code }}
@@ -190,40 +190,40 @@
                                                 @endif
                                             </div>
 
-                                            <div class="wb-cluster wb-cluster-2 wb-text-sm">
+                                            <div class="wb-admin-pages-path-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm">
                                                 @foreach ($translations->take(3) as $translation)
                                                     @php
                                                         $translationPublicUrl = $page->publicUrl($translation->locale?->code);
                                                         $translationPublicPath = $page->publicPath($translation->locale?->code);
                                                     @endphp
                                                     @if ($translationPublicUrl && $translationPublicPath && $page->isPublished())
-                                                         <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">
+                                                         <a href="{{ $translationPublicUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link wb-admin-pages-path-link">
                                                             {{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }}
-                                                         </a>
-                                                     @elseif ($translationPublicPath && ! $page->isPublished())
-                                                         <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }} (not public)</span>
-                                                     @else
-                                                         <span class="wb-text-muted">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
-                                                      @endif
-                                                  @endforeach
+                                                          </a>
+                                                      @elseif ($translationPublicPath && ! $page->isPublished())
+                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} {{ $translationPublicPath }} (not public)</span>
+                                                      @else
+                                                          <span class="wb-text-muted wb-admin-pages-path-text">{{ strtoupper($translation->locale?->code ?? 'en') }} Missing route</span>
+                                                       @endif
+                                                   @endforeach
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
-                                    <td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-count-cell">{{ $page->blocks_count ?? $page->blocks()->count() }}</td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-status-cell">
                                         <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">
                                             {{ $page->workflowLabel() }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="wb-stack wb-gap-1 wb-text-sm">
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-last-edited-cell">
+                                        <div class="wb-admin-pages-last-edited wb-text-sm">
                                             <span>{{ $page->updated_at?->format('Y-m-d H:i') ?? '-' }}</span>
                                             <span class="wb-text-muted">
                                                 {{ $page->updatedByUser?->name ?? 'Not recorded' }}
                                             </span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="wb-admin-pages-table-cell wb-admin-pages-actions-cell">
                                         <div class="wb-action-group">
                                             <a
                                                 href="{{ route('admin.pages.index', array_merge($detailsBaseQuery, ['details' => $page->id])) }}"

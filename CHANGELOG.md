@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Compact the `Admin -> Pages` listing rows so title, locale metadata, public paths, last-edited metadata, and actions stay easier to scan without changing filters, sorting, pagination, or row actions.
+
 ## 1.25.3
 
 - Move CMS-owned public assets from `public/assets/webblocks-cms/`, `public/brand/`, and legacy handle-less `public/site/css/*` paths into `public/cms/`, leaving `public/site/{site_handle}/...` for real install/site/page overrides only.

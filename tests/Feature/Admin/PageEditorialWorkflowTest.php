@@ -531,6 +531,11 @@ class PageEditorialWorkflowTest extends TestCase
         $index->assertSee('id="pages_sort"', false);
         $index->assertSee('id="pages_direction"', false);
         $index->assertSee('Apply', false);
+        $index->assertSee('class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table"', false);
+        $index->assertSee('class="wb-admin-pages-page-meta"', false);
+        $index->assertSee('class="wb-admin-pages-locale-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm wb-text-muted"', false);
+        $index->assertSee('class="wb-admin-pages-path-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm"', false);
+        $index->assertSee('class="wb-admin-pages-last-edited wb-text-sm"', false);
 
         $content = $index->getContent();
         $this->assertIsString($content);
