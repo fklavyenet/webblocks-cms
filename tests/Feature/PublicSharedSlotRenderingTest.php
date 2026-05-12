@@ -97,30 +97,73 @@ class PublicSharedSlotRenderingTest extends TestCase
         $navbar = Block::query()->create([
             'page_id' => $context['sharedSourcePage']->id,
             'type' => 'sticky-navbar',
-            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 100)->id,
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 100, true, true)->id,
             'source_type' => 'static',
             'slot' => 'header',
             'slot_type_id' => $context['headerSlotType']->id,
             'sort_order' => -20,
             'settings' => json_encode([
-                'menu_key' => 'primary',
                 'sticky_mode' => 'sticky',
-                'visual_variant' => 'light',
-                'compact' => true,
             ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => true,
         ]);
-        $navbar->textTranslations()->create([
+
+        $brand = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-brand',
+            'block_type_id' => $this->blockType('navbar-brand', 'Navbar Brand', 101)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
             'title' => 'Shared Brand',
         ]);
 
-        SharedSlotBlock::query()->create([
+        $navigation = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-navigation',
+            'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 102)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['menu_key' => 'primary'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $navigation->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Primary navigation',
+        ]);
+
+        $sharedNavbar = SharedSlotBlock::query()->create([
             'shared_slot_id' => $context['sharedSlot']->id,
             'block_id' => $navbar->id,
             'parent_id' => null,
             'sort_order' => -20,
+        ]);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $brand->id,
+            'parent_id' => $sharedNavbar->id,
+            'sort_order' => 0,
+        ]);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $navigation->id,
+            'parent_id' => $sharedNavbar->id,
+            'sort_order' => 1,
         ]);
 
         NavigationItem::query()->create([
@@ -139,7 +182,8 @@ class PublicSharedSlotRenderingTest extends TestCase
         $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
         $response->assertSee('Shared Brand', false);
         $response->assertSee('Getting Started', false);
-        $response->assertSee('data-wb-block-type="sticky-navbar"', false);
+        $response->assertSee('data-wb-public-block-type="sticky-navbar"', false);
+        $response->assertDontSee('wb-cms-sticky-navbar', false);
     }
 
     #[Test]
@@ -758,11 +802,11 @@ class PublicSharedSlotRenderingTest extends TestCase
         );
     }
 
-    private function blockType(string $slug, string $name, int $sortOrder): BlockType
+    private function blockType(string $slug, string $name, int $sortOrder, bool $isSystem = false, bool $isContainer = false): BlockType
     {
         return BlockType::query()->updateOrCreate(
             ['slug' => $slug],
-            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder],
+            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => $isSystem, 'is_container' => $isContainer],
         );
     }
 }

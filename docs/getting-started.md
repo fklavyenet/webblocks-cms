@@ -41,10 +41,13 @@ For reusable public headers, the recommended pattern is:
 
 - build the menu in `Admin -> Navigation`
 - create or edit a `Header` Shared Slot for the site
-- add `Sticky Navbar` to that Shared Slot
-- choose the navigation menu there instead of entering links manually
+- add `Navbar` to that Shared Slot
+- add child blocks inside it such as `Container`, `Navbar Brand`, `Navbar Navigation`, and `Header Actions`
+- choose the navigation menu on the `Navbar Navigation` child block instead of entering links manually
 
-The first Sticky Navbar release is desktop-first. It supports sticky, fixed, or static placement plus light, transparent, or dark variants, but it does not add a mobile collapse menu yet.
+`Navbar` renders only `nav.wb-navbar` and its child blocks. It does not automatically add a `Container`, brand wrapper, menu wrapper, or generated actions area. When constrained width is needed, place a `Container` block inside the Navbar.
+
+`Position` is the only built-in Navbar setting: `static`, `sticky`, or `fixed`. Visual variants and navbar styling belong to WebBlocks UI class usage, not Navbar block-specific CMS settings.
 
 In the slot editor:
 

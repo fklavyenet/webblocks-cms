@@ -11,140 +11,16 @@
     width: 100%;
 }
 
-.wb-cms-sticky-navbar {
-    z-index: 40;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.wb-cms-sticky-navbar-mode-sticky {
+.wb-cms-navbar--sticky {
     position: sticky;
     top: 0;
+    z-index: 40;
 }
 
-.wb-cms-sticky-navbar-mode-fixed {
+.wb-cms-navbar--fixed {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-}
-
-.wb-cms-sticky-navbar-light {
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(10px);
-}
-
-.wb-cms-sticky-navbar-transparent {
-    background: rgba(255, 255, 255, 0.78);
-    backdrop-filter: blur(10px);
-}
-
-.wb-cms-sticky-navbar-dark {
-    background: rgba(15, 23, 42, 0.94);
-    border-bottom-color: rgba(255, 255, 255, 0.12);
-}
-
-.wb-cms-sticky-navbar-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    min-height: 4.5rem;
-}
-
-.wb-cms-sticky-navbar.is-compact .wb-cms-sticky-navbar-bar {
-    min-height: 3.75rem;
-}
-
-.wb-cms-sticky-navbar-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: inherit;
-    font-weight: 600;
-}
-
-.wb-cms-sticky-navbar-logo {
-    display: block;
-    width: auto;
-    max-height: 2.5rem;
-}
-
-.wb-cms-sticky-navbar.is-compact .wb-cms-sticky-navbar-logo {
-    max-height: 2.125rem;
-}
-
-.wb-cms-sticky-navbar-brand-text {
-    line-height: 1.1;
-}
-
-.wb-cms-sticky-navbar-menu {
-    margin-inline-start: auto;
-}
-
-.wb-cms-sticky-navbar-list {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.wb-cms-sticky-navbar-link,
-.wb-cms-sticky-navbar-link-trigger {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    min-height: 2.5rem;
-    padding: 0.5rem 0.85rem;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-decoration: none;
-}
-
-.wb-cms-sticky-navbar.is-compact .wb-cms-sticky-navbar-link,
-.wb-cms-sticky-navbar.is-compact .wb-cms-sticky-navbar-link-trigger {
-    min-height: 2.25rem;
-    padding-block: 0.4rem;
-}
-
-.wb-cms-sticky-navbar-link:hover,
-.wb-cms-sticky-navbar-link-trigger:hover,
-.wb-cms-sticky-navbar-link.is-active,
-.wb-cms-sticky-navbar-link-trigger.is-active {
-    background: rgba(15, 23, 42, 0.08);
-}
-
-.wb-cms-sticky-navbar-dark,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-brand,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link-trigger {
-    color: #f8fafc;
-}
-
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link:hover,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link-trigger:hover,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link.is-active,
-.wb-cms-sticky-navbar-dark .wb-cms-sticky-navbar-link-trigger.is-active {
-    background: rgba(255, 255, 255, 0.14);
-}
-
-@media (max-width: 767px) {
-    .wb-cms-sticky-navbar-bar {
-        flex-wrap: wrap;
-    }
-
-    .wb-cms-sticky-navbar-menu {
-        width: 100%;
-        margin-inline-start: 0;
-    }
-
-    .wb-cms-sticky-navbar-list {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-    }
+    z-index: 40;
 }

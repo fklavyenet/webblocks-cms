@@ -1041,16 +1041,26 @@ class PageBuilderExperienceTest extends TestCase
         $this->seedFoundation();
 
         $stickyNavbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+        $navbarBrandType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+        $navbarNavigationType = BlockType::query()->where('slug', 'navbar-navigation')->firstOrFail();
 
-        $this->assertSame('Sticky Navbar', $stickyNavbarType->name);
+        $navbarBlock = new Block(['type' => 'sticky-navbar', 'block_type_id' => $stickyNavbarType->id]);
+        $navbarBlock->setRelation('blockType', $stickyNavbarType);
+
+        $this->assertSame('Navbar', $stickyNavbarType->name);
         $this->assertSame('published', $stickyNavbarType->status);
         $this->assertSame('navigation', $stickyNavbarType->category);
         $this->assertTrue($stickyNavbarType->is_system);
-        $this->assertFalse($stickyNavbarType->is_container);
+        $this->assertTrue($stickyNavbarType->is_container);
+        $this->assertSame('Navbar Brand', $navbarBrandType->name);
+        $this->assertSame('Navbar Navigation', $navbarNavigationType->name);
+        $this->assertFalse($navbarBrandType->is_container);
+        $this->assertFalse($navbarNavigationType->is_container);
+        $this->assertSame(['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'], $navbarBlock->allowedChildTypeSlugs());
     }
 
     #[Test]
-    public function sticky_navbar_form_is_dedicated_and_stores_system_navigation_settings_without_editorial_json_links(): void
+    public function navbar_form_is_dedicated_and_stores_only_position_settings(): void
     {
         $this->seedFoundation();
 
@@ -1058,6 +1068,93 @@ class PageBuilderExperienceTest extends TestCase
         $header = $this->slotType('header', 'Header', 1);
         [$page, $pageSlot] = $this->pageWithSlot($header);
         $stickyNavbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $stickyNavbarType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: Navbar');
+        $formResponse->assertSee('Navbar renders only <code>nav.wb-navbar</code> and its child blocks.', false);
+        $formResponse->assertSee('name="name"', false);
+        $formResponse->assertSee('name="sticky_navbar_mode"', false);
+        $formResponse->assertDontSee('name="sticky_navbar_menu_key"', false);
+        $formResponse->assertDontSee('name="sticky_navbar_brand_url"', false);
+        $formResponse->assertDontSee('name="sticky_navbar_variant"', false);
+        $formResponse->assertDontSee('name="sticky_navbar_compact"', false);
+
+        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $stickyNavbarType->id,
+            'sort_order' => 0,
+            'name' => 'Primary Header',
+            'sticky_navbar_mode' => 'sticky',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'sticky-navbar')->firstOrFail();
+        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+
+        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertSame('admin.blocks.types.sticky-navbar', $block->adminFormView());
+        $this->assertSame('pages.partials.blocks.sticky-navbar', $block->publicRenderView());
+        $this->assertNull($block->textTranslations()->first()?->title);
+        $this->assertSame('sticky', $settings['sticky_mode'] ?? null);
+        $this->assertSame('Primary Header', $settings['layout_name'] ?? null);
+        $this->assertArrayNotHasKey('menu_key', $settings ?? []);
+        $this->assertArrayNotHasKey('brand_url', $settings ?? []);
+        $this->assertArrayNotHasKey('visual_variant', $settings ?? []);
+        $this->assertArrayNotHasKey('compact', $settings ?? []);
+        $this->assertArrayNotHasKey('width', $settings ?? []);
+    }
+
+    #[Test]
+    public function navbar_brand_and_navigation_blocks_require_navbar_parent(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page] = $this->pageWithSlot($header);
+        $navbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+        $brandType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+        $navigationType = BlockType::query()->where('slug', 'navbar-navigation')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $navbar = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $navbarType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $plain = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $plainTextType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $brandType->id,
+            'parent_id' => $plain->id,
+            'sort_order' => 0,
+            'title' => 'Brand',
+            'url' => '/',
+            'status' => 'published',
+        ])->assertSessionHasErrors('parent_id');
 
         NavigationItem::query()->create([
             'site_id' => $page->site_id,
@@ -1069,48 +1166,16 @@ class PageBuilderExperienceTest extends TestCase
             'visibility' => NavigationItem::VISIBILITY_VISIBLE,
         ]);
 
-        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $stickyNavbarType->id]));
-
-        $formResponse->assertOk();
-        $formResponse->assertSee('Add Block: Sticky Navbar');
-        $formResponse->assertSee('Sticky Navbar is a system-owned navigation block', false);
-        $formResponse->assertSee('name="sticky_navbar_menu_key"', false);
-        $formResponse->assertSee('name="sticky_navbar_brand_url"', false);
-        $formResponse->assertSee('name="sticky_navbar_mode"', false);
-        $formResponse->assertSee('name="sticky_navbar_variant"', false);
-        $formResponse->assertSee('name="sticky_navbar_compact"', false);
-
-        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
             'slot_type_id' => $header->id,
-            'block_type_id' => $stickyNavbarType->id,
+            'block_type_id' => $navigationType->id,
+            'parent_id' => $navbar->id,
             'sort_order' => 0,
-            'title' => 'FKlavye',
-            'sticky_navbar_menu_key' => 'primary',
-            'sticky_navbar_brand_url' => '/',
-            'sticky_navbar_mode' => 'sticky',
-            'sticky_navbar_variant' => 'light',
-            'sticky_navbar_compact' => '1',
-            'sticky_navbar_container_width' => 'lg',
+            'title' => 'Primary navigation',
+            'navbar_navigation_menu_key' => 'primary',
             'status' => 'published',
-            '_slot_block_mode' => 'create',
-        ]);
-
-        $block = Block::query()->where('page_id', $page->id)->where('type', 'sticky-navbar')->firstOrFail();
-        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
-
-        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $this->assertSame('admin.blocks.types.sticky-navbar', $block->adminFormView());
-        $this->assertSame('pages.partials.blocks.sticky-navbar', $block->publicRenderView());
-        $this->assertSame('FKlavye', $block->textTranslations()->first()?->title);
-        $this->assertSame('primary', $settings['menu_key'] ?? null);
-        $this->assertSame('/', $settings['brand_url'] ?? null);
-        $this->assertSame('sticky', $settings['sticky_mode'] ?? null);
-        $this->assertSame('light', $settings['visual_variant'] ?? null);
-        $this->assertTrue((bool) ($settings['compact'] ?? false));
-        $this->assertSame('lg', $settings['width'] ?? null);
-        $this->assertStringNotContainsString('About', (string) $block->getRawOriginal('settings'));
-        $this->assertStringNotContainsString('/p/', (string) $block->getRawOriginal('settings'));
+        ])->assertSessionDoesntHaveErrors();
     }
 
     #[Test]

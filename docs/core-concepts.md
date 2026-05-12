@@ -107,7 +107,16 @@ Blocks are the reusable editorial units of the CMS.
 - Translated data holds user-facing text for each locale.
 - User-facing content is not stored in arbitrary JSON blobs.
 
-System navigation blocks follow the same relational rule. `Sticky Navbar` is a system-content navigation block that stores only reusable navbar configuration while reading its public menu links from site `navigation_items` rows. Editors do not paste or maintain navbar link JSON inside the block itself.
+System navigation blocks follow the same relational rule. `Navbar` keeps the persisted `sticky-navbar` handle for compatibility, but it now acts as a primitive container block: it renders only `nav.wb-navbar` plus nested child blocks. It does not render brand markup, menu links, header actions, or a forced container by itself.
+
+Navbar composition is relational rather than JSON-driven:
+
+- `Navbar` owns only wrapper semantics and a shared `Position` setting.
+- `Navbar Brand` owns logo and brand text.
+- `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes.
+- `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
+
+This keeps header composition explicit, reusable, and aligned with WebBlocks UI instead of duplicating a CMS-only navbar design surface.
 
 This keeps content ownership clear across multisite, localization, revisions, and public rendering.
 

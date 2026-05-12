@@ -175,7 +175,7 @@ class Block extends Model
         $title = $this->stringValueOrNull($this->title) ?? $this->translatedTextFieldValue('title');
         $content = $this->stringValueOrNull($this->content) ?? $this->translatedTextFieldValue('content');
 
-        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
             $layoutName = $this->layoutAdminName();
 
             return $layoutName !== null
@@ -192,7 +192,7 @@ class Block extends Model
 
     public function editorSummary(): ?string
     {
-        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
+        if (in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
             $childCount = $this->children->count();
 
             return $childCount > 0
@@ -206,7 +206,7 @@ class Block extends Model
             return trim($this->cardVariant().' '.$childCount.' '.Str::plural('child block', $childCount));
         }
 
-        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'sticky-navbar'], true)) {
+        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'navbar-navigation'], true)) {
             return 'Location: '.str($this->navigationLocation())->headline();
         }
 
@@ -249,7 +249,7 @@ class Block extends Model
     {
         $detail = match ($this->typeSlug()) {
             'card' => $this->parentCandidateDetail($this->title),
-            'section', 'container', 'cluster', 'grid' => $this->parentCandidateDetail($this->layoutAdminName()),
+            'section', 'container', 'cluster', 'grid', 'sticky-navbar' => $this->parentCandidateDetail($this->layoutAdminName()),
             default => $this->parentCandidateDetail($this->editorLabel()),
         };
 
@@ -260,7 +260,7 @@ class Block extends Model
 
     public function layoutAdminName(): ?string
     {
-        if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid'], true)) {
+        if (! in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'sticky-navbar'], true)) {
             return null;
         }
 
@@ -416,13 +416,14 @@ class Block extends Model
             return true;
         }
 
-        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card', 'sidebar-navigation', 'sidebar-nav-group'], true);
+        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
     {
         return match ($this->typeSlug()) {
             'card' => ['cluster', 'button_link'],
+            'sticky-navbar' => ['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'],
             'link-list' => ['link-list-item'],
             'sidebar-navigation' => ['sidebar-nav-item', 'sidebar-nav-group'],
             'sidebar-nav-group' => ['sidebar-nav-item'],
@@ -609,7 +610,7 @@ class Block extends Model
     {
         $label = $this->typeName();
 
-        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'sticky-navbar'], true)) {
+        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'navbar-navigation'], true)) {
             return $label.' ('.str($this->navigationLocation())->headline().')';
         }
 
@@ -817,48 +818,46 @@ class Block extends Model
         return in_array($mode, ['sticky', 'fixed', 'static'], true) ? $mode : 'sticky';
     }
 
-    public function stickyNavbarVariant(): string
+    public function navbarPosition(): string
     {
-        $variant = trim((string) $this->setting('visual_variant', 'light'));
-
-        return in_array($variant, ['light', 'transparent', 'dark'], true) ? $variant : 'light';
+        return $this->stickyNavbarMode();
     }
 
-    public function stickyNavbarCompact(): bool
+    public function navbarPositionClass(): ?string
     {
-        $settings = $this->decodedSettings();
-
-        if (! is_array($settings) || ! array_key_exists('compact', $settings)) {
-            return true;
-        }
-
-        return (bool) $this->setting('compact', true);
+        return match ($this->navbarPosition()) {
+            'static' => 'wb-navbar--static',
+            'sticky' => 'wb-cms-navbar--sticky',
+            'fixed' => 'wb-cms-navbar--fixed',
+            default => null,
+        };
     }
 
-    public function stickyNavbarLogoPath(): ?string
+    public function navbarBrandUrl(): ?string
     {
-        $path = trim((string) $this->setting('logo_path', ''));
-
-        return $path !== '' ? $path : null;
-    }
-
-    public function stickyNavbarBrandUrl(): ?string
-    {
-        $url = trim((string) $this->setting('brand_url', ''));
+        $url = trim((string) $this->setting('url', ''));
 
         return $url !== '' ? $url : null;
     }
 
-    public function stickyNavbarContainerWidthClass(): ?string
+    public function navbarBrandTarget(): string
     {
-        return match ($this->appearanceSetting('width')) {
-            'sm' => 'wb-container-sm',
-            'md' => 'wb-container-md',
-            'lg' => 'wb-container-lg',
-            'xl' => 'wb-container-xl',
-            'full' => 'wb-container-full',
-            default => null,
-        };
+        return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
+    public function navbarNavigationMenuKey(): string
+    {
+        return $this->navigationMenuKey();
+    }
+
+    public function isNavbarBrand(): bool
+    {
+        return $this->typeSlug() === 'navbar-brand';
+    }
+
+    public function isNavbarNavigation(): bool
+    {
+        return $this->typeSlug() === 'navbar-navigation';
     }
 
     public function sidebarLinkUrl(): ?string

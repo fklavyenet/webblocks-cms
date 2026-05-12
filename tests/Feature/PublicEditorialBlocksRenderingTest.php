@@ -28,15 +28,63 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sticky-navbar', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
+        foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
     }
 
     #[Test]
-    public function sticky_navbar_renders_brand_logo_menu_items_and_active_state(): void
+    public function navbar_renders_only_wrapper_and_direct_child_blocks(): void
     {
         $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 18, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'sticky_mode' => 'sticky',
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+                'brand_url' => '/',
+                'visual_variant' => 'light',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $block->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 6)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => 'Inner child',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('<p data-wb-public-block-type="plain-text">Inner child</p>', false);
+        $response->assertDontSee('wb-cms-sticky-navbar', false);
+        $response->assertDontSee('<div class="wb-container', false);
+        $response->assertDontSee('About', false);
+        $this->assertSame($child->id, $block->children->first()?->id);
+    }
+
+    #[Test]
+    public function navbar_brand_and_navigation_child_blocks_render_logo_text_menu_items_and_active_state(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $page->site->update(['display_name' => 'Site Brand']);
         $asset = Asset::query()->create([
             'disk' => 'public',
             'path' => 'media/images/sticky-navbar-logo.png',
@@ -49,29 +97,57 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'visibility' => 'public',
         ]);
 
-        $block = Block::query()->create([
+        $navbar = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'sticky-navbar',
-            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 18, true)->id,
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 18, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'sticky_mode' => 'static',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-brand',
+            'block_type_id' => $this->blockType('navbar-brand', 'Navbar Brand', 19)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
             'asset_id' => $asset->id,
-            'settings' => json_encode([
-                'menu_key' => NavigationItem::MENU_PRIMARY,
-                'brand_url' => '/',
-                'sticky_mode' => 'sticky',
-                'visual_variant' => 'light',
-                'compact' => true,
-                'width' => 'lg',
-            ], JSON_UNESCAPED_SLASHES),
+            'settings' => json_encode(['url' => '/', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
-            'is_system' => true,
+            'is_system' => false,
         ]);
-        $block->textTranslations()->create([
+        $brand->textTranslations()->create([
             'locale_id' => Page::defaultLocaleId(),
             'title' => 'FKlavye',
+            'subtitle' => 'Docs',
+        ]);
+
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-navigation',
+            'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 20)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['menu_key' => NavigationItem::MENU_PRIMARY], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $navigation->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Primary navigation',
         ]);
 
         NavigationItem::query()->create([
@@ -97,53 +173,15 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('data-wb-block-type="sticky-navbar"', false);
-        $response->assertSee('class="wb-navbar wb-cms-sticky-navbar wb-cms-sticky-navbar-light wb-cms-sticky-navbar-mode-sticky is-compact"', false);
-        $response->assertSee('class="wb-container wb-container-lg"', false);
+        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('class="wb-navbar-brand"', false);
         $response->assertSee('sticky-navbar-logo.png', false);
-        $response->assertSee('>FKlavye</span>', false);
-        $response->assertSee('href="/" class="wb-cms-sticky-navbar-brand wb-no-decoration"', false);
-        $response->assertSee('href="/p/about" class="wb-cms-sticky-navbar-link is-active" aria-current="page"', false);
-        $response->assertSee('href="/contact" class="wb-cms-sticky-navbar-link"', false);
-    }
-
-    #[Test]
-    public function sticky_navbar_falls_back_to_site_name_and_home_url_when_brand_fields_are_blank(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $page->site->update(['display_name' => 'Site Brand']);
-
-        Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'sticky-navbar',
-            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 18, true)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'settings' => json_encode([
-                'menu_key' => NavigationItem::MENU_PRIMARY,
-            ], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => true,
-        ]);
-
-        NavigationItem::query()->create([
-            'site_id' => $page->site_id,
-            'menu_key' => NavigationItem::MENU_PRIMARY,
-            'title' => 'About',
-            'link_type' => NavigationItem::LINK_PAGE,
-            'page_id' => $page->id,
-            'position' => 1,
-            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
-        ]);
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('>Site Brand</span>', false);
-        $response->assertSee('href="/" class="wb-cms-sticky-navbar-brand wb-no-decoration"', false);
-        $response->assertDontSee('wb-cms-sticky-navbar-logo', false);
+        $response->assertSee('FKlavye', false);
+        $response->assertSee('Docs', false);
+        $response->assertSee('class="wb-navbar-links"', false);
+        $response->assertSee('href="/p/about" class="wb-navbar-link is-active" aria-current="page"', false);
+        $response->assertSee('href="/contact" class="wb-navbar-link"', false);
+        $response->assertDontSee('wb-cms-sticky-navbar', false);
     }
 
     #[Test]
@@ -2705,11 +2743,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         );
     }
 
-    private function blockType(string $slug, string $name, int $sortOrder, bool $isSystem = false): BlockType
+    private function blockType(string $slug, string $name, int $sortOrder, bool $isSystem = false, bool $isContainer = false): BlockType
     {
         return BlockType::query()->updateOrCreate(
             ['slug' => $slug],
-            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => $isSystem, 'is_container' => $slug === 'card' || in_array($slug, ['section', 'container', 'cluster', 'grid'], true)],
+            ['name' => $name, 'source_type' => 'static', 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => $isSystem, 'is_container' => $isContainer || $slug === 'card' || in_array($slug, ['section', 'container', 'cluster', 'grid'], true)],
         );
     }
 }
