@@ -544,13 +544,13 @@ class PageEditorialWorkflowTest extends TestCase
         $editorEdit = $this->actingAs($editor)->get(route('admin.pages.edit', $page));
         $editorEdit->assertOk();
         $editorEdit->assertSee('Submit for Review');
-        $editorEdit->assertDontSee('Publish');
-        $editorEdit->assertDontSee('Archive');
+        $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-primary">Publish</button>', false);
+        $editorEdit->assertDontSee('<button type="submit" class="wb-btn wb-btn-danger">Archive</button>', false);
 
         $siteAdminEdit = $this->actingAs($siteAdmin)->get(route('admin.pages.edit', $page));
         $siteAdminEdit->assertOk();
         $siteAdminEdit->assertSee('Submit for Review');
-        $siteAdminEdit->assertSee('Publish');
+        $siteAdminEdit->assertSee('<button type="submit" class="wb-btn wb-btn-primary">Publish</button>', false);
     }
 
     #[Test]

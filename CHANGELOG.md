@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Merge the Edit Page top site, domain, and editorial workflow summary into one `Page Overview` card while preserving the existing workflow actions and status information.
 - Compact the `Admin -> Pages` listing rows so title, locale metadata, public paths, last-edited metadata, and actions stay easier to scan without changing filters, sorting, pagination, or row actions.
 
 ## 1.25.3

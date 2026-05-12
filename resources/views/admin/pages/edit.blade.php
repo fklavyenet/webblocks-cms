@@ -8,6 +8,7 @@
     $pageDuplicateUrl = $canDuplicatePage ? route('admin.pages.duplicate.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
     $pageMoveUrl = $canMoveToAnotherSite ? route('admin.pages.move-site.create', ['page' => $page, 'return_url' => $pageReturnUrl]) : null;
     $siteName = $page->site?->name ?? 'Site';
+    $domainName = $page->site?->canonicalDomain() ?: 'Not set';
     $headerActions = collect([
         $pageDuplicateUrl ? '<a href="'.$pageDuplicateUrl.'" class="wb-btn wb-btn-secondary">Duplicate page</a>' : null,
         $pageMoveUrl ? '<a href="'.$pageMoveUrl.'" class="wb-btn wb-btn-secondary">Move to another site</a>' : null,
@@ -29,55 +30,60 @@
     @include('admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
-        <div class="wb-card-body">
-            <div class="wb-grid wb-grid-2">
-                <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">Site</span>
-                    <strong>{{ $siteName }}</strong>
-                </div>
-                <div class="wb-stack wb-gap-1">
-                    <span class="wb-text-sm wb-text-muted">Workflow</span>
-                    <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
-                </div>
-                @if ($page->site?->canonicalDomain())
-                    <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">Domain</span>
-                        <span>{{ $page->site->canonicalDomain() }}</span>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Editorial Workflow</strong>
+            <strong>Page Overview</strong>
             <span class="wb-text-sm wb-text-muted">Only published pages are visible on the public site.</span>
         </div>
         <div class="wb-card-body">
-            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-                    <span>Current status: <strong>{{ $page->workflowLabel() }}</strong></span>
-                    @if ($page->review_requested_at)
-                        <span>Review requested: {{ $page->review_requested_at->format('Y-m-d H:i') }}</span>
-                    @endif
-                    @if ($page->published_at)
-                        <span>Published: {{ $page->published_at->format('Y-m-d H:i') }}</span>
-                    @endif
+            <div class="wb-grid wb-grid-2">
+                <div class="wb-stack wb-gap-3">
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Site</span>
+                        <strong>{{ $siteName }}</strong>
+                    </div>
+
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Domain</span>
+                        <span>{{ $domainName }}</span>
+                    </div>
                 </div>
 
-                @if ($workflowActions !== [])
-                    <div class="wb-cluster wb-cluster-2">
-                        @foreach ($workflowActions as $workflowAction)
-                            <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
-                                @csrf
-                                <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
-                                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
-                            </form>
-                        @endforeach
+                <div class="wb-stack wb-gap-3">
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Status</span>
+                        <div>
+                            <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
+                        </div>
                     </div>
-                @endif
+
+                    <div class="wb-stack wb-gap-1">
+                        <span class="wb-text-sm wb-text-muted">Published</span>
+                        <span>{{ $page->published_at ? $page->published_at->format('Y-m-d H:i') : 'Not published' }}</span>
+                    </div>
+
+                    @if ($page->review_requested_at)
+                        <div class="wb-stack wb-gap-1">
+                            <span class="wb-text-sm wb-text-muted">Review requested</span>
+                            <span>{{ $page->review_requested_at->format('Y-m-d H:i') }}</span>
+                        </div>
+                    @endif
+
+                    @if ($workflowActions !== [])
+                        <div class="wb-stack wb-gap-2">
+                            <span class="wb-text-sm wb-text-muted">Actions</span>
+                            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                @foreach ($workflowActions as $workflowAction)
+                                    <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
+                                        @csrf
+                                        <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
+                                        <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+                                        <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
+                                    </form>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
