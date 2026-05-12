@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+## 1.27.1
+
+- Refactor the persisted `sticky-navbar` block into a primitive `Navbar` container that renders only `nav.wb-navbar` plus child blocks, add composable `Navbar Brand` and `Navbar Navigation` child blocks, remove the CMS-specific `wb-cms-sticky-navbar-*` markup and settings surface, and keep only a shared `Position` option so navbar styling remains WebBlocks UI-first.
+
 ## 1.27.0
 
-- Add a reusable system-owned `Sticky Navbar` block type for public page and Shared Slot headers, with navigation-menu-driven rendering, active-link state, optional logo and brand overrides, desktop-first sticky or fixed display modes, and minimal CMS public styling.
+- Add a reusable system-owned `Sticky Navbar` block type for public page and Shared Slot headers.
 
 ## 1.26.2
 
