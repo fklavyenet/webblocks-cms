@@ -40,6 +40,7 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('Search');
         $response->assertSee('Category');
         $response->assertSee('Status');
+        $response->assertSee('Usage');
         $response->assertSee('Support');
         $response->assertSee('data-admin-listing-filters', false);
         $response->assertSee('data-admin-listing-filters-search', false);
@@ -48,6 +49,7 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('id="block_types_search"', false);
         $response->assertSee('id="block_types_category"', false);
         $response->assertSee('id="block_types_status"', false);
+        $response->assertSee('id="block_types_usage"', false);
         $response->assertSee('id="block_types_support"', false);
         $response->assertSee('Apply filters');
         $response->assertSee('Search block types...');
@@ -137,6 +139,170 @@ class BlockTypesIndexTest extends TestCase
         $renderResponse->assertOk();
         $renderResponse->assertSee('Rich Text');
         $renderResponse->assertDontSee('Textarea');
+    }
+
+    #[Test]
+    public function usage_filter_defaults_to_showing_used_and_unused_block_types(): void
+    {
+        $this->seedFoundation();
+
+        $usedType = BlockType::query()->create([
+            'name' => 'Usage Used Type',
+            'slug' => 'usage-used-type',
+            'description' => 'Used block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 0,
+            'status' => 'published',
+        ]);
+        $unusedType = BlockType::query()->create([
+            'name' => 'Usage Unused Type',
+            'slug' => 'usage-unused-type',
+            'description' => 'Unused block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 1,
+            'status' => 'published',
+        ]);
+
+        $this->createBlockUsingType($usedType);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index'));
+
+        $response->assertOk();
+        $response->assertSee('Usage Used Type');
+        $response->assertSee('Usage Unused Type');
+    }
+
+    #[Test]
+    public function usage_filter_can_limit_results_to_used_block_types(): void
+    {
+        $this->seedFoundation();
+
+        $usedType = BlockType::query()->create([
+            'name' => 'Usage Used Only',
+            'slug' => 'usage-used-only',
+            'description' => 'Used-only block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 0,
+            'status' => 'published',
+        ]);
+        $unusedType = BlockType::query()->create([
+            'name' => 'Usage Hidden Unused',
+            'slug' => 'usage-hidden-unused',
+            'description' => 'Unused block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 1,
+            'status' => 'published',
+        ]);
+
+        $this->createBlockUsingType($usedType);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', ['usage' => 'used']));
+
+        $response->assertOk();
+        $response->assertSee('Usage Used Only');
+        $response->assertDontSee('Usage Hidden Unused');
+    }
+
+    #[Test]
+    public function usage_filter_can_limit_results_to_unused_block_types(): void
+    {
+        $this->seedFoundation();
+
+        $usedType = BlockType::query()->create([
+            'name' => 'Usage Hidden Used',
+            'slug' => 'usage-hidden-used',
+            'description' => 'Used block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 0,
+            'status' => 'published',
+        ]);
+        $unusedType = BlockType::query()->create([
+            'name' => 'Usage Unused Only',
+            'slug' => 'usage-unused-only',
+            'description' => 'Unused-only block type fixture.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 1,
+            'status' => 'published',
+        ]);
+
+        $this->createBlockUsingType($usedType);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', ['usage' => 'unused']));
+
+        $response->assertOk();
+        $response->assertSee('Usage Unused Only');
+        $response->assertDontSee('Usage Hidden Used');
+    }
+
+    #[Test]
+    public function usage_filter_combines_with_existing_filters(): void
+    {
+        $this->seedFoundation();
+
+        $usedPattern = BlockType::query()->create([
+            'name' => 'Pattern Match',
+            'slug' => 'pattern-match',
+            'description' => 'Pattern block that is used.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 300,
+            'status' => 'published',
+        ]);
+
+        BlockType::query()->create([
+            'name' => 'Pattern Spare',
+            'slug' => 'pattern-spare',
+            'description' => 'Pattern block that is unused.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => 301,
+            'status' => 'published',
+        ]);
+
+        $this->createBlockUsingType($usedPattern);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'search' => 'Pattern',
+            'category' => 'pattern',
+            'status' => 'published',
+            'support' => 'user',
+            'usage' => 'used',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Pattern Match');
+        $response->assertDontSee('Pattern Spare');
+        $response->assertDontSee('Breadcrumb');
     }
 
     #[Test]
@@ -277,6 +443,7 @@ class BlockTypesIndexTest extends TestCase
             'category' => 'pattern',
             'status' => 'published',
             'support' => 'user',
+            'usage' => 'unused',
         ]));
 
         $response->assertOk();
@@ -288,7 +455,7 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('data-admin-pagination-summary', false);
         $response->assertSee('1-15/35', false);
         $response->assertDontSee('Showing 1-15 of 35', false);
-        $response->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=2', false);
+        $response->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;usage=unused&amp;page=2', false);
         $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
 
         $pageTwo = $this->actingAs($user)->get(route('admin.block-types.index', [
@@ -296,14 +463,15 @@ class BlockTypesIndexTest extends TestCase
             'category' => 'pattern',
             'status' => 'published',
             'support' => 'user',
+            'usage' => 'unused',
             'page' => 2,
         ]));
 
         $pageTwo->assertOk();
         $pageTwo->assertSee('aria-current="page">2</span>', false);
         $pageTwo->assertSee('16-30/35', false);
-        $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=1', false);
-        $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;page=3', false);
+        $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;usage=unused&amp;page=1', false);
+        $pageTwo->assertSee('search=Pattern&amp;category=pattern&amp;status=published&amp;support=user&amp;usage=unused&amp;page=3', false);
     }
 
     #[Test]
@@ -320,5 +488,45 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('Try changing your filters.');
         $response->assertSee('>Reset<', false);
         $response->assertDontSee('<table class="wb-table', false);
+    }
+
+    private function createBlockUsingType(BlockType $blockType): Block
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $slotType = SlotType::query()->firstOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        );
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Usage Page '.$blockType->slug,
+            'slug' => 'usage-page-'.$blockType->slug,
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Usage Page '.$blockType->name, 'slug' => 'usage-page-'.$blockType->slug, 'path' => '/usage/'.$blockType->slug],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        return Block::query()->create([
+            'page_id' => $page->id,
+            'type' => $blockType->slug,
+            'block_type_id' => $blockType->id,
+            'source_type' => $blockType->source_type ?? 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Usage block',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
     }
 }

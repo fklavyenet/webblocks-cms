@@ -6,6 +6,8 @@ WebBlocks CMS includes install-level operational tools for updates, backups, and
 
 `Settings` also lives under the admin `System` navigation because it controls install-level project identity, locale, timezone, privacy, version, and environment settings.
 
+`Admin -> System -> Block Types` also serves as an install-level catalog inspection screen. Its `Support` filter is for block capability and content-source metadata, while its `Usage` filter is for actual live usage counts from the `blocks` table so admins can review used versus unused block type rows.
+
 `Maintenance` remains the operational tools group for:
 
 - Visitor Reports

@@ -25,6 +25,7 @@ class BlockTypeController extends Controller
             'category' => $this->normalizedFilter((string) $request->string('category'), $categories),
             'status' => $this->normalizedFilter((string) $request->string('status'), $statuses),
             'support' => $this->normalizedSupportFilter((string) $request->string('support')),
+            'usage' => $this->normalizedUsageFilter((string) $request->string('usage')),
         ];
 
         $supportedAdminSlugs = array_fill_keys($adminSupportedSlugs, true);
@@ -114,6 +115,12 @@ class BlockTypeController extends Controller
             $query->where('status', $filters['status']);
         }
 
+        match ($filters['usage']) {
+            'used' => $query->has('blocks'),
+            'unused' => $query->doesntHave('blocks'),
+            default => null,
+        };
+
         match ($filters['support']) {
             'system' => $query->where('is_system', true),
             'user' => $query->where('is_system', false),
@@ -178,6 +185,19 @@ class BlockTypeController extends Controller
     private function normalizedSupportFilter(string $value): string
     {
         return array_key_exists($value, $this->supportOptions()) ? $value : '';
+    }
+
+    private function usageOptions(): array
+    {
+        return [
+            'used' => 'Used',
+            'unused' => 'Unused',
+        ];
+    }
+
+    private function normalizedUsageFilter(string $value): string
+    {
+        return array_key_exists($value, $this->usageOptions()) ? $value : '';
     }
 
     private function dedicatedAdminSupportedSlugs(): array

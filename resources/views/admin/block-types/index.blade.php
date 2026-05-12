@@ -2,7 +2,7 @@
 
 @section('content')
     @php
-        $hasActiveFilters = $filters['search'] !== '' || $filters['category'] !== '' || $filters['status'] !== '' || $filters['support'] !== '';
+        $hasActiveFilters = $filters['search'] !== '' || $filters['category'] !== '' || $filters['status'] !== '' || $filters['support'] !== '' || $filters['usage'] !== '';
     @endphp
 
     @include('admin.partials.page-header', [
@@ -40,6 +40,17 @@
                         'value' => $filters['status'],
                         'placeholder' => 'All statuses',
                         'options' => collect($statuses)->mapWithKeys(fn (string $status) => [$status => ucfirst(str_replace('_', ' ', $status))])->all(),
+                    ],
+                    [
+                        'id' => 'block_types_usage',
+                        'name' => 'usage',
+                        'label' => 'Usage',
+                        'value' => $filters['usage'],
+                        'placeholder' => 'All usage',
+                        'options' => [
+                            'used' => 'Used',
+                            'unused' => 'Unused',
+                        ],
                     ],
                     [
                         'id' => 'block_types_support',
