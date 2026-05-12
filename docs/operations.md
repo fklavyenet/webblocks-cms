@@ -27,7 +27,17 @@ The update screen can report states such as:
 - update server unavailable
 - invalid or unsupported response
 
-The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, and records the update run before persisting the installed version.
+The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, synchronizes the core database-backed block type catalog, and records the update run before persisting the installed version.
+
+Core block type synchronization now happens automatically during System Updates after migrations complete. Existing installs therefore refresh shipped block type definitions such as `Header`, `Rich Text`, `TOC`, and `Quote` without requiring a separate manual seed step.
+
+For manual maintenance or recovery on an existing install, admins and developers can also run:
+
+```bash
+ddev artisan block-types:sync-core
+```
+
+That command safely upserts core CMS block types, leaves install-specific custom block types untouched, and can be run repeatedly without creating duplicate rows.
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 

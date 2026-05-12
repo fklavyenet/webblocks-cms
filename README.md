@@ -226,7 +226,9 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 
 ## Developer Notes
 
-- Refresh the product block catalog on an existing install with `ddev artisan db:seed --class=BlockTypeSeeder`. The seeder safely upserts product-owned block types such as `Header`, `Table`, `TOC`, `Quote`, and `Rich Text` without duplicating rows, and removes the legacy `heading` catalog row only when no live published blocks still reference it.
+- Refresh the core CMS block type catalog on an existing install with `ddev artisan block-types:sync-core`. The sync safely upserts product-owned block types such as `Header`, `Table`, `TOC`, `Quote`, and `Rich Text` without duplicating rows or overwriting install-specific custom block types.
+- In-app System Updates now run the core block type catalog sync automatically after migrations and before the installed version is marked complete, so existing installs stay aligned with the current shipped CMS block catalog during upgrades.
+- `BlockTypeSeeder` still uses the shared core block type sync path for fresh installs and keeps the existing legacy compatibility behavior, including drafting non-core rows and removing the legacy `heading` catalog row only when no live published blocks still reference it.
 - In the admin layout, the mobile or narrow sidebar uses the standard WebBlocks UI sidebar contract, including a shell-local `data-wb-sidebar-backdrop`, so outside clicks close the sidebar without inline Blade scripts.
 - Admin chrome product identity is fixed to `WebBlocks CMS`, `A modern block-based CMS`, and `WebBlocks CMS v{VERSION}` from `App\Support\WebBlocks`. System Settings and editable site fields do not change those labels.
 - Admin form actions belong in the owning card or modal footer, not a separate action-only card. Card footers and modal footers use the same placement: primary action first, cancel or secondary action second, and delete or destructive action last in a separate end-aligned danger group when present. Non-destructive footer actions start on the left, and page headers stay focused on navigation and context actions instead of form submit actions.

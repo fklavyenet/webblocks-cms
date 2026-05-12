@@ -11,6 +11,7 @@ use App\Console\Commands\SiteImportCommand;
 use App\Console\Commands\SitePromotionApplyCommand;
 use App\Console\Commands\SitePromotionDryRunCommand;
 use App\Console\Commands\SitePromotionInspectCommand;
+use App\Console\Commands\SyncCoreBlockTypesCommand;
 use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ProjectInitCommand::class,
         ResetPrimitiveBlocksCommand::class,
         SearchRebuildCommand::class,
+        SyncCoreBlockTypesCommand::class,
         SyncWebBlocksUiIconsCommand::class,
         SiteExportCommand::class,
         SiteImportCommand::class,

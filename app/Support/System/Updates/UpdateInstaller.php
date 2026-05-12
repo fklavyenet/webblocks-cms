@@ -93,6 +93,7 @@ class UpdateInstaller
         foreach ([
             ['migrate', '--force'],
             ['db:seed', '--class='.CoreCatalogSeeder::class, '--force'],
+            ['block-types:sync-core', '--force'],
             ['config:clear'],
             ['view:clear'],
             ['cache:clear'],

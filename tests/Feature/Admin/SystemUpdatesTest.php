@@ -145,6 +145,12 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
+        $this->assertCommandOrder([
+            'php artisan migrate --force',
+            'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force',
+            'php artisan block-types:sync-core --force',
+            'php artisan config:clear',
+        ]);
 
         $backup = SystemBackup::query()->latest()->first();
         $this->assertNotNull($backup);
@@ -187,6 +193,38 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Command failed: php artisan migrate --force', (string) $run->output);
         $this->assertStringNotContainsString('php-fpm', (string) $run->output);
         $this->assertContains('php artisan up', $runner->commands);
+    }
+
+    #[Test]
+    public function failed_update_flow_reports_core_block_type_sync_failures_after_migrations(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        Storage::fake('backups');
+
+        [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+
+        config()->set('webblocks-updates.installer.target_path', $targetRoot);
+        $runner = $this->bindFakeCommandRunner([
+            'php artisan block-types:sync-core --force' => 1,
+        ]);
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
+
+        Http::fake([
+            'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+        ]);
+
+        $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHasErrors(['system_update']);
+
+        $run = SystemUpdateRun::query()->latest()->first();
+        $this->assertNotNull($run);
+        $this->assertStringContainsString('Command failed: php artisan block-types:sync-core --force', (string) $run->output);
+        $this->assertSame('php artisan migrate --force', $runner->commands[2] ?? null);
+        $this->assertSame('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands[3] ?? null);
+        $this->assertSame('php artisan block-types:sync-core --force', $runner->commands[4] ?? null);
     }
 
     #[Test]
@@ -442,6 +480,23 @@ class SystemUpdatesTest extends TestCase
         $this->temporaryDirectories[] = $path;
 
         return $path;
+    }
+
+    private function assertCommandOrder(array $expectedCommands): void
+    {
+        $this->assertNotNull($this->fakeCommandRunner);
+
+        $commands = $this->fakeCommandRunner->commands;
+        $lastIndex = -1;
+
+        foreach ($expectedCommands as $expectedCommand) {
+            $index = array_search($expectedCommand, $commands, true);
+
+            $this->assertIsInt($index, 'Failed asserting that command ['.$expectedCommand.'] was executed.');
+            $this->assertGreaterThan($lastIndex, $index, 'Failed asserting command order for ['.$expectedCommand.'].');
+
+            $lastIndex = $index;
+        }
     }
 
     protected function tearDown(): void

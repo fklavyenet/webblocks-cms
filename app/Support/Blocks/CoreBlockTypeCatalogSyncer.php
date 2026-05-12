@@ -1,0 +1,370 @@
+<?php
+
+namespace App\Support\Blocks;
+
+use App\Models\BlockType;
+
+class CoreBlockTypeCatalogSyncer
+{
+    public function sync(): array
+    {
+        $summary = [
+            'created' => 0,
+            'updated' => 0,
+            'unchanged' => 0,
+            'skipped' => 0,
+        ];
+
+        foreach ($this->definitions() as $definition) {
+            $blockType = BlockType::query()->where('slug', $definition['slug'])->first();
+
+            if (! $blockType) {
+                BlockType::query()->create($definition);
+                $summary['created']++;
+
+                continue;
+            }
+
+            $changes = [];
+
+            foreach ($this->updatableColumns() as $column) {
+                if ($blockType->{$column} !== $definition[$column]) {
+                    $changes[$column] = $definition[$column];
+                }
+            }
+
+            if ($changes === []) {
+                $summary['unchanged']++;
+
+                continue;
+            }
+
+            $blockType->forceFill($changes)->save();
+            $summary['updated']++;
+        }
+
+        return $summary;
+    }
+
+    public function slugs(): array
+    {
+        return array_column($this->definitions(), 'slug');
+    }
+
+    public function definitions(): array
+    {
+        return [
+            [
+                'name' => 'Header',
+                'slug' => 'header',
+                'category' => 'content',
+                'description' => 'Primitive translated heading text with a shared heading level.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 5,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Plain Text',
+                'slug' => 'plain_text',
+                'category' => 'content',
+                'description' => 'Primitive translated paragraph text rendered as a plain paragraph element.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 6,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Rich Text',
+                'slug' => 'rich-text',
+                'category' => 'content',
+                'description' => 'Translated body copy with a small safe HTML subset for inline editorial formatting.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 6,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Section',
+                'slug' => 'section',
+                'category' => 'layout',
+                'description' => 'Top-level layout wrapper for nested page blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 2,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Container',
+                'slug' => 'container',
+                'category' => 'layout',
+                'description' => 'Width-constrained layout wrapper for nested page blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 3,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Cluster',
+                'slug' => 'cluster',
+                'category' => 'layout',
+                'description' => 'Inline layout wrapper for grouping child blocks such as button links.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 4,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Grid',
+                'slug' => 'grid',
+                'category' => 'layout',
+                'description' => 'Responsive grid wrapper for nested card and content blocks.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 5,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Content Header',
+                'slug' => 'content_header',
+                'category' => 'pattern',
+                'description' => 'Docs-style content header with title, intro text, and optional metadata items.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 1,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Code',
+                'slug' => 'code',
+                'category' => 'content',
+                'description' => 'Translated code snippet body with a shared optional syntax language label.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 7,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Button Link',
+                'slug' => 'button_link',
+                'category' => 'content',
+                'description' => 'Translated CTA label with a shared URL, target, and WebBlocks button variant.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 7,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Card',
+                'slug' => 'card',
+                'category' => 'content',
+                'description' => 'Translated card content with optional shared link settings for grid-based feature sections.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 8,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Stat Card',
+                'slug' => 'stat-card',
+                'category' => 'content',
+                'description' => 'Translated metric or stat card with eyebrow label, value, and description.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 9,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Table',
+                'slug' => 'table',
+                'category' => 'content',
+                'description' => 'Structured table rows with optional header-row formatting.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 10,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Quote',
+                'slug' => 'quote',
+                'category' => 'content',
+                'description' => 'Editorial quote or testimonial with optional attribution.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 11,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Link List',
+                'slug' => 'link-list',
+                'category' => 'navigation',
+                'description' => 'WebBlocks UI link list container for structured navigation rows.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 12,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Link List Item',
+                'slug' => 'link-list-item',
+                'category' => 'navigation',
+                'description' => 'One row in a WebBlocks UI link list with title, meta, description, and URL.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 13,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'TOC',
+                'slug' => 'toc',
+                'category' => 'navigation',
+                'description' => 'Table of contents built from anchored Header blocks on the same page.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 14,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Alert',
+                'slug' => 'alert',
+                'category' => 'pattern',
+                'description' => 'Translated alert or callout content with a shared WebBlocks UI alert variant.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 15,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Breadcrumb',
+                'slug' => 'breadcrumb',
+                'category' => 'navigation',
+                'description' => 'Renders the current page breadcrumb trail from the active site and translation context.',
+                'source_type' => 'static',
+                'is_system' => true,
+                'is_container' => false,
+                'sort_order' => 16,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Header Actions',
+                'slug' => 'header-actions',
+                'category' => 'navigation',
+                'description' => 'Renders public header utility actions such as color mode and accent controls.',
+                'source_type' => 'static',
+                'is_system' => true,
+                'is_container' => false,
+                'sort_order' => 17,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Brand',
+                'slug' => 'sidebar-brand',
+                'category' => 'navigation',
+                'description' => 'Renders the docs sidebar brand link inside the aside shell wrapper.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 18,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Navigation',
+                'slug' => 'sidebar-navigation',
+                'category' => 'navigation',
+                'description' => 'Renders docs sidebar navigation wrappers and accepts sidebar nav items or groups.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 19,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Nav Item',
+                'slug' => 'sidebar-nav-item',
+                'category' => 'navigation',
+                'description' => 'Renders one docs sidebar navigation link with optional icon and active matching.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 20,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Nav Group',
+                'slug' => 'sidebar-nav-group',
+                'category' => 'navigation',
+                'description' => 'Renders one collapsible docs sidebar navigation group with child sidebar nav items.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => true,
+                'sort_order' => 21,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Search Form',
+                'slug' => 'search-form',
+                'category' => 'navigation',
+                'description' => 'Public site search form that targets the current site and locale search route.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 23,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'Sidebar Footer',
+                'slug' => 'sidebar-footer',
+                'category' => 'navigation',
+                'description' => 'Renders the docs sidebar footer callout and version text inside the aside shell wrapper.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 22,
+                'status' => 'published',
+            ],
+            [
+                'name' => 'HTML (Trusted)',
+                'slug' => 'html',
+                'category' => 'advanced',
+                'description' => 'Render trusted static HTML. Use Rich Text for normal body copy and Code for escaped snippets. Do not paste untrusted scripts or third-party embeds here.',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 99,
+                'status' => 'published',
+            ],
+        ];
+    }
+
+    private function updatableColumns(): array
+    {
+        return [
+            'name',
+            'category',
+            'description',
+            'source_type',
+            'is_system',
+            'is_container',
+            'sort_order',
+            'status',
+        ];
+    }
+}
