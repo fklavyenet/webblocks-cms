@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
@@ -86,6 +87,59 @@ class PublicSharedSlotRenderingTest extends TestCase
         $response->assertSee('Shared Header Child', false);
         $response->assertDontSee('Page Header Content', false);
         $response->assertDontSee('<main data-wb-slot="header"', false);
+    }
+
+    #[Test]
+    public function sticky_navbar_can_render_from_a_shared_header_slot_without_failing(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource();
+
+        $navbar = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 100)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => -20,
+            'settings' => json_encode([
+                'menu_key' => 'primary',
+                'sticky_mode' => 'sticky',
+                'visual_variant' => 'light',
+                'compact' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+        $navbar->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Shared Brand',
+        ]);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $navbar->id,
+            'parent_id' => null,
+            'sort_order' => -20,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $context['page']->site_id,
+            'menu_key' => 'primary',
+            'title' => 'Getting Started',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $context['page']->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<nav data-wb-slot="header" class="wb-navbar wb-navbar-glass wb-w-full">', false);
+        $response->assertSee('Shared Brand', false);
+        $response->assertSee('Getting Started', false);
+        $response->assertSee('data-wb-block-type="sticky-navbar"', false);
     }
 
     #[Test]

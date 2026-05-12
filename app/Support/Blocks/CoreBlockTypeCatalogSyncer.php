@@ -275,6 +275,17 @@ class CoreBlockTypeCatalogSyncer
                 'status' => 'published',
             ],
             [
+                'name' => 'Sticky Navbar',
+                'slug' => 'sticky-navbar',
+                'category' => 'navigation',
+                'description' => 'Renders a reusable system navigation bar from site navigation items, with optional logo and brand settings.',
+                'source_type' => 'static',
+                'is_system' => true,
+                'is_container' => false,
+                'sort_order' => 18,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'Sidebar Brand',
                 'slug' => 'sidebar-brand',
                 'category' => 'navigation',
@@ -282,7 +293,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 18,
+                'sort_order' => 19,
                 'status' => 'published',
             ],
             [
@@ -293,7 +304,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 19,
+                'sort_order' => 20,
                 'status' => 'published',
             ],
             [
@@ -304,7 +315,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 20,
+                'sort_order' => 21,
                 'status' => 'published',
             ],
             [
@@ -315,7 +326,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 21,
+                'sort_order' => 22,
                 'status' => 'published',
             ],
             [
@@ -326,7 +337,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 23,
+                'sort_order' => 24,
                 'status' => 'published',
             ],
             [
@@ -337,7 +348,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 22,
+                'sort_order' => 23,
                 'status' => 'published',
             ],
             [

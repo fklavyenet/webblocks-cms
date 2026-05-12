@@ -49,6 +49,7 @@ class BlockRequest extends FormRequest
         $isAlert = $selectedBlockType?->slug === 'alert';
         $isBreadcrumb = $selectedBlockType?->slug === 'breadcrumb';
         $isHeaderActions = $selectedBlockType?->slug === 'header-actions';
+        $isStickyNavbar = $selectedBlockType?->slug === 'sticky-navbar';
         $isSidebarBrand = $selectedBlockType?->slug === 'sidebar-brand';
         $isSidebarNavigation = $selectedBlockType?->slug === 'sidebar-navigation';
         $isSidebarNavItem = $selectedBlockType?->slug === 'sidebar-nav-item';
@@ -165,6 +166,13 @@ class BlockRequest extends FormRequest
             'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_search' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
+            'sticky_navbar_menu_key' => [$isStickyNavbar ? 'required' : 'prohibited', Rule::in(NavigationItem::menuKeys())],
+            'sticky_navbar_logo_path' => [$isStickyNavbar ? 'nullable' : 'prohibited', 'string', 'max:2048'],
+            'sticky_navbar_brand_url' => [$isStickyNavbar ? 'nullable' : 'prohibited', 'string', 'max:2048'],
+            'sticky_navbar_mode' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['sticky', 'fixed', 'static'])],
+            'sticky_navbar_variant' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['light', 'transparent', 'dark'])],
+            'sticky_navbar_compact' => [$isStickyNavbar ? 'nullable' : 'prohibited', 'boolean'],
+            'sticky_navbar_container_width' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
             'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
             'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
             'sidebar_navigation_active_matching' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(['path', 'current-page', 'exact'])],
@@ -243,6 +251,26 @@ class BlockRequest extends FormRequest
 
                 if (! $asset?->isImage()) {
                     $validator->errors()->add('asset_id', 'Sidebar brand logo must be an image from Media.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'sticky-navbar') {
+                $brandUrl = trim((string) $this->input('sticky_navbar_brand_url', ''));
+
+                if ($brandUrl !== '' && ! $this->isAllowedLinkListItemUrl($brandUrl)) {
+                    $validator->errors()->add('sticky_navbar_brand_url', 'Brand URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
+                }
+
+                if ($this->filled('asset_id')) {
+                    $asset = Asset::query()->find((int) $this->input('asset_id'));
+
+                    if (! $asset?->isImage()) {
+                        $validator->errors()->add('asset_id', 'Sticky navbar logo must be an image from Media.');
+                    }
+                }
+
+                if ($page && $page->site && ! NavigationItem::query()->forSite($page->site_id)->forMenu((string) $this->input('sticky_navbar_menu_key'))->visible()->exists()) {
+                    $validator->errors()->add('sticky_navbar_menu_key', 'Selected navigation menu has no visible items for this site yet. Create navigation items first.');
                 }
             }
 
@@ -830,6 +858,61 @@ class BlockRequest extends FormRequest
                 $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
+            if ($blockType?->slug === 'sticky-navbar') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedStickyNavbarEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedStickyNavbarEdit) {
+                    $brandUrl = trim((string) ($data['sticky_navbar_brand_url'] ?? ''));
+                    $logoPath = trim((string) ($data['sticky_navbar_logo_path'] ?? ''));
+                    $stickyMode = trim((string) ($data['sticky_navbar_mode'] ?? 'sticky'));
+                    $visualVariant = trim((string) ($data['sticky_navbar_variant'] ?? 'light'));
+                    $containerWidth = trim((string) ($data['sticky_navbar_container_width'] ?? ''));
+
+                    $settings['menu_key'] = $data['sticky_navbar_menu_key'] ?? NavigationItem::MENU_PRIMARY;
+                    $settings['sticky_mode'] = in_array($stickyMode, ['sticky', 'fixed', 'static'], true) ? $stickyMode : 'sticky';
+                    $settings['visual_variant'] = in_array($visualVariant, ['light', 'transparent', 'dark'], true) ? $visualVariant : 'light';
+                    $settings['compact'] = (bool) ($data['sticky_navbar_compact'] ?? true);
+
+                    if ($brandUrl !== '') {
+                        $settings['brand_url'] = $brandUrl;
+                    } else {
+                        unset($settings['brand_url']);
+                    }
+
+                    if ($logoPath !== '') {
+                        $settings['logo_path'] = $logoPath;
+                    } else {
+                        unset($settings['logo_path']);
+                    }
+
+                    if (in_array($containerWidth, ['sm', 'md', 'lg', 'xl', 'full'], true)) {
+                        $settings['width'] = $containerWidth;
+                    } else {
+                        unset($settings['width']);
+                    }
+                }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['asset_id'] = $isTranslatedStickyNavbarEdit
+                    ? ($this->route('block')?->asset_id)
+                    : $data['asset_id'];
+                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
+            }
+
             if ($blockType?->slug === 'sidebar-brand') {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
@@ -1158,6 +1241,7 @@ class BlockRequest extends FormRequest
         unset($data['text'], $data['level'], $data['anchor']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
+        unset($data['sticky_navbar_menu_key'], $data['sticky_navbar_logo_path'], $data['sticky_navbar_brand_url'], $data['sticky_navbar_mode'], $data['sticky_navbar_variant'], $data['sticky_navbar_compact'], $data['sticky_navbar_container_width']);
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
         unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
         unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);

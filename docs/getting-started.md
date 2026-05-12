@@ -37,6 +37,15 @@ At a high level, you can:
 
 Media and navigation are managed separately from the page editor, but they work together with page content.
 
+For reusable public headers, the recommended pattern is:
+
+- build the menu in `Admin -> Navigation`
+- create or edit a `Header` Shared Slot for the site
+- add `Sticky Navbar` to that Shared Slot
+- choose the navigation menu there instead of entering links manually
+
+The first Sticky Navbar release is desktop-first. It supports sticky, fixed, or static placement plus light, transparent, or dark variants, but it does not add a mobile collapse menu yet.
+
 In the slot editor:
 
 - the block picker opens on a curated `Common` tab by default

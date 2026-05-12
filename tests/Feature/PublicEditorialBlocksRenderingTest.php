@@ -28,9 +28,122 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     #[Test]
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
-        foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
+        foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sticky-navbar', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function sticky_navbar_renders_brand_logo_menu_items_and_active_state(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/sticky-navbar-logo.png',
+            'filename' => 'sticky-navbar-logo.png',
+            'original_name' => 'sticky-navbar-logo.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 18, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'asset_id' => $asset->id,
+            'settings' => json_encode([
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+                'brand_url' => '/',
+                'sticky_mode' => 'sticky',
+                'visual_variant' => 'light',
+                'compact' => true,
+                'width' => 'lg',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'FKlavye',
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'About',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Contact',
+            'link_type' => NavigationItem::LINK_CUSTOM_URL,
+            'url' => '/contact',
+            'position' => 2,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-block-type="sticky-navbar"', false);
+        $response->assertSee('class="wb-navbar wb-cms-sticky-navbar wb-cms-sticky-navbar-light wb-cms-sticky-navbar-mode-sticky is-compact"', false);
+        $response->assertSee('class="wb-container wb-container-lg"', false);
+        $response->assertSee('sticky-navbar-logo.png', false);
+        $response->assertSee('>FKlavye</span>', false);
+        $response->assertSee('href="/" class="wb-cms-sticky-navbar-brand wb-no-decoration"', false);
+        $response->assertSee('href="/p/about" class="wb-cms-sticky-navbar-link is-active" aria-current="page"', false);
+        $response->assertSee('href="/contact" class="wb-cms-sticky-navbar-link"', false);
+    }
+
+    #[Test]
+    public function sticky_navbar_falls_back_to_site_name_and_home_url_when_brand_fields_are_blank(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $page->site->update(['display_name' => 'Site Brand']);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Sticky Navbar', 18, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'menu_key' => NavigationItem::MENU_PRIMARY,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'About',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('>Site Brand</span>', false);
+        $response->assertSee('href="/" class="wb-cms-sticky-navbar-brand wb-no-decoration"', false);
+        $response->assertDontSee('wb-cms-sticky-navbar-logo', false);
     }
 
     #[Test]

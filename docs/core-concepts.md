@@ -107,6 +107,8 @@ Blocks are the reusable editorial units of the CMS.
 - Translated data holds user-facing text for each locale.
 - User-facing content is not stored in arbitrary JSON blobs.
 
+System navigation blocks follow the same relational rule. `Sticky Navbar` is a system-content navigation block that stores only reusable navbar configuration while reading its public menu links from site `navigation_items` rows. Editors do not paste or maintain navbar link JSON inside the block itself.
+
 This keeps content ownership clear across multisite, localization, revisions, and public rendering.
 
 ## Search

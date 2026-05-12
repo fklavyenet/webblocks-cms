@@ -25,7 +25,7 @@ class BlockSearchTextExtractorRegistry
             'accordion' => $this->fields($block, ['title', 'content']),
             'button', 'button_link', 'search-form' => $this->fields($block, ['title', 'subtitle', 'content']),
             'section', 'container', 'cluster', 'grid', 'columns', 'column_item', 'feature-grid', 'feature-item', 'cta' => $this->fields($block, ['title', 'subtitle', 'content', 'meta']),
-            'breadcrumb', 'header-actions', 'navigation-auto', 'menu', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group' => '',
+            'breadcrumb', 'header-actions', 'navigation-auto', 'menu', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sticky-navbar' => '',
             default => $this->fallback($block),
         };
     }

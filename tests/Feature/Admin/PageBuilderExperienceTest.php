@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
@@ -1032,6 +1033,84 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame('navigation', $headerActionsType->category);
         $this->assertTrue($headerActionsType->is_system);
         $this->assertFalse($headerActionsType->is_container);
+    }
+
+    #[Test]
+    public function sticky_navbar_is_seeded_as_a_published_navigation_system_block(): void
+    {
+        $this->seedFoundation();
+
+        $stickyNavbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+
+        $this->assertSame('Sticky Navbar', $stickyNavbarType->name);
+        $this->assertSame('published', $stickyNavbarType->status);
+        $this->assertSame('navigation', $stickyNavbarType->category);
+        $this->assertTrue($stickyNavbarType->is_system);
+        $this->assertFalse($stickyNavbarType->is_container);
+    }
+
+    #[Test]
+    public function sticky_navbar_form_is_dedicated_and_stores_system_navigation_settings_without_editorial_json_links(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
+        $stickyNavbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => 'primary',
+            'title' => 'About',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $stickyNavbarType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('Add Block: Sticky Navbar');
+        $formResponse->assertSee('Sticky Navbar is a system-owned navigation block', false);
+        $formResponse->assertSee('name="sticky_navbar_menu_key"', false);
+        $formResponse->assertSee('name="sticky_navbar_brand_url"', false);
+        $formResponse->assertSee('name="sticky_navbar_mode"', false);
+        $formResponse->assertSee('name="sticky_navbar_variant"', false);
+        $formResponse->assertSee('name="sticky_navbar_compact"', false);
+
+        $storeResponse = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $stickyNavbarType->id,
+            'sort_order' => 0,
+            'title' => 'FKlavye',
+            'sticky_navbar_menu_key' => 'primary',
+            'sticky_navbar_brand_url' => '/',
+            'sticky_navbar_mode' => 'sticky',
+            'sticky_navbar_variant' => 'light',
+            'sticky_navbar_compact' => '1',
+            'sticky_navbar_container_width' => 'lg',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'sticky-navbar')->firstOrFail();
+        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+
+        $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertSame('admin.blocks.types.sticky-navbar', $block->adminFormView());
+        $this->assertSame('pages.partials.blocks.sticky-navbar', $block->publicRenderView());
+        $this->assertSame('FKlavye', $block->textTranslations()->first()?->title);
+        $this->assertSame('primary', $settings['menu_key'] ?? null);
+        $this->assertSame('/', $settings['brand_url'] ?? null);
+        $this->assertSame('sticky', $settings['sticky_mode'] ?? null);
+        $this->assertSame('light', $settings['visual_variant'] ?? null);
+        $this->assertTrue((bool) ($settings['compact'] ?? false));
+        $this->assertSame('lg', $settings['width'] ?? null);
+        $this->assertStringNotContainsString('About', (string) $block->getRawOriginal('settings'));
+        $this->assertStringNotContainsString('/p/', (string) $block->getRawOriginal('settings'));
     }
 
     #[Test]

@@ -206,7 +206,7 @@ class Block extends Model
             return trim($this->cardVariant().' '.$childCount.' '.Str::plural('child block', $childCount));
         }
 
-        if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
+        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'sticky-navbar'], true)) {
             return 'Location: '.str($this->navigationLocation())->headline();
         }
 
@@ -609,7 +609,7 @@ class Block extends Model
     {
         $label = $this->typeName();
 
-        if ($this->typeSlug() === 'navigation-auto' || $this->typeSlug() === 'menu') {
+        if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'sticky-navbar'], true)) {
             return $label.' ('.str($this->navigationLocation())->headline().')';
         }
 
@@ -803,6 +803,62 @@ class Block extends Model
     public function navigationLocation(): string
     {
         return $this->navigationMenuKey();
+    }
+
+    public function stickyNavbarMenuKey(): string
+    {
+        return $this->navigationMenuKey();
+    }
+
+    public function stickyNavbarMode(): string
+    {
+        $mode = trim((string) $this->setting('sticky_mode', 'sticky'));
+
+        return in_array($mode, ['sticky', 'fixed', 'static'], true) ? $mode : 'sticky';
+    }
+
+    public function stickyNavbarVariant(): string
+    {
+        $variant = trim((string) $this->setting('visual_variant', 'light'));
+
+        return in_array($variant, ['light', 'transparent', 'dark'], true) ? $variant : 'light';
+    }
+
+    public function stickyNavbarCompact(): bool
+    {
+        $settings = $this->decodedSettings();
+
+        if (! is_array($settings) || ! array_key_exists('compact', $settings)) {
+            return true;
+        }
+
+        return (bool) $this->setting('compact', true);
+    }
+
+    public function stickyNavbarLogoPath(): ?string
+    {
+        $path = trim((string) $this->setting('logo_path', ''));
+
+        return $path !== '' ? $path : null;
+    }
+
+    public function stickyNavbarBrandUrl(): ?string
+    {
+        $url = trim((string) $this->setting('brand_url', ''));
+
+        return $url !== '' ? $url : null;
+    }
+
+    public function stickyNavbarContainerWidthClass(): ?string
+    {
+        return match ($this->appearanceSetting('width')) {
+            'sm' => 'wb-container-sm',
+            'md' => 'wb-container-md',
+            'lg' => 'wb-container-lg',
+            'xl' => 'wb-container-xl',
+            'full' => 'wb-container-full',
+            default => null,
+        };
     }
 
     public function sidebarLinkUrl(): ?string
