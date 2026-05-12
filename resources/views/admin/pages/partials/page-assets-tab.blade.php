@@ -5,11 +5,10 @@
     $suggestedBase = '/site/'.$siteHandle.'/pages/'.$pageSlug.'/';
     $pageReturnUrl = $pageReturnUrl ?? request('return_url') ?? session('page_return_url');
     $closeUrl = $pageAssetsTab['closeUrl'] ?? route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'return_url' => $pageReturnUrl]));
-    $compactMode = $compactMode ?? false;
 @endphp
 
-<div class="wb-card wb-card-muted {{ $compactMode ? 'wb-admin-page-edit-assets-card' : '' }}">
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+<div class="wb-card wb-card-muted">
+    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
         <div class="wb-stack wb-gap-1">
             <strong>Page Assets</strong>
             <span class="wb-text-sm wb-text-muted">Manage local <code>/site/...</code> CSS and JS files for this page only.</span>
@@ -23,7 +22,7 @@
         @endif
     </div>
 
-    <div class="wb-card-body {{ $compactMode ? 'wb-stack wb-gap-3 wb-admin-page-edit-card-body' : 'wb-stack wb-gap-4' }}">
+    <div class="wb-card-body wb-stack wb-gap-4">
         <div class="wb-text-sm wb-text-muted">Suggested base: <code title="{{ $suggestedBase }}">{{ $suggestedBase }}</code></div>
 
         @if (! $canManagePageAssets && $pageAssets->isNotEmpty())
@@ -43,8 +42,8 @@
                 @endif
             </div>
         @else
-            <div class="wb-table-wrap wb-admin-page-edit-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover {{ $compactMode ? 'wb-admin-page-edit-assets-table' : '' }}">
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
                             <th>Type</th>
@@ -58,15 +57,15 @@
                     <tbody>
                         @foreach ($pageAssets as $pageAsset)
                             <tr>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-assets-type-cell' : '' }}">
+                                <td>
                                     <span class="wb-status-pill {{ $pageAsset->type === 'js' ? 'wb-status-pending' : 'wb-status-info' }}">{{ strtoupper($pageAsset->type) }}</span>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell' : '' }}">
-                                    <div class="{{ $compactMode ? 'wb-stack wb-gap-0' : 'wb-stack wb-gap-1' }}">
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
                                         <span title="{{ $pageAsset->path }}"><code>{{ $pageAsset->path }}</code></span>
                                     </div>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell' : '' }}">
+                                <td>
                                     <div class="wb-cluster wb-cluster-2 wb-text-sm">
                                         <span>{{ $pageAsset->type === 'js' ? 'head (legacy body_end accepted)' : 'head' }}</span>
                                         @if ($pageAsset->type === 'js' && $pageAsset->is_defer)
@@ -80,11 +79,11 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-assets-status-cell' : '' }}">
+                                <td>
                                     <span class="wb-status-pill {{ $pageAsset->is_enabled ? 'wb-status-active' : 'wb-status-danger' }}">{{ $pageAsset->is_enabled ? 'Enabled' : 'Disabled' }}</span>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-assets-sort-cell' : '' }}">{{ $pageAsset->sort_order }}</td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-assets-actions-cell' : '' }}">
+                                <td>{{ $pageAsset->sort_order }}</td>
+                                <td>
                                     @if ($canManagePageAssets)
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-edit" title="Edit asset" aria-label="Edit asset" aria-haspopup="dialog">

@@ -130,7 +130,6 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('Page Assets');
         $editResponse->assertSee('Slots');
         $editResponse->assertSee('Translations');
-        $editResponse->assertSee('Page Overview');
         $editResponse->assertSee('Add Slot');
         $editResponse->assertDontSee('Site Context');
         $editResponse->assertDontSee('Select slot');
@@ -154,9 +153,6 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('action="'.route('admin.pages.slots.move-up', [$page, $page->slots()->firstOrFail()]).'"', false);
         $editResponse->assertSee('action="'.route('admin.pages.slots.destroy', [$page, $pageSlot]).'"', false);
         $editResponse->assertDontSee('name="slots[', false);
-        $editResponse->assertSee('class="wb-card wb-card-muted wb-admin-page-edit-overview-card"', false);
-        $editResponse->assertSee('class="wb-table wb-table-striped wb-table-hover wb-admin-page-edit-slots-table"', false);
-        $editResponse->assertSee('class="wb-table wb-table-striped wb-table-hover wb-admin-page-edit-translations-table"', false);
         $this->assertNotFalse($content);
         $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
         $this->assertFalse(str_contains($content, 'Site Context'));

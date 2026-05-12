@@ -8,10 +8,9 @@
     $canCreateSharedSlots = $canCreateSharedSlots ?? false;
     $sharedSlotSourcesAvailable = $sharedSlotSourcesAvailable ?? false;
     $pageReturnUrl = $pageReturnUrl ?? route('admin.pages.index', ['site' => $page->site_id]);
-    $compactMode = $compactMode ?? false;
 @endphp
 
-<div class="wb-card {{ $compactMode ? 'wb-admin-page-edit-slots-card' : '' }}">
+<div class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
         <div class="wb-stack wb-gap-1">
             <strong>Slots</strong>
@@ -49,7 +48,7 @@
         @endif
     </div>
 
-    <div class="wb-card-body {{ $compactMode ? 'wb-stack wb-gap-2 wb-admin-page-edit-card-body' : 'wb-stack wb-gap-3' }}">
+    <div class="wb-card-body wb-stack wb-gap-3">
         @error('slot_type_id')
             <div class="wb-alert wb-alert-danger">{{ $message }}</div>
         @enderror
@@ -64,8 +63,8 @@
                 <div class="wb-empty-text">Add Header, Main, Sidebar, or Footer to start defining the page structure.</div>
             </div>
         @else
-            <div class="wb-table-wrap wb-admin-page-edit-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover {{ $compactMode ? 'wb-admin-page-edit-slots-table' : '' }}">
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
                             <th>Slot</th>
@@ -103,16 +102,16 @@
                                     : $pageBlockCount.' '.($pageBlockCount === 1 ? 'page-owned block' : 'page-owned blocks');
                             @endphp
                             <tr>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell' : '' }}">
-                                    <div class="{{ $compactMode ? 'wb-stack wb-gap-0 wb-admin-page-edit-slot-meta' : 'wb-stack wb-gap-1' }}">
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
                                         <strong>{{ $slotName }}</strong>
                                         <div class="wb-cluster wb-cluster-2">
                                             <span class="wb-status-pill wb-status-info">{{ $pageSlot->slotSlug() }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell' : '' }}">
-                                    <div class="{{ $compactMode ? 'wb-stack wb-gap-0 wb-admin-page-edit-slot-source' : 'wb-stack wb-gap-1' }}">
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
                                         @if ($sourceType === PageSlot::SOURCE_TYPE_SHARED_SLOT && $sharedSlot)
                                             <strong>Shared Slot: {{ $sharedSlot->name }}</strong>
                                             <span class="wb-text-sm wb-text-muted"><code>{{ $sharedSlot->handle }}</code></span>
@@ -131,17 +130,17 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-slot-blocks-cell' : '' }}">
-                                    <div class="{{ $compactMode ? 'wb-stack wb-gap-0' : 'wb-stack wb-gap-1' }}">
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
                                         <strong>{{ $pageBlockCountLabel }}</strong>
                                         @if ($sourceType !== PageSlot::SOURCE_TYPE_PAGE && $pageBlockCount > 0)
                                             <span class="wb-text-sm wb-text-muted">Preserved</span>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="{{ $compactMode ? 'wb-admin-page-edit-table-cell wb-admin-page-edit-slot-actions-cell' : '' }}">
+                                <td>
                                     @if ($canEditContent)
-                                        <div class="wb-cluster wb-cluster-2 {{ $compactMode ? 'wb-admin-page-edit-slot-actions' : 'wb-flex-wrap' }}">
+                                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                                             @if ($sharedSlotSourcesAvailable)
                                                 <button
                                                     type="button"

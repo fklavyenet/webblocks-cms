@@ -2,7 +2,6 @@
 
 ## [Unreleased]
 
-- Compact the `Admin -> Pages -> Edit Page` layout by merging the top site and workflow summaries into one denser Page Overview card and tightening the Page Settings, Slots, and Translations cards without changing edit behavior.
 - Compact the `Admin -> Pages` listing rows so title, locale metadata, public paths, last-edited metadata, and actions stay easier to scan without changing filters, sorting, pagination, or row actions.
 
 ## 1.25.3
