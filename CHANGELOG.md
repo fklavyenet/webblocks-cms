@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
+## 1.26.0
+
 - Add a first-class `Admin -> Pages -> Import Page` modal workflow that imports one `webblocks.cms.page.v1` JSON payload into a selected site as a new draft page, including page translations, slots, page-owned block trees, supported block translations, and safe local page asset metadata.
+- Add documented single-page import schema guidance and a sample `webblocks.cms.page.v1` payload so admins can prepare importable page JSON outside project-specific commands.
 - Merge the Edit Page top site, domain, and editorial workflow summary into one `Page Overview` card while preserving the existing workflow actions and status information.
 - Compact the `Admin -> Pages` listing rows so title, locale metadata, public paths, last-edited metadata, and actions stay easier to scan without changing filters, sorting, pagination, or row actions.
 
