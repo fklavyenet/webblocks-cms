@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.26.1
+
+- Synchronize the core database-backed block type catalog during System Updates so existing installs create missing shipped block types and refresh core metadata without overwriting install-specific custom block types.
+
 ## 1.26.0
 
 - Add a first-class `Admin -> Pages -> Import Page` modal workflow that imports one `webblocks.cms.page.v1` JSON payload into a selected site as a new draft page, including page translations, slots, page-owned block trees, supported block translations, and safe local page asset metadata.
