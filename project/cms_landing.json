@@ -1,7 +1,6 @@
 {
   "schema": "webblocks.cms.page.v1",
   "page": {
-    "layout_slug": "landing",
     "public_shell": "default"
   },
   "translations": {
