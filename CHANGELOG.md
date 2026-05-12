@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.26.2
+
+- Add a dedicated `Usage` filter to the `Admin -> System -> Block Types` listing so admins can compare used versus unused block type rows separately from the existing Support metadata filter.
+
 ## 1.26.1
 
 - Synchronize the core database-backed block type catalog during System Updates so existing installs create missing shipped block types and refresh core metadata without overwriting install-specific custom block types.
