@@ -110,6 +110,37 @@ It also does not require the derived public search index as portable content:
 - export/import payloads do not need search rows to recreate the site
 - use `ddev artisan search:rebuild` after import when you need fresh search rows immediately
 
+## Single Page JSON Import
+
+Single Page JSON Import is the page-scoped admin workflow for creating one new page from a JSON file.
+
+- admin path: `Admin -> Pages -> Import Page`
+- scope: one new page in one selected site
+- schema: `webblocks.cms.page.v1`
+- result: always creates a new draft page in V1
+- it does not update an existing page in V1
+- it does not import source page revision history
+- it does not replace the site-level `Export / Import` workflow
+
+What V1 imports:
+
+- page core fields needed for draft creation, including page-level `Public Shell`
+- page translations keyed by locale code for enabled target-site locales
+- page slots, including `shared_slot` references by compatible same-site Shared Slot handle
+- page-owned block trees with nested parent-child order
+- supported block translation rows for translated block families
+- page asset metadata for valid local `/site/...` CSS and JS paths
+
+V1 constraints:
+
+- target-site translated path conflicts block the import before writes
+- Shared Slot references must already exist on the target site and be compatible by site, active state, shell, and slot name
+- the importer does not create Shared Slots automatically
+- unsupported schema values are rejected explicitly
+- the importer is transactional and leaves no partial page when validation fails
+
+See `docs/examples/page-import-v1.json` for the sample payload.
+
 ## Site Promotion
 
 Site Promotion is the package-based workflow for promoting site-owned content from a source package into an existing target site.

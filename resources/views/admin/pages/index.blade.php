@@ -13,6 +13,8 @@
         'direction' => $filters['direction'] !== 'desc' ? $filters['direction'] : null,
         'page' => $pages->currentPage() > 1 ? $pages->currentPage() : null,
     ], fn ($value) => $value !== null && $value !== '');
+    $importPageUrl = route('admin.pages.index', array_filter(array_merge($detailsBaseQuery, ['modal' => 'page-import']), fn ($value) => $value !== null && $value !== ''));
+    $closeImportUrl = route('admin.pages.index', $detailsBaseQuery);
 @endphp
 
 @extends('layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
@@ -99,7 +101,10 @@
                     <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
                 </div>
 
-                <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
+                </div>
             </div>
 
             <div class="wb-card-body">
@@ -120,7 +125,10 @@
                     <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
                 </div>
 
-                <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">New Page</a>
+                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Import Page</a>
+                </div>
             </div>
 
             <div class="wb-card-body">
@@ -256,6 +264,16 @@
 
     @endif
 @endsection
+
+@push('overlays')
+    @include('admin.pages.partials.import-modal', [
+        'importSites' => $importSites,
+        'pageImportOpen' => $pageImportOpen,
+        'pageImportSelectedSiteId' => $pageImportSelectedSiteId,
+        'closeUrl' => $closeImportUrl,
+        'pageReturnUrl' => $pageReturnUrl,
+    ])
+@endpush
 
 @if ($detailsPage)
     @push('overlays')

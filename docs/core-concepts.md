@@ -29,6 +29,7 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - Canonical public asset paths are `public/site/{site_handle}/css/site.css`, `public/site/{site_handle}/js/site.js`, `public/site/{site_handle}/pages/{page_slug}/page.css`, and `public/site/{site_handle}/pages/{page_slug}/page.js`.
 - Page Assets render only for the owning public page and are excluded from admin layouts and unrelated pages.
 - Page revisions, duplicate, move, and site export or import treat Page Assets as page-owned configuration.
+- Single-page JSON import can also create `page_assets` rows when the payload uses valid local `/site/...` paths that pass the existing page asset validation rules.
 - Search indexing does not treat page asset paths as page body content.
 
 ## Page Site Scope
@@ -50,6 +51,10 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - The duplicate workflow can now explicitly disable only those incompatible duplicated page slots instead of persisting an invalid cross-site Shared Slot reference.
 - That opt-in fallback writes the duplicated page slot as `disabled`, clears `shared_slot_id`, leaves the source page unchanged, and does not copy Shared Slot block trees into the duplicated page in this version.
 - Site-level portability tools such as Export / Import and Site Clone remain separate from page moves and page duplication.
+- `Admin -> Pages -> Import Page` is a page-scoped portability workflow. It creates one new page from a documented `webblocks.cms.page.v1` JSON payload and is intentionally separate from site-level Export / Import.
+- V1 single-page import always creates a new page and always imports it as draft.
+- V1 single-page import does not import source page revision history.
+- Shared Slot-backed page slots in single-page import must reference a compatible target-site Shared Slot by stable handle. The importer does not create Shared Slots automatically in V1.
 
 ## Site Identity
 

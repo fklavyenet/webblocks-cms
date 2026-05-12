@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\NavigationItemController;
 use App\Http\Controllers\Admin\PageAssetController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageDuplicateController;
+use App\Http\Controllers\Admin\PageImportController;
 use App\Http\Controllers\Admin\PageRevisionController;
 use App\Http\Controllers\Admin\PageSiteMoveController;
 use App\Http\Controllers\Admin\PageSlotController;
@@ -120,6 +121,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
     Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
+    Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
     Route::post('/pages/{page}/assets/{type}', [PageAssetController::class, 'store'])->name('pages.assets.store');
     Route::put('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'update'])->name('pages.assets.update');
     Route::delete('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'destroy'])->name('pages.assets.destroy');

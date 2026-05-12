@@ -146,6 +146,7 @@ class PageController extends Controller
         return view('admin.pages.index', [
             'pages' => $pages,
             'sites' => $sites,
+            'importSites' => $sites,
             'activeSite' => $activeSite,
             'showAllSites' => $siteFilterValue === 'all',
             'filters' => [
@@ -160,6 +161,8 @@ class PageController extends Controller
             'siteLocaleCounts' => $siteLocaleCounts,
             'pagesIndexUrl' => $this->pageIndexState->storedUrl($request),
             'pageReturnUrl' => $this->pageIndexState->storedUrl($request),
+            'pageImportOpen' => old('_page_import_modal') === 'page-import-modal' || $request->string('modal')->toString() === 'page-import',
+            'pageImportSelectedSiteId' => (int) old('site_id', $activeSite?->id ?? $sites->first()?->id),
         ]);
     }
 
