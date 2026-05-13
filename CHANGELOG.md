@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.30.2
+
+- Refine Page Layout and Page Layout Slot admin polish with standard layout-aware slot page titles, clearer body-class guidance, and an expandable trusted HTML disclosure that reads as an actual admin accordion instead of a readonly notice.
+- Clarify that Page Layout Slot wrapper classes are space-separated tokens and that sticky wrappers such as `wb-sticky` usually still need site CSS offset and stacking rules, for example in `public/site/{site_handle}/css/site.css`.
+
 ## 1.30.1
 
 - Polish the Page Layout Slot create and edit admin UX by grouping slot identity, wrapper markup, advanced trusted layout HTML, and status or ordering into clearer sections while moving trusted HTML into a dedicated advanced panel with explicit safety guidance.
