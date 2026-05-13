@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.27.7
+
+- Pin WebBlocks UI CDN assets and the default icon manifest sync source to `v2.7.1` so CMS installs pick up the icon catalog and generated glyph alignment fix without falling back to unstable asset URLs.
+
 ## 1.27.6
 
 - Fix public `Navbar Navigation` mobile behavior by rendering an accessible burger toggle plus collapsed menu through the existing WebBlocks UI dropdown contract, while preserving primitive `Navbar` composition, keeping default header slots free of forced `wb-stack` wrappers, and restoring header-to-main shell spacing.

@@ -139,10 +139,10 @@ class IconCatalogManagementTest extends TestCase
     }
 
     #[Test]
-    public function default_icon_sync_manifest_is_pinned_to_webblocks_ui_v270(): void
+    public function default_icon_sync_manifest_is_pinned_to_webblocks_ui_v271(): void
     {
         $this->assertSame(
-            'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.0/packages/webblocks/dist/webblocks-icons.json',
+            'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.1/packages/webblocks/dist/webblocks-icons.json',
             WebBlocksIconManifestSyncer::DEFAULT_MANIFEST,
         );
     }
