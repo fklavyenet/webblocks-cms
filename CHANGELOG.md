@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.29.1
+
+- Rename Shared Slot admin wording from `Public Shell` to `Page Layout`, while keeping the stored `shared_slots.public_shell` field and exact-handle compatibility behavior unchanged for backward compatibility.
+
 ## 1.29.0
 
 - Replace the remaining Page Layout `shell_type` admin surface with managed `body_class` and relational `page_layout_slots`, while keeping `pages.settings.public_shell` and deprecated legacy layout columns backward compatible.
