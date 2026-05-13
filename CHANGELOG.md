@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.27.6
+
 - Fix public `Navbar Navigation` mobile behavior by rendering an accessible burger toggle plus collapsed menu through the existing WebBlocks UI dropdown contract, while preserving primitive `Navbar` composition, keeping default header slots free of forced `wb-stack` wrappers, and restoring header-to-main shell spacing.
 
 ## 1.27.5
