@@ -214,6 +214,7 @@ Shared Slots are a slot-content ownership layer that sits under the existing pag
 - A valid Shared Slot contributes only the block tree rendered inside that existing page slot wrapper.
 - Public Shared Slot rendering is conservative:
 - Cross-site shared slot references render nothing.
+- Shared Slot admin screens describe the optional `SharedSlot.public_shell` constraint as `Page Layout`, but the stored field name remains `public_shell` for backward compatibility in this release.
 - If `SharedSlot.public_shell` is set, it must exactly match the consuming page layout handle.
 - If `SharedSlot.slot_name` is set, it must match the consuming page slot name.
 - Null or empty `public_shell` and `slot_name` act as generic matches.
@@ -231,6 +232,7 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - `Disabled`: `page_slots.source_type = disabled` and `shared_slot_id = null`.
 - Changing a slot source does not delete or detach the existing page-owned block tree for that slot. If an editor switches a slot to `shared_slot` or `disabled`, the page-owned blocks remain attached so switching back to `Page Content` restores the prior page-specific content.
 - The page editor filters Shared Slot choices conservatively. Only active Shared Slots from the same site appear, and optional Shared Slot `public_shell` and `slot_name` constraints must match the consuming page shell and slot name.
+- Shared Slot admin forms now label that optional `public_shell` constraint as `Page Layout` so the user-facing term matches the Page editor and Page Layout management screens.
 - Site export/import and clone still transfer page-level `public_shell` handles as part of page configuration. Install-level Page Layout definitions remain local to the install in V1, so target installs should define any custom handles they expect to render without fallback.
 - Install-level Page Layout Slot definitions also remain local to the install in V1.
 - Runtime public rendering guards remain in place even after write-time validation, so invalid, stale, cross-site, inactive, or incompatible assignments still render no shared content publicly.

@@ -5247,7 +5247,7 @@ class PageBuilderExperienceTest extends TestCase
         $warningResponse = $this->actingAs($siteAdmin)->get(route('admin.pages.edit', $page->fresh()));
 
         $warningResponse->assertOk();
-        $warningResponse->assertSee('This Shared Slot is no longer compatible because its public shell no longer matches this page.');
+        $warningResponse->assertSee('This Shared Slot is no longer compatible because its Page Layout no longer matches this page.');
         $warningResponse->assertSee('Manage Source');
     }
 
@@ -5273,7 +5273,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('This slot source update needs attention.');
-        $response->assertSee('Shared Slot public shell must match the page public shell.');
+        $response->assertSee('Shared Slot Page Layout must match the page Page Layout.');
         $response->assertSee('Manage Source: Header');
         $response->assertSee('Manage Source');
         $response->assertSee('class="wb-modal wb-modal-lg is-open" id="slot-source-modal-'.$pageSlot->id.'"', false);

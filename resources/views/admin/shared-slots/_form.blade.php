@@ -41,13 +41,14 @@
         </div>
 
         <div class="wb-stack wb-gap-1">
-            <label for="shared_slot_public_shell">Public Shell</label>
+            <label for="shared_slot_public_shell">Page Layout</label>
             <select id="shared_slot_public_shell" name="public_shell" class="wb-select">
-                <option value="">Any shell</option>
+                <option value="">Any Page Layout</option>
                 @foreach (app(\App\Support\Pages\PageLayoutManager::class)->sharedSlotSelectionOptions($sharedSlot->public_shell) as $layoutOption)
                     <option value="{{ $layoutOption['value'] }}" @selected(old('public_shell', $sharedSlot->public_shell) === $layoutOption['value'])>{{ $layoutOption['label'] }}</option>
                 @endforeach
             </select>
+            <div class="wb-text-sm wb-text-muted">Optional compatibility constraint. Leave empty to keep this Shared Slot generic across any Page Layout. Select a Page Layout to restrict it to pages using that exact layout handle stored on <code>public_shell</code>.</div>
         </div>
 
         <div class="wb-stack wb-gap-1">

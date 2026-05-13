@@ -167,7 +167,7 @@ class PageSlot extends Model
         $messages = collect($issues)->map(fn (string $issue) => match ($issue) {
             'site' => 'it belongs to another site',
             'inactive' => 'it is inactive',
-            'public_shell' => 'its public shell no longer matches this page',
+            'public_shell' => 'its Page Layout no longer matches this page',
             'slot_name' => 'its slot name no longer matches this slot',
             default => 'it is no longer compatible',
         });

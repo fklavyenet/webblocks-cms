@@ -73,6 +73,7 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 
 Shared Slot compatibility remains conservative in V1.
 
+- Shared Slot admin screens now present this constraint as `Page Layout`, while the stored compatibility field remains `public_shell` for backward compatibility in this release
 - Exact `public_shell` handle match is required when a Shared Slot sets `public_shell`
 - Empty `public_shell` remains generic
 - A custom layout handle that reuses docs-style runtime behavior does not automatically match Shared Slots constrained to `docs`

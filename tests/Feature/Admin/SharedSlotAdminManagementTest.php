@@ -111,6 +111,31 @@ class SharedSlotAdminManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Shared Slots');
         $response->assertSee('Primary Header');
+        $response->assertSee('Page Layout');
+        $response->assertDontSee('Public Shell');
+    }
+
+    #[Test]
+    public function shared_slot_forms_show_page_layout_wording_instead_of_public_shell(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $sharedSlot = $this->sharedSlotFor($site);
+        $user = User::factory()->superAdmin()->create();
+
+        $create = $this->actingAs($user)->get(route('admin.shared-slots.create'));
+        $create->assertOk();
+        $create->assertSee('Page Layout');
+        $create->assertSee('Any Page Layout');
+        $create->assertSee('Leave empty to keep this Shared Slot generic across any Page Layout.');
+        $create->assertDontSee('Public Shell');
+
+        $edit = $this->actingAs($user)->get(route('admin.shared-slots.edit', $sharedSlot));
+        $edit->assertOk();
+        $edit->assertSee('Page Layout:');
+        $edit->assertSee('Docs Layout');
+        $edit->assertDontSee('Public Shell');
     }
 
     #[Test]

@@ -38,10 +38,10 @@
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <strong>Public Wrapper</strong>
-            <span class="wb-text-sm wb-text-muted">Resolved automatically from the page shell and slot name.</span>
+            <span class="wb-text-sm wb-text-muted">Resolved automatically from the page layout and slot name.</span>
         </div>
         <div class="wb-card-body">
-            <p class="wb-text-sm wb-text-muted">This Shared Slot provides only the inner block tree. Pages still own the public shell and wrapper for the matching slot.</p>
+            <p class="wb-text-sm wb-text-muted">This Shared Slot provides only the inner block tree. Pages still own the Page Layout wrapper and matching slot wrapper.</p>
         </div>
     </div>
 

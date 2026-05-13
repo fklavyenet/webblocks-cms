@@ -38,7 +38,7 @@
                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
                     <div><strong>Handle:</strong> <code>{{ $sharedSlot->handle }}</code></div>
                     <div><strong>Slot:</strong> {{ $sharedSlot->slotLabel() }}</div>
-                    <div><strong>Public Shell:</strong> {{ $sharedSlot->publicShellLabel() }}</div>
+                    <div><strong>Page Layout:</strong> {{ $sharedSlot->publicShellLabel() }}</div>
                     <div><strong>Status:</strong> <span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></div>
                 </div>
             </div>

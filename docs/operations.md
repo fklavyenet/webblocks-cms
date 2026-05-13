@@ -102,6 +102,7 @@ Page Assets travel through site portability in two layers:
 Shared Slots are exported and imported as first-class site content:
 
 - Shared Slot metadata such as handle, name, slot compatibility, shell compatibility, and active status is included in the package.
+- Shared Slots can also carry an optional Page Layout compatibility constraint. The stored field remains `public_shell` for backward compatibility, empty remains generic, and non-empty values still require exact Page Layout handle matches.
 - Shared Slot block trees, nested order, translations, and media references travel through the same block and asset packaging pipeline used for normal pages.
 - Page slots that use `shared_slot` export a stable Shared Slot handle reference and are remapped to the target site's imported Shared Slot during import.
 - Page payloads preserve each page's Page Layout so docs-shell pages keep compatible docs Shared Slot assignments after import.

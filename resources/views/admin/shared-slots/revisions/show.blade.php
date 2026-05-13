@@ -36,7 +36,7 @@
                 <div><strong>Name:</strong> {{ $snapshotMetadata['name'] ?? '-' }}</div>
                 <div><strong>Handle:</strong> <code>{{ $snapshotMetadata['handle'] ?? '-' }}</code></div>
                 <div><strong>Slot:</strong> {{ $snapshotMetadata['slot_name'] ?? 'Any' }}</div>
-                <div><strong>Public Shell:</strong> {{ $snapshotMetadata['public_shell'] ?? 'Any' }}</div>
+                <div><strong>Page Layout:</strong> {{ $snapshotMetadata['public_shell'] ?? 'Any Page Layout' }}</div>
                 <div><strong>Status:</strong> {{ array_key_exists('is_active', $snapshotMetadata) ? ((bool) $snapshotMetadata['is_active'] ? 'Active' : 'Inactive') : '-' }}</div>
                 <div class="wb-text-danger">Restoring this snapshot affects all pages referencing this Shared Slot.</div>
             </div>

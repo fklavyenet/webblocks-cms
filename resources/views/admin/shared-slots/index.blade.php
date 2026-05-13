@@ -70,7 +70,7 @@
                                 'name' => 'Name',
                                 'handle' => 'Handle',
                                 'slot_name' => 'Slot',
-                                'public_shell' => 'Public shell',
+                                'public_shell' => 'Page Layout',
                             ],
                         ],
                         [
@@ -138,7 +138,7 @@
                                 <th>Handle</th>
                                 <th>Site</th>
                                 <th>Slot</th>
-                                <th>Public Shell</th>
+                                <th>Page Layout</th>
                                 <th>Status</th>
                                 <th>Updated</th>
                                 <th>Actions</th>
