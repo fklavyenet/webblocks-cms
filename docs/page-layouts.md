@@ -11,6 +11,7 @@ Page Layouts are install-level definitions that manage the outer public shell ch
 - Pages still store the selected layout handle in `pages.settings.public_shell` for backward compatibility in this release
 - The visible Page Layout fields are `Name`, `Handle`, `Description`, `Status`, `Sort Order`, and `Body Class`
 - `Shell Type`, `Slot Schema JSON`, and `Wrapper Schema JSON` are deprecated compatibility fields and are no longer part of the admin form
+- Raw `Slot Schema JSON` and `Wrapper Schema JSON` are no longer the admin editing model
 
 ## Built-in Layouts
 
@@ -42,9 +43,15 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - Admin path: `Admin -> System -> Page Layouts -> Edit -> Page Layout Slots`
 - Slot Types are the catalog for adding Page Layout Slots
 - Each Page Layout Slot stores `slot_type_id`, `slot_name`, `label`, `description`, `html_element`, `html_id`, `html_classes`, `before_html`, `start_html`, `end_html`, `after_html`, `is_required`, `is_active`, `is_system`, and `sort_order`
+- Admin editing groups these fields into `Slot Identity`, `Wrapper Markup`, `Advanced Trusted Layout HTML`, and `Status / Ordering`
 - Validation allows only safe HTML ids, safe whitespace-separated classes, and trusted wrapper snippets with script, event-attribute, `javascript:`, `iframe`, `object`, and `embed` content rejected
 - System layouts keep their system slot mapping stable: system Page Layout Slots do not allow changing the underlying slot name or Slot Type
 - Non-system and non-required Page Layout Slots can be removed
+- `Before Slot HTML` renders before the slot wrapper
+- `Slot Start HTML` renders inside the wrapper before blocks
+- `Slot End HTML` renders inside the wrapper after blocks
+- `After Slot HTML` renders after the slot wrapper
+- Advanced trusted layout HTML is for wrapper-adjacent layout markup only and is not for scripts
 
 ## Edit Page Compare And Apply
 
@@ -89,12 +96,14 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - `Body Class` is an optional whitespace-separated token list added to the public `<body>`
 - Built-in seeded values are currently `layout-default` and `layout-docs`
 - Public rendering keeps the base `wb-public-body` class and appends the Page Layout body classes when available
+- Layout-specific CSS can target combinations such as `body.layout-docs` plus slot ids and classes defined by Page Layout Slots
 
 ## Ownership Boundaries
 
 - Page Layout owns the outer public shell choice
 - Page Layout also owns the public body-class tokens for that shell
 - Page Layout Slots own region wrapper metadata and ordering
+- Page Layout Slots own the public wrapper element, id, classes, and optional wrapper-adjacent trusted HTML for each region
 - Slot names own region wrapper semantics such as `header`, `main`, `sidebar`, and `footer`
 - Blocks own content rendered inside those wrappers
 - Sticky navbar behavior remains owned by WebBlocks UI `.wb-navbar`, not by CMS Page Layouts

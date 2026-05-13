@@ -126,6 +126,7 @@ Public pages now use explicit layout composition modes:
 - Slot wrappers are deterministic runtime behavior, not free-form page-level editorial settings.
 - Page layout handle resolves to a managed Page Layout record first when available, and that record's managed Page Layout Slots are then used to resolve slot wrapper element, classes, ids, and trusted structural snippets.
 - Edit Page comparison and `Add Missing Layout Slots` change page structure only by creating missing Page Slots; they do not change public wrapper ownership.
+- Page Layout Slot trusted HTML fields exist for wrapper-adjacent layout structure only. They are not a script surface, and blocks still own the content roots rendered inside the slot wrapper.
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
 - Built-in `default` and `docs` layouts keep fallback managed definitions so rendering remains stable before or without relational slot rows.

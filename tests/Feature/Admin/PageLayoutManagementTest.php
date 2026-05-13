@@ -225,10 +225,57 @@ class PageLayoutManagementTest extends TestCase
             ->assertSee('Status')
             ->assertSee('Sort Order')
             ->assertSee('Body Class')
+            ->assertSee('Common examples include')
+            ->assertSee('layout-default')
+            ->assertSee('layout-docs')
+            ->assertSee('body.layout-docs')
             ->assertSee('Page Layout Slots')
+            ->assertSee('Page Layout Slots define the wrapper for each page region.')
+            ->assertSee('Blocks render inside these wrappers.')
+            ->assertSee('Use Body Class plus slot ID and classes for layout-specific CSS.')
             ->assertDontSee('Shell Type')
             ->assertDontSee('Slot Schema JSON')
             ->assertDontSee('Wrapper Schema JSON');
+    }
+
+    #[Test]
+    public function page_layout_slot_form_groups_fields_and_shows_advanced_helper_text(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $layout = PageLayout::query()->where('handle', 'docs')->firstOrFail();
+        $slot = $layout->layoutSlots()->orderBy('sort_order')->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('admin.page-layouts.slots.create', $layout))
+            ->assertOk()
+            ->assertSee('Slot Identity')
+            ->assertSee('Wrapper Markup')
+            ->assertSee('Advanced Trusted Layout HTML')
+            ->assertSee('Status / Ordering')
+            ->assertSee('Before Slot HTML')
+            ->assertSee('Slot Start HTML')
+            ->assertSee('Slot End HTML')
+            ->assertSee('After Slot HTML')
+            ->assertSee('Before Slot HTML renders before the slot wrapper.')
+            ->assertSee('Slot Start HTML renders inside the wrapper before blocks.')
+            ->assertSee('Slot End HTML renders inside the wrapper after blocks.')
+            ->assertSee('After Slot HTML renders after the slot wrapper.')
+            ->assertSee('Scripts and unsafe JavaScript are not allowed.')
+            ->assertSee('wb-sticky')
+            ->assertSee('wb-sidebar')
+            ->assertSee('wb-dashboard-main')
+            ->assertSee('wb-stack');
+
+        $this->actingAs($user)
+            ->get(route('admin.page-layouts.slots.edit', [$layout, $slot]))
+            ->assertOk()
+            ->assertSee('Slot Identity')
+            ->assertSee('Wrapper Markup')
+            ->assertSee('Advanced Trusted Layout HTML')
+            ->assertSee('Status / Ordering')
+            ->assertSee('Active');
     }
 
     #[Test]

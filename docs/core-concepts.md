@@ -164,6 +164,7 @@ Public page structure is controlled at the page and slot layer.
 - Page Layout Slots are relational install-level records attached to a Page Layout and define slot order plus wrapper metadata.
 - Slot Types are the reusable catalog for Page Layout Slot assignment.
 - Runtime rendering resolves the stored handle to a Page Layout record when available, then resolves body classes and slot wrappers from its managed Page Layout Slots.
+- Body Class is intended for layout-specific CSS on the public `<body>`, while Page Layout Slot wrapper ids and classes provide region-level CSS hooks inside that layout.
 - Edit Page compares the selected Page Layout's managed Layout Slots against the page's current Page Slots.
 - Missing Layout Slots can be added explicitly through `Add Missing Layout Slots`.
 - Extra Page Slots are preserved for safety and are reported rather than deleted.
@@ -172,6 +173,7 @@ Public page structure is controlled at the page and slot layer.
 - V1 custom Page Layouts may use custom handles, but they still reuse the existing `default` or `docs` shell behavior conservatively for compatibility.
 - Slot name determines the semantic public wrapper role for that region.
 - Slot wrappers are resolved automatically from managed Page Layout Slots when available, with legacy fallback definitions for built-in layouts. Unknown slots use the safe default `div` wrapper.
+- Advanced trusted layout HTML exists only for wrapper-adjacent structural markup. It is not a general scripting surface and must not be used for scripts.
 - Header slots are layout-neutral by default and do not force `wb-stack` around their block trees.
 - Main slots may still own stacked rhythm through their shell partial when that presentation is intentional.
 - Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks. Default-shell header and main wrappers own that rhythm so the first content block does not need ad hoc top margins.

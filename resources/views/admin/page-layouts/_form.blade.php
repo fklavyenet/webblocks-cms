@@ -33,7 +33,7 @@
         <div class="wb-stack wb-gap-1">
             <label for="page_layout_body_class">Body Class</label>
             <input id="page_layout_body_class" name="body_class" class="wb-input" type="text" value="{{ old('body_class', $pageLayout->body_class) }}" maxlength="1000">
-            <div class="wb-text-sm wb-text-muted">Optional whitespace-separated classes added to the public <code>body</code>, for example <code>layout-docs</code>.</div>
+            <div class="wb-text-sm wb-text-muted">Optional whitespace-separated classes added to the public <code>body</code>. Common examples include <code>layout-default</code> and <code>layout-docs</code>. Layout-specific CSS can target wrappers through selectors such as <code>body.layout-docs</code> plus slot IDs or classes.</div>
         </div>
     </div>
 

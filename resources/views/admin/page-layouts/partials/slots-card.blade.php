@@ -17,6 +17,14 @@
             <div class="wb-alert wb-alert-danger">{{ $message }}</div>
         @enderror
 
+        <div class="wb-card wb-card-muted wb-mb-3">
+            <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
+                <div>Page Layout Slots define the wrapper for each page region.</div>
+                <div>Blocks render inside these wrappers.</div>
+                <div>Use Body Class plus slot ID and classes for layout-specific CSS.</div>
+            </div>
+        </div>
+
         @if ($layoutSlots->isEmpty())
             <div class="wb-empty">
                 <div class="wb-empty-title">No layout slots yet</div>
@@ -28,13 +36,8 @@
                     <thead>
                         <tr>
                             <th>Order</th>
-                            <th>Slot Type</th>
-                            <th>Slot Name</th>
-                            <th>Label</th>
-                            <th>Element</th>
-                            <th>ID</th>
-                            <th>Classes</th>
-                            <th>Required</th>
+                            <th>Slot</th>
+                            <th>Wrapper</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -43,14 +46,30 @@
                         @foreach ($layoutSlots as $layoutSlot)
                             <tr>
                                 <td class="wb-nowrap">{{ $layoutSlot->sort_order }}</td>
-                                <td>{{ $layoutSlot->slotType?->name ?? '-' }}</td>
-                                <td><code>{{ $layoutSlot->slot_name }}</code></td>
-                                <td>{{ $layoutSlot->label ?: '-' }}</td>
-                                <td class="wb-nowrap"><code>{{ $layoutSlot->html_element }}</code></td>
-                                <td class="wb-nowrap">{{ $layoutSlot->html_id ?: '-' }}</td>
-                                <td>{{ $layoutSlot->html_classes ?: '-' }}</td>
-                                <td>{{ $layoutSlot->is_required ? 'Required' : 'Optional' }}</td>
-                                <td><span class="wb-status-pill {{ $layoutSlot->statusBadgeClass() }}">{{ $layoutSlot->statusLabel() }}</span></td>
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
+                                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                            <strong>{{ $layoutSlot->label ?: ($layoutSlot->slotType?->name ?? $layoutSlot->slot_name) }}</strong>
+                                            <span class="wb-status-pill wb-status-info">{{ $layoutSlot->slotType?->name ?? 'No Slot Type' }}</span>
+                                        </div>
+                                        <div class="wb-text-sm wb-text-muted"><code>{{ $layoutSlot->slot_name }}</code></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="wb-stack wb-gap-1 wb-text-sm">
+                                        <div><strong>Element:</strong> <code>{{ $layoutSlot->html_element }}</code></div>
+                                        <div><strong>ID:</strong> <span title="{{ $layoutSlot->html_id ?: '-' }}">{{ $layoutSlot->html_id ?: '-' }}</span></div>
+                                        <div title="{{ $layoutSlot->html_classes ?: '-' }}"><strong>Classes:</strong> {{ \Illuminate\Support\Str::limit($layoutSlot->html_classes ?: '-', 48) }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="wb-stack wb-gap-1">
+                                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                            <span class="wb-status-pill {{ $layoutSlot->is_required ? 'wb-status-info' : 'wb-status-pending' }}">{{ $layoutSlot->is_required ? 'Required' : 'Optional' }}</span>
+                                            <span class="wb-status-pill {{ $layoutSlot->statusBadgeClass() }}">{{ $layoutSlot->statusLabel() }}</span>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
                                         <a href="{{ route('admin.page-layouts.slots.edit', [$pageLayout, $layoutSlot]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit Page Layout Slot" aria-label="Edit Page Layout Slot">
