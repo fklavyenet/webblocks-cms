@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.27.3
+
+- Add explicit `Container` flow control so editors can choose layout-neutral `wb-container` markup for composed layouts such as `Navbar -> Container -> Cluster`, while preserving legacy stacked container rendering unless a neutral flow is selected.
+- Allow `Navbar Brand` to be configured as logo-only when a logo image is present, and add an accessible label fallback path for logo-only brand rendering.
+
 ## 1.27.2
 
 - Fix navbar child validation and admin block picker eligibility so `Navbar Brand` and `Navbar Navigation` are allowed anywhere inside a `Navbar` descendant tree, while still being rejected outside Navbar entirely.
