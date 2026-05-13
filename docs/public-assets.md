@@ -35,6 +35,10 @@ Install-specific or site-specific public overrides live under the resolved site 
 
 These files are override space for the current install and should not be used for CMS core behavior.
 
+When present, `public/site/{site_handle}/css/site.css` renders in the public `<head>` for the currently resolved public site.
+
+When present, `public/site/{site_handle}/js/site.js` renders in the public `<head>` with `defer` for the currently resolved public site.
+
 `public/storage` is separate from `public/site/...`. It is the Laravel public storage symlink created by `storage:link` for files under `storage/app/public`, and should not be treated as CMS asset space or site-override asset space.
 
 The canonical override convention requires a site handle segment. Handle-less site override paths are not canonical and should not be used for new runtime behavior.
@@ -63,7 +67,9 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Legacy named JS rows stored with `body_end` are still accepted, but public named JS is normalized to `<head defer>` output
 - Public block renderers must not emit inline scripts
 - CMS-owned public JS belongs under `public/cms/js/`
+- CMS-owned public CSS belongs under `public/cms/css/`
 - Site-level override JS belongs under `public/site/{site_handle}/js/site.js`
+- Site-level override CSS belongs under `public/site/{site_handle}/css/site.css`
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
 - Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`
 - CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode, preset, accent, and dropdown behavior now rely on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime

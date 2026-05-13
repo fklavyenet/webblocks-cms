@@ -124,6 +124,83 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function resolved_site_level_public_assets_render_from_the_current_site_when_files_exist(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $defaultSite = Site::query()->firstOrFail();
+        $defaultSite->update(['domain' => 'default.example.test']);
+
+        $this->putTrackedPublicSiteFile('site/default/css/site.css', 'body { color: red; }');
+        $this->putTrackedPublicSiteFile('site/default/js/site.js', 'window.defaultSiteLoaded = true;');
+
+        $secondarySite = Site::query()->create([
+            'name' => 'Docs Site',
+            'handle' => 'docs-site',
+            'domain' => 'docs.example.test',
+            'is_primary' => false,
+        ]);
+
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $footer = $this->slotType('footer', 'Footer', 3);
+        $headerType = $this->blockType('header', 'Header', 1);
+
+        $page = Page::query()->create([
+            'site_id' => $secondarySite->id,
+            'title' => 'Docs Home',
+            'slug' => 'docs-home',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $secondarySite->id, 'name' => 'Docs Home', 'slug' => 'docs-home', 'path' => '/'],
+        );
+
+        foreach ([[$header, 0], [$main, 1], [$footer, 2]] as [$slotType, $sortOrder]) {
+            PageSlot::query()->create([
+                'page_id' => $page->id,
+                'slot_type_id' => $slotType->id,
+                'sort_order' => $sortOrder,
+            ]);
+        }
+
+        $headerBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'variant' => 'h1',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $headerBlock->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Docs Home',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($headerBlock->fresh(['textTranslations']));
+
+        $this->putTrackedPublicSiteFile('site/docs-site/css/site.css', 'body { color: blue; }');
+        $this->putTrackedPublicSiteFile('site/docs-site/js/site.js', 'window.docsSiteLoaded = true;');
+
+        $response = $this->get('http://docs.example.test/');
+        $headHtml = $this->headHtml($response->getContent());
+
+        $response->assertOk();
+        $response->assertSee('cms/css/public.css', false);
+        $response->assertSee('/site/docs-site/css/site.css', false);
+        $response->assertSee('/site/docs-site/js/site.js', false);
+        $response->assertDontSee('/site/default/css/site.css', false);
+        $response->assertDontSee('/site/default/js/site.js', false);
+        $this->assertStringContainsString('<link rel="stylesheet" href="/site/docs-site/css/site.css">', $headHtml);
+        $this->assertStringContainsString('<script src="/site/docs-site/js/site.js" defer></script>', $headHtml);
+    }
+
+    #[Test]
     public function page_assets_render_only_on_the_owning_public_page(): void
     {
         $page = $this->buildHomepageWithHeaderSidebarAndFooter();

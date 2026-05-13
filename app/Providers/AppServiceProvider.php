@@ -7,6 +7,7 @@ use App\Support\Install\InstallState;
 use App\Support\Locales\LocaleResolver;
 use App\Support\Pages\PageLayoutManager;
 use App\Support\Pages\PageRouteResolver;
+use App\Support\PublicRendering\SiteAssetResolver;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
 use App\Support\System\SystemSettings;
@@ -34,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(LocaleResolver::class);
         $this->app->singleton(PageLayoutManager::class);
         $this->app->singleton(PageRouteResolver::class);
+        $this->app->singleton(SiteAssetResolver::class);
         $this->app->singleton(SystemSettings::class);
         $this->app->singleton(VisitorConsent::class);
         $this->app->singleton(DestructiveDatabaseCommandGuard::class);

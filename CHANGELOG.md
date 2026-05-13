@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.30.3
+
+- Fix the Edit Site footer so `Cancel` returns to the Sites index instead of leaking to the Pages screen.
+- Restore resolved site-level public override assets so `public/site/{site_handle}/css/site.css` and `public/site/{site_handle}/js/site.js` render from the current public site while CMS core assets remain under `public/cms/`.
+
 ## 1.30.2
 
 - Refine Page Layout and Page Layout Slot admin polish with standard layout-aware slot page titles, clearer body-class guidance, and an expandable trusted HTML disclosure that reads as an actual admin accordion instead of a readonly notice.

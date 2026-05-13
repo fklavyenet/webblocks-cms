@@ -270,7 +270,7 @@
 
             <div class="wb-card-footer">
                 <x-admin.form-actions
-                    :cancel-url="$site->exists ? route('admin.pages.index', ['site' => $site->id]) : route('admin.sites.index')"
+                    :cancel-url="route('admin.sites.index')"
                     :show-submit="$canManageSiteSettings"
                     :submit-label="$site->exists ? 'Save Changes' : 'Create'"
                     :delete-href="$site->exists && isset($siteDeleteReport) && $canManageDomains ? route('admin.sites.delete', $site) : null"

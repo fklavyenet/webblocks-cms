@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
+        use App\Support\PublicRendering\SiteAssetResolver;
         use App\Support\WebBlocks;
 
         $cmsPublicCssPath = public_path('cms/css/public.css');
@@ -16,9 +17,9 @@
             ->concat($bodyEndPageAssets->where('type', 'js')->values())
             ->values();
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
-        $siteHandle = $resolvedSite?->handle;
-        $siteCssRelativePath = $siteHandle ? 'site/'.$siteHandle.'/css/site.css' : null;
-        $siteCssPath = $siteCssRelativePath ? public_path($siteCssRelativePath) : null;
+        $siteAssetResolver = app(SiteAssetResolver::class);
+        $siteCssPath = $siteAssetResolver->cssPathFor($resolvedSite);
+        $siteJsPath = $siteAssetResolver->jsPathFor($resolvedSite);
         $publicMeta = $publicMeta ?? [
             'site_name' => $resolvedSite?->publicDisplayName() ?? config('app.name'),
             'site_label' => trim((string) ($resolvedSite?->display_name ?? $resolvedSite?->seo_title ?? $resolvedSite?->name ?? config('app.name'))),
@@ -63,8 +64,8 @@
         @if (is_file($cmsPublicCssPath))
             <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
         @endif
-        @if ($siteCssPath && is_file($siteCssPath))
-            <link rel="stylesheet" href="{{ asset($siteCssRelativePath) }}?v={{ filemtime($siteCssPath) }}">
+        @if ($siteCssPath)
+            <link rel="stylesheet" href="{{ $siteCssPath }}">
         @endif
         @foreach ($headCssPageAssets as $pageAsset)
             <link rel="stylesheet" href="{{ $pageAsset->path }}">
@@ -77,6 +78,9 @@
         @endif
         @if (is_file($publicJsAssets['sidebar-navigation']))
             <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+        @endif
+        @if ($siteJsPath)
+            <script src="{{ $siteJsPath }}" defer></script>
         @endif
         @foreach ($deferredHeadJsPageAssets as $pageAsset)
             <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>

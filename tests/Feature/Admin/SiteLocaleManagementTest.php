@@ -377,6 +377,19 @@ class SiteLocaleManagementTest extends TestCase
     }
 
     #[Test]
+    public function site_edit_form_cancel_action_targets_sites_index_and_not_pages_index(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.sites.edit', $site));
+
+        $response->assertOk();
+        $response->assertSee('href="'.route('admin.sites.index').'" class="wb-btn wb-btn-secondary">Cancel</a>', false);
+        $response->assertDontSee('href="'.route('admin.pages.index', ['site' => $site->id]).'" class="wb-btn wb-btn-secondary">Cancel</a>', false);
+    }
+
+    #[Test]
     public function site_admin_can_manage_site_variables_for_assigned_site(): void
     {
         $site = Site::query()->where('is_primary', true)->firstOrFail();
