@@ -47,6 +47,10 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - Validation allows only safe HTML ids, safe whitespace-separated classes, and trusted wrapper snippets with script, event-attribute, `javascript:`, `iframe`, `object`, and `embed` content rejected
 - System layouts keep their system slot mapping stable: system Page Layout Slots do not allow changing the underlying slot name or Slot Type
 - Non-system and non-required Page Layout Slots can be removed
+- `CSS Classes` expects space-separated class tokens
+- Wrapper classes may include layout hints such as `wb-sticky`, `wb-sidebar`, `wb-dashboard-main`, or `wb-stack` when those classes fit the selected layout
+- `wb-sticky` only provides the sticky positioning class; sticky offsets and stacking context should be set in site CSS when needed
+- A typical site-level rule is `header.wb-sticky { top: 0; z-index: 100; }` in `public/site/{site_handle}/css/site.css`
 - `Before Slot HTML` renders before the slot wrapper
 - `Slot Start HTML` renders inside the wrapper before blocks
 - `Slot End HTML` renders inside the wrapper after blocks
@@ -97,6 +101,7 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - Built-in seeded values are currently `layout-default` and `layout-docs`
 - Public rendering keeps the base `wb-public-body` class and appends the Page Layout body classes when available
 - Layout-specific CSS can target combinations such as `body.layout-docs` plus slot ids and classes defined by Page Layout Slots
+- Sticky wrapper classes such as `wb-sticky` can be assigned at the Page Layout Slot level, but site CSS should provide offset and stacking rules when that layout needs them
 
 ## Ownership Boundaries
 

@@ -1,5 +1,10 @@
 @php
     $isProtectedSystemSlot = (bool) ($pageLayout->is_system && $pageLayoutSlot->is_system);
+    $showAdvancedTrustedHtml = $errors->hasAny(['before_html', 'start_html', 'end_html', 'after_html'])
+        || filled(old('before_html', $pageLayoutSlot->before_html))
+        || filled(old('start_html', $pageLayoutSlot->start_html))
+        || filled(old('end_html', $pageLayoutSlot->end_html))
+        || filled(old('after_html', $pageLayoutSlot->after_html));
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -66,24 +71,33 @@
                 <div class="wb-stack wb-gap-1">
                     <label for="page_layout_slot_html_classes">CSS Classes</label>
                     <input id="page_layout_slot_html_classes" name="html_classes" class="wb-input" type="text" value="{{ old('html_classes', $pageLayoutSlot->html_classes) }}" maxlength="1000">
+                    <div class="wb-text-sm wb-text-muted wb-stack wb-gap-1">
+                        <div>CSS classes must be separated with spaces.</div>
+                        <div>Use classes such as <code>wb-sticky</code>, <code>wb-sidebar</code>, <code>wb-dashboard-main</code>, or <code>wb-stack</code> when they fit the selected layout.</div>
+                        <div>For sticky headers, <code>wb-sticky</code> usually also needs a site CSS offset rule such as <code>header.wb-sticky</code> with <code>top: 0</code> and an appropriate <code>z-index</code>.</div>
+                    </div>
                 </div>
             </div>
-
-            <div class="wb-text-sm wb-text-muted">Use wrapper classes for layout-specific CSS hints such as <code>wb-sticky</code>, <code>wb-sidebar</code>, <code>wb-dashboard-main</code>, or <code>wb-stack</code> when they fit the selected layout.</div>
         </div>
     </div>
 
-    <details class="wb-card wb-card-muted">
-        <summary class="wb-card-header"><strong>Advanced Trusted Layout HTML</strong></summary>
+    <details class="wb-card wb-card-muted" @if ($showAdvancedTrustedHtml) open @endif>
+        <summary class="wb-card-header">
+            <span class="wb-cluster wb-cluster-between wb-cluster-2">
+                <span class="wb-stack wb-gap-1">
+                    <strong>Advanced Trusted Layout HTML</strong>
+                    <span class="wb-text-sm wb-text-muted">Contains the before, start, end, and after slot HTML fields for trusted wrapper-adjacent structure.</span>
+                </span>
+                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+            </span>
+        </summary>
         <div class="wb-card-body wb-stack wb-gap-3">
-            <div class="wb-alert wb-alert-info">
-                <div class="wb-text-sm wb-stack wb-gap-1">
-                    <div>Before Slot HTML renders before the slot wrapper.</div>
-                    <div>Slot Start HTML renders inside the wrapper before blocks.</div>
-                    <div>Slot End HTML renders inside the wrapper after blocks.</div>
-                    <div>After Slot HTML renders after the slot wrapper.</div>
-                    <div>Scripts and unsafe JavaScript are not allowed.</div>
-                </div>
+            <div class="wb-text-sm wb-text-muted wb-stack wb-gap-1">
+                <div>Before Slot HTML renders before the slot wrapper.</div>
+                <div>Slot Start HTML renders inside the wrapper before blocks.</div>
+                <div>Slot End HTML renders inside the wrapper after blocks.</div>
+                <div>After Slot HTML renders after the slot wrapper.</div>
+                <div>Scripts and unsafe JavaScript are not allowed.</div>
             </div>
 
             <div class="wb-grid wb-grid-2">

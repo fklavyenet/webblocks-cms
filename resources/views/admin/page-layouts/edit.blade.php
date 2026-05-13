@@ -21,6 +21,8 @@
                     @csrf
                     @method('PUT')
 
+                    <div class="wb-card-header"><strong>Layout Settings</strong></div>
+
                     <div class="wb-card-body">
                         @include('admin.page-layouts._form', ['pageLayout' => $pageLayout])
                     </div>

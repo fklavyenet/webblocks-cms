@@ -165,6 +165,7 @@ Public page structure is controlled at the page and slot layer.
 - Slot Types are the reusable catalog for Page Layout Slot assignment.
 - Runtime rendering resolves the stored handle to a Page Layout record when available, then resolves body classes and slot wrappers from its managed Page Layout Slots.
 - Body Class is intended for layout-specific CSS on the public `<body>`, while Page Layout Slot wrapper ids and classes provide region-level CSS hooks inside that layout.
+- Page Layout Slot wrapper classes can include hints such as `wb-sticky`, but site CSS should still define sticky offset and stacking context where needed, for example through `header.wb-sticky` rules in `public/site/{site_handle}/css/site.css`.
 - Edit Page compares the selected Page Layout's managed Layout Slots against the page's current Page Slots.
 - Missing Layout Slots can be added explicitly through `Add Missing Layout Slots`.
 - Extra Page Slots are preserved for safety and are reported rather than deleted.

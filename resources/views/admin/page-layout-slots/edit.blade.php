@@ -1,14 +1,16 @@
 @php
     $pageLayoutUrl = route('admin.page-layouts.edit', $pageLayout);
+    $pageTitle = 'Edit Page Layout Slot: '.$pageLayout->name;
+    $slotContext = $pageLayoutSlot->label ?: $pageLayoutSlot->slot_name;
 @endphp
 
-@extends('layouts.admin', ['title' => 'Edit Page Layout Slot', 'heading' => 'Page Layouts'])
+@extends('layouts.admin', ['title' => $pageTitle, 'heading' => 'Page Layouts'])
 
 @section('content')
     @include('admin.partials.page-header', [
-        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.page-layouts.index').'">Page Layouts</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pageLayoutUrl.'">'.e($pageLayout->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($pageLayoutSlot->label ?: $pageLayoutSlot->slot_name).'</span></li></ol></nav>',
-        'title' => 'Edit Page Layout Slot',
-        'context' => '<span><code>'.e($pageLayoutSlot->slot_name).'</code></span>',
+        'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.page-layouts.index').'">Page Layouts</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pageLayoutUrl.'">'.e($pageLayout->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($slotContext).'</span></li></ol></nav>',
+        'title' => $pageTitle,
+        'context' => '<span class="wb-status-pill wb-status-info">Slot</span> <code>'.e($pageLayoutSlot->slot_name).'</code>',
     ])
 
     @include('admin.partials.flash')
