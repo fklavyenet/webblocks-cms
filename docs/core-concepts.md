@@ -159,16 +159,20 @@ Public page structure is controlled at the page and slot layer.
 - `default` is the standard public shell.
 - `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
 - Built-in `Default Layout` and `Docs Layout` are seeded system layouts with stable handles `default` and `docs`.
-- Pages store the selected Page Layout handle, not the resolved shell type.
-- Runtime rendering resolves the stored handle to a Page Layout record when available, then uses that layout's `shell_type`.
-- V1 custom Page Layouts may use custom handles, but they can only map to the existing `default` or `docs` shell behavior.
+- Pages store the selected Page Layout handle, not a separate resolved shell mode.
+- Page Layout now owns optional validated public `body_class` tokens.
+- Page Layout Slots are relational install-level records attached to a Page Layout and define slot order plus wrapper metadata.
+- Slot Types are the reusable catalog for Page Layout Slot assignment.
+- Runtime rendering resolves the stored handle to a Page Layout record when available, then resolves body classes and slot wrappers from its managed Page Layout Slots.
+- V1 custom Page Layouts may use custom handles, but they still reuse the existing `default` or `docs` shell behavior conservatively for compatibility.
 - Slot name determines the semantic public wrapper role for that region.
-- Slot wrappers are resolved automatically from page shell plus slot name. Unknown slots use the safe default `div` wrapper.
+- Slot wrappers are resolved automatically from managed Page Layout Slots when available, with legacy fallback definitions for built-in layouts. Unknown slots use the safe default `div` wrapper.
 - Header slots are layout-neutral by default and do not force `wb-stack` around their block trees.
 - Main slots may still own stacked rhythm through their shell partial when that presentation is intentional.
 - Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks. Default-shell header and main wrappers own that rhythm so the first content block does not need ad hoc top margins.
 - Sticky navbar behavior should stay owned by the shipped WebBlocks UI `.wb-navbar` contract. Page layout and header slot wrappers own page-level structure, but CMS should not inject a parallel navbar sticky class.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
+- Page Layout validation allows trusted wrapper snippets for structural gaps, but rejects scripts, event attributes, `javascript:` URLs, `iframe`, `object`, and `embed` content.
 
 For docs-style pages, use the page layout instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Page Layout = Docs Layout` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
 
@@ -228,6 +232,7 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - Changing a slot source does not delete or detach the existing page-owned block tree for that slot. If an editor switches a slot to `shared_slot` or `disabled`, the page-owned blocks remain attached so switching back to `Page Content` restores the prior page-specific content.
 - The page editor filters Shared Slot choices conservatively. Only active Shared Slots from the same site appear, and optional Shared Slot `public_shell` and `slot_name` constraints must match the consuming page shell and slot name.
 - Site export/import and clone still transfer page-level `public_shell` handles as part of page configuration. Install-level Page Layout definitions remain local to the install in V1, so target installs should define any custom handles they expect to render without fallback.
+- Install-level Page Layout Slot definitions also remain local to the install in V1.
 - Runtime public rendering guards remain in place even after write-time validation, so invalid, stale, cross-site, inactive, or incompatible assignments still render no shared content publicly.
 - Shared Slots now participate in site export/import and site clone. Their metadata, hidden-source-page block trees, translations, nested ordering, and media references are transferred as first-class site content. Consuming page slots keep `shared_slot` references by Shared Slot handle during export and are remapped to target-site Shared Slots during import and clone.
 - Hidden Shared Slot source pages remain internal. They are excluded from normal page export payloads, ordinary page listings, and public routing even though their block records still back the Shared Slot editor and portability flows.

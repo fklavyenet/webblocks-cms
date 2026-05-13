@@ -110,9 +110,10 @@ Public pages now use explicit layout composition modes:
 
 ### Public layout
 
-- The public layout owns the page-wide shell and should keep `<body class="wb-public-body">`.
+- The public layout owns the page-wide shell and should keep the base `<body class="wb-public-body">` contract.
 - `Page Layout` is the editor-facing name for the outer public shell mode.
 - The stored compatibility field remains `public_shell` in this phase, but Page Layouts are now managed install-level records in the admin.
+- Page Layout may append validated body classes such as `layout-default` or `layout-docs` to that base body class.
 - Major page regions should be built from shipped WebBlocks UI layout primitives first: `wb-public-main`, `wb-container`, `wb-section`, `wb-stack`, `wb-grid`.
 - `wb-content-shell`, `wb-content-header`, `wb-content-body`, and `wb-content-footer` belong inside the main content area when the page reads like article, guide, docs, or editorial content. They are not the site-wide header or footer chrome.
 - `#wb-overlay-root` is the single shared mount point for public overlays such as the gallery viewer, public search modal, and cookie preference modal.
@@ -122,10 +123,11 @@ Public pages now use explicit layout composition modes:
 
 ### Slot wrappers
 
-- Slot wrappers are deterministic runtime behavior, not editorial settings.
-- Page layout handle resolves to a managed Page Layout record first when available, and that record's `shell_type` plus slot name are then used to resolve slot wrapper element, classes, and structural attributes.
+- Slot wrappers are deterministic runtime behavior, not free-form page-level editorial settings.
+- Page layout handle resolves to a managed Page Layout record first when available, and that record's managed Page Layout Slots are then used to resolve slot wrapper element, classes, ids, and trusted structural snippets.
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
+- Built-in `default` and `docs` layouts keep fallback managed definitions so rendering remains stable before or without relational slot rows.
 - Blocks render inside the resolved slot wrapper and do not own page-shell markup.
 - Sticky navbar behavior belongs to `.wb-navbar`. CMS should not add a second navbar-specific sticky class to the slot wrapper or to the navbar block output.
 - When a page slot uses `source_type = shared_slot`, the Shared Slot contributes only the inner block tree. It must not render its own page shell or slot wrapper.

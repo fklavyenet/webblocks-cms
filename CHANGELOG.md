@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.29.0
+
+- Replace the remaining Page Layout `shell_type` admin surface with managed `body_class` and relational `page_layout_slots`, while keeping `pages.settings.public_shell` and deprecated legacy layout columns backward compatible.
+- Add Page Layout Slot management, seeded system slot definitions for `Default Layout` and `Docs Layout`, and runtime wrapper resolution from managed layout slots so public rendering, Shared Slots, export/import, and clone flows keep working safely.
+- Document the managed Page Layout Slot model, body-class behavior, and portability boundary where page-level layout handles transfer but install-level Page Layout definitions remain local to each install in V1.
+
 ## 1.28.0
 
 - Add Managed Page Layouts V1 with an install-level `page_layouts` catalog, seeded system layouts for `Default Layout` and `Docs Layout`, a new `Admin -> System -> Page Layouts` management screen, and data-driven Page Settings layout selection while keeping `pages.public_shell` storage backward compatible.
