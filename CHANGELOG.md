@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.27.5
+
+- Make default public header slots layout-neutral so they no longer force a `wb-stack` wrapper around header content such as `Navbar`, and move the header-to-main spacing responsibility into the public shell wrapper instead of the Navbar block.
+
 ## 1.27.4
 
 - Extend the reusable `Cluster` layout primitive with editor-controlled width, justify, align, wrap, and gap settings so headers such as `Navbar -> Container -> Cluster` can compose correct left and right distribution without navbar-specific CSS or built-in wrappers.
