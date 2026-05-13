@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.28.0
+
+- Add Managed Page Layouts V1 with an install-level `page_layouts` catalog, seeded system layouts for `Default Layout` and `Docs Layout`, a new `Admin -> System -> Page Layouts` management screen, and data-driven Page Settings layout selection while keeping `pages.public_shell` storage backward compatible.
+- Preserve public rendering and Shared Slot safety by resolving stored page layout handles to `default` or `docs` shell behavior at runtime, keeping unknown handles safe, and maintaining conservative exact-handle Shared Slot compatibility for V1 custom layouts.
+- Document the new Page Layout ownership model and portability boundary, including the fact that page-level `public_shell` handles still transfer through export/import and clone while install-level Page Layout definitions remain local to each install in V1.
+
 ## 1.27.9
 
 - Removed the CMS-specific navbar sticky class and restored clean ownership of sticky and page-level behavior to the public header or page layout wrapper path while keeping WebBlocks UI `wb-navbar` as the navbar behavior source.
