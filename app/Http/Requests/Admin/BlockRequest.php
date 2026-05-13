@@ -85,7 +85,7 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
@@ -96,6 +96,7 @@ class BlockRequest extends FormRequest
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
+            'container_flow' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'stack'])],
             'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', '2', '4', '6'])],
             'cluster_alignment' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end'])],
             'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
@@ -169,6 +170,7 @@ class BlockRequest extends FormRequest
             'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'header_actions_show_search' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'sticky_navbar_mode' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['sticky', 'fixed', 'static'])],
+            'navbar_brand_aria_label' => [$isNavbarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'navbar_navigation_menu_key' => [$isNavbarNavigation ? 'required' : 'prohibited', Rule::in(NavigationItem::menuKeys())],
             'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
             'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
@@ -248,6 +250,15 @@ class BlockRequest extends FormRequest
 
                 if (! $asset?->isImage()) {
                     $validator->errors()->add('asset_id', 'Brand logo must be an image from Media.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'navbar-brand') {
+                $hasTitle = trim((string) $this->input('title', '')) !== '';
+                $hasLogo = (int) ($this->input('asset_id') ?: 0) > 0;
+
+                if (! $hasTitle && ! $hasLogo) {
+                    $validator->errors()->add('title', 'Navbar Brand requires visible title text or a logo image.');
                 }
             }
 
@@ -892,6 +903,7 @@ class BlockRequest extends FormRequest
                 if (! $isTranslatedNavbarBrandEdit) {
                     $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
                     $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                    $settings['aria_label'] = trim((string) ($data['navbar_brand_aria_label'] ?? '')) ?: null;
                 }
 
                 $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
@@ -1140,6 +1152,7 @@ class BlockRequest extends FormRequest
                 $settings = $existingSettings;
                 $spacing = trim((string) ($data['spacing'] ?? ''));
                 $width = trim((string) ($data['width'] ?? ''));
+                $containerFlow = trim((string) ($data['container_flow'] ?? ''));
                 $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
                 $clusterAlignment = trim((string) ($data['cluster_alignment'] ?? ''));
                 $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
@@ -1166,6 +1179,12 @@ class BlockRequest extends FormRequest
                         $settings['width'] = $width;
                     } else {
                         unset($settings['width']);
+                    }
+
+                    if (in_array($containerFlow, ['none', 'stack'], true)) {
+                        $settings['flow'] = $containerFlow;
+                    } else {
+                        unset($settings['flow']);
                     }
 
                     unset($settings['spacing']);
@@ -1258,12 +1277,12 @@ class BlockRequest extends FormRequest
         unset($data['text'], $data['level'], $data['anchor']);
         unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
         unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
-        unset($data['sticky_navbar_mode'], $data['navbar_navigation_menu_key']);
+        unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
         unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
         unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
         unset($data['show_button']);
-        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;
     }

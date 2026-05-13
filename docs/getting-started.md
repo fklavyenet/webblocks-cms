@@ -47,7 +47,11 @@ For reusable public headers, the recommended pattern is:
 
 `Navbar` renders only `nav.wb-navbar` and its child blocks. It does not automatically add a `Container`, brand wrapper, menu wrapper, or generated actions area. When constrained width is needed, place a `Container` block inside the Navbar.
 
-`Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container -> Cluster`, then place `Navbar Brand` and `Navbar Navigation` inside that nested layout.
+`Container` is primarily a width primitive. Legacy containers still render stacked flow by default, but for navbar composition set Container `Flow` to `None` so it renders only `div.wb-container`, then place `Cluster` inside it for horizontal composition.
+
+`Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container (Flow: None) -> Cluster`, then place `Navbar Brand`, `Navbar Navigation`, and `Header Actions` inside that nested layout.
+
+`Navbar Brand` supports logo-only usage when a logo image is present. Visible title text is optional in that case, and the accessible label falls back to the configured brand label or the resolved site name.
 
 `Position` is the only built-in Navbar setting: `static`, `sticky`, or `fixed`. Visual variants and navbar styling belong to WebBlocks UI class usage, not Navbar block-specific CMS settings.
 

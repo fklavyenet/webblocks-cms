@@ -3197,8 +3197,84 @@ class PageBuilderExperienceTest extends TestCase
         $clusterResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $clusterType->id]));
 
         $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="spacing"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
-        $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="width"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+        $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="width"', false)->assertSee('name="container_flow"', false)->assertSee('Container owns width only.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
         $clusterResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="cluster_gap"', false)->assertSee('name="cluster_alignment"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+    }
+
+    #[Test]
+    public function navbar_brand_accepts_logo_only_with_accessible_label_but_rejects_missing_logo_and_title(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
+        $navbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+        $brandType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
+
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/navbar-brand-logo-only.png',
+            'filename' => 'navbar-brand-logo-only.png',
+            'original_name' => 'navbar-brand-logo-only.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $navbar = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $navbarType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $brandType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('name="navbar_brand_aria_label"', false);
+        $formResponse->assertDontSee('name="title" class="wb-input" type="text" value="" required', false);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $brandType->id,
+            'parent_id' => $navbar->id,
+            'sort_order' => 0,
+            'title' => '',
+            'subtitle' => '',
+            'asset_id' => $asset->id,
+            'url' => '/',
+            'target' => '_self',
+            'navbar_brand_aria_label' => 'Fklavye Web Services',
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $brand = Block::query()->where('page_id', $page->id)->where('type', 'navbar-brand')->firstOrFail();
+
+        $this->assertSame('Fklavye Web Services', $brand->navbarBrandAriaLabel());
+        $this->assertNull($brand->fresh()->title);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $brandType->id,
+            'parent_id' => $navbar->id,
+            'sort_order' => 1,
+            'title' => '',
+            'subtitle' => '',
+            'url' => '/',
+            'target' => '_self',
+            'navbar_brand_aria_label' => '',
+            'status' => 'published',
+        ])->assertSessionHasErrors('title');
     }
 
     #[Test]

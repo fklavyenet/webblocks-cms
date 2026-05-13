@@ -6,7 +6,7 @@
     @endif
 
     <div class="wb-alert wb-alert-info">
-        <div>This block renders the inner <code>.wb-navbar-brand</code> link only. Place it inside a Navbar block to build a header layout.</div>
+        <div>This block renders the inner <code>.wb-navbar-brand</code> link only. Place it inside a Navbar block to build a header layout. Provide a visible title, a logo, or both.</div>
     </div>
 
     <div class="wb-stack wb-gap-1">
@@ -26,7 +26,8 @@
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="title">Brand Title</label>
-            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}" required>
+            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
+            <div class="wb-text-sm wb-text-muted">Optional when a logo is present.</div>
         </div>
 
         <div class="wb-stack wb-gap-1">
@@ -38,6 +39,12 @@
     <div class="wb-stack wb-gap-1">
         <label for="subtitle">Subtitle</label>
         <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="navbar_brand_aria_label">Accessible Label</label>
+        <input id="navbar_brand_aria_label" name="navbar_brand_aria_label" class="wb-input" type="text" value="{{ old('navbar_brand_aria_label', $block->navbarBrandAriaLabel()) }}">
+        <div class="wb-text-sm wb-text-muted">Used for logo-only brands when visible title text is empty. Falls back to the site label if left blank.</div>
     </div>
 
     <div class="wb-stack wb-gap-1">

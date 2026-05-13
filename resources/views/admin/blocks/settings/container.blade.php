@@ -11,4 +11,14 @@
         </select>
         <div class="wb-text-sm wb-text-muted">Maps to shipped `wb-container-*` width classes only.</div>
     </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="container_flow">Flow</label>
+        <select id="container_flow" name="container_flow" class="wb-select">
+            <option value="" @selected(old('container_flow', $block->setting('flow')) === null)>Legacy default (Stack)</option>
+            <option value="none" @selected(old('container_flow', $block->setting('flow')) === 'none')>None</option>
+            <option value="stack" @selected(old('container_flow', $block->setting('flow')) === 'stack')>Stack</option>
+        </select>
+        <div class="wb-text-sm wb-text-muted">Container owns width only. Choose `None` for layout-neutral composition, or `Stack` for vertical flow.</div>
+    </div>
 </div>

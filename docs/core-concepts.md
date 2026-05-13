@@ -112,10 +112,12 @@ System navigation blocks follow the same relational rule. `Navbar` keeps the per
 Navbar composition is relational rather than JSON-driven:
 
 - `Navbar` owns only wrapper semantics and a shared `Position` setting.
+- `Container` owns width constraint. Legacy containers still default to stacked flow for compatibility, but `Flow = None` makes Container layout-neutral so child layout blocks control composition.
 - `Navbar Brand` owns logo and brand text.
 - `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes.
 - `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
 - `Navbar Brand` and `Navbar Navigation` must live somewhere inside the `Navbar` ancestor tree, but they do not need to be direct children of the root `Navbar` block.
+- `Navbar Brand` supports logo-only usage when a logo image exists. When visible title text is empty, an explicit accessible label or the resolved site label provides the safe fallback name.
 
 Recommended composition:
 
@@ -124,6 +126,8 @@ Recommended composition:
 - `Cluster` or another layout block
 - `Navbar Brand`
 - `Navbar Navigation`
+
+Use `Container` for width, `Cluster` for horizontal grouping, and stacked child layout only when you choose it explicitly.
 
 This keeps header composition explicit, reusable, and aligned with WebBlocks UI instead of duplicating a CMS-only navbar design surface.
 

@@ -547,6 +547,23 @@ class Block extends Model
         };
     }
 
+    public function containerFlow(): string
+    {
+        $flow = trim((string) $this->setting('flow', ''));
+
+        if (in_array($flow, ['none', 'stack'], true)) {
+            return $flow;
+        }
+
+        // Legacy containers rendered stacked before flow became configurable.
+        return 'stack';
+    }
+
+    public function containerFlowClass(): ?string
+    {
+        return $this->containerFlow() === 'none' ? null : 'wb-stack';
+    }
+
     public function clusterGapClass(): ?string
     {
         return match ($this->appearanceSetting('gap')) {
@@ -867,6 +884,21 @@ class Block extends Model
     public function navbarBrandTarget(): string
     {
         return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
+    public function navbarBrandAriaLabel(): ?string
+    {
+        return $this->stringValueOrNull($this->setting('aria_label'));
+    }
+
+    public function navbarBrandAccessibleLabel(): ?string
+    {
+        return $this->stringValueOrNull($this->title)
+            ?? $this->translatedTextFieldValue('title')
+            ?? $this->navbarBrandAriaLabel()
+            ?? $this->stringValueOrNull($this->renderSite()?->display_name)
+            ?? $this->stringValueOrNull($this->renderSite()?->seo_title)
+            ?? $this->stringValueOrNull($this->renderSite()?->name);
     }
 
     public function navbarNavigationMenuKey(): string

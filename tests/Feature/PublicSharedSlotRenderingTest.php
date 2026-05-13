@@ -403,6 +403,23 @@ class PublicSharedSlotRenderingTest extends TestCase
     }
 
     #[Test]
+    public function shared_slot_container_can_render_neutral_flow_without_stack_class(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource();
+
+        $container = Block::query()->where('page_id', $context['sharedSourcePage']->id)->where('type', 'container')->firstOrFail();
+        $container->forceFill([
+            'settings' => json_encode(['flow' => 'none'], JSON_UNESCAPED_SLASHES),
+        ])->save();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-container" data-wb-public-block-type="container">', false);
+        $response->assertDontSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
+    }
+
+    #[Test]
     public function shared_slot_translations_follow_the_existing_public_translation_rules(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

@@ -185,6 +185,144 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function navbar_composition_supports_neutral_container_cluster_and_logo_only_brand(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $page->site->update(['display_name' => 'Site Brand']);
+
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/navbar-logo-only.png',
+            'filename' => 'navbar-logo-only.png',
+            'original_name' => 'navbar-logo-only.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $navbar = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 18, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'container',
+            'block_type_id' => $this->blockType('container', 'Container', 5, false, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['flow' => 'none'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 6, false, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'navbar-brand',
+            'block_type_id' => $this->blockType('navbar-brand', 'Navbar Brand', 19)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'asset_id' => $asset->id,
+            'settings' => json_encode(['url' => '/', 'target' => '_self', 'aria_label' => 'Fklavye Web Services'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => '',
+            'subtitle' => '',
+        ]);
+
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'navbar-navigation',
+            'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 20)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['menu_key' => NavigationItem::MENU_PRIMARY], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $navigation->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Primary navigation',
+        ]);
+
+        $actions = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'header-actions',
+            'block_type_id' => $this->blockType('header-actions', 'Header Actions', 21)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'settings' => json_encode(['show_mode_toggle' => true, 'show_accent_toggle' => false, 'show_search' => false], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $page->site_id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'About',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('<nav class="wb-navbar wb-navbar--static"><div class="wb-container', false);
+        $response->assertSee('<div class="wb-container" data-wb-public-block-type="container">', false);
+        $response->assertDontSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
+        $response->assertSee('<div class="wb-cluster" data-wb-public-block-type="cluster">', false);
+        $response->assertSee('aria-label="Fklavye Web Services"', false);
+        $response->assertSee('alt="Fklavye Web Services"', false);
+        $response->assertSee('navbar-logo-only.png', false);
+        $response->assertDontSee('<span class="wb-navbar-identity">', false);
+        $response->assertSee('class="wb-navbar-links"', false);
+        $response->assertSee('aria-label="Auto mode"', false);
+
+        unset($actions);
+    }
+
+    #[Test]
     public function sidebar_navigation_renders_only_sidebar_nav_wrapper_with_section_and_children(): void
     {
         $page = $this->pageWithMainSlot();

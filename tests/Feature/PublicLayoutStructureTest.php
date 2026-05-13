@@ -417,6 +417,78 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertDontSee('This page has no published content yet');
     }
 
+    #[Test]
+    public function legacy_container_blocks_still_render_stack_flow_by_default(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $main = SlotType::query()->updateOrCreate(
+            ['slug' => 'main'],
+            ['name' => 'Main', 'status' => 'published', 'sort_order' => 1, 'is_system' => true],
+        );
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Container Legacy',
+            'slug' => 'container-legacy',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Container Legacy', 'slug' => 'container-legacy', 'path' => '/p/container-legacy'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'container',
+            'block_type_id' => BlockType::query()->updateOrCreate(
+                ['slug' => 'container'],
+                ['name' => 'Container', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1, 'is_system' => false, 'is_container' => true],
+            )->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'header',
+            'block_type_id' => BlockType::query()->updateOrCreate(
+                ['slug' => 'header'],
+                ['name' => 'Header', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2, 'is_system' => false, 'is_container' => false],
+            )->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $header->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Legacy container heading',
+        ]);
+
+        $response = $this->get('/p/container-legacy');
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
+        $response->assertSee('Legacy container heading', false);
+    }
+
     private function buildHomepageWithHeaderSidebarAndFooter(): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
