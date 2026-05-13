@@ -116,7 +116,7 @@ Navbar composition is relational rather than JSON-driven:
 - `Cluster` is the horizontal or grouped layout primitive. Its settings control width, justification, cross-axis alignment, wrapping, and gap.
 - `Stack` remains the vertical flow primitive.
 - `Navbar Brand` owns logo and brand text.
-- `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes.
+- `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes. On narrow screens it also renders an accessible burger toggle that opens the same menu through the WebBlocks UI dropdown behavior while leaving brand and header actions in the main navbar row.
 - `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
 - `Navbar Brand` and `Navbar Navigation` must live somewhere inside the `Navbar` ancestor tree, but they do not need to be direct children of the root `Navbar` block.
 - `Navbar Brand` supports logo-only usage when a logo image exists. When visible title text is empty, an explicit accessible label or the resolved site label provides the safe fallback name.
@@ -160,7 +160,7 @@ Public page structure is controlled at the page and slot layer.
 - Slot wrappers are resolved automatically from page shell plus slot name. Unknown slots use the safe default `div` wrapper.
 - Header slots are layout-neutral by default and do not force `wb-stack` around their block trees.
 - Main slots may still own stacked rhythm through their shell partial when that presentation is intentional.
-- Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks.
+- Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks. Default-shell header and main wrappers own that rhythm so the first content block does not need ad hoc top margins.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
 
 For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.

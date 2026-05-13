@@ -68,46 +68,92 @@
         return rtrim((string) url()->to($href), '/') === $currentUrl
             || ($normalized !== null && $normalized === $currentPath);
     };
+    $mobileMenuId = 'wb-navbar-navigation-mobile-menu-'.$block->id;
+
+    $renderItems = function ($items, bool $isMobile = false) use (&$renderItems, $block, $isItemActive) {
+        $html = '';
+
+        foreach ($items as $item) {
+            $isActive = $isItemActive($item);
+            $url = $item->resolvedUrl();
+            $children = $item->children;
+
+            if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
+                if ($isMobile) {
+                    $html .= '<li class="wb-stack wb-gap-1">';
+                    $html .= '<span class="wb-cms-navbar-mobile-group-label'.($isActive ? ' is-active' : '').'">'.e($item->resolvedTitle()).'</span>';
+                    $html .= '<ul class="wb-stack wb-gap-1">'.$renderItems($children, true).'</ul>';
+                    $html .= '</li>';
+
+                    continue;
+                }
+
+                $groupMenuId = 'navbar-navigation-group-'.$block->id.'-'.$item->id;
+                $html .= '<li class="wb-navbar-nav-item wb-dropdown">';
+                $html .= '<button type="button" class="wb-navbar-link'.($isActive ? ' is-active' : '').'" data-wb-toggle="dropdown" data-wb-target="#'.$groupMenuId.'" aria-expanded="false">';
+                $html .= e($item->resolvedTitle());
+                $html .= ' <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>';
+                $html .= '</button>';
+                $html .= '<div class="wb-dropdown-menu" id="'.$groupMenuId.'">';
+
+                foreach ($children as $child) {
+                    $childActive = $isItemActive($child);
+                    $childUrl = $child->resolvedUrl();
+                    $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
+
+                    if ($childUrl) {
+                        $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.'>'.e($child->resolvedTitle()).'</a>';
+                    }
+                }
+
+                $html .= '</div></li>';
+
+                continue;
+            }
+
+            if (! $url) {
+                continue;
+            }
+
+            $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
+            $linkClass = $isMobile ? 'wb-dropdown-item' : 'wb-navbar-link';
+            $itemClass = $isMobile ? '' : ' class="wb-navbar-nav-item"';
+            $html .= '<li'.$itemClass.'>';
+            $html .= '<a href="'.e($url).'" class="'.$linkClass.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.e($item->resolvedTitle()).'</a>';
+            $html .= '</li>';
+        }
+
+        return $html;
+    };
 @endphp
 
 @if ($items->isNotEmpty())
-    <div class="wb-navbar-links" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
-        <ul class="wb-navbar-nav" aria-label="{{ $label }}">
-            @foreach ($items as $item)
-                @php
-                    $isActive = $isItemActive($item);
-                    $url = $item->resolvedUrl();
-                    $children = $item->children;
-                @endphp
+    <div class="wb-cms-navbar-navigation" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+        <div class="wb-dropdown wb-dropdown-end wb-cms-navbar-mobile-toggle">
+            <button
+                type="button"
+                class="wb-navbar-toggle wb-cms-navbar-mobile-toggle-button"
+                data-wb-toggle="dropdown"
+                data-wb-target="#{{ $mobileMenuId }}"
+                aria-expanded="false"
+                aria-haspopup="menu"
+                aria-controls="{{ $mobileMenuId }}"
+                aria-label="Toggle navigation"
+            >
+                <span></span><span></span><span></span>
+            </button>
 
-                @if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty())
-                    <li class="wb-navbar-nav-item wb-dropdown">
-                        <button type="button" class="wb-navbar-link{{ $isActive ? ' is-active' : '' }}" data-wb-toggle="dropdown" data-wb-target="#navbar-navigation-group-{{ $block->id }}-{{ $item->id }}" aria-expanded="false">
-                            {{ $item->resolvedTitle() }}
-                            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
-                        </button>
+            <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu" id="{{ $mobileMenuId }}" role="menu" aria-label="{{ $label }}">
+                <ul class="wb-navbar-nav wb-cms-navbar-mobile-nav">
+                    {!! $renderItems($items, true) !!}
+                </ul>
+            </div>
+        </div>
 
-                        <div class="wb-dropdown-menu" id="navbar-navigation-group-{{ $block->id }}-{{ $item->id }}">
-                            @foreach ($children as $child)
-                                @php
-                                    $childActive = $isItemActive($child);
-                                    $childUrl = $child->resolvedUrl();
-                                    $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
-                                @endphp
-
-                                @if ($childUrl)
-                                    <a class="wb-dropdown-item{{ $childActive ? ' is-active' : '' }}" href="{{ $childUrl }}"{!! $childActive ? ' aria-current="page"' : '' !!}{!! $childTarget !!}>{{ $child->resolvedTitle() }}</a>
-                                @endif
-                            @endforeach
-                        </div>
-                    </li>
-                @elseif ($url)
-                    @php($target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '')
-                    <li class="wb-navbar-nav-item">
-                        <a href="{{ $url }}" class="wb-navbar-link{{ $isActive ? ' is-active' : '' }}"{!! $isActive ? ' aria-current="page"' : '' !!}{!! $target !!}>{{ $item->resolvedTitle() }}</a>
-                    </li>
-                @endif
-            @endforeach
-        </ul>
+        <div class="wb-navbar-links">
+            <ul class="wb-navbar-nav" aria-label="{{ $label }}">
+                {!! $renderItems($items) !!}
+            </ul>
+        </div>
     </div>
 @endif

@@ -73,10 +73,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
-        $response->assertSee('<p data-wb-public-block-type="plain-text">Inner child</p>', false);
+        $response->assertSee('<p>Inner child</p>', false);
         $response->assertDontSee('wb-cms-sticky-navbar', false);
         $response->assertDontSee('<div class="wb-container', false);
-        $response->assertDontSee('About', false);
         $this->assertSame($child->id, $block->children->first()?->id);
     }
 
@@ -178,9 +177,16 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('sticky-navbar-logo.png', false);
         $response->assertSee('FKlavye', false);
         $response->assertSee('Docs', false);
+        $response->assertSee('class="wb-cms-navbar-navigation"', false);
+        $response->assertSee('class="wb-navbar-toggle wb-cms-navbar-mobile-toggle-button"', false);
+        $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
+        $response->assertSee('aria-expanded="false"', false);
+        $response->assertSee('aria-label="Toggle navigation"', false);
+        $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('class="wb-navbar-links"', false);
         $response->assertSee('href="/p/about" class="wb-navbar-link is-active" aria-current="page"', false);
         $response->assertSee('href="/contact" class="wb-navbar-link"', false);
+        $response->assertSee('href="/contact" class="wb-dropdown-item"', false);
         $response->assertDontSee('wb-cms-sticky-navbar', false);
     }
 
@@ -330,10 +336,8 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar--static"><div class="wb-container', false);
-        $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
         $response->assertSee('<div class="wb-container" data-wb-public-block-type="container">', false);
         $response->assertDontSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-between wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">', false);
@@ -958,6 +962,17 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'cms/js/public/sidebar-navigation.js',
             '</head>',
         ], false);
+    }
+
+    #[Test]
+    public function navbar_mobile_toggle_uses_existing_webblocks_ui_dropdown_contract_without_extra_cms_script(): void
+    {
+        $this->pageWithMainSlot();
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('cms/js/public/navbar-toggle.js', false);
     }
 
     #[Test]

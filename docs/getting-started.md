@@ -53,6 +53,8 @@ For reusable public headers, the recommended pattern is:
 
 `Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container (Flow: None) -> Cluster (Width: Full, Justify: Between, Align: Center, Wrap: Nowrap)`, then place `Navbar Brand` plus an inner `Cluster (Justify: End, Align: Center, Wrap: Nowrap)` that holds `Navbar Navigation` and `Header Actions`.
 
+When a `Navbar Navigation` block has visible items, CMS now renders a mobile burger toggle automatically. On mobile the inline desktop links collapse behind that toggle, the brand stays visible, header actions remain available, and the opened menu is rendered below the row through the existing WebBlocks UI dropdown behavior.
+
 `Navbar Brand` supports logo-only usage when a logo image is present. Visible title text is optional in that case, and the accessible label falls back to the configured brand label or the resolved site name.
 
 `Position` is the only built-in Navbar setting: `static`, `sticky`, or `fixed`. Visual variants and navbar styling belong to WebBlocks UI class usage, not Navbar block-specific CMS settings.

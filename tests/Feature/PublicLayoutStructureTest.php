@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
 use App\Models\PageSlot;
@@ -225,7 +226,8 @@ class PublicLayoutStructureTest extends TestCase
         $main = $this->slotType('main', 'Main', 2);
         $navbarType = $this->blockType('sticky-navbar', 'Navbar', 10);
         $brandType = $this->blockType('navbar-brand', 'Navbar Brand', 11);
-        $textType = $this->blockType('plain_text', 'Plain Text', 12);
+        $navigationType = $this->blockType('navbar-navigation', 'Navbar Navigation', 12);
+        $textType = $this->blockType('plain_text', 'Plain Text', 13);
 
         $page = Page::query()->create([
             'site_id' => $site->id,
@@ -283,6 +285,35 @@ class PublicLayoutStructureTest extends TestCase
         ]);
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($brand->fresh(['textTranslations']));
 
+        $navigation = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-navigation',
+            'block_type_id' => $navigationType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 1,
+            'settings' => json_encode(['menu_key' => NavigationItem::MENU_PRIMARY], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $navigation->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Primary navigation',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($navigation->fresh(['textTranslations']));
+
+        NavigationItem::query()->create([
+            'site_id' => $site->id,
+            'menu_key' => NavigationItem::MENU_PRIMARY,
+            'title' => 'Header Slot Shell',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $page->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
         $mainBlock = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'plain_text',
@@ -306,8 +337,12 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
+        $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
+        $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
+        $response->assertSee('aria-label="Toggle navigation"', false);
         $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
         $response->assertSee('Main shell content', false);
+        $this->assertStringContainsString('.wb-public-site-header + main[data-wb-slot="main"] {', file_get_contents(public_path('cms/css/public.css')));
         $this->assertStringContainsString('.wb-public-site-header {', file_get_contents(public_path('cms/css/public.css')));
     }
 
