@@ -18,6 +18,7 @@ class Installer
         private readonly EnvironmentWriter $environmentWriter,
         private readonly InstallState $installState,
         private readonly InstalledVersionStore $installedVersionStore,
+        private readonly InstallationGitRemoteGuard $installationGitRemoteGuard,
     ) {}
 
     public function saveDatabaseConfiguration(array $input): void
@@ -135,6 +136,8 @@ class Installer
 
             return $user;
         });
+
+        $this->installationGitRemoteGuard->protectCurrentInstallQuietly();
 
         return $user;
     }

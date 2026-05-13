@@ -35,11 +35,12 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 For a fresh install, first get the source code locally:
 
 ```bash
-git clone git@github.com:fklavyenet/webblocks-cms.git
+git clone https://github.com/fklavyenet/webblocks-cms.git
 cd webblocks-cms
+git remote set-url --push origin DISABLED
 ```
 
-If you already created an empty target directory, use `git clone git@github.com:fklavyenet/webblocks-cms.git .` instead. After the source code is present locally, continue with one of the install paths below.
+If you already created an empty target directory, use `git clone https://github.com/fklavyenet/webblocks-cms.git .` and then run `git remote set-url --push origin DISABLED` before continuing. CMS installations consume upstream releases and updates, but they must not publish or push back to the CMS upstream repository.
 
 ### DDEV Quick Start
 
@@ -235,6 +236,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 
 - Refresh the core CMS block type catalog on an existing install with `ddev artisan block-types:sync-core`. The sync safely upserts product-owned block types such as `Header`, `Table`, `TOC`, `Quote`, and `Rich Text` without duplicating rows or overwriting install-specific custom block types.
 - In-app System Updates now run the core block type catalog sync automatically after migrations and before the installed version is marked complete, so existing installs stay aligned with the current shipped CMS block catalog during upgrades.
+- Public CMS installations are update consumers, not upstream publishers. Keep `origin` fetchable if you want local git visibility, but disable push on installation working copies with `git remote set-url --push origin DISABLED`. Create CMS releases only from the real maintenance checkout, not from an installed site working copy.
 - `BlockTypeSeeder` still uses the shared core block type sync path for fresh installs and keeps the existing legacy compatibility behavior, including drafting non-core rows and removing the legacy `heading` catalog row only when no live published blocks still reference it.
 - `Navbar` keeps the persisted `sticky-navbar` handle for compatibility, but it now behaves as a primitive system navigation container. It renders only `nav.wb-navbar` and nested child blocks, keeps only `Position` (`static`, `sticky`, `fixed`) as a built-in setting, and does not add an automatic `Container`, brand wrapper, or generated menu markup.
 - `Page Layout` is now a managed install-level CMS concept under `Admin -> System -> Page Layouts`. Pages still store the selected layout handle on `public_shell` for backward compatibility, while the runtime resolves that handle safely through the managed Page Layout catalog. Built-in `Default Layout` and `Docs Layout` remain backward compatible with existing pages, imports, exports, Shared Slots, and public rendering. Page Layouts now expose `Body Class` plus managed `Page Layout Slots` in the admin, while deprecated compatibility fields such as `shell_type`, `slot_schema`, and `wrapper_schema` stay out of the admin UI. Body Class is intended for layout-specific CSS on the public `<body>`, such as `layout-default` or `layout-docs`, and Page Layout Slots own the public wrapper element, id, and classes for each region. Wrapper classes can include hints such as `wb-sticky`, but sticky offset and stacking context remain site CSS concerns. When needed, define site-specific rules such as `header.wb-sticky { top: 0; z-index: 100; }` in `public/site/{site_handle}/css/site.css`. Advanced trusted layout HTML is limited to wrapper-adjacent layout markup only and must not be used for scripts. Edit Page compares current Page Slots against the selected Page Layout's managed Layout Slots and offers a safe `Add Missing Layout Slots` action that creates only missing slots. Custom V1 Page Layouts still reuse the existing `default` or `docs` runtime behavior conservatively, and Shared Slot compatibility remains conservative and exact by stored handle.

@@ -82,6 +82,14 @@ That means the correct time to align local development with a release version is
 
 Only then may the local development install be synchronized to that released version.
 
+## Repository Boundary Rule
+
+Only the real WebBlocks CMS maintenance checkout may publish `main` updates, tags, or releases to `github.com/fklavyenet/webblocks-cms`.
+
+- installed site working copies such as local customer, staging, or project clones are downstream consumers only
+- those installation working copies should set `origin` push to `DISABLED` with `git remote set-url --push origin DISABLED`
+- maintainers must prepare releases from the maintenance repository after confirming they are not inside an installed site checkout
+
 ## Recommended Release Flow
 
 Recommended sequence:

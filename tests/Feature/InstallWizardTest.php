@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\Install\InstallationGitRemoteGuard;
 use App\Support\Install\InstallState;
 use App\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -38,6 +40,8 @@ class InstallWizardTest extends TestCase
 
     protected function tearDown(): void
     {
+        Mockery::close();
+
         if (is_file($this->envPath)) {
             unlink($this->envPath);
         }
@@ -136,6 +140,10 @@ class InstallWizardTest extends TestCase
     public function first_admin_can_be_created_through_the_installer(): void
     {
         $this->runCoreInstall();
+
+        $guard = Mockery::mock(InstallationGitRemoteGuard::class);
+        $guard->shouldReceive('protectCurrentInstallQuietly')->once();
+        $this->app->instance(InstallationGitRemoteGuard::class, $guard);
 
         $response = $this->post(route('install.admin.store'), [
             'name' => 'Install Admin',

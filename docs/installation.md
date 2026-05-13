@@ -22,17 +22,21 @@ Before you run any install commands, make sure the WebBlocks CMS repository is p
 Clone into a new directory:
 
 ```bash
-git clone git@github.com:fklavyenet/webblocks-cms.git
+git clone https://github.com/fklavyenet/webblocks-cms.git
 cd webblocks-cms
+git remote set-url --push origin DISABLED
 ```
 
 Clone into an already-created empty directory:
 
 ```bash
-git clone git@github.com:fklavyenet/webblocks-cms.git .
+git clone https://github.com/fklavyenet/webblocks-cms.git .
+git remote set-url --push origin DISABLED
 ```
 
 After the source code is present locally, continue with one of the fresh install paths below.
+
+WebBlocks CMS installations are update consumers only. They may fetch, pull, or download CMS updates, but they must not push commits or tags back to the canonical CMS upstream. For existing local installation clones, run `git remote set-url --push origin DISABLED` once in the installation working copy.
 
 ## Browser Install Wizard
 

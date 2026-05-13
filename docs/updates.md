@@ -15,6 +15,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Treat development and release workflows separately.
 - Release packages contain reusable CMS core code only and must not ship install-specific `project/` content.
 - Update-time preserved paths do not change the release package boundary: `project/` stays local to the install and outside the published artifact.
+- Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 
 ## Update Apply Flow
 
@@ -33,6 +34,8 @@ The block type sync is idempotent and keeps the database-backed `block_types` ca
 - duplicate core rows are not created
 
 This closes the gap where a code update could add new shipped block types without guaranteeing that an older install's `block_types` table was refreshed to match.
+
+When the updater runs inside a git-backed installation clone that still points at the canonical CMS upstream, CMS now also disables `origin` push automatically after post-install commands so future accidental `git push` attempts fail clearly while normal fetch or pull access remains available.
 
 ## Related Docs
 

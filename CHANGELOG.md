@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.30.5
+
+- Harden installation safety so fresh installs and in-app package updates disable `origin` push with `git remote set-url --push origin DISABLED` when the working copy points at the canonical WebBlocks CMS upstream, while keeping fetch-based update consumption intact.
+- Clarify that CMS installations are update consumers only, that releases must be created from the real maintenance checkout, and that existing installation clones such as `project-fklavye` should disable push on `origin` explicitly.
+
 ## 1.30.3
 
 - Fix the Edit Site footer so `Cancel` returns to the Sites index instead of leaking to the Pages screen.

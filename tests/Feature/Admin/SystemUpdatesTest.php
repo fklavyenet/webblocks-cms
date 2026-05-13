@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -135,6 +136,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('runtime-data', trim((string) File::get($targetRoot.'/storage/app/public/user.txt')));
         $this->assertSame('runtime-cache', trim((string) File::get($targetRoot.'/bootstrap/cache/config.php')));
         $this->assertSame("<?php\n\nreturn ['source' => 'runtime-project'];\n", File::get($targetRoot.'/project/config/sites.php'));
+        $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
 
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
@@ -145,6 +147,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
+        $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
         $this->assertCommandOrder([
             'php artisan migrate --force',
             'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force',
@@ -447,6 +450,8 @@ class SystemUpdatesTest extends TestCase
         File::put($targetRoot.'/bootstrap/cache/config.php', "runtime-cache\n");
         File::ensureDirectoryExists($targetRoot.'/project/config');
         File::put($targetRoot.'/project/config/sites.php', "<?php\n\nreturn ['source' => 'runtime-project'];\n");
+        $this->runProcess(['git', 'init'], $targetRoot);
+        $this->runProcess(['git', 'remote', 'add', 'origin', 'git@github.com:fklavyenet/webblocks-cms.git'], $targetRoot);
 
         $archiveDirectory = $this->makeTemporaryDirectory('release-archive');
         $archivePath = $archiveDirectory.'/webblocks-cms-0.2.0.zip';
@@ -497,6 +502,26 @@ class SystemUpdatesTest extends TestCase
 
             $lastIndex = $index;
         }
+    }
+
+    private function readGitConfig(string $repositoryPath, string $key): ?string
+    {
+        $process = new Process(['git', 'config', '--get', $key], $repositoryPath);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            return null;
+        }
+
+        $output = trim($process->getOutput());
+
+        return $output === '' ? null : $output;
+    }
+
+    private function runProcess(array $command, string $workingDirectory): void
+    {
+        $process = new Process($command, $workingDirectory);
+        $process->mustRun();
     }
 
     protected function tearDown(): void

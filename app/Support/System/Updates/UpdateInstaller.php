@@ -2,6 +2,7 @@
 
 namespace App\Support\System\Updates;
 
+use App\Support\Install\InstallationGitRemoteGuard;
 use Database\Seeders\CoreCatalogSeeder;
 use Illuminate\Support\Facades\File;
 
@@ -9,6 +10,7 @@ class UpdateInstaller
 {
     public function __construct(
         private readonly UpdateCommandRunner $commandRunner,
+        private readonly InstallationGitRemoteGuard $installationGitRemoteGuard,
     ) {}
 
     public function enterMaintenance(array &$output): void
@@ -105,6 +107,8 @@ class UpdateInstaller
                 $output,
             );
         }
+
+        $this->installationGitRemoteGuard->protectCurrentInstall($this->targetPath(), $output);
     }
 
     public function leaveMaintenance(array &$output): void
