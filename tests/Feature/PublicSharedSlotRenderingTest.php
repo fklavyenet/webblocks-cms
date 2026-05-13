@@ -183,7 +183,44 @@ class PublicSharedSlotRenderingTest extends TestCase
         $response->assertSee('Shared Brand', false);
         $response->assertSee('Getting Started', false);
         $response->assertSee('data-wb-public-block-type="sticky-navbar"', false);
+        $response->assertDontSee('<div class="wb-stack"><nav class="wb-navbar wb-navbar--sticky"', false);
         $response->assertDontSee('wb-cms-sticky-navbar', false);
+    }
+
+    #[Test]
+    public function shared_header_slot_renders_navbar_directly_under_the_header_wrapper_without_forced_stack(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource([
+            'page_shell' => 'default',
+            'shared_public_shell' => 'default',
+        ]);
+
+        $navbar = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 110, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => -30,
+            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $navbar->id,
+            'parent_id' => null,
+            'sort_order' => -30,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
+        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
     }
 
     #[Test]

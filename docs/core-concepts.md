@@ -158,6 +158,9 @@ Public page structure is controlled at the page and slot layer.
 - `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
 - Slot name determines the semantic public wrapper role for that region.
 - Slot wrappers are resolved automatically from page shell plus slot name. Unknown slots use the safe default `div` wrapper.
+- Header slots are layout-neutral by default and do not force `wb-stack` around their block trees.
+- Main slots may still own stacked rhythm through their shell partial when that presentation is intentional.
+- Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
 
 For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.

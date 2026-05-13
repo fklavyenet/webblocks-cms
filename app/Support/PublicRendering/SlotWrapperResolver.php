@@ -47,7 +47,7 @@ class SlotWrapperResolver
     private function resolveDefaultMapping(string $slug): array
     {
         return match ($slug) {
-            'header' => ['preset' => 'default', 'element' => 'header', 'class' => null],
+            'header' => ['preset' => 'default', 'element' => 'header', 'class' => 'wb-public-site-header'],
             'main' => ['preset' => 'default', 'element' => 'main', 'class' => null],
             'sidebar' => ['preset' => 'default', 'element' => 'aside', 'class' => null],
             'footer' => ['preset' => 'default', 'element' => 'footer', 'class' => null],

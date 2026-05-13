@@ -120,11 +120,9 @@
                 @include('pages.partials.block', ['block' => $block])
             @endforeach
         @else
-            <div class="wb-stack">
-                @foreach ($slot['blocks'] as $block)
-                    @include('pages.partials.block', ['block' => $block])
-                @endforeach
-            </div>
+            @foreach ($slot['blocks'] as $block)
+                @include('pages.partials.block', ['block' => $block])
+            @endforeach
         @endif
     @endif
 @else

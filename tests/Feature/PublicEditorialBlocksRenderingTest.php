@@ -330,8 +330,10 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertDontSee('<nav class="wb-navbar wb-navbar--static"><div class="wb-container', false);
+        $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
         $response->assertSee('<div class="wb-container" data-wb-public-block-type="container">', false);
         $response->assertDontSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
         $response->assertSee('<div class="wb-cluster wb-cluster-between wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">', false);

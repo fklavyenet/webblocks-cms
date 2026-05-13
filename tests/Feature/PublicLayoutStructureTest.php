@@ -30,7 +30,7 @@ class PublicLayoutStructureTest extends TestCase
 
         $response->assertOk();
         $response->assertSeeInOrder([
-            '<header data-wb-slot="header">',
+            '<header data-wb-slot="header" class="wb-public-site-header">',
             '<main data-wb-slot="main" id="main-content">',
             '<aside data-wb-slot="sidebar">',
             '<footer data-wb-slot="footer">',
@@ -209,9 +209,106 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertSee('<p>Sidebar supporting content</p>', false);
         $response->assertSee('<p>Footer supporting content</p>', false);
         $response->assertSee('<div class="wb-stack">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertDontSee('wb-public-header', false);
         $response->assertDontSee('wb-public-sidebar', false);
         $response->assertDontSee('wb-public-footer', false);
+    }
+
+    #[Test]
+    public function default_header_slot_does_not_force_stack_wrapper_around_navbar_and_shell_spacing_class_is_present(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $navbarType = $this->blockType('sticky-navbar', 'Navbar', 10);
+        $brandType = $this->blockType('navbar-brand', 'Navbar Brand', 11);
+        $textType = $this->blockType('plain_text', 'Plain Text', 12);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Header Slot Shell',
+            'slug' => 'header-slot-shell',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Header Slot Shell', 'slug' => 'header-slot-shell', 'path' => '/p/header-slot-shell'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        $navbar = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $navbarType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-brand',
+            'block_type_id' => $brandType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Shell Brand',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($brand->fresh(['textTranslations']));
+
+        $mainBlock = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'plain_text',
+            'block_type_id' => $textType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $mainBlock->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Main shell content',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($mainBlock->fresh(['textTranslations']));
+
+        $response = $this->get('/p/header-slot-shell');
+
+        $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
+        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
+        $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
+        $response->assertSee('Main shell content', false);
+        $this->assertStringContainsString('.wb-public-site-header {', file_get_contents(public_path('cms/css/public.css')));
     }
 
     #[Test]
@@ -420,7 +517,7 @@ class PublicLayoutStructureTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<header data-wb-slot="header">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertSee('<footer data-wb-slot="footer">', false);
         $response->assertDontSee('This page has no published content yet');
     }

@@ -2,6 +2,10 @@
     padding-top: 0;
 }
 
+.wb-public-site-header {
+    margin-bottom: var(--wb-s6);
+}
+
 .wb-public-footer .wb-footer-cookie-settings-link {
     padding-inline: 0;
     min-height: auto;
