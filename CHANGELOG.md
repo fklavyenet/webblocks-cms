@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.27.4
+
+- Extend the reusable `Cluster` layout primitive with editor-controlled width, justify, align, wrap, and gap settings so headers such as `Navbar -> Container -> Cluster` can compose correct left and right distribution without navbar-specific CSS or built-in wrappers.
+
 ## 1.27.3
 
 - Add explicit `Container` flow control so editors can choose layout-neutral `wb-container` markup for composed layouts such as `Navbar -> Container -> Cluster`, while preserving legacy stacked container rendering unless a neutral flow is selected.
