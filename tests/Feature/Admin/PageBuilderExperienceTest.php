@@ -1109,17 +1109,19 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function navbar_brand_and_navigation_blocks_require_navbar_parent(): void
+    public function navbar_brand_and_navigation_blocks_require_navbar_ancestor(): void
     {
         $this->seedFoundation();
 
         $user = User::factory()->superAdmin()->create();
         $header = $this->slotType('header', 'Header', 1);
-        [$page] = $this->pageWithSlot($header);
+        [$page, $pageSlot] = $this->pageWithSlot($header);
         $navbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
         $brandType = BlockType::query()->where('slug', 'navbar-brand')->firstOrFail();
         $navigationType = BlockType::query()->where('slug', 'navbar-navigation')->firstOrFail();
         $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+        $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
 
         $navbar = Block::query()->create([
             'page_id' => $page->id,
@@ -1145,16 +1147,53 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => false,
         ]);
 
+        $container = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'container',
+            'block_type_id' => $containerType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 2,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $container->id,
+            'type' => 'cluster',
+            'block_type_id' => $clusterType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
         $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
             'slot_type_id' => $header->id,
             'block_type_id' => $brandType->id,
-            'parent_id' => $plain->id,
+            'parent_id' => $navbar->id,
             'sort_order' => 0,
-            'title' => 'Brand',
+            'title' => 'Direct Brand',
             'url' => '/',
             'status' => 'published',
-        ])->assertSessionHasErrors('parent_id');
+        ])->assertSessionDoesntHaveErrors();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $brandType->id,
+            'parent_id' => $cluster->id,
+            'sort_order' => 1,
+            'title' => 'Nested Brand',
+            'url' => '/',
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
 
         NavigationItem::query()->create([
             'site_id' => $page->site_id,
@@ -1172,10 +1211,57 @@ class PageBuilderExperienceTest extends TestCase
             'block_type_id' => $navigationType->id,
             'parent_id' => $navbar->id,
             'sort_order' => 0,
-            'title' => 'Primary navigation',
+            'title' => 'Direct navigation',
             'navbar_navigation_menu_key' => 'primary',
             'status' => 'published',
         ])->assertSessionDoesntHaveErrors();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $navigationType->id,
+            'parent_id' => $cluster->id,
+            'sort_order' => 1,
+            'title' => 'Nested navigation',
+            'navbar_navigation_menu_key' => 'primary',
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $nestedPicker = $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $cluster->id, 'block_type_tab' => 'navigation']));
+
+        $nestedPicker->assertOk();
+        $nestedPicker->assertSee('data-block-type-slug="navbar-brand"', false);
+        $nestedPicker->assertSee('data-block-type-slug="navbar-navigation"', false);
+
+        $outsidePicker = $this->actingAs($user)
+            ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $plain->id, 'block_type_tab' => 'navigation']));
+
+        $outsidePicker->assertOk();
+        $outsidePicker->assertDontSee('data-block-type-slug="navbar-brand"', false);
+        $outsidePicker->assertDontSee('data-block-type-slug="navbar-navigation"', false);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $brandType->id,
+            'parent_id' => $plain->id,
+            'sort_order' => 2,
+            'title' => 'Outside Brand',
+            'url' => '/',
+            'status' => 'published',
+        ])->assertSessionHasErrors('parent_id');
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'block_type_id' => $navigationType->id,
+            'parent_id' => $plain->id,
+            'sort_order' => 3,
+            'title' => 'Outside navigation',
+            'navbar_navigation_menu_key' => 'primary',
+            'status' => 'published',
+        ])->assertSessionHasErrors('parent_id');
     }
 
     #[Test]

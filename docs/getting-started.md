@@ -42,10 +42,12 @@ For reusable public headers, the recommended pattern is:
 - build the menu in `Admin -> Navigation`
 - create or edit a `Header` Shared Slot for the site
 - add `Navbar` to that Shared Slot
-- add child blocks inside it such as `Container`, `Navbar Brand`, `Navbar Navigation`, and `Header Actions`
+- add child blocks inside it such as `Container`, `Cluster`, `Navbar Brand`, `Navbar Navigation`, and `Header Actions`
 - choose the navigation menu on the `Navbar Navigation` child block instead of entering links manually
 
 `Navbar` renders only `nav.wb-navbar` and its child blocks. It does not automatically add a `Container`, brand wrapper, menu wrapper, or generated actions area. When constrained width is needed, place a `Container` block inside the Navbar.
+
+`Navbar Brand` and `Navbar Navigation` must be inside the Navbar tree, but they do not need to be direct children of `Navbar`. A recommended pattern is `Navbar -> Container -> Cluster`, then place `Navbar Brand` and `Navbar Navigation` inside that nested layout.
 
 `Position` is the only built-in Navbar setting: `static`, `sticky`, or `fixed`. Visual variants and navbar styling belong to WebBlocks UI class usage, not Navbar block-specific CMS settings.
 

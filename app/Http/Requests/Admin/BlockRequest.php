@@ -380,7 +380,7 @@ class BlockRequest extends FormRequest
                 return;
             }
 
-            if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation'], true) && $parent->typeSlug() !== 'sticky-navbar') {
+            if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation'], true) && ! $parent->hasNavbarAncestorOrSelf()) {
                 $validator->errors()->add('parent_id', 'Navbar Brand and Navbar Navigation blocks can only be placed under Navbar blocks.');
 
                 return;

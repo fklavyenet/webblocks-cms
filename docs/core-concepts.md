@@ -115,6 +115,15 @@ Navbar composition is relational rather than JSON-driven:
 - `Navbar Brand` owns logo and brand text.
 - `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes.
 - `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
+- `Navbar Brand` and `Navbar Navigation` must live somewhere inside the `Navbar` ancestor tree, but they do not need to be direct children of the root `Navbar` block.
+
+Recommended composition:
+
+- `Navbar`
+- `Container`
+- `Cluster` or another layout block
+- `Navbar Brand`
+- `Navbar Navigation`
 
 This keeps header composition explicit, reusable, and aligned with WebBlocks UI instead of duplicating a CMS-only navbar design surface.
 

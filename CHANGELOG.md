@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.27.2
+
+- Fix navbar child validation and admin block picker eligibility so `Navbar Brand` and `Navbar Navigation` are allowed anywhere inside a `Navbar` descendant tree, while still being rejected outside Navbar entirely.
+
 ## 1.27.1
 
 - Refactor the persisted `sticky-navbar` block into a primitive `Navbar` container that renders only `nav.wb-navbar` plus child blocks, add composable `Navbar Brand` and `Navbar Navigation` child blocks, remove the CMS-specific `wb-cms-sticky-navbar-*` markup and settings surface, and keep only a shared `Position` option so navbar styling remains WebBlocks UI-first.

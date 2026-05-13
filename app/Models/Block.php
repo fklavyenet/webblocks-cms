@@ -444,10 +444,29 @@ class Block extends Model
             return false;
         }
 
+        if (in_array($childTypeSlug, ['navbar-brand', 'navbar-navigation'], true) && ! $this->hasNavbarAncestorOrSelf()) {
+            return false;
+        }
+
         $allowedChildTypeSlugs = $this->allowedChildTypeSlugs();
 
         return $allowedChildTypeSlugs === null
             || in_array($childTypeSlug, $allowedChildTypeSlugs, true);
+    }
+
+    public function hasNavbarAncestorOrSelf(): bool
+    {
+        $cursor = $this;
+
+        while ($cursor) {
+            if ($cursor->isNavbar()) {
+                return true;
+            }
+
+            $cursor = $cursor->parent;
+        }
+
+        return false;
     }
 
     public function appearanceSetting(string $key): ?string
@@ -636,6 +655,11 @@ class Block extends Model
     public function isLinkList(): bool
     {
         return $this->typeSlug() === 'link-list';
+    }
+
+    public function isNavbar(): bool
+    {
+        return $this->typeSlug() === 'sticky-navbar';
     }
 
     public function isSidebarBrand(): bool
