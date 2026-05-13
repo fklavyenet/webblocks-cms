@@ -224,6 +224,79 @@ class PublicSharedSlotRenderingTest extends TestCase
     }
 
     #[Test]
+    public function shared_header_slot_applies_sticky_header_wrapper_when_rendering_a_sticky_navbar(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource([
+            'page_shell' => 'default',
+            'shared_public_shell' => 'default',
+        ]);
+
+        $navbar = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 111, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => -30,
+            'settings' => json_encode(['sticky_mode' => 'sticky'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $sharedNavbar = SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $navbar->id,
+            'parent_id' => null,
+            'sort_order' => -30,
+        ]);
+
+        $navigation = Block::query()->create([
+            'page_id' => $context['sharedSourcePage']->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-navigation',
+            'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 112)->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $context['headerSlotType']->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['menu_key' => 'primary'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $navigation->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Primary navigation',
+        ]);
+
+        SharedSlotBlock::query()->create([
+            'shared_slot_id' => $context['sharedSlot']->id,
+            'block_id' => $navigation->id,
+            'parent_id' => $sharedNavbar->id,
+            'sort_order' => 0,
+        ]);
+
+        NavigationItem::query()->create([
+            'site_id' => $context['page']->site_id,
+            'menu_key' => 'primary',
+            'title' => 'Getting Started',
+            'link_type' => NavigationItem::LINK_PAGE,
+            'page_id' => $context['page']->id,
+            'position' => 1,
+            'visibility' => NavigationItem::VISIBILITY_VISIBLE,
+        ]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header wb-cms-navbar--sticky">', false);
+        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('class="wb-icon wb-icon-menu" aria-hidden="true"', false);
+        $response->assertDontSee('<span></span><span></span><span></span>', false);
+        $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
+    }
+
+    #[Test]
     public function breadcrumb_inside_a_shared_slot_uses_the_consuming_page_context_without_leaking_hidden_source_titles(): void
     {
         $context = $this->publishedPageWithSharedSlotSource([

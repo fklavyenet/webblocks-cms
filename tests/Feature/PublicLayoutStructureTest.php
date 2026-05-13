@@ -261,7 +261,7 @@ class PublicLayoutStructureTest extends TestCase
             'slot' => 'header',
             'slot_type_id' => $header->id,
             'sort_order' => 0,
-            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'settings' => json_encode(['sticky_mode' => 'sticky'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => true,
         ]);
@@ -334,16 +334,74 @@ class PublicLayoutStructureTest extends TestCase
         $response = $this->get('/p/header-slot-shell');
 
         $response->assertOk();
-        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
-        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header wb-cms-navbar--sticky">', false);
+        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
         $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('aria-label="Toggle navigation"', false);
+        $response->assertSee('class="wb-icon wb-icon-menu" aria-hidden="true"', false);
+        $response->assertDontSee('<span></span><span></span><span></span>', false);
         $response->assertSee('<main data-wb-slot="main" id="main-content">', false);
         $response->assertSee('Main shell content', false);
         $this->assertStringContainsString('.wb-public-site-header + main[data-wb-slot="main"] {', file_get_contents(public_path('cms/css/public.css')));
         $this->assertStringContainsString('.wb-public-site-header {', file_get_contents(public_path('cms/css/public.css')));
+    }
+
+    #[Test]
+    public function default_header_slot_remains_non_sticky_when_navbar_is_static(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+
+        $site = Site::query()->firstOrFail();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $navbarType = $this->blockType('sticky-navbar', 'Navbar', 10);
+
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Static Header Slot Shell',
+            'slug' => 'static-header-slot-shell',
+            'status' => 'published',
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Static Header Slot Shell', 'slug' => 'static-header-slot-shell', 'path' => '/p/static-header-slot-shell'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $navbarType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $response = $this->get('/p/static-header-slot-shell');
+
+        $response->assertOk();
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
+        $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('class="wb-public-site-header wb-cms-navbar--sticky"', false);
+        $response->assertDontSee('class="wb-public-site-header wb-cms-navbar--fixed"', false);
     }
 
     #[Test]

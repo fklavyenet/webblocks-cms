@@ -179,14 +179,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('Docs', false);
         $response->assertSee('class="wb-cms-navbar-navigation"', false);
         $response->assertSee('class="wb-navbar-toggle wb-cms-navbar-mobile-toggle-button"', false);
+        $response->assertSee('class="wb-icon wb-icon-menu" aria-hidden="true"', false);
         $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('aria-expanded="false"', false);
         $response->assertSee('aria-label="Toggle navigation"', false);
+        $response->assertSee('data-wb-toggle="dropdown"', false);
+        $response->assertSee('data-wb-target="#wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('class="wb-navbar-links"', false);
         $response->assertSee('href="/p/about" class="wb-navbar-link is-active" aria-current="page"', false);
         $response->assertSee('href="/contact" class="wb-navbar-link"', false);
         $response->assertSee('href="/contact" class="wb-dropdown-item"', false);
+        $response->assertDontSee('<span></span><span></span><span></span>', false);
         $response->assertDontSee('wb-cms-sticky-navbar', false);
     }
 

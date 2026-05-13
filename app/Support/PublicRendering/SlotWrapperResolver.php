@@ -7,13 +7,13 @@ use App\Models\PageSlot;
 
 class SlotWrapperResolver
 {
-    public function resolve(Page $page, PageSlot $slot): array
+    public function resolve(Page $page, PageSlot $slot, array $options = []): array
     {
         $shell = $page->publicShellPreset();
         $slug = $this->normalizeSlotSlug($slot->slotType?->slug);
         $mapping = $shell === 'docs'
             ? $this->resolveDocsMapping($slug)
-            : $this->resolveDefaultMapping($slug);
+            : $this->resolveDefaultMapping($slug, $options);
         $attributes = [
             'data-wb-slot' => $slug,
         ];
@@ -44,10 +44,16 @@ class SlotWrapperResolver
         return $normalized !== '' ? $normalized : 'main';
     }
 
-    private function resolveDefaultMapping(string $slug): array
+    private function resolveDefaultMapping(string $slug, array $options = []): array
     {
+        $headerClass = 'wb-public-site-header';
+
+        if (($options['header_sticky_class'] ?? null) && $slug === 'header') {
+            $headerClass .= ' '.trim((string) $options['header_sticky_class']);
+        }
+
         return match ($slug) {
-            'header' => ['preset' => 'default', 'element' => 'header', 'class' => 'wb-public-site-header'],
+            'header' => ['preset' => 'default', 'element' => 'header', 'class' => $headerClass],
             'main' => ['preset' => 'default', 'element' => 'main', 'class' => null],
             'sidebar' => ['preset' => 'default', 'element' => 'aside', 'class' => null],
             'footer' => ['preset' => 'default', 'element' => 'footer', 'class' => null],

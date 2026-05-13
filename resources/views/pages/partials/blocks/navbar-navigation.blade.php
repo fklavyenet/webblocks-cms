@@ -140,7 +140,7 @@
                 aria-controls="{{ $mobileMenuId }}"
                 aria-label="Toggle navigation"
             >
-                <span></span><span></span><span></span>
+                <i class="wb-icon wb-icon-menu" aria-hidden="true"></i>
             </button>
 
             <div class="wb-dropdown-menu wb-cms-navbar-mobile-menu" id="{{ $mobileMenuId }}" role="menu" aria-label="{{ $label }}">
