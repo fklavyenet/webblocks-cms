@@ -289,8 +289,9 @@ class PublicSharedSlotRenderingTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header wb-cms-navbar--sticky">', false);
-        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
+        $response->assertSee('<nav class="wb-navbar" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('wb-cms-navbar--sticky', false);
         $response->assertSee('class="wb-icon wb-icon-menu" aria-hidden="true"', false);
         $response->assertDontSee('<span></span><span></span><span></span>', false);
         $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);

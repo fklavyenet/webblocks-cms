@@ -63,20 +63,6 @@
     align-items: stretch !important;
 }
 
-.wb-cms-navbar--sticky {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-}
-
-.wb-cms-navbar--fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-}
-
 @media (max-width: 767px) {
     .wb-cms-navbar-mobile-toggle {
         display: inline-flex;

@@ -72,8 +72,9 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('<nav class="wb-navbar" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertSee('<p>Inner child</p>', false);
+        $response->assertDontSee('wb-cms-navbar--sticky', false);
         $response->assertDontSee('wb-cms-sticky-navbar', false);
         $response->assertDontSee('<div class="wb-container', false);
         $this->assertSame($child->id, $block->children->first()?->id);

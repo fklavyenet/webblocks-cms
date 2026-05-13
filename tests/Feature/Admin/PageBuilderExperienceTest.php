@@ -442,10 +442,12 @@ class PageBuilderExperienceTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.pages.edit', $page))
             ->assertOk()
-            ->assertSee('Public Shell')
+            ->assertSee('Page Layout')
+            ->assertDontSee('Public Shell')
             ->assertSee('name="public_shell"', false)
             ->assertSee('value="docs"', false)
-            ->assertSee('>Docs</option>', false);
+            ->assertSee('>Default Layout</option>', false)
+            ->assertSee('>Docs Layout</option>', false);
 
         $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
             'site_id' => $page->site_id,

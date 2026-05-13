@@ -99,9 +99,7 @@ class PublicPagePresenter
         $page = $slot->page ?? $slot->page()->firstOrFail();
         $slug = $slot->slotType?->slug ?? 'main';
         $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug);
-        $wrapper = $this->slotWrapperResolver->resolve($page, $slot, [
-            'header_sticky_class' => $this->resolveHeaderStickyClass($slug, $blocks),
-        ]);
+        $wrapper = $this->slotWrapperResolver->resolve($page, $slot);
 
         return [
             'slug' => $slug,
@@ -126,26 +124,6 @@ class PublicPagePresenter
         }
 
         return collect();
-    }
-
-    private function resolveHeaderStickyClass(string $slotSlug, Collection $blocks): ?string
-    {
-        if (strtolower(trim($slotSlug)) !== 'header') {
-            return null;
-        }
-
-        /** @var Block|null $navbar */
-        $navbar = $blocks->first(fn (Block $block) => $block->typeSlug() === 'sticky-navbar');
-
-        if (! $navbar instanceof Block) {
-            return null;
-        }
-
-        return match ($navbar->navbarPosition()) {
-            'sticky' => 'wb-cms-navbar--sticky',
-            'fixed' => 'wb-cms-navbar--fixed',
-            default => null,
-        };
     }
 
     private function applyRenderContext(Collection $blocks, Page $page, string $slotSlug): Collection

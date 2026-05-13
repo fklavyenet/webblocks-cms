@@ -149,11 +149,12 @@ Search V1 is derived public infrastructure, not project-layer website logic.
 - The first version stores derived rows in the database table `public_search_index` and uses conservative SQL matching instead of an external search service.
 - Search rows are derived runtime data and can be rebuilt safely from CMS content.
 
-## Public Shells
+## Page Layouts
 
 Public page structure is controlled at the page and slot layer.
 
-- Page `Public Shell` is page-level outer-shell configuration.
+- `Page Layout` is the admin-facing name for the page-level outer-shell configuration.
+- The stored compatibility field remains `public_shell` in this phase so existing page data and handles stay valid.
 - `default` is the standard public shell.
 - `docs` is the documentation-oriented shell for layouts with header, sidebar, and main content regions.
 - Slot name determines the semantic public wrapper role for that region.
@@ -161,9 +162,12 @@ Public page structure is controlled at the page and slot layer.
 - Header slots are layout-neutral by default and do not force `wb-stack` around their block trees.
 - Main slots may still own stacked rhythm through their shell partial when that presentation is intentional.
 - Header-to-main spacing belongs to the public shell wrapper, not to `Navbar` or other individual header blocks. Default-shell header and main wrappers own that rhythm so the first content block does not need ad hoc top margins.
+- Sticky navbar behavior should stay owned by the shipped WebBlocks UI `.wb-navbar` contract. Page layout and header slot wrappers own page-level structure, but CMS should not inject a parallel navbar sticky class.
 - Blocks render content inside those slot wrappers and must not own the outer page shell.
 
-For docs-style pages, use page shell instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Public Shell = Docs` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
+For docs-style pages, use the page layout instead of pushing layout responsibility down into individual content blocks. The normal recipe is `Page Layout = Docs Layout` with `Header`, `Sidebar`, and `Main` slots so the shell can map them to the docs navbar, sidebar, and main wrappers automatically.
+
+A future managed Page Layout system may expose layout definitions and slot wrapper rules directly in the admin UI. This release only renames the editor-facing concept while keeping the current internal `public_shell` storage and runtime mapping.
 
 ## Public Metadata
 

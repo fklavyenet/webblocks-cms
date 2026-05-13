@@ -87,7 +87,7 @@ Export / Import covers site-scoped content such as:
 - page assets stored in `page_assets`
 - slots and blocks
 - Shared Slots and Shared Slot block trees
-- page-level Public Shell settings such as `default` and `docs`
+- page-level Page Layout settings such as `default` and `docs` (still stored internally on `public_shell`)
 - block translations
 - navigation items, including optional navigation item icon slugs used by public Sidebar Navigation renderers
 - optional media/assets
@@ -104,7 +104,7 @@ Shared Slots are exported and imported as first-class site content:
 - Shared Slot metadata such as handle, name, slot compatibility, shell compatibility, and active status is included in the package.
 - Shared Slot block trees, nested order, translations, and media references travel through the same block and asset packaging pipeline used for normal pages.
 - Page slots that use `shared_slot` export a stable Shared Slot handle reference and are remapped to the target site's imported Shared Slot during import.
-- Page payloads preserve each page's `Public Shell` so docs-shell pages keep compatible docs Shared Slot assignments after import.
+- Page payloads preserve each page's Page Layout so docs-shell pages keep compatible docs Shared Slot assignments after import.
 - Hidden Shared Slot source pages are kept internal and are not treated as ordinary user-facing pages in the package.
 - Shared Slot revision history is excluded from export/import, matching the current page revision portability boundary.
 
@@ -136,7 +136,7 @@ Single Page JSON Import is the page-scoped admin workflow for creating one new p
 
 What V1 imports:
 
-- page core fields needed for draft creation, including page-level `Public Shell`
+- page core fields needed for draft creation, including page-level Page Layout
 - page translations keyed by locale code for enabled target-site locales
 - page slots, including `shared_slot` references by compatible same-site Shared Slot handle
 - page-owned block trees with nested parent-child order
@@ -254,7 +254,7 @@ Site Clone is different from Export / Import:
 
 - Site Clone works inside the current install
 - Export / Import is for moving a site package between installs
-- Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, media references, and page-level `Public Shell` settings, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind
+- Both Site Clone and Export / Import include Shared Slots, Shared Slot block trees, translations, media references, and page-level Page Layout settings, while remapping consuming page slots to target-site Shared Slots instead of leaving cross-site references behind
 - Both Site Clone and Export / Import also include site-scoped `site_variables`.
 - Shared Slot revision history is not cloned, matching the current page revision clone boundary.
 

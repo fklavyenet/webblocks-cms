@@ -32,12 +32,12 @@
         </div>
         <div class="wb-stack wb-gap-2">
             <div class="wb-stack-2 wb-field">
-                <label for="public_shell">Public Shell</label>
+                <label for="public_shell">Page Layout</label>
                 <select id="public_shell" name="public_shell" class="wb-select">
-                    <option value="default" @selected(old('public_shell', $page->publicShellPreset()) === 'default')>Default</option>
-                    <option value="docs" @selected(old('public_shell', $page->publicShellPreset()) === 'docs')>Docs</option>
+                    <option value="default" @selected(old('public_shell', $page->publicShellPreset()) === 'default')>Default Layout</option>
+                    <option value="docs" @selected(old('public_shell', $page->publicShellPreset()) === 'docs')>Docs Layout</option>
                 </select>
-                <span class="wb-text-sm wb-text-muted">Page-level outer shell. Default uses standard semantic slot wrappers. Docs automatically maps header, sidebar, and main slots to the docs shell wrappers.</span>
+                <span class="wb-text-sm wb-text-muted">Selects the page-level layout wrapper used to render public slots such as header, main, sidebar, and footer.</span>
             </div>
             <div class="wb-stack-2 wb-field">
                 <label>Locale</label>

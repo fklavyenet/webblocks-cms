@@ -334,8 +334,9 @@ class PublicLayoutStructureTest extends TestCase
         $response = $this->get('/p/header-slot-shell');
 
         $response->assertOk();
-        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header wb-cms-navbar--sticky">', false);
-        $response->assertSee('<nav class="wb-navbar wb-cms-navbar--sticky" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
+        $response->assertSee('<nav class="wb-navbar" data-wb-public-block-type="sticky-navbar">', false);
+        $response->assertDontSee('wb-cms-navbar--sticky', false);
         $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
         $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
@@ -400,8 +401,8 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertOk();
         $response->assertSee('<header data-wb-slot="header" class="wb-public-site-header">', false);
         $response->assertSee('<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">', false);
-        $response->assertDontSee('class="wb-public-site-header wb-cms-navbar--sticky"', false);
-        $response->assertDontSee('class="wb-public-site-header wb-cms-navbar--fixed"', false);
+        $response->assertDontSee('wb-cms-navbar--sticky', false);
+        $response->assertDontSee('wb-cms-navbar--fixed', false);
     }
 
     #[Test]

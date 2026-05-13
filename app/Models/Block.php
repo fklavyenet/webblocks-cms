@@ -931,8 +931,7 @@ class Block extends Model
     {
         return match ($this->navbarPosition()) {
             'static' => 'wb-navbar--static',
-            'sticky' => 'wb-cms-navbar--sticky',
-            'fixed' => 'wb-cms-navbar--fixed',
+            'fixed' => 'wb-fixed',
             default => null,
         };
     }

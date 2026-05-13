@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Removed the CMS-specific navbar sticky class and restored clean ownership of sticky and page-level behavior to the public header or page layout wrapper path while keeping WebBlocks UI `wb-navbar` as the navbar behavior source.
+- Renamed the admin-facing `Public Shell` label to `Page Layout` while keeping existing stored shell handles such as `default` and `docs` backward compatible.
+- Confirmed the mobile navbar toggle continues to use the shipped WebBlocks UI `wb-icon-menu` icon.
+
 ## 1.27.8
 
 - Fix reusable public `Navbar` header rendering so sticky navbars stay pinned when rendered inside the default header slot wrapper, and switch the mobile navbar toggle from raw span bars to the shipped WebBlocks UI `wb-icon-menu` icon while preserving existing `data-wb-*` and aria behavior.
