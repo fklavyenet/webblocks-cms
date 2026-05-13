@@ -238,6 +238,29 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
+            'settings' => json_encode([
+                'width' => 'full',
+                'alignment' => 'between',
+                'wrap' => 'nowrap',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $rightCluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 6, false, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'settings' => json_encode([
+                'alignment' => 'end',
+                'wrap' => 'nowrap',
+                'gap' => 'sm',
+            ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -264,7 +287,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $navigation = Block::query()->create([
             'page_id' => $page->id,
-            'parent_id' => $cluster->id,
+            'parent_id' => $rightCluster->id,
             'type' => 'navbar-navigation',
             'block_type_id' => $this->blockType('navbar-navigation', 'Navbar Navigation', 20)->id,
             'source_type' => 'static',
@@ -282,7 +305,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $actions = Block::query()->create([
             'page_id' => $page->id,
-            'parent_id' => $cluster->id,
+            'parent_id' => $rightCluster->id,
             'type' => 'header-actions',
             'block_type_id' => $this->blockType('header-actions', 'Header Actions', 21)->id,
             'source_type' => 'static',
@@ -311,13 +334,24 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('<nav class="wb-navbar wb-navbar--static"><div class="wb-container', false);
         $response->assertSee('<div class="wb-container" data-wb-public-block-type="container">', false);
         $response->assertDontSee('<div class="wb-container wb-stack" data-wb-public-block-type="container">', false);
-        $response->assertSee('<div class="wb-cluster" data-wb-public-block-type="cluster">', false);
+        $response->assertSee('<div class="wb-cluster wb-cluster-between wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">', false);
+        $response->assertSee('<div class="wb-cluster wb-cluster-2 wb-cluster-end wb-flex-nowrap" data-wb-public-block-type="cluster">', false);
         $response->assertSee('aria-label="Fklavye Web Services"', false);
         $response->assertSee('alt="Fklavye Web Services"', false);
         $response->assertSee('navbar-logo-only.png', false);
         $response->assertDontSee('<span class="wb-navbar-identity">', false);
         $response->assertSee('class="wb-navbar-links"', false);
         $response->assertSee('aria-label="Auto mode"', false);
+        $response->assertDontSee('wb-cms-navbar-row', false);
+        $response->assertSeeInOrder([
+            '<nav class="wb-navbar wb-navbar--static" data-wb-public-block-type="sticky-navbar">',
+            '<div class="wb-container" data-wb-public-block-type="container">',
+            '<div class="wb-cluster wb-cluster-between wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">',
+            'class="wb-navbar-brand"',
+            '<div class="wb-cluster wb-cluster-2 wb-cluster-end wb-flex-nowrap" data-wb-public-block-type="cluster">',
+            'class="wb-navbar-links"',
+            'data-wb-header-actions',
+        ], false);
 
         unset($actions);
     }
@@ -2100,7 +2134,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function cluster_appends_only_verified_gap_and_alignment_classes(): void
+    public function cluster_defaults_remain_backward_compatible_without_extra_classes(): void
     {
         $page = $this->pageWithMainSlot();
         $cluster = Block::query()->create([
@@ -2111,7 +2145,6 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'settings' => json_encode(['gap' => '4', 'alignment' => 'center'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -2140,9 +2173,109 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<div class="wb-cluster wb-cluster-4 wb-cluster-center" data-wb-public-block-type="cluster">', false);
-        $response->assertDontSee('wb-cluster-3', false);
+        $response->assertSee('<div class="wb-cluster" data-wb-public-block-type="cluster">', false);
+        $response->assertDontSee('wb-w-full', false);
+        $response->assertDontSee('wb-flex-nowrap', false);
         $response->assertDontSee('wb-cluster-between', false);
+    }
+
+    #[Test]
+    public function cluster_appends_selected_layout_classes(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'width' => 'full',
+                'alignment' => 'between',
+                'items_alignment' => 'end',
+                'wrap' => 'nowrap',
+                'gap' => 'lg',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/start-here', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Start here',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-cluster wb-cluster-6 wb-cluster-between wb-items-end wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">', false);
+        $response->assertDontSee('wb-cluster-3', false);
+        $response->assertDontSee('wb-cms-navbar', false);
+    }
+
+    #[Test]
+    public function cluster_supports_gap_none_and_stretch_bridge_classes_when_selected(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'gap' => 'none',
+                'items_alignment' => 'stretch',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/start-here', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $child->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Start here',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-cluster wb-cms-cluster-gap-none wb-cms-items-stretch" data-wb-public-block-type="cluster">', false);
     }
 
     #[Test]

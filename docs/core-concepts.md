@@ -113,6 +113,8 @@ Navbar composition is relational rather than JSON-driven:
 
 - `Navbar` owns only wrapper semantics and a shared `Position` setting.
 - `Container` owns width constraint. Legacy containers still default to stacked flow for compatibility, but `Flow = None` makes Container layout-neutral so child layout blocks control composition.
+- `Cluster` is the horizontal or grouped layout primitive. Its settings control width, justification, cross-axis alignment, wrapping, and gap.
+- `Stack` remains the vertical flow primitive.
 - `Navbar Brand` owns logo and brand text.
 - `Navbar Navigation` owns menu selection and renders site `navigation_items` using WebBlocks UI navbar classes.
 - `Header Actions`, `Search Form`, `Container`, and other compatible blocks can be placed inside `Navbar` as children when needed.
@@ -122,12 +124,14 @@ Navbar composition is relational rather than JSON-driven:
 Recommended composition:
 
 - `Navbar`
-- `Container`
-- `Cluster` or another layout block
+- `Container (Flow: None)`
+- `Cluster (Width: Full, Justify: Between, Align: Center, Wrap: Nowrap)`
 - `Navbar Brand`
+- `Cluster (Justify: End, Align: Center, Wrap: Nowrap)`
 - `Navbar Navigation`
+- `Header Actions`
 
-Use `Container` for width, `Cluster` for horizontal grouping, and stacked child layout only when you choose it explicitly.
+Use `Container` for width, `Cluster` for horizontal distribution, and `Stack` for vertical flow. `Navbar` remains only the `nav` wrapper and does not add CMS-specific layout helpers on its own.
 
 This keeps header composition explicit, reusable, and aligned with WebBlocks UI instead of duplicating a CMS-only navbar design surface.
 

@@ -566,21 +566,84 @@ class Block extends Model
 
     public function clusterGapClass(): ?string
     {
-        return match ($this->appearanceSetting('gap')) {
-            '2' => 'wb-cluster-2',
-            '4' => 'wb-cluster-4',
-            '6' => 'wb-cluster-6',
+        return match ($this->clusterGap()) {
+            'none' => 'wb-cms-cluster-gap-none',
+            'xs' => 'wb-gap-1',
+            'sm', '2' => 'wb-cluster-2',
+            'md', '4' => 'wb-cluster-4',
+            'lg', '6' => 'wb-cluster-6',
             default => null,
+        };
+    }
+
+    public function clusterGap(): string
+    {
+        return match ($this->appearanceSetting('gap')) {
+            'none', 'xs', 'sm', 'md', 'lg' => $this->appearanceSetting('gap'),
+            '2' => 'sm',
+            '4' => 'md',
+            '6' => 'lg',
+            default => 'default',
         };
     }
 
     public function clusterAlignmentClass(): ?string
     {
-        return match ($this->appearanceSetting('alignment')) {
+        return match ($this->clusterJustify()) {
             'center' => 'wb-cluster-center',
             'end' => 'wb-cluster-end',
+            'between' => 'wb-cluster-between',
             default => null,
         };
+    }
+
+    public function clusterJustify(): string
+    {
+        return match ($this->appearanceSetting('alignment')) {
+            'center', 'end', 'between' => $this->appearanceSetting('alignment'),
+            default => 'start',
+        };
+    }
+
+    public function clusterAlignClass(): ?string
+    {
+        return match ($this->clusterAlign()) {
+            'start' => 'wb-items-start',
+            'end' => 'wb-items-end',
+            'stretch' => 'wb-cms-items-stretch',
+            default => null,
+        };
+    }
+
+    public function clusterAlign(): string
+    {
+        return match ($this->appearanceSetting('items_alignment')) {
+            'start', 'center', 'end', 'stretch' => $this->appearanceSetting('items_alignment'),
+            default => 'center',
+        };
+    }
+
+    public function clusterWrapClass(): ?string
+    {
+        return match ($this->clusterWrap()) {
+            'nowrap' => 'wb-flex-nowrap',
+            default => null,
+        };
+    }
+
+    public function clusterWrap(): string
+    {
+        return $this->appearanceSetting('wrap') === 'nowrap' ? 'nowrap' : 'wrap';
+    }
+
+    public function clusterWidthClass(): ?string
+    {
+        return $this->clusterWidth() === 'full' ? 'wb-w-full' : null;
+    }
+
+    public function clusterWidth(): string
+    {
+        return $this->appearanceSetting('width') === 'full' ? 'full' : 'auto';
     }
 
     public function gridColumnsClass(): string

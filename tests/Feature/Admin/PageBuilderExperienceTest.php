@@ -3198,7 +3198,16 @@ class PageBuilderExperienceTest extends TestCase
 
         $sectionResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="spacing"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
         $containerResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="width"', false)->assertSee('name="container_flow"', false)->assertSee('Container owns width only.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
-        $clusterResponse->assertOk()->assertSee('name="name"', false)->assertSee('name="cluster_gap"', false)->assertSee('name="cluster_alignment"', false)->assertSee('Admin-only label used in the block tree and parent selector.')->assertSee('This layout block has no public content fields.')->assertDontSee('name="text"', false);
+        $clusterResponse->assertOk()
+            ->assertSee('name="name"', false)
+            ->assertSee('name="cluster_width"', false)
+            ->assertSee('name="cluster_justify"', false)
+            ->assertSee('name="cluster_align"', false)
+            ->assertSee('name="cluster_wrap"', false)
+            ->assertSee('name="cluster_gap"', false)
+            ->assertSee('Admin-only label used in the block tree and parent selector.')
+            ->assertSee('This layout block has no public content fields.')
+            ->assertDontSee('name="text"', false);
     }
 
     #[Test]
@@ -3404,6 +3413,41 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('>Action row<', false);
         $response->assertDontSee('— Section');
         $response->assertDontSee('— Container');
+    }
+
+    #[Test]
+    public function cluster_settings_are_saved_with_full_layout_controls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $clusterType->id,
+            'sort_order' => 0,
+            'name' => 'Navbar row',
+            'cluster_width' => 'full',
+            'cluster_justify' => 'between',
+            'cluster_align' => 'end',
+            'cluster_wrap' => 'nowrap',
+            'cluster_gap' => 'lg',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $cluster = Block::query()->where('page_id', $page->id)->where('type', 'cluster')->firstOrFail();
+
+        $this->assertSame('Navbar row', $cluster->fresh()->setting('layout_name'));
+        $this->assertSame('full', $cluster->fresh()->setting('width'));
+        $this->assertSame('between', $cluster->fresh()->setting('alignment'));
+        $this->assertSame('end', $cluster->fresh()->setting('items_alignment'));
+        $this->assertSame('nowrap', $cluster->fresh()->setting('wrap'));
+        $this->assertSame('lg', $cluster->fresh()->setting('gap'));
     }
 
     #[Test]
@@ -4511,10 +4555,13 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'name' => 'Actions',
             'cluster_gap' => '3',
-            'cluster_alignment' => 'between',
+            'cluster_justify' => 'space-between',
+            'cluster_align' => 'baseline',
+            'cluster_wrap' => 'stack',
+            'cluster_width' => 'fluid',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertSessionHasErrors(['cluster_gap', 'cluster_alignment']);
+        ])->assertSessionHasErrors(['cluster_gap', 'cluster_justify', 'cluster_align', 'cluster_wrap', 'cluster_width']);
     }
 
     #[Test]

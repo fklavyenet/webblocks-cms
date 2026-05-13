@@ -189,6 +189,14 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function cluster_full_width_utility_keeps_card_footer_cluster_bridge_valid(): void
+    {
+        $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('cms/css/public.css')));
+        $this->assertStringContainsString('.wb-cms-cluster-gap-none {', file_get_contents(public_path('cms/css/public.css')));
+        $this->assertStringContainsString('.wb-cms-items-stretch {', file_get_contents(public_path('cms/css/public.css')));
+    }
+
+    #[Test]
     public function slots_render_direct_primitive_block_output_without_extra_shell_wrappers(): void
     {
         $this->buildHomepageWithHeaderSidebarAndFooter();

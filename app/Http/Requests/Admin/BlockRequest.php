@@ -97,8 +97,11 @@ class BlockRequest extends FormRequest
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
             'container_flow' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'stack'])],
-            'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', '2', '4', '6'])],
-            'cluster_alignment' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end'])],
+            'cluster_gap' => [$supportsClusterGap ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'xs', 'sm', 'md', 'lg'])],
+            'cluster_justify' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'between'])],
+            'cluster_align' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
+            'cluster_wrap' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'wrap', 'nowrap'])],
+            'cluster_width' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
             'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
             'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
             'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
@@ -1154,7 +1157,10 @@ class BlockRequest extends FormRequest
                 $width = trim((string) ($data['width'] ?? ''));
                 $containerFlow = trim((string) ($data['container_flow'] ?? ''));
                 $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
-                $clusterAlignment = trim((string) ($data['cluster_alignment'] ?? ''));
+                $clusterJustify = trim((string) ($data['cluster_justify'] ?? ''));
+                $clusterAlign = trim((string) ($data['cluster_align'] ?? ''));
+                $clusterWrap = trim((string) ($data['cluster_wrap'] ?? ''));
+                $clusterWidth = trim((string) ($data['cluster_width'] ?? ''));
                 $gridColumns = trim((string) ($data['grid_columns'] ?? ''));
                 $gridGap = trim((string) ($data['grid_gap'] ?? ''));
 
@@ -1191,19 +1197,37 @@ class BlockRequest extends FormRequest
                 }
 
                 if ($blockType->slug === 'cluster') {
-                    if (in_array($clusterGap, ['2', '4', '6'], true)) {
+                    if (in_array($clusterGap, ['none', 'xs', 'sm', 'md', 'lg'], true)) {
                         $settings['gap'] = $clusterGap;
                     } else {
                         unset($settings['gap']);
                     }
 
-                    if (in_array($clusterAlignment, ['center', 'end'], true)) {
-                        $settings['alignment'] = $clusterAlignment;
+                    if (in_array($clusterJustify, ['center', 'end', 'between'], true)) {
+                        $settings['alignment'] = $clusterJustify;
                     } else {
                         unset($settings['alignment']);
                     }
 
-                    unset($settings['spacing'], $settings['width']);
+                    if (in_array($clusterAlign, ['start', 'end', 'stretch'], true)) {
+                        $settings['items_alignment'] = $clusterAlign;
+                    } else {
+                        unset($settings['items_alignment']);
+                    }
+
+                    if ($clusterWrap === 'nowrap') {
+                        $settings['wrap'] = $clusterWrap;
+                    } else {
+                        unset($settings['wrap']);
+                    }
+
+                    if ($clusterWidth === 'full') {
+                        $settings['width'] = $clusterWidth;
+                    } else {
+                        unset($settings['width']);
+                    }
+
+                    unset($settings['spacing']);
                 }
 
                 if ($blockType->slug === 'grid') {
@@ -1282,7 +1306,7 @@ class BlockRequest extends FormRequest
         unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
         unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
         unset($data['show_button']);
-        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_alignment'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+        unset($data['name'], $data['alignment'], $data['spacing'], $data['width'], $data['container_flow'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_gap'], $data['intro_text'], $data['meta_items'], $data['title_level']);
 
         return $data;
     }

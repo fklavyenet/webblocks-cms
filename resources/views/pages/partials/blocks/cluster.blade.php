@@ -1,4 +1,13 @@
-@php($class = trim('wb-cluster '.($block->clusterGapClass() ?? '').' '.($block->clusterAlignmentClass() ?? '')))
+@php(
+    $class = trim(implode(' ', array_filter([
+        'wb-cluster',
+        $block->clusterGapClass(),
+        $block->clusterAlignmentClass(),
+        $block->clusterAlignClass(),
+        $block->clusterWrapClass(),
+        $block->clusterWidthClass(),
+    ])))
+)
 <div class="{{ $class }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
     @foreach ($block->children as $child)
         @include('pages.partials.block', ['block' => $child])

@@ -420,6 +420,27 @@ class PublicSharedSlotRenderingTest extends TestCase
     }
 
     #[Test]
+    public function shared_slot_cluster_can_render_full_between_nowrap_layout_classes(): void
+    {
+        $context = $this->publishedPageWithSharedSlotSource();
+
+        $cluster = Block::query()->where('page_id', $context['sharedSourcePage']->id)->where('type', 'cluster')->firstOrFail();
+        $cluster->forceFill([
+            'settings' => json_encode([
+                'width' => 'full',
+                'alignment' => 'between',
+                'wrap' => 'nowrap',
+                'gap' => 'md',
+            ], JSON_UNESCAPED_SLASHES),
+        ])->save();
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-cluster wb-cluster-4 wb-cluster-between wb-flex-nowrap wb-w-full" data-wb-public-block-type="cluster">', false);
+    }
+
+    #[Test]
     public function shared_slot_translations_follow_the_existing_public_translation_rules(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

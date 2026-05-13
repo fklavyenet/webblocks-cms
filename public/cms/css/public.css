@@ -11,6 +11,14 @@
     width: 100%;
 }
 
+.wb-cms-cluster-gap-none {
+    gap: 0;
+}
+
+.wb-cms-items-stretch {
+    align-items: stretch !important;
+}
+
 .wb-cms-navbar--sticky {
     position: sticky;
     top: 0;
