@@ -12,6 +12,7 @@ class CoreCatalogSeeder extends Seeder
             IconCatalogSeeder::class,
             PageTypeSeeder::class,
             LayoutTypeSeeder::class,
+            PageLayoutSeeder::class,
             SlotTypeSeeder::class,
             BlockTypeSeeder::class,
         ]);

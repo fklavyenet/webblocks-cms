@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Pages\PageLayoutManager;
 use App\Support\Search\ReindexesPublicSearch;
 use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -102,7 +103,11 @@ class SharedSlot extends Model
 
     public function publicShellLabel(): string
     {
-        return $this->public_shell ?: 'Any';
+        if (! $this->public_shell) {
+            return 'Any';
+        }
+
+        return app(PageLayoutManager::class)->labelForHandle($this->public_shell);
     }
 
     public function slotLabel(): string
@@ -124,7 +129,7 @@ class SharedSlot extends Model
 
         $sharedShell = trim((string) ($this->public_shell ?? ''));
 
-        if ($sharedShell !== '' && Page::normalizePublicShellPreset($sharedShell) !== $page->publicShellPreset()) {
+        if ($sharedShell !== '' && Page::normalizePublicShellHandle($sharedShell) !== $page->publicShellPreset()) {
             $issues[] = 'public_shell';
         }
 

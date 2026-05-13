@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Support\Database\DestructiveDatabaseCommandGuard;
 use App\Support\Install\InstallState;
 use App\Support\Locales\LocaleResolver;
+use App\Support\Pages\PageLayoutManager;
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Sites\SiteResolver;
 use App\Support\System\InstalledVersionStore;
@@ -31,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(SiteResolver::class);
         $this->app->singleton(LocaleResolver::class);
+        $this->app->singleton(PageLayoutManager::class);
         $this->app->singleton(PageRouteResolver::class);
         $this->app->singleton(SystemSettings::class);
         $this->app->singleton(VisitorConsent::class);

@@ -21,6 +21,7 @@ use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageIndexState;
+use App\Support\Pages\PageLayoutManager;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -44,6 +45,7 @@ class PageController extends Controller
         private readonly CurrentActorResolver $currentActorResolver,
         private readonly PageRevisionManager $revisionManager,
         private readonly PageIndexState $pageIndexState,
+        private readonly PageLayoutManager $pageLayouts,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -186,6 +188,7 @@ class PageController extends Controller
             'sites' => $sites,
             'selectedSiteId' => $selectedSiteId,
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
+            'pageLayoutOptions' => $this->pageLayouts->pageSelectionOptions('default'),
             'canEditContent' => true,
         ]);
     }
@@ -279,6 +282,7 @@ class PageController extends Controller
                 ->orderBy('name')
                 ->get(),
             'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->get(),
+            'pageLayoutOptions' => $this->pageLayouts->pageSelectionOptions($page->publicShellPreset()),
             'slotBlockPreviews' => $slotBlockPreviews,
             'slotSharedSlotOptions' => $this->slotSharedSlotOptions($page),
             'sharedSlotSourcesAvailable' => $this->sharedSlotsSchemaAvailable(),

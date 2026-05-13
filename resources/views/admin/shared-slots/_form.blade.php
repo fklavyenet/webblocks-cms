@@ -44,8 +44,8 @@
             <label for="shared_slot_public_shell">Public Shell</label>
             <select id="shared_slot_public_shell" name="public_shell" class="wb-select">
                 <option value="">Any shell</option>
-                @foreach (\App\Models\Page::allowedPublicShellPresets() as $preset)
-                    <option value="{{ $preset }}" @selected(old('public_shell', $sharedSlot->public_shell) === $preset)>{{ str($preset)->title() }}</option>
+                @foreach (app(\App\Support\Pages\PageLayoutManager::class)->sharedSlotSelectionOptions($sharedSlot->public_shell) as $layoutOption)
+                    <option value="{{ $layoutOption['value'] }}" @selected(old('public_shell', $sharedSlot->public_shell) === $layoutOption['value'])>{{ $layoutOption['label'] }}</option>
                 @endforeach
             </select>
         </div>

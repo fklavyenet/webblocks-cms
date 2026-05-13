@@ -112,7 +112,7 @@ Public pages now use explicit layout composition modes:
 
 - The public layout owns the page-wide shell and should keep `<body class="wb-public-body">`.
 - `Page Layout` is the editor-facing name for the outer public shell mode.
-- The stored compatibility field remains `public_shell` in this phase.
+- The stored compatibility field remains `public_shell` in this phase, but Page Layouts are now managed install-level records in the admin.
 - Major page regions should be built from shipped WebBlocks UI layout primitives first: `wb-public-main`, `wb-container`, `wb-section`, `wb-stack`, `wb-grid`.
 - `wb-content-shell`, `wb-content-header`, `wb-content-body`, and `wb-content-footer` belong inside the main content area when the page reads like article, guide, docs, or editorial content. They are not the site-wide header or footer chrome.
 - `#wb-overlay-root` is the single shared mount point for public overlays such as the gallery viewer, public search modal, and cookie preference modal.
@@ -123,13 +123,13 @@ Public pages now use explicit layout composition modes:
 ### Slot wrappers
 
 - Slot wrappers are deterministic runtime behavior, not editorial settings.
-- Page layout and slot name are the only inputs used to resolve slot wrapper element, classes, and structural attributes.
+- Page layout handle resolves to a managed Page Layout record first when available, and that record's `shell_type` plus slot name are then used to resolve slot wrapper element, classes, and structural attributes.
 - `default` maps `header`, `main`, `sidebar`, and `footer` to semantic wrappers and falls back to `div` for unknown slots.
 - `docs` maps `header` to the docs navbar wrapper, `sidebar` to the docs sidebar wrapper, and `main` to the docs main wrapper while keeping `wb-dashboard-shell` page-owned.
 - Blocks render inside the resolved slot wrapper and do not own page-shell markup.
 - Sticky navbar behavior belongs to `.wb-navbar`. CMS should not add a second navbar-specific sticky class to the slot wrapper or to the navbar block output.
 - When a page slot uses `source_type = shared_slot`, the Shared Slot contributes only the inner block tree. It must not render its own page shell or slot wrapper.
-- Shared Slot compatibility is checked before rendering: site scope must match, optional `public_shell` must match the consuming page shell, and optional `slot_name` must match the consuming page slot.
+- Shared Slot compatibility is checked before rendering: site scope must match, optional `public_shell` must exactly match the consuming page layout handle, and optional `slot_name` must match the consuming page slot.
 - Generic public block wrappers must stay non-semantic and must not be used for layout/root-owning blocks.
 - The page shell owns the outer shell, slot wrappers own the region wrapper, and root-owning blocks own their own real public root element.
 - Root-owning blocks must place `data-wb-public-block-type` on their own renderer root instead of receiving an extra outer `wb-public-block` wrapper.

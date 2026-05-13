@@ -8,6 +8,7 @@ use App\Models\BlockType;
 use App\Models\Locale;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageLayout;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
@@ -17,6 +18,7 @@ use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
+use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -31,6 +33,7 @@ class PageBuilderExperienceTest extends TestCase
     private function seedFoundation(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(PageLayoutSeeder::class);
         $this->seed(BlockTypeSeeder::class);
     }
 
@@ -458,6 +461,46 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertRedirect(route('admin.pages.edit', $page));
         $this->assertSame('docs', $page->fresh()->publicShellPreset());
+    }
+
+    #[Test]
+    public function page_edit_screen_preserves_unknown_layout_handle_in_selector(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $page->update(['settings' => ['public_shell' => 'legacy-shell']]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('Current Legacy Layout (legacy-shell)');
+    }
+
+    #[Test]
+    public function page_edit_screen_preserves_inactive_layout_handle_in_selector(): void
+    {
+        $this->seedFoundation();
+
+        $inactiveLayout = PageLayout::query()->create([
+            'name' => 'Archived Docs',
+            'handle' => 'archived-docs',
+            'description' => 'Inactive docs layout.',
+            'shell_type' => 'docs',
+            'is_active' => false,
+            'sort_order' => 10,
+        ]);
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $page->update(['settings' => ['public_shell' => $inactiveLayout->handle]]);
+
+        $this->actingAs($user)
+            ->get(route('admin.pages.edit', $page))
+            ->assertOk()
+            ->assertSee('Archived Docs (inactive)');
     }
 
     #[Test]

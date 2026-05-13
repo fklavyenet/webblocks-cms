@@ -369,7 +369,7 @@ class PageJsonImporter
                         ]);
                     }
 
-                    $pageShell = Page::normalizePublicShellPreset($publicShell);
+                    $pageShell = Page::normalizePublicShellHandle($publicShell);
                     $page = new Page(['site_id' => $site->id, 'settings' => ['public_shell' => $pageShell]]);
 
                     if (! $sharedSlot->isCompatibleWithPageSlot($page, $slotSlug)) {

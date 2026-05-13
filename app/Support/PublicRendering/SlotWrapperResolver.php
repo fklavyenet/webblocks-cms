@@ -9,7 +9,7 @@ class SlotWrapperResolver
 {
     public function resolve(Page $page, PageSlot $slot): array
     {
-        $shell = $page->publicShellPreset();
+        $shell = $page->resolvedPublicShellType();
         $slug = $this->normalizeSlotSlug($slot->slotType?->slug);
         $mapping = $shell === 'docs'
             ? $this->resolveDocsMapping($slug)

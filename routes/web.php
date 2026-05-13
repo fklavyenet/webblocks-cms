@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PageAssetController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageDuplicateController;
 use App\Http\Controllers\Admin\PageImportController;
+use App\Http\Controllers\Admin\PageLayoutController;
 use App\Http\Controllers\Admin\PageRevisionController;
 use App\Http\Controllers\Admin\PageSiteMoveController;
 use App\Http\Controllers\Admin\PageSlotController;
@@ -199,6 +200,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::post('locales/{locale}/enable', [LocaleController::class, 'enable'])->name('locales.enable');
         Route::post('locales/{locale}/disable', [LocaleController::class, 'disable'])->name('locales.disable');
         Route::delete('locales/{locale}', [LocaleController::class, 'destroy'])->name('locales.destroy');
+        Route::resource('page-layouts', PageLayoutController::class)->except(['show', 'destroy']);
         Route::resource('slot-types', SlotTypeController::class)->only(['index']);
         Route::resource('block-types', BlockTypeController::class)->except(['show']);
         Route::get('site-transfers/exports', [SiteExportController::class, 'index'])->name('site-transfers.exports.index');

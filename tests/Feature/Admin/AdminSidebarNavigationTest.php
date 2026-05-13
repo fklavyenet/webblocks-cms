@@ -31,6 +31,7 @@ class AdminSidebarNavigationTest extends TestCase
         $usersHref = 'href="'.route('admin.users.index').'"';
         $sitesHref = 'href="'.route('admin.sites.index').'"';
         $localesHref = 'href="'.route('admin.locales.index').'"';
+        $pageLayoutsHref = 'href="'.route('admin.page-layouts.index').'"';
         $slotTypesHref = 'href="'.route('admin.slot-types.index').'"';
         $blockTypesHref = 'href="'.route('admin.block-types.index').'"';
 
@@ -53,6 +54,7 @@ class AdminSidebarNavigationTest extends TestCase
         $response->assertSee('href="'.route('admin.users.index').'"', false);
         $response->assertSee('href="'.route('admin.sites.index').'"', false);
         $response->assertSee('href="'.route('admin.locales.index').'"', false);
+        $response->assertSee('href="'.route('admin.page-layouts.index').'"', false);
         $response->assertSee('href="'.route('admin.slot-types.index').'"', false);
         $response->assertSee('href="'.route('admin.block-types.index').'"', false);
         $response->assertDontSee('>Reports<', false);
@@ -73,7 +75,8 @@ class AdminSidebarNavigationTest extends TestCase
         $this->assertTrue(
             strpos($content, $domainsHref) < strpos($content, $usersHref)
             && strpos($content, $usersHref) < strpos($content, $localesHref)
-            && strpos($content, $localesHref) < strpos($content, $slotTypesHref)
+            && strpos($content, $localesHref) < strpos($content, $pageLayoutsHref)
+            && strpos($content, $pageLayoutsHref) < strpos($content, $slotTypesHref)
             && strpos($content, $slotTypesHref) < strpos($content, $blockTypesHref)
             && strpos($content, $blockTypesHref) < strpos($content, $settingsHref)
         );

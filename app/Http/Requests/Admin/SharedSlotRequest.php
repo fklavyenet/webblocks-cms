@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Models\Page;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Support\Pages\PageLayoutManager;
 use App\Support\SharedSlots\SharedSlotSchema;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,7 +31,7 @@ class SharedSlotRequest extends FormRequest
             'site_id' => $this->input('site_id') ?: Site::primary()?->id,
             'handle' => Str::slug($handle !== '' ? $handle : $name),
             'slot_name' => $slotName !== '' ? Str::slug($slotName) : null,
-            'public_shell' => $publicShell !== '' ? Page::normalizePublicShellPreset($publicShell) : null,
+            'public_shell' => $publicShell !== '' ? Page::normalizePublicShellHandle($publicShell) : null,
             'is_active' => $this->boolean('is_active', true),
         ]);
     }
@@ -40,6 +41,10 @@ class SharedSlotRequest extends FormRequest
         $sharedSlot = $this->route('shared_slot');
         $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
         $siteId = (int) $this->input('site_id');
+        $allowedLayoutHandles = array_values(array_unique(array_filter([
+            ...app(PageLayoutManager::class)->activeHandles(),
+            $sharedSlot?->public_shell,
+        ])));
 
         $handleRules = [
             'required',
@@ -59,7 +64,7 @@ class SharedSlotRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'handle' => $handleRules,
             'slot_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
-            'public_shell' => ['nullable', Rule::in(Page::allowedPublicShellPresets())],
+            'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
             'is_active' => ['required', 'boolean'],
         ];
     }
@@ -72,7 +77,7 @@ class SharedSlotRequest extends FormRequest
         $data['handle'] = Str::slug((string) $data['handle']);
         $data['slot_name'] = filled($data['slot_name'] ?? null) ? Str::slug((string) $data['slot_name']) : null;
         $data['public_shell'] = filled($data['public_shell'] ?? null)
-            ? Page::normalizePublicShellPreset($data['public_shell'])
+            ? Page::normalizePublicShellHandle($data['public_shell'])
             : null;
         $data['is_active'] = (bool) $data['is_active'];
 

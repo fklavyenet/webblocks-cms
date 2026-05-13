@@ -79,6 +79,7 @@
                             ['label' => 'Icons', 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*']],
                             ['label' => 'Users', 'route' => 'admin.users.index', 'active' => ['admin.users.*']],
                             ['label' => 'Locales', 'route' => 'admin.locales.index', 'active' => ['admin.locales.*']],
+                            ['label' => 'Page Layouts', 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*']],
                             ['label' => 'Slot Types', 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*']],
                             ['label' => 'Block Types', 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*']],
                             ['label' => 'Settings', 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*']],

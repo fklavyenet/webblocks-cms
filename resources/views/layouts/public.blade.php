@@ -87,7 +87,7 @@
             @yield('content')
         @else
         @php
-            $publicShell = $page->publicShellPreset();
+            $publicShell = $page->resolvedPublicShellType();
             $slotCollection = collect($slots ?? []);
             $renderSlot = function (array $slot) use ($page) {
                 $wrapper = is_array($slot['wrapper'] ?? null) ? $slot['wrapper'] : [];

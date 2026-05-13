@@ -14,7 +14,7 @@ class PublicLayoutMode
 
     public static function forPage(Page $page): string
     {
-        if ($page->publicShellPreset() === 'docs') {
+        if ($page->resolvedPublicShellType() === 'docs') {
             return self::SIDEBAR;
         }
 

@@ -33,7 +33,7 @@ class SharedSlotSourcePageManager
             'page_type' => Page::TYPE_SHARED_SLOT_SOURCE,
             'status' => Page::STATUS_DRAFT,
             'settings' => array_merge($settings, [
-                'public_shell' => Page::normalizePublicShellPreset($sharedSlot->public_shell ?: 'default'),
+                'public_shell' => Page::normalizePublicShellHandle($sharedSlot->public_shell ?: 'default'),
                 'shared_slot_id' => $sharedSlot->id,
                 'shared_slot_handle' => $sharedSlot->handle,
             ]),

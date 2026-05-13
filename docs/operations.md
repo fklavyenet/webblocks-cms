@@ -105,6 +105,9 @@ Shared Slots are exported and imported as first-class site content:
 - Shared Slot block trees, nested order, translations, and media references travel through the same block and asset packaging pipeline used for normal pages.
 - Page slots that use `shared_slot` export a stable Shared Slot handle reference and are remapped to the target site's imported Shared Slot during import.
 - Page payloads preserve each page's Page Layout so docs-shell pages keep compatible docs Shared Slot assignments after import.
+- Install-level Page Layout definitions themselves are not part of site export/import in V1.
+- Custom page `public_shell` handles still transfer with the page payload, so target installs should provide matching Page Layout handles when they rely on custom layouts.
+- If a matching Page Layout handle does not exist on the target install, public rendering falls back safely.
 - Hidden Shared Slot source pages are kept internal and are not treated as ordinary user-facing pages in the package.
 - Shared Slot revision history is excluded from export/import, matching the current page revision portability boundary.
 

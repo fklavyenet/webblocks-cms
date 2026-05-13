@@ -7,6 +7,7 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\Site;
+use App\Support\Pages\PageLayoutManager;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -39,6 +40,11 @@ class PageRequest extends FormRequest
         $page = $this->route('page');
         $page = $page instanceof Page ? $page : null;
         $siteId = (int) $this->input('site_id');
+        $allowedLayoutHandles = array_values(array_unique(array_filter([
+            ...app(PageLayoutManager::class)->activeHandles(),
+            $page?->publicShellPreset(),
+            'dashboard',
+        ])));
         $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
         $translationId = $page
             ? $page->translations()->where('locale_id', $defaultLocaleId)->value('id')
@@ -61,7 +67,7 @@ class PageRequest extends FormRequest
                     return $translationId ? $rule->ignore($translationId) : $rule;
                 })(),
             ],
-            'public_shell' => ['nullable', Rule::in(array_merge(Page::allowedPublicShellPresets(), ['dashboard']))],
+            'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
             'blocks' => ['nullable', 'array'],
             'blocks.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
             'blocks.*.block_type_id' => ['required', 'integer', 'exists:block_types,id'],
@@ -98,7 +104,7 @@ class PageRequest extends FormRequest
 
         if (Page::supportsSettingsColumn()) {
             $data['settings'] = [
-                'public_shell' => Page::normalizePublicShellPreset($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
+                'public_shell' => Page::normalizePublicShellHandle($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
             ];
             $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
         } else {

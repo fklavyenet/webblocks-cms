@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Pages\PageLayoutManager;
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Search\PublicSearchIndexer;
 use App\Support\Search\ReindexesPublicSearch;
@@ -143,7 +144,7 @@ class Page extends Model
         return ['default', 'docs'];
     }
 
-    public static function normalizePublicShellPreset(mixed $preset): string
+    public static function normalizePublicShellType(mixed $preset): string
     {
         $normalized = strtolower(trim((string) $preset));
 
@@ -151,6 +152,24 @@ class Page extends Model
             'docs', 'dashboard' => 'docs',
             default => 'default',
         };
+    }
+
+    public static function normalizePublicShellHandle(mixed $preset): string
+    {
+        $normalized = strtolower(trim((string) $preset));
+
+        if ($normalized === '') {
+            return 'default';
+        }
+
+        return $normalized === 'dashboard'
+            ? 'docs'
+            : $normalized;
+    }
+
+    public static function normalizePublicShellPreset(mixed $preset): string
+    {
+        return self::normalizePublicShellType($preset);
     }
 
     public static function sanitizeSettings(mixed $settings, mixed $publicShell = null): ?array
@@ -165,7 +184,7 @@ class Page extends Model
         }
 
         if ($publicShell !== null || array_key_exists('public_shell', $settings)) {
-            $settings['public_shell'] = self::normalizePublicShellPreset($publicShell ?? $settings['public_shell'] ?? 'default');
+            $settings['public_shell'] = self::normalizePublicShellHandle($publicShell ?? $settings['public_shell'] ?? 'default');
         }
 
         return $settings === [] ? null : $settings;
@@ -173,7 +192,12 @@ class Page extends Model
 
     public function publicShellPreset(): string
     {
-        return self::normalizePublicShellPreset($this->setting('public_shell', 'default'));
+        return self::normalizePublicShellHandle($this->setting('public_shell', 'default'));
+    }
+
+    public function resolvedPublicShellType(): string
+    {
+        return app(PageLayoutManager::class)->resolveShellType($this->publicShellPreset());
     }
 
     public static function workflowStatuses(): array

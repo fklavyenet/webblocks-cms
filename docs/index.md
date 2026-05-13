@@ -21,6 +21,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Page Builder (Layouts / Slots / Blocks)
 
 - [Core Concepts](core-concepts.md#page-builder)
+- [Page Layouts](page-layouts.md)
 - [Renderer Contracts](block-ui-renderer-contract.md)
 
 ## Multisite & Localization
