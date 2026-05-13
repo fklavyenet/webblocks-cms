@@ -10,6 +10,7 @@ use App\Models\Page;
 use App\Models\PageAsset;
 use App\Models\PageRevision;
 use App\Models\PageSlot;
+use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
@@ -194,6 +195,43 @@ class PageRevisionTest extends TestCase
             'event' => 'slot_changed',
             'label' => 'Slot deleted',
         ]);
+    }
+
+    #[Test]
+    public function slot_revision_snapshot_keeps_slot_source_metadata(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->siteAdminFor($site);
+        $header = $this->slotType('header', 'Header', 1);
+        $page = $this->pageFor($site, Page::STATUS_DRAFT);
+        $sharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Header Shared',
+            'handle' => 'header-shared',
+            'slot_name' => 'header',
+            'public_shell' => 'default',
+            'is_active' => true,
+        ]);
+        $slot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+            'sort_order' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('admin.pages.slots.source.update', [$page, $slot]), [
+                'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            ])
+            ->assertRedirect(route('admin.pages.edit', $page));
+
+        $revision = $page->fresh()->revisions()->latest('id')->firstOrFail();
+        $slotSnapshot = collect($revision->snapshot['slots'] ?? [])->firstWhere('slot_type_id', $header->id);
+
+        $this->assertNotNull($slotSnapshot);
+        $this->assertSame(PageSlot::SOURCE_TYPE_DISABLED, $slotSnapshot['source_type'] ?? null);
+        $this->assertNull($slotSnapshot['shared_slot_id'] ?? null);
     }
 
     #[Test]

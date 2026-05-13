@@ -6,7 +6,7 @@ Page Layouts are install-level definitions that manage the outer public shell ch
 
 - Admin path: `Admin -> System -> Page Layouts`
 - Access: `super_admin` only
-- V1 supports list, create, edit, activate, deactivate, ordering, and managed Page Layout Slot CRUD
+- V1 supports list, create, edit, activate, deactivate, ordering, managed Page Layout Slot CRUD, Edit Page slot comparison, and safe missing-slot apply
 - V1 does not support deleting system layouts
 - Pages still store the selected layout handle in `pages.settings.public_shell` for backward compatibility in this release
 - The visible Page Layout fields are `Name`, `Handle`, `Description`, `Status`, `Sort Order`, and `Body Class`
@@ -46,6 +46,44 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - System layouts keep their system slot mapping stable: system Page Layout Slots do not allow changing the underlying slot name or Slot Type
 - Non-system and non-required Page Layout Slots can be removed
 
+## Edit Page Compare And Apply
+
+- Edit Page now shows a `Page Layout Slots` card near slot management
+- The card compares active managed Page Layout Slots for the selected Page Layout against the current page's Page Slots
+- The comparison reports at least:
+- Layout Slots defined by the selected Page Layout
+- Page Slots already present on the page
+- missing Layout Slots
+- extra Page Slots not defined by the selected Page Layout
+- Disabled Page Slots
+- Shared Slot-backed Page Slots
+- `Add Missing Layout Slots` only appears when missing Layout Slots exist
+- The action is explicit. Saving normal page settings does not silently sync slots.
+
+## Safety Rules
+
+- `Add Missing Layout Slots` creates only missing active Page Layout Slots on the current page
+- It does not delete extra Page Slots
+- It does not delete blocks
+- It does not change existing `page_slots.source_type`
+- It does not clear existing `shared_slot_id`
+- It does not enable Disabled Page Slots automatically
+- It does not silently reorder or rewrite existing Page Slots
+- Extra Page Slots are preserved and reported for safety, even if the selected Page Layout does not define them
+- Shared Slot compatibility stays exact by stored `public_shell` handle
+
+## New Page Defaults
+
+- New pages use the selected Page Layout's active managed Page Layout Slots when possible
+- Legacy `slot_schema` fallback remains only as a safe compatibility fallback when relational or built-in managed slot definitions are unavailable
+- New pages should not require admins to manually add the standard slots after choosing a Page Layout
+
+## Existing Page Layout Changes
+
+- Changing the selected Page Layout on an existing page does not automatically delete or rewrite slots during normal save
+- After save, Edit Page shows the updated comparison so editors can review missing or extra slots safely
+- The current release intentionally prefers explicit `Add Missing Layout Slots` over automatic mutation
+
 ## Body Class
 
 - `Body Class` is an optional whitespace-separated token list added to the public `<body>`
@@ -77,6 +115,7 @@ Shared Slot compatibility remains conservative in V1.
 - Exact `public_shell` handle match is required when a Shared Slot sets `public_shell`
 - Empty `public_shell` remains generic
 - A custom layout handle that reuses docs-style runtime behavior does not automatically match Shared Slots constrained to `docs`
+- Adding missing Layout Slots creates new Page Slots as `Page Content` by default and does not broaden Shared Slot compatibility behavior
 
 ## Portability Boundary
 

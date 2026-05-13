@@ -199,10 +199,6 @@ class PageEditorialWorkflowTest extends TestCase
         $this->assertSame($user->id, $page->fresh()->created_by_user_id);
         $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
 
-        $this->actingAs($user)
-            ->post(route('admin.pages.slots.store', $page), ['slot_type_id' => $main->id])
-            ->assertRedirect(route('admin.pages.edit', $page));
-
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
     }
 

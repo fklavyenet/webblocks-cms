@@ -164,6 +164,11 @@ Public page structure is controlled at the page and slot layer.
 - Page Layout Slots are relational install-level records attached to a Page Layout and define slot order plus wrapper metadata.
 - Slot Types are the reusable catalog for Page Layout Slot assignment.
 - Runtime rendering resolves the stored handle to a Page Layout record when available, then resolves body classes and slot wrappers from its managed Page Layout Slots.
+- Edit Page compares the selected Page Layout's managed Layout Slots against the page's current Page Slots.
+- Missing Layout Slots can be added explicitly through `Add Missing Layout Slots`.
+- Extra Page Slots are preserved for safety and are reported rather than deleted.
+- New pages use active managed Page Layout Slots from the selected Page Layout before falling back to legacy slot arrays.
+- Changing Page Layout on normal save does not automatically mutate existing Page Slots.
 - V1 custom Page Layouts may use custom handles, but they still reuse the existing `default` or `docs` shell behavior conservatively for compatibility.
 - Slot name determines the semantic public wrapper role for that region.
 - Slot wrappers are resolved automatically from managed Page Layout Slots when available, with legacy fallback definitions for built-in layouts. Unknown slots use the safe default `div` wrapper.
@@ -231,6 +236,7 @@ Current scope now includes foundation, public rendering, site-scoped admin manag
 - `Shared Slot`: `page_slots.source_type = shared_slot` and `shared_slot_id` points to a compatible active Shared Slot from the same site.
 - `Disabled`: `page_slots.source_type = disabled` and `shared_slot_id = null`.
 - Changing a slot source does not delete or detach the existing page-owned block tree for that slot. If an editor switches a slot to `shared_slot` or `disabled`, the page-owned blocks remain attached so switching back to `Page Content` restores the prior page-specific content.
+- Adding missing Layout Slots follows the same safety principle: it creates only new Page Slots and does not alter existing Shared Slot-backed slots, Disabled slots, or page-owned block trees.
 - The page editor filters Shared Slot choices conservatively. Only active Shared Slots from the same site appear, and optional Shared Slot `public_shell` and `slot_name` constraints must match the consuming page shell and slot name.
 - Shared Slot admin forms now label that optional `public_shell` constraint as `Page Layout` so the user-facing term matches the Page editor and Page Layout management screens.
 - Site export/import and clone still transfer page-level `public_shell` handles as part of page configuration. Install-level Page Layout definitions remain local to the install in V1, so target installs should define any custom handles they expect to render without fallback.

@@ -15,6 +15,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Pages\PageLayoutSlotComparison;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
@@ -490,6 +491,306 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id]);
         $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $footer->id]);
+    }
+
+    #[Test]
+    public function page_layout_slot_comparison_identifies_present_missing_extra_disabled_and_shared_slots(): void
+    {
+        $this->seedFoundation();
+
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $footer = $this->slotType('footer', 'Footer', 4);
+        $promo = $this->slotType('promo', 'Promo', 5);
+        $page = Page::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'title' => 'Layout Compare',
+            'slug' => 'layout-compare',
+            'status' => 'draft',
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $page->site_id, 'name' => 'Layout Compare', 'slug' => 'layout-compare', 'path' => '/p/layout-compare'],
+        );
+
+        $sharedSlot = SharedSlot::query()->create([
+            'site_id' => $page->site_id,
+            'name' => 'Docs Sidebar Shared',
+            'handle' => 'docs-sidebar-shared',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'sort_order' => 0,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+            'sort_order' => 1,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $promo->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'sort_order' => 2,
+        ]);
+
+        $comparison = app(PageLayoutSlotComparison::class)->compare($page->fresh(['slots.slotType', 'slots.sharedSlot']));
+
+        $this->assertSame(4, $comparison['layout_slot_count']);
+        $this->assertSame(3, $comparison['page_slot_count']);
+        $this->assertSame(2, $comparison['present_count']);
+        $this->assertSame(2, $comparison['missing_count']);
+        $this->assertSame(1, $comparison['extra_count']);
+        $this->assertSame(1, $comparison['disabled_count']);
+        $this->assertSame(1, $comparison['shared_slot_count']);
+        $this->assertSame(['main', 'footer'], $comparison['missing_slots']->pluck('layout_slot_name')->all());
+        $this->assertSame(['promo'], $comparison['extra_slots']->pluck('page_slot_name')->all());
+    }
+
+    #[Test]
+    public function edit_page_shows_layout_slot_summary_and_missing_slots_action_only_when_needed(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+        $page = Page::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'title' => 'Docs Draft',
+            'slug' => 'docs-draft',
+            'status' => 'draft',
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $page->site_id, 'name' => 'Docs Draft', 'slug' => 'docs-draft', 'path' => '/p/docs-draft'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+
+        $response->assertOk();
+        $response->assertSee('Page Layout Slots');
+        $response->assertSee('Add Missing Layout Slots');
+        $response->assertSee('Missing on this page');
+        $response->assertSee('Extra Page Slots are kept for safety');
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'sort_order' => 1,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType('main', 'Main', 3)->id,
+            'sort_order' => 2,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType('footer', 'Footer', 4)->id,
+            'sort_order' => 3,
+        ]);
+
+        $completeResponse = $this->actingAs($user)->get(route('admin.pages.edit', $page->fresh()));
+
+        $completeResponse->assertOk();
+        $completeResponse->assertSee('This page already has all slots defined by the selected Page Layout.');
+        $completeResponse->assertDontSee('Add Missing Layout Slots');
+    }
+
+    #[Test]
+    public function sync_layout_slots_adds_only_missing_slots_and_preserves_existing_slot_state(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $header = $this->slotType('header', 'Header', 1);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+        $promo = $this->slotType('promo', 'Promo', 5);
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Sync Me',
+            'slug' => 'sync-me',
+            'status' => 'draft',
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $site->id, 'name' => 'Sync Me', 'slug' => 'sync-me', 'path' => '/p/sync-me'],
+        );
+
+        $sharedSlot = SharedSlot::query()->create([
+            'site_id' => $site->id,
+            'name' => 'Sidebar Shared',
+            'handle' => 'sidebar-shared',
+            'slot_name' => 'sidebar',
+            'public_shell' => 'docs',
+            'is_active' => true,
+        ]);
+
+        $headerSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+            'sort_order' => 0,
+        ]);
+        $sidebarSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+            'shared_slot_id' => $sharedSlot->id,
+            'sort_order' => 1,
+        ]);
+        $extraSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $promo->id,
+            'source_type' => PageSlot::SOURCE_TYPE_PAGE,
+            'sort_order' => 2,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $sectionType->id,
+            'type' => 'section',
+            'source_type' => 'static',
+            'slot' => 'promo',
+            'slot_type_id' => $promo->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.pages.layout-slots.sync', $page), [
+            'return_url' => route('admin.pages.index', ['site' => $site->id]),
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'return_url' => route('admin.pages.index', ['site' => $site->id])]));
+        $response->assertSessionHas('status', 'Added 2 missing Page Layout slots.');
+        $this->assertSame(['header', 'sidebar', 'promo', 'main', 'footer'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+        $this->assertDatabaseHas('page_slots', ['id' => $headerSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_DISABLED]);
+        $this->assertDatabaseHas('page_slots', ['id' => $sidebarSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT, 'shared_slot_id' => $sharedSlot->id]);
+        $this->assertDatabaseHas('page_slots', ['id' => $extraSlot->id]);
+        $this->assertDatabaseHas('blocks', ['id' => $block->id, 'page_id' => $page->id]);
+    }
+
+    #[Test]
+    public function sync_layout_slots_reports_noop_when_all_layout_slots_exist(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+
+        $response = $this->actingAs($user)->post(route('admin.pages.store'), [
+            'site_id' => $site->id,
+            'title' => 'Already Synced',
+            'slug' => 'already-synced',
+            'public_shell' => 'docs',
+        ]);
+
+        $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'already-synced'))->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+
+        $noopResponse = $this->actingAs($user)->post(route('admin.pages.layout-slots.sync', $page));
+
+        $noopResponse->assertRedirect(route('admin.pages.edit', $page));
+        $noopResponse->assertSessionHas('status', 'This page already has all slots defined by the selected Page Layout.');
+    }
+
+    #[Test]
+    public function changing_page_layout_on_normal_save_does_not_automatically_mutate_slots(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $page = Page::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'title' => 'Layout Switch',
+            'slug' => 'layout-switch',
+            'status' => 'draft',
+            'settings' => ['public_shell' => 'default'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $page->site_id, 'name' => 'Layout Switch', 'slug' => 'layout-switch', 'path' => '/p/layout-switch'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $header->id,
+            'sort_order' => 0,
+        ]);
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+            'site_id' => $page->site_id,
+            'title' => 'Layout Switch',
+            'slug' => 'layout-switch',
+            'public_shell' => 'docs',
+        ]);
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame(['header', 'main'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+
+        $editResponse = $this->actingAs($user)->get(route('admin.pages.edit', $page->fresh()));
+        $editResponse->assertOk();
+        $editResponse->assertSee('Missing: 2');
+        $editResponse->assertSee('Extra: 0');
+        $editResponse->assertSee('Add Missing Layout Slots');
+    }
+
+    #[Test]
+    public function sync_layout_slots_uses_existing_page_edit_authorization_rules(): void
+    {
+        $this->seedFoundation();
+
+        $editor = User::factory()->editor()->create();
+        $page = Page::query()->create([
+            'site_id' => $this->defaultSite()->id,
+            'title' => 'Published Docs',
+            'slug' => 'published-docs',
+            'status' => Page::STATUS_PUBLISHED,
+            'settings' => ['public_shell' => 'docs'],
+        ]);
+        $editor->sites()->sync([$page->site_id]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $page->site_id, 'name' => 'Published Docs', 'slug' => 'published-docs', 'path' => '/p/published-docs'],
+        );
+
+        $this->actingAs($editor)
+            ->post(route('admin.pages.layout-slots.sync', $page))
+            ->assertForbidden();
     }
 
     #[Test]

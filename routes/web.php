@@ -133,6 +133,7 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::post('/pages/{page}/move-site', [PageSiteMoveController::class, 'store'])->name('pages.move-site.store');
     Route::get('/pages/{page}/revisions', [PageRevisionController::class, 'index'])->name('pages.revisions.index');
     Route::post('/pages/{page}/revisions/{revision}/restore', [PageRevisionController::class, 'restore'])->name('pages.revisions.restore');
+    Route::post('/pages/{page}/sync-layout-slots', [PageSlotController::class, 'syncLayoutSlots'])->name('pages.layout-slots.sync');
     Route::post('/pages/{page}/slots', [PageSlotController::class, 'store'])->name('pages.slots.store');
     Route::delete('/pages/{page}/slots/{slot}', [PageSlotController::class, 'destroy'])->name('pages.slots.destroy');
     Route::put('/pages/{page}/slots/{slot}/source', [PageSlotController::class, 'updateSource'])->name('pages.slots.source.update');

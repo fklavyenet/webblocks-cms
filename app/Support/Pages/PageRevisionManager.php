@@ -170,6 +170,12 @@ class PageRevisionManager
                 ->values()
                 ->map(fn ($slot) => [
                     'slot_type_id' => $slot->slot_type_id,
+                    'source_type' => Schema::hasColumn('page_slots', 'source_type')
+                        ? PageSlot::normalizeRuntimeSourceType($slot->source_type)
+                        : PageSlot::SOURCE_TYPE_PAGE,
+                    'shared_slot_id' => Schema::hasColumn('page_slots', 'shared_slot_id')
+                        ? $slot->shared_slot_id
+                        : null,
                     'sort_order' => $slot->sort_order,
                     'settings' => PageSlot::sanitizeSettings($slot->settings),
                 ])
@@ -296,11 +302,23 @@ class PageRevisionManager
         $page->slots()->delete();
 
         foreach (Arr::get($snapshot, 'slots', []) as $slot) {
-            $page->slots()->create([
+            $attributes = [
                 'slot_type_id' => $slot['slot_type_id'],
                 'sort_order' => $slot['sort_order'],
                 'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
-            ]);
+            ];
+
+            if (Schema::hasColumn('page_slots', 'source_type')) {
+                $attributes['source_type'] = PageSlot::normalizeRuntimeSourceType($slot['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
+            }
+
+            if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+                $attributes['shared_slot_id'] = $attributes['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
+                    ? ($slot['shared_slot_id'] ?? null)
+                    : null;
+            }
+
+            $page->slots()->create($attributes);
         }
 
         $page->pageAssets()->delete();

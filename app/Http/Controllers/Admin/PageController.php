@@ -22,6 +22,8 @@ use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageIndexState;
 use App\Support\Pages\PageLayoutManager;
+use App\Support\Pages\PageLayoutSlotComparison;
+use App\Support\Pages\PageLayoutSlotSyncer;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -46,6 +48,8 @@ class PageController extends Controller
         private readonly PageRevisionManager $revisionManager,
         private readonly PageIndexState $pageIndexState,
         private readonly PageLayoutManager $pageLayouts,
+        private readonly PageLayoutSlotComparison $pageLayoutSlotComparison,
+        private readonly PageLayoutSlotSyncer $pageLayoutSlotSyncer,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -210,7 +214,7 @@ class PageController extends Controller
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
-            $this->syncManagedLayoutSlotsForNewPage($page, $selectedLayoutHandle);
+            $this->pageLayoutSlotSyncer->seedInitialSlots($page, $selectedLayoutHandle);
 
             if ($blocks === []) {
                 $this->syncBlocks($page, []);
@@ -274,6 +278,7 @@ class PageController extends Controller
             ->mapWithKeys(fn (PageSlot $slot) => [
                 $slot->id => $this->slotBlockPreviewFor($page, $slot),
             ]);
+        $layoutSlotComparison = $this->pageLayoutSlotComparison->compare($page);
 
         return view('admin.pages.edit', [
             'page' => $page,
@@ -297,6 +302,7 @@ class PageController extends Controller
             'canCreateSharedSlots' => ! request()->user()->isEditor(),
             'canManagePageAssets' => request()->user()->isSuperAdmin(),
             'pageAssetsTab' => $this->pageAssetsTabState($page),
+            'layoutSlotComparison' => $layoutSlotComparison,
             'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
             'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
         ]);
@@ -727,30 +733,6 @@ class PageController extends Controller
         $page->blocks()
             ->whereNotIn('id', $keptBlockIds)
             ->delete();
-    }
-
-    private function syncManagedLayoutSlotsForNewPage(Page $page, string $layoutHandle): void
-    {
-        $managedSlots = $this->pageLayouts->managedSlotsForHandle($layoutHandle);
-
-        if ($managedSlots->isEmpty()) {
-            return;
-        }
-
-        $existingSlotTypeIds = $page->slots()->pluck('slot_type_id')->map(fn ($id) => (int) $id)->all();
-
-        $managedSlots->each(function ($layoutSlot) use ($page, $existingSlotTypeIds): void {
-            $slotTypeId = (int) ($layoutSlot->slot_type_id ?: $layoutSlot->slotType?->id ?: 0);
-
-            if ($slotTypeId <= 0 || in_array($slotTypeId, $existingSlotTypeIds, true)) {
-                return;
-            }
-
-            $page->slots()->create([
-                'slot_type_id' => $slotTypeId,
-                'sort_order' => (int) ($layoutSlot->sort_order ?? 0),
-            ]);
-        });
     }
 
     private function syncDefaultTranslation(Page $page, array $translation): void

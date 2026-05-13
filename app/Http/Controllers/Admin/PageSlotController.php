@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePageSlotRequest;
+use App\Http\Requests\Admin\SyncPageLayoutSlotsRequest;
 use App\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Support\Pages\PageIndexState;
+use App\Support\Pages\PageLayoutSlotSyncer;
 use App\Support\Pages\PageRevisionManager;
 use App\Support\Pages\PageWorkflowManager;
 use App\Support\Users\AdminAuthorization;
@@ -19,9 +21,32 @@ class PageSlotController extends Controller
     public function __construct(
         private readonly PageRevisionManager $revisionManager,
         private readonly PageIndexState $pageIndexState,
+        private readonly PageLayoutSlotSyncer $pageLayoutSlotSyncer,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
     ) {}
+
+    public function syncLayoutSlots(SyncPageLayoutSlotsRequest $request, Page $page): RedirectResponse
+    {
+        $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+        abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
+
+        $result = $this->pageLayoutSlotSyncer->syncMissingSlots($page, $request->user());
+
+        if ($result['noop']) {
+            return $this->redirectToEdit($page, 'This page already has all slots defined by the selected Page Layout.', $request->validatedReturnUrl());
+        }
+
+        $addedCount = (int) $result['added_count'];
+
+        return $this->redirectToEdit(
+            $page,
+            $addedCount === 1
+                ? 'Added 1 missing Page Layout slot.'
+                : 'Added '.$addedCount.' missing Page Layout slots.',
+            $request->validatedReturnUrl(),
+        );
+    }
 
     public function store(StorePageSlotRequest $request, Page $page): RedirectResponse
     {
@@ -191,13 +216,17 @@ class PageSlotController extends Controller
             });
     }
 
-    private function redirectToEdit(Page $page, string $status): RedirectResponse
+    private function redirectToEdit(Page $page, string $status, ?string $returnUrl = null): RedirectResponse
     {
+        $parameters = ['page' => $page];
+        $safeReturnUrl = $returnUrl ?? $this->pageIndexState->safeReturnUrlFromRequest(request());
+
+        if ($safeReturnUrl !== null && $safeReturnUrl !== '') {
+            $parameters['return_url'] = $safeReturnUrl;
+        }
+
         $redirect = redirect()
-            ->route('admin.pages.edit', array_filter([
-                'page' => $page,
-                'return_url' => $this->pageIndexState->safeReturnUrlFromRequest(request()),
-            ], fn (mixed $value) => $value !== null && $value !== ''))
+            ->route('admin.pages.edit', $parameters)
             ->with('status', $status);
 
         if ($page->isPublished() && $page->publicUrl()) {

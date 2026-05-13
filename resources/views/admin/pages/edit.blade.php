@@ -141,6 +141,7 @@
         'slotBlockPreviews' => $slotBlockPreviews,
         'slotSharedSlotOptions' => $slotSharedSlotOptions,
         'sharedSlotSourcesAvailable' => $sharedSlotSourcesAvailable,
+        'layoutSlotComparison' => $layoutSlotComparison,
         'canEditContent' => $canEditContent,
         'canCreateSharedSlots' => $canCreateSharedSlots,
         'pageReturnUrl' => $pageReturnUrl,

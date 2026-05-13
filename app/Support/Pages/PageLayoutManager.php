@@ -121,48 +121,39 @@ class PageLayoutManager
                 ? $layout->layoutSlots
                 : $layout->layoutSlots()->with('slotType')->get();
 
-            return $slots
+            $resolvedSlots = $slots
                 ->when(! $includeInactive, fn (Collection $collection) => $collection->where('is_active', true))
                 ->sortBy(fn (PageLayoutSlot $slot) => sprintf('%010d-%s', (int) $slot->sort_order, $slot->slot_name))
                 ->values();
+
+            if ($resolvedSlots->isNotEmpty()) {
+                return $resolvedSlots;
+            }
         }
 
         $fallback = PageLayoutCatalog::fallback($normalized);
+
+        $managedSlots = $fallback
+            ? $this->managedSlotsFromDefinitions($fallback['managed_slots'] ?? [], $includeInactive)
+            : collect();
+
+        if ($managedSlots->isNotEmpty()) {
+            return $managedSlots;
+        }
+
+        if ($layout) {
+            $legacySlots = $this->syntheticSlotsFromSlugs($this->legacySlotSchemaForLayout($layout));
+
+            if ($legacySlots->isNotEmpty()) {
+                return $legacySlots;
+            }
+        }
 
         if (! $fallback) {
             return collect();
         }
 
-        return collect($fallback['managed_slots'] ?? [])
-            ->filter(fn (array $slot) => $includeInactive || ($slot['is_active'] ?? true))
-            ->map(function (array $slot) {
-                $slotTypeSlug = $slot['slot_type_slug'] ?? $slot['slot_name'];
-                $layoutSlot = new PageLayoutSlot([
-                    'slot_name' => $slot['slot_name'],
-                    'label' => $slot['label'] ?? null,
-                    'description' => $slot['description'] ?? null,
-                    'html_element' => $slot['html_element'] ?? 'div',
-                    'html_id' => $slot['html_id'] ?? null,
-                    'html_classes' => $slot['html_classes'] ?? null,
-                    'before_html' => $slot['before_html'] ?? null,
-                    'start_html' => $slot['start_html'] ?? null,
-                    'end_html' => $slot['end_html'] ?? null,
-                    'after_html' => $slot['after_html'] ?? null,
-                    'is_required' => (bool) ($slot['is_required'] ?? false),
-                    'is_active' => (bool) ($slot['is_active'] ?? true),
-                    'is_system' => (bool) ($slot['is_system'] ?? true),
-                    'sort_order' => (int) ($slot['sort_order'] ?? 0),
-                ]);
-
-                $layoutSlot->setRelation('slotType', SlotType::query()->where('slug', $slotTypeSlug)->first()
-                    ?? new SlotType([
-                        'slug' => $slotTypeSlug,
-                        'name' => $slot['label'] ?? str($slot['slot_name'] ?? 'main')->headline()->toString(),
-                    ]));
-
-                return $layoutSlot;
-            })
-            ->values();
+        return $this->syntheticSlotsFromSlugs(array_values(array_filter($fallback['slot_schema'] ?? [])));
     }
 
     public function slotDefinitionForPageSlot(Page $page, string $slotSlug): ?PageLayoutSlot
@@ -193,7 +184,84 @@ class PageLayoutManager
             return $managed->all();
         }
 
+        $layout = $this->findByHandle(Page::normalizePublicShellHandle($handle), includeInactive: true);
+
+        if ($layout) {
+            return $this->legacySlotSchemaForLayout($layout);
+        }
+
         return array_values(array_filter(PageLayoutCatalog::fallback(Page::normalizePublicShellHandle($handle))['slot_schema'] ?? []));
+    }
+
+    private function syntheticSlotsFromSlugs(array $slotSlugs): Collection
+    {
+        return collect($slotSlugs)
+            ->values()
+            ->map(function (mixed $slotSlug, int $index) {
+                $normalizedSlotSlug = LayoutMarkup::normalizeSlotName($slotSlug);
+
+                if (! $normalizedSlotSlug) {
+                    return null;
+                }
+
+                $slotType = SlotType::query()->where('slug', $normalizedSlotSlug)->first();
+                $layoutSlot = new PageLayoutSlot([
+                    'slot_name' => $normalizedSlotSlug,
+                    'label' => $slotType?->name ?? str($normalizedSlotSlug)->headline()->toString(),
+                    'is_required' => false,
+                    'is_active' => true,
+                    'is_system' => true,
+                    'sort_order' => $index,
+                ]);
+
+                if ($slotType) {
+                    $layoutSlot->slot_type_id = $slotType->id;
+                    $layoutSlot->setRelation('slotType', $slotType);
+                }
+
+                return $layoutSlot;
+            })
+            ->filter()
+            ->values();
+    }
+
+    private function legacySlotSchemaForLayout(PageLayout $layout): array
+    {
+        return array_values(array_filter(is_array($layout->slot_schema) ? $layout->slot_schema : []));
+    }
+
+    private function managedSlotsFromDefinitions(array $definitions, bool $includeInactive): Collection
+    {
+        return collect($definitions)
+            ->filter(fn (array $slot) => $includeInactive || ($slot['is_active'] ?? true))
+            ->map(function (array $slot) {
+                $slotTypeSlug = $slot['slot_type_slug'] ?? $slot['slot_name'];
+                $layoutSlot = new PageLayoutSlot([
+                    'slot_name' => $slot['slot_name'],
+                    'label' => $slot['label'] ?? null,
+                    'description' => $slot['description'] ?? null,
+                    'html_element' => $slot['html_element'] ?? 'div',
+                    'html_id' => $slot['html_id'] ?? null,
+                    'html_classes' => $slot['html_classes'] ?? null,
+                    'before_html' => $slot['before_html'] ?? null,
+                    'start_html' => $slot['start_html'] ?? null,
+                    'end_html' => $slot['end_html'] ?? null,
+                    'after_html' => $slot['after_html'] ?? null,
+                    'is_required' => (bool) ($slot['is_required'] ?? false),
+                    'is_active' => (bool) ($slot['is_active'] ?? true),
+                    'is_system' => (bool) ($slot['is_system'] ?? true),
+                    'sort_order' => (int) ($slot['sort_order'] ?? 0),
+                ]);
+
+                $layoutSlot->setRelation('slotType', SlotType::query()->where('slug', $slotTypeSlug)->first()
+                    ?? new SlotType([
+                        'slug' => $slotTypeSlug,
+                        'name' => $slot['label'] ?? str($slot['slot_name'] ?? 'main')->headline()->toString(),
+                    ]));
+
+                return $layoutSlot;
+            })
+            ->values();
     }
 
     public function labelForHandle(?string $handle): string
