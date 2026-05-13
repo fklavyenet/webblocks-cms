@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.30.1
+
+- Polish the Page Layout Slot create and edit admin UX by grouping slot identity, wrapper markup, advanced trusted layout HTML, and status or ordering into clearer sections while moving trusted HTML into a dedicated advanced panel with explicit safety guidance.
+- Refine the Edit Page Layout slot listing with more compact wrapper-focused rows, clearer Required and Active status visibility, and helper copy that explains how Body Class plus slot ids and classes support layout-specific CSS without restoring deprecated shell or raw JSON fields.
+- Document that Page Layout body classes target the public body, Page Layout Slots own wrapper element, id, and classes, and advanced trusted layout HTML remains limited to wrapper-adjacent structure rather than scripts.
+
 ## 1.30.0
 
 - Add Page Layout Slot compare-and-apply workflow on Edit Page, including a reusable layout-slot diff service, compact `Page Layout Slots` admin summary, and an explicit `Add Missing Layout Slots` action that creates only missing Page Slots from the selected Page Layout.
