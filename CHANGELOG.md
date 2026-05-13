@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.30.0
+
+- Add Page Layout Slot compare-and-apply workflow on Edit Page, including a reusable layout-slot diff service, compact `Page Layout Slots` admin summary, and an explicit `Add Missing Layout Slots` action that creates only missing Page Slots from the selected Page Layout.
+- Keep layout sync safe by preserving extra Page Slots, page-owned blocks, Shared Slot assignments, Disabled slot states, normal save behavior, and existing `public_shell` compatibility while extending new page creation to seed active managed Page Layout Slots by default.
+- Extend page revision snapshots to keep slot source metadata so Shared Slot-backed and Disabled slot state remains recoverable, and document the new compare/apply workflow and ownership boundaries for Page Layouts, Page Slots, and Shared Slots.
+
 ## 1.29.1
 
 - Rename Shared Slot admin wording from `Public Shell` to `Page Layout`, while keeping the stored `shared_slots.public_shell` field and exact-handle compatibility behavior unchanged for backward compatibility.
