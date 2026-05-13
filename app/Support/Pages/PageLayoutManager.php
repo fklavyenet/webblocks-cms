@@ -4,6 +4,8 @@ namespace App\Support\Pages;
 
 use App\Models\Page;
 use App\Models\PageLayout;
+use App\Models\PageLayoutSlot;
+use App\Models\SlotType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -37,9 +39,15 @@ class PageLayoutManager
         }
 
         return PageLayout::query()
+            ->when($this->slotsTableExists(), fn ($query) => $query->with(['layoutSlots.slotType']))
             ->when(! $includeInactive, fn ($query) => $query->where('is_active', true))
             ->where('handle', $normalized)
             ->first();
+    }
+
+    public function slotsTableExists(): bool
+    {
+        return Schema::hasTable('page_layout_slots');
     }
 
     public function resolveShellType(?string $handle): string
@@ -48,6 +56,12 @@ class PageLayoutManager
         $layout = $this->findByHandle($normalized);
 
         if ($layout) {
+            $managedShellType = $this->inferManagedShellType($this->managedSlotsForHandle($normalized));
+
+            if ($managedShellType !== null) {
+                return $managedShellType;
+            }
+
             return Page::normalizePublicShellType($layout->shell_type);
         }
 
@@ -58,6 +72,128 @@ class PageLayoutManager
         }
 
         return Page::normalizePublicShellType($normalized);
+    }
+
+    private function inferManagedShellType(Collection $slots): ?string
+    {
+        if ($slots->isEmpty()) {
+            return null;
+        }
+
+        $hasDocsSidebar = $slots->contains(function (PageLayoutSlot $slot) {
+            $slotName = LayoutMarkup::normalizeSlotName($slot->slot_name) ?? LayoutMarkup::normalizeSlotName($slot->slotType?->slug);
+            $classes = LayoutMarkup::normalizeTokenList($slot->html_classes);
+
+            return $slotName === 'sidebar'
+                && ($slot->html_id === 'docsSidebar' || str_contains((string) $classes, 'wb-sidebar'));
+        });
+
+        $hasDocsMain = $slots->contains(function (PageLayoutSlot $slot) {
+            $slotName = LayoutMarkup::normalizeSlotName($slot->slot_name) ?? LayoutMarkup::normalizeSlotName($slot->slotType?->slug);
+            $classes = LayoutMarkup::normalizeTokenList($slot->html_classes);
+
+            return $slotName === 'main'
+                && str_contains((string) $classes, 'wb-dashboard-main');
+        });
+
+        return ($hasDocsSidebar || $hasDocsMain) ? 'docs' : 'default';
+    }
+
+    public function bodyClassForHandle(?string $handle): ?string
+    {
+        $normalized = Page::normalizePublicShellHandle($handle);
+        $layout = $this->findByHandle($normalized);
+
+        if ($layout) {
+            return LayoutMarkup::normalizeTokenList($layout->body_class);
+        }
+
+        return LayoutMarkup::normalizeTokenList(PageLayoutCatalog::fallback($normalized)['body_class'] ?? null);
+    }
+
+    public function managedSlotsForHandle(?string $handle, bool $includeInactive = false): Collection
+    {
+        $normalized = Page::normalizePublicShellHandle($handle);
+        $layout = $this->findByHandle($normalized, includeInactive: true);
+
+        if ($layout && $this->slotsTableExists()) {
+            $slots = $layout->relationLoaded('layoutSlots')
+                ? $layout->layoutSlots
+                : $layout->layoutSlots()->with('slotType')->get();
+
+            return $slots
+                ->when(! $includeInactive, fn (Collection $collection) => $collection->where('is_active', true))
+                ->sortBy(fn (PageLayoutSlot $slot) => sprintf('%010d-%s', (int) $slot->sort_order, $slot->slot_name))
+                ->values();
+        }
+
+        $fallback = PageLayoutCatalog::fallback($normalized);
+
+        if (! $fallback) {
+            return collect();
+        }
+
+        return collect($fallback['managed_slots'] ?? [])
+            ->filter(fn (array $slot) => $includeInactive || ($slot['is_active'] ?? true))
+            ->map(function (array $slot) {
+                $slotTypeSlug = $slot['slot_type_slug'] ?? $slot['slot_name'];
+                $layoutSlot = new PageLayoutSlot([
+                    'slot_name' => $slot['slot_name'],
+                    'label' => $slot['label'] ?? null,
+                    'description' => $slot['description'] ?? null,
+                    'html_element' => $slot['html_element'] ?? 'div',
+                    'html_id' => $slot['html_id'] ?? null,
+                    'html_classes' => $slot['html_classes'] ?? null,
+                    'before_html' => $slot['before_html'] ?? null,
+                    'start_html' => $slot['start_html'] ?? null,
+                    'end_html' => $slot['end_html'] ?? null,
+                    'after_html' => $slot['after_html'] ?? null,
+                    'is_required' => (bool) ($slot['is_required'] ?? false),
+                    'is_active' => (bool) ($slot['is_active'] ?? true),
+                    'is_system' => (bool) ($slot['is_system'] ?? true),
+                    'sort_order' => (int) ($slot['sort_order'] ?? 0),
+                ]);
+
+                $layoutSlot->setRelation('slotType', SlotType::query()->where('slug', $slotTypeSlug)->first()
+                    ?? new SlotType([
+                        'slug' => $slotTypeSlug,
+                        'name' => $slot['label'] ?? str($slot['slot_name'] ?? 'main')->headline()->toString(),
+                    ]));
+
+                return $layoutSlot;
+            })
+            ->values();
+    }
+
+    public function slotDefinitionForPageSlot(Page $page, string $slotSlug): ?PageLayoutSlot
+    {
+        $normalizedSlug = LayoutMarkup::normalizeSlotName($slotSlug);
+
+        if (! $normalizedSlug) {
+            return null;
+        }
+
+        return $this->managedSlotsForHandle($page->publicShellPreset())
+            ->first(function (PageLayoutSlot $slot) use ($normalizedSlug) {
+                return in_array($normalizedSlug, array_filter([
+                    LayoutMarkup::normalizeSlotName($slot->slot_name),
+                    LayoutMarkup::normalizeSlotName($slot->slotType?->slug),
+                ]), true);
+            });
+    }
+
+    public function orderedSlotSlugsForHandle(?string $handle): array
+    {
+        $managed = $this->managedSlotsForHandle($handle)
+            ->map(fn (PageLayoutSlot $slot) => LayoutMarkup::normalizeSlotName($slot->slot_name) ?? LayoutMarkup::normalizeSlotName($slot->slotType?->slug))
+            ->filter()
+            ->values();
+
+        if ($managed->isNotEmpty()) {
+            return $managed->all();
+        }
+
+        return array_values(array_filter(PageLayoutCatalog::fallback(Page::normalizePublicShellHandle($handle))['slot_schema'] ?? []));
     }
 
     public function labelForHandle(?string $handle): string
@@ -149,6 +285,7 @@ class PageLayoutManager
                 'is_system' => $layout->is_system,
                 'is_active' => $layout->is_active,
                 'sort_order' => $layout->sort_order,
+                'body_class' => $layout->body_class,
                 'shell_type' => $layout->shell_type,
                 'slot_schema' => $layout->slot_schema,
                 'wrapper_schema' => $layout->wrapper_schema,
@@ -169,6 +306,7 @@ class PageLayoutManager
                 'is_system' => $layout->is_system,
                 'is_active' => $layout->is_active,
                 'sort_order' => $layout->sort_order,
+                'body_class' => $layout->body_class,
                 'shell_type' => $layout->shell_type,
                 'slot_schema' => $layout->slot_schema,
                 'wrapper_schema' => $layout->wrapper_schema,

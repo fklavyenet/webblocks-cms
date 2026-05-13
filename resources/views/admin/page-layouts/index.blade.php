@@ -26,7 +26,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Handle</th>
-                            <th>Shell Type</th>
+                            <th>Body Class</th>
                             <th>Status</th>
                             <th>Ownership</th>
                             <th>Sort Order</th>
@@ -43,7 +43,7 @@
                                     </div>
                                 </td>
                                 <td class="wb-nowrap"><code>{{ $pageLayout->handle }}</code></td>
-                                <td class="wb-nowrap">{{ str($pageLayout->shell_type)->headline() }}</td>
+                                <td class="wb-nowrap"><code>{{ $pageLayout->body_class ?: '-' }}</code></td>
                                 <td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->statusLabel() }}</span></td>
                                 <td><span class="wb-status-pill {{ $pageLayout->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ strtolower($pageLayout->ownershipLabel()) }}</span></td>
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>

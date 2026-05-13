@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PageLayout extends Model
 {
@@ -16,6 +17,7 @@ class PageLayout extends Model
         'is_system',
         'is_active',
         'sort_order',
+        'body_class',
         'shell_type',
         'slot_schema',
         'wrapper_schema',
@@ -44,5 +46,12 @@ class PageLayout extends Model
     public function ownershipLabel(): string
     {
         return $this->is_system ? 'System' : 'Custom';
+    }
+
+    public function layoutSlots(): HasMany
+    {
+        return $this->hasMany(PageLayoutSlot::class)
+            ->orderBy('sort_order')
+            ->orderBy('slot_name');
     }
 }

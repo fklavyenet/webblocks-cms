@@ -29,7 +29,13 @@ return new class extends Migration
         $now = now();
         $rows = collect(PageLayoutCatalog::definitions())
             ->map(fn (array $layout) => [
-                ...$layout,
+                'handle' => $layout['handle'],
+                'name' => $layout['name'],
+                'description' => $layout['description'] ?? null,
+                'is_system' => $layout['is_system'] ?? false,
+                'is_active' => $layout['is_active'] ?? true,
+                'sort_order' => $layout['sort_order'] ?? 0,
+                'shell_type' => $layout['shell_type'] ?? 'default',
                 'slot_schema' => isset($layout['slot_schema']) ? json_encode($layout['slot_schema'], JSON_UNESCAPED_SLASHES) : null,
                 'wrapper_schema' => isset($layout['wrapper_schema']) ? json_encode($layout['wrapper_schema'], JSON_UNESCAPED_SLASHES) : null,
                 'created_at' => $now,

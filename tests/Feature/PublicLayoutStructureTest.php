@@ -7,6 +7,8 @@ use App\Models\BlockType;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
+use App\Models\PageLayout;
+use App\Models\PageLayoutSlot;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
@@ -14,6 +16,7 @@ use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
+use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -36,6 +39,77 @@ class PublicLayoutStructureTest extends TestCase
             '<aside data-wb-slot="sidebar">',
             '<footer data-wb-slot="footer">',
         ], false);
+    }
+
+    #[Test]
+    public function public_body_includes_seeded_layout_body_class(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->seed(PageLayoutSeeder::class);
+
+        $page = $this->buildHomepageWithHeaderSidebarAndFooter();
+        $page->update(['settings' => ['public_shell' => 'docs']]);
+
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('<body class="wb-public-body layout-docs">', false);
+    }
+
+    #[Test]
+    public function custom_layout_body_class_and_slot_classes_render_safely(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
+        $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+
+        $layout = PageLayout::query()->create([
+            'name' => 'Marketing Layout',
+            'handle' => 'marketing',
+            'description' => 'Marketing',
+            'is_active' => true,
+            'sort_order' => 20,
+            'body_class' => 'layout-marketing hero-shell',
+            'shell_type' => 'default',
+        ]);
+
+        PageLayoutSlot::query()->create([
+            'page_layout_id' => $layout->id,
+            'slot_type_id' => $main->id,
+            'slot_name' => 'main',
+            'label' => 'Main',
+            'html_element' => 'section',
+            'html_classes' => 'marketing-main wb-sticky',
+            'is_required' => true,
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $site = Site::query()->firstOrFail();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Marketing',
+            'slug' => 'marketing',
+            'status' => 'published',
+            'settings' => ['public_shell' => 'marketing'],
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => Page::defaultLocaleId()],
+            ['site_id' => $site->id, 'name' => 'Marketing', 'slug' => 'marketing', 'path' => '/p/marketing'],
+        );
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+        ]);
+
+        $response = $this->get('/p/marketing');
+
+        $response->assertOk();
+        $response->assertSee('<body class="wb-public-body layout-marketing hero-shell">', false);
+        $response->assertSee('<section data-wb-slot="main" class="marketing-main wb-sticky">', false);
     }
 
     #[Test]

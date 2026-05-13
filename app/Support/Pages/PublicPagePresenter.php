@@ -37,12 +37,18 @@ class PublicPagePresenter
             ->map(fn (PageSlot $slot) => $this->presentSlot($slot, $translatedTopLevelBlocks))
             ->values();
 
+        $slots = $this->orderSlotsForLayout($page, $slots);
+
         return [
             'page' => $page,
             'slots' => $slots,
             'headPageAssets' => $this->pageAssetRenderer->headAssetsFor($page),
             'bodyEndPageAssets' => $this->pageAssetRenderer->bodyEndAssetsFor($page),
             'publicMeta' => $this->publicMeta($page),
+            'publicBodyClass' => trim(implode(' ', array_filter([
+                'wb-public-body',
+                app(PageLayoutManager::class)->bodyClassForHandle($page->publicShellPreset()),
+            ]))),
         ];
     }
 
@@ -108,9 +114,28 @@ class PublicPagePresenter
                 'preset' => $wrapper['preset'],
                 'element' => $wrapper['element'],
                 'attributes' => $wrapper['attributes'],
+                'before_html' => $wrapper['before_html'] ?? null,
+                'start_html' => $wrapper['start_html'] ?? null,
+                'end_html' => $wrapper['end_html'] ?? null,
+                'after_html' => $wrapper['after_html'] ?? null,
             ],
             'blocks' => $blocks,
         ];
+    }
+
+    private function orderSlotsForLayout(Page $page, Collection $slots): Collection
+    {
+        $orderedSlugs = app(PageLayoutManager::class)->orderedSlotSlugsForHandle($page->publicShellPreset());
+
+        if ($orderedSlugs === []) {
+            return $slots->values();
+        }
+
+        $positions = array_flip($orderedSlugs);
+
+        return $slots
+            ->sortBy(fn (array $slot) => sprintf('%010d-%s', $positions[$slot['slug'] ?? ''] ?? 9999, $slot['slug'] ?? ''))
+            ->values();
     }
 
     private function resolveSlotBlocks(PageSlot $slot, Collection $topLevelBlocks): Collection

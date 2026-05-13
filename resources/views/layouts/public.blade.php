@@ -82,7 +82,7 @@
             <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>
         @endforeach
     </head>
-    <body class="wb-public-body">
+    <body class="{{ $publicBodyClass ?? 'wb-public-body' }}">
         @if (! isset($page))
             @yield('content')
         @else
@@ -92,14 +92,22 @@
             $renderSlot = function (array $slot) use ($page) {
                 $wrapper = is_array($slot['wrapper'] ?? null) ? $slot['wrapper'] : [];
                 $tag = $wrapper['element'] ?? 'div';
+                $beforeHtml = $wrapper['before_html'] ?? null;
+                $startHtml = $wrapper['start_html'] ?? null;
+                $endHtml = $wrapper['end_html'] ?? null;
+                $afterHtml = $wrapper['after_html'] ?? null;
                 $attributes = collect($wrapper['attributes'] ?? [])
                     ->map(fn ($value, $name) => e((string) $name).'="'.e((string) $value).'"')
                     ->values()
                     ->all();
 
-                return '<'.$tag.' '.implode(' ', $attributes).'>'
+                return ($beforeHtml ? $beforeHtml : '')
+                    .'<'.$tag.' '.implode(' ', $attributes).'>'
+                    .($startHtml ? $startHtml : '')
                     .view('pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render()
-                    .'</'.$tag.'>';
+                    .($endHtml ? $endHtml : '')
+                    .'</'.$tag.'>'
+                    .($afterHtml ? $afterHtml : '');
             };
         @endphp
 

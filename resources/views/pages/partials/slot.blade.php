@@ -29,8 +29,14 @@
     }
 @endphp
 
+@if ($renderWrapper && ! empty($wrapper['before_html']))
+    {!! $wrapper['before_html'] !!}
+@endif
 @if ($renderWrapper)
     <{{ $tag }} {!! $attributes !!}>
+@endif
+@if ($renderWrapper && ! empty($wrapper['start_html']))
+    {!! $wrapper['start_html'] !!}
 @endif
 @if ($bodyClass !== '')
     <div class="{{ $bodyClass }}">
@@ -47,6 +53,12 @@
 @if ($bodyClass !== '')
     </div>
 @endif
+@if ($renderWrapper && ! empty($wrapper['end_html']))
+    {!! $wrapper['end_html'] !!}
+@endif
 @if ($renderWrapper)
     </{{ $tag }}>
+@endif
+@if ($renderWrapper && ! empty($wrapper['after_html']))
+    {!! $wrapper['after_html'] !!}
 @endif

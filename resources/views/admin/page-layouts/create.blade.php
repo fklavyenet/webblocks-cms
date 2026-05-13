@@ -3,7 +3,7 @@
 @section('content')
     @include('admin.partials.page-header', [
         'title' => 'Create Page Layout',
-        'description' => 'Create a reusable page layout handle that maps to a supported public shell type.',
+        'description' => 'Create a reusable page layout with managed body classes and slot wrappers.',
     ])
 
     @include('admin.partials.flash')

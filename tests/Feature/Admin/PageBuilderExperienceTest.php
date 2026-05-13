@@ -464,6 +464,35 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function page_create_uses_managed_layout_slots_as_default_slots(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $header = $this->slotType('header', 'Header', 1);
+        $main = $this->slotType('main', 'Main', 2);
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+        $footer = $this->slotType('footer', 'Footer', 4);
+
+        $response = $this->actingAs($user)->post(route('admin.pages.store'), [
+            'site_id' => $site->id,
+            'title' => 'Managed Layout Page',
+            'slug' => 'managed-layout-page',
+            'public_shell' => 'docs',
+        ]);
+
+        $page = Page::query()->whereHas('translations', fn ($query) => $query->where('slug', 'managed-layout-page'))->firstOrFail();
+
+        $response->assertRedirect(route('admin.pages.edit', $page));
+        $this->assertSame(['header', 'sidebar', 'main', 'footer'], $page->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
+        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $header->id]);
+        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $main->id]);
+        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $sidebar->id]);
+        $this->assertDatabaseHas('page_slots', ['page_id' => $page->id, 'slot_type_id' => $footer->id]);
+    }
+
+    #[Test]
     public function page_edit_screen_preserves_unknown_layout_handle_in_selector(): void
     {
         $this->seedFoundation();

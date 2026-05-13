@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Page;
 use App\Models\PageLayout;
+use App\Models\PageLayoutSlot;
 use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\SharedSlot;
@@ -69,13 +70,24 @@ class PageLayoutManagementTest extends TestCase
             'handle' => 'default',
             'name' => 'Default Layout',
             'is_system' => true,
+            'body_class' => 'layout-default',
             'shell_type' => 'default',
         ]);
         $this->assertDatabaseHas('page_layouts', [
             'handle' => 'docs',
             'name' => 'Docs Layout',
             'is_system' => true,
+            'body_class' => 'layout-docs',
             'shell_type' => 'docs',
+        ]);
+        $this->assertSame(8, PageLayoutSlot::query()->count());
+        $this->assertDatabaseHas('page_layout_slots', [
+            'slot_name' => 'header',
+            'html_element' => 'header',
+        ]);
+        $this->assertDatabaseHas('page_layout_slots', [
+            'slot_name' => 'sidebar',
+            'html_id' => 'docsSidebar',
         ]);
     }
 
@@ -140,40 +152,36 @@ class PageLayoutManagementTest extends TestCase
                 'name' => 'Knowledge Base Layout',
                 'handle' => 'knowledge-base',
                 'description' => 'Docs-like knowledge base pages.',
-                'shell_type' => 'docs',
                 'is_active' => '1',
                 'sort_order' => '20',
-                'slot_schema' => json_encode(['header', 'sidebar', 'main'], JSON_UNESCAPED_SLASHES),
-                'wrapper_schema' => json_encode(['mode' => 'docs'], JSON_UNESCAPED_SLASHES),
+                'body_class' => 'layout-kb docs-surface',
             ]);
 
         $layout = PageLayout::query()->where('handle', 'knowledge-base')->firstOrFail();
 
         $createResponse->assertRedirect(route('admin.page-layouts.edit', $layout));
-        $this->assertSame('docs', $layout->shell_type);
+        $this->assertSame('layout-kb docs-surface', $layout->body_class);
 
         $updateResponse = $this->actingAs($user)
             ->put(route('admin.page-layouts.update', $layout), [
                 'name' => 'Knowledge Base Layout V2',
                 'handle' => 'knowledge-base-v2',
                 'description' => 'Updated docs-like pages.',
-                'shell_type' => 'default',
                 'is_active' => '0',
                 'sort_order' => '30',
-                'slot_schema' => json_encode(['header', 'main'], JSON_UNESCAPED_SLASHES),
-                'wrapper_schema' => json_encode(['mode' => 'default'], JSON_UNESCAPED_SLASHES),
+                'body_class' => 'layout-kb-v2',
             ]);
 
         $layout->refresh();
 
         $updateResponse->assertRedirect(route('admin.page-layouts.edit', $layout));
         $this->assertSame('knowledge-base-v2', $layout->handle);
-        $this->assertSame('default', $layout->shell_type);
+        $this->assertSame('layout-kb-v2', $layout->body_class);
         $this->assertFalse($layout->is_active);
     }
 
     #[Test]
-    public function system_layout_handle_and_shell_type_cannot_be_changed(): void
+    public function system_layout_handle_remains_protected(): void
     {
         $this->seedFoundation();
 
@@ -185,9 +193,9 @@ class PageLayoutManagementTest extends TestCase
                 'name' => 'Docs Layout Renamed',
                 'handle' => 'docs-renamed',
                 'description' => 'Updated description.',
-                'shell_type' => 'default',
                 'is_active' => '0',
                 'sort_order' => '5',
+                'body_class' => 'layout-docs custom-docs',
             ])
             ->assertRedirect(route('admin.page-layouts.edit', $layout));
 
@@ -196,7 +204,88 @@ class PageLayoutManagementTest extends TestCase
         $this->assertSame('docs', $layout->handle);
         $this->assertSame('docs', $layout->shell_type);
         $this->assertSame('Docs Layout Renamed', $layout->name);
+        $this->assertSame('layout-docs custom-docs', $layout->body_class);
         $this->assertFalse($layout->is_active);
+    }
+
+    #[Test]
+    public function page_layout_edit_form_hides_technical_json_and_shell_fields_and_shows_managed_fields(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $layout = PageLayout::query()->where('handle', 'docs')->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('admin.page-layouts.edit', $layout))
+            ->assertOk()
+            ->assertSee('Name')
+            ->assertSee('Handle')
+            ->assertSee('Description')
+            ->assertSee('Status')
+            ->assertSee('Sort Order')
+            ->assertSee('Body Class')
+            ->assertSee('Page Layout Slots')
+            ->assertDontSee('Shell Type')
+            ->assertDontSee('Slot Schema JSON')
+            ->assertDontSee('Wrapper Schema JSON');
+    }
+
+    #[Test]
+    public function page_layout_slot_can_be_added_and_validates_safe_fields(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $layout = PageLayout::query()->create([
+            'name' => 'Custom Layout',
+            'handle' => 'custom-layout',
+            'description' => 'Custom',
+            'is_active' => true,
+            'sort_order' => 50,
+            'body_class' => 'layout-custom',
+            'shell_type' => 'default',
+        ]);
+        $slotType = $this->slotType('promo', 'Promo', 50);
+
+        $this->actingAs($user)
+            ->post(route('admin.page-layouts.slots.store', $layout), [
+                'slot_type_id' => $slotType->id,
+                'slot_name' => 'promo',
+                'label' => 'Promo',
+                'html_element' => 'section',
+                'html_id' => 'promo-slot',
+                'html_classes' => 'promo-shell wb-sticky',
+                'is_required' => '0',
+                'is_active' => '1',
+                'sort_order' => '10',
+            ])
+            ->assertRedirect(route('admin.page-layouts.edit', $layout));
+
+        $this->assertDatabaseHas('page_layout_slots', [
+            'page_layout_id' => $layout->id,
+            'slot_name' => 'promo',
+            'html_element' => 'section',
+            'html_id' => 'promo-slot',
+            'html_classes' => 'promo-shell wb-sticky',
+        ]);
+
+        $invalid = $this->actingAs($user)
+            ->from(route('admin.page-layouts.slots.create', $layout))
+            ->post(route('admin.page-layouts.slots.store', $layout), [
+                'slot_type_id' => $slotType->id,
+                'slot_name' => 'promo-unsafe',
+                'html_element' => 'section',
+                'html_id' => 'bad id',
+                'html_classes' => 'safe bad@class',
+                'before_html' => '<script>alert(1)</script>',
+                'is_required' => '0',
+                'is_active' => '1',
+                'sort_order' => '20',
+            ]);
+
+        $invalid->assertRedirect(route('admin.page-layouts.slots.create', $layout));
+        $invalid->assertSessionHasErrors(['html_id', 'html_classes', 'before_html']);
     }
 
     #[Test]

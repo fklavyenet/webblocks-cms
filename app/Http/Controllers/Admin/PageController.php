@@ -201,6 +201,7 @@ class PageController extends Controller
             $data = $request->validatedData();
             $blocks = $data['blocks'] ?? [];
             $translation = $data['translation'];
+            $selectedLayoutHandle = Page::normalizePublicShellHandle(data_get($data, 'settings.public_shell', 'default'));
             $actor = $this->currentActorResolver->resolve($request->user());
             unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
@@ -209,6 +210,7 @@ class PageController extends Controller
 
             $page = Page::create($data);
             $this->syncDefaultTranslation($page, $translation);
+            $this->syncManagedLayoutSlotsForNewPage($page, $selectedLayoutHandle);
 
             if ($blocks === []) {
                 $this->syncBlocks($page, []);
@@ -725,6 +727,30 @@ class PageController extends Controller
         $page->blocks()
             ->whereNotIn('id', $keptBlockIds)
             ->delete();
+    }
+
+    private function syncManagedLayoutSlotsForNewPage(Page $page, string $layoutHandle): void
+    {
+        $managedSlots = $this->pageLayouts->managedSlotsForHandle($layoutHandle);
+
+        if ($managedSlots->isEmpty()) {
+            return;
+        }
+
+        $existingSlotTypeIds = $page->slots()->pluck('slot_type_id')->map(fn ($id) => (int) $id)->all();
+
+        $managedSlots->each(function ($layoutSlot) use ($page, $existingSlotTypeIds): void {
+            $slotTypeId = (int) ($layoutSlot->slot_type_id ?: $layoutSlot->slotType?->id ?: 0);
+
+            if ($slotTypeId <= 0 || in_array($slotTypeId, $existingSlotTypeIds, true)) {
+                return;
+            }
+
+            $page->slots()->create([
+                'slot_type_id' => $slotTypeId,
+                'sort_order' => (int) ($layoutSlot->sort_order ?? 0),
+            ]);
+        });
     }
 
     private function syncDefaultTranslation(Page $page, array $translation): void

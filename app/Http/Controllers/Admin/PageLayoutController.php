@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageLayoutRequest;
 use App\Models\PageLayout;
+use App\Models\SlotType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,8 +32,9 @@ class PageLayoutController extends Controller
             'pageLayout' => new PageLayout([
                 'is_active' => true,
                 'sort_order' => (int) PageLayout::query()->max('sort_order') + 10,
-                'shell_type' => 'default',
+                'body_class' => null,
             ]),
+            'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 
@@ -50,7 +52,8 @@ class PageLayoutController extends Controller
         abort_unless($request->user()?->isSuperAdmin(), 403);
 
         return view('admin.page-layouts.edit', [
-            'pageLayout' => $pageLayout,
+            'pageLayout' => $pageLayout->load(['layoutSlots.slotType']),
+            'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
         ]);
     }
 

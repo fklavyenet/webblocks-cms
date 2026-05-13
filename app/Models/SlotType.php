@@ -31,4 +31,9 @@ class SlotType extends Model
     {
         return $this->hasMany(Block::class);
     }
+
+    public function pageLayoutSlots(): HasMany
+    {
+        return $this->hasMany(PageLayoutSlot::class);
+    }
 }
