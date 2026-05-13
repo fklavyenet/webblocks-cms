@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.27.8
+
 - Fix reusable public `Navbar` header rendering so sticky navbars stay pinned when rendered inside the default header slot wrapper, and switch the mobile navbar toggle from raw span bars to the shipped WebBlocks UI `wb-icon-menu` icon while preserving existing `data-wb-*` and aria behavior.
 
 ## 1.27.7
