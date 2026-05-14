@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.14
+
+- Add `Sort by` and `Direction` controls to `Admin -> Media` using the shared compact listing toolbar pattern, while keeping `Search`, `Kind`, `Usage`, folder pills, view mode, pagination, preview links, and edit return URLs in the same query-preserved Media list context.
+- Keep Media sorting safe and deterministic with a whitelist of practical fields, default `updated_at desc` behavior, folder sorting through the related folder name, and `usage` sorting mapped to a real aggregate count across protected CMS media references.
+
 ## 1.31.13
 
 - Fix contact form notification handling so saved submissions can resolve a usable recipient more reliably in local DDEV installs, including a safe fallback to `MAIL_FROM_ADDRESS` when neither the block recipient override nor `CONTACT_RECIPIENT_EMAIL` is configured.
