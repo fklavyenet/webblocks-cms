@@ -15,8 +15,23 @@ class MediaIndexState
         'search',
         'kind',
         'usage',
+        'sort',
+        'direction',
         'view',
         'page',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_SORTS = [
+        'created_at',
+        'updated_at',
+        'title',
+        'filename',
+        'kind',
+        'folder',
+        'usage',
     ];
 
     public function returnUrl(Request $request): string
@@ -117,6 +132,14 @@ class MediaIndexState
             }
 
             if ($key === 'usage' && ! in_array($stringValue, ['used', 'unused'], true)) {
+                continue;
+            }
+
+            if ($key === 'sort' && ! in_array($stringValue, self::ALLOWED_SORTS, true)) {
+                continue;
+            }
+
+            if ($key === 'direction' && ! in_array($stringValue, ['asc', 'desc'], true)) {
                 continue;
             }
 

@@ -10,6 +10,8 @@
         'search' => $search ?: null,
         'kind' => $kind ?: null,
         'usage' => $usage ?: null,
+        'sort' => $sort !== 'updated_at' ? $sort : null,
+        'direction' => $direction !== 'desc' ? $direction : null,
         'view' => $viewMode !== 'list' ? $viewMode : null,
     ]);
     $previewBaseQuery = array_merge($baseQuery, ['page' => $assets->currentPage() > 1 ? $assets->currentPage() : null]);
@@ -61,12 +63,37 @@
                             'unused' => 'Unused',
                         ],
                     ],
+                    [
+                        'id' => 'media_sort',
+                        'name' => 'sort',
+                        'label' => 'Sort by',
+                        'selected' => $sort,
+                        'options' => [
+                            'created_at' => 'Created at',
+                            'updated_at' => 'Updated at',
+                            'title' => 'Title',
+                            'filename' => 'Filename',
+                            'kind' => 'Kind',
+                            'folder' => 'Folder',
+                            'usage' => 'Usage',
+                        ],
+                    ],
+                    [
+                        'id' => 'media_direction',
+                        'name' => 'direction',
+                        'label' => 'Direction',
+                        'selected' => $direction,
+                        'options' => [
+                            'desc' => 'Descending',
+                            'asc' => 'Ascending',
+                        ],
+                    ],
                 ],
                 'hidden' => [
                     'folder_id' => $selectedFolderId,
                     'view' => $viewMode,
                 ],
-                'showReset' => $selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $viewMode !== 'list',
+                'showReset' => $selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $sort !== 'updated_at' || $direction !== 'desc' || $viewMode !== 'list',
                 'resetUrl' => route('admin.media.index'),
                 'applyLabel' => 'Apply',
             ])
@@ -89,9 +116,9 @@
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
                 <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">
-                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
+                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
                     @foreach ($folders as $folder)
-                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                        <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
                         </a>
                     @endforeach

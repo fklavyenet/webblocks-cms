@@ -13,6 +13,7 @@ use App\Support\Media\MediaKindResolver;
 use App\Support\Media\MediaUsageFilter;
 use App\Support\Media\MediaUsageResolver;
 use App\Support\Users\AdminAuthorization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,19 @@ use Illuminate\View\View;
 
 class MediaController extends Controller
 {
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_SORTS = [
+        'created_at',
+        'updated_at',
+        'title',
+        'filename',
+        'kind',
+        'folder',
+        'usage',
+    ];
+
     public function __construct(
         private readonly MediaUsageFilter $mediaUsageFilter,
         private readonly MediaUsageResolver $mediaUsageResolver,
@@ -35,6 +49,8 @@ class MediaController extends Controller
         $search = trim((string) request('search'));
         $kind = request()->string('kind')->toString();
         $usage = request()->string('usage')->toString();
+        $sort = request()->string('sort')->toString();
+        $direction = Str::lower(request()->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
         $view = request()->string('view')->toString() === 'grid' ? 'grid' : 'list';
         $openModal = old('_media_modal', request()->string('modal')->toString() ?: null);
         $previewMediaId = request()->integer('preview') ?: null;
@@ -48,9 +64,13 @@ class MediaController extends Controller
             $usage = '';
         }
 
+        if (! in_array($sort, self::ALLOWED_SORTS, true)) {
+            $sort = 'updated_at';
+        }
+
         $totalMediaCount = $this->authorization->scopeMediaForUser(Media::query(), $user)->count();
 
-        $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage)
+        $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage, $sort, $direction)
             ->paginate($view === 'grid' ? 24 : 20)
             ->withQueryString();
 
@@ -86,6 +106,8 @@ class MediaController extends Controller
             'search' => $search,
             'kind' => $kind,
             'usage' => $usage,
+            'sort' => $sort,
+            'direction' => $direction,
             'viewMode' => $view,
             'totalMediaCount' => $totalMediaCount,
             'filteredMediaCount' => $media->total(),
@@ -235,14 +257,15 @@ class MediaController extends Controller
     private function folderOptions()
     {
         return MediaFolder::query()
+            ->withCount('assets')
             ->with('parent')
             ->orderBy('name')
             ->get();
     }
 
-    private function mediaListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
+    private function mediaListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null, string $sort = 'updated_at', string $direction = 'desc')
     {
-        return $this->authorization->scopeMediaForUser(Media::query(), $user)
+        $query = $this->authorization->scopeMediaForUser(Media::query(), $user)
             ->with(['folder', 'uploader'])
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($kind, fn ($query) => $query->where('kind', $kind))
@@ -255,7 +278,48 @@ class MediaController extends Controller
                         ->orWhere('alt_text', 'like', "%{$search}%")
                         ->orWhere('caption', 'like', "%{$search}%");
                 });
-            })
-            ->latest();
+            });
+
+        return $this->applySorting($query, $sort, $direction);
+    }
+
+    private function applySorting(Builder $query, string $sort, string $direction): Builder
+    {
+        return match ($sort) {
+            'created_at', 'updated_at', 'filename', 'kind' => $query
+                ->orderBy('media.'.$sort, $direction)
+                ->orderByDesc('media.updated_at')
+                ->orderByDesc('media.id'),
+            'title' => $query
+                ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
+                ->orderBy('media.title', $direction)
+                ->orderBy('media.filename', $direction)
+                ->orderByDesc('media.id'),
+            'folder' => $query
+                ->leftJoin('media_folders', 'media_folders.id', '=', 'media.folder_id')
+                ->select('media.*')
+                ->orderByRaw('case when media_folders.name is null or trim(media_folders.name) = ? then 1 else 0 end asc', [''])
+                ->orderBy('media_folders.name', $direction)
+                ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
+                ->orderBy('media.title', $direction)
+                ->orderBy('media.filename', $direction)
+                ->orderByDesc('media.id'),
+            'usage' => $query
+                ->withCount([
+                    'blocks as direct_usage_count',
+                    'blockMedia as related_media_usage_count',
+                    'sitesUsingAsFavicon as favicon_usage_count',
+                    'sitesUsingAsSocialImage as social_image_usage_count',
+                    'pageTranslationsUsingAsOgImage as seo_usage_count',
+                ])
+                ->orderByRaw('(direct_usage_count + related_media_usage_count + favicon_usage_count + social_image_usage_count + seo_usage_count) '.$direction)
+                ->orderByRaw('case when media.title is null or trim(media.title) = ? then 1 else 0 end asc', [''])
+                ->orderBy('media.title', $direction)
+                ->orderBy('media.filename', $direction)
+                ->orderByDesc('media.id'),
+            default => $query
+                ->orderBy('media.updated_at', 'desc')
+                ->orderByDesc('media.id'),
+        };
     }
 }

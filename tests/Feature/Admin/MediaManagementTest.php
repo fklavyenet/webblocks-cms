@@ -120,6 +120,10 @@ class MediaManagementTest extends TestCase
         $response->assertSee('id="media_search"', false);
         $response->assertSee('id="media_kind"', false);
         $response->assertSee('id="media_usage"', false);
+        $response->assertSee('id="media_sort"', false);
+        $response->assertSee('id="media_direction"', false);
+        $response->assertSee('>Sort by<', false);
+        $response->assertSee('>Direction<', false);
         $response->assertSee('<button type="submit" class="wb-btn wb-btn-primary">Apply</button>', false);
         $response->assertSee('<div class="wb-card wb-card-muted">', false);
         $response->assertSee('<div class="wb-table-wrap">', false);
@@ -198,6 +202,8 @@ class MediaManagementTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
+            'sort' => 'title',
+            'direction' => 'asc',
         ]));
 
         $response->assertOk();
@@ -211,6 +217,8 @@ class MediaManagementTest extends TestCase
         $response->assertSee(e(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
+            'sort' => 'title',
+            'direction' => 'asc',
             'page' => 2,
         ])), false);
         $response->assertSee('<span class="wb-pagination-link">Previous</span>', false);
@@ -218,6 +226,8 @@ class MediaManagementTest extends TestCase
         $pageTwo = $this->actingAs($user)->get(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
+            'sort' => 'title',
+            'direction' => 'asc',
             'page' => 2,
         ]));
 
@@ -227,8 +237,183 @@ class MediaManagementTest extends TestCase
         $pageTwo->assertSee(e(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
+            'sort' => 'title',
+            'direction' => 'asc',
             'page' => 1,
         ])), false);
+    }
+
+    #[Test]
+    public function media_index_defaults_sort_and_direction_and_keeps_valid_selected_values(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/default-sort.jpg',
+            'filename' => 'default-sort.jpg',
+            'original_name' => 'default-sort.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Default sort asset',
+        ]);
+
+        $defaultResponse = $this->actingAs($user)->get(route('admin.media.index'));
+        $defaultResponse->assertOk();
+        $defaultResponse->assertSee('<option value="updated_at" selected>Updated at</option>', false);
+        $defaultResponse->assertSee('<option value="desc" selected>Descending</option>', false);
+
+        $customResponse = $this->actingAs($user)->get(route('admin.media.index', [
+            'sort' => 'filename',
+            'direction' => 'asc',
+        ]));
+
+        $customResponse->assertOk();
+        $customResponse->assertSee('<option value="filename" selected>Filename</option>', false);
+        $customResponse->assertSee('<option value="asc" selected>Ascending</option>', false);
+    }
+
+    #[Test]
+    public function media_index_invalid_sort_and_direction_fall_back_safely(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/fallback-sort.jpg',
+            'filename' => 'fallback-sort.jpg',
+            'original_name' => 'fallback-sort.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Fallback sort asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', [
+            'sort' => 'drop table media',
+            'direction' => 'sideways',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('<option value="updated_at" selected>Updated at</option>', false);
+        $response->assertSee('<option value="desc" selected>Descending</option>', false);
+        $response->assertDontSee('drop table media');
+        $response->assertDontSee('sideways');
+    }
+
+    #[Test]
+    public function media_index_sorts_deterministically_by_title_updated_folder_and_usage(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $alphaFolder = AssetFolder::create(['name' => 'Alpha Folder']);
+        $betaFolder = AssetFolder::create(['name' => 'Beta Folder']);
+        $slotType = $this->slotType();
+        $page = Page::create([
+            'title' => 'Usage Sort Page',
+            'slug' => 'usage-sort-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+
+        $this->pageSlot($page, $slotType);
+
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        $betaTitle = Asset::create([
+            'folder_id' => $betaFolder->id,
+            'disk' => 'public',
+            'path' => 'media/images/beta-title.jpg',
+            'filename' => 'beta-title.jpg',
+            'original_name' => 'beta-title.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1000,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Beta title',
+            'updated_at' => now()->subDay(),
+            'created_at' => now()->subDays(2),
+        ]);
+
+        $alphaTitle = Asset::create([
+            'folder_id' => $alphaFolder->id,
+            'disk' => 'public',
+            'path' => 'media/images/alpha-title.jpg',
+            'filename' => 'alpha-title.jpg',
+            'original_name' => 'alpha-title.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1000,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Alpha title',
+            'updated_at' => now()->subHours(2),
+            'created_at' => now()->subDays(3),
+        ]);
+
+        $noFolder = Asset::create([
+            'folder_id' => null,
+            'disk' => 'public',
+            'path' => 'media/images/no-folder.jpg',
+            'filename' => 'no-folder.jpg',
+            'original_name' => 'no-folder.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1000,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'No folder title',
+            'updated_at' => now()->subMinutes(30),
+            'created_at' => now()->subDays(4),
+        ]);
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Usage sort block',
+            'asset_id' => $betaTitle->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        BlockAsset::create([
+            'block_id' => Block::query()->latest('id')->value('id'),
+            'asset_id' => $alphaTitle->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+
+        $titleAsc = $this->actingAs($user)->get(route('admin.media.index', ['sort' => 'title', 'direction' => 'asc']));
+        $titleAsc->assertOk();
+        $this->assertBefore($titleAsc->getContent(), 'Alpha title', 'Beta title');
+
+        $updatedDesc = $this->actingAs($user)->get(route('admin.media.index', ['sort' => 'updated_at', 'direction' => 'desc']));
+        $updatedDesc->assertOk();
+        $this->assertBefore($updatedDesc->getContent(), 'No folder title', 'Alpha title');
+
+        $folderAsc = $this->actingAs($user)->get(route('admin.media.index', ['sort' => 'folder', 'direction' => 'asc']));
+        $folderAsc->assertOk();
+        $this->assertBefore($folderAsc->getContent(), 'Alpha title', 'Beta title');
+        $this->assertBefore($folderAsc->getContent(), 'Beta title', 'No folder title');
+
+        $usageDesc = $this->actingAs($user)->get(route('admin.media.index', ['sort' => 'usage', 'direction' => 'desc']));
+        $usageDesc->assertOk();
+        $this->assertBefore($usageDesc->getContent(), 'Alpha title', 'No folder title');
+        $this->assertBefore($usageDesc->getContent(), 'Beta title', 'No folder title');
     }
 
     #[Test]
@@ -1316,8 +1501,8 @@ class MediaManagementTest extends TestCase
             'title' => 'List actions asset',
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.media.index', ['search' => 'List actions asset']));
-        $returnUrl = route('admin.media.index', ['search' => 'List actions asset']);
+        $response = $this->actingAs($user)->get(route('admin.media.index', ['search' => 'List actions asset', 'sort' => 'title', 'direction' => 'asc']));
+        $returnUrl = route('admin.media.index', ['search' => 'List actions asset', 'sort' => 'title', 'direction' => 'asc']);
 
         $response->assertOk();
         $response->assertSee(route('admin.media.edit', ['media' => $asset, 'return_url' => $returnUrl]), false);
@@ -1451,7 +1636,7 @@ class MediaManagementTest extends TestCase
             'title' => 'Return URL asset',
         ]);
 
-        $safeReturnUrl = route('admin.media.index', ['search' => 'Return URL asset', 'view' => 'grid']);
+        $safeReturnUrl = route('admin.media.index', ['search' => 'Return URL asset', 'sort' => 'usage', 'direction' => 'asc', 'view' => 'grid']);
 
         $safeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => $safeReturnUrl]));
         $safeEdit->assertSee('href="'.e($safeReturnUrl).'" class="wb-btn wb-btn-secondary"', false);
@@ -1479,5 +1664,15 @@ class MediaManagementTest extends TestCase
             'return_url' => 'https://evil.example.test/admin/media',
         ]);
         $unsafeUpdate->assertRedirect(route('admin.media.index'));
+    }
+
+    private function assertBefore(string $html, string $first, string $second): void
+    {
+        $firstPosition = strpos($html, $first);
+        $secondPosition = strpos($html, $second);
+
+        $this->assertNotFalse($firstPosition, sprintf('Failed asserting that [%s] exists in the response.', $first));
+        $this->assertNotFalse($secondPosition, sprintf('Failed asserting that [%s] exists in the response.', $second));
+        $this->assertLessThan($secondPosition, $firstPosition, sprintf('Failed asserting that [%s] appears before [%s].', $first, $second));
     }
 }
