@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Contact Messages',
         'description' => 'Review saved public enquiries, check notification delivery, and update editorial status.',
-        'count' => $messages->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -63,6 +63,12 @@
         </div>
     @else
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Contact Messages</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+            </div>
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">

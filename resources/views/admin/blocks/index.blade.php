@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks',
         'description' => $currentPage ? 'Inspect block instances for the selected page.' : 'Inspect and edit block instances across the CMS.',
-        'count' => $blocks->total(),
+        'count' => $totalCount,
         'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">Manage Slots</a>' : null,
     ])
 
@@ -74,9 +74,15 @@
     </div>
 
     @if ($blocks->isEmpty())
-        <div class="wb-card"><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">No blocks found</div><div class="wb-empty-text">Adjust the filters or open a page or shared slot editor to manage block content.</div></div></div></div>
+        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks' }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">No blocks found</div><div class="wb-empty-text">Adjust the filters or open a page or shared slot editor to manage block content.</div></div></div></div>
     @else
         <div class="wb-card">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks' }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+            </div>
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">

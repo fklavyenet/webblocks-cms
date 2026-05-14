@@ -8,7 +8,7 @@
             <h1 class="wb-page-header-title">{{ $title }}</h1>
 
             @isset($count)
-                <span class="wb-status-pill wb-status-info">{{ $count }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-page-count>{{ $count }}</span>
             @endisset
         </div>
 

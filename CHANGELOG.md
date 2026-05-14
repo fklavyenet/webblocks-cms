@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.17
+
+- Standardize admin listing count badges so page-header badges show the total record count in each screen's base scope while listing-card badges show the currently filtered result count.
+- Fix affected admin listings including Block Types, Pages, Shared Slots, Blocks, Contact Messages, Icons, Users, Sites, Page Layouts, Slot Types, Backups, and Export / Import histories without changing existing filter, pagination, or query-string behavior.
+
 ## 1.31.16
 
 - Update `Admin -> System -> Block Types` so install-specific edit actions open a query-driven WebBlocks admin modal from the index, keep the existing edit route as a fallback, and preserve filtered or paginated list return context on save.

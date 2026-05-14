@@ -9,7 +9,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Block Types',
         'description' => 'Review the CMS block catalog. System block types are product-owned; non-system entries are install-specific extensions.',
-        'count' => $blockTypes->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -73,7 +73,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Block Types</strong>
-                <span class="wb-status-pill wb-status-info">{{ $blockTypes->total() }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
             <a href="{{ route('admin.block-types.create') }}" class="wb-btn wb-btn-primary">New Custom Block Type</a>

@@ -11,13 +11,18 @@ class SlotTypeController extends Controller
 {
     public function index(): View
     {
+        $totalCount = SlotType::query()->count();
+        $slotTypes = SlotType::query()
+            ->withCount('blocks')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(AdminPagination::perPage())
+            ->withQueryString();
+
         return view('admin.slot-types.index', [
-            'slotTypes' => SlotType::query()
-                ->withCount('blocks')
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->paginate(AdminPagination::perPage())
-                ->withQueryString(),
+            'slotTypes' => $slotTypes,
+            'totalCount' => $totalCount,
+            'filteredCount' => $slotTypes->total(),
         ]);
     }
 }

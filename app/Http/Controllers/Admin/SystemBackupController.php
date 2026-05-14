@@ -61,29 +61,35 @@ class SystemBackupController extends Controller
             $this->systemBackupManager->markStaleBackupsAsFailed();
         }
 
+        $totalCount = $tableExists
+            ? SystemBackup::query()->count()
+            : 0;
+
+        $backups = $tableExists
+            ? SystemBackup::query()
+                ->with('triggeredBy')
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($inner) use ($search): void {
+                        $inner->where('archive_filename', 'like', "%{$search}%")
+                            ->orWhere('label', 'like', "%{$search}%")
+                            ->orWhere('summary', 'like', "%{$search}%")
+                            ->orWhere('error_message', 'like', "%{$search}%")
+                            ->orWhere('type', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%");
+                    });
+                })
+                ->when($type !== '', fn ($query) => $query->where('type', $type))
+                ->when($status !== '', fn ($query) => $query->where('status', $status))
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString()
+            : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+
         return view('admin.system.backups.index', [
-            'backups' => $tableExists
-                ? SystemBackup::query()
-                    ->with('triggeredBy')
-                    ->when($search !== '', function ($query) use ($search): void {
-                        $query->where(function ($inner) use ($search): void {
-                            $inner->where('archive_filename', 'like', "%{$search}%")
-                                ->orWhere('label', 'like', "%{$search}%")
-                                ->orWhere('summary', 'like', "%{$search}%")
-                                ->orWhere('error_message', 'like', "%{$search}%")
-                                ->orWhere('type', 'like', "%{$search}%")
-                                ->orWhere('status', 'like', "%{$search}%");
-                        });
-                    })
-                    ->when($type !== '', fn ($query) => $query->where('type', $type))
-                    ->when($status !== '', fn ($query) => $query->where('status', $status))
-                    ->latest()
-                    ->paginate($perPage)
-                    ->withQueryString()
-                : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [
-                    'path' => request()->url(),
-                    'query' => request()->query(),
-                ]),
+            'backups' => $backups,
             'latestBackup' => $this->systemBackupManager->latest(),
             'freshness' => $this->systemBackupManager->freshnessSummary(),
             'backupTableExists' => $tableExists,
@@ -92,6 +98,8 @@ class SystemBackupController extends Controller
                 'type' => $type,
                 'status' => $status,
             ],
+            'totalCount' => $totalCount,
+            'filteredCount' => $backups->total(),
         ]);
     }
 

@@ -104,7 +104,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Media Library</strong>
-                <span class="wb-status-pill wb-status-info">{{ $filteredMediaCount }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredMediaCount }}</span>
             </div>
 
             <div class="wb-cluster wb-cluster-2">

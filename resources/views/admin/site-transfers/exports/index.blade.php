@@ -9,6 +9,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Export / Import',
         'description' => 'Run portable site exports, inspect package history, and validate or import transfer packages from one operational screen.',
+        'count' => $totalExportsCount + $totalImportsCount,
     ])
 
     @include('admin.partials.flash')
@@ -18,7 +19,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Site Exports</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $exports->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredExportsCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
@@ -89,7 +90,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Site Imports</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $imports->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredImportsCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">

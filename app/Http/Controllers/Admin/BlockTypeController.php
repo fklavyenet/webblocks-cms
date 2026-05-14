@@ -36,6 +36,7 @@ class BlockTypeController extends Controller
 
         $supportedAdminSlugs = array_fill_keys($adminSupportedSlugs, true);
         $supportedRenderSlugs = array_fill_keys($renderSupportedSlugs, true);
+        $totalCount = BlockType::query()->count();
 
         $blockTypes = $this->filteredBlockTypesQuery($filters, $adminSupportedSlugs, $renderSupportedSlugs)
             ->withCount('blocks')
@@ -67,6 +68,8 @@ class BlockTypeController extends Controller
             'editBlockType' => $editBlockType,
             'blockTypesReturnUrl' => $returnUrl,
             'closeUrl' => $closeUrl,
+            'totalCount' => $totalCount,
+            'filteredCount' => $blockTypes->total(),
             'supportedAdminForms' => $blockTypes->getCollection()
                 ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedAdminSlugs[$blockType->slug])]),
             'supportedPublicRenders' => $blockTypes->getCollection()

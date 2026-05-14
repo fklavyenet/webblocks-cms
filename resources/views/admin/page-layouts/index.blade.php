@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Page Layouts',
         'description' => 'Manage reusable public page layout definitions. Pages still store the selected layout handle on public_shell for backward compatibility.',
-        'count' => $pageLayouts->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -13,7 +13,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Page Layouts</strong>
-                <span class="wb-status-pill wb-status-info">{{ $pageLayouts->total() }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
             <a href="{{ route('admin.page-layouts.create') }}" class="wb-btn wb-btn-primary">New Page Layout</a>

@@ -165,20 +165,18 @@ class MediaManagementTest extends TestCase
         ]);
 
         $unfilteredResponse = $this->actingAs($user)->get(route('admin.media.index'));
-        $unfilteredHtml = $unfilteredResponse->getContent();
 
         $unfilteredResponse->assertOk();
-        $this->assertMatchesRegularExpression('/<h1 class="wb-page-header-title">Media<\/h1>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $unfilteredHtml);
-        $this->assertMatchesRegularExpression('/<strong>Media Library<\/strong>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $unfilteredHtml);
+        $unfilteredResponse->assertSee('<span class="wb-status-pill wb-status-info" data-admin-page-count>2</span>', false);
+        $unfilteredResponse->assertSee('<span class="wb-status-pill wb-status-info" data-admin-list-count>2</span>', false);
 
         $filteredResponse = $this->actingAs($user)->get(route('admin.media.index', ['search' => 'visible']));
-        $filteredHtml = $filteredResponse->getContent();
 
         $filteredResponse->assertOk();
         $filteredResponse->assertSee('Count visible asset');
         $filteredResponse->assertDontSee('Count hidden asset');
-        $this->assertMatchesRegularExpression('/<h1 class="wb-page-header-title">Media<\/h1>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $filteredHtml);
-        $this->assertMatchesRegularExpression('/<strong>Media Library<\/strong>\s*<span class="wb-status-pill wb-status-info">1<\/span>/', $filteredHtml);
+        $filteredResponse->assertSee('<span class="wb-status-pill wb-status-info" data-admin-page-count>2</span>', false);
+        $filteredResponse->assertSee('<span class="wb-status-pill wb-status-info" data-admin-list-count>1</span>', false);
     }
 
     #[Test]

@@ -29,28 +29,35 @@ class ContactMessageController extends Controller
             $notification = '';
         }
 
+        $baseQuery = ContactMessage::query()
+            ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()));
+
+        $filteredQuery = ContactMessage::query()
+            ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%")
+                        ->orWhere('message', 'like', "%{$search}%");
+                });
+            })
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->when($notification !== '', function ($query) use ($notification) {
+                match ($notification) {
+                    'sent' => $query->where('notification_enabled', true)->whereNotNull('notification_sent_at'),
+                    'pending' => $query->where('notification_enabled', true)->whereNull('notification_sent_at')->whereNull('notification_error'),
+                    'failed' => $query->whereNotNull('notification_error'),
+                    'disabled' => $query->where('notification_enabled', false),
+                    default => null,
+                };
+            });
+
+        $totalCount = (clone $baseQuery)->count();
+
         return view('admin.contact-messages.index', [
-            'messages' => ContactMessage::query()
-                ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()))
+            'messages' => $filteredQuery
                 ->with(['page', 'block.slotType', 'block.blockType'])
-                ->when($search !== '', function ($query) use ($search) {
-                    $query->where(function ($inner) use ($search) {
-                        $inner->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('subject', 'like', "%{$search}%")
-                            ->orWhere('message', 'like', "%{$search}%");
-                    });
-                })
-                ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->when($notification !== '', function ($query) use ($notification) {
-                    match ($notification) {
-                        'sent' => $query->where('notification_enabled', true)->whereNotNull('notification_sent_at'),
-                        'pending' => $query->where('notification_enabled', true)->whereNull('notification_sent_at')->whereNull('notification_error'),
-                        'failed' => $query->whereNotNull('notification_error'),
-                        'disabled' => $query->where('notification_enabled', false),
-                        default => null,
-                    };
-                })
                 ->latest()
                 ->paginate(AdminPagination::perPage())
                 ->withQueryString(),
@@ -59,6 +66,8 @@ class ContactMessageController extends Controller
                 'status' => $status,
                 'notification' => $notification,
             ],
+            'totalCount' => $totalCount,
+            'filteredCount' => (clone $filteredQuery)->count(),
         ]);
     }
 

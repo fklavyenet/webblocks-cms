@@ -9,7 +9,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Icons',
         'description' => 'Manage the install-level icon catalog used by admin pickers. WebBlocks UI provides the CSS classes and manifest; CMS stores labels, contexts, activity, and sort order.',
-        'count' => $icons->total(),
+        'count' => $totalCount,
         'actions' => '<a href="'.e($defaultManifest).'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Open Manifest</a>',
     ])
 
@@ -60,6 +60,12 @@
     </div>
 
     <div class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <strong>Icons</strong>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            </div>
+        </div>
         @if ($icons->isEmpty())
             <div class="wb-card-body">
                 <div class="wb-empty">

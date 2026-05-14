@@ -11,7 +11,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Sites',
         'description' => 'Manage the small multisite foundation and the locales available on each site.',
-        'count' => $sites->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -20,7 +20,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Sites</strong>
-                <span class="wb-status-pill wb-status-info">{{ $sites->total() }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $sites->total() }}</span>
             </div>
 
             <div class="wb-cluster wb-cluster-2">

@@ -24,7 +24,7 @@
         'title' => 'Pages',
         'description' => null,
         'context' => '<span>'.e($siteContextDescription).'</span>',
-        'count' => $pages->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -98,7 +98,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Pages for {{ $siteContext }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
@@ -122,7 +122,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Pages for {{ $siteContext }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $pages->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">

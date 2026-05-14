@@ -67,6 +67,16 @@ class BlockController extends Controller
         $filters = $this->blockIndexFilters($request);
         $pageId = $filters['page_id'] !== '' ? (int) $filters['page_id'] : null;
         $localeId = $this->localeIdForFilter($filters['locale']);
+        $totalCount = $this->applyIndexFilters(
+            $this->authorization->scopeBlocksForUser(Block::query(), $request->user()),
+            array_merge($filters, [
+                'search' => '',
+                'block_type_id' => '',
+                'status' => '',
+                'locale' => '',
+            ]),
+            null,
+        )->count();
         $blocks = $this->applyIndexFilters(
             $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
                 ->with(['page', 'parent', 'blockType', 'slotType', 'children']),
@@ -89,6 +99,8 @@ class BlockController extends Controller
             'filterBlockTypes' => $this->blockIndexBlockTypeOptions(),
             'filterLocales' => $this->blockIndexLocaleOptions(),
             'hasActiveFilters' => $this->hasActiveIndexFilters($filters),
+            'totalCount' => $totalCount,
+            'filteredCount' => $blocks->total(),
         ]);
     }
 

@@ -4,7 +4,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Locales',
         'description' => 'Manage locale lifecycle safely. Disable locales to remove them from active routing and editing, and only delete locales that are fully unused.',
-        'count' => $locales->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -13,7 +13,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Locales</strong>
-                <span class="wb-status-pill wb-status-info">{{ $locales->total() }}</span>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
             </div>
 
             <a href="{{ route('admin.locales.create') }}" class="wb-btn wb-btn-primary">Add Locale</a>

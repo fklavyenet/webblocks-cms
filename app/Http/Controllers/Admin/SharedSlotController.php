@@ -64,6 +64,13 @@ class SharedSlotController extends Controller
         }
 
         $sharedSlots = null;
+        $totalCount = null;
+
+        if ($sharedSlotsReady) {
+            $totalCount = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), $request->user())
+                ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
+                ->count();
+        }
 
         if ($sharedSlotsReady) {
             $sharedSlots = $this->authorization->scopeSharedSlotsForUser(SharedSlot::query(), $request->user())
@@ -99,6 +106,8 @@ class SharedSlotController extends Controller
                 'sort' => $sort,
                 'direction' => $direction,
             ],
+            'totalCount' => $totalCount,
+            'filteredCount' => $sharedSlots?->total() ?? 0,
             'canCreateSharedSlots' => $this->canManageSharedSlots($request->user()),
         ]);
     }

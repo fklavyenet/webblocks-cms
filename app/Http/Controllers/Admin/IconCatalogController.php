@@ -30,6 +30,8 @@ class IconCatalogController extends Controller
                 : '',
         ];
 
+        $totalCount = IconCatalogItem::query()->count();
+
         $icons = IconCatalogItem::query()
             ->search($filters['search'])
             ->when($filters['source'] !== '', fn (Builder $query) => $query->forSource($filters['source']))
@@ -67,6 +69,8 @@ class IconCatalogController extends Controller
             'editIcon' => $editIcon,
             'closeUrl' => route('admin.system.icons.index', $baseQuery),
             'defaultManifest' => WebBlocksIconManifestSyncer::DEFAULT_MANIFEST,
+            'totalCount' => $totalCount,
+            'filteredCount' => $icons->total(),
         ]);
     }
 

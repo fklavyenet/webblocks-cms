@@ -114,6 +114,42 @@ class BlockTypesIndexTest extends TestCase
     }
 
     #[Test]
+    public function block_types_page_header_count_ignores_filters_while_card_count_uses_filtered_results(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+
+        foreach (range(1, 3) as $index) {
+            BlockType::query()->create([
+                'name' => 'Count Pattern '.$index,
+                'slug' => 'count-pattern-'.$index,
+                'description' => 'Count testing block type '.$index,
+                'category' => 'pattern',
+                'source_type' => 'static',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 400 + $index,
+                'status' => 'published',
+            ]);
+        }
+
+        $totalCount = BlockType::query()->count();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'search' => 'Count Pattern 1',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Count Pattern 1');
+        $response->assertDontSee('Count Pattern 2');
+        $response->assertSee('data-admin-page-count', false);
+        $response->assertSee('data-admin-list-count', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-page-count>'.$totalCount.'</span>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-list-count>1</span>', false);
+    }
+
+    #[Test]
     public function updating_from_modal_returns_to_the_filtered_block_types_list_context(): void
     {
         $this->seedFoundation();

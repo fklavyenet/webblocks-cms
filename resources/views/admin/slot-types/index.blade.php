@@ -4,12 +4,18 @@
     @include('admin.partials.page-header', [
         'title' => 'Slot Types',
         'description' => 'Slot types are product-owned core catalog records for page structure and block placement.',
-        'count' => $slotTypes->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
 
     <div class="wb-card">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <strong>Slot Types</strong>
+                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            </div>
+        </div>
         <div class="wb-card-body">
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped wb-table-hover">

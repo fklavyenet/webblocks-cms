@@ -68,6 +68,7 @@ class SiteController extends Controller
                 'selectedSite' => $selectedDetailSite,
                 'closeUrl' => route('admin.sites.index'),
             ],
+            'totalCount' => $siteCount,
         ]);
     }
 

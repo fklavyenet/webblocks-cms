@@ -22,18 +22,26 @@ class SiteExportController extends Controller
 
     public function index(): View
     {
+        $exports = SiteExport::query()
+            ->with(['site', 'user'])
+            ->latest()
+            ->paginate(AdminPagination::perPage(), ['*'], 'exports_page')
+            ->withQueryString();
+
+        $imports = SiteImport::query()
+            ->with(['targetSite', 'user'])
+            ->latest()
+            ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
+            ->withQueryString();
+
         return view('admin/site-transfers/exports/index', [
-            'exports' => SiteExport::query()
-                ->with(['site', 'user'])
-                ->latest()
-                ->paginate(AdminPagination::perPage(), ['*'], 'exports_page')
-                ->withQueryString(),
-            'imports' => SiteImport::query()
-                ->with(['targetSite', 'user'])
-                ->latest()
-                ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
-                ->withQueryString(),
+            'exports' => $exports,
+            'imports' => $imports,
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
+            'totalExportsCount' => SiteExport::query()->count(),
+            'filteredExportsCount' => $exports->total(),
+            'totalImportsCount' => SiteImport::query()->count(),
+            'filteredImportsCount' => $imports->total(),
         ]);
     }
 

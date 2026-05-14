@@ -673,6 +673,37 @@ class PageEditorialWorkflowTest extends TestCase
     }
 
     #[Test]
+    public function pages_index_page_header_count_uses_site_scope_total_while_card_count_uses_filters(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+
+        foreach (range(1, 3) as $index) {
+            Page::query()->create([
+                'site_id' => $site->id,
+                'title' => 'Scoped Count Page '.$index,
+                'slug' => 'scoped-count-page-'.$index,
+                'status' => $index === 1 ? Page::STATUS_PUBLISHED : Page::STATUS_DRAFT,
+                'page_type' => 'default',
+            ]);
+        }
+
+        $siteScopedTotal = Page::query()->where('site_id', $site->id)->count();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Scoped Count Page',
+            'status' => Page::STATUS_PUBLISHED,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-page-count', false);
+        $response->assertSee('data-admin-list-count', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-page-count>'.$siteScopedTotal.'</span>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-list-count>1</span>', false);
+    }
+
+    #[Test]
     public function pages_index_can_sort_by_last_edited(): void
     {
         $site = $this->defaultSite();

@@ -186,4 +186,36 @@ class IconCatalogManagementTest extends TestCase
         $response->assertSee('1-12/13', false);
         $response->assertSee(e($expectedPageTwoUrl), false);
     }
+
+    #[Test]
+    public function icons_page_header_count_ignores_filters_while_card_count_uses_filtered_results(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        foreach (range(1, 3) as $index) {
+            IconCatalogItem::query()->create([
+                'source' => 'webblocks-ui',
+                'slug' => 'count-icon-'.$index,
+                'label' => 'Count Icon '.$index,
+                'css_class' => 'wb-icon-box',
+                'contexts' => ['navigation'],
+                'categories' => ['navigation'],
+                'is_active' => $index === 1,
+                'sort_order' => 300 + $index,
+            ]);
+        }
+
+        $totalCount = IconCatalogItem::query()->count();
+
+        $response = $this->actingAs($user)->get(route('admin.system.icons.index', [
+            'search' => 'Count Icon',
+            'status' => 'active',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-page-count', false);
+        $response->assertSee('data-admin-list-count', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-page-count>'.$totalCount.'</span>', false);
+        $response->assertSee('<span class="wb-status-pill wb-status-info" data-admin-list-count>1</span>', false);
+    }
 }

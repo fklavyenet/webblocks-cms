@@ -95,6 +95,10 @@ class PageController extends Controller
             ->withCount(['enabledLocales as locales_count'])
             ->pluck('locales_count', 'id');
 
+        $totalCount = $this->authorization->scopePagesForUser(Page::query(), $request->user())
+            ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
+            ->count();
+
         $pages = $this->authorization->scopePagesForUser(Page::query(), $request->user())
             ->with([
                 'site',
@@ -168,6 +172,8 @@ class PageController extends Controller
             'siteLocaleCounts' => $siteLocaleCounts,
             'pagesIndexUrl' => $this->pageIndexState->storedUrl($request),
             'pageReturnUrl' => $this->pageIndexState->storedUrl($request),
+            'totalCount' => $totalCount,
+            'filteredCount' => $pages->total(),
             'pageImportOpen' => old('_page_import_modal') === 'page-import-modal' || $request->string('modal')->toString() === 'page-import',
             'pageImportSelectedSiteId' => (int) old('site_id', $activeSite?->id ?? $sites->first()?->id),
         ]);

@@ -14,7 +14,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Shared Slots',
         'context' => '<span>'.e($siteContextDescription).'</span>',
-        'count' => $sharedSlotsReady ? $sharedSlots->total() : null,
+        'count' => $sharedSlotsReady ? $totalCount : null,
     ])
 
     @include('admin.partials.flash')
@@ -96,7 +96,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Shared Slots for {{ $siteContext }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $sharedSlots->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 @if ($canCreateSharedSlots)
@@ -121,7 +121,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Shared Slots for {{ $siteContext }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $sharedSlots->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 @if ($canCreateSharedSlots)

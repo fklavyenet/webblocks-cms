@@ -29,6 +29,8 @@ class UserController extends Controller
             'role' => $this->normalizedRoleFilter((string) $request->string('role')),
         ];
 
+        $totalCount = User::query()->count();
+
         $users = $this->filteredUsersQuery($filters)
             ->with('sites')
             ->withRoleOrder()
@@ -40,6 +42,8 @@ class UserController extends Controller
             'users' => $users,
             'filters' => $filters,
             'userLifecycleGuard' => $this->lifecycleGuard,
+            'totalCount' => $totalCount,
+            'filteredCount' => $users->total(),
         ]);
     }
 

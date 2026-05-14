@@ -17,11 +17,16 @@ class PageLayoutController extends Controller
     {
         abort_unless($request->user()?->isSuperAdmin(), 403);
 
+        $totalCount = PageLayout::query()->count();
+        $pageLayouts = PageLayout::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(AdminPagination::perPage());
+
         return view('admin.page-layouts.index', [
-            'pageLayouts' => PageLayout::query()
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->paginate(AdminPagination::perPage()),
+            'pageLayouts' => $pageLayouts,
+            'totalCount' => $totalCount,
+            'filteredCount' => $pageLayouts->total(),
         ]);
     }
 

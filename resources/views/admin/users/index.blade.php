@@ -8,7 +8,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Users',
         'description' => 'Manage CMS users, admin access, and active account state without leaving the admin workspace.',
-        'count' => $users->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -61,7 +61,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Users</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $users->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">Add User</a>
@@ -87,7 +87,7 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Users</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $users->total() }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                 </div>
 
                 <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">Add User</a>

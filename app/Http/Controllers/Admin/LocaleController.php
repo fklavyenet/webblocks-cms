@@ -19,6 +19,7 @@ class LocaleController extends Controller
 
     public function index(): View
     {
+        $totalCount = Locale::query()->count();
         $locales = Locale::query()
             ->orderByDesc('is_default')
             ->orderBy('name')
@@ -27,6 +28,8 @@ class LocaleController extends Controller
         return view('admin.locales.index', [
             'locales' => $locales,
             'reports' => $this->lifecycleGuard->inspectMany(collect($locales->items())),
+            'totalCount' => $totalCount,
+            'filteredCount' => $locales->total(),
         ]);
     }
 

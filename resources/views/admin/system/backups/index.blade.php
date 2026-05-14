@@ -9,7 +9,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Backups',
         'description' => 'Create a local backup before updates or other risky maintenance, then review history, upload a downloaded backup archive, and restore through the normal backup flow.',
-        'count' => $backups->total(),
+        'count' => $totalCount,
     ])
 
     @include('admin.partials.flash')
@@ -144,7 +144,7 @@
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                     <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                         <strong>Backups</strong>
-                        <span class="wb-status-pill wb-status-info">{{ $backups->total() }}</span>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
@@ -168,7 +168,7 @@
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                     <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                         <strong>Backups</strong>
-                        <span class="wb-status-pill wb-status-info">{{ $backups->total() }}</span>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
