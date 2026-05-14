@@ -30,6 +30,12 @@
             return;
         }
 
+        if (event.detail.tabId === 'page-management-layout-slots-panel') {
+            hiddenInput.value = 'layout-slots';
+
+            return;
+        }
+
         hiddenInput.value = 'settings';
     });
 }());

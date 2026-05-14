@@ -137,6 +137,7 @@ class PageBuilderExperienceTest extends TestCase
         $editResponse->assertSee('Overview');
         $editResponse->assertSee('Settings');
         $editResponse->assertSee('Assets');
+        $editResponse->assertSee('Layout Slots');
         $editResponse->assertSee('Slots');
         $editResponse->assertSee('Translations');
         $editResponse->assertSee('Add Slot');
@@ -189,8 +190,13 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, $xpath->query('.//div[@id="page-management-overview-panel"]//strong[normalize-space()="Overview"]', $pageManagementCard)->length);
         $this->assertSame(1, $xpath->query('.//div[@id="page-management-settings-panel"]//strong[normalize-space()="Settings"]', $pageManagementCard)->length);
         $this->assertSame(1, $xpath->query('.//div[@id="page-management-assets-panel"]//strong[normalize-space()="Page Assets"]', $pageManagementCard)->length);
+        $this->assertSame(1, $xpath->query('.//div[@id="page-management-layout-slots-panel"]//strong[normalize-space()="Page Layout Slots"]', $pageManagementCard)->length);
         $this->assertSame(0, $xpath->query('.//div[@id="page-management-assets-panel"]//button[normalize-space()="Save Changes"]', $pageManagementCard)->length);
         $this->assertSame(0, $xpath->query('.//div[@id="page-management-assets-panel"]//a[normalize-space()="Cancel"]', $pageManagementCard)->length);
+
+        $slotsCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//strong[normalize-space()="Slots"]]')->item(0);
+        $this->assertNotNull($slotsCard);
+        $this->assertSame(0, $xpath->query('.//strong[normalize-space()="Page Layout Slots"]', $slotsCard)->length);
     }
 
     #[Test]
@@ -614,6 +620,21 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Missing on this page');
         $response->assertSee('Extra Page Slots are kept for safety');
 
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($response->getContent());
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($document);
+        $layoutSlotsPanel = $xpath->query('//div[@id="page-management-layout-slots-panel"]')->item(0);
+        $slotsCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//strong[normalize-space()="Slots"]]')->item(0);
+
+        $this->assertNotNull($layoutSlotsPanel);
+        $this->assertNotNull($slotsCard);
+        $this->assertSame(1, $xpath->query('.//strong[normalize-space()="Page Layout Slots"]', $layoutSlotsPanel)->length);
+        $this->assertSame(1, $xpath->query('.//button[normalize-space()="Add Missing Layout Slots"]', $layoutSlotsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//strong[normalize-space()="Page Layout Slots"]', $slotsCard)->length);
+
         PageSlot::query()->create([
             'page_id' => $page->id,
             'slot_type_id' => $sidebar->id,
@@ -706,7 +727,7 @@ class PageBuilderExperienceTest extends TestCase
             'return_url' => route('admin.pages.index', ['site' => $site->id]),
         ]);
 
-        $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'return_url' => route('admin.pages.index', ['site' => $site->id])]));
+        $response->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'layout-slots', 'return_url' => route('admin.pages.index', ['site' => $site->id])]));
         $response->assertSessionHas('status', 'Added 2 missing Page Layout slots.');
         $this->assertSame(['header', 'sidebar', 'promo', 'main', 'footer'], $page->fresh()->slots()->with('slotType')->orderBy('sort_order')->get()->pluck('slotType.slug')->all());
         $this->assertDatabaseHas('page_slots', ['id' => $headerSlot->id, 'source_type' => PageSlot::SOURCE_TYPE_DISABLED]);
@@ -736,7 +757,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $noopResponse = $this->actingAs($user)->post(route('admin.pages.layout-slots.sync', $page));
 
-        $noopResponse->assertRedirect(route('admin.pages.edit', $page));
+        $noopResponse->assertRedirect(route('admin.pages.edit', ['page' => $page, 'tab' => 'layout-slots']));
         $noopResponse->assertSessionHas('status', 'This page already has all slots defined by the selected Page Layout.');
     }
 

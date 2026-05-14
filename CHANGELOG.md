@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.9
+
+- Extend `Admin -> Pages -> Edit Page -> Page Management` with a dedicated `Layout Slots` tab so the `Page Layout Slots` comparison and `Add Missing Layout Slots` action live with other page-management concerns instead of inside the separate `Slots` card.
+- Remove the duplicated `Add CSS asset` and `Add JS asset` buttons from the `Assets` empty state so those actions stay owned by the `Page Assets` card header.
+
 ## 1.31.8
 
 - Refine `Admin -> Pages -> Edit Page` by replacing the crowded top `Page Overview` plus `Page Settings` arrangement with one `Page Management` card that separates `Overview`, `Settings`, and `Assets` into calmer tab-owned cards.

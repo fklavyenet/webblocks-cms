@@ -2,6 +2,7 @@
     $pageTitle = 'Edit Page: '.$page->title;
     $settingsTab = old('_page_settings_tab', match (request('tab')) {
         'page-assets' => 'assets',
+        'layout-slots' => 'layout-slots',
         'overview' => 'overview',
         default => 'settings',
     });
@@ -36,7 +37,7 @@
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
             <strong>Page Management</strong>
-            <span class="wb-text-sm wb-text-muted">Manage page status, settings, and page-specific assets.</span>
+            <span class="wb-text-sm wb-text-muted">Manage page status, settings, page-specific assets, and layout slot alignment.</span>
         </div>
         <div class="wb-card-body">
             <div class="wb-tabs" data-wb-tabs data-wb-page-settings-tabs>
@@ -46,6 +47,7 @@
                     @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())
                         <button type="button" class="wb-tabs-btn {{ $settingsTab === 'assets' ? 'is-active' : '' }}" data-wb-tab="page-management-assets-panel" aria-selected="{{ $settingsTab === 'assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'assets') tabindex="-1" @endif>Assets</button>
                     @endif
+                    <button type="button" class="wb-tabs-btn {{ $settingsTab === 'layout-slots' ? 'is-active' : '' }}" data-wb-tab="page-management-layout-slots-panel" aria-selected="{{ $settingsTab === 'layout-slots' ? 'true' : 'false' }}" @if ($settingsTab !== 'layout-slots') tabindex="-1" @endif>Layout Slots</button>
                 </div>
 
                 <div class="wb-tabs-panels">
@@ -145,6 +147,15 @@
                             ])
                         </div>
                     @endif
+
+                    <div class="wb-tabs-panel {{ $settingsTab === 'layout-slots' ? 'is-active' : '' }}" id="page-management-layout-slots-panel">
+                        @include('admin.pages.partials.layout-slot-summary-card', [
+                            'page' => $page,
+                            'layoutSlotComparison' => $layoutSlotComparison,
+                            'canEditContent' => $canEditContent,
+                            'pageReturnUrl' => $pageReturnUrl,
+                        ])
+                    </div>
                 </div>
             </div>
         </div>

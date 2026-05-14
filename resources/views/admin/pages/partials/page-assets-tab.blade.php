@@ -33,13 +33,6 @@
             <div class="wb-empty-state">
                 <div class="wb-empty-title">No page assets yet.</div>
                 <div class="wb-empty-text">Add CSS or JS files when this page needs page-specific styling or interaction.</div>
-
-                @if ($canManagePageAssets)
-                    <div class="wb-cluster wb-cluster-2 wb-mt-3">
-                        <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add CSS asset</a>
-                        <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">Add JS asset</a>
-                    </div>
-                @endif
             </div>
         @else
             <div class="wb-table-wrap">

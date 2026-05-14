@@ -34,7 +34,7 @@ class PageSlotController extends Controller
         $result = $this->pageLayoutSlotSyncer->syncMissingSlots($page, $request->user());
 
         if ($result['noop']) {
-            return $this->redirectToEdit($page, 'This page already has all slots defined by the selected Page Layout.', $request->validatedReturnUrl());
+            return $this->redirectToEdit($page, 'This page already has all slots defined by the selected Page Layout.', $request->validatedReturnUrl(), 'layout-slots');
         }
 
         $addedCount = (int) $result['added_count'];
@@ -45,6 +45,7 @@ class PageSlotController extends Controller
                 ? 'Added 1 missing Page Layout slot.'
                 : 'Added '.$addedCount.' missing Page Layout slots.',
             $request->validatedReturnUrl(),
+            'layout-slots',
         );
     }
 
@@ -216,10 +217,14 @@ class PageSlotController extends Controller
             });
     }
 
-    private function redirectToEdit(Page $page, string $status, ?string $returnUrl = null): RedirectResponse
+    private function redirectToEdit(Page $page, string $status, ?string $returnUrl = null, ?string $tab = null): RedirectResponse
     {
         $parameters = ['page' => $page];
         $safeReturnUrl = $returnUrl ?? $this->pageIndexState->safeReturnUrlFromRequest(request());
+
+        if ($tab !== null && $tab !== '') {
+            $parameters['tab'] = $tab;
+        }
 
         if ($safeReturnUrl !== null && $safeReturnUrl !== '') {
             $parameters['return_url'] = $safeReturnUrl;

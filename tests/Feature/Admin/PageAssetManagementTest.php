@@ -38,6 +38,7 @@ class PageAssetManagementTest extends TestCase
         $response->assertSee('Overview');
         $response->assertSee('Settings');
         $response->assertSee('Assets');
+        $response->assertSee('Layout Slots');
         $response->assertSee('Page Assets');
         $response->assertSee('Add CSS asset');
         $response->assertSee('Add JS asset');
@@ -63,6 +64,8 @@ class PageAssetManagementTest extends TestCase
         $this->assertNotNull($assetsPanel);
         $this->assertSame(1, $xpath->query('.//a[normalize-space()="Add CSS asset"]', $assetsPanel)->length);
         $this->assertSame(1, $xpath->query('.//a[normalize-space()="Add JS asset"]', $assetsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-empty-state ")]//a[normalize-space()="Add CSS asset"]', $assetsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-empty-state ")]//a[normalize-space()="Add JS asset"]', $assetsPanel)->length);
         $this->assertSame(0, $xpath->query('.//button[normalize-space()="Save Changes"]', $assetsPanel)->length);
         $this->assertSame(0, $xpath->query('.//a[normalize-space()="Cancel"]', $assetsPanel)->length);
     }
@@ -80,6 +83,18 @@ class PageAssetManagementTest extends TestCase
         $response->assertSee('No page assets yet.');
         $response->assertSee('Add CSS asset');
         $response->assertSee('Add JS asset');
+
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($response->getContent());
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($document);
+        $assetsPanel = $xpath->query('//div[@id="page-management-assets-panel"]')->item(0);
+
+        $this->assertNotNull($assetsPanel);
+        $this->assertSame(0, $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-empty-state ")]//a[normalize-space()="Add CSS asset"]', $assetsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-empty-state ")]//a[normalize-space()="Add JS asset"]', $assetsPanel)->length);
     }
 
     #[Test]

@@ -338,7 +338,12 @@ class PageController extends Controller
         $redirect = redirect()
             ->route('admin.pages.edit', array_filter([
                 'page' => $page,
-                'tab' => $request->input('_page_settings_tab') === 'assets' ? 'page-assets' : ($request->input('_page_settings_tab') === 'overview' ? 'overview' : null),
+                'tab' => match ($request->input('_page_settings_tab')) {
+                    'assets' => 'page-assets',
+                    'overview' => 'overview',
+                    'layout-slots' => 'layout-slots',
+                    default => null,
+                },
                 'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
             ], fn (mixed $value) => $value !== null && $value !== ''))
             ->with('status', 'Page updated successfully.');

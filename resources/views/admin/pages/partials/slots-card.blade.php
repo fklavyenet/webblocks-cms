@@ -49,13 +49,6 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-gap-3">
-        @include('admin.pages.partials.layout-slot-summary-card', [
-            'page' => $page,
-            'layoutSlotComparison' => $layoutSlotComparison,
-            'canEditContent' => $canEditContent,
-            'pageReturnUrl' => $pageReturnUrl,
-        ])
-
         @error('slot_type_id')
             <div class="wb-alert wb-alert-danger">{{ $message }}</div>
         @enderror
