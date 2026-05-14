@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SiteCloneRequest;
 use App\Http\Requests\Admin\SiteDeleteRequest;
 use App\Http\Requests\Admin\SiteRequest;
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\Site;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
@@ -257,7 +257,7 @@ class SiteController extends Controller
 
     private function assetPickerAssets()
     {
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();
@@ -265,7 +265,7 @@ class SiteController extends Controller
 
     private function assetPickerFolders()
     {
-        return AssetFolder::query()
+        return MediaFolder::query()
             ->withCount('assets')
             ->with('parent')
             ->orderBy('name')

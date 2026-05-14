@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SharedSlotRequest;
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\User;
@@ -556,9 +556,9 @@ class SharedSlotController extends Controller
                 'mode' => 'edit',
                 'block' => $editingBlock,
                 'selectedBlockType' => $selectedBlockType,
-                'selectedAsset' => $this->resolveSelectedAsset(old('asset_id', $editingBlock->asset_id)),
-                'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_asset_ids', $editingBlock->galleryAssetIds())),
-                'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_asset_id', $editingBlock->attachmentAsset()?->id)),
+                'selectedAsset' => $this->resolveSelectedAsset(old('media_id', old('asset_id', $editingBlock->media_id))),
+                'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_media_ids', old('gallery_asset_ids', $editingBlock->galleryMediaIds()))),
+                'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_media_id', old('attachment_asset_id', $editingBlock->attachmentMedia()?->id))),
             ];
         }
 
@@ -596,13 +596,13 @@ class SharedSlotController extends Controller
             'mode' => 'create',
             'block' => $block,
             'selectedBlockType' => $selectedBlockType,
-            'selectedAsset' => $this->resolveSelectedAsset(old('asset_id')),
-            'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_asset_ids', [])),
-            'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_asset_id')),
+            'selectedAsset' => $this->resolveSelectedAsset(old('media_id', old('asset_id'))),
+            'selectedGalleryAssets' => $this->resolveGalleryAssets(old('gallery_media_ids', old('gallery_asset_ids', []))),
+            'selectedAttachmentAsset' => $this->resolveSelectedAsset(old('attachment_media_id', old('attachment_asset_id'))),
         ];
     }
 
-    private function resolveSelectedAsset(mixed $assetId): ?Asset
+    private function resolveSelectedAsset(mixed $assetId): ?Media
     {
         $resolvedId = (int) $assetId;
 
@@ -610,7 +610,7 @@ class SharedSlotController extends Controller
             return null;
         }
 
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->find($resolvedId);
     }
 
@@ -625,10 +625,10 @@ class SharedSlotController extends Controller
             return collect();
         }
 
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->whereIn('id', $resolvedIds)
             ->get()
-            ->sortBy(fn (Asset $asset) => $resolvedIds->search($asset->id))
+            ->sortBy(fn (Media $asset) => $resolvedIds->search($asset->id))
             ->values();
     }
 
@@ -852,7 +852,7 @@ class SharedSlotController extends Controller
 
     private function assetPickerAssets()
     {
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();
@@ -860,7 +860,7 @@ class SharedSlotController extends Controller
 
     private function assetPickerFolders()
     {
-        return AssetFolder::query()
+        return MediaFolder::query()
             ->withCount('assets')
             ->with('parent')
             ->orderBy('name')

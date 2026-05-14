@@ -77,10 +77,10 @@
                     <div class="wb-stack wb-gap-2 wb-field">
                         <label class="wb-checkbox" for="{{ $modalId }}IncludesMedia">
                             <input id="{{ $modalId }}IncludesMedia" type="checkbox" name="includes_media" value="1" @checked(old('includes_media', true))>
-                            <span>Include media/assets</span>
+                            <span>Include media files</span>
                         </label>
 
-                        <div class="wb-text-sm wb-text-muted">When enabled, the export package includes referenced asset records and the actual files from CMS-managed storage.</div>
+                        <div class="wb-text-sm wb-text-muted">When enabled, the export package includes referenced media records and the actual files from CMS-managed storage.</div>
                     </div>
                 </div>
 

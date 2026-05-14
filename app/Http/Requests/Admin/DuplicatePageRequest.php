@@ -141,7 +141,7 @@ class DuplicatePageRequest extends FormRequest
                 'seo_keywords' => $defaultTranslation->seo_keywords,
                 'og_title' => $defaultTranslation->og_title,
                 'og_description' => $defaultTranslation->og_description,
-                'og_image_asset_id' => $defaultTranslation->og_image_asset_id,
+                'og_image_media_id' => $defaultTranslation->og_image_media_id,
                 'name_field' => 'title',
                 'slug_field' => 'slug',
             ]);
@@ -160,7 +160,7 @@ class DuplicatePageRequest extends FormRequest
                 'seo_keywords' => $sourceTranslation?->seo_keywords,
                 'og_title' => $sourceTranslation?->og_title,
                 'og_description' => $sourceTranslation?->og_description,
-                'og_image_asset_id' => $sourceTranslation?->og_image_asset_id,
+                'og_image_media_id' => $sourceTranslation?->og_image_media_id,
                 'name_field' => 'translations.'.$index.'.name',
                 'slug_field' => 'translations.'.$index.'.slug',
             ]);

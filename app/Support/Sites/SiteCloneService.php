@@ -2,7 +2,6 @@
 
 namespace App\Support\Sites;
 
-use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
@@ -10,6 +9,7 @@ use App\Models\BlockContactFormTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -294,8 +294,8 @@ class SiteCloneService
                     'seo_keywords' => $translation->seo_keywords,
                     'og_title' => $translation->og_title,
                     'og_description' => $translation->og_description,
-                    'og_image_asset_id' => $options->withMedia && $translation->og_image_asset_id
-                        ? $this->clonedAssetId($translation->og_image_asset_id, $assetMap, $options, $counts)
+                    'og_image_media_id' => $options->withMedia && $translation->og_image_media_id
+                        ? $this->clonedAssetId($translation->og_image_media_id, $assetMap, $options, $counts)
                         : null,
                     'created_at' => $translation->created_at,
                     'updated_at' => $translation->updated_at,
@@ -388,9 +388,9 @@ class SiteCloneService
             $attributes['updated_at'] = $block->updated_at;
 
             if (! $options->withMedia) {
-                $attributes['asset_id'] = null;
-            } elseif ($block->asset_id) {
-                $attributes['asset_id'] = $this->clonedAssetId($block->asset_id, $assetMap, $options, $counts);
+                $attributes['media_id'] = null;
+            } elseif ($block->media_id) {
+                $attributes['media_id'] = $this->clonedAssetId($block->media_id, $assetMap, $options, $counts);
             }
 
             $newBlock = Block::query()->create($attributes);
@@ -404,7 +404,7 @@ class SiteCloneService
 
                 BlockAsset::query()->create([
                     'block_id' => $newBlock->id,
-                    'asset_id' => $this->clonedAssetId($blockAsset->asset_id, $assetMap, $options, $counts),
+                    'media_id' => $this->clonedAssetId($blockAsset->media_id, $assetMap, $options, $counts),
                     'role' => $blockAsset->role,
                     'position' => $blockAsset->position,
                     'created_at' => $blockAsset->created_at,
@@ -611,26 +611,26 @@ class SiteCloneService
             return $assetMap[$assetId];
         }
 
-        $asset = Asset::query()->findOrFail($assetId);
+        $asset = Media::query()->findOrFail($assetId);
         $attributes = Arr::except($asset->getAttributes(), ['id', 'path', 'filename', 'created_at', 'updated_at']);
         $attributes['path'] = $this->copyAssetFile($asset, $counts);
         $attributes['filename'] = basename($attributes['path']);
         $attributes['created_at'] = $asset->created_at;
         $attributes['updated_at'] = $asset->updated_at;
 
-        $newAsset = Asset::query()->create($attributes);
+        $newAsset = Media::query()->create($attributes);
         $assetMap[$assetId] = $newAsset->id;
         $counts['assets_cloned']++;
 
         return $newAsset->id;
     }
 
-    private function copyAssetFile(Asset $asset, array &$counts): string
+    private function copyAssetFile(Media $asset, array &$counts): string
     {
         $disk = Storage::disk($asset->disk);
 
         if (! $disk->exists($asset->path)) {
-            throw new RuntimeException('Asset file could not be copied because the source file is missing: '.$asset->path);
+            throw new RuntimeException('Media file could not be copied because the source file is missing: '.$asset->path);
         }
 
         $extension = pathinfo($asset->path, PATHINFO_EXTENSION);
@@ -660,10 +660,10 @@ class SiteCloneService
         $sharedSlotBlockIds = Block::query()->whereIn('page_id', $sharedSlotSourcePageIds)->pluck('id');
         $defaultLocaleId = $this->defaultLocaleId();
         $assetIds = collect()
-            ->merge(Block::query()->whereIn('id', $blockIds)->whereNotNull('asset_id')->pluck('asset_id'))
-            ->merge(Block::query()->whereIn('id', $sharedSlotBlockIds)->whereNotNull('asset_id')->pluck('asset_id'))
-            ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('asset_id'))
-            ->merge(BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->pluck('asset_id'))
+            ->merge(Block::query()->whereIn('id', $blockIds)->whereNotNull('media_id')->pluck('media_id'))
+            ->merge(Block::query()->whereIn('id', $sharedSlotBlockIds)->whereNotNull('media_id')->pluck('media_id'))
+            ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('media_id'))
+            ->merge(BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->pluck('media_id'))
             ->filter()
             ->unique()
             ->values();

@@ -268,7 +268,7 @@ class PageRevisionTest extends TestCase
             'seo_keywords' => 'tr,seo',
             'og_title' => 'TR OG',
             'og_description' => 'TR OG description',
-            'og_image_asset_id' => $ogImage->id,
+            'og_image_media_id' => $ogImage->id,
         ]);
 
         $response->assertRedirect(route('admin.pages.edit', $page));
@@ -280,7 +280,7 @@ class PageRevisionTest extends TestCase
             'seo_keywords' => 'tr,seo',
             'og_title' => 'TR OG',
             'og_description' => 'TR OG description',
-            'og_image_asset_id' => $ogImage->id,
+            'og_image_media_id' => $ogImage->id,
         ]);
         $this->assertDatabaseHas('page_revisions', [
             'page_id' => $page->id,

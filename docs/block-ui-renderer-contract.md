@@ -336,7 +336,7 @@ Public pages now use explicit layout composition modes:
 - CMS block slug: `button`
 - Admin fields: `title`, `url`, `subtitle`, `variant`
 - Translatable fields: `title`
-- Shared fields: `url`, `subtitle`/target, `variant`, optional attachment asset relation
+- Shared fields: `url`, `subtitle`/target, `variant`, optional attachment media relation
 - Intended WebBlocks UI output: explicit `wb-btn` variant mapping for `primary`, `secondary`, `outline`, `ghost`, and `danger`; unknown values must fall back to `wb-btn wb-btn-primary`.
 - Current implementation: acceptable
 - Variant mapping:
@@ -358,9 +358,9 @@ Public pages now use explicit layout composition modes:
 ### `image`
 
 - CMS block slug: `image`
-- Admin fields: `asset_id`, `subtitle`, `url`, `title`
+- Admin fields: `media_id`, `subtitle`, `url`, `title`
 - Translatable fields: `title` as caption, `subtitle` as alt text
-- Shared fields: `asset_id`, `url`
+- Shared fields: `media_id`, `url`
 - Intended WebBlocks UI output: semantic `figure`, `img`, and optional `figcaption`; use shipped media/card classes only when the image is intentionally framed.
 - Current implementation: weak
 - Notes for later renderer/admin improvements: honor the optional link URL, keep alt/caption semantics clear, and avoid decorative wrappers by default.
@@ -368,9 +368,9 @@ Public pages now use explicit layout composition modes:
 ### `gallery`
 
 - CMS block slug: `gallery`
-- Admin fields: `title`, `subtitle`, `gallery_asset_ids`
+- Admin fields: `title`, `subtitle`, `gallery_media_ids`
 - Translatable fields: none
-- Shared fields: `title`, `subtitle`, ordered gallery assets, legacy fallback settings when present
+- Shared fields: `title`, `subtitle`, ordered gallery media, legacy fallback settings when present
 - Intended WebBlocks UI output: WebBlocks gallery pattern with the viewer mounted under `#wb-overlay-root`; shipped WebBlocks UI gallery hooks should drive interaction first.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep CMS JavaScript limited to CMS-specific data plumbing only if the shipped hooks cannot cover a case. Gallery items should emit `data-wb-gallery-target` for one shared viewer modal instead of inventing a separate CMS lightbox contract.
@@ -378,9 +378,9 @@ Public pages now use explicit layout composition modes:
 ### `download`
 
 - CMS block slug: `download`
-- Admin fields: `title`, `subtitle`, `asset_id`, `variant`
+- Admin fields: `title`, `subtitle`, `media_id`, `variant`
 - Translatable fields: none
-- Shared fields: `title`, `subtitle`, `asset_id`, `variant`
+- Shared fields: `title`, `subtitle`, `media_id`, `variant`
 - Intended WebBlocks UI output: file CTA as `wb-btn`, or a compact `wb-card` plus `wb-btn` when the variant needs more context.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: add explicit card/download variants instead of inferring presentation from helper text alone.
@@ -388,9 +388,9 @@ Public pages now use explicit layout composition modes:
 ### `video`
 
 - CMS block slug: `video`
-- Admin fields: `title`, `content`, `url`, `asset_id`
+- Admin fields: `title`, `content`, `url`, `media_id`
 - Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `asset_id`
+- Shared fields: `title`, `content`, `url`, `media_id`
 - Intended WebBlocks UI output: semantic `<video controls>` for direct sources, or a safe provider `<iframe>` only for known YouTube/Vimeo URLs, inside a simple `wb-card` shell.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep playback native, avoid custom player JS, and fall back to a simple external link when the URL is not a safe embed provider.
@@ -398,9 +398,9 @@ Public pages now use explicit layout composition modes:
 ### `audio`
 
 - CMS block slug: `audio`
-- Admin fields: `title`, `content`, `url`, `asset_id`
+- Admin fields: `title`, `content`, `url`, `media_id`
 - Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `asset_id`
+- Shared fields: `title`, `content`, `url`, `media_id`
 - Intended WebBlocks UI output: semantic `<audio controls>` inside a simple `wb-card` shell.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep playback native and dependency-free.
@@ -408,9 +408,9 @@ Public pages now use explicit layout composition modes:
 ### `file`
 
 - CMS block slug: `file`
-- Admin fields: `title`, `content`, `url`, `asset_id`
+- Admin fields: `title`, `content`, `url`, `media_id`
 - Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `asset_id`
+- Shared fields: `title`, `content`, `url`, `media_id`
 - Intended WebBlocks UI output: compact file card with a `wb-btn wb-btn-secondary` download/open action.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep this distinct from the dedicated `download` CTA block, which remains more action-oriented.

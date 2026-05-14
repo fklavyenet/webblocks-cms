@@ -80,7 +80,7 @@ class PageJsonImporter
                     'seo_keywords' => $translation['seo_keywords'],
                     'og_title' => $translation['og_title'],
                     'og_description' => $translation['og_description'],
-                    'og_image_asset_id' => null,
+                    'og_image_media_id' => null,
                 ]);
             }
 
@@ -111,7 +111,7 @@ class PageJsonImporter
                     'subtitle' => null,
                     'content' => null,
                     'url' => $block['url'],
-                    'asset_id' => null,
+                    'media_id' => null,
                     'variant' => $block['variant'],
                     'meta' => $block['meta'],
                     'settings' => $block['settings'],

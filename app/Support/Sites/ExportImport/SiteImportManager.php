@@ -127,7 +127,18 @@ class SiteImportManager
 
         foreach (SiteTransferPackage::OPTIONAL_DATA_FILES as $file) {
             $key = pathinfo($file, PATHINFO_FILENAME);
-            $payload[$key] = $archive->locateName($file) === false
+            $hasFile = $archive->locateName($file) !== false;
+
+            if (! $hasFile) {
+                foreach (SiteTransferPackage::DATA_FILE_ALIASES[$file] ?? [] as $alias) {
+                    if ($archive->locateName($alias) !== false) {
+                        $hasFile = true;
+                        break;
+                    }
+                }
+            }
+
+            $payload[$key] = ! $hasFile
                 ? []
                 : $this->archiveInspector->decodeJsonFile($archive, $file);
         }

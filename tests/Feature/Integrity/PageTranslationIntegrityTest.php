@@ -275,7 +275,7 @@ class PageTranslationIntegrityTest extends TestCase
             'page_id' => $page->id,
             'locale_id' => $locale->id,
             'slug' => 'hakkinda',
-            'og_image_asset_id' => null,
+            'og_image_media_id' => null,
         ]);
     }
 }

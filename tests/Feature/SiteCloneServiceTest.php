@@ -345,6 +345,6 @@ class SiteCloneServiceTest extends TestCase
 
         $this->assertSame(0, NavigationItem::query()->where('site_id', $targetSite->id)->count());
         $this->assertSame(0, PageTranslation::query()->where('page_id', $aboutPage->id)->where('slug', 'hakkinda')->count());
-        $this->assertSame(0, Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->whereNotNull('asset_id')->count());
+        $this->assertSame(0, Block::query()->where('page_id', $aboutPage->id)->where('type', 'image')->whereNotNull('media_id')->count());
     }
 }

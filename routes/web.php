@@ -158,10 +158,10 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
     Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');
-    Route::get('media/{asset}', [MediaController::class, 'show'])->name('media.show');
-    Route::get('media/{asset}/edit', [MediaController::class, 'edit'])->name('media.edit');
-    Route::put('media/{asset}', [MediaController::class, 'update'])->name('media.update');
-    Route::delete('media/{asset}', [MediaController::class, 'destroy'])->name('media.destroy');
+    Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
+    Route::get('media/{media}/edit', [MediaController::class, 'edit'])->name('media.edit');
+    Route::put('media/{media}', [MediaController::class, 'update'])->name('media.update');
+    Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
     Route::post('navigation/reorder', [NavigationItemController::class, 'reorder'])->name('navigation.reorder');
     Route::patch('navigation/{navigation}/visibility', [NavigationItemController::class, 'toggleVisibility'])->name('navigation.visibility');
     Route::resource('navigation', NavigationItemController::class)->except(['show']);

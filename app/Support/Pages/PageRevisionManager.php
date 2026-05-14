@@ -11,6 +11,7 @@ use App\Models\PageSlot;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class PageRevisionManager
         private readonly PageWorkflowManager $workflowManager,
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly CurrentActorResolver $currentActorResolver,
+        private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
     ) {}
 
     public function canView(User $user, Page $page): bool
@@ -162,7 +164,7 @@ class PageRevisionManager
                     'seo_keywords' => $translation->seo_keywords,
                     'og_title' => $translation->og_title,
                     'og_description' => $translation->og_description,
-                    'og_image_asset_id' => $translation->og_image_asset_id,
+                    'og_image_media_id' => $translation->og_image_media_id,
                 ])
                 ->all(),
             'slots' => $page->slots
@@ -208,17 +210,17 @@ class PageRevisionManager
                     'subtitle' => $block->getRawOriginal('subtitle'),
                     'content' => $block->getRawOriginal('content'),
                     'url' => $block->url,
-                    'asset_id' => $block->asset_id,
+                    'media_id' => $block->media_id,
                     'variant' => $block->variant,
                     'meta' => $block->meta,
                     'settings' => $block->getRawOriginal('settings'),
                     'status' => $block->status,
                     'is_system' => $block->is_system,
-                    'block_assets' => $block->blockAssets
+                    'block_media' => $block->blockAssets
                         ->sortBy('position')
                         ->values()
                         ->map(fn ($asset) => [
-                            'asset_id' => $asset->asset_id,
+                            'media_id' => $asset->media_id,
                             'role' => $asset->role,
                             'position' => $asset->position,
                         ])
@@ -270,6 +272,7 @@ class PageRevisionManager
 
     private function applySnapshot(Page $page, array $snapshot): void
     {
+        $snapshot = $this->legacyAssetPayloadNormalizer->normalizeRevisionSnapshot($snapshot);
         $pageData = Arr::get($snapshot, 'page', []);
 
         $page->forceFill([
@@ -295,7 +298,7 @@ class PageRevisionManager
                 'seo_keywords' => $translation['seo_keywords'] ?? null,
                 'og_title' => $translation['og_title'] ?? null,
                 'og_description' => $translation['og_description'] ?? null,
-                'og_image_asset_id' => $translation['og_image_asset_id'] ?? null,
+                'og_image_media_id' => $translation['og_image_media_id'] ?? null,
             ]);
         }
 
@@ -364,7 +367,7 @@ class PageRevisionManager
                     'subtitle' => $block['subtitle'],
                     'content' => $block['content'],
                     'url' => $block['url'],
-                    'asset_id' => $block['asset_id'],
+                    'media_id' => $block['media_id'] ?? null,
                     'variant' => $block['variant'],
                     'meta' => $block['meta'],
                     'settings' => $block['settings'],
@@ -388,9 +391,9 @@ class PageRevisionManager
         foreach ($snapshotBlocks as $block) {
             $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
 
-            foreach ($block['block_assets'] ?? [] as $asset) {
+            foreach ($block['block_media'] ?? [] as $asset) {
                 $restoredBlock->blockAssets()->create([
-                    'asset_id' => $asset['asset_id'],
+                    'media_id' => $asset['media_id'] ?? null,
                     'role' => $asset['role'],
                     'position' => $asset['position'],
                 ]);

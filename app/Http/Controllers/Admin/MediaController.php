@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\AssetFolderRequest;
-use App\Http\Requests\Admin\AssetUpdateRequest;
-use App\Http\Requests\Admin\AssetUploadRequest;
-use App\Models\Asset;
-use App\Models\AssetFolder;
-use App\Support\Assets\AssetKindResolver;
-use App\Support\Assets\AssetUsageResolver;
+use App\Http\Requests\Admin\MediaFolderRequest;
+use App\Http\Requests\Admin\MediaUpdateRequest;
+use App\Http\Requests\Admin\MediaUploadRequest;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Support\Media\MediaIndexState;
+use App\Support\Media\MediaKindResolver;
+use App\Support\Media\MediaUsageResolver;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
@@ -21,7 +21,7 @@ use Illuminate\View\View;
 class MediaController extends Controller
 {
     public function __construct(
-        private readonly AssetUsageResolver $assetUsageResolver,
+        private readonly MediaUsageResolver $mediaUsageResolver,
         private readonly MediaIndexState $mediaIndexState,
         private readonly AdminAuthorization $authorization,
     ) {}
@@ -34,10 +34,10 @@ class MediaController extends Controller
         $usage = request()->string('usage')->toString();
         $view = request()->string('view')->toString() === 'grid' ? 'grid' : 'list';
         $openModal = old('_media_modal', request()->string('modal')->toString() ?: null);
-        $previewAssetId = request()->integer('preview') ?: null;
-        $usageAssetId = request()->integer('usage_asset') ?: null;
+        $previewMediaId = request()->integer('preview') ?: null;
+        $usageMediaId = request()->integer('usage_media') ?: request()->integer('usage_asset') ?: null;
 
-        if (! in_array($kind, [Asset::KIND_IMAGE, Asset::KIND_VIDEO, Asset::KIND_DOCUMENT, Asset::KIND_OTHER], true)) {
+        if (! in_array($kind, [Media::KIND_IMAGE, Media::KIND_VIDEO, Media::KIND_DOCUMENT, Media::KIND_OTHER], true)) {
             $kind = '';
         }
 
@@ -45,66 +45,70 @@ class MediaController extends Controller
             $usage = '';
         }
 
-        $assetPaginator = $this->assetListingQuery(request()->user(), $selectedFolderId, $search, $kind, $usage)
+        $mediaPaginator = $this->mediaListingQuery(request()->user(), $selectedFolderId, $search, $kind, $usage)
             ->paginate($view === 'grid' ? 24 : 20)
             ->withQueryString();
 
-        $assetPaginator->getCollection()->transform(function (Asset $asset) {
-            $usages = $this->assetUsageResolver->resolve($asset);
-            $asset->setRelation('resolvedUsages', $usages);
-            $asset->setAttribute('resolved_usage_count', $usages->count());
+        $mediaPaginator->getCollection()->transform(function (Media $media) {
+            $usages = $this->mediaUsageResolver->resolve($media);
+            $media->setRelation('resolvedUsages', $usages);
+            $media->setAttribute('resolved_usage_count', $usages->count());
 
-            return $asset;
+            return $media;
         });
 
-        $assets = $assetPaginator;
-        $previewAsset = $previewAssetId
-            ? ($assets->getCollection()->firstWhere('id', $previewAssetId) ?: $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())->with(['folder', 'uploader'])->find($previewAssetId))
+        $media = $mediaPaginator;
+        $previewMedia = $previewMediaId
+            ? ($media->getCollection()->firstWhere('id', $previewMediaId) ?: $this->authorization->scopeMediaForUser(Media::query(), request()->user())->with(['folder', 'uploader'])->find($previewMediaId))
             : null;
-        $usageAsset = $usageAssetId
-            ? ($assets->getCollection()->firstWhere('id', $usageAssetId) ?: $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())->with(['folder', 'uploader'])->find($usageAssetId))
+        $usageMedia = $usageMediaId
+            ? ($media->getCollection()->firstWhere('id', $usageMediaId) ?: $this->authorization->scopeMediaForUser(Media::query(), request()->user())->with(['folder', 'uploader'])->find($usageMediaId))
             : null;
 
-        if ($previewAsset instanceof Asset && ! $previewAsset->relationLoaded('resolvedUsages')) {
-            $previewAsset->setRelation('resolvedUsages', $this->assetUsageResolver->resolve($previewAsset));
+        if ($previewMedia instanceof Media && ! $previewMedia->relationLoaded('resolvedUsages')) {
+            $previewMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($previewMedia));
         }
 
-        if ($usageAsset instanceof Asset && ! $usageAsset->relationLoaded('resolvedUsages')) {
-            $usageAsset->setRelation('resolvedUsages', $this->assetUsageResolver->resolve($usageAsset));
+        if ($usageMedia instanceof Media && ! $usageMedia->relationLoaded('resolvedUsages')) {
+            $usageMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($usageMedia));
         }
 
         return view('admin.media.index', [
             'folders' => $this->folderOptions(),
-            'assets' => $assets,
+            'assets' => $media,
+            'media' => $media,
             'selectedFolderId' => $selectedFolderId,
             'search' => $search,
             'kind' => $kind,
             'usage' => $usage,
             'viewMode' => $view,
-            'previewAsset' => $previewAsset,
-            'usageAsset' => $usageAsset,
+            'previewAsset' => $previewMedia,
+            'previewMedia' => $previewMedia,
+            'usageAsset' => $usageMedia,
+            'usageMedia' => $usageMedia,
             'openModal' => in_array($openModal, ['upload-asset', 'new-folder'], true) ? $openModal : null,
         ]);
     }
 
-    public function show(Asset $asset): RedirectResponse
+    public function show(Media $media): RedirectResponse
     {
-        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
+        $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
 
         return redirect()->route('admin.media.edit', array_filter([
-            'asset' => $asset,
+            'media' => $media,
             'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request()),
         ]));
     }
 
-    public function edit(Asset $asset): View
+    public function edit(Media $media): View
     {
-        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
+        $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
 
-        $usages = $this->assetUsageResolver->resolve($asset);
+        $usages = $this->mediaUsageResolver->resolve($media);
 
         return view('admin.media.edit', [
-            'asset' => $asset->load('folder'),
+            'asset' => $media->load('folder'),
+            'media' => $media->load('folder'),
             'folders' => $this->folderOptions(),
             'usages' => $usages,
             'mediaReturnUrl' => $this->mediaIndexState->returnUrl(request()),
@@ -112,20 +116,20 @@ class MediaController extends Controller
         ]);
     }
 
-    public function update(AssetUpdateRequest $request, Asset $asset): RedirectResponse
+    public function update(MediaUpdateRequest $request, Media $media): RedirectResponse
     {
-        $this->authorization->abortUnlessAssetAccess($request->user(), $asset);
-        $asset->update($request->validated());
+        $this->authorization->abortUnlessMediaAccess($request->user(), $media);
+        $media->update($request->validated());
 
         return redirect()
             ->to($request->safeReturnUrl() ?: route('admin.media.index'))
             ->with('status', 'Media updated successfully.');
     }
 
-    public function destroy(Asset $asset): RedirectResponse
+    public function destroy(Media $media): RedirectResponse
     {
-        $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
-        $usages = $this->assetUsageResolver->resolve($asset);
+        $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
+        $usages = $this->mediaUsageResolver->resolve($media);
         $returnUrl = $this->mediaIndexState->safeReturnUrlFromRequest(request());
 
         if ($usages->isNotEmpty()) {
@@ -133,34 +137,34 @@ class MediaController extends Controller
 
             return redirect()
                 ->route('admin.media.edit', array_filter([
-                    'asset' => $asset,
+                    'media' => $media,
                     'return_url' => $returnUrl,
                 ]))
                 ->withErrors(['asset' => 'Media cannot be deleted because it is in use. '.$summary]);
         }
 
-        Storage::disk($asset->disk)->delete($asset->path);
-        $asset->delete();
+        Storage::disk($media->disk)->delete($media->path);
+        $media->delete();
 
         return redirect()
             ->to($returnUrl ?: route('admin.media.index'))
             ->with('status', 'Media deleted successfully.');
     }
 
-    public function store(AssetUploadRequest $request): RedirectResponse
+    public function store(MediaUploadRequest $request): RedirectResponse
     {
         $file = $request->file('file');
         $mimeType = $file?->getMimeType();
         $extension = strtolower($file?->getClientOriginalExtension() ?: $file?->extension() ?: '');
-        $kind = AssetKindResolver::resolve($mimeType, $extension);
+        $kind = MediaKindResolver::resolve($mimeType, $extension);
         $disk = 'public';
-        $directory = 'media/'.AssetKindResolver::directoryFor($kind);
+        $directory = 'media/'.MediaKindResolver::directoryFor($kind);
         $filename = $this->buildFilename($file, $extension);
         $path = $file->storeAs($directory, $filename, $disk);
 
         $dimensions = $this->imageDimensions($file, $kind);
 
-        Asset::create([
+        Media::create([
             'folder_id' => $request->validated('folder_id'),
             'disk' => $disk,
             'path' => $path,
@@ -186,9 +190,9 @@ class MediaController extends Controller
             ->with('status', 'Media uploaded successfully.');
     }
 
-    public function storeFolder(AssetFolderRequest $request): RedirectResponse
+    public function storeFolder(MediaFolderRequest $request): RedirectResponse
     {
-        $folder = AssetFolder::create($request->validated());
+        $folder = MediaFolder::create($request->validated());
 
         return redirect()
             ->route('admin.media.index', ['folder_id' => $folder->id])
@@ -199,12 +203,12 @@ class MediaController extends Controller
     {
         $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
 
-        return trim($name !== '' ? $name : 'asset').'-'.Str::lower(Str::random(10)).($extension !== '' ? '.'.$extension : '');
+        return trim($name !== '' ? $name : 'media').'-'.Str::lower(Str::random(10)).($extension !== '' ? '.'.$extension : '');
     }
 
     private function imageDimensions(UploadedFile $file, string $kind): array
     {
-        if ($kind !== Asset::KIND_IMAGE) {
+        if ($kind !== Media::KIND_IMAGE) {
             return ['width' => null, 'height' => null];
         }
 
@@ -222,34 +226,36 @@ class MediaController extends Controller
 
     private function folderOptions()
     {
-        return AssetFolder::query()
+        return MediaFolder::query()
             ->with('parent')
             ->orderBy('name')
             ->get();
     }
 
-    private function assetListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
+    private function mediaListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null)
     {
-        return $this->authorization->scopeAssetsForUser(Asset::query(), $user)
+        return $this->authorization->scopeMediaForUser(Media::query(), $user)
             ->with(['folder', 'uploader'])
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($kind, fn ($query) => $query->where('kind', $kind))
             ->when($usage === 'used', function ($query) {
                 $query->where(function ($inner) {
-                    $inner->whereNotNull('asset_id')
+                    $inner->whereNotNull('media_id')
+                        ->orWhereNotNull('asset_id')
                         ->orWhereExists(function ($exists) {
                             $exists->selectRaw('1')
-                                ->from('block_assets')
-                                ->whereColumn('block_assets.asset_id', 'assets.id');
+                                ->from('block_media')
+                                ->whereColumn('block_media.media_id', 'media.id');
                         });
                 });
             })
             ->when($usage === 'unused', function ($query) {
-                $query->whereNull('asset_id')
+                $query->whereNull('media_id')
+                    ->whereNull('asset_id')
                     ->whereNotExists(function ($exists) {
                         $exists->selectRaw('1')
-                            ->from('block_assets')
-                            ->whereColumn('block_assets.asset_id', 'assets.id');
+                            ->from('block_media')
+                            ->whereColumn('block_media.media_id', 'media.id');
                     });
             })
             ->when($search, function ($query) use ($search) {

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.0
+
+- Complete the Phase 2 `Asset` to `Media` rename across active runtime code, requests, admin forms, tests, revisions, and site transfer packaging so canonical CMS internals now use `Media`, `media_id`, `block_media`, and `media.json` while preserving legacy payload, request-key, and archive-file compatibility.
+- Keep backward compatibility for older exports, revision snapshots, and submitted admin payloads by normalizing legacy `asset_*` keys and alias archive entries during import, restore, clone, and promotion flows instead of preserving `Asset` as the active internal model.
+
 ## 1.30.6
 
 - Polish the Media admin UX so user-facing copy consistently uses `Media`, media titles and edit actions open the merged `Edit Media: {title}` screen, preview stays a modal action, and the legacy `/admin/media/{id}` detail route now redirects safely to edit.

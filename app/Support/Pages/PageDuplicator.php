@@ -97,7 +97,7 @@ class PageDuplicator
                     'seo_keywords' => $translation['seo_keywords'] ?? null,
                     'og_title' => $translation['og_title'] ?? null,
                     'og_description' => $translation['og_description'] ?? null,
-                    'og_image_asset_id' => $translation['og_image_asset_id'] ?? null,
+                    'og_image_media_id' => $translation['og_image_media_id'] ?? null,
                 ]);
             }
 
@@ -153,7 +153,7 @@ class PageDuplicator
                 foreach ($block->blockAssets as $blockAsset) {
                     BlockAsset::query()->create([
                         'block_id' => $newBlock->id,
-                        'asset_id' => $blockAsset->asset_id,
+                        'media_id' => $blockAsset->media_id,
                         'role' => $blockAsset->role,
                         'position' => $blockAsset->position,
                     ]);

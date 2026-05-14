@@ -7,16 +7,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DemoAssetReference extends Model
+class BlockMedia extends Model
 {
     use HasFactory;
 
-    protected $table = 'demo_media_references';
+    protected $table = 'block_media';
 
     protected $fillable = [
-        'source_key',
+        'block_id',
         'media_id',
         'asset_id',
+        'role',
+        'position',
     ];
 
     protected function mediaId(): Attribute
@@ -33,6 +35,11 @@ class DemoAssetReference extends Model
             get: fn ($value, array $attributes) => $value ?? ($attributes['media_id'] ?? null),
             set: fn ($value) => ['media_id' => $value],
         );
+    }
+
+    public function block(): BelongsTo
+    {
+        return $this->belongsTo(Block::class);
     }
 
     public function media(): BelongsTo

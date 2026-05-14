@@ -3,7 +3,7 @@
 namespace App\Support\Blocks;
 
 use App\Models\Block;
-use App\Models\BlockAsset;
+use App\Models\BlockMedia;
 use App\Models\Page;
 
 class BlockPayloadWriter
@@ -14,7 +14,7 @@ class BlockPayloadWriter
     {
         $isCreating = ! $block->exists;
         $translationSourceBlock = $isCreating ? null : clone $block;
-        $blockAssets = $data['_block_assets'] ?? [];
+        $blockAssets = $data['_block_media'] ?? $data['_block_assets'] ?? [];
         $canonicalData = $this->blockTranslationWriter->canonicalPayload(
             $data,
             $isCreating ? null : $block,
@@ -23,7 +23,7 @@ class BlockPayloadWriter
             $isCreating,
         );
 
-        unset($canonicalData['_block_assets'], $canonicalData['locale']);
+        unset($canonicalData['_block_media'], $canonicalData['_block_assets'], $canonicalData['locale']);
 
         $block->fill($canonicalData);
         $block->save();
@@ -44,9 +44,9 @@ class BlockPayloadWriter
                     continue;
                 }
 
-                BlockAsset::create([
+                BlockMedia::create([
                     'block_id' => $block->id,
-                    'asset_id' => $assetId,
+                    'media_id' => $assetId,
                     'role' => $role,
                     'position' => $position,
                 ]);

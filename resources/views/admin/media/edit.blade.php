@@ -16,7 +16,7 @@
 
     @include('admin.partials.flash')
 
-    <form method="POST" action="{{ route('admin.media.update', $asset) }}" class="wb-stack wb-gap-4">
+    <form method="POST" action="{{ route('admin.media.update', $media ?? $asset) }}" class="wb-stack wb-gap-4">
         @csrf
         @method('PUT')
         <input type="hidden" name="return_url" value="{{ $mediaReturnUrl }}">
@@ -158,7 +158,7 @@
                             <button type="button" class="wb-btn wb-btn-danger" disabled>Delete media</button>
                         @else
                             <div class="wb-text-sm wb-text-muted">Delete this media item only when you are sure it is no longer needed.</div>
-                            <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $mediaReturnUrl, 'modal' => 'delete-media']) }}" class="wb-btn wb-btn-danger" aria-haspopup="dialog">Delete media</a>
+                            <a href="{{ route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'delete-media']) }}" class="wb-btn wb-btn-danger" aria-haspopup="dialog">Delete media</a>
                         @endif
                     </div>
                 </div>
@@ -188,12 +188,12 @@
                             <span class="wb-text-sm wb-text-muted" id="{{ $deleteModalDescriptionId }}">Confirm whether this media item should be deleted permanently.</span>
                         </div>
 
-                        <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $mediaReturnUrl]) }}" class="wb-modal-close" aria-label="Close delete media modal">
+                        <a href="{{ route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]) }}" class="wb-modal-close" aria-label="Close delete media modal">
                             <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                         </a>
                     </div>
 
-                    <form method="POST" action="{{ route('admin.media.destroy', ['asset' => $asset, 'return_url' => $mediaReturnUrl]) }}">
+                    <form method="POST" action="{{ route('admin.media.destroy', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]) }}">
                         @csrf
                         @method('DELETE')
 
@@ -208,7 +208,7 @@
                         </div>
 
                         <x-admin.form-actions
-                            :cancel-url="route('admin.media.edit', ['asset' => $asset, 'return_url' => $mediaReturnUrl])"
+                            :cancel-url="route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl])"
                             :show-submit="false"
                             :delete-submit="true"
                             delete-label="Delete media"

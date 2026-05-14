@@ -1,6 +1,6 @@
 @php
-    $selectedGalleryAssets = collect(old('gallery_asset_ids', []))
-        ->map(fn ($id) => $id ? \App\Models\Asset::query()->find($id) : null)
+    $selectedGalleryAssets = collect(old('gallery_media_ids', old('gallery_asset_ids', [])))
+        ->map(fn ($id) => $id ? \App\Models\Media::query()->find($id) : null)
         ->filter()
         ->values()
         ->whenEmpty(fn () => $selectedGalleryAssets ?? $block->galleryAssets());
@@ -24,8 +24,8 @@
         @include('admin.media.asset-picker-panel', [
             'name' => 'gallery-assets',
             'mode' => 'multiple',
-            'inputId' => 'gallery_asset_ids',
-            'fieldName' => 'gallery_asset_ids',
+            'inputId' => 'gallery_media_ids',
+            'fieldName' => 'gallery_media_ids',
             'selectedAssets' => $selectedGalleryAssets,
             'buttonLabel' => 'Choose from Media',
             'replaceLabel' => 'Add More Assets',

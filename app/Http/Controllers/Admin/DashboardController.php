@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\Media;
 use App\Models\Page;
 use App\Models\SlotType;
 use App\Support\Users\AdminAuthorization;
@@ -25,7 +25,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'stats' => [
                 'pages' => $this->authorization->scopePagesForUser(Page::query(), $request->user())->count(),
-                'media' => $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())->count(),
+                'media' => $this->authorization->scopeMediaForUser(Media::query(), $request->user())->count(),
                 'blocks' => $this->authorization->scopeBlocksForUser(Block::query(), $request->user())->count(),
                 'slotTypes' => SlotType::count(),
                 'blockTypes' => BlockType::count(),
@@ -37,7 +37,7 @@ class DashboardController extends Controller
                 ->latest()
                 ->limit(5)
                 ->get(),
-            'recentAssets' => $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())
+            'recentAssets' => $this->authorization->scopeMediaForUser(Media::query(), $request->user())
                 ->latest()
                 ->limit(5)
                 ->get(),

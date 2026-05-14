@@ -2,8 +2,6 @@
 
 namespace App\Support\SitePromotion;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
@@ -13,6 +11,8 @@ use App\Models\BlockTextTranslation;
 use App\Models\BlockType;
 use App\Models\Layout;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
@@ -23,6 +23,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Media\LegacyAssetPayloadNormalizer;
 use App\Support\Pages\PageAssetPathValidator;
 use App\Support\Search\PublicSearchIndexer;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -44,6 +45,7 @@ class SitePromotionApplier
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
         private readonly PageAssetPathValidator $pageAssetPathValidator,
+        private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
     ) {}
 
     public function apply(string $planToken, ?int $userId = null): SitePromotionResult
@@ -81,7 +83,7 @@ class SitePromotionApplier
 
         try {
             $this->db->transaction(function () use ($plan, $targetSite, $inspection, $archive, &$copiedFiles): void {
-                $payload = $inspection->payload;
+                $payload = $this->legacyAssetPayloadNormalizer->normalizePayload($inspection->payload);
                 $localeMap = $this->ensureLocales($payload);
                 $assetMaps = $plan->applyAssets() && $inspection->includesAssets
                     ? $this->syncAssets($archive, $payload, $copiedFiles)
@@ -162,8 +164,8 @@ class SitePromotionApplier
             'seo_title' => $siteData['seo_title'] ?? $targetSite->seo_title,
             'seo_description' => $siteData['seo_description'] ?? $targetSite->seo_description,
             'seo_keywords' => $siteData['seo_keywords'] ?? $targetSite->seo_keywords,
-            'favicon_asset_id' => $applyAssets ? ($assetMap[(int) ($siteData['favicon_asset_id'] ?? 0)] ?? $targetSite->favicon_asset_id) : $targetSite->favicon_asset_id,
-            'social_image_asset_id' => $applyAssets ? ($assetMap[(int) ($siteData['social_image_asset_id'] ?? 0)] ?? $targetSite->social_image_asset_id) : $targetSite->social_image_asset_id,
+            'favicon_media_id' => $applyAssets ? ($assetMap[(int) ($siteData['favicon_media_id'] ?? 0)] ?? $targetSite->favicon_media_id) : $targetSite->favicon_media_id,
+            'social_image_media_id' => $applyAssets ? ($assetMap[(int) ($siteData['social_image_media_id'] ?? 0)] ?? $targetSite->social_image_media_id) : $targetSite->social_image_media_id,
         ]);
     }
 
@@ -346,7 +348,7 @@ class SitePromotionApplier
                     'seo_keywords' => $translation['seo_keywords'] ?? null,
                     'og_title' => $translation['og_title'] ?? null,
                     'og_description' => $translation['og_description'] ?? null,
-                    'og_image_asset_id' => $applyAssets ? ($assetMap[(int) ($translation['og_image_asset_id'] ?? 0)] ?? null) : null,
+                    'og_image_media_id' => $applyAssets ? ($assetMap[(int) ($translation['og_image_media_id'] ?? 0)] ?? null) : null,
                 ]);
             }
         }
@@ -446,7 +448,7 @@ class SitePromotionApplier
         $buttonTranslations = collect($payload['block_button_translations'] ?? [])->groupBy('block_id');
         $imageTranslations = collect($payload['block_image_translations'] ?? [])->groupBy('block_id');
         $contactTranslations = collect($payload['block_contact_form_translations'] ?? [])->groupBy('block_id');
-        $blockAssets = collect($payload['block_assets'] ?? [])->groupBy('block_id');
+        $blockAssets = collect($payload['block_media'] ?? [])->groupBy('block_id');
 
         foreach ($pageMap as $sourcePageId => $targetPageId) {
             Block::query()->where('page_id', $targetPageId)->delete();
@@ -473,7 +475,7 @@ class SitePromotionApplier
                     'subtitle' => $row['subtitle'] ?? null,
                     'content' => $row['content'] ?? null,
                     'url' => $row['url'] ?? null,
-                    'asset_id' => $applyAssets ? ($assetMap[(int) ($row['asset_id'] ?? 0)] ?? null) : null,
+                    'media_id' => $applyAssets ? ($assetMap[(int) ($row['media_id'] ?? 0)] ?? null) : null,
                     'variant' => $row['variant'] ?? null,
                     'meta' => $row['meta'] ?? null,
                     'settings' => $row['settings'] ?? null,
@@ -555,14 +557,14 @@ class SitePromotionApplier
                         continue;
                     }
 
-                    $assetId = $assetMap[(int) ($blockAsset['asset_id'] ?? 0)] ?? null;
+                    $assetId = $assetMap[(int) ($blockAsset['media_id'] ?? 0)] ?? null;
                     if (! $assetId) {
                         continue;
                     }
 
                     BlockAsset::query()->create([
                         'block_id' => $block->id,
-                        'asset_id' => $assetId,
+                        'media_id' => $assetId,
                         'role' => $blockAsset['role'] ?? null,
                         'position' => $blockAsset['position'] ?? 0,
                     ]);
@@ -649,7 +651,7 @@ class SitePromotionApplier
 
     private function syncAssets(ZipArchive $archive, array $payload, array &$copiedFiles): array
     {
-        $folderRows = collect($payload['asset_folders'] ?? [])->keyBy('id');
+        $folderRows = collect($payload['media_folders'] ?? [])->keyBy('id');
         $folderKeys = [];
         $folderMap = [];
 
@@ -675,7 +677,7 @@ class SitePromotionApplier
             $parentId = null;
 
             foreach ($segments as $segment) {
-                $folder = AssetFolder::query()->firstOrCreate([
+                $folder = MediaFolder::query()->firstOrCreate([
                     'parent_id' => $parentId,
                     'slug' => $segment,
                 ], [
@@ -689,25 +691,25 @@ class SitePromotionApplier
 
         $assetMap = [];
 
-        foreach ($payload['assets'] ?? [] as $assetData) {
+        foreach ($payload['media'] ?? [] as $assetData) {
             $diskName = (string) ($assetData['disk'] ?? 'public');
             $path = (string) ($assetData['path'] ?? '');
             $archiveEntry = 'files/'.$diskName.'/'.$path;
 
             if ($archive->locateName($archiveEntry) === false) {
-                throw new RuntimeException('Promotion package is missing asset file '.$archiveEntry.'.');
+                throw new RuntimeException('Promotion package is missing media file '.$archiveEntry.'.');
             }
 
             $stream = $archive->getStream($archiveEntry);
             if (! is_resource($stream)) {
-                throw new RuntimeException('Could not read promoted asset file '.$archiveEntry.'.');
+                throw new RuntimeException('Could not read promoted media file '.$archiveEntry.'.');
             }
 
             Storage::disk($diskName)->writeStream($path, $stream);
             fclose($stream);
             $copiedFiles[] = [$diskName, $path];
 
-            $asset = Asset::query()->updateOrCreate(
+            $asset = Media::query()->updateOrCreate(
                 ['disk' => $diskName, 'path' => $path],
                 [
                     'folder_id' => $folderMap[(int) ($assetData['folder_id'] ?? 0)] ?? null,
@@ -716,7 +718,7 @@ class SitePromotionApplier
                     'extension' => $assetData['extension'] ?? pathinfo($path, PATHINFO_EXTENSION),
                     'mime_type' => $assetData['mime_type'] ?? null,
                     'size' => $assetData['size'] ?? null,
-                    'kind' => $assetData['kind'] ?? Asset::KIND_OTHER,
+                    'kind' => $assetData['kind'] ?? Media::KIND_OTHER,
                     'visibility' => $assetData['visibility'] ?? 'public',
                     'title' => $assetData['title'] ?? null,
                     'alt_text' => $assetData['alt_text'] ?? null,

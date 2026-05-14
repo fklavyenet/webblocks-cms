@@ -449,7 +449,7 @@ class PageDuplicateTest extends TestCase
             'locale_id' => $this->defaultLocale()->id,
             'seo_title' => 'About SEO',
             'og_title' => 'About OG',
-            'og_image_asset_id' => $sourceBlocks->firstWhere('type', 'image')?->asset_id,
+            'og_image_media_id' => $sourceBlocks->firstWhere('type', 'image')?->media_id,
         ]);
         $this->assertDatabaseHas('page_translations', [
             'page_id' => $duplicate->id,

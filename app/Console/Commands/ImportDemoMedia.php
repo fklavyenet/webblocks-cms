@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
 use App\Models\DemoAssetReference;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\Page;
 use App\Models\SlotType;
 use App\Models\User;
@@ -84,7 +84,7 @@ class ImportDemoMedia extends Command
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
-    private function importItem(array $item): Asset
+    private function importItem(array $item): Media
     {
         $response = Http::timeout(30)->get((string) $item['source_url']);
 
@@ -114,7 +114,7 @@ class ImportDemoMedia extends Command
             $folder = $this->ensureFolder((string) ($item['folder'] ?? 'Demo Content'));
             $dimensions = $this->imageDimensions($contents, $kind);
 
-            $asset = Asset::query()->create([
+            $asset = Media::query()->create([
                 'folder_id' => $folder?->id,
                 'disk' => 'public',
                 'path' => $path,
@@ -136,7 +136,7 @@ class ImportDemoMedia extends Command
 
             DemoAssetReference::query()->updateOrCreate(
                 ['source_key' => (string) $item['key']],
-                ['asset_id' => $asset->id],
+                ['media_id' => $asset->id],
             );
 
             return $asset;
@@ -147,7 +147,7 @@ class ImportDemoMedia extends Command
         }
     }
 
-    private function ensureFolder(string $folderPath): ?AssetFolder
+    private function ensureFolder(string $folderPath): ?MediaFolder
     {
         $segments = array_values(array_filter(explode('/', $folderPath), fn ($segment) => trim($segment) !== ''));
 
@@ -159,7 +159,7 @@ class ImportDemoMedia extends Command
         $folder = null;
 
         foreach ($segments as $segment) {
-            $folder = AssetFolder::query()->firstOrCreate(
+            $folder = MediaFolder::query()->firstOrCreate(
                 [
                     'parent_id' => $parentId,
                     'name' => $segment,
@@ -191,7 +191,7 @@ class ImportDemoMedia extends Command
         return $bindings;
     }
 
-    private function bindBlockAsset(string $pageSlug, string $type, string $title, ?Asset $asset): int
+    private function bindBlockAsset(string $pageSlug, string $type, string $title, ?Media $asset): int
     {
         if (! $asset) {
             return 0;
@@ -212,7 +212,7 @@ class ImportDemoMedia extends Command
         }
 
         $updates = [
-            'asset_id' => $asset->id,
+            'media_id' => $asset->id,
         ];
 
         if ($block->type === 'image' && blank($block->subtitle)) {
@@ -224,7 +224,7 @@ class ImportDemoMedia extends Command
         return 1;
     }
 
-    private function bindServicesOverview(?Asset $asset): int
+    private function bindServicesOverview(?Media $asset): int
     {
         if (! $asset) {
             return 0;
@@ -270,7 +270,7 @@ class ImportDemoMedia extends Command
         return $bindings + 1;
     }
 
-    private function bindContactImage(?Asset $asset): int
+    private function bindContactImage(?Media $asset): int
     {
         if (! $asset) {
             return 0;
@@ -310,7 +310,7 @@ class ImportDemoMedia extends Command
             'subtitle' => $asset->alt_text,
             'content' => null,
             'url' => null,
-            'asset_id' => $asset->id,
+            'media_id' => $asset->id,
             'variant' => null,
             'meta' => null,
             'settings' => null,
@@ -361,7 +361,7 @@ class ImportDemoMedia extends Command
         foreach ($galleryAssets->values() as $position => $asset) {
             BlockAsset::query()->create([
                 'block_id' => $block->id,
-                'asset_id' => $asset->id,
+                'media_id' => $asset->id,
                 'role' => 'gallery_item',
                 'position' => $position,
             ]);
@@ -424,7 +424,7 @@ class ImportDemoMedia extends Command
 
     private function imageDimensions(string $contents, string $kind): array
     {
-        if ($kind !== Asset::KIND_IMAGE) {
+        if ($kind !== Media::KIND_IMAGE) {
             return ['width' => null, 'height' => null];
         }
 

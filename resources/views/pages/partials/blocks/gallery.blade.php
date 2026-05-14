@@ -9,7 +9,7 @@
         ->values();
     $legacyAssets = $legacyAssetIds->isEmpty()
         ? collect()
-        : \App\Models\Asset::query()
+        : \App\Models\Media::query()
             ->whereIn('id', $legacyAssetIds)
             ->get()
             ->sortBy(fn ($asset) => $legacyAssetIds->search($asset->id))

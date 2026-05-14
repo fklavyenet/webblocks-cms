@@ -62,7 +62,7 @@ class PageSiteMover
                     'seo_keywords' => $translation->seo_keywords,
                     'og_title' => $translation->og_title,
                     'og_description' => $translation->og_description,
-                    'og_image_asset_id' => $translation->og_image_asset_id,
+                    'og_image_media_id' => $translation->og_image_media_id,
                     'created_at' => $translation->created_at,
                     'updated_at' => $translation->updated_at,
                 ])
@@ -89,7 +89,7 @@ class PageSiteMover
                     'seo_keywords' => $payload['seo_keywords'],
                     'og_title' => $payload['og_title'],
                     'og_description' => $payload['og_description'],
-                    'og_image_asset_id' => $payload['og_image_asset_id'],
+                    'og_image_media_id' => $payload['og_image_media_id'],
                     'created_at' => $payload['created_at'] instanceof Carbon ? $payload['created_at'] : now(),
                     'updated_at' => now(),
                 ])

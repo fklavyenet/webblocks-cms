@@ -58,7 +58,7 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Only the owning public page renders its configured page assets
 - Page Assets are not rendered in admin layouts
 - Page Assets are stored in `page_assets`, not in `pages.settings`
-- When site Export / Import includes media or assets, referenced `/site/...` physical files are also packaged and restored
+- When site Export / Import includes media files, referenced `/site/...` physical files are also packaged and restored
 
 ## Public Asset Convention
 
@@ -78,10 +78,10 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 
 Public favicon and social sharing artwork are now selected from the shared Media library on each Site.
 
-- favicon output uses the current resolved site's `favicon_asset_id` when that asset has a public URL
-- Open Graph fallback imagery uses the current resolved site's `social_image_asset_id` when available
+- favicon output uses the current resolved site's `favicon_media_id` when that media item has a public URL
+- Open Graph fallback imagery uses the current resolved site's `social_image_media_id` when available
 - these are site-scoped metadata assets, not CMS product-brand assets
-- page translation `og_image_asset_id` can override the site social image for one locale when that asset has a public URL
+- page translation `og_image_media_id` can override the site social image for one locale when that media item has a public URL
 - page-level SEO assets affect public metadata only and do not change CMS admin branding
 - install-level Project Identity does not affect public favicon, public metadata, or site-scoped social sharing assets
 

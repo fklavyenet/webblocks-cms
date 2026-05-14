@@ -25,7 +25,7 @@ Revision snapshots include:
 - page slots
 - page block tree
 - block translation rows
-- asset ID references
+- media ID references
 
 For page translations, the snapshot includes locale-aware SEO override fields as part of the editorial translation state. Restoring a page revision restores those page SEO values alongside localized name, slug, and path data.
 
@@ -58,7 +58,7 @@ This keeps both the previous live state and the restored state in revision histo
 Shared Slot revisions are intentionally separate from page revisions.
 
 - They are site-scoped and attached to one Shared Slot.
-- They capture Shared Slot metadata plus the reusable Shared Slot block tree, including nested structure, translation rows, and asset references.
+- They capture Shared Slot metadata plus the reusable Shared Slot block tree, including nested structure, translation rows, and media references.
 - They do not capture unrelated editorial pages that reference the Shared Slot.
 - They do not store page slot assignments as part of the Shared Slot revision snapshot.
 - They carry the same compact actor, source, and event metadata pattern used by page revisions when the caller can provide it.

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Search\PublicSearchIndexer;
 use App\Support\Search\ReindexesPublicSearch;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,14 +26,31 @@ class PageTranslation extends Model
         'seo_keywords',
         'og_title',
         'og_description',
+        'og_image_media_id',
         'og_image_asset_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'og_image_asset_id' => 'integer',
+            'og_image_media_id' => 'integer',
         ];
+    }
+
+    protected function ogImageMediaId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_asset_id'] ?? null),
+            set: fn ($value) => ['og_image_media_id' => $value],
+        );
+    }
+
+    protected function ogImageAssetId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_media_id'] ?? null),
+            set: fn ($value) => ['og_image_media_id' => $value],
+        );
     }
 
     protected static function booted(): void
@@ -91,8 +109,13 @@ class PageTranslation extends Model
         return $this->belongsTo(Locale::class);
     }
 
+    public function ogImageMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'og_image_media_id');
+    }
+
     public function ogImage(): BelongsTo
     {
-        return $this->belongsTo(Asset::class, 'og_image_asset_id');
+        return $this->ogImageMedia();
     }
 }

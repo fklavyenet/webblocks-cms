@@ -6,7 +6,7 @@
     $assetIds = $items->pluck('asset_id')->filter()->map(fn ($id) => (int) $id)->values();
     $assets = $assetIds->isEmpty()
         ? collect()
-        : \App\Models\Asset::query()->whereIn('id', $assetIds)->get()->keyBy('id');
+        : \App\Models\Media::query()->whereIn('id', $assetIds)->get()->keyBy('id');
     $gridClass = match (true) {
         $items->count() <= 1 => 'wb-stack wb-gap-3',
         $items->count() === 2 => 'wb-grid wb-grid-2',

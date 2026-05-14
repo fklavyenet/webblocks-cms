@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\SlotType;
@@ -123,10 +123,14 @@ class BlockRequest extends FormRequest
             'primary_cta_url' => ['nullable', 'string', 'max:2048'],
             'secondary_cta_label' => ['nullable', 'string', 'max:255'],
             'secondary_cta_url' => ['nullable', 'string', 'max:2048'],
-            'asset_id' => ['nullable', 'integer', 'exists:assets,id'],
+            'media_id' => ['nullable', 'integer', 'exists:media,id'],
+            'asset_id' => ['nullable', 'integer', 'exists:media,id'],
+            'gallery_media_ids' => ['nullable', 'array'],
+            'gallery_media_ids.*' => ['integer', 'exists:media,id'],
             'gallery_asset_ids' => ['nullable', 'array'],
-            'gallery_asset_ids.*' => ['integer', 'exists:assets,id'],
-            'attachment_asset_id' => ['nullable', 'integer', 'exists:assets,id'],
+            'gallery_asset_ids.*' => ['integer', 'exists:media,id'],
+            'attachment_media_id' => ['nullable', 'integer', 'exists:media,id'],
+            'attachment_asset_id' => ['nullable', 'integer', 'exists:media,id'],
             'column_items' => ['nullable', 'array'],
             'column_items.*.id' => ['nullable', 'integer', 'exists:blocks,id'],
             'column_items.*.block_type_id' => ['nullable', 'integer', 'exists:block_types,id'],
@@ -248,17 +252,17 @@ class BlockRequest extends FormRequest
                 }
             }
 
-            if (in_array($selectedBlockType?->slug, ['navbar-brand', 'sidebar-brand'], true) && $this->filled('asset_id')) {
-                $asset = Asset::query()->find((int) $this->input('asset_id'));
+            if (in_array($selectedBlockType?->slug, ['navbar-brand', 'sidebar-brand'], true) && ($this->filled('media_id') || $this->filled('asset_id'))) {
+                $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
                 if (! $asset?->isImage()) {
-                    $validator->errors()->add('asset_id', 'Brand logo must be an image from Media.');
+                    $validator->errors()->add('media_id', 'Brand logo must be an image from Media.');
                 }
             }
 
             if ($selectedBlockType?->slug === 'navbar-brand') {
                 $hasTitle = trim((string) $this->input('title', '')) !== '';
-                $hasLogo = (int) ($this->input('asset_id') ?: 0) > 0;
+                $hasLogo = (int) ($this->input('media_id') ?: $this->input('asset_id') ?: 0) > 0;
 
                 if (! $hasTitle && ! $hasLogo) {
                     $validator->errors()->add('title', 'Navbar Brand requires visible title text or a logo image.');
@@ -518,14 +522,14 @@ class BlockRequest extends FormRequest
         $data['settings'] = $settings === '' ? null : $settings;
         $meta = trim((string) ($data['meta'] ?? ''));
         $data['meta'] = $meta === '' ? null : $meta;
-        $data['asset_id'] = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['asset_id']) ? (int) $data['asset_id'] : null);
+        $data['media_id'] = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['media_id']) ? (int) $data['media_id'] : (! empty($data['asset_id']) ? (int) $data['asset_id'] : null));
 
-        if ($data['asset_id'] === null && $existingBlock && ! $this->has('asset_id')) {
-            $data['asset_id'] = $existingBlock->asset_id;
+        if ($data['media_id'] === null && $existingBlock && ! $this->has('media_id') && ! $this->has('asset_id')) {
+            $data['media_id'] = $existingBlock->media_id;
         }
 
-        $galleryAssetIds = $authorization->filterAllowedAssetIds($this->user(), $data['gallery_asset_ids'] ?? []);
-        $attachmentAssetId = $authorization->normalizeAllowedAssetId($this->user(), ! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null);
+        $galleryAssetIds = $authorization->filterAllowedMediaIds($this->user(), $data['gallery_media_ids'] ?? $data['gallery_asset_ids'] ?? []);
+        $attachmentAssetId = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['attachment_media_id']) ? (int) $data['attachment_media_id'] : (! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null));
 
         $decodedSettings = [];
 
@@ -538,10 +542,13 @@ class BlockRequest extends FormRequest
             ? null
             : json_encode($decodedSettings, JSON_UNESCAPED_SLASHES);
 
+        unset($data['asset_id']);
         unset($data['gallery_asset_ids']);
+        unset($data['gallery_media_ids']);
         unset($data['attachment_asset_id']);
+        unset($data['attachment_media_id']);
 
-        $data['_block_assets'] = [
+        $data['_block_media'] = [
             'gallery_item' => $galleryAssetIds,
             'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
         ];

@@ -2,8 +2,6 @@
 
 namespace App\Support\Sites\ExportImport;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
@@ -13,6 +11,8 @@ use App\Models\BlockTextTranslation;
 use App\Models\BlockType;
 use App\Models\Layout;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
@@ -25,6 +25,7 @@ use App\Models\SiteDomain;
 use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Media\LegacyAssetPayloadNormalizer;
 use App\Support\Pages\PageAssetPathValidator;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\Sites\SiteDomainManager;
@@ -47,10 +48,12 @@ class ImportDataMapper
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly PageAssetPathValidator $pageAssetPathValidator,
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
+        private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
     ) {}
 
     public function import(SiteImport $siteImport, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$output = []): Site
     {
+        $payload = $this->legacyAssetPayloadNormalizer->normalizePayload($payload);
         $copiedFiles = [];
 
         try {
@@ -272,11 +275,11 @@ class ImportDataMapper
 
     private function importAssetFolders(array $payload, array &$output): array
     {
-        $folders = $payload['asset_folders'] ?? [];
+        $folders = $payload['media_folders'] ?? [];
         $map = [];
 
         foreach ($folders as $folderData) {
-            $folder = AssetFolder::query()->create([
+            $folder = MediaFolder::query()->create([
                 'parent_id' => null,
                 'name' => $folderData['name'] ?? 'Imported Folder',
                 'slug' => $folderData['slug'] ?? Str::slug((string) ($folderData['name'] ?? 'imported-folder')),
@@ -290,12 +293,12 @@ class ImportDataMapper
             $newParentId = $map[(int) ($folderData['parent_id'] ?? 0)] ?? null;
 
             if ($newFolderId) {
-                AssetFolder::query()->whereKey($newFolderId)->update(['parent_id' => $newParentId]);
+                MediaFolder::query()->whereKey($newFolderId)->update(['parent_id' => $newParentId]);
             }
         }
 
         if ($map !== []) {
-            $output[] = 'Imported '.count($map).' asset folder(s).';
+            $output[] = 'Imported '.count($map).' media folder(s).';
         }
 
         return $map;
@@ -305,30 +308,30 @@ class ImportDataMapper
     {
         $map = [];
 
-        foreach (($payload['assets'] ?? []) as $assetData) {
+        foreach (($payload['media'] ?? []) as $assetData) {
             $diskName = (string) ($assetData['disk'] ?? 'public');
             $sourcePath = (string) ($assetData['path'] ?? '');
             $archiveEntry = 'files/'.$diskName.'/'.$sourcePath;
 
-            $this->pathGuard->assertSafeRelativePath($sourcePath, 'Asset path');
+            $this->pathGuard->assertSafeRelativePath($sourcePath, 'Media path');
             $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive media path');
 
             if ($archive->locateName($archiveEntry) === false) {
-                throw new RuntimeException('Import package is missing asset file '.$archiveEntry.'.');
+                throw new RuntimeException('Import package is missing media file '.$archiveEntry.'.');
             }
 
             $targetPath = $this->availableAssetPath($diskName, $sourcePath);
             $stream = $archive->getStream($archiveEntry);
 
             if (! is_resource($stream)) {
-                throw new RuntimeException('Could not read asset file '.$archiveEntry.' from import package.');
+                throw new RuntimeException('Could not read media file '.$archiveEntry.' from import package.');
             }
 
             Storage::disk($diskName)->writeStream($targetPath, $stream);
             fclose($stream);
             $copiedFiles[] = [$diskName, $targetPath];
 
-            $asset = Asset::query()->create([
+            $asset = Media::query()->create([
                 'folder_id' => $folderMap[(int) ($assetData['folder_id'] ?? 0)] ?? null,
                 'disk' => $diskName,
                 'path' => $targetPath,
@@ -337,7 +340,7 @@ class ImportDataMapper
                 'extension' => $assetData['extension'] ?? pathinfo($targetPath, PATHINFO_EXTENSION),
                 'mime_type' => $assetData['mime_type'] ?? null,
                 'size' => $assetData['size'] ?? null,
-                'kind' => $assetData['kind'] ?? Asset::KIND_OTHER,
+                'kind' => $assetData['kind'] ?? Media::KIND_OTHER,
                 'visibility' => $assetData['visibility'] ?? 'public',
                 'title' => $assetData['title'] ?? null,
                 'alt_text' => $assetData['alt_text'] ?? null,
@@ -355,7 +358,7 @@ class ImportDataMapper
         }
 
         if ($map !== []) {
-            $output[] = 'Imported '.count($map).' asset record(s) and media file(s).';
+            $output[] = 'Imported '.count($map).' media record(s) and file(s).';
         }
 
         return $map;
@@ -411,7 +414,7 @@ class ImportDataMapper
                 'seo_keywords' => $translationData['seo_keywords'] ?? null,
                 'og_title' => $translationData['og_title'] ?? null,
                 'og_description' => $translationData['og_description'] ?? null,
-                'og_image_asset_id' => $assetMap[(int) ($translationData['og_image_asset_id'] ?? 0)] ?? null,
+                'og_image_media_id' => $assetMap[(int) ($translationData['og_image_media_id'] ?? 0)] ?? null,
                 'created_at' => $translationData['created_at'] ?? null,
                 'updated_at' => $translationData['updated_at'] ?? null,
             ]);
@@ -641,7 +644,7 @@ class ImportDataMapper
                 'subtitle' => $blockData['subtitle'] ?? null,
                 'content' => $blockData['content'] ?? null,
                 'url' => $blockData['url'] ?? null,
-                'asset_id' => $assetMap[(int) ($blockData['asset_id'] ?? 0)] ?? null,
+                'media_id' => $assetMap[(int) ($blockData['media_id'] ?? 0)] ?? null,
                 'variant' => $blockData['variant'] ?? null,
                 'meta' => $blockData['meta'] ?? null,
                 'settings' => $blockData['settings'] ?? null,
@@ -759,9 +762,9 @@ class ImportDataMapper
     {
         $count = 0;
 
-        foreach (($payload['block_assets'] ?? []) as $blockAssetData) {
+        foreach (($payload['block_media'] ?? []) as $blockAssetData) {
             $blockId = $blockMap[(int) ($blockAssetData['block_id'] ?? 0)] ?? null;
-            $assetId = $assetMap[(int) ($blockAssetData['asset_id'] ?? 0)] ?? null;
+            $assetId = $assetMap[(int) ($blockAssetData['media_id'] ?? 0)] ?? null;
 
             if (! $blockId || ! $assetId) {
                 continue;
@@ -769,7 +772,7 @@ class ImportDataMapper
 
             BlockAsset::query()->create([
                 'block_id' => $blockId,
-                'asset_id' => $assetId,
+                'media_id' => $assetId,
                 'role' => $blockAssetData['role'] ?? null,
                 'position' => $blockAssetData['position'] ?? 0,
                 'created_at' => $blockAssetData['created_at'] ?? null,
@@ -779,7 +782,7 @@ class ImportDataMapper
             $count++;
         }
 
-        $output[] = 'Imported '.$count.' block asset link(s).';
+        $output[] = 'Imported '.$count.' block media link(s).';
     }
 
     private function importNavigation(Site $site, array $payload, array $pageMap, array &$output): void

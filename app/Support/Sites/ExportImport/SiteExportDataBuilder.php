@@ -2,11 +2,11 @@
 
 namespace App\Support\Sites\ExportImport;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
@@ -63,9 +63,9 @@ class SiteExportDataBuilder
 
         $assetIds = $includesMedia
             ? collect()
-                ->merge($blocks->pluck('asset_id'))
-                ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('asset_id'))
-                ->merge(PageTranslation::query()->whereIn('page_id', $pageIds)->pluck('og_image_asset_id'))
+                ->merge($blocks->pluck('media_id'))
+                ->merge(BlockAsset::query()->whereIn('block_id', $blockIds)->pluck('media_id'))
+                ->merge(PageTranslation::query()->whereIn('page_id', $pageIds)->pluck('og_image_media_id'))
                 ->filter()
                 ->map(fn ($id) => (int) $id)
                 ->unique()
@@ -74,10 +74,10 @@ class SiteExportDataBuilder
 
         $assets = $assetIds->isEmpty()
             ? collect()
-            : Asset::query()->whereIn('id', $assetIds)->orderBy('id')->get();
+            : Media::query()->whereIn('id', $assetIds)->orderBy('id')->get();
 
         $assetFolders = $includesMedia
-            ? $this->assetFoldersFor($assets)
+            ? $this->mediaFoldersFor($assets)
             : collect();
 
         $locales = Locale::query()
@@ -159,7 +159,7 @@ class SiteExportDataBuilder
                 'seo_keywords' => $translation->seo_keywords,
                 'og_title' => $translation->og_title,
                 'og_description' => $translation->og_description,
-                'og_image_asset_id' => $includesMedia ? $translation->og_image_asset_id : null,
+                'og_image_media_id' => $includesMedia ? $translation->og_image_media_id : null,
                 'created_at' => $translation->created_at?->toDateTimeString(),
                 'updated_at' => $translation->updated_at?->toDateTimeString(),
             ])->all(),
@@ -223,7 +223,7 @@ class SiteExportDataBuilder
                 'subtitle' => $block->getRawOriginal('subtitle'),
                 'content' => $block->getRawOriginal('content'),
                 'url' => $block->getRawOriginal('url'),
-                'asset_id' => $includesMedia ? $block->asset_id : null,
+                'media_id' => $includesMedia ? $block->media_id : null,
                 'variant' => $block->getRawOriginal('variant'),
                 'meta' => $block->getRawOriginal('meta'),
                 'settings' => $block->getRawOriginal('settings'),
@@ -232,11 +232,11 @@ class SiteExportDataBuilder
                 'created_at' => $block->created_at?->toDateTimeString(),
                 'updated_at' => $block->updated_at?->toDateTimeString(),
             ])->all(),
-            'block_assets' => $includesMedia
+            'block_media' => $includesMedia
                 ? BlockAsset::query()->whereIn('block_id', $blockIds)->orderBy('id')->get()->map(fn (BlockAsset $blockAsset) => [
                     'id' => $blockAsset->id,
                     'block_id' => $blockAsset->block_id,
-                    'asset_id' => $blockAsset->asset_id,
+                    'media_id' => $blockAsset->media_id,
                     'role' => $blockAsset->role,
                     'position' => $blockAsset->position,
                     'created_at' => $blockAsset->created_at?->toDateTimeString(),
@@ -300,7 +300,7 @@ class SiteExportDataBuilder
                 'created_at' => $item->created_at?->toDateTimeString(),
                 'updated_at' => $item->updated_at?->toDateTimeString(),
             ])->all(),
-            'asset_folders' => $assetFolders->map(fn (AssetFolder $folder) => [
+            'media_folders' => $assetFolders->map(fn (MediaFolder $folder) => [
                 'id' => $folder->id,
                 'parent_id' => $folder->parent_id,
                 'name' => $folder->name,
@@ -308,7 +308,7 @@ class SiteExportDataBuilder
                 'created_at' => $folder->created_at?->toDateTimeString(),
                 'updated_at' => $folder->updated_at?->toDateTimeString(),
             ])->all(),
-            'assets' => $assets->map(fn (Asset $asset) => [
+            'media' => $assets->map(fn (Media $asset) => [
                 'id' => $asset->id,
                 'folder_id' => $asset->folder_id,
                 'disk' => $asset->disk,
@@ -341,14 +341,14 @@ class SiteExportDataBuilder
                 'page_assets' => $pageAssets->count(),
                 'shared_slots' => $sharedSlots->count(),
                 'blocks' => $blocks->count(),
-                'block_assets' => $includesMedia ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() : 0,
+                'block_media' => $includesMedia ? BlockAsset::query()->whereIn('block_id', $blockIds)->count() : 0,
                 'block_text_translations' => $blocks->sum(fn (Block $block) => $block->textTranslations->count()),
                 'block_button_translations' => $blocks->sum(fn (Block $block) => $block->buttonTranslations->count()),
                 'block_image_translations' => $blocks->sum(fn (Block $block) => $block->imageTranslations->count()),
                 'block_contact_form_translations' => $blocks->sum(fn (Block $block) => $block->contactFormTranslations->count()),
                 'navigation_items' => $navigationItems->count(),
-                'asset_folders' => $assetFolders->count(),
-                'assets' => $assets->count(),
+                'media_folders' => $assetFolders->count(),
+                'media' => $assets->count(),
                 'page_asset_files' => $includesMedia
                     ? $pageAssets->filter(function (PageAsset $pageAsset): bool {
                         try {
@@ -364,7 +364,7 @@ class SiteExportDataBuilder
         ];
     }
 
-    private function assetFoldersFor(Collection $assets): Collection
+    private function mediaFoldersFor(Collection $assets): Collection
     {
         $folderIds = $assets->pluck('folder_id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
 
@@ -372,7 +372,7 @@ class SiteExportDataBuilder
             return collect();
         }
 
-        $folders = AssetFolder::query()->whereIn('id', $folderIds)->get()->keyBy('id');
+        $folders = MediaFolder::query()->whereIn('id', $folderIds)->get()->keyBy('id');
         $allFolderIds = $folderIds->values();
 
         foreach ($folders as $folder) {
@@ -380,10 +380,10 @@ class SiteExportDataBuilder
 
             while ($parentId) {
                 $allFolderIds->push((int) $parentId);
-                $parentId = AssetFolder::query()->whereKey($parentId)->value('parent_id');
+                $parentId = MediaFolder::query()->whereKey($parentId)->value('parent_id');
             }
         }
 
-        return AssetFolder::query()->whereIn('id', $allFolderIds->unique()->values())->orderBy('id')->get();
+        return MediaFolder::query()->whereIn('id', $allFolderIds->unique()->values())->orderBy('id')->get();
     }
 }

@@ -35,8 +35,8 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->first();
 
-        $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertNotNull($siteExport);
+        $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertSame('completed', $siteExport->status);
         $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
         Storage::disk('site-exports')->assertExists($siteExport->archive_path);
@@ -89,7 +89,7 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertSee('Export Site');
         $response->assertSee($site->name);
         $response->assertSee($site->handle);
-        $response->assertSee('Include media/assets');
+        $response->assertSee('Include media files');
         $response->assertSee('aria-controls="siteIndexExportModal"', false);
         $response->assertSee('modal=export-site');
         $response->assertSee('export_site='.$site->id);
@@ -195,8 +195,8 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->first();
 
-        $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertNotNull($siteExport);
+        $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertSame($siteExport->archive_name, $siteExport->archive_path);
         $this->assertStringStartsWith('webblocks-cms-site-export-', (string) $siteExport->archive_path);
         $this->assertFalse((bool) preg_match('/^[a-z0-9]{8}-/', (string) $siteExport->archive_path));

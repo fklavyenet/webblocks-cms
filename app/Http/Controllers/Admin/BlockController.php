@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BlockRequest;
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SharedSlot;
@@ -128,8 +128,8 @@ class BlockController extends Controller
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
-        $selectedAsset = $block->asset_id
-            ? $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())->find($block->asset_id)
+        $selectedAsset = $block->media_id
+            ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($block->media_id)
             : null;
         $selectedGalleryAssets = $block->galleryAssets();
         $selectedAttachmentAsset = $block->attachmentAsset();
@@ -267,8 +267,8 @@ class BlockController extends Controller
         $blockTypes = BlockType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $slotTypes = SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get();
         $assetPickerAssets = $this->assetPickerAssets();
-        $selectedAsset = $block->asset_id
-            ? $this->authorization->scopeAssetsForUser(Asset::query(), $request->user())->find($block->asset_id)
+        $selectedAsset = $block->media_id
+            ? $this->authorization->scopeMediaForUser(Media::query(), $request->user())->find($block->media_id)
             : null;
         $selectedGalleryAssets = $block->galleryAssets();
         $selectedAttachmentAsset = $block->attachmentAsset();
@@ -1004,7 +1004,7 @@ class BlockController extends Controller
 
     private function assetPickerAssets()
     {
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();
@@ -1012,7 +1012,7 @@ class BlockController extends Controller
 
     private function assetPickerFolders()
     {
-        return AssetFolder::query()
+        return MediaFolder::query()
             ->withCount('assets')
             ->with('parent')
             ->orderBy('name')

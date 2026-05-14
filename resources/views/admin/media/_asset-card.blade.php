@@ -9,7 +9,7 @@
                 <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="160" height="112">
             @else
                 <div class="wb-cluster wb-cluster-2">
-                    <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon {{ $asset->kind === \App\Models\Asset::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>
+                    <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon {{ $asset->kind === \App\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>
                     <span class="wb-text-sm wb-text-muted">{{ ucfirst($asset->kind) }}</span>
                 </div>
             @endif

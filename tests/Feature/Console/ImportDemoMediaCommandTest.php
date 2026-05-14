@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\DemoAssetReference;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
@@ -41,14 +41,14 @@ class ImportDemoMediaCommandTest extends TestCase
 
         $this->assertNotNull($reference);
 
-        $asset = $reference->asset;
+        $asset = $reference->media;
 
         $this->assertNotNull($asset);
         $this->assertSame('Modern workspace desk', $asset->title);
         $this->assertSame('Modern workspace with laptop and desk', $asset->alt_text);
-        $this->assertSame(Asset::KIND_IMAGE, $asset->kind);
-        $this->assertDatabaseHas('asset_folders', ['name' => 'Demo Content', 'parent_id' => null]);
-        $folder = AssetFolder::query()->where('name', 'Home')->first();
+        $this->assertSame(Media::KIND_IMAGE, $asset->kind);
+        $this->assertDatabaseHas('media_folders', ['name' => 'Demo Content', 'parent_id' => null]);
+        $folder = MediaFolder::query()->where('name', 'Home')->first();
         $this->assertNotNull($folder);
         $this->assertSame($folder->id, $asset->folder_id);
         $this->assertTrue(Storage::disk('public')->exists('assets/demo-content/home/home-hero-01.jpg'));
@@ -93,7 +93,7 @@ class ImportDemoMediaCommandTest extends TestCase
         $exitCode = Artisan::call('demo:import-media');
 
         $this->assertSame(1, $exitCode);
-        $this->assertDatabaseMissing('demo_asset_references', ['source_key' => 'home-hero-01']);
+        $this->assertDatabaseMissing('demo_media_references', ['source_key' => 'home-hero-01']);
         $this->assertFalse(Storage::disk('public')->exists('assets/demo-content/home/home-hero-01.jpg'));
     }
 

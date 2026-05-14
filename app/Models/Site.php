@@ -24,10 +24,12 @@ class Site extends Model
         'is_primary',
         'display_name',
         'tagline',
+        'favicon_media_id',
         'favicon_asset_id',
         'seo_title',
         'seo_description',
         'seo_keywords',
+        'social_image_media_id',
         'social_image_asset_id',
     ];
 
@@ -36,6 +38,38 @@ class Site extends Model
         return [
             'is_primary' => 'boolean',
         ];
+    }
+
+    protected function faviconMediaId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['favicon_asset_id'] ?? null),
+            set: fn ($value) => ['favicon_media_id' => $value],
+        );
+    }
+
+    protected function socialImageMediaId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['social_image_asset_id'] ?? null),
+            set: fn ($value) => ['social_image_media_id' => $value],
+        );
+    }
+
+    protected function faviconAssetId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['favicon_media_id'] ?? null),
+            set: fn ($value) => ['favicon_media_id' => $value],
+        );
+    }
+
+    protected function socialImageAssetId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['social_image_media_id'] ?? null),
+            set: fn ($value) => ['social_image_media_id' => $value],
+        );
     }
 
     protected static function booted(): void
@@ -129,14 +163,24 @@ class Site extends Model
             ->withTimestamps();
     }
 
+    public function faviconMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'favicon_media_id');
+    }
+
+    public function socialImageMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'social_image_media_id');
+    }
+
     public function faviconAsset(): BelongsTo
     {
-        return $this->belongsTo(Asset::class, 'favicon_asset_id');
+        return $this->faviconMedia();
     }
 
     public function socialImageAsset(): BelongsTo
     {
-        return $this->belongsTo(Asset::class, 'social_image_asset_id');
+        return $this->socialImageMedia();
     }
 
     public function siteLocales(): HasMany

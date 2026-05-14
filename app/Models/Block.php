@@ -6,6 +6,7 @@ use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Locales\LocaleResolver;
 use App\Support\Search\ReindexesPublicSearch;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,7 @@ class Block extends Model
         'subtitle',
         'content',
         'url',
+        'media_id',
         'asset_id',
         'variant',
         'meta',
@@ -47,6 +49,22 @@ class Block extends Model
         return [
             'is_system' => 'boolean',
         ];
+    }
+
+    protected function mediaId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['asset_id'] ?? null),
+            set: fn ($value) => ['media_id' => $value],
+        );
+    }
+
+    protected function assetId(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value, array $attributes) => $value ?? ($attributes['media_id'] ?? null),
+            set: fn ($value) => ['media_id' => $value],
+        );
     }
 
     protected static function booted(): void
@@ -95,9 +113,14 @@ class Block extends Model
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function media(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'media_id');
+    }
+
     public function asset(): BelongsTo
     {
-        return $this->belongsTo(Asset::class);
+        return $this->media();
     }
 
     public function children(): HasMany
@@ -110,9 +133,14 @@ class Block extends Model
         return $this->children()->where('status', 'published');
     }
 
+    public function blockMedia(): HasMany
+    {
+        return $this->hasMany(BlockMedia::class)->orderBy('position');
+    }
+
     public function blockAssets(): HasMany
     {
-        return $this->hasMany(BlockAsset::class)->orderBy('position');
+        return $this->blockMedia();
     }
 
     public function sharedSlotAssignments(): HasMany
@@ -1043,15 +1071,20 @@ class Block extends Model
         };
     }
 
-    public function galleryAssetIds(): array
+    public function galleryMediaIds(): array
     {
-        return $this->blockAssets
+        return $this->blockMedia
             ->where('role', 'gallery_item')
             ->sortBy('position')
-            ->pluck('asset_id')
+            ->pluck('media_id')
             ->map(fn ($id) => (int) $id)
             ->values()
             ->all();
+    }
+
+    public function galleryAssetIds(): array
+    {
+        return $this->galleryMediaIds();
     }
 
     private function decodedSettings(): array
@@ -1069,38 +1102,53 @@ class Block extends Model
         return is_array($decoded) ? $decoded : [];
     }
 
-    public function galleryAssets(): Collection
+    public function galleryMedia(): Collection
     {
-        $assetIds = $this->galleryAssetIds();
+        $mediaIds = $this->galleryMediaIds();
 
-        if ($assetIds === []) {
+        if ($mediaIds === []) {
             return collect();
         }
 
-        return Asset::query()
-            ->whereIn('id', $assetIds)
+        return Media::query()
+            ->whereIn('id', $mediaIds)
             ->get()
-            ->sortBy(fn (Asset $asset) => array_search($asset->id, $assetIds, true))
+            ->sortBy(fn (Media $media) => array_search($media->id, $mediaIds, true))
             ->values();
     }
 
-    public function attachmentAsset(): ?Asset
+    public function galleryAssets(): Collection
     {
-        $structured = $this->blockAssets
-            ->where('role', 'attachment')
-            ->sortBy('position')
-            ->first()?->asset;
-
-        return $structured ?: $this->asset;
+        return $this->galleryMedia();
     }
 
-    public function downloadAsset(): ?Asset
+    public function attachmentMedia(): ?Media
+    {
+        $structured = $this->blockMedia
+            ->where('role', 'attachment')
+            ->sortBy('position')
+            ->first()?->media;
+
+        return $structured ?: $this->media;
+    }
+
+    public function attachmentAsset(): ?Media
+    {
+        return $this->attachmentMedia();
+    }
+
+    public function downloadMedia(): ?Media
     {
         if ($this->typeSlug() === 'download') {
-            return $this->asset;
+            return $this->media;
         }
 
         return null;
+    }
+
+    public function downloadAsset(): ?Media
+    {
+        return $this->downloadMedia();
     }
 
     public static function supportsAdminForm(?string $slug): bool

@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageTranslationRequest;
-use App\Models\Asset;
-use App\Models\AssetFolder;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Support\Pages\PageIndexState;
@@ -138,7 +138,7 @@ class PageTranslationController extends Controller
 
     private function assetPickerAssets()
     {
-        return $this->authorization->scopeAssetsForUser(Asset::query(), request()->user())
+        return $this->authorization->scopeMediaForUser(Media::query(), request()->user())
             ->with('folder')
             ->latest()
             ->get();
@@ -146,7 +146,7 @@ class PageTranslationController extends Controller
 
     private function assetPickerFolders()
     {
-        return AssetFolder::query()
+        return MediaFolder::query()
             ->withCount('assets')
             ->with('parent')
             ->orderBy('name')

@@ -9,6 +9,7 @@ use App\Models\SharedSlotRevision;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class SharedSlotRevisionManager
         private readonly BlockTranslationWriter $blockTranslationWriter,
         private readonly SharedSlotSchema $schema,
         private readonly CurrentActorResolver $currentActorResolver,
+        private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
     ) {}
 
     public function canView(User $user, SharedSlot $sharedSlot): bool
@@ -176,17 +178,17 @@ class SharedSlotRevisionManager
                     'subtitle' => $block->getRawOriginal('subtitle'),
                     'content' => $block->getRawOriginal('content'),
                     'url' => $block->url,
-                    'asset_id' => $block->asset_id,
+                    'media_id' => $block->media_id,
                     'variant' => $block->variant,
                     'meta' => $block->meta,
                     'settings' => $block->getRawOriginal('settings'),
                     'status' => $block->status,
                     'is_system' => $block->is_system,
-                    'block_assets' => $block->blockAssets
+                    'block_media' => $block->blockAssets
                         ->sortBy('position')
                         ->values()
                         ->map(fn ($asset) => [
-                            'asset_id' => $asset->asset_id,
+                            'media_id' => $asset->media_id,
                             'role' => $asset->role,
                             'position' => $asset->position,
                         ])
@@ -238,6 +240,7 @@ class SharedSlotRevisionManager
 
     private function applySnapshot(SharedSlot $sharedSlot, array $snapshot): void
     {
+        $snapshot = $this->legacyAssetPayloadNormalizer->normalizeRevisionSnapshot($snapshot);
         $sharedSlotData = Arr::get($snapshot, 'shared_slot', []);
 
         $sharedSlot->forceFill([
@@ -286,7 +289,7 @@ class SharedSlotRevisionManager
                     'subtitle' => $block['subtitle'],
                     'content' => $block['content'],
                     'url' => $block['url'],
-                    'asset_id' => $block['asset_id'],
+                    'media_id' => $block['media_id'] ?? null,
                     'variant' => $block['variant'],
                     'meta' => $block['meta'],
                     'settings' => $block['settings'],
@@ -310,9 +313,9 @@ class SharedSlotRevisionManager
         foreach ($snapshotBlocks as $block) {
             $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
 
-            foreach ($block['block_assets'] ?? [] as $asset) {
+            foreach ($block['block_media'] ?? [] as $asset) {
                 $restoredBlock->blockAssets()->create([
-                    'asset_id' => $asset['asset_id'],
+                    'media_id' => $asset['media_id'] ?? null,
                     'role' => $asset['role'],
                     'position' => $asset['position'],
                 ]);

@@ -1840,7 +1840,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertDatabaseHas('blocks', [
             'page_id' => $page->id,
             'type' => 'sidebar-brand',
-            'asset_id' => $image->id,
+            'media_id' => $image->id,
         ]);
 
         $invalid = $this->actingAs($user)
@@ -1858,7 +1858,7 @@ class PageBuilderExperienceTest extends TestCase
             ]);
 
         $invalid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $invalid->assertSessionHasErrors('asset_id');
+        $invalid->assertSessionHasErrors('media_id');
     }
 
     #[Test]

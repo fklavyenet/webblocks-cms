@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Asset;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\Site;
 use App\Models\SiteDomain;
 use App\Support\Sites\SiteDomainNormalizer;
@@ -48,8 +48,8 @@ class SiteRequest extends FormRequest
             'seo_title' => trim((string) $this->input('seo_title')),
             'seo_description' => trim((string) $this->input('seo_description')),
             'seo_keywords' => trim((string) $this->input('seo_keywords')),
-            'favicon_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('favicon_asset_id') ?: null) : null,
-            'social_image_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('social_image_asset_id') ?: null) : null,
+            'favicon_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('favicon_media_id') ?: $this->integer('favicon_asset_id') ?: null) : null,
+            'social_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('social_image_media_id') ?: $this->integer('social_image_asset_id') ?: null) : null,
             '_site_tab' => trim((string) $this->input('_site_tab', 'site')),
         ]);
     }
@@ -67,11 +67,11 @@ class SiteRequest extends FormRequest
             'is_primary' => ['nullable', 'boolean'],
             'display_name' => ['nullable', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],
-            'favicon_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
+            'favicon_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:1000'],
             'seo_keywords' => ['nullable', 'string', 'max:500'],
-            'social_image_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
+            'social_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
             'locale_ids' => ['required', 'array', 'min:1'],
             'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query
                 ->where(fn ($enabled) => $enabled

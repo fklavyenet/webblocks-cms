@@ -21,14 +21,14 @@ class SiteTransferPackage
         'data/page_slots.json',
         'data/page_assets.json',
         'data/blocks.json',
-        'data/block_assets.json',
+        'data/block_media.json',
         'data/block_text_translations.json',
         'data/block_button_translations.json',
         'data/block_image_translations.json',
         'data/block_contact_form_translations.json',
         'data/navigation_items.json',
-        'data/asset_folders.json',
-        'data/assets.json',
+        'data/media_folders.json',
+        'data/media.json',
     ];
 
     public const OPTIONAL_DATA_FILES = [
@@ -40,5 +40,11 @@ class SiteTransferPackage
     public const ALL_DATA_FILES = [
         ...self::REQUIRED_DATA_FILES,
         ...self::OPTIONAL_DATA_FILES,
+    ];
+
+    public const DATA_FILE_ALIASES = [
+        'data/block_media.json' => ['data/block_assets.json'],
+        'data/media_folders.json' => ['data/asset_folders.json'],
+        'data/media.json' => ['data/assets.json'],
     ];
 }

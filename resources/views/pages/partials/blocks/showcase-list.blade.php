@@ -10,7 +10,7 @@
         ->values();
     $assets = $assetIds->isEmpty()
         ? collect()
-        : \App\Models\Asset::query()->whereIn('id', $assetIds)->get()->keyBy('id');
+        : \App\Models\Media::query()->whereIn('id', $assetIds)->get()->keyBy('id');
 @endphp
 
 <section class="wb-stack wb-gap-6">

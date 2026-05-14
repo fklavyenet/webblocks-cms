@@ -77,10 +77,14 @@ class PageRequest extends FormRequest
             'blocks.*.subtitle' => ['nullable', 'string', 'max:255'],
             'blocks.*.content' => ['nullable', 'string'],
             'blocks.*.url' => ['nullable', 'string', 'max:2048'],
-            'blocks.*.asset_id' => ['nullable', 'integer', 'exists:assets,id'],
+            'blocks.*.media_id' => ['nullable', 'integer', 'exists:media,id'],
+            'blocks.*.asset_id' => ['nullable', 'integer', 'exists:media,id'],
+            'blocks.*.gallery_media_ids' => ['nullable', 'array'],
+            'blocks.*.gallery_media_ids.*' => ['integer', 'exists:media,id'],
             'blocks.*.gallery_asset_ids' => ['nullable', 'array'],
-            'blocks.*.gallery_asset_ids.*' => ['integer', 'exists:assets,id'],
-            'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:assets,id'],
+            'blocks.*.gallery_asset_ids.*' => ['integer', 'exists:media,id'],
+            'blocks.*.attachment_media_id' => ['nullable', 'integer', 'exists:media,id'],
+            'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:media,id'],
             'blocks.*.variant' => ['nullable', 'string', 'max:255'],
             'blocks.*.meta' => ['nullable', 'string'],
             'blocks.*.settings' => ['nullable', 'string'],
@@ -121,8 +125,8 @@ class PageRequest extends FormRequest
                 $blockType = ! empty($block['block_type_id'])
                     ? BlockType::query()->find($block['block_type_id'])
                     : null;
-                $galleryAssetIds = $authorization->filterAllowedAssetIds($this->user(), $block['gallery_asset_ids'] ?? []);
-                $attachmentAssetId = $authorization->normalizeAllowedAssetId($this->user(), ! empty($block['attachment_asset_id']) ? (int) $block['attachment_asset_id'] : null);
+                $galleryAssetIds = $authorization->filterAllowedMediaIds($this->user(), $block['gallery_media_ids'] ?? $block['gallery_asset_ids'] ?? []);
+                $attachmentAssetId = $authorization->normalizeAllowedMediaId($this->user(), ! empty($block['attachment_media_id']) ? (int) $block['attachment_media_id'] : (! empty($block['attachment_asset_id']) ? (int) $block['attachment_asset_id'] : null));
 
                 $block['settings'] = trim((string) ($block['settings'] ?? '')) ?: null;
                 $decodedSettings = [];
@@ -137,16 +141,16 @@ class PageRequest extends FormRequest
                     : json_encode($decodedSettings, JSON_UNESCAPED_SLASHES);
 
                 $block['meta'] = trim((string) ($block['meta'] ?? '')) ?: null;
-                $block['asset_id'] = $authorization->normalizeAllowedAssetId($this->user(), ! empty($block['asset_id']) ? (int) $block['asset_id'] : null);
+                $block['media_id'] = $authorization->normalizeAllowedMediaId($this->user(), ! empty($block['media_id']) ? (int) $block['media_id'] : (! empty($block['asset_id']) ? (int) $block['asset_id'] : null));
                 $block['is_system'] = (bool) ($blockType?->is_system ?? false);
                 $block['_delete'] = (bool) ($block['_delete'] ?? false);
                 $block['sort_order'] = $index;
-                $block['_block_assets'] = [
+                $block['_block_media'] = [
                     'gallery_item' => $galleryAssetIds,
                     'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
                 ];
 
-                unset($block['gallery_asset_ids'], $block['attachment_asset_id']);
+                unset($block['asset_id'], $block['gallery_asset_ids'], $block['gallery_media_ids'], $block['attachment_asset_id'], $block['attachment_media_id']);
 
                 return $block;
             })

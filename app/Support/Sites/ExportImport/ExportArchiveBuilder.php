@@ -39,7 +39,7 @@ class ExportArchiveBuilder
             $fileCount = 0;
 
             if ($includesMedia) {
-                foreach ($payload['assets'] as $asset) {
+                foreach ($payload['media'] as $asset) {
                     $sourcePath = (string) ($asset['path'] ?? '');
                     $diskName = (string) ($asset['disk'] ?? 'public');
 
@@ -76,7 +76,7 @@ class ExportArchiveBuilder
 
             $archive->close();
             $output[] = 'Archive created as '.basename($archivePath).'.';
-            $output[] = 'JSON manifests written for site, pages, shared slots, blocks, navigation, locales, and assets.';
+            $output[] = 'JSON manifests written for site, pages, shared slots, blocks, navigation, locales, and media.';
 
             if ($includesMedia) {
                 $output[] = 'Added '.$fileCount.' media file(s) to package.';

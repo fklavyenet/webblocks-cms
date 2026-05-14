@@ -68,15 +68,16 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - `display_name` is the optional public site name override.
 - `tagline` is optional public-facing copy for the site.
 - `seo_title`, `seo_description`, and `seo_keywords` are site-level fallback metadata.
-- `favicon_asset_id` and `social_image_asset_id` are optional site-level media references for public head output.
+- `favicon_media_id` and `social_image_media_id` are optional site-level media references for public head output.
 - `site_variables` are optional site-level reusable plain-text values for controlled public token replacement.
-- Page translation rows also own localized SEO override fields such as `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_asset_id`.
+- Page translation rows also own localized SEO override fields such as `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_media_id`.
 - This keeps public page metadata locale-aware and out of shared page JSON settings.
 
 ## Media
 
-- `Media` is the admin-facing name for shared uploaded files in this phase.
-- Internal technical names such as the `Asset` model, `assets` table, `asset_id` columns, export or import payload keys, revision fields, and storage paths remain unchanged until the later technical refactor.
+- `Media` is the canonical name for shared uploaded files across the active CMS runtime.
+- Active technical names now use `Media`, `media_id`, `media`, `media_folders`, and `block_media` across current runtime code, requests, revisions, and site transfer packages.
+- Legacy `Asset` names remain only for compatibility wrappers, historical migrations, and older payload or archive normalization.
 - `Admin -> Media` keeps the main list title `Media` and the listing card title `Media Library`.
 - On the Media list, the title link and pencil icon both open `Edit Media: {title}` and carry a safe Media return URL back to the current filtered list.
 - The eye icon remains the large preview modal action from the list.
@@ -208,7 +209,7 @@ In V1, Page Layout owns the outer public shell choice, slot names own region wra
 - Keywords precedence is: page translation `seo_keywords`, site `seo_keywords`, then no keywords tag.
 - Open Graph title precedence is: page translation `og_title`, otherwise the same site-first public title pattern.
 - Open Graph description precedence is: page translation `og_description`, page translation `seo_description`, site `seo_description`.
-- Open Graph image precedence is: page translation `og_image_asset_id`, site `social_image_asset_id`, then no `og:image` tag.
+- Open Graph image precedence is: page translation `og_image_media_id`, site `social_image_media_id`, then no `og:image` tag.
 - Site favicon media is unchanged and still stays site-level only in this phase.
 - Multisite metadata stays host-aware through the resolved public site; the primary site is not used blindly when another site matches the current host.
 

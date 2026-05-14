@@ -88,7 +88,18 @@ class SitePromotionPackageInspector
 
             foreach (SiteTransferPackage::OPTIONAL_DATA_FILES as $file) {
                 $key = pathinfo($file, PATHINFO_FILENAME);
-                $payload[$key] = $archive->locateName($file) === false
+                $hasFile = $archive->locateName($file) !== false;
+
+                if (! $hasFile) {
+                    foreach (SiteTransferPackage::DATA_FILE_ALIASES[$file] ?? [] as $alias) {
+                        if ($archive->locateName($alias) !== false) {
+                            $hasFile = true;
+                            break;
+                        }
+                    }
+                }
+
+                $payload[$key] = ! $hasFile
                     ? []
                     : $this->decodeJsonFile($archive, $file);
             }
@@ -118,22 +129,39 @@ class SitePromotionPackageInspector
 
     public function decodeJsonFile(ZipArchive $archive, string $path): array
     {
-        if ($archive->locateName($path) === false) {
+        $resolvedPath = $this->resolveJsonPath($archive, $path);
+
+        if ($resolvedPath === null) {
             throw new RuntimeException('Promotion package is missing '.$path.'.');
         }
 
-        $contents = $archive->getFromName($path);
+        $contents = $archive->getFromName($resolvedPath);
 
         if (! is_string($contents) || trim($contents) === '') {
-            throw new RuntimeException($path.' is empty.');
+            throw new RuntimeException($resolvedPath.' is empty.');
         }
 
         $decoded = json_decode($contents, true);
 
         if (! is_array($decoded)) {
-            throw new RuntimeException($path.' is not valid JSON.');
+            throw new RuntimeException($resolvedPath.' is not valid JSON.');
         }
 
         return $decoded;
+    }
+
+    private function resolveJsonPath(ZipArchive $archive, string $path): ?string
+    {
+        if ($archive->locateName($path) !== false) {
+            return $path;
+        }
+
+        foreach (SiteTransferPackage::DATA_FILE_ALIASES[$path] ?? [] as $alias) {
+            if ($archive->locateName($alias) !== false) {
+                return $alias;
+            }
+        }
+
+        return null;
     }
 }

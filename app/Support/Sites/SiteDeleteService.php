@@ -127,7 +127,7 @@ class SiteDeleteService
             'page_translations' => $pageIds->isEmpty() ? 0 : PageTranslation::query()->whereIn('page_id', $pageIds)->count(),
             'page_slots' => $pageIds->isEmpty() ? 0 : PageSlot::query()->whereIn('page_id', $pageIds)->count(),
             'blocks' => $blockIds->count(),
-            'block_assets' => $blockIds->isEmpty() ? 0 : BlockAsset::query()->whereIn('block_id', $blockIds)->count(),
+            'block_media' => $blockIds->isEmpty() ? 0 : BlockAsset::query()->whereIn('block_id', $blockIds)->count(),
             'block_translation_rows' => $this->blockTranslationCount($blockIds),
             'navigation_items' => NavigationItem::query()->where('site_id', $site->id)->count(),
             'contact_messages' => $this->contactMessageCount($pageIds, $blockIds),

@@ -130,7 +130,7 @@ trait BuildsCloneableSite
             'seo_description' => 'About SEO Description',
             'og_title' => 'About OG',
             'og_description' => 'About OG Description',
-            'og_image_asset_id' => $heroAsset->id,
+            'og_image_media_id' => $heroAsset->id,
         ]);
 
         $homePage->defaultTranslation()?->update([
@@ -143,7 +143,7 @@ trait BuildsCloneableSite
             'seo_description' => 'Hakkinda SEO Description',
             'og_title' => 'Hakkinda OG',
             'og_description' => 'Hakkinda OG Description',
-            'og_image_asset_id' => $heroAsset->id,
+            'og_image_media_id' => $heroAsset->id,
         ]);
 
         $homePage->translations()->where('locale_id', $turkish->id)->update([

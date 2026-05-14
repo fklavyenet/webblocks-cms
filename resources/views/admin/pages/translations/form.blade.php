@@ -3,8 +3,8 @@
     $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
     $pageReturnUrl = $pageReturnUrl ?? $pagesIndexUrl;
     $siteName = $page->site?->name ?? 'Site';
-    $selectedOgImage = old('og_image_asset_id')
-        ? $assetPickerAssets->firstWhere('id', (int) old('og_image_asset_id'))
+    $selectedOgImage = old('og_image_media_id', old('og_image_asset_id'))
+        ? $assetPickerAssets->firstWhere('id', (int) old('og_image_media_id', old('og_image_asset_id')))
         : $translation->ogImage;
 @endphp
 
@@ -104,12 +104,12 @@
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-field">
-                            <label for="og_image_asset_id">Open Graph image</label>
+                            <label for="og_image_media_id">Open Graph image</label>
                             @include('admin.media.asset-picker-panel', [
                                 'name' => 'translation-og-image',
                                 'title' => 'Open Graph image',
-                                'inputId' => 'og_image_asset_id',
-                                'fieldName' => 'og_image_asset_id',
+                                'inputId' => 'og_image_media_id',
+                                'fieldName' => 'og_image_media_id',
                                 'selectedAsset' => $selectedOgImage,
                                 'assetPickerAssets' => $assetPickerAssets,
                                 'assetPickerFolders' => $assetPickerFolders,

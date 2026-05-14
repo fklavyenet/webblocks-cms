@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Asset;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Support\Users\AdminAuthorization;
@@ -34,7 +34,7 @@ class PageTranslationRequest extends FormRequest
             'seo_keywords' => $this->nullableTrimmed('seo_keywords'),
             'og_title' => $this->nullableTrimmed('og_title'),
             'og_description' => $this->nullableTrimmed('og_description'),
-            'og_image_asset_id' => $user ? $authorization->normalizeAllowedAssetId($user, $this->integer('og_image_asset_id') ?: null) : null,
+            'og_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('og_image_media_id') ?: $this->integer('og_image_asset_id') ?: null) : null,
         ]);
     }
 
@@ -80,7 +80,7 @@ class PageTranslationRequest extends FormRequest
             'seo_keywords' => ['nullable', 'string', 'max:500'],
             'og_title' => ['nullable', 'string', 'max:255'],
             'og_description' => ['nullable', 'string', 'max:1000'],
-            'og_image_asset_id' => ['nullable', 'integer', Rule::exists(Asset::class, 'id')],
+            'og_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
         ];
     }
 
@@ -107,7 +107,7 @@ class PageTranslationRequest extends FormRequest
             'seo_keywords' => $data['seo_keywords'] ?? null,
             'og_title' => $data['og_title'] ?? null,
             'og_description' => $data['og_description'] ?? null,
-            'og_image_asset_id' => $data['og_image_asset_id'] ?? null,
+            'og_image_media_id' => $data['og_image_media_id'] ?? null,
         ];
     }
 

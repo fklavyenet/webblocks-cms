@@ -70,7 +70,7 @@ Use it to move one site's content between installs.
 
 The admin workflow now has two related entry points:
 
-- `Admin -> Sites` includes a per-site `Export` row action that opens a modal for the selected site, shows the site name and handle, and can include media or assets before creating the package.
+- `Admin -> Sites` includes a per-site `Export` row action that opens a modal for the selected site, shows the site name and handle, and can include media files before creating the package.
 - `Admin -> Maintenance -> Export / Import` is the combined operational screen for transfer history and transfer actions. It shows `Site Exports` and `Site Imports` together, with `Run Export` and `Run Import` actions in the relevant listing card headers.
 
 Relationship between the tools:
@@ -90,20 +90,20 @@ Export / Import covers site-scoped content such as:
 - page-level Page Layout settings such as `default` and `docs` (still stored internally on `public_shell`)
 - block translations
 - navigation items, including optional navigation item icon slugs used by public Sidebar Navigation renderers
-- optional media/assets
+- optional media files
 
 Page Assets travel through site portability in two layers:
 
 - `page_assets` rows are always included in site export and import payloads.
-- When `Include media/assets` is enabled, referenced `/site/...` public files are also packaged under the export archive and restored back into `public/site/...` on import.
-- When `Include media/assets` is disabled, page asset metadata still imports, but the referenced physical files must already exist on the target install.
+- When `Include media files` is enabled, referenced `/site/...` public files are also packaged under the export archive and restored back into `public/site/...` on import.
+- When `Include media files` is disabled, page asset metadata still imports, but the referenced physical files must already exist on the target install.
 - Missing page asset files are reported during export and skipped rather than crashing the full package build in the current version.
 
 Shared Slots are exported and imported as first-class site content:
 
 - Shared Slot metadata such as handle, name, slot compatibility, shell compatibility, and active status is included in the package.
 - Shared Slots can also carry an optional Page Layout compatibility constraint. The stored field remains `public_shell` for backward compatibility, empty remains generic, and non-empty values still require exact Page Layout handle matches.
-- Shared Slot block trees, nested order, translations, and media references travel through the same block and asset packaging pipeline used for normal pages.
+- Shared Slot block trees, nested order, translations, and media references travel through the same block and media packaging pipeline used for normal pages.
 - Page slots that use `shared_slot` export a stable Shared Slot handle reference and are remapped to the target site's imported Shared Slot during import.
 - Page payloads preserve each page's Page Layout so docs-shell pages keep compatible docs Shared Slot assignments after import.
 - Install-level Page Layout definitions and Page Layout Slot definitions themselves are not part of site export/import in V1.

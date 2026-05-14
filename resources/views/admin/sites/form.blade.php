@@ -10,11 +10,11 @@
     $selectedLocaleIds = collect(old('locale_ids', $site->exists ? $site->locales->pluck('id') : $locales->where('is_default', true)->pluck('id')))
         ->map(fn ($id) => (int) $id)
         ->values();
-    $selectedFavicon = old('favicon_asset_id')
-        ? $assetPickerAssets->firstWhere('id', (int) old('favicon_asset_id'))
+    $selectedFavicon = old('favicon_media_id', old('favicon_asset_id'))
+        ? $assetPickerAssets->firstWhere('id', (int) old('favicon_media_id', old('favicon_asset_id')))
         : $site->faviconAsset;
-    $selectedSocialImage = old('social_image_asset_id')
-        ? $assetPickerAssets->firstWhere('id', (int) old('social_image_asset_id'))
+    $selectedSocialImage = old('social_image_media_id', old('social_image_asset_id'))
+        ? $assetPickerAssets->firstWhere('id', (int) old('social_image_media_id', old('social_image_asset_id')))
         : $site->socialImageAsset;
     $siteVariablesUi = $siteVariablesUi ?? ['requestedModal' => '', 'selectedVariable' => null, 'closeUrl' => $site->exists ? route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']) : route('admin.sites.create', ['tab' => 'variables'])];
     $tabUrl = fn (string $tab) => $site->exists
@@ -177,13 +177,13 @@
 
                                     <div class="wb-grid wb-grid-2 wb-gap-4">
                                         <div class="wb-stack wb-gap-2 wb-field">
-                                            <label for="favicon_asset_id">Favicon</label>
+                                            <label for="favicon_media_id">Favicon</label>
                                             @if ($canManageSiteSettings)
                                                 @include('admin.media.asset-picker-panel', [
                                                     'name' => 'site-favicon',
                                                     'title' => 'Favicon',
-                                                    'inputId' => 'favicon_asset_id',
-                                                    'fieldName' => 'favicon_asset_id',
+                                                    'inputId' => 'favicon_media_id',
+                                                    'fieldName' => 'favicon_media_id',
                                                     'selectedAsset' => $selectedFavicon,
                                                     'assetPickerAssets' => $assetPickerAssets,
                                                     'assetPickerFolders' => $assetPickerFolders,
@@ -203,13 +203,13 @@
                                         </div>
 
                                         <div class="wb-stack wb-gap-2 wb-field">
-                                            <label for="social_image_asset_id">Social image</label>
+                                            <label for="social_image_media_id">Social image</label>
                                             @if ($canManageSiteSettings)
                                                 @include('admin.media.asset-picker-panel', [
                                                     'name' => 'site-social-image',
                                                     'title' => 'Social image',
-                                                    'inputId' => 'social_image_asset_id',
-                                                    'fieldName' => 'social_image_asset_id',
+                                                    'inputId' => 'social_image_media_id',
+                                                    'fieldName' => 'social_image_media_id',
                                                     'selectedAsset' => $selectedSocialImage,
                                                     'assetPickerAssets' => $assetPickerAssets,
                                                     'assetPickerFolders' => $assetPickerFolders,
