@@ -386,6 +386,15 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: add explicit card/download variants instead of inferring presentation from helper text alone.
 
+### `contact_form`
+
+- CMS block slug: `contact_form`
+- Admin fields: `heading`, `intro_text`, `submit_label`, `success_message`, `recipient_email`, `send_email_notification`, `store_submissions`
+- Translatable fields: `heading`, `intro_text`, `submit_label`, `success_message`
+- Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
+- Intended behavior: public submission stores the message first, then attempts synchronous email notification to the resolved recipient; admin views should show compact notification state and safe failure detail when delivery fails.
+- Notes: block recipient override wins first, then `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as a last safe local fallback when no explicit contact recipient is configured.
+
 ### `video`
 
 - CMS block slug: `video`

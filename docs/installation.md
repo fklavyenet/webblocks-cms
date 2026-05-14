@@ -103,6 +103,9 @@ Notes:
 
 - `ddev config --project-type=laravel --docroot=public --project-name=<your-project-name>` is required on a fresh clone to create `.ddev/config.yaml`
 - without `.ddev/config.yaml`, `ddev start` fails with a `no project found` error
+- local contact form email notifications should use DDEV Mailpit; the usual local SMTP values are `MAIL_MAILER=smtp`, `MAIL_HOST=127.0.0.1`, and `MAIL_PORT=1025`
+- contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`
+- when notification delivery fails, admins can inspect the saved message under `Admin -> Contact Messages` to see the compact failure state in the list and the stored failure detail on the message detail screen
 
 Then open:
 

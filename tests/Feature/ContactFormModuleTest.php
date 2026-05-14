@@ -154,7 +154,7 @@ class ContactFormModuleTest extends TestCase
         [, $block] = $this->createContactFormPage();
 
         Mail::shouldReceive('to')->once()->with('team@example.com')->andReturnSelf();
-        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('SMTP unavailable'));
+        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('SMTP unavailable for password=secret token=abcdef1234567890abcdef123456'));
 
         $this->post(route('contact-messages.store'), $this->submissionPayload($block))
             ->assertRedirect();
@@ -162,8 +162,86 @@ class ContactFormModuleTest extends TestCase
         $message = ContactMessage::query()->latest('id')->first();
 
         $this->assertNotNull($message);
-        $this->assertSame('SMTP unavailable', $message->notification_error);
+        $this->assertSame('SMTP unavailable for password=[redacted] token=[redacted]', $message->notification_error);
         $this->assertSame('new', $message->status);
+    }
+
+    #[Test]
+    public function notification_falls_back_to_mail_from_address_when_block_and_contact_recipient_are_empty(): void
+    {
+        config()->set('contact.recipient_email', null);
+        config()->set('mail.from.address', 'hello@example.com');
+        [, $block] = $this->createContactFormPage();
+        $block->update([
+            'settings' => json_encode([
+                'recipient_email' => null,
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        Mail::fake();
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('hello@example.com', $message->notification_recipient);
+        $this->assertNotNull($message->notification_sent_at);
+        $this->assertNull($message->notification_error);
+        Mail::assertSent(ContactMessageNotification::class);
+    }
+
+    #[Test]
+    public function missing_recipient_marks_failure_without_claiming_a_transport_send(): void
+    {
+        config()->set('contact.recipient_email', null);
+        config()->set('mail.from.address', null);
+        [, $block] = $this->createContactFormPage();
+        $block->update([
+            'settings' => json_encode([
+                'recipient_email' => null,
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        Mail::fake();
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('No contact recipient email is configured.', $message->notification_error);
+        $this->assertNull($message->notification_sent_at);
+        $this->assertNull($message->notification_recipient);
+        Mail::assertNothingSent();
+    }
+
+    #[Test]
+    public function disabled_notification_is_not_marked_as_failed(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+        $block->update([
+            'settings' => json_encode([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => false,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertFalse($message->notification_enabled);
+        $this->assertNull($message->notification_error);
+        $this->assertSame('Skipped', $message->notificationLabel());
+        Mail::assertNothingSent();
     }
 
     #[Test]
@@ -380,6 +458,38 @@ class ContactFormModuleTest extends TestCase
         $response->assertSee('Slot:');
         $response->assertSee('Notification');
         $response->assertSee('Recipient:');
+    }
+
+    #[Test]
+    public function admin_views_show_compact_notification_failure_reason_and_full_failure_detail(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Failed notification',
+            'message' => 'Detail source check.',
+            'status' => 'new',
+            'source_url' => route('pages.show', $page->slug),
+            'notification_enabled' => true,
+            'notification_recipient' => 'team@example.com',
+            'notification_error' => 'SMTP unavailable',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.contact-messages.index'))
+            ->assertOk()
+            ->assertSee('Failed', false)
+            ->assertSee('SMTP unavailable', false);
+
+        $this->actingAs($user)
+            ->get(route('admin.contact-messages.show', $message))
+            ->assertOk()
+            ->assertSee('Failure Detail:', false)
+            ->assertSee('SMTP unavailable', false);
     }
 
     #[Test]

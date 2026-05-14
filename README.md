@@ -17,6 +17,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - page revisions and in-place restore with actor, source, and event metadata when available
 - relational page-scoped CSS and JS assets stored in `page_assets`, rendered only on the owning public page, and managed from the `Edit Page -> Page Management -> Assets` tab through compact rows plus Add/Edit modals
 - media library and site-scoped navigation management
+- contact forms that store submissions first, then attempt synchronous email notification with admin-visible delivery status and failure details for saved messages
 - install-level icon catalog management under `System -> Icons`, with WebBlocks UI manifest sync, catalog metadata editing, and filtered navigation-only icon pickers in admin forms
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
 - primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`

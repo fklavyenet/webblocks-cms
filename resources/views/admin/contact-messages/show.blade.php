@@ -65,7 +65,7 @@
                 <div><strong>Notification:</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
                 <div><strong>Recipient:</strong> {{ $message->notification_recipient ?? '-' }}</div>
                 <div><strong>Sent At:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                <div><strong>Error:</strong> {{ $message->notification_error ?? '-' }}</div>
+                <div><strong>Failure Detail:</strong> {{ $message->notification_error ?? '-' }}</div>
             </div>
         </div>
 

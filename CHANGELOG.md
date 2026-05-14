@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.13
+
+- Fix contact form notification handling so saved submissions can resolve a usable recipient more reliably in local DDEV installs, including a safe fallback to `MAIL_FROM_ADDRESS` when neither the block recipient override nor `CONTACT_RECIPIENT_EMAIL` is configured.
+- Move contact notification delivery into a dedicated service, keep public success semantics tied to message storage, sanitize and persist concise admin-visible failure details, and surface failure context in both the Contact Messages list and detail screen.
+
 ## 1.31.12
 
 - Fix the public `showcase-list` renderer so clickable showcase images emit the required WebBlocks UI `data-wb-gallery-target` and register a matching gallery viewer modal under the shared `#wb-overlay-root` instead of falling through to raw image URL navigation.

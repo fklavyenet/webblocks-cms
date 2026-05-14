@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ContactMessageRequest;
-use App\Mail\ContactMessageNotification;
 use App\Models\Block;
 use App\Models\ContactMessage;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Contact\ContactMessageNotifier;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Mail;
 
 class ContactMessageController extends Controller
 {
+    public function __construct(private readonly ContactMessageNotifier $notifier) {}
+
     public function store(ContactMessageRequest $request): RedirectResponse
     {
         $payload = $request->payload();
@@ -37,7 +38,7 @@ class ContactMessageController extends Controller
         }
 
         $notificationEnabled = (bool) $block->setting('send_email_notification', true);
-        $notificationRecipient = trim((string) ($block->setting('recipient_email') ?: config('contact.recipient_email')));
+        $notificationRecipient = trim((string) $block->setting('recipient_email'));
 
         $contactMessage = ContactMessage::create([
             'block_id' => $block->id,
@@ -56,24 +57,13 @@ class ContactMessageController extends Controller
         ]);
 
         if ($notificationEnabled) {
-            if ($notificationRecipient === '') {
-                $contactMessage->update([
-                    'notification_error' => 'No contact recipient email is configured.',
-                ]);
-            } else {
-                try {
-                    Mail::to($notificationRecipient)->send(new ContactMessageNotification($contactMessage));
+            $result = $this->notifier->send($contactMessage);
 
-                    $contactMessage->update([
-                        'notification_sent_at' => now(),
-                        'notification_error' => null,
-                    ]);
-                } catch (\Throwable $throwable) {
-                    $contactMessage->update([
-                        'notification_error' => $throwable->getMessage(),
-                    ]);
-                }
-            }
+            $contactMessage->update([
+                'notification_recipient' => $result->recipient,
+                'notification_sent_at' => $result->sent ? now() : null,
+                'notification_error' => $result->error,
+            ]);
         }
 
         return redirect($redirectUrl)

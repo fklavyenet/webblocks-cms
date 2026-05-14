@@ -96,6 +96,9 @@
                                     </td>
                                     <td>
                                         <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span>
+                                        @if ($message->notification_error)
+                                            <div class="wb-text-sm wb-text-muted">{{ \Illuminate\Support\Str::limit($message->notification_error, 80) }}</div>
+                                        @endif
                                     </td>
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
                                     <td>
