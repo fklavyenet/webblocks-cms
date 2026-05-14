@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LocaleRequest;
 use App\Models\Locale;
+use App\Support\Admin\AdminPagination;
 use App\Support\Locales\LocaleLifecycleGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class LocaleController extends Controller
         $locales = Locale::query()
             ->orderByDesc('is_default')
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(AdminPagination::perPage());
 
         return view('admin.locales.index', [
             'locales' => $locales,

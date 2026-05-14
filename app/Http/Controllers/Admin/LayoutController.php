@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LayoutRequest;
 use App\Models\Layout;
 use App\Models\LayoutType;
+use App\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -18,7 +19,7 @@ class LayoutController extends Controller
                 ->with('layoutType')
                 ->withCount('pages')
                 ->latest()
-                ->paginate(15)
+                ->paginate(AdminPagination::perPage())
                 ->withQueryString(),
         ]);
     }

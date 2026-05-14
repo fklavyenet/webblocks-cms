@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\UserStoreRequest;
 use App\Http\Requests\Admin\UserUpdateRequest;
 use App\Models\Site;
 use App\Models\User;
+use App\Support\Admin\AdminPagination;
 use App\Support\Users\UserLifecycleGuard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +33,7 @@ class UserController extends Controller
             ->with('sites')
             ->withRoleOrder()
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
         return view('admin.users.index', [

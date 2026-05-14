@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SlotType;
+use App\Support\Admin\AdminPagination;
 use Illuminate\View\View;
 
 class SlotTypeController extends Controller
@@ -15,7 +16,7 @@ class SlotTypeController extends Controller
                 ->withCount('blocks')
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->paginate(15)
+                ->paginate(AdminPagination::perPage())
                 ->withQueryString(),
         ]);
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LayoutTypeRequest;
 use App\Models\LayoutType;
+use App\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -17,7 +18,7 @@ class LayoutTypeController extends Controller
                 ->withCount('layouts')
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->paginate(15)
+                ->paginate(AdminPagination::perPage())
                 ->withQueryString(),
         ]);
     }

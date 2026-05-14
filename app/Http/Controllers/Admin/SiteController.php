@@ -10,6 +10,7 @@ use App\Models\Locale;
 use App\Models\Media;
 use App\Models\MediaFolder;
 use App\Models\Site;
+use App\Support\Admin\AdminPagination;
 use App\Support\Sites\SiteCloneOptions;
 use App\Support\Sites\SiteCloneService;
 use App\Support\Sites\SiteDeleteService;
@@ -50,7 +51,7 @@ class SiteController extends Controller
                 ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
                 ->primaryFirst()
                 ->orderBy('name')
-                ->paginate(15),
+                ->paginate(AdminPagination::perPage()),
             'siteDeleteReports' => Site::query()
                 ->get()
                 ->keyBy('id')

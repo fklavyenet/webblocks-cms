@@ -12,9 +12,13 @@
         <div class="wb-card">
             <div class="wb-card-header"><strong>General</strong></div>
 
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+            <form id="general-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
                 @csrf
                 @method('PUT')
+
+                <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
+                <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
+                <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
 
                 <div class="wb-card-body">
                     <div class="wb-stack wb-gap-3">
@@ -35,24 +39,45 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <label for="settings_admin_listing_per_page">Admin listing rows per page</label>
+                            <input
+                                id="settings_admin_listing_per_page"
+                                name="admin_listing_per_page"
+                                type="number"
+                                class="wb-input"
+                                min="1"
+                                max="100"
+                                step="1"
+                                required
+                                value="{{ $settings['admin_listing_per_page'] }}"
+                            >
+                            <div class="wb-text-sm wb-text-muted">Controls the default number of rows shown on paginated admin listing screens.</div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
             </form>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions
+                    :cancel-url="route('admin.system.settings.edit')"
+                    submit-label="Save Changes"
+                    :submit-attributes="['form' => 'general-settings-form']"
+                />
+            </div>
         </div>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Project</strong></div>
 
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+            <form id="project-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
                 @csrf
                 @method('PUT')
 
                 <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
                 <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+                <input type="hidden" name="admin_listing_per_page" value="{{ $settings['admin_listing_per_page'] }}">
                 <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
 
                 <div class="wb-card-body">
@@ -79,16 +104,21 @@
                     </div>
                 </div>
 
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
             </form>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions
+                    :cancel-url="route('admin.system.settings.edit')"
+                    submit-label="Save Changes"
+                    :submit-attributes="['form' => 'project-settings-form']"
+                />
+            </div>
         </div>
 
         <div class="wb-card">
             <div class="wb-card-header"><strong>Cookie settings</strong></div>
 
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+            <form id="cookie-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
                 @csrf
                 @method('PUT')
 
@@ -96,6 +126,7 @@
                 <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
                 <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
                 <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
+                <input type="hidden" name="admin_listing_per_page" value="{{ $settings['admin_listing_per_page'] }}">
 
                 <div class="wb-card-body">
                     <div class="wb-stack wb-gap-3">
@@ -119,10 +150,15 @@
                     </div>
                 </div>
 
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
             </form>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions
+                    :cancel-url="route('admin.system.settings.edit')"
+                    submit-label="Save Changes"
+                    :submit-attributes="['form' => 'cookie-settings-form']"
+                />
+            </div>
         </div>
 
         <div class="wb-card wb-card-muted">

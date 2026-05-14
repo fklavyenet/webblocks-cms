@@ -24,6 +24,14 @@ class SystemSettings
 
     public const TIMEZONE = 'system.timezone';
 
+    public const ADMIN_LISTING_PER_PAGE = 'admin.listing_per_page';
+
+    public const ADMIN_LISTING_PER_PAGE_DEFAULT = 15;
+
+    public const ADMIN_LISTING_PER_PAGE_MIN = 1;
+
+    public const ADMIN_LISTING_PER_PAGE_MAX = 100;
+
     public const VISITOR_CONSENT_BANNER_ENABLED = 'system.visitor_consent_banner_enabled';
 
     private const READABLE_KEYS = [
@@ -33,6 +41,7 @@ class SystemSettings
         self::APP_SLOGAN,
         self::DEFAULT_LOCALE,
         self::TIMEZONE,
+        self::ADMIN_LISTING_PER_PAGE,
         self::VISITOR_CONSENT_BANNER_ENABLED,
     ];
 
@@ -41,6 +50,7 @@ class SystemSettings
         self::PROJECT_TAGLINE,
         self::DEFAULT_LOCALE,
         self::TIMEZONE,
+        self::ADMIN_LISTING_PER_PAGE,
         self::VISITOR_CONSENT_BANNER_ENABLED,
     ];
 
@@ -101,6 +111,18 @@ class SystemSettings
         $timezone = trim((string) $this->get(self::TIMEZONE, ''));
 
         return $timezone !== '' ? $timezone : (string) config('app.timezone', 'UTC');
+    }
+
+    public function adminListingPerPage(): int
+    {
+        $perPage = filter_var($this->get(self::ADMIN_LISTING_PER_PAGE), FILTER_VALIDATE_INT, [
+            'options' => [
+                'min_range' => self::ADMIN_LISTING_PER_PAGE_MIN,
+                'max_range' => self::ADMIN_LISTING_PER_PAGE_MAX,
+            ],
+        ]);
+
+        return is_int($perPage) ? $perPage : self::ADMIN_LISTING_PER_PAGE_DEFAULT;
     }
 
     public function projectName(): ?string

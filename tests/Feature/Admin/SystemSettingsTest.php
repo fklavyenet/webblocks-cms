@@ -6,6 +6,7 @@ use App\Models\Locale;
 use App\Models\Site;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\System\SystemSettings;
 use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,7 @@ class SystemSettingsTest extends TestCase
         $response->assertDontSee('Application slogan');
         $response->assertSee('Default locale');
         $response->assertSee('Timezone');
+        $response->assertSee('Admin listing rows per page');
         $response->assertSee('Cookie settings');
         $response->assertSee('Show the public privacy settings banner when visitor reports are enabled.');
         $response->assertSee('Visitors who decline still contribute privacy-safe anonymous page view counts.');
@@ -64,6 +66,7 @@ class SystemSettingsTest extends TestCase
             'project_tagline' => 'Install-specific admin context',
             'default_locale' => $locale->code,
             'timezone' => 'Europe/Istanbul',
+            'admin_listing_per_page' => '12',
             'visitor_consent_banner_enabled' => '1',
         ]);
 
@@ -73,12 +76,14 @@ class SystemSettingsTest extends TestCase
         $this->assertSame('Install-specific admin context', SystemSetting::query()->where('key', 'system.project_tagline')->value('value'));
         $this->assertSame($locale->code, SystemSetting::query()->where('key', 'system.default_locale')->value('value'));
         $this->assertSame('Europe/Istanbul', SystemSetting::query()->where('key', 'system.timezone')->value('value'));
+        $this->assertSame('12', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
         $this->assertSame('1', SystemSetting::query()->where('key', 'system.visitor_consent_banner_enabled')->value('value'));
 
         $followUp = $this->actingAs($user)->get(route('admin.system.settings.edit'));
         $followUp->assertSee('Europe/Istanbul');
         $followUp->assertSee('WebBlocks UI Docs');
         $followUp->assertSee('Install-specific admin context');
+        $followUp->assertSee('value="12"', false);
     }
 
     #[Test]
@@ -101,6 +106,45 @@ class SystemSettingsTest extends TestCase
 
         $response->assertRedirect(route('admin.system.settings.edit'));
         $response->assertSessionHasErrors(['project_name', 'project_tagline', 'default_locale', 'timezone']);
+    }
+
+    #[Test]
+    public function settings_require_admin_listing_rows_per_page_to_be_an_integer_in_range(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->from(route('admin.system.settings.edit'))->put(route('admin.system.settings.update'), [
+            'project_name' => 'WebBlocks UI Docs',
+            'project_tagline' => 'Install-specific admin context',
+            'default_locale' => $locale->code,
+            'timezone' => 'UTC',
+            'admin_listing_per_page' => '101',
+            'visitor_consent_banner_enabled' => '1',
+        ]);
+
+        $response->assertRedirect(route('admin.system.settings.edit'));
+        $response->assertSessionHasErrors(['admin_listing_per_page']);
+    }
+
+    #[Test]
+    public function admin_listing_rows_per_page_falls_back_to_default_when_missing_or_invalid(): void
+    {
+        $settings = app(SystemSettings::class);
+
+        $this->assertSame(15, $settings->adminListingPerPage());
+
+        SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LISTING_PER_PAGE], ['value' => '']);
+        $this->assertSame(15, $settings->adminListingPerPage());
+
+        SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LISTING_PER_PAGE], ['value' => 'abc']);
+        $this->assertSame(15, $settings->adminListingPerPage());
+
+        SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LISTING_PER_PAGE], ['value' => '0']);
+        $this->assertSame(15, $settings->adminListingPerPage());
+
+        SystemSetting::query()->updateOrCreate(['key' => SystemSettings::ADMIN_LISTING_PER_PAGE], ['value' => '200']);
+        $this->assertSame(15, $settings->adminListingPerPage());
     }
 
     #[Test]
@@ -156,5 +200,22 @@ class SystemSettingsTest extends TestCase
         $response->assertSee('Primary Public Site');
         $response->assertDontSee('Public site tagline');
         $response->assertSee('<title>Admin Dashboard · WebBlocks CMS</title>', false);
+    }
+
+    #[Test]
+    public function general_card_actions_render_in_the_card_footer(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/<div class="wb-card">\s*<div class="wb-card-header"><strong>General<\/strong><\/div>.*?<form id="general-settings-form"[\s\S]*?<\/form>\s*<div class="wb-card-footer">\s*<div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap" data-admin-form-actions>/s',
+            $html,
+        );
     }
 }

@@ -3,7 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Site;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\System\SystemSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -192,6 +194,44 @@ class UserManagementTest extends TestCase
         $pageTwo->assertOk();
         $pageTwo->assertSee('aria-current="page">2</span>', false);
         $pageTwo->assertSee('16-16/16', false);
+    }
+
+    #[Test]
+    public function users_index_uses_configured_admin_listing_rows_per_page(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(
+            ['key' => SystemSettings::ADMIN_LISTING_PER_PAGE],
+            ['value' => '12'],
+        );
+
+        User::factory()->count(13)->sequence(fn ($sequence) => [
+            'name' => 'Paged Member '.($sequence->index + 1),
+            'email' => 'paged-member-'.($sequence->index + 1).'@example.com',
+        ])->create();
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index', [
+            'q' => 'paged-member',
+            'status' => 'active',
+            'role' => User::ROLE_EDITOR,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('1-12/13', false);
+        $response->assertSee('q=paged-member', false);
+        $response->assertSee('page=2', false);
+
+        $pageTwo = $this->actingAs($admin)->get(route('admin.users.index', [
+            'q' => 'paged-member',
+            'status' => 'active',
+            'role' => User::ROLE_EDITOR,
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('13-13/13', false);
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
     }
 
     #[Test]

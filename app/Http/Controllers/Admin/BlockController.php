@@ -14,6 +14,7 @@ use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Support\Admin\AdminPagination;
 use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockPayloadWriter;
 use App\Support\Blocks\BlockTranslationResolver;
@@ -73,7 +74,7 @@ class BlockController extends Controller
             $localeId,
         )
             ->orderByDesc('id')
-            ->paginate(15)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
         $currentPage = $pageId
             ? Page::query()->with(['site', 'translations.locale'])->find($pageId)

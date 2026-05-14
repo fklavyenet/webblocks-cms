@@ -12,6 +12,7 @@ use App\Models\MediaFolder;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\User;
+use App\Support\Admin\AdminPagination;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockTranslationResolver;
@@ -81,7 +82,7 @@ class SharedSlotController extends Controller
                 ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
                 ->orderBy($sort, $direction)
                 ->when($sort !== 'updated_at', fn ($query) => $query->orderByDesc('updated_at'))
-                ->paginate(15)
+                ->paginate(AdminPagination::perPage())
                 ->withQueryString();
         }
 

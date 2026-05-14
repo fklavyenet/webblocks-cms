@@ -24,6 +24,7 @@ class SystemSettingsController extends Controller
                 'project_tagline' => old('project_tagline', $this->systemSettings->projectTagline()),
                 'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
                 'timezone' => old('timezone', $this->systemSettings->timezone()),
+                'admin_listing_per_page' => old('admin_listing_per_page', $this->systemSettings->adminListingPerPage()),
                 'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),
             ],
             'localeOptions' => $this->systemSettings->enabledLocaleOptions(),

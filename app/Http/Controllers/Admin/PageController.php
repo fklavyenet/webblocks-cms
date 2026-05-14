@@ -16,6 +16,7 @@ use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Support\Admin\AdminPagination;
 use App\Support\Audit\CurrentActorResolver;
 use App\Support\Blocks\BlockDeletionManager;
 use App\Support\Blocks\BlockPayloadWriter;
@@ -137,7 +138,7 @@ class PageController extends Controller
             ->when($sort === 'slug', fn ($query) => $query->orderByDefaultTranslation('slug', $direction))
             ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
             ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
-            ->paginate(15)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
         $this->pageIndexState->remember($request, array_filter([

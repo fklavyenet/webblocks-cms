@@ -231,6 +231,7 @@ It keeps:
 - Project Name and Project Tagline for admin-only install context
 - default locale
 - timezone
+- admin listing rows per page for paginated admin listing screens
 - cookie or privacy banner settings
 - product version information
 - environment information
@@ -243,6 +244,8 @@ It does not control:
 - public favicon, public search scope, or page translation SEO
 
 Project Identity helps distinguish one CMS install from another in the admin topbar and browser title. Those public-facing values still live on each Site or page translation instead.
+
+`Admin listing rows per page` defaults to `15`, accepts custom numeric values such as `10` or `12`, and changes only the default row count used by paginated admin listing screens. It does not affect public pagination.
 
 ## Site Clone
 

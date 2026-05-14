@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BlockTypeRequest;
 use App\Models\BlockType;
+use App\Support\Admin\AdminPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class BlockTypeController extends Controller
             ->withCount('blocks')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
         return view('admin.block-types.index', [
