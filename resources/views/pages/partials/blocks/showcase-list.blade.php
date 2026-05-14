@@ -3,6 +3,7 @@
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
     $items = collect($settings['items'] ?? []);
+    $viewerId = 'wb-gallery-viewer-'.$block->id;
     $assetIds = $items
         ->flatMap(fn ($item) => collect($item['images'] ?? [])->pluck('asset_id'))
         ->filter()
@@ -11,6 +12,32 @@
     $assets = $assetIds->isEmpty()
         ? collect()
         : \App\Models\Media::query()->whereIn('id', $assetIds)->get()->keyBy('id');
+    $galleryItems = $items
+        ->flatMap(function ($item) use ($assets) {
+            return collect($item['images'] ?? [])->map(function ($image) use ($assets, $item) {
+                $asset = $assets->get((int) ($image['asset_id'] ?? 0));
+                $imageUrl = $asset?->url();
+
+                if (! $imageUrl) {
+                    return null;
+                }
+
+                $caption = trim((string) ($image['title'] ?? ''));
+                $alt = trim((string) ($asset?->alt_text ?: ($image['title'] ?? ($item['title'] ?? 'Project image'))));
+
+                return [
+                    'thumbnail_url' => $imageUrl,
+                    'full_url' => $imageUrl,
+                    'alt' => $alt,
+                    'caption' => $caption,
+                    'meta' => '',
+                    'width' => $asset?->width,
+                    'height' => $asset?->height,
+                ];
+            });
+        })
+        ->filter()
+        ->values();
 @endphp
 
 <section class="wb-stack wb-gap-6">
@@ -47,9 +74,12 @@
                                         <a
                                             href="{{ $imageUrl }}"
                                             class="wb-gallery-trigger"
+                                            data-wb-gallery-target="#{{ $viewerId }}"
                                             data-wb-gallery-full="{{ $imageUrl }}"
                                             data-wb-gallery-alt="{{ $asset?->alt_text ?: ($image['title'] ?? ($item['title'] ?? 'Project image')) }}"
                                             @if (! empty($image['title'])) data-wb-gallery-caption="{{ $image['title'] }}" @endif
+                                            @if ($asset?->width) data-wb-gallery-width="{{ $asset->width }}" @endif
+                                            @if ($asset?->height) data-wb-gallery-height="{{ $asset->height }}" @endif
                                         >
                                             <img src="{{ $imageUrl }}" alt="{{ $asset?->alt_text ?: ($image['title'] ?? ($item['title'] ?? 'Project image')) }}" class="wb-gallery-media">
                                         </a>
@@ -71,3 +101,13 @@
         </article>
     @endforeach
 </section>
+
+@if ($galleryItems->isNotEmpty())
+    @php
+        $galleryViewerHtml = view('pages.partials.blocks.gallery-viewer', [
+            'viewerId' => $viewerId,
+            'galleryItems' => $galleryItems,
+        ])->render();
+        app(\App\Support\Blocks\PublicOverlayRegistry::class)->push($galleryViewerHtml);
+    @endphp
+@endif

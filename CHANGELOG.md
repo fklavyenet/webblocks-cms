@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.12
+
+- Fix the public `showcase-list` renderer so clickable showcase images emit the required WebBlocks UI `data-wb-gallery-target` and register a matching gallery viewer modal under the shared `#wb-overlay-root` instead of falling through to raw image URL navigation.
+- Keep existing `href` image links as the no-JavaScript fallback while adding regression coverage that both `showcase-list` and the existing `gallery` block keep a valid gallery trigger-to-overlay target relationship.
+
 ## 1.31.11
 
 - Fix the CMS public search modal shell so it no longer renders the shared `.wb-overlay-layer--dialog` in a hidden state that WebBlocks UI `v2.7.1` reuses for trusted HTML modals and gallery viewers, which previously left CMS-rendered overlays invisible even though the runtime locked the body and found the target.

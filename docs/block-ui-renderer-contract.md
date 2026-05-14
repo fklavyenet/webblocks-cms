@@ -492,7 +492,7 @@ Public pages now use explicit layout composition modes:
 | CMS Block | Current state | Desired direction | Notes |
 | --- | --- | --- | --- |
 | `card-grid` | public-render-only | should stay transitional | The renderer now matches the same `wb-grid` and `wb-card` structure as `columns.variant = cards`, but it still depends on `settings.items`. Prefer Columns for new structured content. |
-| `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. |
+| `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. Public image triggers should still follow the shipped gallery contract by emitting `data-wb-gallery-target` and registering one shared viewer modal under `#wb-overlay-root`. |
 | `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
 | `code` | first-class public renderer | acceptable | Safe `<pre><code>` rendering is now in place; richer editor affordances remain optional future work. |
 | `list` | first-class public renderer | acceptable | Dedicated line-based list rendering now exists; keep compatibility for legacy settings-driven content. |

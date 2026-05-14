@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\Media;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -1798,6 +1799,135 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-modal"/s', $html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-gallery-viewer"/s', $html);
         $this->assertStringNotContainsString('wb-overlay-layer--dialog" hidden', $html);
+    }
+
+    #[Test]
+    public function showcase_list_registers_a_gallery_viewer_target_under_the_shared_overlay_root(): void
+    {
+        $page = $this->pageWithMainSlot('Showcase Page', 'showcase-page');
+        $imageOne = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/showcase-one.jpg',
+            'filename' => 'showcase-one.jpg',
+            'original_name' => 'showcase-one.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Showcase One',
+            'alt_text' => 'Showcase alt one',
+            'width' => 1600,
+            'height' => 900,
+        ]);
+        $imageTwo = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/showcase-two.jpg',
+            'filename' => 'showcase-two.jpg',
+            'original_name' => 'showcase-two.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1400,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Showcase Two',
+            'alt_text' => 'Showcase alt two',
+            'width' => 1280,
+            'height' => 720,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'showcase-list',
+            'block_type_id' => $this->blockType('showcase-list', 'Showcase List', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'items' => [
+                    [
+                        'title' => 'Web App Project',
+                        'subtitle' => 'Reference app',
+                        'url' => 'https://example.test/project',
+                        'url_label' => 'Visit project',
+                        'images' => [
+                            ['asset_id' => $imageOne->id, 'title' => 'Dashboard'],
+                            ['asset_id' => $imageTwo->id, 'title' => 'Settings'],
+                        ],
+                    ],
+                ],
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'showcase-page'));
+        $html = $response->getContent();
+        $viewerId = 'wb-gallery-viewer-'.$block->id;
+
+        $response->assertOk();
+        $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+        $this->assertSame(1, substr_count($html, 'class="wb-overlay-root"'));
+        $this->assertSame(2, substr_count($html, 'class="wb-gallery-trigger"'));
+        $this->assertSame(2, substr_count($html, 'data-wb-gallery-target="#'.$viewerId.'"'));
+        $this->assertSame(2, substr_count($html, 'data-wb-gallery-full='));
+        $this->assertSame(2, substr_count($html, 'data-wb-gallery-alt="Showcase alt'));
+        $this->assertStringContainsString('showcase-one.jpg', $html);
+        $this->assertStringContainsString('showcase-two.jpg', $html);
+        $this->assertMatchesRegularExpression('/href="[^"]*showcase-one\.jpg"/', $html);
+        $this->assertStringContainsString('data-wb-gallery-target="#'.$viewerId.'"', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="'.preg_quote($viewerId, '/').'"/s', $html);
+        $this->assertMatchesRegularExpression('/<div class="wb-modal wb-modal-xl" id="'.preg_quote($viewerId, '/').'".*class="wb-gallery-viewer"/s', $html);
+        $this->assertStringContainsString('data-wb-gallery-caption="Dashboard"', $html);
+        $this->assertStringContainsString('data-wb-gallery-caption="Settings"', $html);
+    }
+
+    #[Test]
+    public function gallery_block_keeps_registering_a_matching_shared_overlay_viewer(): void
+    {
+        $page = $this->pageWithMainSlot('Gallery Page', 'gallery-page');
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/gallery-check.jpg',
+            'filename' => 'gallery-check.jpg',
+            'original_name' => 'gallery-check.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Gallery Check',
+            'alt_text' => 'Gallery check alt',
+            'caption' => 'Gallery caption',
+            'description' => 'Gallery meta',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $this->blockType('gallery', 'Gallery', 98)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'asset_ids' => [$image->id],
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'gallery-page'));
+        $html = $response->getContent();
+        $viewerId = 'wb-gallery-viewer-'.$block->id;
+
+        $response->assertOk();
+        $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+        $this->assertStringContainsString('data-wb-gallery-target="#'.$viewerId.'"', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="'.preg_quote($viewerId, '/').'"/s', $html);
     }
 
     #[Test]
