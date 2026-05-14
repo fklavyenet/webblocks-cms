@@ -1,4 +1,13 @@
 <div class="wb-stack wb-gap-4">
+    @if ($errors->any())
+        <div class="wb-alert wb-alert-danger">
+            <div>
+                <div class="wb-alert-title">Validation Error</div>
+                <div>{{ $errors->first() }}</div>
+            </div>
+        </div>
+    @endif
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="name">Name</label>

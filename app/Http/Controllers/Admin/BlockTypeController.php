@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BlockTypeRequest;
 use App\Models\BlockType;
 use App\Support\Admin\AdminPagination;
+use App\Support\BlockTypes\BlockTypeIndexState;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,10 @@ use Illuminate\View\View;
 
 class BlockTypeController extends Controller
 {
+    public function __construct(
+        private readonly BlockTypeIndexState $indexState,
+    ) {}
+
     public function index(Request $request): View
     {
         $categories = $this->categoryOptions();
@@ -39,12 +44,29 @@ class BlockTypeController extends Controller
             ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
+        $requestedModal = (string) $request->query('modal', '');
+        $editBlockType = null;
+
+        if ($requestedModal === 'edit-block-type') {
+            $requestedBlockTypeId = (int) $request->query('block_type');
+            $editBlockType = $blockTypes->getCollection()->first(
+                fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId && ! $blockType->is_system
+            );
+        }
+
+        $closeUrl = route('admin.block-types.index', $this->indexState->normalizeQuery($request->query()));
+        $returnUrl = $this->indexState->safeReturnUrlFromRequest($request) ?? $closeUrl;
+
         return view('admin.block-types.index', [
             'blockTypes' => $blockTypes,
             'filters' => $filters,
             'categories' => $categories,
             'statuses' => $statuses,
             'supportOptions' => $this->supportOptions(),
+            'requestedModal' => $requestedModal,
+            'editBlockType' => $editBlockType,
+            'blockTypesReturnUrl' => $returnUrl,
+            'closeUrl' => $closeUrl,
             'supportedAdminForms' => $blockTypes->getCollection()
                 ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedAdminSlugs[$blockType->slug])]),
             'supportedPublicRenders' => $blockTypes->getCollection()
@@ -70,7 +92,10 @@ class BlockTypeController extends Controller
             return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
         }
 
-        return view('admin.block-types.edit', ['blockType' => $blockType]);
+        return view('admin.block-types.edit', [
+            'blockType' => $blockType,
+            'blockTypesReturnUrl' => $this->indexState->returnUrl(request()),
+        ]);
     }
 
     public function update(BlockTypeRequest $request, BlockType $blockType): RedirectResponse
@@ -81,7 +106,9 @@ class BlockTypeController extends Controller
 
         $blockType->update($request->validated() + ['is_system' => false]);
 
-        return redirect()->route('admin.block-types.index')->with('status', 'Block type updated successfully.');
+        return redirect()
+            ->to($request->safeReturnUrl() ?: route('admin.block-types.index'))
+            ->with('status', 'Block type updated successfully.');
     }
 
     public function destroy(BlockType $blockType): RedirectResponse

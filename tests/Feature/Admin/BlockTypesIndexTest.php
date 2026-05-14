@@ -33,6 +33,17 @@ class BlockTypesIndexTest extends TestCase
         $this->seedFoundation();
 
         $user = User::factory()->superAdmin()->create();
+        $editableBlockType = BlockType::query()->create([
+            'name' => 'Modal Editable Type',
+            'slug' => 'modal-editable-type',
+            'description' => 'Visible custom block type for index actions.',
+            'category' => 'pattern',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => -1,
+            'status' => 'published',
+        ]);
 
         $response = $this->actingAs($user)->get(route('admin.block-types.index'));
 
@@ -55,6 +66,88 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('Search block types...');
         $response->assertSee('New Custom Block Type');
         $response->assertSee('Edit block type');
+
+        $expectedModalUrl = route('admin.block-types.index', ['modal' => 'edit-block-type', 'block_type' => $editableBlockType->id]);
+
+        $response->assertSee('href="'.e($expectedModalUrl).'"', false);
+        $response->assertSee('aria-haspopup="dialog"', false);
+        $response->assertSee('aria-controls="blockTypeEditModal-'.$editableBlockType->id.'"', false);
+        $response->assertDontSee('href="'.e(route('admin.block-types.edit', $editableBlockType)).'" class="wb-action-btn wb-action-btn-edit"', false);
+    }
+
+    #[Test]
+    public function edit_page_heading_includes_the_block_type_name(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('is_system', false)->orderBy('name')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.edit', $blockType));
+
+        $response->assertOk();
+        $response->assertSee('Edit Block Type: '.$blockType->name, false);
+        $response->assertSee('<h1 class="wb-page-header-title">Edit Block Type: '.$blockType->name.'</h1>', false);
+    }
+
+    #[Test]
+    public function index_can_open_block_type_edit_in_a_modal_that_submits_to_the_update_route(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('is_system', false)->orderBy('name')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'search' => $blockType->name,
+            'status' => $blockType->status,
+            'modal' => 'edit-block-type',
+            'block_type' => $blockType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('id="blockTypeEditModal-'.$blockType->id.'"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+        $response->assertSee('Edit Block Type: '.$blockType->name, false);
+        $response->assertSee('action="'.e(route('admin.block-types.update', $blockType)).'"', false);
+        $response->assertSee('name="return_url" value="'.e(route('admin.block-types.index', ['search' => $blockType->name, 'status' => $blockType->status])).'"', false);
+    }
+
+    #[Test]
+    public function updating_from_modal_returns_to_the_filtered_block_types_list_context(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('is_system', false)->orderBy('name')->firstOrFail();
+        $returnUrl = route('admin.block-types.index', [
+            'search' => $blockType->name,
+            'category' => $blockType->category,
+            'status' => $blockType->status,
+            'support' => 'user',
+            'usage' => 'unused',
+            'page' => 2,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.block-types.update', $blockType), [
+            'name' => $blockType->name.' Updated',
+            'slug' => $blockType->slug,
+            'description' => $blockType->description,
+            'category' => $blockType->category,
+            'source_type' => $blockType->source_type,
+            'sort_order' => $blockType->sort_order,
+            'status' => $blockType->status,
+            'is_container' => $blockType->is_container ? '1' : '0',
+            'return_url' => $returnUrl,
+            '_block_type_modal' => 'edit-block-type',
+            '_block_type_id' => (string) $blockType->id,
+        ]);
+
+        $response->assertRedirect($returnUrl);
+        $this->assertDatabaseHas('block_types', [
+            'id' => $blockType->id,
+            'name' => $blockType->name.' Updated',
+        ]);
     }
 
     #[Test]

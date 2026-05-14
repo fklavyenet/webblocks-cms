@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.16
+
+- Update `Admin -> System -> Block Types` so install-specific edit actions open a query-driven WebBlocks admin modal from the index, keep the existing edit route as a fallback, and preserve filtered or paginated list return context on save.
+- Rename the Block Type edit heading and modal title to `Edit Block Type: {Block Type Name}` so the selected record stays visible in page-level and modal-level admin context.
+
 ## 1.31.15
 
 - Apply the install-level `Admin listing rows per page` setting consistently across remaining paginated CMS admin listings, including `Media`, Page Layouts, backup history, icon catalog, contact messages, and site export/import histories.

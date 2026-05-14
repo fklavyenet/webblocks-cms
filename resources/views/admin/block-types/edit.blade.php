@@ -1,8 +1,8 @@
-@extends('layouts.admin', ['title' => 'Edit Block Type', 'heading' => 'Edit Block Type'])
+@extends('layouts.admin', ['title' => 'Edit Block Type: '.$blockType->name, 'heading' => 'Edit Block Type: '.$blockType->name])
 
 @section('content')
     @include('admin.partials.page-header', [
-        'title' => 'Edit Block Type',
+        'title' => 'Edit Block Type: '.$blockType->name,
         'description' => 'Update the selected block type record.',
     ])
 
@@ -12,13 +12,14 @@
         <form method="POST" action="{{ route('admin.block-types.update', $blockType) }}" class="wb-stack wb-gap-0">
             @csrf
             @method('PUT')
+            <input type="hidden" name="return_url" value="{{ $blockTypesReturnUrl }}">
 
             <div class="wb-card-body">
                 @include('admin.block-types._form')
             </div>
 
             <div class="wb-card-footer">
-                <x-admin.form-actions :cancel-url="route('admin.block-types.index')" submit-label="Save Changes" />
+                <x-admin.form-actions :cancel-url="$blockTypesReturnUrl" submit-label="Save Changes" />
             </div>
         </form>
     </div>

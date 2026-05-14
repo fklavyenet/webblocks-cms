@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\BlockType;
+use App\Support\BlockTypes\BlockTypeIndexState;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -38,6 +39,12 @@ class BlockTypeRequest extends FormRequest
             'is_container' => ['nullable', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'status' => ['required', Rule::in(['draft', 'published'])],
+            'return_url' => ['nullable', 'string', 'max:2048'],
         ];
+    }
+
+    public function safeReturnUrl(): ?string
+    {
+        return app(BlockTypeIndexState::class)->sanitizeReturnUrl($this->input('return_url'));
     }
 }

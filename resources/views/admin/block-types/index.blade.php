@@ -3,6 +3,7 @@
 @section('content')
     @php
         $hasActiveFilters = $filters['search'] !== '' || $filters['category'] !== '' || $filters['status'] !== '' || $filters['support'] !== '' || $filters['usage'] !== '';
+        $baseQuery = array_filter(array_merge($filters, ['page' => $blockTypes->currentPage() > 1 ? $blockTypes->currentPage() : null]));
     @endphp
 
     @include('admin.partials.page-header', [
@@ -129,7 +130,7 @@
                                         <td class="wb-nowrap">
                                             <div class="wb-action-group">
                                                 @if (! $blockType->is_system)
-                                                    <a href="{{ route('admin.block-types.edit', $blockType) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type">
+                                                    <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
                                                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                     </a>
                                                     <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">
@@ -155,3 +156,13 @@
         @include('admin.partials.pagination', ['paginator' => $blockTypes, 'ariaLabel' => 'Block types pagination', 'compact' => true])
     </div>
 @endsection
+
+@push('overlays')
+    @if ($requestedModal === 'edit-block-type' && $editBlockType)
+        @include('admin.block-types.partials.edit-modal', [
+            'blockType' => $editBlockType,
+            'closeUrl' => $closeUrl,
+            'blockTypesReturnUrl' => $blockTypesReturnUrl,
+        ])
+    @endif
+@endpush
