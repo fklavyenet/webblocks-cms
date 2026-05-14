@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.4
+
+- Refine the Edit Media admin screen so Preview and Usage render as read-only context cards, Media Information becomes the full-width edit form, File Details opens from the Preview header, and delete actions stay on the Media list instead of the edit form.
+- Clarify Media index count badges so the page heading shows total media in scope while the Media Library card shows the current filtered result count.
+
 ## 1.31.3
 
 - Fix Media Usage filter after Asset-to-Media rename so used/unused filtering no longer queries legacy/non-existent root media columns.
