@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Support\Assets\AssetKindResolver;
 use App\Support\Assets\AssetUsageResolver;
+use App\Support\Media\MediaIndexState;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
@@ -21,6 +22,7 @@ class MediaController extends Controller
 {
     public function __construct(
         private readonly AssetUsageResolver $assetUsageResolver,
+        private readonly MediaIndexState $mediaIndexState,
         private readonly AdminAuthorization $authorization,
     ) {}
 
@@ -85,23 +87,28 @@ class MediaController extends Controller
         ]);
     }
 
-    public function show(Asset $asset): View
+    public function show(Asset $asset): RedirectResponse
     {
         $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
 
-        return view('admin.media.show', [
-            'asset' => $asset->load('folder'),
-            'usages' => $this->assetUsageResolver->resolve($asset),
-        ]);
+        return redirect()->route('admin.media.edit', array_filter([
+            'asset' => $asset,
+            'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request()),
+        ]));
     }
 
     public function edit(Asset $asset): View
     {
         $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
 
+        $usages = $this->assetUsageResolver->resolve($asset);
+
         return view('admin.media.edit', [
-            'asset' => $asset,
+            'asset' => $asset->load('folder'),
             'folders' => $this->folderOptions(),
+            'usages' => $usages,
+            'mediaReturnUrl' => $this->mediaIndexState->returnUrl(request()),
+            'showDeleteModal' => request()->string('modal')->toString() === 'delete-media',
         ]);
     }
 
@@ -111,32 +118,33 @@ class MediaController extends Controller
         $asset->update($request->validated());
 
         return redirect()
-            ->route('admin.media.show', array_filter([
-                'asset' => $asset,
-                'back_to_preview' => $request->boolean('back_to_preview') ? 1 : null,
-            ]))
-            ->with('status', 'Asset updated successfully.');
+            ->to($request->safeReturnUrl() ?: route('admin.media.index'))
+            ->with('status', 'Media updated successfully.');
     }
 
     public function destroy(Asset $asset): RedirectResponse
     {
         $this->authorization->abortUnlessAssetAccess(request()->user(), $asset);
         $usages = $this->assetUsageResolver->resolve($asset);
+        $returnUrl = $this->mediaIndexState->safeReturnUrlFromRequest(request());
 
         if ($usages->isNotEmpty()) {
             $summary = $usages->take(3)->map(fn (array $usage) => $usage['context'].': '.$usage['label'])->implode(', ');
 
             return redirect()
-                ->route('admin.media.show', $asset)
-                ->withErrors(['asset' => 'Asset cannot be deleted because it is in use. '.$summary]);
+                ->route('admin.media.edit', array_filter([
+                    'asset' => $asset,
+                    'return_url' => $returnUrl,
+                ]))
+                ->withErrors(['asset' => 'Media cannot be deleted because it is in use. '.$summary]);
         }
 
         Storage::disk($asset->disk)->delete($asset->path);
         $asset->delete();
 
         return redirect()
-            ->route('admin.media.index')
-            ->with('status', 'Asset deleted successfully.');
+            ->to($returnUrl ?: route('admin.media.index'))
+            ->with('status', 'Media deleted successfully.');
     }
 
     public function store(AssetUploadRequest $request): RedirectResponse
@@ -175,7 +183,7 @@ class MediaController extends Controller
 
         return redirect()
             ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
-            ->with('status', 'Asset uploaded successfully.');
+            ->with('status', 'Media uploaded successfully.');
     }
 
     public function storeFolder(AssetFolderRequest $request): RedirectResponse

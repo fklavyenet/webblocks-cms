@@ -73,6 +73,18 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - Page translation rows also own localized SEO override fields such as `seo_title`, `seo_description`, `seo_keywords`, `og_title`, `og_description`, and `og_image_asset_id`.
 - This keeps public page metadata locale-aware and out of shared page JSON settings.
 
+## Media
+
+- `Media` is the admin-facing name for shared uploaded files in this phase.
+- Internal technical names such as the `Asset` model, `assets` table, `asset_id` columns, export or import payload keys, revision fields, and storage paths remain unchanged until the later technical refactor.
+- `Admin -> Media` keeps the main list title `Media` and the listing card title `Media Library`.
+- On the Media list, the title link and pencil icon both open `Edit Media: {title}` and carry a safe Media return URL back to the current filtered list.
+- The eye icon remains the large preview modal action from the list.
+- The legacy `/admin/media/{id}` detail route now redirects to `/admin/media/{id}/edit` so older links and bookmarks continue to work.
+- `Edit Media` merges preview, file details, metadata, organization, usage, and danger-zone management into one screen.
+- `Copy public URL` now lives in the `File Details` area of the edit screen instead of the list action column.
+- Delete follows the standard admin modal plus `Danger Zone` pattern rather than browser confirm markup.
+
 ## Site Variables
 
 - Site Variables are stored relationally in `site_variables`.

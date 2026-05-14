@@ -14,6 +14,7 @@
         'view' => $viewMode !== 'list' ? $viewMode : null,
     ]);
     $previewBaseQuery = array_merge($baseQuery, ['page' => $assets->currentPage() > 1 ? $assets->currentPage() : null]);
+    $currentReturnUrl = route('admin.media.index', $previewBaseQuery);
 @endphp
 
 @section('content')
@@ -55,7 +56,7 @@
                         'name' => 'usage',
                         'label' => 'Usage',
                         'selected' => $usage,
-                        'placeholder' => 'All assets',
+                        'placeholder' => 'All media',
                         'options' => [
                             'used' => 'Used',
                             'unused' => 'Unused',
@@ -81,7 +82,7 @@
             </div>
 
             <div class="wb-cluster wb-cluster-2">
-                <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">Upload Asset</a>
+                <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">Upload Media</a>
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])) }}" class="wb-btn wb-btn-secondary">New Folder</a>
             </div>
         </div>
@@ -111,10 +112,10 @@
 
             @if ($assets->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No assets found</div>
+                    <div class="wb-empty-title">No media found</div>
                     <div class="wb-empty-text">Adjust the filters or upload the next file into the shared media library.</div>
                     <div class="wb-cluster wb-cluster-2">
-                        <a href="{{ route('admin.media.index', ['modal' => 'upload-asset']) }}" class="wb-btn wb-btn-primary">Upload Asset</a>
+                        <a href="{{ route('admin.media.index', ['modal' => 'upload-asset']) }}" class="wb-btn wb-btn-primary">Upload Media</a>
                         <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">Reset filters</a>
                     </div>
                 </div>
@@ -124,7 +125,7 @@
                         @php($assetUsages = $asset->resolvedUsages)
                         <div class="wb-card wb-card-muted wb-media-grid-card">
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-grid-preview wb-no-decoration" title="Preview asset">
+                                <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-grid-preview wb-no-decoration" title="Preview media">
                                     @if ($asset->canPreview() && $asset->url())
                                         <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}">
                                     @else
@@ -133,7 +134,7 @@
                                 </a>
 
                                 <div class="wb-stack wb-gap-1">
-                                    <strong><a href="{{ route('admin.media.show', $asset) }}">{{ $asset->displayTitle() }}</a></strong>
+                                    <strong><a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl]) }}">{{ $asset->displayTitle() }}</a></strong>
                                     <div class="wb-text-sm wb-text-muted" title="{{ $asset->original_name }}">{{ $asset->original_name }}</div>
                                     <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                                     <div class="wb-text-sm wb-text-muted">{{ $asset->folder?->name ?? 'No folder' }}</div>
@@ -143,23 +144,20 @@
                                     @if ($assetUsages->isNotEmpty())
                                         <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['usage_asset' => $asset->id])) }}" class="wb-status-pill wb-status-pending">Used in {{ $assetUsages->count() }}</a>
                                     @else
-                                        <span class="wb-status-pill wb-status-info">Unused</span>
+                                        <span class="wb-status-pill wb-status-info">Unused media</span>
                                     @endif
 
                                     <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span>
                                 </div>
 
                                 <div class="wb-action-group wb-media-grid-actions">
-                                    <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="Preview asset" aria-label="Preview asset"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
-                                    <a href="{{ route('admin.media.edit', $asset) }}" class="wb-action-btn wb-action-btn-edit" title="Edit asset" aria-label="Edit asset"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                    @if ($asset->url())
-                                        <button type="button" class="wb-action-btn" data-wb-copy-url="{{ $asset->url() }}" title="Copy asset URL" aria-label="Copy asset URL"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></button>
+                                    <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="Preview media" aria-label="Preview media"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                    <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit media" aria-label="Edit media"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                    @if ($assetUsages->isNotEmpty())
+                                        <button type="button" class="wb-action-btn wb-action-btn-delete" title="Delete media" aria-label="Delete media" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                    @else
+                                        <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" title="Delete media" aria-label="Delete media" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.media.destroy', $asset) }}" onsubmit="return confirm('Delete this asset?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete asset" aria-label="Delete asset" @disabled($assetUsages->isNotEmpty())><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -171,7 +169,7 @@
                         <thead>
                             <tr>
                                 <th>Preview</th>
-                                <th>Asset</th>
+                                <th>Media</th>
                                 <th>Folder</th>
                                 <th>Usage</th>
                                 <th>Updated</th>
@@ -183,7 +181,7 @@
                                 @php($assetUsages = $asset->resolvedUsages)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-preview-box wb-no-decoration" title="Preview asset">
+                                        <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-preview-box wb-no-decoration" title="Preview media">
                                             @if ($asset->canPreview() && $asset->url())
                                                 <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}">
                                             @else
@@ -193,7 +191,7 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong><a href="{{ route('admin.media.show', $asset) }}">{{ $asset->displayTitle() }}</a></strong>
+                                            <strong><a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl]) }}">{{ $asset->displayTitle() }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted" title="{{ $asset->original_name }}">{{ $asset->original_name }}</span>
                                             <span class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</span>
                                         </div>
@@ -208,7 +206,7 @@
                                         @if ($assetUsages->isNotEmpty())
                                             <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['usage_asset' => $asset->id])) }}" class="wb-status-pill wb-status-pending">Used in {{ $assetUsages->count() }}</a>
                                         @else
-                                            <span class="wb-status-pill wb-status-info">Unused</span>
+                                            <span class="wb-status-pill wb-status-info">Unused media</span>
                                         @endif
                                     </td>
                                     <td>
@@ -219,16 +217,13 @@
                                     </td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="Preview asset" aria-label="Preview asset"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
-                                            <a href="{{ route('admin.media.edit', $asset) }}" class="wb-action-btn wb-action-btn-edit" title="Edit asset" aria-label="Edit asset"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                            @if ($asset->url())
-                                                <button type="button" class="wb-action-btn" data-wb-copy-url="{{ $asset->url() }}" title="Copy asset URL" aria-label="Copy asset URL"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></button>
+                                            <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="Preview media" aria-label="Preview media"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit media" aria-label="Edit media"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            @if ($assetUsages->isNotEmpty())
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" title="Delete media" aria-label="Delete media" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                            @else
+                                                <a href="{{ route('admin.media.edit', ['asset' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" title="Delete media" aria-label="Delete media" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
                                             @endif
-                                            <form method="POST" action="{{ route('admin.media.destroy', $asset) }}" onsubmit="return confirm('Delete this asset?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete asset" aria-label="Delete asset" @disabled($assetUsages->isNotEmpty())><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>
@@ -267,7 +262,7 @@
                                     <div class="wb-empty">
                                         <i class="wb-icon {{ $previewAsset->previewIconClass() }} wb-icon-2xl" aria-hidden="true"></i>
                                         <div class="wb-empty-title">Preview unavailable</div>
-                                        <div class="wb-empty-text">This asset type does not have an inline viewer yet. You can still copy its public URL or edit the metadata.</div>
+                                        <div class="wb-empty-text">This media type does not have an inline viewer yet. You can still edit the metadata.</div>
                                     </div>
                                 @endif
                             </div>
@@ -275,10 +270,7 @@
                         <div class="wb-cluster wb-cluster-between wb-cluster-2">
                             <div class="wb-text-sm wb-text-muted">{{ $previewAsset->folder?->name ?? 'No folder' }}</div>
                             <div class="wb-action-group">
-                                @if ($previewAsset->url())
-                                    <button type="button" class="wb-action-btn" data-wb-copy-url="{{ $previewAsset->url() }}" title="Copy asset URL" aria-label="Copy asset URL"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></button>
-                                @endif
-                                <a href="{{ route('admin.media.show', array_merge(['asset' => $previewAsset], ['back_to_preview' => 1])) }}" class="wb-action-btn wb-action-btn-view" title="Open details" aria-label="Open details"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                <a href="{{ route('admin.media.edit', ['asset' => $previewAsset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="Edit media" aria-label="Edit media"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>
@@ -292,7 +284,7 @@
             <div class="wb-overlay-backdrop"></div>
             <div class="wb-drawer wb-drawer-right wb-drawer-sm is-open" id="media-usage-drawer" role="dialog" aria-modal="true" aria-labelledby="media-usage-title">
                 <div class="wb-drawer-header">
-                    <h2 class="wb-drawer-title" id="media-usage-title">Asset usage</h2>
+                    <h2 class="wb-drawer-title" id="media-usage-title">Media usage</h2>
                     <a href="{{ route('admin.media.index', $previewBaseQuery) }}" class="wb-drawer-close" aria-label="Close usage details"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></a>
                 </div>
                 <div class="wb-drawer-body wb-stack wb-gap-3">
@@ -303,8 +295,8 @@
 
                     @if ($usageAsset->resolvedUsages->isEmpty())
                         <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">Unused asset</div>
-                            <div class="wb-empty-text">This asset is not referenced by protected CMS content right now.</div>
+                            <div class="wb-empty-title">Unused media</div>
+                            <div class="wb-empty-text">This media item is not referenced by protected CMS content right now.</div>
                         </div>
                     @else
                         <div class="wb-stack wb-gap-2 wb-media-usage-list">
@@ -334,7 +326,7 @@
                 <div class="wb-modal-dialog">
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
-                            <h2 class="wb-modal-title" id="media-upload-title">Upload Asset</h2>
+                            <h2 class="wb-modal-title" id="media-upload-title">Upload Media</h2>
                             <span class="wb-text-sm wb-text-muted">Add a new file to the shared media library.</span>
                         </div>
 
@@ -488,7 +480,7 @@
                         }
 
                         if (feedback) {
-                            feedback.textContent = 'Asset URL copied.';
+                            feedback.textContent = 'Public URL copied.';
                             window.clearTimeout(window.__wbMediaCopyTimer || 0);
                             window.__wbMediaCopyTimer = window.setTimeout(function () {
                                 feedback.textContent = '';

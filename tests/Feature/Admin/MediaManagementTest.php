@@ -62,9 +62,10 @@ class MediaManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.media.index'));
+        $returnUrl = route('admin.media.index');
 
         $response->assertOk();
-        $response->assertSee('Upload Asset');
+        $response->assertSee('Upload Media');
         $response->assertSee('New Folder');
         $response->assertSee('All folders');
         $response->assertSee('Example image');
@@ -72,8 +73,9 @@ class MediaManagementTest extends TestCase
         $response->assertDontSee('Organize shared assets into compact folders.');
         $response->assertDontSee('MIME Type');
         $response->assertDontSee('Size');
-        $response->assertSee(route('admin.media.show', $asset), false);
-        $response->assertSee('Copy asset URL');
+        $response->assertDontSee('Upload Asset');
+        $response->assertSee(route('admin.media.edit', ['asset' => $asset, 'return_url' => $returnUrl]), false);
+        $response->assertDontSee('Copy asset URL');
         $response->assertSee('List');
         $response->assertSee('Grid');
         $response->assertSee('<div class="wb-card wb-card-muted">', false);
@@ -81,6 +83,8 @@ class MediaManagementTest extends TestCase
         $response->assertSee('<div class="wb-table-wrap">', false);
         $response->assertDontSee('<div class="wb-page-actions">', false);
         $response->assertSee('<strong>Media Library</strong>', false);
+        $response->assertSee('<th>Media</th>', false);
+        $response->assertDontSee('<th>Asset</th>', false);
         $response->assertSee('name="view" value="list"', false);
     }
 
@@ -115,7 +119,7 @@ class MediaManagementTest extends TestCase
         $response->assertSee('<div class="wb-card wb-card-muted">', false);
         $response->assertSee('<div class="wb-table-wrap">', false);
         $response->assertSee('wb-media-view-toggle', false);
-        $response->assertSee(route('admin.media.show', $asset), false);
+        $response->assertSee(route('admin.media.edit', ['asset' => $asset, 'return_url' => route('admin.media.index')]), false);
     }
 
     #[Test]
@@ -265,7 +269,7 @@ class MediaManagementTest extends TestCase
         $response->assertSee('Used grid asset');
         $response->assertDontSee('Unused guide');
         $response->assertSee('Used in 1');
-        $response->assertSee('Asset usage');
+        $response->assertSee('Media usage');
         $response->assertSee('Media Library Page');
         $response->assertSee('Hero visual');
         $response->assertSee('wb-media-grid', false);
@@ -342,7 +346,7 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
-    public function asset_detail_can_link_back_to_preview_modal(): void
+    public function media_show_route_redirects_to_edit_and_preserves_safe_return_url(): void
     {
         $user = User::factory()->superAdmin()->create();
 
@@ -359,19 +363,20 @@ class MediaManagementTest extends TestCase
             'title' => 'Back to preview asset',
         ]);
 
-        $response = $this->actingAs($user)->get(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
+        $returnUrl = route('admin.media.index', ['search' => 'Back to preview asset', 'view' => 'grid']);
+        $response = $this->actingAs($user)->get(route('admin.media.show', ['asset' => $asset, 'return_url' => $returnUrl]));
 
-        $response->assertOk();
-        $response->assertSee('Back to Preview');
-        $response->assertSee(route('admin.media.index', ['preview' => $asset->id]), false);
+        $response->assertRedirect(route('admin.media.edit', ['asset' => $asset, 'return_url' => $returnUrl]));
     }
 
     #[Test]
-    public function asset_edit_preserves_back_to_preview_context(): void
+    public function media_edit_uses_merged_screen_sections_and_safe_return_url_flow(): void
     {
         $user = User::factory()->superAdmin()->create();
+        $folder = AssetFolder::create(['name' => 'Library']);
 
         $asset = Asset::create([
+            'folder_id' => $folder->id,
             'disk' => 'public',
             'path' => 'media/images/edit-context.jpg',
             'filename' => 'edit-context.jpg',
@@ -382,13 +387,28 @@ class MediaManagementTest extends TestCase
             'kind' => 'image',
             'visibility' => 'public',
             'title' => 'Edit context asset',
+            'alt_text' => 'Current alt',
+            'caption' => 'Current caption',
+            'description' => 'Current description',
         ]);
 
-        $editResponse = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'back_to_preview' => 1]));
+        $returnUrl = route('admin.media.index', ['search' => 'Edit context asset', 'view' => 'grid']);
+
+        $editResponse = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'return_url' => $returnUrl]));
 
         $editResponse->assertOk();
-        $editResponse->assertSee(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]), false);
-        $editResponse->assertSee('name="back_to_preview" value="1"', false);
+        $editResponse->assertSee('Edit Media: Edit context asset');
+        $editResponse->assertSee('Review file details, update metadata, and manage this media item safely.');
+        $editResponse->assertSee('Preview');
+        $editResponse->assertSee('File Details');
+        $editResponse->assertSee('Metadata');
+        $editResponse->assertSee('Organization');
+        $editResponse->assertSee('Usage');
+        $editResponse->assertSee('Danger Zone');
+        $editResponse->assertSee('Copy public URL');
+        $editResponse->assertSee('name="return_url" value="'.e($returnUrl).'"', false);
+        $editResponse->assertSee('>Save changes<', false);
+        $editResponse->assertSee('href="'.e($returnUrl).'" class="wb-btn wb-btn-secondary"', false);
 
         $updateResponse = $this->actingAs($user)->put(route('admin.media.update', $asset), [
             'title' => 'Updated title',
@@ -396,10 +416,10 @@ class MediaManagementTest extends TestCase
             'caption' => 'Caption',
             'description' => 'Description',
             'folder_id' => null,
-            'back_to_preview' => 1,
+            'return_url' => $returnUrl,
         ]);
 
-        $updateResponse->assertRedirect(route('admin.media.show', ['asset' => $asset, 'back_to_preview' => 1]));
+        $updateResponse->assertRedirect($returnUrl);
     }
 
     #[Test]
@@ -413,6 +433,7 @@ class MediaManagementTest extends TestCase
         $modalResponse = $this->actingAs($user)->get(route('admin.media.index', ['modal' => 'upload-asset']));
         $modalResponse->assertOk();
         $modalResponse->assertSee('media-upload-modal');
+        $modalResponse->assertSee('Upload Media');
         $modalResponse->assertSee('Add a new file to the shared media library.');
 
         $folderModalResponse = $this->actingAs($user)->get(route('admin.media.index', ['modal' => 'new-folder']));
@@ -511,7 +532,7 @@ class MediaManagementTest extends TestCase
 
         $deleteResponse = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
-        $deleteResponse->assertRedirect(route('admin.media.show', $asset));
+        $deleteResponse->assertRedirect(route('admin.media.edit', $asset));
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
     }
 
@@ -542,7 +563,7 @@ class MediaManagementTest extends TestCase
             'description' => 'Hero description',
         ]);
 
-        $response->assertRedirect(route('admin.media.show', $asset));
+        $response->assertRedirect(route('admin.media.index'));
 
         $this->assertDatabaseHas('assets', [
             'id' => $asset->id,
@@ -686,7 +707,7 @@ class MediaManagementTest extends TestCase
 
         $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
-        $response->assertRedirect(route('admin.media.show', $asset));
+        $response->assertRedirect(route('admin.media.edit', $asset));
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
     }
 
@@ -894,7 +915,7 @@ class MediaManagementTest extends TestCase
 
         $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
-        $response->assertRedirect(route('admin.media.show', $asset));
+        $response->assertRedirect(route('admin.media.edit', $asset));
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
     }
 
@@ -1052,7 +1073,161 @@ class MediaManagementTest extends TestCase
 
         $response = $this->actingAs($user)->delete(route('admin.media.destroy', $asset));
 
-        $response->assertRedirect(route('admin.media.show', $asset));
+        $response->assertRedirect(route('admin.media.edit', $asset));
         $this->assertDatabaseHas('assets', ['id' => $asset->id]);
+    }
+
+    #[Test]
+    public function media_index_actions_use_edit_routes_preview_modal_and_modal_delete_pattern(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/list-actions.jpg',
+            'filename' => 'list-actions.jpg',
+            'original_name' => 'list-actions.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'List actions asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', ['search' => 'List actions asset']));
+        $returnUrl = route('admin.media.index', ['search' => 'List actions asset']);
+
+        $response->assertOk();
+        $response->assertSee(route('admin.media.edit', ['asset' => $asset, 'return_url' => $returnUrl]), false);
+        $response->assertSee('class="wb-action-btn wb-action-btn-edit" title="Edit media" aria-label="Edit media"', false);
+        $response->assertSee('class="wb-action-btn wb-action-btn-view" title="Preview media" aria-label="Preview media"', false);
+        $response->assertSee('preview='.$asset->id, false);
+        $response->assertDontSee('Copy asset URL');
+        $response->assertDontSee('wb-icon-copy');
+        $response->assertDontSee('onsubmit="return confirm', false);
+        $response->assertSee(route('admin.media.edit', ['asset' => $asset, 'return_url' => $returnUrl]), false);
+        $response->assertSee('modal=delete-media', false);
+    }
+
+    #[Test]
+    public function media_edit_usage_and_delete_modal_render_for_used_and_unused_media(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $page = Page::create([
+            'title' => 'Media Usage Page',
+            'slug' => 'media-usage-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+        $slotType = $this->slotType();
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        $usedAsset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/used-edit-screen.jpg',
+            'filename' => 'used-edit-screen.jpg',
+            'original_name' => 'used-edit-screen.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Used edit screen asset',
+        ]);
+
+        $unusedAsset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/documents/unused-edit-screen.pdf',
+            'filename' => 'unused-edit-screen.pdf',
+            'original_name' => 'unused-edit-screen.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 2200,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Unused edit screen asset',
+        ]);
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Hero visual',
+            'asset_id' => $usedAsset->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $usedResponse = $this->actingAs($user)->get(route('admin.media.edit', $usedAsset));
+        $usedResponse->assertOk();
+        $usedResponse->assertSee('Hero visual');
+        $usedResponse->assertSee('Open');
+        $usedResponse->assertSee('Media Usage Page');
+        $usedResponse->assertSee('Delete is blocked because this media item is still used by protected CMS consumers.');
+        $usedResponse->assertDontSee('onsubmit="return confirm', false);
+
+        $unusedResponse = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $unusedAsset, 'modal' => 'delete-media']));
+        $unusedResponse->assertOk();
+        $unusedResponse->assertSee('Unused media');
+        $unusedResponse->assertSee('This media item is not referenced by protected CMS consumers yet.');
+        $unusedResponse->assertSee('Delete media');
+        $unusedResponse->assertSee('role="dialog"', false);
+        $unusedResponse->assertSee('Close delete media modal');
+        $unusedResponse->assertDontSee('confirm(');
+    }
+
+    #[Test]
+    public function media_edit_cancel_and_save_ignore_external_return_url_and_fall_back_to_index(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/return-url.jpg',
+            'filename' => 'return-url.jpg',
+            'original_name' => 'return-url.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Return URL asset',
+        ]);
+
+        $safeReturnUrl = route('admin.media.index', ['search' => 'Return URL asset', 'view' => 'grid']);
+
+        $safeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'return_url' => $safeReturnUrl]));
+        $safeEdit->assertSee('href="'.e($safeReturnUrl).'" class="wb-btn wb-btn-secondary"', false);
+
+        $unsafeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['asset' => $asset, 'return_url' => 'https://evil.example.test/admin/media']));
+        $unsafeEdit->assertSee('href="'.route('admin.media.index').'" class="wb-btn wb-btn-secondary"', false);
+        $unsafeEdit->assertDontSee('evil.example.test');
+
+        $safeUpdate = $this->actingAs($user)->put(route('admin.media.update', $asset), [
+            'title' => 'Saved with safe return url',
+            'alt_text' => null,
+            'caption' => null,
+            'description' => null,
+            'folder_id' => null,
+            'return_url' => $safeReturnUrl,
+        ]);
+        $safeUpdate->assertRedirect($safeReturnUrl);
+
+        $unsafeUpdate = $this->actingAs($user)->put(route('admin.media.update', $asset), [
+            'title' => 'Saved with fallback return url',
+            'alt_text' => null,
+            'caption' => null,
+            'description' => null,
+            'folder_id' => null,
+            'return_url' => 'https://evil.example.test/admin/media',
+        ]);
+        $unsafeUpdate->assertRedirect(route('admin.media.index'));
     }
 }

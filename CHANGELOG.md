@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.30.6
+
+- Polish the Media admin UX so user-facing copy consistently uses `Media`, media titles and edit actions open the merged `Edit Media: {title}` screen, preview stays a modal action, and the legacy `/admin/media/{id}` detail route now redirects safely to edit.
+- Move `Copy public URL` into the Edit Media `File Details` card, preserve usage summaries and Open links on the merged edit screen, and replace browser confirm deletion with the standard admin `Danger Zone` plus modal confirmation pattern while keeping internal Asset tables, models, ids, and storage paths unchanged in this patch release.
+
 ## 1.30.5
 
 - Harden installation safety so fresh installs and in-app package updates disable `origin` push with `git remote set-url --push origin DISABLED` when the working copy points at the canonical WebBlocks CMS upstream, while keeping fetch-based update consumption intact.

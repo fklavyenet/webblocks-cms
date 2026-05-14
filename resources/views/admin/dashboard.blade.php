@@ -139,7 +139,7 @@
                     @else
                         <div class="wb-link-list">
                             @foreach ($recentAssets as $asset)
-                                <a href="{{ route('admin.media.show', $asset) }}" class="wb-link-list-item">
+                                <a href="{{ route('admin.media.edit', $asset) }}" class="wb-link-list-item">
                                     <div class="wb-link-list-main">
                                         <div class="wb-link-list-title">{{ $asset->title ?: $asset->original_name }}</div>
                                         <div class="wb-link-list-meta">{{ $asset->kind }} | {{ $asset->humanSize() }}</div>
