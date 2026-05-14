@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.21
+
+- Continue Phase 3 block-type contract cleanup by aligning the persisted `sticky-navbar` Navbar block with root-owning public rendering and removing the extra generic wrapper path where Navbar already owns the real `nav.wb-navbar` root.
+- Tighten the published non-container contract for `code`, `table`, `quote`, `toc`, and `html` so new arbitrary child placement is no longer eligible in the slot builder, public renderers no longer emit historical child trees, and the shared contract registry, audit command, docs, and regression coverage match the shipped behavior while preserving existing saved child rows.
+
 ## 1.31.20
 
 - Start Phase 3 block-type contract standardization by aligning the shipped `code` and `table` blocks with the existing text-translation architecture, preserving breadcrumb display settings on save, rendering stat-card URLs publicly, and surfacing translated link-list intro copy in the public renderer.

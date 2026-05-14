@@ -440,11 +440,21 @@ class Block extends Model
 
     public function canAcceptChildren(): bool
     {
+        $slug = $this->typeSlug();
+
+        if ($slug === null) {
+            return false;
+        }
+
+        if (in_array($slug, ['code', 'table', 'quote', 'toc', 'html'], true)) {
+            return false;
+        }
+
         if ((bool) ($this->blockType?->is_container ?? false)) {
             return true;
         }
 
-        return in_array($this->typeSlug(), ['section', 'container', 'cluster', 'grid', 'card', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+        return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
@@ -903,6 +913,7 @@ class Block extends Model
             'cluster',
             'card',
             'content_header',
+            'sticky-navbar',
         ], true);
     }
 

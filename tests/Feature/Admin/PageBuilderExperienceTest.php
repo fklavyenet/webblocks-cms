@@ -1474,6 +1474,76 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertFalse($navbarBrandType->is_container);
         $this->assertFalse($navbarNavigationType->is_container);
         $this->assertSame(['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'], $navbarBlock->allowedChildTypeSlugs());
+        $this->assertTrue($navbarBlock->ownsPublicRoot());
+    }
+
+    #[Test]
+    public function deferred_non_container_blocks_do_not_offer_new_child_creation_but_historical_rows_stay_visible(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
+        $plainTextType = BlockType::query()->where('slug', 'plain_text')->firstOrFail();
+
+        $code = Block::query()->create([
+            'page_id' => $page->id,
+            'block_type_id' => $codeType->id,
+            'type' => 'code',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'echo true;',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $legacyChild = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $code->id,
+            'block_type_id' => $plainTextType->id,
+            'type' => 'plain_text',
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'content' => 'Legacy child row',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $indexResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('<span class="wb-cms-block-children-badge" aria-label="1 child block">1</span>', false);
+        $indexResponse->assertSee('data-block-id="'.$legacyChild->id.'"', false);
+        $indexResponse->assertSee('data-parent-id="'.$code->id.'"', false);
+        $indexResponse->assertDontSee('href="'.e(route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'picker' => 1, 'parent_id' => $code->id])).'" class="wb-action-btn" title="Add child block"', false);
+
+        $pickerResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $code->id]));
+
+        $pickerResponse->assertOk();
+        $pickerResponse->assertSee('No common shortcuts are available for this picker context.');
+        $pickerResponse->assertDontSee('data-block-type-slug=', false);
+
+        $invalidCreate = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'parent_id' => $code->id,
+                'slot_type_id' => $main->id,
+                'block_type_id' => $plainTextType->id,
+                'sort_order' => 1,
+                'text' => 'Bad child',
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalidCreate->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidCreate->assertSessionHasErrors('parent_id');
     }
 
     #[Test]

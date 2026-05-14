@@ -205,18 +205,60 @@ class BlockTypePhaseThreeContractsTest extends TestCase
 
         $code = $contracts->resolve('code');
         $table = $contracts->resolve('table');
+        $quote = $contracts->resolve('quote');
+        $toc = $contracts->resolve('toc');
+        $html = $contracts->resolve('html');
+        $navbar = $contracts->resolve('sticky-navbar');
         $breadcrumb = $contracts->resolve('breadcrumb');
         $statCard = $contracts->resolve('stat-card');
         $linkList = $contracts->resolve('link-list');
 
         $this->assertSame(['title', 'subtitle', 'content'], $code->translatableFields);
-        $this->assertSame('mostly clear', $code->currentContractStatus);
+        $this->assertSame('clear', $code->currentContractStatus);
+        $this->assertSame([], $code->knownGaps);
         $this->assertSame(['title', 'content'], $table->translatableFields);
+        $this->assertSame('mostly clear', $table->currentContractStatus);
+        $this->assertSame(['Renderer still supports a legacy settings fallback path for rows.'], $table->knownGaps);
+        $this->assertSame('clear', $quote->currentContractStatus);
+        $this->assertSame([], $quote->knownGaps);
+        $this->assertSame('clear', $toc->currentContractStatus);
+        $this->assertSame([], $toc->knownGaps);
+        $this->assertSame('mostly clear', $html->currentContractStatus);
+        $this->assertSame(['Trusted markup can also affect shared overlay or body-end output beyond the visible root.'], $html->knownGaps);
+        $this->assertSame('clear', $navbar->currentContractStatus);
+        $this->assertTrue($navbar->ownsPublicRootHelper);
         $this->assertSame('clear', $breadcrumb->currentContractStatus);
         $this->assertSame([], $breadcrumb->knownGaps);
         $this->assertSame('clear', $statCard->currentContractStatus);
         $this->assertSame([], $statCard->knownGaps);
         $this->assertSame('clear', $linkList->currentContractStatus);
         $this->assertSame([], $linkList->knownGaps);
+    }
+
+    #[Test]
+    public function sticky_navbar_owns_its_public_root_using_the_persisted_slug(): void
+    {
+        $this->seedFoundation();
+
+        $navbarType = BlockType::query()->where('slug', 'sticky-navbar')->firstOrFail();
+        $navbar = new Block(['type' => 'sticky-navbar', 'block_type_id' => $navbarType->id]);
+        $navbar->setRelation('blockType', $navbarType);
+
+        $this->assertTrue($navbar->ownsPublicRoot());
+    }
+
+    #[Test]
+    public function deferred_non_container_blocks_do_not_accept_new_children(): void
+    {
+        $this->seedFoundation();
+
+        foreach (['code', 'table', 'quote', 'toc', 'html'] as $slug) {
+            $blockType = BlockType::query()->where('slug', $slug)->firstOrFail();
+            $block = new Block(['type' => $slug, 'block_type_id' => $blockType->id]);
+            $block->setRelation('blockType', $blockType);
+
+            $this->assertFalse($block->canAcceptChildren(), $slug.' should not accept child blocks.');
+            $this->assertNull($block->allowedChildTypeSlugs(), $slug.' should not expose normal child whitelists.');
+        }
     }
 }

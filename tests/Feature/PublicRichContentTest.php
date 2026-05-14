@@ -11,6 +11,8 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationWriter;
+use App\Support\Blocks\PublicBodyEndRegistry;
+use App\Support\Blocks\PublicOverlayRegistry;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -137,6 +139,46 @@ class PublicRichContentTest extends TestCase
         $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
         $response->assertDontSee('>C# Script', false);
+    }
+
+    #[Test]
+    public function code_block_does_not_render_historical_child_blocks_publicly(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $code = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'code',
+            'block_type_id' => $this->blockType('code', 'Code', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => 'echo true;',
+            'settings' => json_encode(['language' => 'php'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $code->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => 'Historical child',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<pre><code data-language="php">echo true;</code></pre>', false);
+        $response->assertDontSee('Historical child');
     }
 
     #[Test]
@@ -405,6 +447,138 @@ class PublicRichContentTest extends TestCase
         $response->assertSee('<span class="wb-link-list-title">Nested details</span>', false);
         $response->assertDontSee('href="#Missing anchor"', false);
         $response->assertDontSee('href="#hidden-section"', false);
+    }
+
+    #[Test]
+    public function toc_does_not_render_historical_child_blocks_publicly(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $toc = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'toc',
+            'block_type_id' => $this->blockType('toc', 'TOC', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'On this page',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'variant' => 'h2',
+            'url' => 'overview',
+            'settings' => json_encode(['anchor' => 'overview'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        app(BlockTranslationWriter::class)->sync($header, ['title' => 'Overview'], null, true);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $toc->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => 'Hidden child content',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a class="wb-link-list-item" href="#overview">', false);
+        $response->assertDontSee('Hidden child content');
+    }
+
+    #[Test]
+    public function table_quote_and_html_blocks_ignore_historical_child_rows_without_crashing(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $table = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'table',
+            'block_type_id' => $this->blockType('table', 'Table', 1)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'title' => 'Plans',
+            'content' => "Plan | Seats\nStarter | 3",
+            'variant' => 'header-row',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $quote = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'quote',
+            'block_type_id' => $this->blockType('quote', 'Quote', 2)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'title' => 'Editor',
+            'subtitle' => 'Docs Team',
+            'content' => 'Stay close to the shipped contract.',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $html = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'html',
+            'block_type_id' => $this->blockType('html', 'HTML (Trusted)', 3)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'content' => '<div class="wb-card">Trusted body</div>',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([$table, $quote, $html] as $parent) {
+            Block::query()->create([
+                'page_id' => $page->id,
+                'parent_id' => $parent->id,
+                'type' => 'plain_text',
+                'block_type_id' => $this->blockType('plain_text', 'Plain Text', 4)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => 0,
+                'content' => 'Historical child row',
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<h3>Plans</h3>', false);
+        $response->assertSee('<th>Plan</th>', false);
+        $response->assertSee('Stay close to the shipped contract.');
+        $response->assertSee('<div class="wb-card">Trusted body</div>', false);
+        $response->assertDontSee('Historical child row');
+        $this->assertSame([], app(PublicOverlayRegistry::class)->all()->all());
+        $this->assertSame([], app(PublicBodyEndRegistry::class)->all()->all());
     }
 
     #[Test]

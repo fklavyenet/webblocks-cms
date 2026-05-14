@@ -504,6 +504,7 @@ class PublicLayoutStructureTest extends TestCase
         $response->assertSee('<nav class="wb-navbar" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertDontSee('wb-cms-navbar--sticky', false);
         $response->assertDontSee('<header data-wb-slot="header" class="wb-public-site-header"><div class="wb-stack">', false);
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="sticky-navbar">', false);
         $response->assertSee('aria-controls="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('id="wb-navbar-navigation-mobile-menu-'.$navigation->id.'"', false);
         $response->assertSee('aria-label="Toggle navigation"', false);

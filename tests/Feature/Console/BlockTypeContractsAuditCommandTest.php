@@ -40,11 +40,14 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('"slug": "code"', $output);
         $this->assertStringContainsString('"translation_family": "text"', $output);
-        $this->assertStringContainsString('"current_contract_status": "mostly clear"', $output);
+        $this->assertStringContainsString('"current_contract_status": "clear"', $output);
         $this->assertStringContainsString('"slug": "table"', $output);
         $this->assertStringContainsString('"current_contract_status": "clear"', $output);
         $this->assertStringContainsString('"slug": "breadcrumb"', $output);
         $this->assertStringContainsString('"slug": "stat-card"', $output);
         $this->assertStringContainsString('"slug": "link-list"', $output);
+        $this->assertStringContainsString('"slug": "sticky-navbar"', $output);
+        $this->assertStringContainsString('"owns_public_root_helper": true', $output);
+        $this->assertStringNotContainsString('Renderer clearly owns a root, but `Block::ownsPublicRoot()` does not currently include `sticky-navbar`.', $output);
     }
 }
