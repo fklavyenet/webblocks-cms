@@ -12,12 +12,24 @@
             return;
         }
 
-        var hiddenInput = target.closest('form').querySelector('[data-wb-page-settings-tab-input]');
+        var hiddenInput = target.closest('.wb-card').querySelector('[data-wb-page-settings-tab-input]');
 
         if (!hiddenInput || !event.detail || !event.detail.tabId) {
             return;
         }
 
-        hiddenInput.value = event.detail.tabId === 'page-settings-assets-panel' ? 'page-assets' : 'general';
+        if (event.detail.tabId === 'page-management-assets-panel') {
+            hiddenInput.value = 'assets';
+
+            return;
+        }
+
+        if (event.detail.tabId === 'page-management-overview-panel') {
+            hiddenInput.value = 'overview';
+
+            return;
+        }
+
+        hiddenInput.value = 'settings';
     });
 }());

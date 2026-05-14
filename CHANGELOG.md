@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.8
+
+- Refine `Admin -> Pages -> Edit Page` by replacing the crowded top `Page Overview` plus `Page Settings` arrangement with one `Page Management` card that separates `Overview`, `Settings`, and `Assets` into calmer tab-owned cards.
+- Keep workflow/status actions in `Overview`, keep `Save Changes` and `Cancel` only in the `Settings` form card, and keep page asset add/edit/delete actions owned by the `Assets` card and modal flow.
+
 ## 1.31.7
 
 - Consolidate `Admin -> System -> Settings` into one `Settings` form card with a two-column layout, one shared footer action row, and the existing editable system settings saved together in a single submit.

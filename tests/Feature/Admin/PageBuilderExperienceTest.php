@@ -20,6 +20,8 @@ use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
 use Database\Seeders\PageLayoutSeeder;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -131,8 +133,10 @@ class PageBuilderExperienceTest extends TestCase
         $content = $editResponse->getContent();
 
         $editResponse->assertOk();
-        $editResponse->assertSee('Page Settings');
-        $editResponse->assertSee('Page Assets');
+        $editResponse->assertSee('Page Management');
+        $editResponse->assertSee('Overview');
+        $editResponse->assertSee('Settings');
+        $editResponse->assertSee('Assets');
         $editResponse->assertSee('Slots');
         $editResponse->assertSee('Translations');
         $editResponse->assertSee('Add Slot');
@@ -161,7 +165,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($content);
         $this->assertFalse(str_contains($content, 'data-wb-slot-builder'));
         $this->assertFalse(str_contains($content, 'Site Context'));
-        $pageSettingsPosition = strpos($content, 'Page Settings');
+        $pageSettingsPosition = strpos($content, 'Page Management');
         $slotsPosition = strpos($content, '<strong>Slots</strong>');
         $translationsPosition = strpos($content, '<strong>Translations</strong>');
         $this->assertNotFalse($pageSettingsPosition);
@@ -170,6 +174,23 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertTrue($pageSettingsPosition < $slotsPosition);
         $this->assertTrue($slotsPosition < $translationsPosition);
         $this->assertTrue(strpos($content, '</form>') < strpos($content, '<strong>Slots</strong>'));
+
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($content);
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($document);
+        $pageManagementCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="Page Management"]]')->item(0);
+
+        $this->assertNotNull($pageManagementCard);
+        $this->assertSame(1, $xpath->query('.//button[normalize-space()="Save Changes"]', $pageManagementCard)->length);
+        $this->assertSame(1, $xpath->query('.//a[normalize-space()="Cancel"]', $pageManagementCard)->length);
+        $this->assertSame(1, $xpath->query('.//div[@id="page-management-overview-panel"]//strong[normalize-space()="Overview"]', $pageManagementCard)->length);
+        $this->assertSame(1, $xpath->query('.//div[@id="page-management-settings-panel"]//strong[normalize-space()="Settings"]', $pageManagementCard)->length);
+        $this->assertSame(1, $xpath->query('.//div[@id="page-management-assets-panel"]//strong[normalize-space()="Page Assets"]', $pageManagementCard)->length);
+        $this->assertSame(0, $xpath->query('.//div[@id="page-management-assets-panel"]//button[normalize-space()="Save Changes"]', $pageManagementCard)->length);
+        $this->assertSame(0, $xpath->query('.//div[@id="page-management-assets-panel"]//a[normalize-space()="Cancel"]', $pageManagementCard)->length);
     }
 
     #[Test]
@@ -428,7 +449,7 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.edit', $page));
 
         $response->assertOk();
-        $response->assertSee('Page Settings');
+        $response->assertSee('Page Management');
         $response->assertSee('Slots');
         $response->assertDontSee('name="source_type"', false);
         $response->assertDontSee('name="shared_slot_id"', false);

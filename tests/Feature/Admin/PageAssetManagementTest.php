@@ -7,6 +7,8 @@ use App\Models\PageAsset;
 use App\Models\Site;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -32,6 +34,10 @@ class PageAssetManagementTest extends TestCase
             ->get(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
 
         $response->assertOk();
+        $response->assertSee('Page Management');
+        $response->assertSee('Overview');
+        $response->assertSee('Settings');
+        $response->assertSee('Assets');
         $response->assertSee('Page Assets');
         $response->assertSee('Add CSS asset');
         $response->assertSee('Add JS asset');
@@ -45,6 +51,20 @@ class PageAssetManagementTest extends TestCase
         $response->assertDontSee('name="page_assets[', false);
         $response->assertDontSee('Remove row');
         $response->assertDontSee('name="page_assets[0][type]"', false);
+
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($response->getContent());
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($document);
+        $assetsPanel = $xpath->query('//div[@id="page-management-assets-panel"]')->item(0);
+
+        $this->assertNotNull($assetsPanel);
+        $this->assertSame(1, $xpath->query('.//a[normalize-space()="Add CSS asset"]', $assetsPanel)->length);
+        $this->assertSame(1, $xpath->query('.//a[normalize-space()="Add JS asset"]', $assetsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//button[normalize-space()="Save Changes"]', $assetsPanel)->length);
+        $this->assertSame(0, $xpath->query('.//a[normalize-space()="Cancel"]', $assetsPanel)->length);
     }
 
     #[Test]
@@ -56,6 +76,7 @@ class PageAssetManagementTest extends TestCase
             ->get(route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']));
 
         $response->assertOk();
+        $response->assertSee('Assets');
         $response->assertSee('No page assets yet.');
         $response->assertSee('Add CSS asset');
         $response->assertSee('Add JS asset');
