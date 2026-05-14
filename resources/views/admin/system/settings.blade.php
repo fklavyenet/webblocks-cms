@@ -8,20 +8,20 @@
 
     @include('admin.partials.flash')
 
-    <div class="wb-grid wb-grid-2">
-        <div class="wb-card">
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
+    <div class="wb-card">
+        <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
+            @csrf
+            @method('PUT')
 
-                <div class="wb-card-header"><strong>General</strong></div>
+            <div class="wb-card-header"><strong>Settings</strong></div>
 
-                <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
-                <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
-                <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
+            <div class="wb-card-body wb-grid wb-grid-2 wb-gap-4">
+                <div class="wb-stack wb-gap-4">
+                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-general-heading">
+                        <div>
+                            <strong id="settings-general-heading">General</strong>
+                        </div>
 
-                <div class="wb-card-body">
-                    <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label for="settings_default_locale">Default locale</label>
                             <select id="settings_default_locale" name="default_locale" class="wb-select" required>
@@ -55,29 +55,39 @@
                             >
                             <div class="wb-text-sm wb-text-muted">Controls the default number of rows shown on paginated admin listing screens.</div>
                         </div>
-                    </div>
+                    </section>
+
+                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-cookie-heading">
+                        <div>
+                            <strong id="settings-cookie-heading">Cookie settings</strong>
+                        </div>
+
+                        <div class="wb-text-sm wb-text-muted">
+                            The public cookie settings panel lets visitors accept or decline optional analytics tracking. Necessary Laravel, admin, CSRF, and security cookies remain separate. Visitors who decline still contribute privacy-safe anonymous page view counts.
+                        </div>
+
+                        <div class="wb-stack-2 wb-field">
+                            <input type="hidden" name="visitor_consent_banner_enabled" value="0">
+                            <label class="wb-cluster wb-cluster-2" for="settings_visitor_consent_banner_enabled">
+                                <input
+                                    id="settings_visitor_consent_banner_enabled"
+                                    name="visitor_consent_banner_enabled"
+                                    type="checkbox"
+                                    value="1"
+                                    @checked($settings['visitor_consent_banner_enabled'])
+                                >
+                                <span>Show the public privacy settings banner when visitor reports are enabled.</span>
+                            </label>
+                        </div>
+                    </section>
                 </div>
 
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
-            </form>
-        </div>
+                <div class="wb-stack wb-gap-4">
+                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-project-heading">
+                        <div>
+                            <strong id="settings-project-heading">Project</strong>
+                        </div>
 
-        <div class="wb-card">
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
-
-                <div class="wb-card-header"><strong>Project</strong></div>
-
-                <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
-                <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
-                <input type="hidden" name="admin_listing_per_page" value="{{ $settings['admin_listing_per_page'] }}">
-                <input type="hidden" name="visitor_consent_banner_enabled" value="{{ $settings['visitor_consent_banner_enabled'] ? '1' : '0' }}">
-
-                <div class="wb-card-body">
-                    <div class="wb-stack wb-gap-3">
                         <div class="wb-text-sm wb-text-muted">
                             Project identity is shown only in the admin interface so users can distinguish this CMS project from other WebBlocks CMS installs.
                         </div>
@@ -97,80 +107,39 @@
                         <div class="wb-text-sm wb-text-muted">
                             These fields do not change the WebBlocks CMS product brand, do not change public site metadata, and do not replace Site Branding or Page SEO fields.
                         </div>
-                    </div>
-                </div>
+                    </section>
 
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
-            </form>
-        </div>
-
-        <div class="wb-card">
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
-
-                <div class="wb-card-header"><strong>Cookie settings</strong></div>
-
-                <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
-                <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
-                <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
-                <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
-                <input type="hidden" name="admin_listing_per_page" value="{{ $settings['admin_listing_per_page'] }}">
-
-                <div class="wb-card-body">
-                    <div class="wb-stack wb-gap-3">
-                        <div class="wb-text-sm wb-text-muted">
-                            The public cookie settings panel lets visitors accept or decline optional analytics tracking. Necessary Laravel, admin, CSRF, and security cookies remain separate. Visitors who decline still contribute privacy-safe anonymous page view counts.
+                    <section class="wb-stack wb-gap-3" aria-labelledby="settings-information-heading">
+                        <div>
+                            <strong id="settings-information-heading">Information</strong>
                         </div>
 
-                        <div class="wb-stack-2 wb-field">
-                            <input type="hidden" name="visitor_consent_banner_enabled" value="0">
-                            <label class="wb-cluster wb-cluster-2" for="settings_visitor_consent_banner_enabled">
-                                <input
-                                    id="settings_visitor_consent_banner_enabled"
-                                    name="visitor_consent_banner_enabled"
-                                    type="checkbox"
-                                    value="1"
-                                    @checked($settings['visitor_consent_banner_enabled'])
-                                >
-                                <span>Show the public privacy settings banner when visitor reports are enabled.</span>
-                            </label>
+                        <div class="wb-settings-row">
+                            <div class="wb-settings-row-label">
+                                <strong>Application version</strong>
+                                <span>Current product version from the codebase source of truth.</span>
+                            </div>
+                            <div class="wb-settings-row-control">
+                                <span>{{ $installedVersionDisplay }}</span>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
-                </div>
-            </form>
-        </div>
-
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>Information</strong></div>
-
-            <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-settings-row">
-                    <div class="wb-settings-row-label">
-                        <strong>Application version</strong>
-                        <span>Current product version from the codebase source of truth.</span>
-                    </div>
-                    <div class="wb-settings-row-control">
-                        <span>{{ $installedVersionDisplay }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-settings-row">
-                    <div class="wb-settings-row-label">
-                        <strong>Environment</strong>
-                        <span>Current Laravel runtime environment.</span>
-                    </div>
-                    <div class="wb-settings-row-control">
-                        <span>{{ $environment }}</span>
-                    </div>
+                        <div class="wb-settings-row">
+                            <div class="wb-settings-row-label">
+                                <strong>Environment</strong>
+                                <span>Current Laravel runtime environment.</span>
+                            </div>
+                            <div class="wb-settings-row-control">
+                                <span>{{ $environment }}</span>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
-        </div>
+
+            <div class="wb-card-footer">
+                <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+            </div>
+        </form>
     </div>
 @endsection

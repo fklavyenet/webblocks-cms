@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.7
+
+- Consolidate `Admin -> System -> Settings` into one `Settings` form card with a two-column layout, one shared footer action row, and the existing editable system settings saved together in a single submit.
+- Remove the hidden duplicated setting mirror inputs that previously kept the separate General, Project, and Cookie forms from clearing each other, and move Application version plus Environment into the same card as read-only information rows.
+
 ## 1.31.6
 
 - Fix the System Settings `General` card form structure so its action row renders as the real card footer at the visual bottom of the card, matching the standard admin card footer pattern.

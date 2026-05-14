@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Support\System\SystemSettings;
 use App\Support\WebBlocks;
 use DOMDocument;
+use DOMElement;
+use DOMNodeList;
 use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,16 +47,41 @@ class SystemSettingsTest extends TestCase
     }
 
     #[Test]
-    public function cookie_banner_checkbox_is_not_inside_the_general_card(): void
+    public function system_settings_page_uses_one_editable_form_with_one_action_row_and_read_only_information(): void
     {
         $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
         $response->assertOk();
+
+        $document = $this->htmlDocument($response->getContent());
+        $xpath = new DOMXPath($document);
+        $form = $this->settingsForm($xpath);
+
+        $this->assertSame(1, $xpath->query('//form[contains(@action, "/admin/system/settings")]')->length);
+        $this->assertSame(1, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $form)->length);
+        $this->assertSame(1, $this->queryElements($xpath, './/a[normalize-space()="Cancel"]', $form)->length);
+
+        foreach (['default_locale', 'timezone', 'admin_listing_per_page', 'project_name', 'project_tagline'] as $fieldName) {
+            $this->assertSame(1, $this->queryElements($xpath, './/*[@name="'.$fieldName.'"]', $form)->length);
+        }
+
+        $this->assertSame(2, $this->queryElements($xpath, './/*[@name="visitor_consent_banner_enabled"]', $form)->length);
+
+        foreach (['project_name', 'project_tagline', 'default_locale', 'timezone', 'admin_listing_per_page'] as $fieldName) {
+            $this->assertSame(0, $this->queryElements($xpath, './/input[@type="hidden" and @name="'.$fieldName.'"]', $form)->length);
+        }
+
+        $this->assertSame(1, $this->queryElements($xpath, './/input[@type="hidden" and @name="visitor_consent_banner_enabled" and @value="0"]', $form)->length);
+        $this->assertSame(0, $this->queryElements($xpath, './/*[@name="version" or @name="environment"]', $form)->length);
+
         $response->assertSee('>General<', false);
         $response->assertSee('>Cookie settings<', false);
-        $response->assertSeeInOrder(['>General<', '>Cookie settings<'], false);
+        $response->assertSee('>Project<', false);
+        $response->assertSee('>Information<', false);
+        $response->assertSee((string) WebBlocks::VERSION);
+        $response->assertSee(app()->environment());
     }
 
     #[Test]
@@ -86,6 +113,31 @@ class SystemSettingsTest extends TestCase
         $followUp->assertSee('WebBlocks UI Docs');
         $followUp->assertSee('Install-specific admin context');
         $followUp->assertSee('value="12"', false);
+    }
+
+    #[Test]
+    public function admin_can_save_all_settings_together_with_cookie_banner_disabled(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $locale = Locale::query()->where('is_enabled', true)->firstOrFail();
+
+        $response = $this->actingAs($user)->put(route('admin.system.settings.update'), [
+            'project_name' => 'Project Atlas',
+            'project_tagline' => 'Unified settings card',
+            'default_locale' => $locale->code,
+            'timezone' => 'UTC',
+            'admin_listing_per_page' => '10',
+            'visitor_consent_banner_enabled' => '0',
+        ]);
+
+        $response->assertRedirect(route('admin.system.settings.edit'));
+
+        $this->assertSame('Project Atlas', SystemSetting::query()->where('key', SystemSettings::PROJECT_NAME)->value('value'));
+        $this->assertSame('Unified settings card', SystemSetting::query()->where('key', SystemSettings::PROJECT_TAGLINE)->value('value'));
+        $this->assertSame($locale->code, SystemSetting::query()->where('key', SystemSettings::DEFAULT_LOCALE)->value('value'));
+        $this->assertSame('UTC', SystemSetting::query()->where('key', SystemSettings::TIMEZONE)->value('value'));
+        $this->assertSame('10', SystemSetting::query()->where('key', SystemSettings::ADMIN_LISTING_PER_PAGE)->value('value'));
+        $this->assertSame('0', SystemSetting::query()->where('key', SystemSettings::VISITOR_CONSENT_BANNER_ENABLED)->value('value'));
     }
 
     #[Test]
@@ -213,37 +265,54 @@ class SystemSettingsTest extends TestCase
 
         $response->assertOk();
 
-        $generalCard = $this->generalSettingsCardXPath($response->getContent());
+        $document = $this->htmlDocument($response->getContent());
+        $xpath = new DOMXPath($document);
+        $settingsCard = $this->settingsCard($xpath);
 
-        $footers = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]', $generalCard['card']);
+        $footers = $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]', $settingsCard);
         $this->assertSame(1, $footers->length);
 
         $footer = $footers->item(0);
         $this->assertStringContainsString('Save Changes', $footer->textContent);
         $this->assertStringContainsString('Cancel', $footer->textContent);
 
-        $footerAfterPerPageField = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")][preceding::*[@id="settings_admin_listing_per_page"]]', $generalCard['card']);
+        $footerAfterPerPageField = $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")][preceding::*[@id="settings_admin_listing_per_page"]]', $settingsCard);
         $this->assertSame(1, $footerAfterPerPageField->length);
 
-        $bodiesAfterFooter = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-body ")][preceding::div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]]', $generalCard['card']);
+        $bodiesAfterFooter = $this->queryElements($xpath, './/div[contains(concat(" ", normalize-space(@class), " "), " wb-card-body ")][preceding::div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]]', $settingsCard);
         $this->assertSame(0, $bodiesAfterFooter->length);
     }
 
-    private function generalSettingsCardXPath(string $html): array
+    private function htmlDocument(string $html): DOMDocument
     {
         $document = new DOMDocument;
         libxml_use_internal_errors(true);
         $document->loadHTML($html);
         libxml_clear_errors();
 
-        $xpath = new DOMXPath($document);
-        $generalCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="General"]]')->item(0);
+        return $document;
+    }
 
-        $this->assertNotNull($generalCard);
+    private function settingsCard(DOMXPath $xpath): DOMElement
+    {
+        $settingsCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="Settings"]]')->item(0);
 
-        return [
-            'xpath' => $xpath,
-            'card' => $generalCard,
-        ];
+        $this->assertInstanceOf(DOMElement::class, $settingsCard);
+
+        return $settingsCard;
+    }
+
+    private function settingsForm(DOMXPath $xpath): DOMElement
+    {
+        $form = $this->queryElements($xpath, './/form[contains(@action, "/admin/system/settings")]', $this->settingsCard($xpath))->item(0);
+
+        $this->assertInstanceOf(DOMElement::class, $form);
+
+        return $form;
+    }
+
+    private function queryElements(DOMXPath $xpath, string $expression, ?DOMElement $context = null): DOMNodeList
+    {
+        return $xpath->query($expression, $context);
     }
 }
