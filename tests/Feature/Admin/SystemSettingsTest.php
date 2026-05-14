@@ -8,6 +8,8 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Support\System\SystemSettings;
 use App\Support\WebBlocks;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -211,11 +213,37 @@ class SystemSettingsTest extends TestCase
 
         $response->assertOk();
 
-        $html = $response->getContent();
+        $generalCard = $this->generalSettingsCardXPath($response->getContent());
 
-        $this->assertMatchesRegularExpression(
-            '/<div class="wb-card">\s*<div class="wb-card-header"><strong>General<\/strong><\/div>.*?<form id="general-settings-form"[\s\S]*?<\/form>\s*<div class="wb-card-footer">\s*<div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap" data-admin-form-actions>/s',
-            $html,
-        );
+        $footers = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]', $generalCard['card']);
+        $this->assertSame(1, $footers->length);
+
+        $footer = $footers->item(0);
+        $this->assertStringContainsString('Save Changes', $footer->textContent);
+        $this->assertStringContainsString('Cancel', $footer->textContent);
+
+        $footerAfterPerPageField = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")][preceding::*[@id="settings_admin_listing_per_page"]]', $generalCard['card']);
+        $this->assertSame(1, $footerAfterPerPageField->length);
+
+        $bodiesAfterFooter = $generalCard['xpath']->query('.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-body ")][preceding::div[contains(concat(" ", normalize-space(@class), " "), " wb-card-footer ")]]', $generalCard['card']);
+        $this->assertSame(0, $bodiesAfterFooter->length);
+    }
+
+    private function generalSettingsCardXPath(string $html): array
+    {
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($html);
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($document);
+        $generalCard = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " wb-card ")][.//div[contains(concat(" ", normalize-space(@class), " "), " wb-card-header ")]/strong[normalize-space()="General"]]')->item(0);
+
+        $this->assertNotNull($generalCard);
+
+        return [
+            'xpath' => $xpath,
+            'card' => $generalCard,
+        ];
     }
 }

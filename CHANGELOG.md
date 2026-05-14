@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.6
+
+- Fix the System Settings `General` card form structure so its action row renders as the real card footer at the visual bottom of the card, matching the standard admin card footer pattern.
+
 ## 1.31.5
 
 - Add an install-level `Admin listing rows per page` system setting under `Admin -> System -> Settings`, apply its validated default row count across core admin listings that previously used the shared hard-coded `15`, and keep missing or invalid stored values safely falling back to `15` without affecting public pagination.

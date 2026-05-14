@@ -10,11 +10,11 @@
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
-            <div class="wb-card-header"><strong>General</strong></div>
-
-            <form id="general-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
+
+                <div class="wb-card-header"><strong>General</strong></div>
 
                 <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
                 <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
@@ -57,23 +57,19 @@
                         </div>
                     </div>
                 </div>
-            </form>
 
-            <div class="wb-card-footer">
-                <x-admin.form-actions
-                    :cancel-url="route('admin.system.settings.edit')"
-                    submit-label="Save Changes"
-                    :submit-attributes="['form' => 'general-settings-form']"
-                />
-            </div>
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
+            </form>
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Project</strong></div>
-
-            <form id="project-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
+
+                <div class="wb-card-header"><strong>Project</strong></div>
 
                 <input type="hidden" name="default_locale" value="{{ $settings['default_locale'] }}">
                 <input type="hidden" name="timezone" value="{{ $settings['timezone'] }}">
@@ -104,23 +100,18 @@
                     </div>
                 </div>
 
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
             </form>
-
-            <div class="wb-card-footer">
-                <x-admin.form-actions
-                    :cancel-url="route('admin.system.settings.edit')"
-                    submit-label="Save Changes"
-                    :submit-attributes="['form' => 'project-settings-form']"
-                />
-            </div>
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Cookie settings</strong></div>
-
-            <form id="cookie-settings-form" method="POST" action="{{ route('admin.system.settings.update') }}">
+            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
                 @csrf
                 @method('PUT')
+
+                <div class="wb-card-header"><strong>Cookie settings</strong></div>
 
                 <input type="hidden" name="project_name" value="{{ $settings['project_name'] }}">
                 <input type="hidden" name="project_tagline" value="{{ $settings['project_tagline'] }}">
@@ -150,15 +141,10 @@
                     </div>
                 </div>
 
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="route('admin.system.settings.edit')" submit-label="Save Changes" />
+                </div>
             </form>
-
-            <div class="wb-card-footer">
-                <x-admin.form-actions
-                    :cancel-url="route('admin.system.settings.edit')"
-                    submit-label="Save Changes"
-                    :submit-attributes="['form' => 'cookie-settings-form']"
-                />
-            </div>
         </div>
 
         <div class="wb-card wb-card-muted">
