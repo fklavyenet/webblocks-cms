@@ -341,6 +341,21 @@ class PublicLayoutStructureTest extends TestCase
     }
 
     #[Test]
+    public function public_search_modal_does_not_hide_the_shared_dialog_layer(): void
+    {
+        $this->buildHomepageWithHeaderSidebarAndFooter();
+
+        $response = $this->get('/');
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-public-search-overlay>', false);
+        $response->assertSee('<div class="wb-overlay-backdrop" data-wb-public-search-close hidden></div>', false);
+        $response->assertDontSee('<div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-public-search-overlay hidden>', false);
+        $this->assertStringNotContainsString('wb-overlay-layer--dialog" hidden', $html);
+    }
+
+    #[Test]
     public function cluster_full_width_utility_keeps_card_footer_cluster_bridge_valid(): void
     {
         $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('cms/css/public.css')));

@@ -14,8 +14,8 @@
 @endphp
 
 @if ($publicSearchSearchPath && $publicSearchJsonPath)
-    <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-public-search-overlay hidden>
-        <div class="wb-overlay-backdrop" data-wb-public-search-close></div>
+    <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-public-search-overlay>
+        <div class="wb-overlay-backdrop" data-wb-public-search-close hidden></div>
 
         <div
             class="wb-modal wb-modal-lg"

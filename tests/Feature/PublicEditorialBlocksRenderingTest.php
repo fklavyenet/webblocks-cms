@@ -1797,6 +1797,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSee('data-wb-gallery-target="#trusted-gallery-viewer"', false);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-modal"/s', $html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-gallery-viewer"/s', $html);
+        $this->assertStringNotContainsString('wb-overlay-layer--dialog" hidden', $html);
     }
 
     #[Test]

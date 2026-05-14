@@ -196,9 +196,19 @@
       form.setAttribute('action', path);
     }
 
+    function setBackdropVisible(visible) {
+      var backdrop = overlay.querySelector('.wb-overlay-backdrop');
+
+      if (!backdrop) {
+        return;
+      }
+
+      backdrop.hidden = !visible;
+    }
+
     function openModal(initialQuery, path) {
       syncFormAction(path);
-      overlay.hidden = false;
+      setBackdropVisible(true);
       modal.hidden = false;
       modal.classList.add(ACTIVE_CLASS);
       setBodyLocked(true);
@@ -221,7 +231,7 @@
     }
 
     function closeModal() {
-      overlay.hidden = true;
+      setBackdropVisible(false);
       modal.hidden = true;
       modal.classList.remove(ACTIVE_CLASS);
       setBodyLocked(false);

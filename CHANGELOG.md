@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.11
+
+- Fix the CMS public search modal shell so it no longer renders the shared `.wb-overlay-layer--dialog` in a hidden state that WebBlocks UI `v2.7.1` reuses for trusted HTML modals and gallery viewers, which previously left CMS-rendered overlays invisible even though the runtime locked the body and found the target.
+- Align CMS public overlay output with the working WebBlocks UI DOM contract by keeping the shared dialog layer visible, limiting hidden state to the search backdrop and search modal itself, and adding regression coverage that trusted modal and gallery targets under `#wb-overlay-root` are not blocked by a hidden parent layer.
+
 ## 1.31.10
 
 - Fix trusted HTML public rendering so detached `wb-modal`, gallery viewer, drawer, dropdown, and popover targets are hoisted into the single shared `#wb-overlay-root` instead of being emitted as loose body-end markup, restoring WebBlocks UI modal and gallery trigger reachability on CMS-rendered public pages.
