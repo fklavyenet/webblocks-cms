@@ -2,7 +2,7 @@
 
 ## Purpose And Scope
 
-This document is the Phase 1 inventory of the currently shipped published core block types in WebBlocks CMS.
+This document began as the Phase 1 inventory of the currently shipped published core block types in WebBlocks CMS and now also documents the Phase 2 read-only admin contract view.
 
 Phase 1 is read-only documentation only.
 
@@ -12,7 +12,7 @@ Phase 1 is read-only documentation only.
 - It does not change public rendering.
 - It does not change how `Admin -> System -> Block Types` edits work today.
 
-The current Block Types admin screen remains a catalog and metadata screen. It is not yet a dynamic contract viewer or dynamic form builder.
+The current Block Types admin screen remains a catalog and metadata screen. In Phase 2 it can now open a read-only Contract modal for each listed row, but it is still not a dynamic form builder or schema editor.
 
 ## Definition
 
@@ -83,6 +83,16 @@ The command is read-only.
 - it reports translation-family metadata and basic container support
 
 The command is a freshness aid for catalog and file-presence drift. It is not a substitute for the fuller contract notes in this document.
+
+## Phase 2 Admin View
+
+Phase 2 exposes contract details read-only in `Admin -> System -> Block Types`.
+
+- each row can open a `Block Type Contract` modal
+- the modal is informational only and does not submit updates
+- it shows catalog, admin form, storage, translation, media or relationship, child, renderer, and gap details from shipped code
+- it does not make Block Types admin a schema editor or form builder
+- custom or draft block types can still open the modal, but may show `No shipped contract is documented for this block type yet.` when no core contract is defined
 
 ## Published Block Contract Matrix
 
@@ -169,17 +179,6 @@ Major current gaps found during the Phase 1 audit:
 - `sidebar-nav-group` does not fully reuse `sidebar-nav-item` rendering helpers for nested items
 - published and draft catalogs coexist, so future admin surfacing must stay explicit about published core contracts versus draft or install-specific rows
 
-## Recommended Phase 2
-
-Recommended next step for `Admin -> System -> Block Types`:
-
-- add a read-only contract details view for each block type from shipped sources
-- show catalog metadata, translation family, admin form source, public renderer source, and child support
-- show whether the block owns translated fields, shared settings, direct media, ordered media, or relationship lookups
-- surface current-status classification and known gaps directly in the admin
-- keep the existing edit modal and update behavior unchanged for install-specific block types
-- do not turn the Block Types screen into a dynamic block editor yet
-
 ## Recommended Phase 3
 
 Recommended later standardization work for block groups:
@@ -193,4 +192,8 @@ Recommended later standardization work for block groups:
 
 Phase 1 establishes the current published contract inventory without changing block editing behavior, block storage, or public rendering.
 
-That is the intended stopping point for this release.
+That was the intended stopping point for the Phase 1 release.
+
+## Phase 2 Summary
+
+Phase 2 makes the documented contract visible in the Block Types admin as read-only information while keeping block edit behavior, storage, renderers, and picker behavior unchanged.

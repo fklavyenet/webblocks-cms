@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BlockTypeRequest;
 use App\Models\BlockType;
 use App\Support\Admin\AdminPagination;
+use App\Support\BlockTypes\BlockTypeContractRegistry;
 use App\Support\BlockTypes\BlockTypeIndexState;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,7 @@ class BlockTypeController extends Controller
 {
     public function __construct(
         private readonly BlockTypeIndexState $indexState,
+        private readonly BlockTypeContractRegistry $contracts,
     ) {}
 
     public function index(Request $request): View
@@ -47,11 +49,19 @@ class BlockTypeController extends Controller
 
         $requestedModal = (string) $request->query('modal', '');
         $editBlockType = null;
+        $contractBlockType = null;
 
         if ($requestedModal === 'edit-block-type') {
             $requestedBlockTypeId = (int) $request->query('block_type');
             $editBlockType = $blockTypes->getCollection()->first(
                 fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId && ! $blockType->is_system
+            );
+        }
+
+        if ($requestedModal === 'block-type-contract') {
+            $requestedBlockTypeId = (int) $request->query('contract_block_type');
+            $contractBlockType = $blockTypes->getCollection()->first(
+                fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId
             );
         }
 
@@ -66,10 +76,13 @@ class BlockTypeController extends Controller
             'supportOptions' => $this->supportOptions(),
             'requestedModal' => $requestedModal,
             'editBlockType' => $editBlockType,
+            'contractBlockType' => $contractBlockType,
             'blockTypesReturnUrl' => $returnUrl,
             'closeUrl' => $closeUrl,
             'totalCount' => $totalCount,
             'filteredCount' => $blockTypes->total(),
+            'blockTypeContracts' => $blockTypes->getCollection()
+                ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => $this->contracts->resolve($blockType)]),
             'supportedAdminForms' => $blockTypes->getCollection()
                 ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedAdminSlugs[$blockType->slug])]),
             'supportedPublicRenders' => $blockTypes->getCollection()

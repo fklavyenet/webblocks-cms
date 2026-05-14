@@ -129,6 +129,18 @@
                                         </td>
                                         <td class="wb-nowrap">
                                             <div class="wb-action-group">
+                                                <a
+                                                    href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'block-type-contract', 'contract_block_type' => $blockType->id]))) }}"
+                                                    class="wb-action-btn wb-action-btn-view"
+                                                    title="View block type contract"
+                                                    aria-label="View block type contract"
+                                                    aria-haspopup="dialog"
+                                                    aria-controls="blockTypeContractModal-{{ $blockType->id }}"
+                                                    data-admin-block-type-contract-action
+                                                >
+                                                    <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                                </a>
+
                                                 @if (! $blockType->is_system)
                                                     <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="Edit block type" aria-label="Edit block type" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
                                                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
@@ -158,6 +170,14 @@
 @endsection
 
 @push('overlays')
+    @if ($requestedModal === 'block-type-contract' && $contractBlockType)
+        @include('admin.block-types.partials.contract-modal', [
+            'blockType' => $contractBlockType,
+            'contract' => $blockTypeContracts[$contractBlockType->id] ?? null,
+            'closeUrl' => $closeUrl,
+        ])
+    @endif
+
     @if ($requestedModal === 'edit-block-type' && $editBlockType)
         @include('admin.block-types.partials.edit-modal', [
             'blockType' => $editBlockType,

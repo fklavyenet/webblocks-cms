@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.19
+
+- Add a read-only `Block Type Contract` modal to `Admin -> System -> Block Types` so each listed row can surface shipped contract details such as admin form source, translation ownership, shared settings, media or relationship paths, child rules, public renderer ownership, and known gaps without changing edit behavior.
+- Refactor the Phase 1 contract audit into a shared block type contract registry so the admin modal and `ddev artisan block-types:contracts-audit` use the same core contract source and custom or draft rows can fail safely with an informational no-contract message.
+
 ## 1.31.18
 
 - Add Phase 1 Block Type Contracts documentation with a read-only published core block inventory that documents current admin form sources, translation and shared ownership, media or relationship paths, renderer ownership, known gaps, and recommended next phases without changing block behavior.

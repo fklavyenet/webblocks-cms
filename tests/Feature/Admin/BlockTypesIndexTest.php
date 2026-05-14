@@ -33,6 +33,7 @@ class BlockTypesIndexTest extends TestCase
         $this->seedFoundation();
 
         $user = User::factory()->superAdmin()->create();
+        $header = BlockType::query()->where('slug', 'header')->firstOrFail();
         $editableBlockType = BlockType::query()->create([
             'name' => 'Modal Editable Type',
             'slug' => 'modal-editable-type',
@@ -65,14 +66,70 @@ class BlockTypesIndexTest extends TestCase
         $response->assertSee('Apply filters');
         $response->assertSee('Search block types...');
         $response->assertSee('New Custom Block Type');
+        $response->assertSee('data-admin-block-type-contract-action', false);
         $response->assertSee('Edit block type');
 
+        $expectedContractUrl = route('admin.block-types.index', ['modal' => 'block-type-contract', 'contract_block_type' => $header->id]);
         $expectedModalUrl = route('admin.block-types.index', ['modal' => 'edit-block-type', 'block_type' => $editableBlockType->id]);
 
+        $response->assertSee('href="'.e($expectedContractUrl).'"', false);
         $response->assertSee('href="'.e($expectedModalUrl).'"', false);
         $response->assertSee('aria-haspopup="dialog"', false);
         $response->assertSee('aria-controls="blockTypeEditModal-'.$editableBlockType->id.'"', false);
         $response->assertDontSee('href="'.e(route('admin.block-types.edit', $editableBlockType)).'" class="wb-action-btn wb-action-btn-edit"', false);
+    }
+
+    #[Test]
+    public function index_can_open_block_type_contract_modal_for_a_published_core_block_type(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('slug', 'header')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'modal' => 'block-type-contract',
+            'contract_block_type' => $blockType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-admin-block-type-contract-modal', false);
+        $response->assertSee('Block Type Contract: '.$blockType->name, false);
+        $response->assertSee('<code>header</code>', false);
+        $response->assertSee('resources/views/admin/blocks/types/header.blade.php', false);
+        $response->assertSee('<code>title</code>', false);
+        $response->assertSee('resources/views/pages/partials/blocks/header.blade.php', false);
+        $response->assertSee('Known Gaps', false);
+        $response->assertSee('This modal is informational only and does not save changes.', false);
+    }
+
+    #[Test]
+    public function index_shows_a_safe_contract_fallback_for_undocumented_block_types(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->create([
+            'name' => 'Undocumented Contract Type',
+            'slug' => 'undocumented-contract-type',
+            'description' => 'Custom block type without a shipped contract.',
+            'category' => 'custom',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => -10,
+            'status' => 'draft',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'modal' => 'block-type-contract',
+            'contract_block_type' => $blockType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Block Type Contract: '.$blockType->name, false);
+        $response->assertSee('No shipped contract is documented for this block type yet.', false);
+        $response->assertSee('<code>undocumented-contract-type</code>', false);
     }
 
     #[Test]
