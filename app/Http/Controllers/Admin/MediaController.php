@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\MediaUpdateRequest;
 use App\Http\Requests\Admin\MediaUploadRequest;
 use App\Models\Media;
 use App\Models\MediaFolder;
+use App\Support\Admin\AdminPagination;
 use App\Support\Media\MediaIndexState;
 use App\Support\Media\MediaKindResolver;
 use App\Support\Media\MediaUsageFilter;
@@ -71,7 +72,7 @@ class MediaController extends Controller
         $totalMediaCount = $this->authorization->scopeMediaForUser(Media::query(), $user)->count();
 
         $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage, $sort, $direction)
-            ->paginate($view === 'grid' ? 24 : 20)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
         $mediaPaginator->getCollection()->transform(function (Media $media) {

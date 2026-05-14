@@ -3,8 +3,10 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\IconCatalogItem;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Support\Icons\WebBlocksIconManifestSyncer;
+use App\Support\System\SystemSettings;
 use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -145,5 +147,43 @@ class IconCatalogManagementTest extends TestCase
             'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.1/packages/webblocks/dist/webblocks-icons.json',
             WebBlocksIconManifestSyncer::DEFAULT_MANIFEST,
         );
+    }
+
+    #[Test]
+    public function icons_index_uses_configured_admin_listing_rows_per_page(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(
+            ['key' => SystemSettings::ADMIN_LISTING_PER_PAGE],
+            ['value' => '12'],
+        );
+
+        foreach (range(1, 13) as $index) {
+            IconCatalogItem::query()->create([
+                'source' => 'webblocks-ui',
+                'slug' => 'configured-icon-'.$index,
+                'label' => 'Configured Icon '.$index,
+                'css_class' => 'wb-icon-box',
+                'contexts' => ['navigation'],
+                'categories' => ['navigation'],
+                'is_active' => true,
+                'sort_order' => $index,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.system.icons.index', [
+            'search' => 'Configured Icon',
+            'status' => 'active',
+        ]));
+        $expectedPageTwoUrl = route('admin.system.icons.index', [
+            'search' => 'Configured Icon',
+            'status' => 'active',
+            'page' => 2,
+        ]);
+
+        $response->assertOk();
+        $response->assertSee('1-12/13', false);
+        $response->assertSee(e($expectedPageTwoUrl), false);
     }
 }

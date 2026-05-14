@@ -10,7 +10,9 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\System\SystemSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -613,6 +615,61 @@ class PageEditorialWorkflowTest extends TestCase
             'direction' => 'asc',
             'page' => 1,
         ])), false);
+    }
+
+    #[Test]
+    public function pages_index_uses_configured_admin_listing_rows_per_page(): void
+    {
+        $site = $this->defaultSite();
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(
+            ['key' => SystemSettings::ADMIN_LISTING_PER_PAGE],
+            ['value' => '12'],
+        );
+
+        foreach (range(1, 13) as $index) {
+            Page::query()->create([
+                'site_id' => $site->id,
+                'title' => sprintf('Configured Page %02d', $index),
+                'slug' => sprintf('configured-page-%02d', $index),
+                'status' => Page::STATUS_PUBLISHED,
+                'page_type' => 'default',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Configured Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+        ]));
+        $expectedPageTwoUrl = route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Configured Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ]);
+
+        $response->assertOk();
+        $response->assertSee('1-12/13', false);
+        $response->assertSee(e($expectedPageTwoUrl), false);
+
+        $pageTwo = $this->actingAs($user)->get(route('admin.pages.index', [
+            'site' => $site->id,
+            'search' => 'Configured Page',
+            'status' => Page::STATUS_PUBLISHED,
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('13-13/13', false);
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
     }
 
     #[Test]

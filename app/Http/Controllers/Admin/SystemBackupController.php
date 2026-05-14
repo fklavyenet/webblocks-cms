@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\RunSystemBackupRestoreRequest;
 use App\Http\Requests\Admin\SystemBackupUploadRequest;
 use App\Models\SystemBackup;
 use App\Models\SystemBackupRestore;
+use App\Support\Admin\AdminPagination;
 use App\Support\System\BackupRestoreArchiveInspector;
 use App\Support\System\SystemBackupManager;
 use App\Support\System\SystemBackupRestoreManager;
@@ -22,6 +23,8 @@ use Throwable;
 
 class SystemBackupController extends Controller
 {
+    private const FALLBACK_PER_PAGE = 15;
+
     public function __construct(
         private readonly SystemBackupManager $systemBackupManager,
         private readonly SystemBackupRestoreManager $systemBackupRestoreManager,
@@ -32,6 +35,7 @@ class SystemBackupController extends Controller
     public function index(): View
     {
         $tableExists = Schema::hasTable('system_backups');
+        $perPage = AdminPagination::perPage();
         $search = trim((string) request()->string('search'));
         $type = request()->string('type')->toString();
         $status = request()->string('status')->toString();
@@ -74,9 +78,9 @@ class SystemBackupController extends Controller
                     ->when($type !== '', fn ($query) => $query->where('type', $type))
                     ->when($status !== '', fn ($query) => $query->where('status', $status))
                     ->latest()
-                    ->paginate(20)
+                    ->paginate($perPage)
                     ->withQueryString()
-                : new LengthAwarePaginator([], 0, 20, 1, [
+                : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [
                     'path' => request()->url(),
                     'query' => request()->query(),
                 ]),

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\SiteExportRequest;
 use App\Models\Site;
 use App\Models\SiteExport;
 use App\Models\SiteImport;
+use App\Support\Admin\AdminPagination;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -25,12 +26,12 @@ class SiteExportController extends Controller
             'exports' => SiteExport::query()
                 ->with(['site', 'user'])
                 ->latest()
-                ->paginate(20, ['*'], 'exports_page')
+                ->paginate(AdminPagination::perPage(), ['*'], 'exports_page')
                 ->withQueryString(),
             'imports' => SiteImport::query()
                 ->with(['targetSite', 'user'])
                 ->latest()
-                ->paginate(20, ['*'], 'imports_page')
+                ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
                 ->withQueryString(),
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
         ]);

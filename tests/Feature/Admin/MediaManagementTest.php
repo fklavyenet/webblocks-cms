@@ -13,7 +13,9 @@ use App\Models\PageSlot;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\System\SystemSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -212,8 +214,8 @@ class MediaManagementTest extends TestCase
         $response->assertSee('aria-label="Media pagination"', false);
         $response->assertSee('aria-current="page">1</span>', false);
         $response->assertSee('data-admin-pagination-summary', false);
-        $response->assertSee('1-20/35', false);
-        $response->assertDontSee('Showing 1-20 of 35', false);
+        $response->assertSee('1-15/35', false);
+        $response->assertDontSee('Showing 1-15 of 35', false);
         $response->assertSee(e(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
@@ -233,7 +235,7 @@ class MediaManagementTest extends TestCase
 
         $pageTwo->assertOk();
         $pageTwo->assertSee('aria-current="page">2</span>', false);
-        $pageTwo->assertSee('21-35/35', false);
+        $pageTwo->assertSee('16-30/35', false);
         $pageTwo->assertSee(e(route('admin.media.index', [
             'search' => 'Pattern asset',
             'kind' => Asset::KIND_IMAGE,
@@ -241,6 +243,55 @@ class MediaManagementTest extends TestCase
             'direction' => 'asc',
             'page' => 1,
         ])), false);
+    }
+
+    #[Test]
+    public function media_index_uses_configured_admin_listing_rows_per_page_and_keeps_sort_query(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(
+            ['key' => SystemSettings::ADMIN_LISTING_PER_PAGE],
+            ['value' => '12'],
+        );
+
+        foreach (range(1, 13) as $index) {
+            Asset::create([
+                'disk' => 'public',
+                'path' => 'media/images/configured-media-'.$index.'.jpg',
+                'filename' => 'configured-media-'.$index.'.jpg',
+                'original_name' => 'configured-media-'.$index.'.jpg',
+                'extension' => 'jpg',
+                'mime_type' => 'image/jpeg',
+                'size' => 1000 + $index,
+                'kind' => Asset::KIND_IMAGE,
+                'visibility' => 'public',
+                'title' => 'Configured Media '.sprintf('%02d', $index),
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.media.index', [
+            'search' => 'Configured Media',
+            'sort' => 'title',
+            'direction' => 'asc',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('1-12/13', false);
+        $response->assertSee('sort=title', false);
+        $response->assertSee('direction=asc', false);
+        $response->assertSee('page=2', false);
+
+        $pageTwo = $this->actingAs($user)->get(route('admin.media.index', [
+            'search' => 'Configured Media',
+            'sort' => 'title',
+            'direction' => 'asc',
+            'page' => 2,
+        ]));
+
+        $pageTwo->assertOk();
+        $pageTwo->assertSee('13-13/13', false);
+        $pageTwo->assertSee('aria-current="page">2</span>', false);
     }
 
     #[Test]

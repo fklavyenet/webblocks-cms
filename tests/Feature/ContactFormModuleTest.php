@@ -403,8 +403,8 @@ class ContactFormModuleTest extends TestCase
         $response->assertSee('aria-label="Contact messages pagination"', false);
         $response->assertSee('aria-current="page">1</span>', false);
         $response->assertSee('data-admin-pagination-summary', false);
-        $response->assertSee('1-20/35', false);
-        $response->assertDontSee('Showing 1-20 of 35', false);
+        $response->assertSee('1-15/35', false);
+        $response->assertDontSee('Showing 1-15 of 35', false);
         $response->assertSee(e(route('admin.contact-messages.index', [
             'search' => 'Pattern',
             'status' => 'new',
@@ -422,7 +422,7 @@ class ContactFormModuleTest extends TestCase
 
         $pageTwo->assertOk();
         $pageTwo->assertSee('aria-current="page">2</span>', false);
-        $pageTwo->assertSee('21-35/35', false);
+        $pageTwo->assertSee('16-30/35', false);
         $pageTwo->assertSee(e(route('admin.contact-messages.index', [
             'search' => 'Pattern',
             'status' => 'new',

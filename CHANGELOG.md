@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.15
+
+- Apply the install-level `Admin listing rows per page` setting consistently across remaining paginated CMS admin listings, including `Media`, Page Layouts, backup history, icon catalog, contact messages, and site export/import histories.
+- Keep admin pagination centralized through the shared helper so invalid or missing stored values still fall back safely to `15`, while existing admin filter, sort, direction, and query-string preservation continues to work.
+
 ## 1.31.14
 
 - Add `Sort by` and `Direction` controls to `Admin -> Media` using the shared compact listing toolbar pattern, while keeping `Search`, `Kind`, `Usage`, folder pills, view mode, pagination, preview links, and edit return URLs in the same query-preserved Media list context.

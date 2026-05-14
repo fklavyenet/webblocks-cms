@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PageLayoutRequest;
 use App\Models\PageLayout;
 use App\Models\SlotType;
+use App\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,7 +21,7 @@ class PageLayoutController extends Controller
             'pageLayouts' => PageLayout::query()
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->paginate(20),
+                ->paginate(AdminPagination::perPage()),
         ]);
     }
 

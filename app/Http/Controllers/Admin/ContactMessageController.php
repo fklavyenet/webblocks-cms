@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
+use App\Support\Admin\AdminPagination;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class ContactMessageController extends Controller
                     };
                 })
                 ->latest()
-                ->paginate(20)
+                ->paginate(AdminPagination::perPage())
                 ->withQueryString(),
             'filters' => [
                 'search' => $search,

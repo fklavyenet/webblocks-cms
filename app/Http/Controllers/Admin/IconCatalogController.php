@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
 use App\Models\IconCatalogItem;
+use App\Support\Admin\AdminPagination;
 use App\Support\Icons\WebBlocksIconManifestSyncer;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,7 @@ class IconCatalogController extends Controller
             ->orderBy('source')
             ->orderBy('sort_order')
             ->orderBy('label')
-            ->paginate(25)
+            ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
         $baseQuery = array_filter([

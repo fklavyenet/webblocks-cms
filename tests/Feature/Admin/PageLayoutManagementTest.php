@@ -10,8 +10,10 @@ use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Support\Pages\PageLayoutManager;
+use App\Support\System\SystemSettings;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,6 +140,36 @@ class PageLayoutManagementTest extends TestCase
             ->assertSee('Docs Layout')
             ->assertSee('<code>default</code>', false)
             ->assertSee('<code>docs</code>', false);
+    }
+
+    #[Test]
+    public function page_layouts_index_uses_configured_admin_listing_rows_per_page(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+
+        SystemSetting::query()->updateOrCreate(
+            ['key' => SystemSettings::ADMIN_LISTING_PER_PAGE],
+            ['value' => '12'],
+        );
+
+        foreach (range(1, 11) as $index) {
+            PageLayout::query()->create([
+                'name' => 'Configured Layout '.$index,
+                'handle' => 'configured-layout-'.$index,
+                'description' => 'Configured layout '.$index,
+                'is_active' => true,
+                'sort_order' => 100 + $index,
+                'body_class' => 'configured-layout-'.$index,
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get(route('admin.page-layouts.index'));
+
+        $response->assertOk();
+        $response->assertSee('aria-current="page">1</span>', false);
+        $response->assertSee(e(route('admin.page-layouts.index', ['page' => 2])), false);
     }
 
     #[Test]
