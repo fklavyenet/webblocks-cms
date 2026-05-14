@@ -11,7 +11,6 @@
     $fileDetailsModalDescriptionId = $fileDetailsModalId.'Description';
     $fileDetailsCloseUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]);
     $fileDetailsOpenUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'file-details']);
-    $deleteOpenUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'delete-media']);
     $dimensions = $asset->width && $asset->height ? $asset->width.' x '.$asset->height : '-';
     $previewMeta = collect([
         trim(($asset->extension ? strtoupper($asset->extension).' ' : '').$asset->kind),
@@ -28,69 +27,71 @@
 
     @include('admin.partials.flash')
 
-    <form method="POST" action="{{ route('admin.media.update', $media ?? $asset) }}" class="wb-stack wb-gap-4">
-        @csrf
-        @method('PUT')
-        <input type="hidden" name="return_url" value="{{ $mediaReturnUrl }}">
-
+    <div class="wb-stack wb-gap-4">
         <div class="wb-grid wb-grid-2">
-            <div class="wb-stack wb-gap-4">
-                <div class="wb-card">
-                    <div class="wb-card-header"><strong>Preview</strong></div>
-                    <div class="wb-card-body wb-stack wb-gap-3">
-                        @if ($asset->canPreview() && $publicUrl)
-                            <img src="{{ $publicUrl }}" alt="{{ $asset->thumbnailLabel() }}">
-                        @else
-                            <div class="wb-empty wb-empty-sm">
-                                <i class="wb-icon {{ $asset->previewIconClass() }} wb-icon-2xl" aria-hidden="true"></i>
-                                <div class="wb-empty-title">Preview unavailable</div>
-                                <div class="wb-empty-text">This media type does not have an inline preview in the current UI.</div>
-                            </div>
-                        @endif
-                        @if ($previewMeta !== '')
-                            <div class="wb-text-sm wb-text-muted">{{ $previewMeta }}</div>
-                        @endif
-                    </div>
+            <div class="wb-card">
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                    <strong>Preview</strong>
+                    <a href="{{ $fileDetailsOpenUrl }}" class="wb-btn wb-btn-secondary wb-btn-sm" aria-haspopup="dialog">File Details</a>
                 </div>
-
-                <div class="wb-card">
-                    <div class="wb-card-header"><strong>Usage</strong></div>
-                    <div class="wb-card-body">
-                        @if ($usages->isEmpty())
-                            <div class="wb-empty wb-empty-sm">
-                                <div class="wb-empty-title">Unused media</div>
-                                <div class="wb-empty-text">This media item is not referenced by protected CMS consumers yet.</div>
-                            </div>
-                        @else
-                            <div class="wb-stack wb-gap-2">
-                                @foreach ($usages as $usage)
-                                    <div class="wb-card wb-card-muted">
-                                        <div class="wb-card-body">
-                                            <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                                                <div class="wb-stack wb-gap-1">
-                                                    <strong>{{ $usage['label'] }}</strong>
-                                                    <div class="wb-text-sm wb-text-muted">{{ $usage['type'] }} | {{ $usage['context'] }}@if($usage['page_title']) | {{ $usage['page_title'] }}@endif</div>
-                                                </div>
-                                                @if (! empty($usage['admin_url']))
-                                                    <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary">Open</a>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
+                <div class="wb-card-body wb-stack wb-gap-3">
+                    @if ($asset->canPreview() && $publicUrl)
+                        <img src="{{ $publicUrl }}" alt="{{ $asset->thumbnailLabel() }}">
+                    @else
+                        <div class="wb-empty wb-empty-sm">
+                            <i class="wb-icon {{ $asset->previewIconClass() }} wb-icon-2xl" aria-hidden="true"></i>
+                            <div class="wb-empty-title">Preview unavailable</div>
+                            <div class="wb-empty-text">This media type does not have an inline preview in the current UI.</div>
+                        </div>
+                    @endif
+                    @if ($previewMeta !== '')
+                        <div class="wb-text-sm wb-text-muted">{{ $previewMeta }}</div>
+                    @endif
                 </div>
             </div>
 
-            <div class="wb-stack wb-gap-4">
-                <div class="wb-card">
-                    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                        <strong>Media Information</strong>
-                        <a href="{{ $fileDetailsOpenUrl }}" class="wb-btn wb-btn-secondary wb-btn-sm" aria-haspopup="dialog">File Details</a>
-                    </div>
-                    <div class="wb-card-body wb-stack wb-gap-4">
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Usage</strong></div>
+                <div class="wb-card-body">
+                    @if ($usages->isEmpty())
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">Unused media</div>
+                            <div class="wb-empty-text">This media item is not referenced by protected CMS consumers yet.</div>
+                        </div>
+                    @else
+                        <div class="wb-stack wb-gap-2">
+                            @foreach ($usages as $usage)
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body">
+                                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                                            <div class="wb-stack wb-gap-1">
+                                                <strong>{{ $usage['label'] }}</strong>
+                                                <div class="wb-text-sm wb-text-muted">{{ $usage['type'] }} | {{ $usage['context'] }}@if($usage['page_title']) | {{ $usage['page_title'] }}@endif</div>
+                                            </div>
+                                            @if (! empty($usage['admin_url']))
+                                                <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary">Open</a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.media.update', $media ?? $asset) }}">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="return_url" value="{{ $mediaReturnUrl }}">
+
+            <div class="wb-card">
+                <div class="wb-card-header">
+                    <strong>Media Information</strong>
+                </div>
+                <div class="wb-card-body wb-grid wb-grid-2 wb-gap-4">
+                    <div class="wb-stack wb-gap-4">
                         <div class="wb-stack wb-gap-1">
                             <label for="title">Title</label>
                             <input id="title" name="title" type="text" class="wb-input" value="{{ old('title', $asset->title) }}">
@@ -100,18 +101,6 @@
                             <label for="alt_text">Alt Text</label>
                             <input id="alt_text" name="alt_text" type="text" class="wb-input" value="{{ old('alt_text', $asset->alt_text) }}">
                             <span class="wb-text-sm wb-text-muted">Accessibility text used when this image is rendered publicly.</span>
-                        </div>
-
-                        <div class="wb-stack wb-gap-1">
-                            <label for="caption">Caption</label>
-                            <textarea id="caption" name="caption" class="wb-textarea" rows="4">{{ old('caption', $asset->caption) }}</textarea>
-                            <span class="wb-text-sm wb-text-muted">Optional visible caption for contexts that support captions.</span>
-                        </div>
-
-                        <div class="wb-stack wb-gap-1">
-                            <label for="description">Description</label>
-                            <textarea id="description" name="description" class="wb-textarea" rows="5">{{ old('description', $asset->description) }}</textarea>
-                            <span class="wb-text-sm wb-text-muted">Internal notes or longer metadata.</span>
                         </div>
 
                         <div class="wb-stack wb-gap-1">
@@ -125,35 +114,27 @@
                         </div>
                     </div>
 
-                    @if ($usages->isNotEmpty())
-                        <div class="wb-card-body">
-                            <div class="wb-alert wb-alert-warning wb-text-sm" data-media-delete-blocked>
-                                <div class="wb-alert-title">Delete blocked</div>
-                                This media item is still used by protected CMS consumers, so it cannot be deleted yet.
-                            </div>
+                    <div class="wb-stack wb-gap-4">
+                        <div class="wb-stack wb-gap-1">
+                            <label for="caption">Caption</label>
+                            <textarea id="caption" name="caption" class="wb-textarea" rows="4">{{ old('caption', $asset->caption) }}</textarea>
+                            <span class="wb-text-sm wb-text-muted">Optional visible caption for contexts that support captions.</span>
                         </div>
-                    @else
-                        <div class="wb-card-body">
-                            <div class="wb-text-sm wb-text-muted">Delete this media item only when you are sure it is no longer needed.</div>
-                        </div>
-                    @endif
 
-                    <div class="wb-card-footer">
-                        <x-admin.form-actions
-                            :cancel-url="$mediaReturnUrl"
-                            submit-label="Save changes"
-                            :delete-href="$usages->isEmpty() ? $deleteOpenUrl : '#'"
-                            delete-label="Delete media"
-                            :delete-disabled="$usages->isNotEmpty()"
-                            :delete-attributes="$usages->isEmpty()
-                                ? ['aria-haspopup' => 'dialog']
-                                : ['aria-disabled' => 'true', 'data-media-delete-blocked' => true]"
-                        />
+                        <div class="wb-stack wb-gap-1">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" class="wb-textarea" rows="5">{{ old('description', $asset->description) }}</textarea>
+                            <span class="wb-text-sm wb-text-muted">Internal notes or longer metadata.</span>
+                        </div>
                     </div>
                 </div>
+
+                <div class="wb-card-footer">
+                    <x-admin.form-actions :cancel-url="$mediaReturnUrl" submit-label="Save changes" />
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 
     <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
 @endsection
@@ -206,12 +187,12 @@
                                 </div>
 
                                 <div class="wb-stack wb-gap-1">
-                                    <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                                    <div class="wb-cluster wb-gap-2 wb-flex-wrap">
                                         <strong>Public URL</strong>
                                         @if ($publicUrl)
                                             <button
                                                 type="button"
-                                                class="wb-btn wb-btn-secondary wb-btn-sm wb-btn-icon"
+                                                class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon"
                                                 data-wb-copy-url="{{ $publicUrl }}"
                                                 aria-label="Copy public URL"
                                                 title="Copy public URL"

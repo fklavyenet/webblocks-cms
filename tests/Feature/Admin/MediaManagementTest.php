@@ -548,6 +548,7 @@ class MediaManagementTest extends TestCase
         $returnUrl = route('admin.media.index', ['search' => 'Edit context asset', 'view' => 'grid']);
 
         $editResponse = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => $returnUrl]));
+        $editHtml = $editResponse->getContent();
 
         $editResponse->assertOk();
         $editResponse->assertSee('Edit Media: Edit context asset');
@@ -564,15 +565,24 @@ class MediaManagementTest extends TestCase
         $editResponse->assertSee('name="description"', false);
         $editResponse->assertSee('name="folder_id"', false);
         $editResponse->assertDontSee('name="kind"', false);
+        $editResponse->assertSee('<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">', false);
+        $editResponse->assertSee('<strong>Preview</strong>', false);
+        $editResponse->assertSee('<div class="wb-card-header">', false);
+        $editResponse->assertSee('<strong>Media Information</strong>', false);
         $editResponse->assertSee('>File Details<', false);
         $editResponse->assertSee('modal=file-details', false);
+        $editResponse->assertSee('wb-card-body wb-grid wb-grid-2 wb-gap-4', false);
         $editResponse->assertDontSee('>Copy public URL<', false);
         $editResponse->assertSee('data-admin-form-actions', false);
         $editResponse->assertSee('>Save changes<', false);
         $editResponse->assertSee('name="return_url" value="'.e($returnUrl).'"', false);
         $editResponse->assertSee('href="'.e($returnUrl).'" class="wb-btn wb-btn-secondary"', false);
-        $editResponse->assertSee('data-admin-form-actions-danger', false);
-        $editResponse->assertSee('modal=delete-media', false);
+        $editResponse->assertDontSee('data-admin-form-actions-danger', false);
+        $editResponse->assertDontSee('Delete media');
+        $editResponse->assertDontSee('Delete blocked');
+        $editResponse->assertDontSee('modal=delete-media', false);
+        $this->assertSame(1, substr_count($editHtml, '>File Details<'));
+        $this->assertMatchesRegularExpression('/<strong>Preview<\/strong>\s*<a href="[^"]*modal=file-details/', $editHtml);
 
         $updateResponse = $this->actingAs($user)->put(route('admin.media.update', $asset), [
             'title' => 'Updated title',
@@ -1274,7 +1284,7 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
-    public function media_edit_usage_and_delete_modal_render_for_used_and_unused_media(): void
+    public function media_edit_keeps_usage_and_file_details_modal_without_inline_delete_ui(): void
     {
         $user = User::factory()->superAdmin()->create();
         $page = Page::create([
@@ -1335,9 +1345,12 @@ class MediaManagementTest extends TestCase
         $usedResponse->assertSee('Hero visual');
         $usedResponse->assertSee('Open');
         $usedResponse->assertSee('Media Usage Page');
-        $usedResponse->assertSee('Delete blocked');
-        $usedResponse->assertSee('This media item is still used by protected CMS consumers, so it cannot be deleted yet.');
-        $usedResponse->assertSee('type="button" class="wb-btn wb-btn-danger" disabled', false);
+        $usedResponse->assertSee('Preview');
+        $usedResponse->assertSee('Usage');
+        $usedResponse->assertSee('Media Information');
+        $usedResponse->assertDontSee('Delete blocked');
+        $usedResponse->assertDontSee('This media item is still used by protected CMS consumers, so it cannot be deleted yet.');
+        $usedResponse->assertDontSee('Delete media');
         $usedResponse->assertDontSee('modal=delete-media', false);
         $usedResponse->assertDontSee('onsubmit="return confirm', false);
 
@@ -1359,6 +1372,8 @@ class MediaManagementTest extends TestCase
         $fileDetailsResponse->assertSee('Updated:');
         $fileDetailsResponse->assertSee('aria-label="Copy public URL"', false);
         $fileDetailsResponse->assertSee('wb-btn-icon', false);
+        $fileDetailsResponse->assertSee('wb-btn-ghost', false);
+        $fileDetailsResponse->assertSee('<div class="wb-cluster wb-gap-2 wb-flex-wrap">', false);
         $fileDetailsResponse->assertDontSee('>Copy public URL<', false);
 
         $unusedResponse = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $unusedAsset, 'modal' => 'delete-media']));
