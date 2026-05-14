@@ -38,22 +38,22 @@ return new class extends Migration
 
     private function renameColumns(): void
     {
-        $this->renameConstrainedColumn('media', 'folder_id', 'media_folders');
-        $this->renameConstrainedColumn('blocks', 'asset_id', 'media', 'media_id');
-        $this->renameConstrainedColumn('block_media', 'asset_id', 'media', 'media_id');
-        $this->renameConstrainedColumn('sites', 'favicon_asset_id', 'media', 'favicon_media_id');
-        $this->renameConstrainedColumn('sites', 'social_image_asset_id', 'media', 'social_image_media_id');
-        $this->renameConstrainedColumn('page_translations', 'og_image_asset_id', 'media', 'og_image_media_id');
+        $this->renameConstrainedColumn('media', 'folder_id', 'media_folders', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('blocks', 'asset_id', 'media', 'media_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('block_media', 'asset_id', 'media', 'media_id', onDeleteAction: 'cascade');
+        $this->renameConstrainedColumn('sites', 'favicon_asset_id', 'media', 'favicon_media_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('sites', 'social_image_asset_id', 'media', 'social_image_media_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('page_translations', 'og_image_asset_id', 'media', 'og_image_media_id', onDeleteAction: 'set null');
     }
 
     private function renameColumnsBack(): void
     {
-        $this->renameConstrainedColumn('page_translations', 'og_image_media_id', 'assets', 'og_image_asset_id');
-        $this->renameConstrainedColumn('sites', 'social_image_media_id', 'assets', 'social_image_asset_id');
-        $this->renameConstrainedColumn('sites', 'favicon_media_id', 'assets', 'favicon_asset_id');
-        $this->renameConstrainedColumn('block_media', 'media_id', 'assets', 'asset_id');
-        $this->renameConstrainedColumn('blocks', 'media_id', 'assets', 'asset_id');
-        $this->renameConstrainedColumn('media', 'folder_id', 'asset_folders');
+        $this->renameConstrainedColumn('page_translations', 'og_image_media_id', 'assets', 'og_image_asset_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('sites', 'social_image_media_id', 'assets', 'social_image_asset_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('sites', 'favicon_media_id', 'assets', 'favicon_asset_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('block_media', 'media_id', 'assets', 'asset_id', onDeleteAction: 'cascade');
+        $this->renameConstrainedColumn('blocks', 'media_id', 'assets', 'asset_id', onDeleteAction: 'set null');
+        $this->renameConstrainedColumn('media', 'folder_id', 'asset_folders', onDeleteAction: 'set null');
     }
 
     private function renameTablesBack(): void
@@ -77,19 +77,19 @@ return new class extends Migration
             Schema::rename('demo_asset_references', 'demo_media_references');
         }
 
-        $this->renameConstrainedColumn('demo_media_references', 'asset_id', 'media', 'media_id', cascadeOnDelete: true);
+        $this->renameConstrainedColumn('demo_media_references', 'asset_id', 'media', 'media_id', onDeleteAction: 'cascade');
     }
 
     private function renameDemoReferencesTableBack(): void
     {
-        $this->renameConstrainedColumn('demo_media_references', 'media_id', 'assets', 'asset_id', cascadeOnDelete: true);
+        $this->renameConstrainedColumn('demo_media_references', 'media_id', 'assets', 'asset_id', onDeleteAction: 'cascade');
 
         if (Schema::hasTable('demo_media_references') && ! Schema::hasTable('demo_asset_references')) {
             Schema::rename('demo_media_references', 'demo_asset_references');
         }
     }
 
-    private function renameConstrainedColumn(string $table, string $from, string $constrainedTable, ?string $to = null, bool $cascadeOnDelete = false): void
+    private function renameConstrainedColumn(string $table, string $from, string $constrainedTable, ?string $to = null, string $onDeleteAction = 'set null'): void
     {
         $to ??= $from;
 
@@ -98,28 +98,33 @@ return new class extends Migration
         }
 
         if (! Schema::hasColumn($table, $from) || Schema::hasColumn($table, $to)) {
-            $this->rebuildForeignKeyIfNeeded($table, $to, $constrainedTable, $cascadeOnDelete);
+            $this->rebuildForeignKeyIfNeeded($table, $to, $constrainedTable, $onDeleteAction);
 
             return;
         }
 
         $this->dropForeignKeyIfExists($table, $from);
         $this->renameColumn($table, $from, $to);
-        $this->rebuildForeignKeyIfNeeded($table, $to, $constrainedTable, $cascadeOnDelete);
+        $this->rebuildForeignKeyIfNeeded($table, $to, $constrainedTable, $onDeleteAction);
     }
 
-    private function rebuildForeignKeyIfNeeded(string $table, string $column, string $constrainedTable, bool $cascadeOnDelete): void
+    private function rebuildForeignKeyIfNeeded(string $table, string $column, string $constrainedTable, string $onDeleteAction): void
     {
-        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
+        if (! Schema::hasTable($table) || ! Schema::hasTable($constrainedTable) || ! Schema::hasColumn($table, $column)) {
             return;
         }
 
         $this->dropForeignKeyIfExists($table, $column);
+        $this->ensureColumnNullabilityMatchesOnDeleteAction($table, $column, $onDeleteAction);
 
-        Schema::table($table, function (Blueprint $blueprint) use ($column, $constrainedTable, $cascadeOnDelete): void {
+        if ($this->foreignKeyExists($table, $column, $constrainedTable, $onDeleteAction)) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($column, $constrainedTable, $onDeleteAction): void {
             $foreign = $blueprint->foreign($column)->references('id')->on($constrainedTable);
 
-            if ($cascadeOnDelete) {
+            if ($onDeleteAction === 'cascade') {
                 $foreign->cascadeOnDelete();
 
                 return;
@@ -129,16 +134,86 @@ return new class extends Migration
         });
     }
 
+    private function ensureColumnNullabilityMatchesOnDeleteAction(string $table, string $column, string $onDeleteAction): void
+    {
+        if ($onDeleteAction !== 'set null') {
+            return;
+        }
+
+        $definition = $this->columnDefinition($table, $column);
+
+        if (! $definition || $definition->is_nullable === 'YES') {
+            return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            return;
+        }
+
+        $defaultSql = $definition->column_default === null ? '' : ' DEFAULT '.DB::getPdo()->quote((string) $definition->column_default);
+        $commentSql = $definition->column_comment !== '' ? ' COMMENT '.DB::getPdo()->quote((string) $definition->column_comment) : '';
+
+        DB::statement(sprintf(
+            'ALTER TABLE `%s` MODIFY `%s` %s NULL%s%s',
+            $table,
+            $column,
+            $definition->column_type,
+            $defaultSql,
+            $commentSql,
+        ));
+    }
+
+    private function foreignKeyExists(string $table, string $column, string $constrainedTable, string $onDeleteAction): bool
+    {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            return false;
+        }
+
+        $constraint = DB::selectOne(
+            'SELECT k.CONSTRAINT_NAME AS constraint_name, r.DELETE_RULE AS delete_rule '
+            .'FROM information_schema.KEY_COLUMN_USAGE k '
+            .'JOIN information_schema.REFERENTIAL_CONSTRAINTS r '
+            .'ON k.CONSTRAINT_SCHEMA = r.CONSTRAINT_SCHEMA '
+            .'AND k.CONSTRAINT_NAME = r.CONSTRAINT_NAME '
+            .'AND k.TABLE_NAME = r.TABLE_NAME '
+            .'WHERE k.CONSTRAINT_SCHEMA = DATABASE() '
+            .'AND k.TABLE_NAME = ? AND k.COLUMN_NAME = ? AND k.REFERENCED_TABLE_NAME = ? '
+            .'LIMIT 1',
+            [$table, $column, $constrainedTable],
+        );
+
+        if (! $constraint) {
+            return false;
+        }
+
+        return strtolower((string) $constraint->delete_rule) === ($onDeleteAction === 'cascade' ? 'cascade' : 'set null');
+    }
+
+    private function columnDefinition(string $table, string $column): ?object
+    {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            return null;
+        }
+
+        return DB::selectOne(
+            'SELECT COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, COLUMN_COMMENT AS column_comment '
+            .'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+            [$table, $column],
+        );
+    }
+
     private function renameColumn(string $table, string $from, string $to): void
     {
         $driver = Schema::getConnection()->getDriverName();
 
         if (in_array($driver, ['mysql', 'mariadb'], true)) {
-            $definition = DB::selectOne(
-                'SELECT COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, COLUMN_COMMENT AS column_comment '
-                .'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-                [$table, $from],
-            );
+            $definition = $this->columnDefinition($table, $from);
 
             if (! $definition) {
                 return;
@@ -169,18 +244,32 @@ return new class extends Migration
 
     private function dropForeignKeyIfExists(string $table, string $column): void
     {
-        $foreignKey = $this->foreignKeyName($table, $column);
-
-        try {
-            Schema::table($table, function (Blueprint $blueprint) use ($foreignKey): void {
-                $blueprint->dropForeign($foreignKey);
-            });
-        } catch (Throwable) {
+        foreach ($this->possibleForeignKeyNames($table, $column) as $foreignKey) {
+            try {
+                Schema::table($table, function (Blueprint $blueprint) use ($foreignKey): void {
+                    $blueprint->dropForeign($foreignKey);
+                });
+            } catch (Throwable) {
+            }
         }
     }
 
-    private function foreignKeyName(string $table, string $column): string
+    private function possibleForeignKeyNames(string $table, string $column): array
     {
-        return $table.'_'.$column.'_foreign';
+        $names = [$table.'_'.$column.'_foreign'];
+
+        if ($table === 'block_media' && $column === 'media_id') {
+            $names[] = 'block_assets_asset_id_foreign';
+        }
+
+        if ($table === 'demo_media_references' && $column === 'media_id') {
+            $names[] = 'demo_asset_references_asset_id_foreign';
+        }
+
+        if ($table === 'media' && $column === 'folder_id') {
+            $names[] = 'assets_folder_id_foreign';
+        }
+
+        return array_values(array_unique($names));
     }
 };

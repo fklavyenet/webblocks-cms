@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.1
+
+- Fix the Asset-to-Media rename migration so `SET NULL` media foreign keys are made nullable before constraints are rebuilt, allowing `v1.31.0` installs with `block_media` references to migrate successfully.
+
 ## 1.31.0
 
 - Complete the Phase 2 `Asset` to `Media` rename across active runtime code, requests, admin forms, tests, revisions, and site transfer packaging so canonical CMS internals now use `Media`, `media_id`, `block_media`, and `media.json` while preserving legacy payload, request-key, and archive-file compatibility.
