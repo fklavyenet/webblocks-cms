@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.10
+
+- Fix trusted HTML public rendering so detached `wb-modal`, gallery viewer, drawer, dropdown, and popover targets are hoisted into the single shared `#wb-overlay-root` instead of being emitted as loose body-end markup, restoring WebBlocks UI modal and gallery trigger reachability on CMS-rendered public pages.
+- Confirm CMS public layout continues to own pinned WebBlocks UI `v2.7.1` asset loading, the canonical shared overlay root, and regression coverage for trusted modal plus gallery trigger-to-target contracts.
+
 ## 1.31.9
 
 - Extend `Admin -> Pages -> Edit Page -> Page Management` with a dedicated `Layout Slots` tab so the `Page Layout Slots` comparison and `Add Missing Layout Slots` action live with other page-management concerns instead of inside the separate `Slots` card.

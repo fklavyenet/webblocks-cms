@@ -1764,6 +1764,39 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $this->assertSame(1, substr_count($response->getContent(), 'id="wb-overlay-root"'));
         $response->assertDontSee('id="wb-public-overlay-root"', false);
         $response->assertSee('<div class="wb-modal" id="trusted-viewer" role="dialog"></div>', false);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-viewer"/s', $response->getContent());
+    }
+
+    #[Test]
+    public function html_block_hoists_detached_trusted_modal_and_gallery_targets_into_the_shared_public_overlay_root(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'html',
+            'block_type_id' => $this->blockType('html', 'HTML (Trusted)', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '<section class="wb-stack wb-gap-3"><button class="wb-btn wb-btn-outline" type="button" data-wb-toggle="modal" data-wb-target="#trusted-modal">Open modal</button><button class="wb-gallery-trigger" type="button" data-wb-gallery-target="#trusted-gallery-viewer" data-wb-gallery-full="/storage/example.jpg" data-wb-gallery-alt="Example image">Open viewer</button><div class="wb-card"><div class="wb-modal wb-modal-sm" id="trusted-modal" role="dialog" aria-modal="true" aria-labelledby="trusted-modal-title"><div class="wb-modal-dialog"><div class="wb-modal-header"><h2 class="wb-modal-title" id="trusted-modal-title">Trusted modal</h2></div></div></div><div class="wb-modal wb-modal-xl" id="trusted-gallery-viewer" role="dialog" aria-modal="true" aria-labelledby="trusted-gallery-viewer-title"><div class="wb-modal-dialog"><div class="wb-modal-body"><figure class="wb-gallery-viewer-media"><img class="wb-gallery-viewer-image" src="/storage/example.jpg" alt="Example image"><figcaption class="wb-gallery-viewer-caption" id="trusted-gallery-viewer-title">Example viewer</figcaption></figure></div></div></div></div></section>',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
+        $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+        $this->assertSame(1, substr_count($html, 'class="wb-overlay-root"'));
+        $response->assertSee('data-wb-toggle="modal"', false);
+        $response->assertSee('data-wb-target="#trusted-modal"', false);
+        $response->assertSee('data-wb-gallery-target="#trusted-gallery-viewer"', false);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-modal"/s', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="trusted-gallery-viewer"/s', $html);
     }
 
     #[Test]

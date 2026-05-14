@@ -49,38 +49,32 @@ class TrustedHtmlOverlayExtractor
         }
 
         $bodyEndHtml = [];
+        $overlayHtml = [];
 
-        $overlayRoot = null;
-
-        foreach (iterator_to_array($root->childNodes) as $child) {
-            if (! $child instanceof DOMElement) {
-                continue;
-            }
-
-            if ($child->getAttribute('id') === 'wb-overlay-root') {
-                $overlayRoot = $child;
+        foreach ($this->detachedElements($root) as $element) {
+            if ($element->getAttribute('id') === 'wb-overlay-root') {
+                $overlayHtml[] = $this->innerHtml($element);
+                $element->parentNode?->removeChild($element);
 
                 continue;
             }
 
-            if ($this->shouldMoveToBodyEnd($child)) {
-                $bodyEndHtml[] = $document->saveHTML($child) ?: '';
-                $child->parentNode?->removeChild($child);
+            if ($this->shouldMoveToOverlayRoot($element)) {
+                $overlayHtml[] = $document->saveHTML($element) ?: '';
+                $element->parentNode?->removeChild($element);
 
                 continue;
             }
-        }
 
-        $overlayHtml = null;
-
-        if ($overlayRoot instanceof DOMElement) {
-            $overlayHtml = $this->innerHtml($overlayRoot);
-            $overlayRoot->parentNode?->removeChild($overlayRoot);
+            if ($this->shouldMoveToBodyEnd($element)) {
+                $bodyEndHtml[] = $document->saveHTML($element) ?: '';
+                $element->parentNode?->removeChild($element);
+            }
         }
 
         return [
             'content' => $this->innerHtml($root),
-            'overlay' => is_string($overlayHtml) && trim($overlayHtml) !== '' ? $overlayHtml : null,
+            'overlay' => ($overlay = trim(implode('', array_filter($overlayHtml)))) !== '' ? $overlay : null,
             'body_end' => array_values(array_filter(array_map('trim', $bodyEndHtml))),
         ];
     }
@@ -98,6 +92,23 @@ class TrustedHtmlOverlayExtractor
 
     private function shouldMoveToBodyEnd(DOMElement $element): bool
     {
+        if ($this->shouldMoveToOverlayRoot($element)) {
+            return false;
+        }
+
+        $className = ' '.trim($element->getAttribute('class')).' ';
+
+        foreach ([' wb-toast ', ' wb-tooltip-content '] as $candidate) {
+            if (str_contains($className, $candidate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function shouldMoveToOverlayRoot(DOMElement $element): bool
+    {
         $className = ' '.trim($element->getAttribute('class')).' ';
 
         foreach ([' wb-modal ', ' wb-drawer ', ' wb-dropdown-menu ', ' wb-popover-panel '] as $candidate) {
@@ -107,6 +118,41 @@ class TrustedHtmlOverlayExtractor
         }
 
         return false;
+    }
+
+    /**
+     * @return array<int, DOMElement>
+     */
+    private function detachedElements(DOMElement $root): array
+    {
+        $detached = [];
+
+        foreach (iterator_to_array($root->getElementsByTagName('*')) as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
+            if ($element->getAttribute('id') === 'wb-overlay-root' || $this->shouldMoveToOverlayRoot($element) || $this->shouldMoveToBodyEnd($element)) {
+                $detached[] = $element;
+            }
+        }
+
+        usort($detached, fn (DOMElement $left, DOMElement $right) => $this->nodeDepth($right) <=> $this->nodeDepth($left));
+
+        return $detached;
+    }
+
+    private function nodeDepth(DOMElement $element): int
+    {
+        $depth = 0;
+        $current = $element->parentNode;
+
+        while ($current instanceof DOMNode) {
+            $depth++;
+            $current = $current->parentNode;
+        }
+
+        return $depth;
     }
 
     private function innerHtml(DOMNode $node): string
