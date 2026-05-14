@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\BlockTypeContractsAuditCommand;
 use App\Console\Commands\ImportDemoMedia;
 use App\Console\Commands\ProjectInitCommand;
 use App\Console\Commands\ResetPrimitiveBlocksCommand;
@@ -56,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        BlockTypeContractsAuditCommand::class,
         ImportDemoMedia::class,
         ProjectInitCommand::class,
         ResetPrimitiveBlocksCommand::class,

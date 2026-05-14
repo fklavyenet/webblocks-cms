@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.18
+
+- Add Phase 1 Block Type Contracts documentation with a read-only published core block inventory that documents current admin form sources, translation and shared ownership, media or relationship paths, renderer ownership, known gaps, and recommended next phases without changing block behavior.
+- Add the safe developer audit command `ddev artisan block-types:contracts-audit` plus focused console coverage so shipped block-type catalog and admin or public support-file presence can be re-audited without touching database content.
+
 ## 1.31.17
 
 - Standardize admin listing count badges so page-header badges show the total record count in each screen's base scope while listing-card badges show the currently filtered result count.

@@ -38,6 +38,7 @@ class CoreCommandListTest extends TestCase
             ->doesntExpectOutputToContain($removedHomeMainCommand)
             ->doesntExpectOutputToContain($projectGettingStartedCommand)
             ->doesntExpectOutputToContain($projectNavigationCommand)
+            ->expectsOutputToContain('block-types:contracts-audit')
             ->expectsOutputToContain('block-types:sync-core')
             ->expectsOutputToContain('icons:sync-webblocks-ui')
             ->expectsOutputToContain('search:rebuild')
