@@ -3,7 +3,6 @@
 @php
     use App\Models\Media;
 
-    $assetCount = $assets->total();
     $showUploadModal = $openModal === 'upload-asset';
     $showFolderModal = $openModal === 'new-folder';
     $baseQuery = array_filter([
@@ -21,7 +20,7 @@
     @include('admin.partials.page-header', [
         'title' => 'Media',
         'description' => 'Review, filter, preview, and manage the shared media library from one compact screen.',
-        'count' => $assetCount,
+        'count' => $totalMediaCount,
     ])
 
     @include('admin.partials.flash')
@@ -78,7 +77,7 @@
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Media Library</strong>
-                <span class="wb-status-pill wb-status-info">{{ $assetCount }}</span>
+                <span class="wb-status-pill wb-status-info">{{ $filteredMediaCount }}</span>
             </div>
 
             <div class="wb-cluster wb-cluster-2">
@@ -90,7 +89,7 @@
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-media-toolbar">
                 <div class="wb-cluster wb-cluster-2 wb-media-folder-pills">
-                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $assetCount }}</span></a>
+                    <a href="{{ route('admin.media.index', array_filter(['search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">All folders <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
                     @foreach ($folders as $folder)
                         <a href="{{ route('admin.media.index', array_filter(['folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-media-folder-pill {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>

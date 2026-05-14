@@ -128,6 +128,54 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
+    public function media_index_uses_total_count_for_page_header_and_filtered_count_for_library_badge(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/count-visible.jpg',
+            'filename' => 'count-visible.jpg',
+            'original_name' => 'count-visible.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Count visible asset',
+        ]);
+
+        Asset::create([
+            'disk' => 'public',
+            'path' => 'media/documents/count-hidden.pdf',
+            'filename' => 'count-hidden.pdf',
+            'original_name' => 'count-hidden.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 2200,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Count hidden asset',
+        ]);
+
+        $unfilteredResponse = $this->actingAs($user)->get(route('admin.media.index'));
+        $unfilteredHtml = $unfilteredResponse->getContent();
+
+        $unfilteredResponse->assertOk();
+        $this->assertMatchesRegularExpression('/<h1 class="wb-page-header-title">Media<\/h1>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $unfilteredHtml);
+        $this->assertMatchesRegularExpression('/<strong>Media Library<\/strong>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $unfilteredHtml);
+
+        $filteredResponse = $this->actingAs($user)->get(route('admin.media.index', ['search' => 'visible']));
+        $filteredHtml = $filteredResponse->getContent();
+
+        $filteredResponse->assertOk();
+        $filteredResponse->assertSee('Count visible asset');
+        $filteredResponse->assertDontSee('Count hidden asset');
+        $this->assertMatchesRegularExpression('/<h1 class="wb-page-header-title">Media<\/h1>\s*<span class="wb-status-pill wb-status-info">2<\/span>/', $filteredHtml);
+        $this->assertMatchesRegularExpression('/<strong>Media Library<\/strong>\s*<span class="wb-status-pill wb-status-info">1<\/span>/', $filteredHtml);
+    }
+
+    #[Test]
     public function media_index_pagination_preserves_filters_and_uses_compact_summary(): void
     {
         $user = User::factory()->superAdmin()->create();

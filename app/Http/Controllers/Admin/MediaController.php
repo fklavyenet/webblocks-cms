@@ -30,6 +30,7 @@ class MediaController extends Controller
 
     public function index(): View
     {
+        $user = request()->user();
         $selectedFolderId = request()->integer('folder_id') ?: null;
         $search = trim((string) request('search'));
         $kind = request()->string('kind')->toString();
@@ -47,7 +48,9 @@ class MediaController extends Controller
             $usage = '';
         }
 
-        $mediaPaginator = $this->mediaListingQuery(request()->user(), $selectedFolderId, $search, $kind, $usage)
+        $totalMediaCount = $this->authorization->scopeMediaForUser(Media::query(), $user)->count();
+
+        $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage)
             ->paginate($view === 'grid' ? 24 : 20)
             ->withQueryString();
 
@@ -84,6 +87,8 @@ class MediaController extends Controller
             'kind' => $kind,
             'usage' => $usage,
             'viewMode' => $view,
+            'totalMediaCount' => $totalMediaCount,
+            'filteredMediaCount' => $media->total(),
             'previewAsset' => $previewMedia,
             'previewMedia' => $previewMedia,
             'usageAsset' => $usageMedia,
