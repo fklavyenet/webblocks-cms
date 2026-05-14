@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.20
+
+- Start Phase 3 block-type contract standardization by aligning the shipped `code` and `table` blocks with the existing text-translation architecture, preserving breadcrumb display settings on save, rendering stat-card URLs publicly, and surfacing translated link-list intro copy in the public renderer.
+- Update the shared contract registry, read-only Block Types contract modal, audit command output, and focused regression coverage so the resolved gaps for `code`, `table`, `breadcrumb`, `stat-card`, and `link-list` match current shipped behavior.
+
 ## 1.31.19
 
 - Add a read-only `Block Type Contract` modal to `Admin -> System -> Block Types` so each listed row can surface shipped contract details such as admin form source, translation ownership, shared settings, media or relationship paths, child rules, public renderer ownership, and known gaps without changing edit behavior.

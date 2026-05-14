@@ -282,4 +282,33 @@ class StatCardTest extends TestCase
             '.wb-stat .wb-stat-detail' => 'div',
         ]);
     }
+
+    #[Test]
+    public function public_rendering_uses_the_optional_url_when_present(): void
+    {
+        $this->seedFoundation();
+
+        [$page, , $slotType] = $this->pageWithSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'stat-card',
+            'block_type_id' => BlockType::query()->where('slug', 'stat-card')->value('id'),
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => '173',
+            'subtitle' => 'Icons',
+            'content' => 'Class-based mask-image icon usage',
+            'url' => '/p/about',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $this->get(route('pages.show', 'about'))
+            ->assertOk()
+            ->assertSee('href="/p/about"', false)
+            ->assertSee('Learn more');
+    }
 }

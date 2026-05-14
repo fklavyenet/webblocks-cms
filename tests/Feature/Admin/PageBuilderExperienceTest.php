@@ -2017,6 +2017,10 @@ class PageBuilderExperienceTest extends TestCase
             'content' => null,
             'is_system' => true,
         ]);
+        $this->assertSame([
+            'home_label' => 'Start',
+            'include_current' => true,
+        ], json_decode((string) $block->fresh()->getRawOriginal('settings'), true));
         $this->assertSame('admin.blocks.types.breadcrumb', $block->adminFormView());
         $this->assertSame('pages.partials.blocks.breadcrumb', $block->publicRenderView());
     }

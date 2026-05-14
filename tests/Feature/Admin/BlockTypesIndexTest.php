@@ -104,6 +104,29 @@ class BlockTypesIndexTest extends TestCase
     }
 
     #[Test]
+    public function index_contract_modal_reflects_phase_three_resolved_contracts(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('slug', 'stat-card')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'modal' => 'block-type-contract',
+            'contract_block_type' => $blockType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Block Type Contract: '.$blockType->name, false);
+        $response->assertSee('<code>title</code>', false);
+        $response->assertSee('<code>subtitle</code>', false);
+        $response->assertSee('<code>content</code>', false);
+        $response->assertSee('clear', false);
+        $response->assertSee('Optional URL stays on the canonical block url column.', false);
+        $response->assertDontSee('The admin form stores an optional URL, but the current public renderer does not use it.', false);
+    }
+
+    #[Test]
     public function index_shows_a_safe_contract_fallback_for_undocumented_block_types(): void
     {
         $this->seedFoundation();

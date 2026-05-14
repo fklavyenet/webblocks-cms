@@ -119,6 +119,8 @@ class BlockRequest extends FormRequest
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
             'language' => [$isCode ? 'nullable' : 'nullable', 'string', 'max:255'],
+            'breadcrumb_home_label' => [$isBreadcrumb ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'breadcrumb_include_current' => [$isBreadcrumb ? 'nullable' : 'prohibited', Rule::in(['0', '1'])],
             'primary_cta_label' => ['nullable', 'string', 'max:255'],
             'primary_cta_url' => ['nullable', 'string', 'max:2048'],
             'secondary_cta_label' => ['nullable', 'string', 'max:255'],
@@ -219,6 +221,14 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'stat-card') {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
+                    $validator->errors()->add('url', 'Stat card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
                 }
             }
 
@@ -619,6 +629,32 @@ class BlockRequest extends FormRequest
                 if ($data['settings'] === '[]' || $data['settings'] === '{}') {
                     $data['settings'] = null;
                 }
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = is_string($data['content'] ?? null)
+                    ? $data['content']
+                    : null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+            }
+
+            if ($blockType?->slug === 'table') {
+                $isTranslatedTableEdit = $data['locale'] !== null;
+                $variant = trim((string) ($data['variant'] ?? 'header-row'));
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = is_string($data['content'] ?? null)
+                    ? $data['content']
+                    : null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+                $data['variant'] = $isTranslatedTableEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (in_array($variant, ['header-row', 'plain'], true) ? $variant : 'header-row');
             }
 
             if (in_array($blockType?->slug, ['navigation-auto', 'menu'], true)) {
@@ -832,9 +868,54 @@ class BlockRequest extends FormRequest
             }
 
             if ($blockType?->slug === 'breadcrumb') {
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $settings = $existingSettings;
+
+                $homeLabel = trim((string) ($data['breadcrumb_home_label'] ?? ''));
+
+                if ($homeLabel !== '') {
+                    $settings['home_label'] = $homeLabel;
+                } else {
+                    unset($settings['home_label']);
+                }
+
+                $settings['include_current'] = ($data['breadcrumb_include_current'] ?? '1') !== '0';
+
                 $data['title'] = null;
                 $data['subtitle'] = null;
                 $data['content'] = null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+            }
+
+            if ($blockType?->slug === 'stat-card') {
+                $isTranslatedStatCardEdit = $data['locale'] !== null;
+                $title = trim((string) ($data['title'] ?? ''));
+                $subtitle = trim((string) ($data['subtitle'] ?? ''));
+                $content = trim((string) ($data['content'] ?? ''));
+
+                $data['title'] = $title !== '' ? $title : null;
+                $data['subtitle'] = $subtitle !== '' ? $subtitle : null;
+                $data['content'] = $content !== '' ? $content : null;
+                $data['url'] = $isTranslatedStatCardEdit
+                    ? ($this->route('block')?->getRawOriginal('url'))
+                    : (trim((string) ($data['url'] ?? '')) ?: null);
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if ($blockType?->slug === 'link-list') {
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
                 $data['url'] = null;
                 $data['asset_id'] = null;
                 $data['variant'] = null;
