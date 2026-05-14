@@ -7,13 +7,18 @@ use App\Models\AssetFolder;
 use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -343,6 +348,154 @@ class MediaManagementTest extends TestCase
         $response->assertDontSee('Other used asset');
         $response->assertSee('Unused');
         $response->assertSee('media-preview-modal');
+    }
+
+    #[Test]
+    public function media_usage_filters_only_query_real_reference_tables_and_separate_used_from_unused_media(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $blockUsed = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/usage-block-used.jpg',
+            'filename' => 'usage-block-used.jpg',
+            'original_name' => 'usage-block-used.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Block used media',
+        ]);
+
+        $siteUsed = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/usage-site-used.jpg',
+            'filename' => 'usage-site-used.jpg',
+            'original_name' => 'usage-site-used.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Site used media',
+        ]);
+
+        $seoUsed = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/usage-seo-used.jpg',
+            'filename' => 'usage-seo-used.jpg',
+            'original_name' => 'usage-seo-used.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'SEO used media',
+        ]);
+
+        $unused = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/usage-unused.jpg',
+            'filename' => 'usage-unused.jpg',
+            'original_name' => 'usage-unused.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1536,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Actually unused media',
+        ]);
+
+        $slotType = $this->slotType();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $site = Site::create([
+            'name' => 'Usage Filter Site',
+            'handle' => 'usage-filter-site',
+            'is_primary' => true,
+        ]);
+        $page = Page::create([
+            'site_id' => $site->id,
+            'title' => 'Usage Filter Page',
+            'slug' => 'usage-filter-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Usage filter block',
+            'media_id' => $blockUsed->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $site->update([
+            'favicon_media_id' => $siteUsed->id,
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $defaultLocale->id],
+            [
+                'name' => 'Usage Filter Page',
+                'slug' => 'usage-filter-page',
+                'site_id' => $site->id,
+                'path' => '/p/usage-filter-page',
+                'og_image_media_id' => $seoUsed->id,
+            ],
+        );
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $usedResponse = $this->actingAs($user)->get(route('admin.media.index', ['usage' => 'used']));
+
+        $usedResponse->assertOk();
+        $usedResponse->assertSee('Block used media');
+        $usedResponse->assertSee('Site used media');
+        $usedResponse->assertSee('SEO used media');
+        $usedResponse->assertDontSee('Actually unused media');
+
+        $usedSql = collect(DB::getQueryLog())
+            ->pluck('query')
+            ->map(fn (string $query) => Str::lower($query))
+            ->implode("\n");
+
+        $this->assertStringNotContainsString('`media_id` is not null', $usedSql);
+        $this->assertStringNotContainsString('`asset_id` is not null', $usedSql);
+        $this->assertStringContainsString('from "blocks"', $usedSql);
+        $this->assertStringContainsString('from "block_media"', $usedSql);
+        $this->assertStringContainsString('from "sites"', $usedSql);
+        $this->assertStringContainsString('from "page_translations"', $usedSql);
+
+        DB::flushQueryLog();
+
+        $unusedResponse = $this->actingAs($user)->get(route('admin.media.index', ['usage' => 'unused']));
+
+        $unusedResponse->assertOk();
+        $unusedResponse->assertSee('Actually unused media');
+        $unusedResponse->assertDontSee('Block used media');
+        $unusedResponse->assertDontSee('Site used media');
+        $unusedResponse->assertDontSee('SEO used media');
+
+        $unusedSql = collect(DB::getQueryLog())
+            ->pluck('query')
+            ->map(fn (string $query) => Str::lower($query))
+            ->implode("\n");
+
+        $this->assertStringNotContainsString('`media_id` is null', $unusedSql);
+        $this->assertStringNotContainsString('`asset_id` is null', $unusedSql);
     }
 
     #[Test]

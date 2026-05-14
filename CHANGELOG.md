@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.3
+
+- Fix Media Usage filter after Asset-to-Media rename so used/unused filtering no longer queries legacy/non-existent root media columns.
+
 ## 1.31.2
 
 - Fix the Asset-to-Media rename migration so nullable media foreign key column renames do not emit invalid MariaDB SQL such as `DEFAULT 'NULL'`.

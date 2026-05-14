@@ -10,6 +10,7 @@ use App\Models\Media;
 use App\Models\MediaFolder;
 use App\Support\Media\MediaIndexState;
 use App\Support\Media\MediaKindResolver;
+use App\Support\Media\MediaUsageFilter;
 use App\Support\Media\MediaUsageResolver;
 use App\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,7 @@ use Illuminate\View\View;
 class MediaController extends Controller
 {
     public function __construct(
+        private readonly MediaUsageFilter $mediaUsageFilter,
         private readonly MediaUsageResolver $mediaUsageResolver,
         private readonly MediaIndexState $mediaIndexState,
         private readonly AdminAuthorization $authorization,
@@ -238,26 +240,7 @@ class MediaController extends Controller
             ->with(['folder', 'uploader'])
             ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
             ->when($kind, fn ($query) => $query->where('kind', $kind))
-            ->when($usage === 'used', function ($query) {
-                $query->where(function ($inner) {
-                    $inner->whereNotNull('media_id')
-                        ->orWhereNotNull('asset_id')
-                        ->orWhereExists(function ($exists) {
-                            $exists->selectRaw('1')
-                                ->from('block_media')
-                                ->whereColumn('block_media.media_id', 'media.id');
-                        });
-                });
-            })
-            ->when($usage === 'unused', function ($query) {
-                $query->whereNull('media_id')
-                    ->whereNull('asset_id')
-                    ->whereNotExists(function ($exists) {
-                        $exists->selectRaw('1')
-                            ->from('block_media')
-                            ->whereColumn('block_media.media_id', 'media.id');
-                    });
-            })
+            ->tap(fn ($query) => $this->mediaUsageFilter->apply($query, $usage))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('filename', 'like', "%{$search}%")
