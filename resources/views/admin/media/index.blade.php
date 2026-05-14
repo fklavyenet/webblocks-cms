@@ -456,43 +456,7 @@
 @push('scripts')
     <script>
         (function () {
-            var feedback = document.querySelector('[data-wb-copy-feedback]');
             var previewOverlay = document.querySelector('[data-wb-media-preview-overlay]');
-
-            document.querySelectorAll('[data-wb-copy-url]').forEach(function (button) {
-                button.addEventListener('click', async function () {
-                    var url = button.getAttribute('data-wb-copy-url');
-
-                    if (!url) {
-                        return;
-                    }
-
-                    try {
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(url);
-                        } else {
-                            var helper = document.createElement('input');
-                            helper.value = url;
-                            document.body.appendChild(helper);
-                            helper.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(helper);
-                        }
-
-                        if (feedback) {
-                            feedback.textContent = 'Public URL copied.';
-                            window.clearTimeout(window.__wbMediaCopyTimer || 0);
-                            window.__wbMediaCopyTimer = window.setTimeout(function () {
-                                feedback.textContent = '';
-                            }, 1600);
-                        }
-                    } catch (error) {
-                        if (feedback) {
-                            feedback.textContent = 'Copy failed.';
-                        }
-                    }
-                });
-            });
 
             if (previewOverlay) {
                 var previewPanel = previewOverlay.querySelector('[data-wb-media-preview-panel]');

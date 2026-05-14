@@ -115,6 +115,7 @@ class MediaController extends Controller
             'usages' => $usages,
             'mediaReturnUrl' => $this->mediaIndexState->returnUrl(request()),
             'showDeleteModal' => request()->string('modal')->toString() === 'delete-media',
+            'showFileDetailsModal' => request()->string('modal')->toString() === 'file-details',
         ]);
     }
 

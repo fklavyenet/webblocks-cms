@@ -9,6 +9,7 @@
             'core' => public_path('cms/js/admin/core.js'),
             'password-fields' => public_path('cms/js/admin/password-fields.js'),
             'asset-picker' => public_path('cms/js/admin/asset-picker.js'),
+            'media-copy' => public_path('cms/js/admin/media-copy.js'),
             'admin-sortable-list' => public_path('cms/js/admin-sortable-list.js'),
             'inline-block-builder' => public_path('cms/js/admin/inline-block-builder.js'),
             'builder-items' => public_path('cms/js/admin/builder-items.js'),
@@ -256,6 +257,9 @@
         @endif
         @if (is_file($adminJsAssets['asset-picker']))
             <script src="{{ asset('cms/js/admin/asset-picker.js') }}?v={{ filemtime($adminJsAssets['asset-picker']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['media-copy']))
+            <script src="{{ asset('cms/js/admin/media-copy.js') }}?v={{ filemtime($adminJsAssets['media-copy']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['admin-sortable-list']))
             <script src="{{ asset('cms/js/admin-sortable-list.js') }}?v={{ filemtime($adminJsAssets['admin-sortable-list']) }}" defer></script>

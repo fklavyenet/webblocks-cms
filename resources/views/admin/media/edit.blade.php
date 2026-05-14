@@ -6,6 +6,18 @@
     $deleteModalId = 'media-delete-modal-'.$asset->id;
     $deleteModalTitleId = $deleteModalId.'Title';
     $deleteModalDescriptionId = $deleteModalId.'Description';
+    $fileDetailsModalId = 'media-file-details-modal-'.$asset->id;
+    $fileDetailsModalTitleId = $fileDetailsModalId.'Title';
+    $fileDetailsModalDescriptionId = $fileDetailsModalId.'Description';
+    $fileDetailsCloseUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl]);
+    $fileDetailsOpenUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'file-details']);
+    $deleteOpenUrl = route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'delete-media']);
+    $dimensions = $asset->width && $asset->height ? $asset->width.' x '.$asset->height : '-';
+    $previewMeta = collect([
+        trim(($asset->extension ? strtoupper($asset->extension).' ' : '').$asset->kind),
+        $asset->humanSize(),
+        $asset->disk.' disk',
+    ])->filter()->implode(' · ');
 @endphp
 
 @section('content')
@@ -25,7 +37,7 @@
             <div class="wb-stack wb-gap-4">
                 <div class="wb-card">
                     <div class="wb-card-header"><strong>Preview</strong></div>
-                    <div class="wb-card-body">
+                    <div class="wb-card-body wb-stack wb-gap-3">
                         @if ($asset->canPreview() && $publicUrl)
                             <img src="{{ $publicUrl }}" alt="{{ $asset->thumbnailLabel() }}">
                         @else
@@ -35,38 +47,9 @@
                                 <div class="wb-empty-text">This media type does not have an inline preview in the current UI.</div>
                             </div>
                         @endif
-                    </div>
-                </div>
-
-                <div class="wb-card">
-                    <div class="wb-card-header"><strong>File Details</strong></div>
-                    <div class="wb-card-body wb-stack wb-gap-3 wb-text-sm">
-                        <div class="wb-grid wb-grid-2">
-                            <div class="wb-stack wb-gap-2">
-                                <div><strong>Filename:</strong> {{ $asset->filename }}</div>
-                                <div><strong>Original Name:</strong> {{ $asset->original_name }}</div>
-                                <div><strong>MIME Type:</strong> {{ $asset->mime_type ?? '-' }}</div>
-                                <div><strong>Extension:</strong> {{ $asset->extension ?? '-' }}</div>
-                                <div><strong>Size:</strong> {{ $asset->humanSize() }}</div>
-                                <div><strong>Kind:</strong> <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
-                                <div><strong>Disk:</strong> {{ $asset->disk }}</div>
-                            </div>
-
-                            <div class="wb-stack wb-gap-2">
-                                <div><strong>Dimensions:</strong> {{ $asset->width && $asset->height ? $asset->width.' x '.$asset->height : '-' }}</div>
-                                <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                                    <span><strong>Path:</strong> <code>{{ $asset->path }}</code></span>
-                                    @if ($publicUrl)
-                                        <button type="button" class="wb-btn wb-btn-secondary wb-btn-sm" data-wb-copy-url="{{ $publicUrl }}">Copy public URL</button>
-                                    @endif
-                                </div>
-                                @if ($publicUrl)
-                                    <div><strong>Public URL:</strong> <code>{{ $publicUrl }}</code></div>
-                                @endif
-                                <div><strong>Created:</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                                <div><strong>Updated:</strong> {{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                            </div>
-                        </div>
+                        @if ($previewMeta !== '')
+                            <div class="wb-text-sm wb-text-muted">{{ $previewMeta }}</div>
+                        @endif
                     </div>
                 </div>
 
@@ -103,7 +86,10 @@
 
             <div class="wb-stack wb-gap-4">
                 <div class="wb-card">
-                    <div class="wb-card-header"><strong>Metadata</strong></div>
+                    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                        <strong>Media Information</strong>
+                        <a href="{{ $fileDetailsOpenUrl }}" class="wb-btn wb-btn-secondary wb-btn-sm" aria-haspopup="dialog">File Details</a>
+                    </div>
                     <div class="wb-card-body wb-stack wb-gap-4">
                         <div class="wb-stack wb-gap-1">
                             <label for="title">Title</label>
@@ -127,12 +113,7 @@
                             <textarea id="description" name="description" class="wb-textarea" rows="5">{{ old('description', $asset->description) }}</textarea>
                             <span class="wb-text-sm wb-text-muted">Internal notes or longer metadata.</span>
                         </div>
-                    </div>
-                </div>
 
-                <div class="wb-card">
-                    <div class="wb-card-header"><strong>Organization</strong></div>
-                    <div class="wb-card-body wb-stack wb-gap-4">
                         <div class="wb-stack wb-gap-1">
                             <label for="folder_id">Folder</label>
                             <select id="folder_id" name="folder_id" class="wb-select">
@@ -142,32 +123,34 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
 
-                        <div class="wb-stack wb-gap-1">
-                            <span class="wb-text-sm wb-text-muted">Kind</span>
-                            <div><span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
+                    @if ($usages->isNotEmpty())
+                        <div class="wb-card-body">
+                            <div class="wb-alert wb-alert-warning wb-text-sm" data-media-delete-blocked>
+                                <div class="wb-alert-title">Delete blocked</div>
+                                This media item is still used by protected CMS consumers, so it cannot be deleted yet.
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="wb-card">
-                    <div class="wb-card-header"><strong>Danger Zone</strong></div>
-                    <div class="wb-card-body wb-stack wb-gap-3">
-                        @if ($usages->isNotEmpty())
-                            <div class="wb-text-sm wb-text-muted">Delete is blocked because this media item is still used by protected CMS consumers.</div>
-                            <button type="button" class="wb-btn wb-btn-danger" disabled>Delete media</button>
-                        @else
+                    @else
+                        <div class="wb-card-body">
                             <div class="wb-text-sm wb-text-muted">Delete this media item only when you are sure it is no longer needed.</div>
-                            <a href="{{ route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl, 'modal' => 'delete-media']) }}" class="wb-btn wb-btn-danger" aria-haspopup="dialog">Delete media</a>
-                        @endif
+                        </div>
+                    @endif
+
+                    <div class="wb-card-footer">
+                        <x-admin.form-actions
+                            :cancel-url="$mediaReturnUrl"
+                            submit-label="Save changes"
+                            :delete-href="$usages->isEmpty() ? $deleteOpenUrl : '#'"
+                            delete-label="Delete media"
+                            :delete-disabled="$usages->isNotEmpty()"
+                            :delete-attributes="$usages->isEmpty()
+                                ? ['aria-haspopup' => 'dialog']
+                                : ['aria-disabled' => 'true', 'data-media-delete-blocked' => true]"
+                        />
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="wb-card">
-            <div class="wb-card-footer">
-                <x-admin.form-actions :cancel-url="$mediaReturnUrl" submit-label="Save changes" />
             </div>
         </div>
     </form>
@@ -176,6 +159,84 @@
 @endsection
 
 @push('overlays')
+    @if ($showFileDetailsModal)
+        <div class="wb-overlay-layer wb-overlay-layer--dialog">
+            <div class="wb-overlay-backdrop"></div>
+
+            <div class="wb-modal wb-modal-lg is-open" id="{{ $fileDetailsModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $fileDetailsModalTitleId }}" aria-describedby="{{ $fileDetailsModalDescriptionId }}">
+                <div class="wb-modal-dialog">
+                    <div class="wb-modal-header">
+                        <div class="wb-stack wb-gap-1">
+                            <h2 class="wb-modal-title" id="{{ $fileDetailsModalTitleId }}">File Details</h2>
+                            <span class="wb-text-sm wb-text-muted" id="{{ $fileDetailsModalDescriptionId }}">Review read-only file, image, and storage details for this media item.</span>
+                        </div>
+
+                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-modal-close" aria-label="Close file details modal">
+                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                        </a>
+                    </div>
+
+                    <div class="wb-modal-body wb-stack wb-gap-4 wb-text-sm">
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-header"><strong>File</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-3">
+                                <div><strong>Filename:</strong> {{ $asset->filename }}</div>
+                                <div><strong>Original Name:</strong> {{ $asset->original_name }}</div>
+                                <div><strong>MIME Type:</strong> {{ $asset->mime_type ?? '-' }}</div>
+                                <div><strong>Extension:</strong> {{ $asset->extension ?? '-' }}</div>
+                                <div><strong>Size:</strong> {{ $asset->humanSize() }}</div>
+                                <div><strong>Kind:</strong> <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
+                                <div><strong>Disk:</strong> {{ $asset->disk }}</div>
+                            </div>
+                        </div>
+
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-header"><strong>Image</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-3">
+                                <div><strong>Dimensions:</strong> {{ $dimensions }}</div>
+                            </div>
+                        </div>
+
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-header"><strong>Storage</strong></div>
+                            <div class="wb-card-body wb-stack wb-gap-3">
+                                <div class="wb-stack wb-gap-1">
+                                    <strong>Path</strong>
+                                    <code style="white-space: normal; word-break: break-word; display: block;">{{ $asset->path }}</code>
+                                </div>
+
+                                <div class="wb-stack wb-gap-1">
+                                    <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                                        <strong>Public URL</strong>
+                                        @if ($publicUrl)
+                                            <button
+                                                type="button"
+                                                class="wb-btn wb-btn-secondary wb-btn-sm wb-btn-icon"
+                                                data-wb-copy-url="{{ $publicUrl }}"
+                                                aria-label="Copy public URL"
+                                                title="Copy public URL"
+                                            >
+                                                <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <code style="white-space: normal; word-break: break-word; display: block;">{{ $publicUrl ?: '-' }}</code>
+                                </div>
+
+                                <div><strong>Created:</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                                <div><strong>Updated:</strong> {{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
+                        <a href="{{ $fileDetailsCloseUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if ($showDeleteModal && $usages->isEmpty())
         <div class="wb-overlay-layer wb-overlay-layer--dialog">
             <div class="wb-overlay-backdrop"></div>
@@ -219,47 +280,4 @@
             </div>
         </div>
     @endif
-@endpush
-
-@push('scripts')
-    <script>
-        (function () {
-            var feedback = document.querySelector('[data-wb-copy-feedback]');
-
-            document.querySelectorAll('[data-wb-copy-url]').forEach(function (button) {
-                button.addEventListener('click', async function () {
-                    var url = button.getAttribute('data-wb-copy-url');
-
-                    if (!url) {
-                        return;
-                    }
-
-                    try {
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(url);
-                        } else {
-                            var helper = document.createElement('input');
-                            helper.value = url;
-                            document.body.appendChild(helper);
-                            helper.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(helper);
-                        }
-
-                        if (feedback) {
-                            feedback.textContent = 'Public URL copied.';
-                            window.clearTimeout(window.__wbMediaCopyTimer || 0);
-                            window.__wbMediaCopyTimer = window.setTimeout(function () {
-                                feedback.textContent = '';
-                            }, 1600);
-                        }
-                    } catch (error) {
-                        if (feedback) {
-                            feedback.textContent = 'Copy failed.';
-                        }
-                    }
-                });
-            });
-        })();
-    </script>
 @endpush

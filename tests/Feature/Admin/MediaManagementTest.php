@@ -553,15 +553,26 @@ class MediaManagementTest extends TestCase
         $editResponse->assertSee('Edit Media: Edit context asset');
         $editResponse->assertSee('Review file details, update metadata, and manage this media item safely.');
         $editResponse->assertSee('Preview');
-        $editResponse->assertSee('File Details');
-        $editResponse->assertSee('Metadata');
-        $editResponse->assertSee('Organization');
         $editResponse->assertSee('Usage');
-        $editResponse->assertSee('Danger Zone');
-        $editResponse->assertSee('Copy public URL');
-        $editResponse->assertSee('name="return_url" value="'.e($returnUrl).'"', false);
+        $editResponse->assertSee('Media Information');
+        $editResponse->assertDontSee('<div class="wb-card-header"><strong>Metadata</strong></div>', false);
+        $editResponse->assertDontSee('<div class="wb-card-header"><strong>Organization</strong></div>', false);
+        $editResponse->assertDontSee('<div class="wb-card-header"><strong>Danger Zone</strong></div>', false);
+        $editResponse->assertSee('name="title"', false);
+        $editResponse->assertSee('name="alt_text"', false);
+        $editResponse->assertSee('name="caption"', false);
+        $editResponse->assertSee('name="description"', false);
+        $editResponse->assertSee('name="folder_id"', false);
+        $editResponse->assertDontSee('name="kind"', false);
+        $editResponse->assertSee('>File Details<', false);
+        $editResponse->assertSee('modal=file-details', false);
+        $editResponse->assertDontSee('>Copy public URL<', false);
+        $editResponse->assertSee('data-admin-form-actions', false);
         $editResponse->assertSee('>Save changes<', false);
+        $editResponse->assertSee('name="return_url" value="'.e($returnUrl).'"', false);
         $editResponse->assertSee('href="'.e($returnUrl).'" class="wb-btn wb-btn-secondary"', false);
+        $editResponse->assertSee('data-admin-form-actions-danger', false);
+        $editResponse->assertSee('modal=delete-media', false);
 
         $updateResponse = $this->actingAs($user)->put(route('admin.media.update', $asset), [
             'title' => 'Updated title',
@@ -1324,8 +1335,31 @@ class MediaManagementTest extends TestCase
         $usedResponse->assertSee('Hero visual');
         $usedResponse->assertSee('Open');
         $usedResponse->assertSee('Media Usage Page');
-        $usedResponse->assertSee('Delete is blocked because this media item is still used by protected CMS consumers.');
+        $usedResponse->assertSee('Delete blocked');
+        $usedResponse->assertSee('This media item is still used by protected CMS consumers, so it cannot be deleted yet.');
+        $usedResponse->assertSee('type="button" class="wb-btn wb-btn-danger" disabled', false);
+        $usedResponse->assertDontSee('modal=delete-media', false);
         $usedResponse->assertDontSee('onsubmit="return confirm', false);
+
+        $fileDetailsResponse = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $unusedAsset, 'modal' => 'file-details']));
+        $fileDetailsResponse->assertOk();
+        $fileDetailsResponse->assertSee('role="dialog"', false);
+        $fileDetailsResponse->assertSee('File Details');
+        $fileDetailsResponse->assertSee('Filename:');
+        $fileDetailsResponse->assertSee('Original Name:');
+        $fileDetailsResponse->assertSee('MIME Type:');
+        $fileDetailsResponse->assertSee('Extension:');
+        $fileDetailsResponse->assertSee('Size:');
+        $fileDetailsResponse->assertSee('Kind:');
+        $fileDetailsResponse->assertSee('Disk:');
+        $fileDetailsResponse->assertSee('Dimensions:');
+        $fileDetailsResponse->assertSee('Path');
+        $fileDetailsResponse->assertSee('Public URL');
+        $fileDetailsResponse->assertSee('Created:');
+        $fileDetailsResponse->assertSee('Updated:');
+        $fileDetailsResponse->assertSee('aria-label="Copy public URL"', false);
+        $fileDetailsResponse->assertSee('wb-btn-icon', false);
+        $fileDetailsResponse->assertDontSee('>Copy public URL<', false);
 
         $unusedResponse = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $unusedAsset, 'modal' => 'delete-media']));
         $unusedResponse->assertOk();
