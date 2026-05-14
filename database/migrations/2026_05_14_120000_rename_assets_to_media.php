@@ -152,7 +152,7 @@ return new class extends Migration
             return;
         }
 
-        $defaultSql = $definition->column_default === null ? '' : ' DEFAULT '.DB::getPdo()->quote((string) $definition->column_default);
+        $defaultSql = $this->defaultSql($definition);
         $commentSql = $definition->column_comment !== '' ? ' COMMENT '.DB::getPdo()->quote((string) $definition->column_comment) : '';
 
         DB::statement(sprintf(
@@ -202,7 +202,7 @@ return new class extends Migration
         }
 
         return DB::selectOne(
-            'SELECT COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, COLUMN_COMMENT AS column_comment '
+            'SELECT DATA_TYPE AS data_type, COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, COLUMN_COMMENT AS column_comment '
             .'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
             [$table, $column],
         );
@@ -220,7 +220,7 @@ return new class extends Migration
             }
 
             $nullSql = $definition->is_nullable === 'YES' ? 'NULL' : 'NOT NULL';
-            $defaultSql = $definition->column_default === null ? '' : ' DEFAULT '.DB::getPdo()->quote((string) $definition->column_default);
+            $defaultSql = $this->defaultSql($definition);
             $commentSql = $definition->column_comment !== '' ? ' COMMENT '.DB::getPdo()->quote((string) $definition->column_comment) : '';
 
             DB::statement(sprintf(
@@ -271,5 +271,45 @@ return new class extends Migration
         }
 
         return array_values(array_unique($names));
+    }
+
+    private function defaultSql(object $definition): string
+    {
+        if ($definition->column_default === null) {
+            return '';
+        }
+
+        $default = (string) $definition->column_default;
+        $dataType = strtolower((string) ($definition->data_type ?? ''));
+
+        if ($this->defaultShouldBeQuoted($dataType) && ! $this->isRawDefaultExpression($default)) {
+            return ' DEFAULT '.DB::getPdo()->quote($default);
+        }
+
+        return ' DEFAULT '.$default;
+    }
+
+    private function defaultShouldBeQuoted(string $dataType): bool
+    {
+        return in_array($dataType, [
+            'char',
+            'varchar',
+            'tinytext',
+            'text',
+            'mediumtext',
+            'longtext',
+            'enum',
+            'set',
+            'date',
+            'datetime',
+            'timestamp',
+            'time',
+            'json',
+        ], true);
+    }
+
+    private function isRawDefaultExpression(string $default): bool
+    {
+        return preg_match('/^(current_timestamp(?:\(\d+\))?|current_date(?:\(\))?|current_time(?:\(\d+\))?|now\(\))$/i', $default) === 1;
     }
 };

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.2
+
+- Fix the Asset-to-Media rename migration so nullable media foreign key column renames do not emit invalid MariaDB SQL such as `DEFAULT 'NULL'`.
+
 ## 1.31.1
 
 - Fix the Asset-to-Media rename migration so `SET NULL` media foreign keys are made nullable before constraints are rebuilt, allowing `v1.31.0` installs with `block_media` references to migrate successfully.
