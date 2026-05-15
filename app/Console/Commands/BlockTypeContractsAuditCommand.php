@@ -70,6 +70,50 @@ class BlockTypeContractsAuditCommand extends Command
             );
         }
 
+        $lines[] = '';
+
+        foreach ($contracts as $contract) {
+            $lines[] = '## `'.$contract['slug'].'`';
+            $lines[] = '';
+            $lines[] = '- Label: '.$contract['label'];
+            $lines[] = '- Category: `'.$contract['category'].'`';
+            $lines[] = '- Status: `'.$contract['status'].'`';
+            $lines[] = '- Source type: `'.$contract['source_type'].'`';
+            $lines[] = '- System block: '.($contract['is_system'] ? 'yes' : 'no');
+            $lines[] = '- Container: '.($contract['is_container'] ? 'yes' : 'no');
+            $lines[] = '- Translation family: '.($contract['translation_family'] === null ? 'shared/canonical' : '`'.$contract['translation_family'].'`');
+            $lines[] = '- Translation family fields: '.$this->markdownList($contract['translation_family_fields']);
+            $lines[] = '- Admin form source: `'.($contract['admin_form_source'] ?? 'missing').'`';
+            $lines[] = '- Admin form fields: '.$this->markdownList($contract['admin_form_fields']);
+            $lines[] = '- Translatable fields: '.$this->markdownList($contract['translatable_fields']);
+            $lines[] = '- Shared/settings fields: '.$this->markdownList($contract['shared_settings_fields']);
+            $lines[] = '- Storage fields: '.$this->markdownList($contract['storage_fields']);
+            $lines[] = '- Media/relationship fields: '.$this->markdownList($contract['media_relationship_fields']);
+            $lines[] = '- Child/container behavior: '.$this->markdownList($contract['child_container_behavior']);
+            $lines[] = '- Public renderer source: `'.($contract['public_renderer_source'] ?? 'missing').'`';
+            $lines[] = '- Renderer root contract: '.$contract['renderer_root_contract'];
+            $lines[] = '- Supports children: '.($contract['supports_children'] ? 'yes' : 'no');
+            $lines[] = '- Allowed child type slugs: '.$this->markdownList($contract['allowed_child_type_slugs']);
+            $lines[] = '- Owns public root helper: '.($contract['owns_public_root_helper'] ? 'yes' : 'no');
+            $lines[] = '- Current contract status: `'.$contract['current_contract_status'].'`';
+            $lines[] = '- Known gaps: '.$this->markdownList($contract['known_gaps']);
+
+            if ($contract['undocumented_message']) {
+                $lines[] = '- Undocumented message: '.$contract['undocumented_message'];
+            }
+
+            $lines[] = '';
+        }
+
         return $lines;
+    }
+
+    private function markdownList(?array $values): string
+    {
+        if (! is_array($values) || $values === []) {
+            return 'none';
+        }
+
+        return implode('; ', $values);
     }
 }

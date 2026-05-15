@@ -11,6 +11,7 @@ use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationRegistry;
+use App\Support\Blocks\BlockTranslationWriter;
 use App\Support\BlockTypes\BlockTypeContractRegistry;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
@@ -222,6 +223,12 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $breadcrumb = $contracts->resolve('breadcrumb');
         $statCard = $contracts->resolve('stat-card');
         $linkList = $contracts->resolve('link-list');
+        $section = $contracts->resolve('section');
+        $container = $contracts->resolve('container');
+        $cluster = $contracts->resolve('cluster');
+        $grid = $contracts->resolve('grid');
+        $card = $contracts->resolve('card');
+        $contentHeader = $contracts->resolve('content_header');
 
         $this->assertSame(['title', 'subtitle', 'content'], $code->translatableFields);
         $this->assertSame('clear', $code->currentContractStatus);
@@ -265,6 +272,53 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame([], $statCard->knownGaps);
         $this->assertSame('clear', $linkList->currentContractStatus);
         $this->assertSame([], $linkList->knownGaps);
+        $this->assertSame(['settings.layout_name', 'settings.spacing'], $section->sharedSettingsFields);
+        $this->assertSame(['settings.layout_name', 'settings.width', 'settings.flow'], $container->sharedSettingsFields);
+        $this->assertSame(['settings.layout_name', 'settings.gap', 'settings.alignment', 'settings.items_alignment', 'settings.wrap', 'settings.width'], $cluster->sharedSettingsFields);
+        $this->assertSame(['settings.layout_name', 'settings.columns', 'settings.gap'], $grid->sharedSettingsFields);
+        $this->assertSame(['eyebrow', 'title', 'subtitle', 'content', 'meta'], $card->translatableFields);
+        $this->assertSame(['cluster', 'button_link'], $card->allowedChildTypeSlugs);
+        $this->assertSame('transitional', $card->currentContractStatus);
+        $this->assertSame(['variant', 'settings.alignment'], $contentHeader->sharedSettingsFields);
+        $this->assertSame(['title', 'subtitle', 'meta'], $contentHeader->translatableFields);
+        $this->assertTrue($section->ownsPublicRootHelper);
+        $this->assertTrue($container->ownsPublicRootHelper);
+        $this->assertTrue($cluster->ownsPublicRootHelper);
+        $this->assertTrue($grid->ownsPublicRootHelper);
+        $this->assertTrue($card->ownsPublicRootHelper);
+        $this->assertTrue($contentHeader->ownsPublicRootHelper);
+    }
+
+    #[Test]
+    public function card_text_translation_normalization_keeps_translated_eyebrow_copy_available(): void
+    {
+        $this->seedFoundation();
+
+        [$page, $slotType] = $this->pageWithSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => BlockType::query()->where('slug', 'card')->value('id'),
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'promo'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $card->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'eyebrow' => 'Translated eyebrow',
+            'title' => 'Pattern-first workflow',
+        ]);
+
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $resolved = $card->fresh(['textTranslations']);
+
+        $this->assertNull($resolved->getRawOriginal('title'));
+        $this->assertSame('Translated eyebrow', $resolved->textTranslations()->firstWhere('locale_id', $this->defaultLocale()->id)?->eyebrow);
     }
 
     #[Test]

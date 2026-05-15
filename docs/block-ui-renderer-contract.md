@@ -235,6 +235,7 @@ Public pages now use explicit layout composition modes:
 - `Card` owns its `<article class="wb-card">` or promo `<section class="wb-card wb-promo">` root.
 - `Header` owns its semantic heading root such as `<h1>` or `<h2>`.
 - `Content Header` owns its semantic `<header class="wb-content-header">` root.
+- Layout + Card Phase 3 standardization keeps these root-owning blocks aligned across the renderer partials, `Block::ownsPublicRoot()`, the contract registry, the read-only admin contract modal, and the contracts audit command.
 
 ### `hero`
 

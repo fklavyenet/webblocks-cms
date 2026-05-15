@@ -30,6 +30,8 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "content_header"', $output);
         $this->assertStringContainsString('"admin_form_source": "resources/views/admin/blocks/types/content_header.blade.php"', $output);
         $this->assertStringContainsString('"public_renderer_source": "resources/views/pages/partials/blocks/content_header.blade.php"', $output);
+        $this->assertStringContainsString('"shared_settings_fields": [', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public `<header>` root."', $output);
     }
 
     #[Test]
@@ -57,10 +59,36 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "navbar-brand"', $output);
         $this->assertStringContainsString('"slug": "sidebar-brand"', $output);
         $this->assertStringContainsString('"slug": "sidebar-nav-group"', $output);
+        $this->assertStringContainsString('"slug": "section"', $output);
+        $this->assertStringContainsString('"slug": "container"', $output);
+        $this->assertStringContainsString('"slug": "grid"', $output);
+        $this->assertStringContainsString('"slug": "cluster"', $output);
+        $this->assertStringContainsString('"slug": "card"', $output);
+        $this->assertStringContainsString('"allowed_child_type_slugs": [', $output);
+        $this->assertStringContainsString('"cluster"', $output);
+        $this->assertStringContainsString('"button_link"', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public `<section>` root."', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public container `<div>` root."', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public cluster `<div>` root."', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public grid `<div>` root."', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public card root element."', $output);
         $this->assertStringContainsString('"owns_public_root_helper": true', $output);
         $this->assertStringNotContainsString('Renderer clearly owns a root, but `Block::ownsPublicRoot()` does not currently include `sticky-navbar`.', $output);
         $this->assertStringNotContainsString('Public renderer can fall back to the site home URL, but the admin request currently requires a URL on default-locale edits.', $output);
         $this->assertStringNotContainsString('Logo-only accessibility handling is weaker than the current Navbar Brand contract.', $output);
         $this->assertStringNotContainsString('Nested group rendering does not fully reuse sidebar-nav-item helper behavior for child icon and active-state rules.', $output);
+    }
+
+    #[Test]
+    public function markdown_audit_includes_expanded_layout_and_card_contract_details(): void
+    {
+        $this->artisan('block-types:contracts-audit')
+            ->expectsOutputToContain('## `section`')
+            ->expectsOutputToContain('- Shared/settings fields: settings.layout_name; settings.spacing')
+            ->expectsOutputToContain('## `card`')
+            ->expectsOutputToContain('- Allowed child type slugs: cluster; button_link')
+            ->expectsOutputToContain('## `content_header`')
+            ->expectsOutputToContain('- Renderer root contract: Owns its public `<header>` root.')
+            ->assertExitCode(0);
     }
 }

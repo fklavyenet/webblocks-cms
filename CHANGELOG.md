@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.25
+
+- Continue the Phase 3 block type contract cleanup for the Layout + Card group by aligning `section`, `container`, `grid`, `cluster`, `card`, and `content_header` across the shared contract registry, audit output, root-ownership reporting, request or save ownership, docs, and focused regression coverage.
+- Expand `block-types:contracts-audit` so both markdown and JSON outputs expose the same contract detail already used by the shipped admin contract modal, align contract or admin serialization for list-shaped fields, and document the real Card storage model where visible copy stays translation-backed without assuming any nonexistent `blocks.eyebrow` column.
+
 ## 1.31.24
 
 - Finalize the omitted Phase 3 media or visual block contract cleanup pieces from `v1.31.23` by marking `image`, `gallery`, `download`, `file`, `video`, and `audio` as root-owning public blocks, restoring their shipped documented contract entries in the shared registry, and fixing contract audit or admin modal serialization to emit the real `translatable_fields` payload.
