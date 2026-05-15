@@ -409,4 +409,76 @@ class MediaVisualBlockContractsTest extends TestCase
             'alt_text' => 'Deutsch alt a',
         ]);
     }
+
+    #[Test]
+    public function gallery_existing_item_updates_persist_locale_metadata_and_reopen_with_saved_values(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $image = $this->media('image', 'persisted-caption.jpg', 'image/jpeg', 'media/images/persisted-caption.jpg');
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'sort_order' => 0,
+            'gallery_items' => [
+                [
+                    'media_id' => $image->id,
+                    'sort_order' => 0,
+                    'alt_text' => 'Original alt',
+                    'caption' => 'Original caption',
+                    'overlay_title' => 'Original overlay title',
+                    'overlay_text' => 'Original overlay text',
+                ],
+            ],
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $block = Block::query()->where('type', 'gallery')->firstOrFail();
+
+        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'sort_order' => 0,
+            'gallery_items' => [
+                [
+                    'media_id' => $image->id,
+                    'sort_order' => 0,
+                    'alt_text' => 'Updated alt',
+                    'caption' => 'Updated caption from modal',
+                    'overlay_title' => 'Updated overlay title',
+                    'overlay_text' => 'Updated overlay text',
+                ],
+            ],
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $blockMedia = $block->fresh()->galleryItems()->firstWhere('media_id', $image->id);
+
+        $this->assertNotNull($blockMedia);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $blockMedia->id,
+            'locale_id' => Page::defaultLocaleId(),
+            'alt_text' => 'Updated alt',
+            'caption' => 'Updated caption from modal',
+            'overlay_title' => 'Updated overlay title',
+            'overlay_text' => 'Updated overlay text',
+        ]);
+
+        $editResponse = $this->actingAs($user)->followingRedirects()->get(route('admin.blocks.edit', $block));
+
+        $editResponse->assertOk();
+        $editResponse->assertSee('name="gallery_items[0][caption]" value="Updated caption from modal"', false);
+        $editResponse->assertSee('name="gallery_items[0][alt_text]" value="Updated alt"', false);
+        $editResponse->assertSee('name="gallery_items[0][overlay_title]" value="Updated overlay title"', false);
+        $editResponse->assertSee('name="gallery_items[0][overlay_text]" value="Updated overlay text"', false);
+        $editResponse->assertSee('data-wb-gallery-caption-summary', false);
+        $editResponse->assertSee('Updated caption from modal', false);
+        $editResponse->assertSee('id="gallery-item-modal-gallery-'.$image->id.'"', false);
+        $editResponse->assertSee('value="Updated caption from modal" data-wb-gallery-modal-field="caption"', false);
+    }
 }

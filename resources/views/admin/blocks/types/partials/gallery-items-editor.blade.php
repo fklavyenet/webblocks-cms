@@ -58,6 +58,12 @@
             : "gallery_items[{$index}][{$field}]";
     };
     $modalIdPrefix = $modalIdPrefix ?? 'gallery-item-editor';
+    $modalIdValue = static function (int $mediaId) use ($rootPrefix): string {
+        $prefix = $rootPrefix ?: 'gallery';
+        $sanitizedPrefix = preg_replace('/[^A-Za-z0-9_-]+/', '-', $prefix) ?: 'gallery';
+
+        return 'gallery-item-modal-'.$sanitizedPrefix.'-'.$mediaId;
+    };
     $renderOwnCard = (bool) ($renderOwnCard ?? false);
 @endphp
 
@@ -116,7 +122,7 @@
                                         $overlaySummary = $item['overlay_title'] !== ''
                                             ? $item['overlay_title']
                                             : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
-                                        $modalId = $modalIdPrefix.'-'.$galleryIndex.'-'.(int) $asset->id;
+                                        $modalId = $modalIdValue((int) $asset->id);
                                     @endphp
                                     <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                                         <td>
@@ -151,7 +157,7 @@
                                         </td>
                                         <td>
                                             <div class="wb-action-group">
-                                                <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" title="Edit item metadata" aria-label="Edit item metadata">
+                                                <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </button>
                                                 <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="Remove item" aria-label="Remove item">
@@ -267,7 +273,7 @@
                                 $overlaySummary = $item['overlay_title'] !== ''
                                     ? $item['overlay_title']
                                     : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
-                                $modalId = $modalIdPrefix.'-'.$galleryIndex.'-'.(int) $asset->id;
+                                $modalId = $modalIdValue((int) $asset->id);
                             @endphp
                             <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                                 <td>
@@ -302,7 +308,7 @@
                                 </td>
                                 <td>
                                     <div class="wb-action-group">
-                                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" title="Edit item metadata" aria-label="Edit item metadata">
+                                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </button>
                                         <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="Remove item" aria-label="Remove item">
@@ -397,7 +403,7 @@
             </td>
             <td>
                 <div class="wb-action-group">
-                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" title="Edit item metadata" aria-label="Edit item metadata">
+                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" data-wb-gallery-edit-item title="Edit item metadata" aria-label="Edit item metadata">
                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="__MEDIA_ID__" title="Remove item" aria-label="Remove item">

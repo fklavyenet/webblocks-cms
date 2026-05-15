@@ -93,59 +93,58 @@
     data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"
     data-wb-gallery-variant="{{ $block->galleryVariant() }}"
     data-wb-gallery-captions="{{ $captionMode }}"
+    aria-label="{{ $ariaLabel }}"
 >
     @if ($galleryItems->isNotEmpty())
-        <section aria-label="{{ $ariaLabel }}">
-            <div class="wb-gallery-grid">
-                @foreach ($galleryItems as $item)
-                    @php
-                        $showBelowCaption = $captionMode === 'below' && $item['caption'] !== '';
-                        $showOverlay = in_array($captionMode, ['overlay', 'on-hover'], true) && ($item['caption'] !== '' || $item['overlay_title'] !== '' || $item['overlay_text'] !== '');
-                        $triggerClass = $lightboxEnabled ? 'wb-gallery-trigger' : 'wb-gallery-link';
-                    @endphp
-                    <figure class="wb-gallery-item">
-                        <a
-                            href="{{ $item['full_url'] }}"
-                            class="{{ $triggerClass }}"
-                            @if ($lightboxEnabled)
-                                data-wb-gallery-target="#{{ $viewerId }}"
-                                data-wb-gallery-full="{{ $item['full_url'] }}"
-                                data-wb-gallery-alt="{{ $item['alt'] }}"
-                                @if ($item['caption'] !== '') data-wb-gallery-caption="{{ $item['caption'] }}" @endif
-                                @if (($item['meta'] ?? '') !== '') data-wb-gallery-meta="{{ $item['meta'] }}" @endif
-                                @if ($item['width']) data-wb-gallery-width="{{ $item['width'] }}" @endif
-                                @if ($item['height']) data-wb-gallery-height="{{ $item['height'] }}" @endif
-                            @endif
-                        >
-                            <img
-                                src="{{ $item['thumbnail_url'] }}"
-                                alt="{{ $item['alt'] }}"
-                                class="wb-gallery-media"
-                                @if ($item['width']) width="{{ $item['width'] }}" @endif
-                                @if ($item['height']) height="{{ $item['height'] }}" @endif
-                            >
-
-                            @if ($showOverlay)
-                                <span class="wb-gallery-caption wb-gallery-caption--{{ $overlayMode }} @if($captionMode === 'on-hover') wb-gallery-caption--hover @endif">
-                                    @if ($item['overlay_title'] !== '')
-                                        <span class="wb-gallery-caption-title">{{ $item['overlay_title'] }}</span>
-                                    @endif
-                                    @if ($item['overlay_text'] !== '')
-                                        <span class="wb-gallery-caption-meta">{{ $item['overlay_text'] }}</span>
-                                    @elseif ($item['caption'] !== '')
-                                        <span class="wb-gallery-caption-meta">{{ $item['caption'] }}</span>
-                                    @endif
-                                </span>
-                            @endif
-                        </a>
-
-                        @if ($showBelowCaption)
-                            <figcaption class="wb-gallery-caption">{{ $item['caption'] }}</figcaption>
+        <div class="wb-gallery-grid">
+            @foreach ($galleryItems as $item)
+                @php
+                    $showBelowCaption = $captionMode === 'below' && $item['caption'] !== '';
+                    $showOverlay = in_array($captionMode, ['overlay', 'on-hover'], true) && ($item['caption'] !== '' || $item['overlay_title'] !== '' || $item['overlay_text'] !== '');
+                    $triggerClass = $lightboxEnabled ? 'wb-gallery-trigger' : 'wb-gallery-link';
+                @endphp
+                <figure class="wb-gallery-item">
+                    <a
+                        href="{{ $item['full_url'] }}"
+                        class="{{ $triggerClass }}"
+                        @if ($lightboxEnabled)
+                            data-wb-gallery-target="#{{ $viewerId }}"
+                            data-wb-gallery-full="{{ $item['full_url'] }}"
+                            data-wb-gallery-alt="{{ $item['alt'] }}"
+                            @if ($item['caption'] !== '') data-wb-gallery-caption="{{ $item['caption'] }}" @endif
+                            @if (($item['meta'] ?? '') !== '') data-wb-gallery-meta="{{ $item['meta'] }}" @endif
+                            @if ($item['width']) data-wb-gallery-width="{{ $item['width'] }}" @endif
+                            @if ($item['height']) data-wb-gallery-height="{{ $item['height'] }}" @endif
                         @endif
-                    </figure>
-                @endforeach
-            </div>
-        </section>
+                    >
+                        <img
+                            src="{{ $item['thumbnail_url'] }}"
+                            alt="{{ $item['alt'] }}"
+                            class="wb-gallery-media"
+                            @if ($item['width']) width="{{ $item['width'] }}" @endif
+                            @if ($item['height']) height="{{ $item['height'] }}" @endif
+                        >
+
+                        @if ($showOverlay)
+                            <span class="wb-gallery-caption wb-gallery-caption--{{ $overlayMode }} @if($captionMode === 'on-hover') wb-gallery-caption--hover @endif">
+                                @if ($item['overlay_title'] !== '')
+                                    <span class="wb-gallery-caption-title">{{ $item['overlay_title'] }}</span>
+                                @endif
+                                @if ($item['overlay_text'] !== '')
+                                    <span class="wb-gallery-caption-meta">{{ $item['overlay_text'] }}</span>
+                                @elseif ($item['caption'] !== '')
+                                    <span class="wb-gallery-caption-meta">{{ $item['caption'] }}</span>
+                                @endif
+                            </span>
+                        @endif
+                    </a>
+
+                    @if ($showBelowCaption)
+                        <figcaption class="wb-gallery-caption">{{ $item['caption'] }}</figcaption>
+                    @endif
+                </figure>
+            @endforeach
+        </div>
 
         @if ($lightboxEnabled)
             @php

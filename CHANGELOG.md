@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.37
+
+- Fix the real Gallery existing-item editor persistence bug by aligning server-rendered item modal ids with the admin Gallery row binding logic, so `Done` now updates the exact hidden `gallery_items[*][alt_text|caption|overlay_title|overlay_text]` inputs, live row summaries, and saved `block_gallery_item_translations` values for the active locale.
+- Simplify the public Gallery renderer by letting the root `.wb-gallery` own the block wrapper directly and removing the unnecessary inner `section`, while preserving ordered media output, the single `.wb-gallery-grid` layout wrapper, lightbox wiring, legacy `data-wb-gallery-meta`, and shared overlay registration.
+
 ## 1.31.36
 
 - Fix Gallery item metadata editing so existing item modals now sync alt text, caption, overlay title, and overlay text back into the hidden gallery-item inputs and compact summaries before block save, restoring persistence through `block_gallery_item_translations`.

@@ -3775,6 +3775,72 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function gallery_edit_form_targets_existing_item_modals_by_media_id_and_keeps_real_hidden_field_names(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page] = $this->pageWithSlot($main);
+        $galleryType = BlockType::query()->where('slug', 'gallery')->firstOrFail();
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/gallery-existing-item.jpg',
+            'filename' => 'gallery-existing-item.jpg',
+            'original_name' => 'gallery-existing-item.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Existing gallery item',
+            'alt_text' => 'Existing fallback alt',
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $galleryType->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $blockMedia = $block->blockMedia()->create([
+            'media_id' => $asset->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+
+        $blockMedia->galleryItemTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'alt_text' => 'Saved alt text',
+            'caption' => 'Saved caption',
+            'overlay_title' => 'Saved overlay title',
+            'overlay_text' => 'Saved overlay text',
+        ]);
+
+        $response = $this->actingAs($user)->followingRedirects()->get(route('admin.blocks.edit', $block));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-gallery-item-row data-media-id="'.$asset->id.'"', false);
+        $response->assertSee('name="gallery_items[0][media_id]"', false);
+        $response->assertSee('name="gallery_items[0][caption]" value="Saved caption"', false);
+        $response->assertSee('name="gallery_items[0][alt_text]" value="Saved alt text"', false);
+        $response->assertSee('name="gallery_items[0][overlay_title]" value="Saved overlay title"', false);
+        $response->assertSee('name="gallery_items[0][overlay_text]" value="Saved overlay text"', false);
+        $response->assertSee('data-wb-target="#gallery-item-modal-gallery-'.$asset->id.'"', false);
+        $response->assertSee('id="gallery-item-modal-gallery-'.$asset->id.'"', false);
+        $response->assertSee('data-media-id="'.$asset->id.'"', false);
+        $response->assertSee('data-wb-gallery-edit-item', false);
+        $response->assertSee('data-wb-gallery-caption-summary', false);
+        $response->assertSee('Saved caption', false);
+    }
+
+    #[Test]
     public function layout_block_admin_forms_show_expected_fields_and_settings_controls(): void
     {
         $this->seedFoundation();

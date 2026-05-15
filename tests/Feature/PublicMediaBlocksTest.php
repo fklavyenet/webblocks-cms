@@ -264,6 +264,8 @@ class PublicMediaBlocksTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('class="wb-gallery wb-gallery--collage wb-gallery--cols-4 wb-gallery--gap-lg wb-gallery--aspect-16-9"', false);
+        $response->assertDontSee('<section aria-label="Gallery">', false);
+        $response->assertSee('<div class="wb-gallery-grid">', false);
         $response->assertSee('alt="Translated alt"', false);
         $response->assertSee('Translated overlay title', false);
         $response->assertSee('Translated overlay text', false);
