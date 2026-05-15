@@ -123,7 +123,8 @@ class BlockRequest extends FormRequest
             'card_variant' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['default', 'promo'])],
             'image_alt' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'image_caption' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'image_position' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['none', 'top'])],
+            'image_position' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['none', 'top', 'middle', 'bottom'])],
+            'image_align' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['start', 'center', 'end', 'stretch'])],
             'image_aspect' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
             'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -944,6 +945,14 @@ class BlockRequest extends FormRequest
                     : [];
                 $existingSettings = is_array($existingSettings) ? $existingSettings : [];
                 $settings = $existingSettings;
+                $submittedImagePosition = trim((string) ($data['image_position'] ?? ''));
+                $submittedImageAlign = trim((string) ($data['image_align'] ?? ''));
+                $resolvedImagePosition = in_array($submittedImagePosition, ['top', 'middle', 'bottom'], true)
+                    ? $submittedImagePosition
+                    : 'top';
+                $resolvedImageAlign = in_array($submittedImageAlign, ['start', 'center', 'end', 'stretch'], true)
+                    ? $submittedImageAlign
+                    : 'center';
 
                 if (! $isTranslatedCardEdit) {
                     $settings['url'] = trim((string) ($data['card_url'] ?? '')) ?: null;
@@ -951,7 +960,8 @@ class BlockRequest extends FormRequest
                     $settings['variant'] = in_array(trim((string) ($data['card_variant'] ?? 'default')), ['default', 'promo'], true)
                         ? trim((string) ($data['card_variant'] ?? 'default'))
                         : 'default';
-                    $settings['image_position'] = ($data['image_position'] ?? 'none') === 'top' ? 'top' : 'none';
+                    $settings['image_position'] = $resolvedImagePosition;
+                    $settings['image_align'] = $resolvedImageAlign;
                     $settings['image_aspect'] = in_array(trim((string) ($data['image_aspect'] ?? 'auto')), ['auto', 'square', 'wide', 'portrait'], true)
                         ? trim((string) ($data['image_aspect'] ?? 'auto'))
                         : 'auto';
@@ -1578,7 +1588,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level'], $data['anchor']);
-        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_aspect'], $data['alert_variant']);
+        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['alert_variant']);
         unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
         unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);

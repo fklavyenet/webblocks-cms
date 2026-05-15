@@ -764,7 +764,21 @@ class Block extends Model
 
     public function cardImagePosition(): string
     {
-        return $this->setting('image_position') === 'top' ? 'top' : 'none';
+        return match ($this->setting('image_position')) {
+            'middle' => 'middle',
+            'bottom' => 'bottom',
+            default => 'top',
+        };
+    }
+
+    public function cardImageAlign(): string
+    {
+        return match ($this->setting('image_align')) {
+            'start' => 'start',
+            'end' => 'end',
+            'stretch' => 'stretch',
+            default => 'center',
+        };
     }
 
     public function cardImageAspect(): string

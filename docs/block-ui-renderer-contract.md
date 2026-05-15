@@ -233,7 +233,7 @@ Public pages now use explicit layout composition modes:
 - `Section` owns the semantic `<section class="wb-section">` root when needed.
 - `Container`, `Grid`, and `Cluster` own their own non-semantic layout roots unless a specific renderer intentionally chooses otherwise.
 - `Card` owns its `<article class="wb-card">` or promo `<section class="wb-card wb-promo">` root.
-- Card may optionally render a shared top image ahead of the body copy when configured, but existing no-image cards keep the same root ownership and body/footer structure.
+- Card may optionally render a shared image inside `.wb-card-body` when selected media exists. Shared placement supports `top`, `middle`, and `bottom`, blank or legacy `none` values fall back safely to `top`, shared alignment stays canonical, and existing no-image cards keep the same root ownership and footer structure.
 - `Header` owns its semantic heading root such as `<h1>` or `<h2>`.
 - `Content Header` owns its semantic `<header class="wb-content-header">` root.
 - Layout + Card Phase 3 standardization keeps these root-owning blocks aligned across the renderer partials, `Block::ownsPublicRoot()`, the contract registry, the read-only admin contract modal, and the contracts audit command.

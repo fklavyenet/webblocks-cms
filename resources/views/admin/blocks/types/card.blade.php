@@ -17,18 +17,38 @@
             'clearLabel' => 'Remove',
             'accept' => 'image',
         ])
-        <div class="wb-text-sm wb-text-muted">Optional shared image for service, feature, and content card patterns.</div>
+        <div class="wb-text-sm wb-text-muted">Selecting media enables the card image. Clear the selected media to remove the image.</div>
     </div>
+
+    @php
+        $selectedMediaId = old('media_id', old('asset_id', $block->media_id));
+        $defaultImagePlacement = $selectedMediaId ? $block->cardImagePosition() : 'top';
+    @endphp
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
-            <label for="image_position">Image Position</label>
+            <label for="image_position">Image Placement</label>
             <select id="image_position" name="image_position" class="wb-select">
-                <option value="none" @selected(old('image_position', $block->cardImagePosition()) === 'none')>No image</option>
-                <option value="top" @selected(old('image_position', $block->cardImagePosition()) === 'top')>Top</option>
+                <option value="top" @selected(old('image_position', $defaultImagePlacement) === 'top')>Top</option>
+                <option value="middle" @selected(old('image_position', $defaultImagePlacement) === 'middle')>Middle</option>
+                <option value="bottom" @selected(old('image_position', $defaultImagePlacement) === 'bottom')>Bottom</option>
             </select>
+            <div class="wb-text-sm wb-text-muted">Placement controls where the selected image appears inside the card body.</div>
         </div>
 
+        <div class="wb-stack wb-gap-1">
+            <label for="image_align">Image Alignment</label>
+            <select id="image_align" name="image_align" class="wb-select">
+                <option value="start" @selected(old('image_align', $block->cardImageAlign()) === 'start')>Start</option>
+                <option value="center" @selected(old('image_align', $block->cardImageAlign()) === 'center')>Center</option>
+                <option value="end" @selected(old('image_align', $block->cardImageAlign()) === 'end')>End</option>
+                <option value="stretch" @selected(old('image_align', $block->cardImageAlign()) === 'stretch')>Stretch</option>
+            </select>
+            <div class="wb-text-sm wb-text-muted">Alignment controls how the image is aligned within the card body.</div>
+        </div>
+    </div>
+
+    <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="image_aspect">Image Aspect</label>
             <select id="image_aspect" name="image_aspect" class="wb-select">

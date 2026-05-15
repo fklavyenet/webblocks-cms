@@ -2481,7 +2481,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function card_with_media_renders_image_before_the_body_when_image_position_is_top(): void
+    public function card_with_media_renders_image_inside_the_body_by_default_even_without_explicit_top_position(): void
     {
         $page = $this->pageWithMainSlot();
         $image = Media::query()->create([
@@ -2509,7 +2509,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
             'media_id' => $image->id,
-            'settings' => json_encode(['image_position' => 'top', 'image_aspect' => 'wide'], JSON_UNESCAPED_SLASHES),
+            'settings' => json_encode(['image_aspect' => 'wide'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
@@ -2531,12 +2531,196 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<article class="wb-card" data-wb-public-block-type="card">',
-            '<figure>',
+            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<figure class="wb-stack wb-gap-1 wb-text-center">',
             'card-public.jpg',
             'alt="Card image alt"',
             '<figcaption>Card image caption</figcaption>',
-            '<div class="wb-card-body wb-stack wb-gap-2">',
             '<strong>Image card</strong>',
+        ], false);
+    }
+
+    #[Test]
+    public function card_with_legacy_none_image_position_still_renders_the_selected_image_as_top(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-legacy-none.jpg',
+            'filename' => 'card-legacy-none.jpg',
+            'original_name' => 'card-legacy-none.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Legacy none image',
+            'width' => 800,
+            'height' => 600,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'settings' => json_encode(['image_position' => 'none'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Legacy card',
+            'content' => 'Legacy content',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<figure class="wb-stack wb-gap-1 wb-text-center">',
+            'card-legacy-none.jpg',
+            '<strong>Legacy card</strong>',
+        ], false);
+    }
+
+    #[Test]
+    public function card_without_media_keeps_rendering_without_an_image(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'No image card',
+            'content' => 'Still no image.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<article class="wb-card" data-wb-public-block-type="card">', false);
+        $response->assertSee('<div class="wb-card-body wb-stack wb-gap-2">', false);
+        $response->assertDontSee('<figure', false);
+    }
+
+    #[Test]
+    public function card_supports_bottom_image_placement_and_end_alignment(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-bottom.jpg',
+            'filename' => 'card-bottom.jpg',
+            'original_name' => 'card-bottom.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bottom aligned image',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'settings' => json_encode(['image_position' => 'bottom', 'image_align' => 'end'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Bottom card',
+            'content' => 'Image should render after text.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<strong>Bottom card</strong>',
+            '<p class="wb-m-0">Image should render after text.</p>',
+            '<figure class="wb-stack wb-gap-1 wb-text-right">',
+            'card-bottom.jpg',
+        ], false);
+    }
+
+    #[Test]
+    public function card_supports_middle_image_placement_and_stretch_alignment(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-middle.jpg',
+            'filename' => 'card-middle.jpg',
+            'original_name' => 'card-middle.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Middle aligned image',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'settings' => json_encode(['image_position' => 'middle', 'image_align' => 'stretch'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Middle card',
+            'content' => 'Image should render between title and text.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<strong>Middle card</strong>',
+            '<figure class="wb-stack wb-gap-1 wb-w-full">',
+            'card-middle.jpg',
+            '<p class="wb-m-0">Image should render between title and text.</p>',
         ], false);
     }
 

@@ -116,7 +116,8 @@ class MediaVisualBlockContractsTest extends TestCase
             'card_url' => '/services/design',
             'card_target' => '_blank',
             'card_variant' => 'promo',
-            'image_position' => 'top',
+            'image_position' => 'bottom',
+            'image_align' => 'end',
             'image_aspect' => 'wide',
             'image_alt' => 'Design service illustration',
             'image_caption' => 'Optional card image caption',
@@ -133,7 +134,8 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertSame('/services/design', $settings['url']);
         $this->assertSame('_blank', $settings['target']);
         $this->assertSame('promo', $settings['variant']);
-        $this->assertSame('top', $settings['image_position']);
+        $this->assertSame('bottom', $settings['image_position']);
+        $this->assertSame('end', $settings['image_align']);
         $this->assertSame('wide', $settings['image_aspect']);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,

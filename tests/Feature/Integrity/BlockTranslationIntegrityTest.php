@@ -562,6 +562,7 @@ class BlockTranslationIntegrityTest extends TestCase
                 'target' => '_blank',
                 'variant' => 'promo',
                 'image_position' => 'top',
+                'image_align' => 'stretch',
                 'image_aspect' => 'wide',
             ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
@@ -604,6 +605,7 @@ class BlockTranslationIntegrityTest extends TestCase
         $this->assertSame('_blank', $settings['target']);
         $this->assertSame('promo', $settings['variant']);
         $this->assertSame('top', $settings['image_position']);
+        $this->assertSame('stretch', $settings['image_align']);
         $this->assertSame('wide', $settings['image_aspect']);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,

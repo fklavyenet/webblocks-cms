@@ -315,7 +315,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame(['eyebrow', 'title', 'subtitle', 'content', 'meta', 'image_alt', 'image_caption'], $card->translatableFields);
         $this->assertSame(['cluster', 'button_link'], $card->allowedChildTypeSlugs);
         $this->assertSame('transitional', $card->currentContractStatus);
-        $this->assertSame(['media_id', 'settings.url', 'settings.target', 'settings.variant', 'settings.image_position', 'settings.image_aspect'], $card->sharedSettingsFields);
+        $this->assertSame(['media_id', 'settings.url', 'settings.target', 'settings.variant', 'settings.image_position', 'settings.image_align', 'settings.image_aspect'], $card->sharedSettingsFields);
         $this->assertSame(['variant', 'settings.alignment'], $contentHeader->sharedSettingsFields);
         $this->assertSame(['title', 'subtitle', 'meta'], $contentHeader->translatableFields);
         $this->assertTrue($section->ownsPublicRootHelper);

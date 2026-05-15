@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.30
+
+- Refine the core `card` block image UX so selected media now controls image visibility, older blank or legacy `image_position = none` values fall back safely to `top`, and the public card image figure renders inside `.wb-card-body` instead of flush against the outer card edge.
+- Expand shared Card image presentation settings with `top`, `middle`, and `bottom` placement plus shared horizontal alignment, keep image alt and caption locale-aware, preserve locale-only shared-field protection, and keep nested child footer actions plus the legacy single-action fallback backward compatible.
+
 ## 1.31.29
 
 - Enhance the core `card` block with optional shared media selection so editors can build editable image cards inside `Grid` and other existing layout trees without introducing a separate install-specific card variant.
