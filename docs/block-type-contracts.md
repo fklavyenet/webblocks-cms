@@ -2,7 +2,7 @@
 
 ## Purpose And Scope
 
-This document began as the Phase 1 inventory of the currently shipped published core block types in WebBlocks CMS, now also documents the Phase 2 read-only admin contract view, and records the Phase 3 gap-standardization fixes completed so far, including the Layout + Card cleanup for `section`, `container`, `grid`, `cluster`, `card`, and `content_header`.
+This document began as the Phase 1 inventory of the currently shipped published core block types in WebBlocks CMS, now also documents the Phase 2 read-only admin contract view, and records the Phase 3 gap-standardization fixes completed so far, including the Layout + Card cleanup for `section`, `container`, `grid`, `cluster`, `card`, and `content_header`, the Marketing / Structured Content cleanup for `hero`, `columns`, `column_item`, `cta`, `feature-grid`, and `feature-item`, and the Legacy / Transitional cleanup that keeps old compatibility slugs documented honestly without promoting them into the published core catalog.
 
 Phase 1 is read-only documentation only.
 
@@ -183,6 +183,8 @@ Current remaining high-signal gaps after the current Phase 3 fixes:
 - `table` renderer still supports a legacy `settings.rows` fallback path even though the core admin form writes translated row copy
 - `hero` still preserves legacy field fallbacks when canonical translated intro fields are empty
 - `feature-grid` and `feature-item` are now published because they are source-backed, but they remain intentionally transitional delegate contracts over the shared Columns or Column Item presentation paths
+- `tabs`, `slider`, `menu`, and `faq-list` still exist as legacy draft catalog rows with compatibility forms or renderers, but they are not published core contracts and should continue to fail safely in the contract modal and audit output
+- `showcase-list` and `contact-info` still exist only as public-render compatibility paths rather than shipped published core catalog blocks; their settings-driven links now follow the same safe public URL rules as other block renderers
 - published and draft catalogs coexist, so future admin surfacing must stay explicit about published core contracts versus draft or install-specific rows
 
 ## Recommended Phase 3
@@ -229,3 +231,4 @@ Phase 3 starts resolving low-risk documented contract gaps without adding a sche
 - `card` keeps its intentional transitional contract: translated visible copy, shared URL/target/variant, nested child action composition, and the legacy single-action fallback all remain documented and tested
 - `content_header` keeps translated title, intro, and meta copy with shared heading level and alignment, and its semantic `<header class="wb-content-header">` root remains renderer-owned without a generic wrapper
 - `testimonial` and `stats` remain documented honestly as alias-only behavior that delegates to existing Quote or Columns render paths rather than as standalone published core contracts
+- `tabs`, `slider`, `menu`, and `faq-list` remain draft or alias-era compatibility slugs rather than published core contracts, while `showcase-list` and `contact-info` remain public-only compatibility renderers with no shipped core contract entry

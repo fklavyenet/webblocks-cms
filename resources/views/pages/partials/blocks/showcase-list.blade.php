@@ -1,4 +1,6 @@
 @php
+    use App\Models\Block;
+
     $settings = is_array($block->settings)
         ? $block->settings
         : (json_decode((string) $block->settings, true) ?: []);
@@ -94,8 +96,12 @@
                     </section>
                 @endif
 
-                @if (! empty($item['url']))
-                    <a href="{{ $item['url'] }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $item['url_label'] ?? $item['url'] }}</a>
+                @php
+                    $itemUrl = Block::safePublicUrl($item['url'] ?? null);
+                @endphp
+
+                @if ($itemUrl)
+                    <a href="{{ $itemUrl }}" target="_blank" rel="noopener noreferrer" class="wb-link">{{ $item['url_label'] ?? $itemUrl }}</a>
                 @endif
             </div>
         </article>

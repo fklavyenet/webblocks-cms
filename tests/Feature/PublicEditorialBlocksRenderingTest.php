@@ -2094,6 +2094,59 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function showcase_list_skips_unsafe_project_links_but_keeps_gallery_overlay_contract(): void
+    {
+        $page = $this->pageWithMainSlot('Unsafe Showcase Page', 'unsafe-showcase-page');
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/showcase-unsafe.jpg',
+            'filename' => 'showcase-unsafe.jpg',
+            'original_name' => 'showcase-unsafe.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Showcase Unsafe',
+            'alt_text' => 'Showcase unsafe alt',
+            'width' => 1600,
+            'height' => 900,
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'showcase-list',
+            'block_type_id' => $this->blockType('showcase-list', 'Showcase List', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'items' => [[
+                    'title' => 'Unsafe project',
+                    'url' => 'javascript:alert(1)',
+                    'url_label' => 'Open project',
+                    'images' => [
+                        ['asset_id' => $image->id, 'title' => 'Unsafe image'],
+                    ],
+                ]],
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'unsafe-showcase-page'));
+        $html = $response->getContent();
+        $viewerId = 'wb-gallery-viewer-'.$block->id;
+
+        $response->assertOk();
+        $this->assertStringNotContainsString('javascript:alert(1)', $html);
+        $this->assertStringNotContainsString('>Open project</a>', $html);
+        $this->assertStringContainsString('data-wb-gallery-target="#'.$viewerId.'"', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="'.preg_quote($viewerId, '/').'"/s', $html);
+    }
+
+    #[Test]
     public function rich_text_block_supports_safe_html_rendering_without_raw_html_passthrough(): void
     {
         $page = $this->pageWithMainSlot();

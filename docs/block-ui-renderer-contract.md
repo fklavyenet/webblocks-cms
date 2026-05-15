@@ -519,6 +519,12 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: keep support for old content, but prefer `navigation-auto` in admin UX and future seeds.
 
+### Legacy / Transitional Phase 3 Note
+
+- `tabs`, `slider`, `menu`, and `faq-list` are still legacy draft-era slugs in the CMS catalog rather than published core contracts.
+- `showcase-list` and `contact-info` still exist only as public-render compatibility blocks and are not promoted into the published core catalog in this phase.
+- This phase keeps those paths documented honestly, preserves compatibility rendering where it already ships, and adds safe link sanitization for settings-driven public links without introducing a new tabs or slider JavaScript system.
+
 ### `contact_form`
 
 - CMS block slug: `contact_form`
@@ -535,7 +541,7 @@ Public pages now use explicit layout composition modes:
 | --- | --- | --- | --- |
 | `card-grid` | public-render-only | should stay transitional | The renderer now matches the same `wb-grid` and `wb-card` structure as `columns.variant = cards`, but it still depends on `settings.items`. Prefer Columns for new structured content. |
 | `showcase-list` | public-render-only | should stay fallback/custom | This is currently showcase-specific seeded content and should not become core unless the pattern repeats across sites. Public image triggers should still follow the shipped gallery contract by emitting `data-wb-gallery-target` and registering one shared viewer modal under `#wb-overlay-root`. |
-| `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. |
+| `contact-info` | public-render-only | should become first-class | If editors keep using contact metadata cards, a small structured block is better than settings-driven custom content. Current compatibility rendering now ignores unsafe settings URLs instead of emitting invalid or dangerous anchors. |
 | `code` | first-class public renderer | acceptable | Safe `<pre><code>` rendering is now in place; richer editor affordances remain optional future work. |
 | `list` | first-class public renderer | acceptable | Dedicated line-based list rendering now exists; keep compatibility for legacy settings-driven content. |
 | `table` | first-class public renderer | acceptable | Dedicated line-based table rendering now exists; keep compatibility for legacy settings rows. |

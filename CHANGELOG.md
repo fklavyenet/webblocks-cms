@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.28
+
+- Continue the Phase 3 Legacy / Transitional cleanup by keeping `tabs`, `slider`, `menu`, and `faq-list` documented honestly as legacy draft-era compatibility slugs instead of falsely promoting them into the published core contract set, while `showcase-list` and `contact-info` remain public-only compatibility renderers without shipped core contract entries.
+- Preserve the existing legacy renderer behavior for those transitional paths, keep contract modal and audit output safely undocumented for non-published target slugs, and harden settings-driven public links in `showcase-list` and `contact-info` so unsafe URLs are ignored without adding any new tabs or slider JavaScript architecture.
+
 ## 1.31.27
 
 - Publish the corrected Phase 3 Marketing / Structured Content cleanup release as `v1.31.27`, superseding the accidentally published `v1.31.26` tag that pointed at the previous `v1.31.25` release commit without changing that already-published tag.

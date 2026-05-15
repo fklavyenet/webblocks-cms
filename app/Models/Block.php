@@ -475,9 +475,48 @@ class Block extends Model
 
     public function linkListItemUrl(): ?string
     {
-        $url = trim((string) $this->url);
+        return self::safePublicUrl($this->url);
+    }
 
-        return $url !== '' ? $url : null;
+    public static function safePublicUrl(mixed $value): ?string
+    {
+        $url = trim((string) $value);
+
+        if ($url === '' || preg_match('/\s/', $url) === 1) {
+            return null;
+        }
+
+        if (preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $url) === 1) {
+            $scheme = Str::lower((string) parse_url($url, PHP_URL_SCHEME));
+
+            if (in_array($scheme, ['http', 'https'], true)) {
+                return filter_var($url, FILTER_VALIDATE_URL) !== false ? $url : null;
+            }
+
+            if ($scheme === 'mailto') {
+                return substr($url, strlen('mailto:')) !== '' ? $url : null;
+            }
+
+            if ($scheme === 'tel') {
+                return substr($url, strlen('tel:')) !== '' ? $url : null;
+            }
+
+            return null;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return str_starts_with($url, '//') ? null : $url;
+        }
+
+        if (str_starts_with($url, '#')) {
+            return strlen($url) > 1 ? $url : null;
+        }
+
+        if (preg_match('/^[A-Za-z0-9._\/-]+(?:\?[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?(?:#[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?$/', $url) !== 1) {
+            return null;
+        }
+
+        return str_starts_with($url, '//') ? null : $url;
     }
 
     public function canAcceptChildType(?string $childTypeSlug): bool
@@ -548,9 +587,7 @@ class Block extends Model
 
     public function buttonLinkUrl(): ?string
     {
-        $url = trim((string) $this->setting('url', ''));
-
-        return $url !== '' ? $url : null;
+        return self::safePublicUrl($this->setting('url', ''));
     }
 
     public function buttonLinkTarget(): string
@@ -709,9 +746,7 @@ class Block extends Model
 
     public function cardUrl(): ?string
     {
-        $url = trim((string) $this->setting('url', ''));
-
-        return $url !== '' ? $url : null;
+        return self::safePublicUrl($this->setting('url', ''));
     }
 
     public function cardTarget(): string
@@ -990,9 +1025,7 @@ class Block extends Model
 
     public function navbarBrandUrl(): ?string
     {
-        $url = trim((string) $this->setting('url', ''));
-
-        return $url !== '' ? $url : null;
+        return self::safePublicUrl($this->setting('url', ''));
     }
 
     public function navbarBrandTarget(): string
@@ -1030,9 +1063,8 @@ class Block extends Model
 
     public function sidebarLinkUrl(): ?string
     {
-        $url = trim((string) $this->setting('url', ''));
-
-        return $url !== '' ? $url : $this->stringValueOrNull($this->url);
+        return self::safePublicUrl($this->setting('url', ''))
+            ?? self::safePublicUrl($this->url);
     }
 
     public function sidebarLinkTarget(): string
