@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.31
+
+- Pin CMS-owned default WebBlocks UI CDN assets and the default icon manifest sync source to `v2.7.3` so public and admin layouts consume the released card media frame utilities instead of older `v2.7.x` assets.
+- Update the core `card` public renderer to use WebBlocks UI `wb-card-media` alignment and aspect modifiers inside `.wb-card-body`, while preserving media-driven visibility, no-image cards, legacy `image_position = none` fallback, nested child footer actions, and the older single-action fallback.
+
 ## 1.31.30
 
 - Refine the core `card` block image UX so selected media now controls image visibility, older blank or legacy `image_position = none` values fall back safely to `top`, and the public card image figure renders inside `.wb-card-body` instead of flush against the outer card edge.

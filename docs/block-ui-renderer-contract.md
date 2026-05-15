@@ -6,8 +6,8 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 
 Verified against the actual shipped assets used by CMS:
 
-- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.1/packages/webblocks/dist/webblocks-ui.css`
-- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.1/packages/webblocks/dist/webblocks-ui.js`
+- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.3/packages/webblocks/dist/webblocks-ui.css`
+- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.3/packages/webblocks/dist/webblocks-ui.js`
 
 Confirmed primitives and patterns:
 
@@ -119,7 +119,19 @@ Public pages now use explicit layout composition modes:
 - `#wb-overlay-root` is the single shared mount point for public overlays such as the gallery viewer, public search modal, and cookie preference modal.
 - Public layouts own that wrapper; blocks, partials, and trusted HTML may contribute overlay children but must not render competing overlay root containers.
 - Trusted imported HTML that uses shipped WebBlocks UI trigger hooks must preserve the trigger-to-target contract. If a trigger inside imported main content points at a modal, drawer, popover, or gallery viewer outside `<main>`, the extractor must hoist that referenced target into the shared `#wb-overlay-root` instead of dropping it.
-- When CMS pre-renders a shared dialog layer under `#wb-overlay-root`, that layer must stay unhidden so WebBlocks UI `v2.7.1` can portal trusted modal and gallery targets into it without leaving them inside a hidden ancestor.
+- When CMS pre-renders a shared dialog layer under `#wb-overlay-root`, that layer must stay unhidden so WebBlocks UI `v2.7.3` can portal trusted modal and gallery targets into it without leaving them inside a hidden ancestor.
+
+## Card
+
+- `card` keeps `article.wb-card` or promo `section.wb-card.wb-promo` as the renderer root with `data-wb-public-block-type="card"`.
+- When `media_id` exists, the image figure renders inside `.wb-card-body`.
+- The figure uses `wb-card-media` plus one alignment modifier from `image_align`: `wb-card-media--start`, `wb-card-media--center`, `wb-card-media--end`, or `wb-card-media--stretch`.
+- The figure uses one aspect modifier from `image_aspect`: `wb-card-media--aspect-auto`, `wb-card-media--aspect-square`, `wb-card-media--aspect-wide`, or `wb-card-media--aspect-portrait`.
+- Unknown or missing `image_align` falls back safely to `center`.
+- Unknown or missing `image_aspect` falls back safely to `auto`.
+- Blank, missing, null, or legacy `image_position = none` still falls back to `top` when media exists.
+- Selected media shows the image and clearing media removes it; no-image cards remain valid.
+- Alt text stays escaped, caption stays optional, child `Cluster` or `Button Link` footer actions stay supported, and the legacy single-action fallback remains supported.
 - `wb-sidebar` is reserved for a true docs/app navigation shell. Generic marketing or editorial sidebars should stay ordinary `aside` content composed from `wb-grid`, `wb-stack`, cards, callouts, and link lists.
 
 ### Slot wrappers

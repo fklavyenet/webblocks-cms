@@ -17,7 +17,7 @@
             'clearLabel' => 'Remove',
             'accept' => 'image',
         ])
-        <div class="wb-text-sm wb-text-muted">Selecting media enables the card image. Clear the selected media to remove the image.</div>
+            <div class="wb-text-sm wb-text-muted">Selecting media enables the card image. Clearing media removes the image.</div>
     </div>
 
     @php
@@ -44,7 +44,7 @@
                 <option value="end" @selected(old('image_align', $block->cardImageAlign()) === 'end')>End</option>
                 <option value="stretch" @selected(old('image_align', $block->cardImageAlign()) === 'stretch')>Stretch</option>
             </select>
-            <div class="wb-text-sm wb-text-muted">Alignment controls how the image is aligned within the card body.</div>
+            <div class="wb-text-sm wb-text-muted">Alignment controls the card media frame alignment.</div>
         </div>
     </div>
 
@@ -57,6 +57,7 @@
                 <option value="wide" @selected(old('image_aspect', $block->cardImageAspect()) === 'wide')>Wide</option>
                 <option value="portrait" @selected(old('image_aspect', $block->cardImageAspect()) === 'portrait')>Portrait</option>
             </select>
+            <div class="wb-text-sm wb-text-muted">Aspect controls the card media frame rhythm.</div>
         </div>
     </div>
 

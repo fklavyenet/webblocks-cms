@@ -2532,7 +2532,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSeeInOrder([
             '<article class="wb-card" data-wb-public-block-type="card">',
             '<div class="wb-card-body wb-stack wb-gap-2">',
-            '<figure class="wb-stack wb-gap-1 wb-text-center">',
+            '<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-wide">',
             'card-public.jpg',
             'alt="Card image alt"',
             '<figcaption>Card image caption</figcaption>',
@@ -2585,7 +2585,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<div class="wb-card-body wb-stack wb-gap-2">',
-            '<figure class="wb-stack wb-gap-1 wb-text-center">',
+            '<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-auto">',
             'card-legacy-none.jpg',
             '<strong>Legacy card</strong>',
         ], false);
@@ -2668,7 +2668,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSeeInOrder([
             '<strong>Bottom card</strong>',
             '<p class="wb-m-0">Image should render after text.</p>',
-            '<figure class="wb-stack wb-gap-1 wb-text-right">',
+            '<figure class="wb-card-media wb-card-media--end wb-card-media--aspect-auto">',
             'card-bottom.jpg',
         ], false);
     }
@@ -2718,10 +2718,113 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<strong>Middle card</strong>',
-            '<figure class="wb-stack wb-gap-1 wb-w-full">',
+            '<figure class="wb-card-media wb-card-media--stretch wb-card-media--aspect-auto">',
             'card-middle.jpg',
             '<p class="wb-m-0">Image should render between title and text.</p>',
         ], false);
+
+    }
+
+    #[Test]
+    public function card_image_uses_safe_default_media_classes_when_alignment_or_aspect_are_missing_or_unknown(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-default-media-frame.jpg',
+            'filename' => 'card-default-media-frame.jpg',
+            'original_name' => 'card-default-media-frame.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Default frame image',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'settings' => json_encode(['image_align' => 'bogus', 'image_aspect' => 'landscape'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Safe defaults card',
+            'content' => 'Safe defaults should still render.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-auto">', false);
+    }
+
+    #[Test]
+    public function card_image_alignment_and_aspect_values_map_to_matching_webblocks_ui_media_modifiers(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-modifiers.jpg',
+            'filename' => 'card-modifiers.jpg',
+            'original_name' => 'card-modifiers.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Modifier image',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        foreach ([
+            ['align' => 'start', 'aspect' => 'square', 'sort' => 0],
+            ['align' => 'center', 'aspect' => 'wide', 'sort' => 1],
+            ['align' => 'end', 'aspect' => 'portrait', 'sort' => 2],
+            ['align' => 'stretch', 'aspect' => 'auto', 'sort' => 3],
+        ] as $variant) {
+            $card = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => 'card',
+                'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $variant['sort'],
+                'media_id' => $image->id,
+                'settings' => json_encode(['image_align' => $variant['align'], 'image_aspect' => $variant['aspect']], JSON_UNESCAPED_SLASHES),
+                'status' => 'published',
+                'is_system' => false,
+            ]);
+
+            $card->textTranslations()->create([
+                'locale_id' => Page::defaultLocaleId(),
+                'title' => 'Card '.$variant['sort'],
+            ]);
+            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertStringContainsString('wb-card-media wb-card-media--start wb-card-media--aspect-square', $html);
+        $this->assertStringContainsString('wb-card-media wb-card-media--center wb-card-media--aspect-wide', $html);
+        $this->assertStringContainsString('wb-card-media wb-card-media--end wb-card-media--aspect-portrait', $html);
+        $this->assertStringContainsString('wb-card-media wb-card-media--stretch wb-card-media--aspect-auto', $html);
     }
 
     #[Test]

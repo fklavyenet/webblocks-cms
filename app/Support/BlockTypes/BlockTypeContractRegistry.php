@@ -247,6 +247,7 @@ class BlockTypeContractRegistry
                     'Translated card image alt text and caption live in block image translation rows.',
                     'Shared selected image stays on the canonical block media_id column.',
                     'Shared URL, target, variant, image placement, image alignment, and image aspect stay in shared settings.',
+                    'When media exists, the public figure stays inside `.wb-card-body` and consumes WebBlocks UI card media frame utilities.',
                     'Legacy single-action fallback still uses translated meta content.',
                 ],
                 'media_relationship_fields' => ['Primary card image is owned through the direct block media_id relation. Nested child footer actions remain block relationships rather than media rows.'],

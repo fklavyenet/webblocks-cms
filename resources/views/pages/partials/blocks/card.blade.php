@@ -12,6 +12,7 @@
         : trim((string) ($media?->alt_text ?: $media?->title ?: $imageCaption ?: $title ?: 'Card image'));
     $imagePosition = $block->cardImagePosition();
     $imageAlign = $block->cardImageAlign();
+    $imageAspect = $block->cardImageAspect();
     $showsImage = $imageSource !== null;
     $renderedDescription = app(\App\Support\Formatting\InlineRichTextRenderer::class)->render($description);
     $actionLabel = trim((string) ($block->meta ?? ''));
@@ -20,15 +21,11 @@
     $footerBlocks = $block->children;
     $hasFooterBlocks = $footerBlocks->isNotEmpty();
     $showsLegacyAction = ! $hasFooterBlocks && $url !== null && $actionLabel !== '';
-    $imageFigureClasses = ['wb-stack', 'wb-gap-1'];
-
-    if ($imageAlign === 'stretch') {
-        $imageFigureClasses[] = 'wb-w-full';
-    } elseif ($imageAlign === 'center') {
-        $imageFigureClasses[] = 'wb-text-center';
-    } elseif ($imageAlign === 'end') {
-        $imageFigureClasses[] = 'wb-text-right';
-    }
+    $imageFigureClasses = [
+        'wb-card-media',
+        'wb-card-media--'.$imageAlign,
+        'wb-card-media--aspect-'.$imageAspect,
+    ];
 
     $imageFigureClass = implode(' ', $imageFigureClasses);
 @endphp
