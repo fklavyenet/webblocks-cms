@@ -3755,9 +3755,11 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Add Block: Gallery');
         $response->assertSee('Gallery Items');
-        $response->assertSee('Choose from Media');
+        $response->assertSee('Add Gallery Items');
         $response->assertSee('Per-item copy is edited from the compact list below.');
+        $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
         $response->assertDontSee('Gallery Assets');
+        $response->assertDontSee('Add More Assets');
         $response->assertDontSee('Gallery Title');
         $response->assertDontSee('Description');
         $response->assertDontSee('name="title"', false);

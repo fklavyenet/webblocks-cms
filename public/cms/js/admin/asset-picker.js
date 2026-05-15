@@ -274,21 +274,51 @@
         }
     }
 
-    function closePickerPanel(root) {
-        var panel = root ? root.querySelector('[data-wb-picker-panel]') : null;
+    function pickerPanelMode(root) {
+        return root ? (root.getAttribute('data-wb-picker-panel-mode') || 'inline') : 'inline';
+    }
 
-        if (panel) {
-            panel.hidden = true;
+    function setPickerPanelOpen(root, isOpen) {
+        if (!root) {
+            return;
         }
+
+        var panel = root.querySelector('[data-wb-picker-panel]');
+        var openButton = root.querySelector('[data-wb-picker-open]');
+
+        if (!panel) {
+            return;
+        }
+
+        panel.hidden = !isOpen;
+
+        if (pickerPanelMode(root) === 'overlay') {
+            panel.classList.toggle('is-open', isOpen);
+        }
+
+        if (openButton) {
+            openButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        if (!isOpen) {
+            return;
+        }
+
+        window.setTimeout(function () {
+            var focusTarget = panel.querySelector('[data-wb-picker-search], button, input:not([type="hidden"]), select, textarea, a[href]');
+
+            if (focusTarget) {
+                focusTarget.focus();
+            }
+        }, 0);
+    }
+
+    function closePickerPanel(root) {
+        setPickerPanelOpen(root, false);
     }
 
     function openPickerPanel(root) {
-        var panel = root ? root.querySelector('[data-wb-picker-panel]') : null;
-
-        if (panel) {
-            panel.hidden = false;
-        }
-
+        setPickerPanelOpen(root, true);
         filterPickerAssets(root);
     }
 
@@ -326,6 +356,7 @@
     function initializePicker(root) {
         updatePickerSummary(root);
         filterPickerAssets(root);
+        closePickerPanel(root);
 
         if (root.getAttribute('data-wb-picker-mode') === 'multiple') {
             var selectedIds = Array.prototype.slice.call(root.querySelectorAll('[data-wb-picker-selected-input]')).map(function (input) {
@@ -398,6 +429,13 @@
 
         if (applyButton) {
             closePickerPanel(applyButton.closest('[data-wb-asset-picker-panel]'));
+            return;
+        }
+
+        var overlayPanel = event.target.closest('[data-wb-picker-panel]');
+
+        if (overlayPanel && event.target === overlayPanel && overlayPanel.getAttribute('data-wb-picker-panel-mode') === 'overlay') {
+            closePickerPanel(overlayPanel.closest('[data-wb-asset-picker-panel]'));
             return;
         }
 
@@ -491,5 +529,21 @@
                 ? uploadInput.files[0].name + ' ready to upload.'
                 : 'Select a file to upload it to the shared media library.';
         }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        var openPanels = Array.prototype.slice.call(document.querySelectorAll('[data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]')).filter(function (panel) {
+            return !panel.hidden;
+        });
+
+        if (openPanels.length === 0) {
+            return;
+        }
+
+        closePickerPanel(openPanels[openPanels.length - 1].closest('[data-wb-asset-picker-panel]'));
     });
 }());

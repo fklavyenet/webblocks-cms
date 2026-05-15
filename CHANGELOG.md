@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.34
+
+- Move the Gallery block media picker out of the inline `Gallery Items` flow into an overlay-style picker inside the still-open Gallery editor modal, keeping the compact list stable while preserving existing add, append, remove-all, and ordering behavior.
+- Rename the Gallery picker action from `Add More Assets` to `Add Gallery Items` while keeping the existing media library filters, folder and kind controls, upload flow, and selection handling intact.
+
 ## 1.31.33
 
 - Remove the redundant `Gallery Assets` selected-assets card and thumbnail grid from the Gallery block editor so the compact `Gallery Items` list remains the single canonical admin UI for adding, removing, reordering, and editing gallery items.

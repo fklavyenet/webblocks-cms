@@ -84,11 +84,13 @@
                 'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
                 'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
                 'selectedAssets' => $galleryItemRows->pluck('asset'),
-                'buttonLabel' => 'Choose from Media',
-                'replaceLabel' => 'Add More Assets',
+                'buttonLabel' => 'Add Gallery Items',
+                'replaceLabel' => 'Add Gallery Items',
                 'clearLabel' => 'Remove All',
                 'accept' => 'image',
                 'compactControls' => true,
+                'panelMode' => 'overlay',
+                'panelTitle' => 'Add Gallery Items',
             ])
         </div>
 
