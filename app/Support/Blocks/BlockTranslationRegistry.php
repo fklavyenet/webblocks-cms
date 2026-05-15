@@ -60,7 +60,19 @@ class BlockTranslationRegistry
 
     public function isTranslatable(Block|string|null $block): bool
     {
-        return $this->familyFor($block) !== null;
+        return $this->familyFor($block) !== null || $this->supportsImageTranslations($block);
+    }
+
+    public function supportsTextTranslations(Block|string|null $block): bool
+    {
+        return $this->familyFor($block) === 'text';
+    }
+
+    public function supportsImageTranslations(Block|string|null $block): bool
+    {
+        $slug = $block instanceof Block ? $block->typeSlug() : $block;
+
+        return in_array($slug, ['image', 'card'], true);
     }
 
     public function translatedFieldMap(string $family): array

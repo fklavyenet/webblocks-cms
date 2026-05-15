@@ -3,6 +3,15 @@
     $title = trim((string) ($block->title ?? ''));
     $subtitle = trim((string) ($block->subtitle ?? ''));
     $description = trim((string) ($block->content ?? ''));
+    $imageCaption = trim((string) ($block->image_caption ?? ''));
+    $media = $block->media;
+    $imageSource = $media?->url();
+    $imageAlt = trim((string) ($block->image_alt ?? ''));
+    $resolvedImageAlt = $imageAlt !== ''
+        ? $imageAlt
+        : trim((string) ($media?->alt_text ?: $media?->title ?: $imageCaption ?: $title ?: 'Card image'));
+    $imagePosition = $block->cardImagePosition();
+    $showTopImage = $imageSource && $imagePosition === 'top';
     $renderedDescription = app(\App\Support\Formatting\InlineRichTextRenderer::class)->render($description);
     $actionLabel = trim((string) ($block->meta ?? ''));
     $url = $block->cardUrl();
@@ -14,6 +23,20 @@
 
 @if ($block->isPromoCard())
     <section class="wb-card wb-promo" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+        @if ($showTopImage)
+            <figure>
+                <img
+                    src="{{ $imageSource }}"
+                    alt="{{ $resolvedImageAlt }}"
+                    @if ($media?->width) width="{{ $media->width }}" @endif
+                    @if ($media?->height) height="{{ $media->height }}" @endif
+                >
+                @if ($imageCaption !== '')
+                    <figcaption>{{ $imageCaption }}</figcaption>
+                @endif
+            </figure>
+        @endif
+
         <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
             @if ($eyebrow !== '')
                 <p class="wb-eyebrow">{{ $eyebrow }}</p>
@@ -46,6 +69,20 @@
     </section>
 @else
     <article class="wb-card" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
+        @if ($showTopImage)
+            <figure>
+                <img
+                    src="{{ $imageSource }}"
+                    alt="{{ $resolvedImageAlt }}"
+                    @if ($media?->width) width="{{ $media->width }}" @endif
+                    @if ($media?->height) height="{{ $media->height }}" @endif
+                >
+                @if ($imageCaption !== '')
+                    <figcaption>{{ $imageCaption }}</figcaption>
+                @endif
+            </figure>
+        @endif
+
         @if ($subtitle !== '')
             <div class="wb-card-header">{{ $subtitle }}</div>
         @endif

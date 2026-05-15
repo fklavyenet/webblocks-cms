@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.31.29
+
+- Enhance the core `card` block with optional shared media selection so editors can build editable image cards inside `Grid` and other existing layout trees without introducing a separate install-specific card variant.
+- Make Card image alt and caption copy locale-aware while keeping image presentation settings shared, and preserve backward compatibility for existing no-image cards, nested child action composition, and the legacy single-action fallback.
+- Add focused regression coverage for Card media persistence, locale-only edit preservation, public rendering, and contract reporting so the shipped Card contract stays aligned with the actual admin and renderer behavior.
+
 ## 1.31.28
 
 - Continue the Phase 3 Legacy / Transitional cleanup by keeping `tabs`, `slider`, `menu`, and `faq-list` documented honestly as legacy draft-era compatibility slugs instead of falsely promoting them into the published core contract set, while `showcase-list` and `contact-info` remain public-only compatibility renderers without shipped core contract entries.

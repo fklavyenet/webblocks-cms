@@ -2481,6 +2481,66 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function card_with_media_renders_image_before_the_body_when_image_position_is_top(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/card-public.jpg',
+            'filename' => 'card-public.jpg',
+            'original_name' => 'card-public.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Card public image',
+            'alt_text' => 'Fallback alt text',
+            'width' => 1200,
+            'height' => 800,
+        ]);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'settings' => json_encode(['image_position' => 'top', 'image_aspect' => 'wide'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $card->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Image card',
+            'content' => 'Card with image.',
+        ]);
+        $card->imageTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'caption' => 'Card image caption',
+            'alt_text' => 'Card image alt',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations', 'imageTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            '<article class="wb-card" data-wb-public-block-type="card">',
+            '<figure>',
+            'card-public.jpg',
+            'alt="Card image alt"',
+            '<figcaption>Card image caption</figcaption>',
+            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<strong>Image card</strong>',
+        ], false);
+    }
+
+    #[Test]
     public function cluster_renders_button_link_children_without_admin_name_output(): void
     {
         $page = $this->pageWithMainSlot();

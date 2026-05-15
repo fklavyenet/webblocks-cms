@@ -46,6 +46,8 @@ class BlockTranslationWriter
         $family = $this->registry->familyFor($block);
 
         if (! $family) {
+            $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
+
             return;
         }
 
@@ -64,6 +66,8 @@ class BlockTranslationWriter
         if (! $isDefaultLocaleEdit) {
             $this->writeTranslation($block, $family, $locale->id, $this->translationPayload($family, $data, $translationSourceBlock, $locale->id));
         }
+
+        $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
     }
 
     public function normalizeCanonicalStorage(Block $block): void
@@ -111,6 +115,28 @@ class BlockTranslationWriter
         $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $translationSourceBlock, $defaultLocaleId));
     }
 
+    private function syncAdditionalTranslations(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
+    {
+        if ($block->typeSlug() !== 'card' || ! $this->registry->supportsImageTranslations($block)) {
+            return;
+        }
+
+        $locale = $this->resolveLocale($localeCode);
+        $defaultLocale = $this->localeResolver->default();
+        $translationSourceBlock ??= $block;
+        $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
+
+        if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
+            $this->writeTranslation($block, 'image', $defaultLocale->id, $this->translationPayload('image', $data, $translationSourceBlock, $defaultLocale->id));
+        } else {
+            $this->ensureDefaultTranslation($block, 'image', $defaultLocale->id, $translationSourceBlock);
+        }
+
+        if (! $isDefaultLocaleEdit) {
+            $this->writeTranslation($block, 'image', $locale->id, $this->translationPayload('image', $data, $translationSourceBlock, $locale->id));
+        }
+    }
+
     private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void
     {
         match ($family) {
@@ -137,8 +163,8 @@ class BlockTranslationWriter
                     ?? 'Open link',
             ],
             'image' => [
-                'caption' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'imageTranslations', $localeId, 'caption', $block->getRawOriginal('title')),
-                'alt_text' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $this->existingTranslationValue($block, 'imageTranslations', $localeId, 'alt_text', $block->getRawOriginal('subtitle')),
+                'caption' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'caption'),
+                'alt_text' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'alt_text'),
             ],
             'contact_form' => [
                 'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'title', $block->getRawOriginal('title')),
@@ -173,6 +199,22 @@ class BlockTranslationWriter
         $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
 
         return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
+    }
+
+    private function resolvedImageTranslationValue(array $data, Block $block, int $localeId, string $field): ?string
+    {
+        $sourceField = match ($block->typeSlug()) {
+            'card' => $field === 'caption' ? 'image_caption' : 'image_alt',
+            default => $field === 'caption' ? 'title' : 'subtitle',
+        };
+
+        $fallback = match ($block->typeSlug()) {
+            'card' => null,
+            default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
+        };
+
+        return $this->submittedString($data, $sourceField)
+            ?? $this->existingTranslationValue($block, 'imageTranslations', $localeId, $field, $fallback);
     }
 
     private function existingTranslationValue(Block $block, string $relation, int $localeId, string $field, mixed $fallback = null): mixed

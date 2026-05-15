@@ -201,7 +201,7 @@ class CoreBlockTypeCatalogSyncer
                 'name' => 'Card',
                 'slug' => 'card',
                 'category' => 'content',
-                'description' => 'Translated card content with optional shared link settings for grid-based feature sections.',
+                'description' => 'Translated card content with optional shared image media, image presentation settings, and shared link settings for grid-based feature sections.',
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,

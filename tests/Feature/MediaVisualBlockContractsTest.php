@@ -89,10 +89,64 @@ class MediaVisualBlockContractsTest extends TestCase
     #[Test]
     public function image_gallery_download_file_video_and_audio_forms_are_shipped(): void
     {
-        foreach (['image', 'gallery', 'download', 'file', 'video', 'audio'] as $slug) {
+        foreach (['card', 'image', 'gallery', 'download', 'file', 'video', 'audio'] as $slug) {
             $this->assertFileExists(resource_path('views/admin/blocks/types/'.$slug.'.blade.php'));
             $this->assertFileExists(resource_path('views/pages/partials/blocks/'.$slug.'.blade.php'));
         }
+    }
+
+    #[Test]
+    public function card_block_round_trips_shared_media_and_translated_image_fields(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $image = $this->media('image', 'service-card.jpg', 'image/jpeg', 'media/images/service-card.jpg');
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('card'),
+            'sort_order' => 0,
+            'title' => 'Service card',
+            'subtitle' => 'Service summary',
+            'content' => 'Shared image cards should stay source-backed.',
+            'action_label' => 'Learn more',
+            'card_url' => '/services/design',
+            'card_target' => '_blank',
+            'card_variant' => 'promo',
+            'image_position' => 'top',
+            'image_aspect' => 'wide',
+            'image_alt' => 'Design service illustration',
+            'image_caption' => 'Optional card image caption',
+            'asset_id' => $image->id,
+            'status' => 'published',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors();
+
+        $block = Block::query()->where('type', 'card')->firstOrFail();
+        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+
+        $this->assertSame($image->id, $block->media_id);
+        $this->assertSame('/services/design', $settings['url']);
+        $this->assertSame('_blank', $settings['target']);
+        $this->assertSame('promo', $settings['variant']);
+        $this->assertSame('top', $settings['image_position']);
+        $this->assertSame('wide', $settings['image_aspect']);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'title' => 'Service card',
+            'subtitle' => 'Service summary',
+            'content' => 'Shared image cards should stay source-backed.',
+            'meta' => 'Learn more',
+        ]);
+        $this->assertDatabaseHas('block_image_translations', [
+            'block_id' => $block->id,
+            'caption' => 'Optional card image caption',
+            'alt_text' => 'Design service illustration',
+        ]);
     }
 
     #[Test]

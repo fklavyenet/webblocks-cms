@@ -121,6 +121,10 @@ class BlockRequest extends FormRequest
             'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
             'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'card_variant' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['default', 'promo'])],
+            'image_alt' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'image_caption' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'image_position' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['none', 'top'])],
+            'image_aspect' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
             'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -322,6 +326,14 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('card_url', 'Card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+
+                if ($this->filled('media_id') || $this->filled('asset_id')) {
+                    $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+                    if (! $asset?->isImage()) {
+                        $validator->errors()->add('media_id', 'Card media must be an image from Media.');
+                    }
                 }
             }
 
@@ -609,6 +621,10 @@ class BlockRequest extends FormRequest
         $data['media_id'] = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['media_id']) ? (int) $data['media_id'] : (! empty($data['asset_id']) ? (int) $data['asset_id'] : null));
 
         if ($data['media_id'] === null && $existingBlock && ! $this->has('media_id') && ! $this->has('asset_id')) {
+            $data['media_id'] = $existingBlock->media_id;
+        }
+
+        if ($data['locale'] !== null && $existingBlock && ($existingBlock->typeSlug() === 'card') && $data['media_id'] === null) {
             $data['media_id'] = $existingBlock->media_id;
         }
 
@@ -935,6 +951,10 @@ class BlockRequest extends FormRequest
                     $settings['variant'] = in_array(trim((string) ($data['card_variant'] ?? 'default')), ['default', 'promo'], true)
                         ? trim((string) ($data['card_variant'] ?? 'default'))
                         : 'default';
+                    $settings['image_position'] = ($data['image_position'] ?? 'none') === 'top' ? 'top' : 'none';
+                    $settings['image_aspect'] = in_array(trim((string) ($data['image_aspect'] ?? 'auto')), ['auto', 'square', 'wide', 'portrait'], true)
+                        ? trim((string) ($data['image_aspect'] ?? 'auto'))
+                        : 'auto';
                 }
 
                 $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
@@ -943,7 +963,10 @@ class BlockRequest extends FormRequest
                 $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
                 $data['meta'] = trim((string) ($data['action_label'] ?? '')) ?: null;
                 $data['url'] = null;
-                $data['asset_id'] = null;
+                $data['media_id'] = $isTranslatedCardEdit
+                    ? ($this->route('block')?->media_id)
+                    : $data['media_id'];
+                unset($data['asset_id']);
                 $data['variant'] = null;
                 $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
                 $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
@@ -1555,7 +1578,7 @@ class BlockRequest extends FormRequest
         unset($data['language']);
         unset($data['navigation_menu_key']);
         unset($data['text'], $data['level'], $data['anchor']);
-        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['alert_variant']);
+        unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_aspect'], $data['alert_variant']);
         unset($data['header_actions_show_mode_toggle'], $data['header_actions_show_accent_toggle']);
         unset($data['sticky_navbar_mode'], $data['navbar_brand_aria_label'], $data['navbar_navigation_menu_key']);
         unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);

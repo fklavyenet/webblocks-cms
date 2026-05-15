@@ -33,7 +33,7 @@ class BlockTranslationResolver
             $resolved->setRelation('children', $this->resolveCollection($resolved->children, $requestedLocale, $site));
         }
 
-        if (! $family) {
+        if (! $family && ! $this->registry->supportsImageTranslations($block)) {
             $this->applySiteVariables($resolved, $site);
             $resolved->setAttribute('translation_state', 'shared');
             $resolved->setAttribute('resolved_locale_code', $requestedLocale->code);
@@ -41,14 +41,31 @@ class BlockTranslationResolver
             return $resolved;
         }
 
-        [$translation, $state, $resolvedLocale] = match ($family) {
-            'text' => $this->resolveLoadedTranslation($resolved, 'textTranslations', $requestedLocale, $defaultLocale),
-            'button' => $this->resolveLoadedTranslation($resolved, 'buttonTranslations', $requestedLocale, $defaultLocale),
-            'image' => $this->resolveLoadedTranslation($resolved, 'imageTranslations', $requestedLocale, $defaultLocale),
-            'contact_form' => $this->resolveLoadedTranslation($resolved, 'contactFormTranslations', $requestedLocale, $defaultLocale),
-        };
+        $translation = null;
+        $state = 'shared';
+        $resolvedLocale = $requestedLocale;
 
-        $this->applyResolvedFields($resolved, $family, $translation);
+        if ($family) {
+            [$translation, $state, $resolvedLocale] = match ($family) {
+                'text' => $this->resolveLoadedTranslation($resolved, 'textTranslations', $requestedLocale, $defaultLocale),
+                'button' => $this->resolveLoadedTranslation($resolved, 'buttonTranslations', $requestedLocale, $defaultLocale),
+                'image' => $this->resolveLoadedTranslation($resolved, 'imageTranslations', $requestedLocale, $defaultLocale),
+                'contact_form' => $this->resolveLoadedTranslation($resolved, 'contactFormTranslations', $requestedLocale, $defaultLocale),
+            };
+
+            $this->applyResolvedFields($resolved, $family, $translation);
+        }
+
+        if ($this->registry->supportsImageTranslations($resolved)) {
+            [$imageTranslation, $imageState, $imageResolvedLocale] = $this->resolveLoadedTranslation($resolved, 'imageTranslations', $requestedLocale, $defaultLocale);
+            $this->applyResolvedImageFields($resolved, $imageTranslation);
+
+            if (! $family) {
+                $state = $imageState;
+                $resolvedLocale = $imageResolvedLocale;
+            }
+        }
+
         $this->applySiteVariables($resolved, $site);
 
         $resolved->setAttribute('translation_state', $state);
@@ -63,7 +80,7 @@ class BlockTranslationResolver
         $defaultLocale = $this->localeResolver->default();
         $family = $this->registry->familyFor($block);
 
-        if (! $family) {
+        if (! $family && ! $this->registry->supportsImageTranslations($block)) {
             return [
                 'state' => 'shared',
                 'label' => 'Shared',
@@ -71,12 +88,16 @@ class BlockTranslationResolver
             ];
         }
 
-        [, $state, $resolvedLocale] = match ($family) {
-            'text' => $this->resolveLoadedTranslation($block, 'textTranslations', $requestedLocale, $defaultLocale),
-            'button' => $this->resolveLoadedTranslation($block, 'buttonTranslations', $requestedLocale, $defaultLocale),
-            'image' => $this->resolveLoadedTranslation($block, 'imageTranslations', $requestedLocale, $defaultLocale),
-            'contact_form' => $this->resolveLoadedTranslation($block, 'contactFormTranslations', $requestedLocale, $defaultLocale),
-        };
+        if ($family) {
+            [, $state, $resolvedLocale] = match ($family) {
+                'text' => $this->resolveLoadedTranslation($block, 'textTranslations', $requestedLocale, $defaultLocale),
+                'button' => $this->resolveLoadedTranslation($block, 'buttonTranslations', $requestedLocale, $defaultLocale),
+                'image' => $this->resolveLoadedTranslation($block, 'imageTranslations', $requestedLocale, $defaultLocale),
+                'contact_form' => $this->resolveLoadedTranslation($block, 'contactFormTranslations', $requestedLocale, $defaultLocale),
+            };
+        } else {
+            [, $state, $resolvedLocale] = $this->resolveLoadedTranslation($block, 'imageTranslations', $requestedLocale, $defaultLocale);
+        }
 
         return [
             'state' => $state,
@@ -136,6 +157,24 @@ class BlockTranslationResolver
         };
     }
 
+    private function applyResolvedImageFields(Block $block, mixed $translation): void
+    {
+        if (! $translation) {
+            return;
+        }
+
+        if ($block->typeSlug() === 'card') {
+            $this->applyAttributes($block, [
+                'image_caption' => $translation->caption,
+                'image_alt' => $translation->alt_text,
+            ]);
+
+            return;
+        }
+
+        $this->applyResolvedFields($block, 'image', $translation);
+    }
+
     private function applyContactFormFields(Block $block, mixed $translation): void
     {
         $settings = is_array($block->settings)
@@ -168,7 +207,7 @@ class BlockTranslationResolver
 
         $slug = $block->typeSlug();
 
-        foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta', 'submit_label', 'success_message'] as $field) {
+        foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta', 'submit_label', 'success_message', 'image_caption', 'image_alt'] as $field) {
             $value = $block->getAttribute($field);
 
             if (! is_string($value) || $value === '') {

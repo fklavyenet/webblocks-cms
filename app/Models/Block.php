@@ -762,6 +762,21 @@ class Block extends Model
         };
     }
 
+    public function cardImagePosition(): string
+    {
+        return $this->setting('image_position') === 'top' ? 'top' : 'none';
+    }
+
+    public function cardImageAspect(): string
+    {
+        return match ($this->setting('image_aspect')) {
+            'square' => 'square',
+            'wide' => 'wide',
+            'portrait' => 'portrait',
+            default => 'auto',
+        };
+    }
+
     public function isPromoCard(): bool
     {
         return $this->cardVariant() === 'promo';
