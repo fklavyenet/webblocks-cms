@@ -160,14 +160,15 @@
     @if ($pickerPanelMode === 'overlay')
         @push('overlays')
             <div
-                class="wb-overlay-layer wb-overlay-layer--dialog wb-gallery-picker-overlay"
+                class="wb-overlay-layer wb-overlay-layer--dialog wb-gallery-picker-overlay wb-gallery-picker-overlay--stacked"
                 data-wb-picker-panel
                 data-wb-picker-panel-mode="{{ $pickerPanelMode }}"
                 data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}"
+                data-wb-picker-overlay-stack="nested-gallery"
                 hidden
             >
-                <div class="wb-overlay-backdrop wb-gallery-picker-overlay-backdrop" data-wb-picker-overlay-backdrop></div>
-                <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}">
+                <div class="wb-overlay-backdrop wb-gallery-picker-overlay-backdrop" data-wb-picker-overlay-backdrop data-wb-picker-overlay-layer="backdrop"></div>
+                <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}" data-wb-picker-overlay-layer="panel">
                     <div class="wb-modal-dialog wb-gallery-picker-dialog">
                         <div class="wb-modal-header">
                             <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>

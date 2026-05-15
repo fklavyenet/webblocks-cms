@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.39
+
+- Fix the stacked admin Gallery `Add Gallery Items` picker so the detached overlay now uses an explicit CMS-owned z-index contract for its shell, backdrop, and panel, keeping the picker above the still-open parent Gallery editor modal after the `#wb-overlay-root` refactor.
+- Restore pointer-safe nested picker interaction so media cards, `Select`, `Add Selected`, and close actions stay clickable while the parent Gallery editor remains open but visually de-emphasized underneath.
+
 ## 1.31.38
 
 - Fix the admin Gallery `Add Gallery Items` picker so its overlay now mounts under the shared admin `#wb-overlay-root` instead of inside the parent Gallery editor modal, preventing clipping by modal body overflow or max-height while keeping the editor open underneath.

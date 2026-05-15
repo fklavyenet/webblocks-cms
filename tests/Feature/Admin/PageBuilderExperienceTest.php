@@ -3764,18 +3764,25 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Add, remove, and reorder gallery images. Per-item copy stays in each item editor.');
         $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
         $response->assertSee('wb-gallery-picker-overlay', false);
+        $response->assertSee('wb-gallery-picker-overlay--stacked', false);
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
+        $response->assertSee('data-wb-picker-overlay-stack="nested-gallery"', false);
+        $response->assertSee('data-wb-picker-overlay-layer="backdrop"', false);
+        $response->assertSee('data-wb-picker-overlay-layer="panel"', false);
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
-        $editorModalPosition = strpos($content, 'id="slot-block-editor-modal"');
-        $pickerOverlayPosition = strrpos($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"');
         $this->assertNotFalse($overlayRootPosition);
-        $this->assertNotFalse($editorModalPosition);
-        $this->assertNotFalse($pickerOverlayPosition);
-        $this->assertTrue($overlayRootPosition < $editorModalPosition);
-        $this->assertTrue($editorModalPosition < $pickerOverlayPosition);
-        $this->assertTrue($overlayRootPosition < $pickerOverlayPosition);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*wb-gallery-picker-overlay wb-gallery-picker-overlay--stacked.*data-wb-picker-overlay-stack="nested-gallery"/s', $content);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
+        $adminCss = file_get_contents(public_path('cms/css/admin.css'));
+        $this->assertNotFalse($adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked', $adminCss);
+        $this->assertStringContainsString('z-index: 2200;', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-overlay-backdrop', $adminCss);
+        $this->assertStringContainsString('z-index: 2201;', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-modal', $adminCss);
+        $this->assertStringContainsString('z-index: 2202;', $adminCss);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
         $response->assertDontSee('Gallery is a media collection block.');
@@ -3853,11 +3860,9 @@ class PageBuilderExperienceTest extends TestCase
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', $content);
-        $editorModalPosition = strpos($content, 'id="slot-block-editor-modal"');
-        $pickerOverlayPosition = strrpos($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"');
-        $this->assertNotFalse($editorModalPosition);
-        $this->assertNotFalse($pickerOverlayPosition);
-        $this->assertTrue($editorModalPosition < $pickerOverlayPosition);
+        $this->assertStringContainsString('data-wb-picker-overlay-stack="nested-gallery"', $content);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*data-wb-picker-overlay-stack="nested-gallery"/s', $content);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
     }
 
     #[Test]
