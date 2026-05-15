@@ -75,7 +75,7 @@
         ->values();
 @endphp
 
-<div class="wb-stack wb-gap-3">
+<div class="wb-stack wb-gap-3" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
     @if ($block->title)
         <h3>{{ $block->title }}</h3>
     @endif
@@ -130,11 +130,3 @@
         @endphp
     @endif
 </div>
-
-@if ($block->children->isNotEmpty())
-    <div class="wb-stack wb-gap-4">
-        @foreach ($block->children as $child)
-            @include('pages.partials.block', ['block' => $child])
-        @endforeach
-    </div>
-@endif

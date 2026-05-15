@@ -47,6 +47,12 @@ class BlockRequest extends FormRequest
         $isContentHeader = $selectedBlockType?->slug === 'content_header';
         $isButtonLink = $selectedBlockType?->slug === 'button_link';
         $isAlert = $selectedBlockType?->slug === 'alert';
+        $isImage = $selectedBlockType?->slug === 'image';
+        $isGallery = $selectedBlockType?->slug === 'gallery';
+        $isDownload = $selectedBlockType?->slug === 'download';
+        $isFile = $selectedBlockType?->slug === 'file';
+        $isVideo = $selectedBlockType?->slug === 'video';
+        $isAudio = $selectedBlockType?->slug === 'audio';
         $isBreadcrumb = $selectedBlockType?->slug === 'breadcrumb';
         $isHeaderActions = $selectedBlockType?->slug === 'header-actions';
         $isStickyNavbar = $selectedBlockType?->slug === 'sticky-navbar';
@@ -85,7 +91,7 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
@@ -164,7 +170,7 @@ class BlockRequest extends FormRequest
             'link_list_items.*.is_system' => ['nullable', 'boolean'],
             'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'link_list_items.*._delete' => ['nullable', 'boolean'],
-            'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', $isButtonLink ? Rule::in(['primary', 'secondary']) : 'string', 'max:255'],
+            'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', ($isButtonLink || $isDownload) ? Rule::in(['primary', 'secondary', 'ghost']) : 'string', 'max:255'],
             'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'settings' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
             'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
@@ -316,6 +322,64 @@ class BlockRequest extends FormRequest
 
                 if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
                     $validator->errors()->add('card_url', 'Card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'image') {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
+                    $validator->errors()->add('url', 'Image link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+                }
+
+                if ($this->filled('media_id') || $this->filled('asset_id')) {
+                    $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+                    if (! $asset?->isImage()) {
+                        $validator->errors()->add('media_id', 'Image block media must be an image from Media.');
+                    }
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'gallery') {
+                $galleryMediaIds = collect($this->input('gallery_media_ids', $this->input('gallery_asset_ids', [])))
+                    ->map(fn ($id) => (int) $id)
+                    ->filter(fn ($id) => $id > 0)
+                    ->values();
+
+                if ($galleryMediaIds->isNotEmpty()) {
+                    $invalidGalleryMediaExists = Media::query()
+                        ->whereIn('id', $galleryMediaIds)
+                        ->where('kind', '!=', Media::KIND_IMAGE)
+                        ->exists();
+
+                    if ($invalidGalleryMediaExists) {
+                        $validator->errors()->add('gallery_media_ids', 'Gallery items must be images from Media.');
+                    }
+                }
+            }
+
+            if (in_array($selectedBlockType?->slug, ['download', 'file', 'video', 'audio'], true)) {
+                $url = trim((string) $this->input('url', ''));
+
+                if ($url !== '' && ! preg_match('/^https?:\/\//i', $url)) {
+                    $validator->errors()->add('url', 'External media URL must be a full HTTP or HTTPS URL.');
+                }
+            }
+
+            if (in_array($selectedBlockType?->slug, ['download', 'file'], true) && ($this->filled('media_id') || $this->filled('asset_id'))) {
+                $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+                if (! $asset || ! in_array($asset->kind, [Media::KIND_DOCUMENT, Media::KIND_OTHER], true)) {
+                    $validator->errors()->add('media_id', 'File and download media must be a document or file from Media.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'video' && ($this->filled('media_id') || $this->filled('asset_id'))) {
+                $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
+
+                if (! $asset?->isVideo()) {
+                    $validator->errors()->add('media_id', 'Video block media must be a video from Media.');
                 }
             }
 
@@ -875,6 +939,58 @@ class BlockRequest extends FormRequest
                 if ($data['settings'] === '[]' || $data['settings'] === '{}') {
                     $data['settings'] = null;
                 }
+            }
+
+            if ($blockType?->slug === 'image') {
+                $isTranslatedImageEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['url'] = $isTranslatedImageEdit
+                    ? ($this->route('block')?->getRawOriginal('url'))
+                    : (trim((string) ($data['url'] ?? '')) ?: null);
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if ($blockType?->slug === 'gallery') {
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if ($blockType?->slug === 'download') {
+                $isTranslatedDownloadEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = null;
+                $data['url'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+                $data['variant'] = $isTranslatedDownloadEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (in_array(trim((string) ($data['variant'] ?? 'secondary')), ['primary', 'secondary', 'ghost'], true) ? trim((string) ($data['variant'] ?? 'secondary')) : 'secondary');
+            }
+
+            if (in_array($blockType?->slug, ['file', 'video', 'audio'], true)) {
+                $isTranslatedMediaCardEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = $isTranslatedMediaCardEdit
+                    ? ($this->route('block')?->getRawOriginal('url'))
+                    : (trim((string) ($data['url'] ?? '')) ?: null);
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
             }
 
             if ($blockType?->slug === 'breadcrumb') {

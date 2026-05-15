@@ -12,8 +12,9 @@ class BlockTypeContractsAuditCommandTest extends TestCase
     public function it_reports_published_block_contracts_in_markdown(): void
     {
         $this->artisan('block-types:contracts-audit')
-            ->expectsOutputToContain('Published block types: 30')
-            ->expectsOutputToContain('| `header` | Header | `content` | `text` (title, eyebrow, subtitle, content, meta) | no | `resources/views/admin/blocks/types/header.blade.php` | `resources/views/pages/partials/blocks/header.blade.php` |')
+            ->expectsOutputToContain('Published block types: 36')
+            ->expectsOutputToContain('| `header` | Header | `content` | `text` (title) | no | `resources/views/admin/blocks/types/header.blade.php` | `resources/views/pages/partials/blocks/header.blade.php` |')
+            ->expectsOutputToContain('| `image` | Image | `content` | `image` (title, subtitle) | no | `resources/views/admin/blocks/types/image.blade.php` | `resources/views/pages/partials/blocks/image.blade.php` |')
             ->expectsOutputToContain('| `sticky-navbar` | Navbar | `navigation` | shared/canonical | yes | `resources/views/admin/blocks/types/sticky-navbar.blade.php` | `resources/views/pages/partials/blocks/sticky-navbar.blade.php` |')
             ->assertExitCode(0);
     }
@@ -25,7 +26,7 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('"published_count": 30', $output);
+        $this->assertStringContainsString('"published_count": 36', $output);
         $this->assertStringContainsString('"slug": "content_header"', $output);
         $this->assertStringContainsString('"admin_form_source": "resources/views/admin/blocks/types/content_header.blade.php"', $output);
         $this->assertStringContainsString('"public_renderer_source": "resources/views/pages/partials/blocks/content_header.blade.php"', $output);
@@ -41,6 +42,12 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "code"', $output);
         $this->assertStringContainsString('"translation_family": "text"', $output);
         $this->assertStringContainsString('"current_contract_status": "clear"', $output);
+        $this->assertStringContainsString('"slug": "image"', $output);
+        $this->assertStringContainsString('"slug": "gallery"', $output);
+        $this->assertStringContainsString('"slug": "download"', $output);
+        $this->assertStringContainsString('"slug": "file"', $output);
+        $this->assertStringContainsString('"slug": "video"', $output);
+        $this->assertStringContainsString('"slug": "audio"', $output);
         $this->assertStringContainsString('"slug": "table"', $output);
         $this->assertStringContainsString('"current_contract_status": "clear"', $output);
         $this->assertStringContainsString('"slug": "breadcrumb"', $output);

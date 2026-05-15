@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 1.31.23
+
+- Continue Phase 3 block-type contract cleanup by publishing the media or visual core block contracts for `image`, `gallery`, `download`, `file`, `video`, and `audio`, aligning the shared contract registry, audit output, admin modal coverage, request normalization, save behavior, media relationship ownership, public renderer root ownership, docs, and focused regression tests around one shipped source-backed contract.
+- Preserve submitted gallery media ordering through `AdminAuthorization::filterAllowedMediaIds()` so multi-select admin saves keep the editor-selected gallery item order when canonical `block_media` rows are written.
+- Stop legacy draft seeding in `BlockTypeSeeder` from overwriting promoted core metadata for shipped media block types after the core catalog sync has published them.
+- Keep backward compatibility for existing saved media content by preserving legacy gallery settings fallbacks where they still affect public output, while stopping new arbitrary child placement and public child-tree rendering for these non-container media blocks.
+
 ## 1.31.22
 
 - Continue Phase 3 block-type contract cleanup by aligning `navbar-brand` and `sidebar-brand` around the same conservative shared URL fallback and logo-only accessible-name contract, while keeping translated visible copy and shared logo or operational settings intact.

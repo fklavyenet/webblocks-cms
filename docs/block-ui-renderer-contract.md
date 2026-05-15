@@ -363,28 +363,28 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `title` as caption, `subtitle` as alt text
 - Shared fields: `media_id`, `url`
 - Intended WebBlocks UI output: semantic `figure`, `img`, and optional `figcaption`; use shipped media/card classes only when the image is intentionally framed.
-- Current implementation: weak
-- Notes for later renderer/admin improvements: honor the optional link URL, keep alt/caption semantics clear, and avoid decorative wrappers by default.
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: Phase 3 now keeps caption and alt text on the image-translation path, preserves the optional shared link URL, and keeps wrapper-free semantic output when media exists.
 
 ### `gallery`
 
 - CMS block slug: `gallery`
 - Admin fields: `title`, `subtitle`, `gallery_media_ids`
-- Translatable fields: none
-- Shared fields: `title`, `subtitle`, ordered gallery media, legacy fallback settings when present
+- Translatable fields: `title`, `subtitle`
+- Shared fields: ordered gallery media, legacy fallback settings when present
 - Intended WebBlocks UI output: WebBlocks gallery pattern with the viewer mounted under `#wb-overlay-root`; shipped WebBlocks UI gallery hooks should drive interaction first.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep CMS JavaScript limited to CMS-specific data plumbing only if the shipped hooks cannot cover a case. Gallery items should emit `data-wb-gallery-target` for one shared viewer modal instead of inventing a separate CMS lightbox contract.
+- Notes for later renderer/admin improvements: Phase 3 now writes canonical ordered gallery media through `block_media`, keeps visible title and description on text translations, preserves legacy fallback items for older saved content, and keeps `data-wb-gallery-target` paired with one shared viewer modal under `#wb-overlay-root`.
 
 ### `download`
 
 - CMS block slug: `download`
 - Admin fields: `title`, `subtitle`, `media_id`, `variant`
-- Translatable fields: none
-- Shared fields: `title`, `subtitle`, `media_id`, `variant`
+- Translatable fields: `title`, `subtitle`
+- Shared fields: `media_id`, `variant`
 - Intended WebBlocks UI output: file CTA as `wb-btn`, or a compact `wb-card` plus `wb-btn` when the variant needs more context.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: add explicit card/download variants instead of inferring presentation from helper text alone.
+- Notes for later renderer/admin improvements: Phase 3 now keeps visible label and helper text on text translations, preserves shared media and button variant ownership, and suppresses broken CTA output when no media source exists.
 
 ### `contact_form`
 
@@ -399,31 +399,31 @@ Public pages now use explicit layout composition modes:
 
 - CMS block slug: `video`
 - Admin fields: `title`, `content`, `url`, `media_id`
-- Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `media_id`
+- Translatable fields: `title`, `content`
+- Shared fields: `url`, `media_id`
 - Intended WebBlocks UI output: semantic `<video controls>` for direct sources, or a safe provider `<iframe>` only for known YouTube/Vimeo URLs, inside a simple `wb-card` shell.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep playback native, avoid custom player JS, and fall back to a simple external link when the URL is not a safe embed provider.
+- Notes for later renderer/admin improvements: Phase 3 now gives Video a dedicated admin form and save path, keeps visible copy translated, preserves hosted-media-first rendering, and falls back to a simple external link for safe unknown URLs instead of unsafe embedding.
 
 ### `audio`
 
 - CMS block slug: `audio`
 - Admin fields: `title`, `content`, `url`, `media_id`
-- Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `media_id`
+- Translatable fields: `title`, `content`
+- Shared fields: `url`, `media_id`
 - Intended WebBlocks UI output: semantic `<audio controls>` inside a simple `wb-card` shell.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep playback native and dependency-free.
+- Notes for later renderer/admin improvements: Phase 3 now gives Audio a dedicated admin form and save path, keeps visible copy translated, and suppresses empty controls when no usable source exists.
 
 ### `file`
 
 - CMS block slug: `file`
 - Admin fields: `title`, `content`, `url`, `media_id`
-- Translatable fields: none
-- Shared fields: `title`, `content`, `url`, `media_id`
+- Translatable fields: `title`, `content`
+- Shared fields: `url`, `media_id`
 - Intended WebBlocks UI output: compact file card with a `wb-btn wb-btn-secondary` download/open action.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: keep this distinct from the dedicated `download` CTA block, which remains more action-oriented.
+- Notes for later renderer/admin improvements: Phase 3 now gives File a dedicated admin form and save path, keeps visible copy translated, and keeps the shared media-or-URL source contract explicit without rendering empty invalid anchors.
 
 ### `map`
 

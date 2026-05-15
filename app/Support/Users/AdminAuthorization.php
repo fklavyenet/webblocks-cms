@@ -86,10 +86,14 @@ class AdminAuthorization
             return [];
         }
 
-        return $this->scopeMediaForUser(Media::query(), $user)
+        $allowedIds = $this->scopeMediaForUser(Media::query(), $user)
             ->whereIn('id', $resolvedIds)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
+            ->flip();
+
+        return $resolvedIds
+            ->filter(fn ($id) => $allowedIds->has($id))
             ->values()
             ->all();
     }

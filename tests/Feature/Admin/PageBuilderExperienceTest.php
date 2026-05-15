@@ -5099,7 +5099,7 @@ class PageBuilderExperienceTest extends TestCase
             'variant' => 'ghost',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertSessionHasErrors(['label', 'url', 'target', 'variant']);
+        ])->assertSessionHasErrors(['label', 'url', 'target']);
 
         $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
 

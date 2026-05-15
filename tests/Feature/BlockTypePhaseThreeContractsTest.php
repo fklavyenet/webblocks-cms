@@ -205,6 +205,12 @@ class BlockTypePhaseThreeContractsTest extends TestCase
 
         $code = $contracts->resolve('code');
         $table = $contracts->resolve('table');
+        $image = $contracts->resolve('image');
+        $gallery = $contracts->resolve('gallery');
+        $download = $contracts->resolve('download');
+        $file = $contracts->resolve('file');
+        $video = $contracts->resolve('video');
+        $audio = $contracts->resolve('audio');
         $quote = $contracts->resolve('quote');
         $toc = $contracts->resolve('toc');
         $html = $contracts->resolve('html');
@@ -223,6 +229,20 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame(['title', 'content'], $table->translatableFields);
         $this->assertSame('mostly clear', $table->currentContractStatus);
         $this->assertSame(['Renderer still supports a legacy settings fallback path for rows.'], $table->knownGaps);
+        $this->assertSame(['title', 'subtitle'], $image->translatableFields);
+        $this->assertSame(['media_id', 'url'], $image->sharedSettingsFields);
+        $this->assertSame('clear', $image->currentContractStatus);
+        $this->assertSame(['title', 'subtitle'], $gallery->translatableFields);
+        $this->assertSame('transitional', $gallery->currentContractStatus);
+        $this->assertSame(['Public rendering still preserves legacy settings-based gallery items when no canonical block_media rows exist.'], $gallery->knownGaps);
+        $this->assertSame(['title', 'subtitle'], $download->translatableFields);
+        $this->assertSame('clear', $download->currentContractStatus);
+        $this->assertSame(['title', 'content'], $file->translatableFields);
+        $this->assertSame('clear', $file->currentContractStatus);
+        $this->assertSame(['title', 'content'], $video->translatableFields);
+        $this->assertSame('clear', $video->currentContractStatus);
+        $this->assertSame(['title', 'content'], $audio->translatableFields);
+        $this->assertSame('clear', $audio->currentContractStatus);
         $this->assertSame('clear', $quote->currentContractStatus);
         $this->assertSame([], $quote->knownGaps);
         $this->assertSame('clear', $toc->currentContractStatus);
@@ -264,13 +284,27 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     {
         $this->seedFoundation();
 
-        foreach (['code', 'table', 'quote', 'toc', 'html'] as $slug) {
+        foreach (['image', 'gallery', 'download', 'file', 'video', 'audio', 'code', 'table', 'quote', 'toc', 'html'] as $slug) {
             $blockType = BlockType::query()->where('slug', $slug)->firstOrFail();
             $block = new Block(['type' => $slug, 'block_type_id' => $blockType->id]);
             $block->setRelation('blockType', $blockType);
 
             $this->assertFalse($block->canAcceptChildren(), $slug.' should not accept child blocks.');
             $this->assertNull($block->allowedChildTypeSlugs(), $slug.' should not expose normal child whitelists.');
+        }
+    }
+
+    #[Test]
+    public function media_visual_block_types_are_registered_for_phase_three_audit_output(): void
+    {
+        $this->seedFoundation();
+
+        foreach (['image', 'gallery', 'download', 'file', 'video', 'audio'] as $slug) {
+            $blockType = BlockType::query()->where('slug', $slug)->first();
+
+            $this->assertNotNull($blockType, $slug.' should exist in the synced block type catalog.');
+            $this->assertSame('published', $blockType->status);
+            $this->assertSame('content', $blockType->category);
         }
     }
 }

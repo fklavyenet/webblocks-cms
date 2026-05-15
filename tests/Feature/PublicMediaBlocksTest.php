@@ -107,6 +107,189 @@ class PublicMediaBlocksTest extends TestCase
     }
 
     #[Test]
+    public function image_block_renders_figure_with_link_caption_and_safe_alt_text(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $asset = $this->asset('image', 'poster.jpg', 'image/jpeg', 'media/images/poster.jpg');
+        $asset->update(['alt_text' => 'Fallback media alt']);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'image',
+            'block_type_id' => $this->blockType('image', 'Image', 6)->id,
+            'asset_id' => $asset->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->imageTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'caption' => 'Poster caption',
+            'alt_text' => 'Poster alt text',
+        ]);
+
+        $block = Block::query()->where('type', 'image')->firstOrFail();
+        $block->update(['url' => '/case-study']);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<figure class="wb-stack wb-gap-2" data-wb-public-block-type="image">', false);
+        $response->assertSee('<a href="/case-study">', false);
+        $response->assertSee('src="'.$asset->url().'"', false);
+        $response->assertSee('alt="Poster alt text"', false);
+        $response->assertSee('<figcaption>Poster caption</figcaption>', false);
+    }
+
+    #[Test]
+    public function download_block_renders_nothing_when_media_is_missing(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'download',
+            'block_type_id' => $this->blockType('download', 'Download', 7)->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ])->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Missing asset download',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('Missing asset download');
+        $response->assertDontSee('data-wb-public-block-type="download"', false);
+    }
+
+    #[Test]
+    public function gallery_block_keeps_shared_overlay_contract_without_duplicate_overlay_roots(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = $this->asset('image', 'gallery.jpg', 'image/jpeg', 'media/images/gallery.jpg');
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $this->blockType('gallery', 'Gallery', 8)->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Gallery block',
+            'subtitle' => 'Visual set',
+        ]);
+        $block->blockMedia()->create([
+            'media_id' => $image->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+        $viewerId = 'wb-gallery-viewer-'.$block->id;
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $response->assertSee('data-wb-gallery-target="#'.$viewerId.'"', false);
+        $response->assertSee('id="'.$viewerId.'"', false);
+        $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+    }
+
+    #[Test]
+    public function video_and_audio_blocks_skip_empty_controls_when_no_source_is_available(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'video',
+            'block_type_id' => $this->blockType('video', 'Video', 9)->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'audio',
+            'block_type_id' => $this->blockType('audio', 'Audio', 10)->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertDontSee('<video controls', false);
+        $response->assertDontSee('<audio controls', false);
+    }
+
+    #[Test]
+    public function media_visual_blocks_do_not_render_historical_child_trees_publicly(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = $this->asset('image', 'nested.jpg', 'image/jpeg', 'media/images/nested.jpg');
+
+        $parent = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'image',
+            'block_type_id' => $this->blockType('image', 'Image', 11)->id,
+            'asset_id' => $image->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $parent->imageTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'caption' => 'Image root',
+            'alt_text' => 'Image root alt',
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $parent->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 12)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => 'Historical child should stay hidden',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('Image root');
+        $response->assertDontSee('Historical child should stay hidden');
+    }
+
+    #[Test]
     public function map_block_renders_safe_link(): void
     {
         $page = $this->pageWithMainSlot();
