@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.36
+
+- Fix Gallery item metadata editing so existing item modals now sync alt text, caption, overlay title, and overlay text back into the hidden gallery-item inputs and compact summaries before block save, restoring persistence through `block_gallery_item_translations`.
+- Add CMS-owned public Gallery layout styling for the shipped variant, columns, gap, and aspect-ratio settings so supported Gallery settings now visibly affect public output instead of only adding inert classes.
+
 ## 1.31.35
 
 - Polish the Gallery block editor so `Gallery Items` owns a normal admin card header with a live item-count badge plus header actions for `Add Gallery Items` and `Remove All`, while removing the old inline explanatory callouts from the main editing path.

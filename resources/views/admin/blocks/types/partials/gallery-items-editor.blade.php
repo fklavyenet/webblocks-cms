@@ -113,7 +113,9 @@
                                         $itemLabel = $asset->title ?: $asset->filename;
                                         $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: 'No alt text');
                                         $captionSummary = $item['caption'] !== '' ? $item['caption'] : 'No caption';
-                                        $overlaySummary = $item['overlay_title'] !== '' ? $item['overlay_title'] : 'No overlay title';
+                                        $overlaySummary = $item['overlay_title'] !== ''
+                                            ? $item['overlay_title']
+                                            : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
                                         $modalId = $modalIdPrefix.'-'.$galleryIndex.'-'.(int) $asset->id;
                                     @endphp
                                     <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
@@ -143,9 +145,9 @@
                                             <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                                         </td>
                                         <td>
-                                            <div class="wb-text-sm"><strong>Alt:</strong> {{ $altSummary }}</div>
-                                            <div class="wb-text-sm"><strong>Caption:</strong> {{ $captionSummary }}</div>
-                                            <div class="wb-text-sm"><strong>Overlay:</strong> {{ $overlaySummary }}</div>
+                                            <div class="wb-text-sm"><strong>Alt:</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
+                                            <div class="wb-text-sm"><strong>Caption:</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
+                                            <div class="wb-text-sm"><strong>Overlay:</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
                                         </td>
                                         <td>
                                             <div class="wb-action-group">
@@ -262,7 +264,9 @@
                                 $itemLabel = $asset->title ?: $asset->filename;
                                 $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: 'No alt text');
                                 $captionSummary = $item['caption'] !== '' ? $item['caption'] : 'No caption';
-                                $overlaySummary = $item['overlay_title'] !== '' ? $item['overlay_title'] : 'No overlay title';
+                                $overlaySummary = $item['overlay_title'] !== ''
+                                    ? $item['overlay_title']
+                                    : ($item['overlay_text'] !== '' ? $item['overlay_text'] : 'No overlay title');
                                 $modalId = $modalIdPrefix.'-'.$galleryIndex.'-'.(int) $asset->id;
                             @endphp
                             <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
@@ -292,9 +296,9 @@
                                     <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                                 </td>
                                 <td>
-                                    <div class="wb-text-sm"><strong>Alt:</strong> {{ $altSummary }}</div>
-                                    <div class="wb-text-sm"><strong>Caption:</strong> {{ $captionSummary }}</div>
-                                    <div class="wb-text-sm"><strong>Overlay:</strong> {{ $overlaySummary }}</div>
+                                    <div class="wb-text-sm"><strong>Alt:</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
+                                    <div class="wb-text-sm"><strong>Caption:</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
+                                    <div class="wb-text-sm"><strong>Overlay:</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
                                 </td>
                                 <td>
                                     <div class="wb-action-group">

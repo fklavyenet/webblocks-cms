@@ -3758,6 +3758,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Content Fields for Gallery');
         $response->assertSee('Add Gallery Items');
         $response->assertSee('data-wb-gallery-items-count', false);
+        $response->assertSee('data-wb-gallery-alt-summary', false);
+        $response->assertSee('data-wb-gallery-caption-summary', false);
+        $response->assertSee('data-wb-gallery-overlay-summary', false);
         $response->assertSee('Add, remove, and reorder gallery images. Per-item copy stays in each item editor.');
         $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
         $response->assertSee('wb-gallery-picker-overlay', false);

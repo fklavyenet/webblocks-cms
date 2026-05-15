@@ -63,6 +63,185 @@
     align-items: stretch !important;
 }
 
+.wb-gallery {
+    --wb-gallery-columns: 3;
+    --wb-gallery-gap: var(--wb-s3);
+}
+
+.wb-gallery--cols-2 {
+    --wb-gallery-columns: 2;
+}
+
+.wb-gallery--cols-3 {
+    --wb-gallery-columns: 3;
+}
+
+.wb-gallery--cols-4 {
+    --wb-gallery-columns: 4;
+}
+
+.wb-gallery--cols-5 {
+    --wb-gallery-columns: 5;
+}
+
+.wb-gallery--gap-none {
+    --wb-gallery-gap: 0;
+}
+
+.wb-gallery--gap-sm {
+    --wb-gallery-gap: var(--wb-s2);
+}
+
+.wb-gallery--gap-md {
+    --wb-gallery-gap: var(--wb-s3);
+}
+
+.wb-gallery--gap-lg {
+    --wb-gallery-gap: var(--wb-s4);
+}
+
+.wb-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--wb-gallery-columns), minmax(0, 1fr));
+    gap: var(--wb-gallery-gap);
+}
+
+.wb-gallery-item {
+    margin: 0;
+}
+
+.wb-gallery-item > a {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--wb-radius-md, 0.75rem);
+    background: Canvas;
+}
+
+.wb-gallery-media {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    object-fit: cover;
+}
+
+.wb-gallery--aspect-square .wb-gallery-item > a {
+    aspect-ratio: 1 / 1;
+}
+
+.wb-gallery--aspect-4-3 .wb-gallery-item > a {
+    aspect-ratio: 4 / 3;
+}
+
+.wb-gallery--aspect-16-9 .wb-gallery-item > a {
+    aspect-ratio: 16 / 9;
+}
+
+.wb-gallery--aspect-portrait .wb-gallery-item > a {
+    aspect-ratio: 3 / 4;
+}
+
+.wb-gallery--aspect-square .wb-gallery-media,
+.wb-gallery--aspect-4-3 .wb-gallery-media,
+.wb-gallery--aspect-16-9 .wb-gallery-media,
+.wb-gallery--aspect-portrait .wb-gallery-media {
+    block-size: 100%;
+}
+
+.wb-gallery-caption {
+    display: block;
+}
+
+.wb-gallery-item > figcaption.wb-gallery-caption {
+    margin-top: var(--wb-s2);
+}
+
+.wb-gallery-item > a > .wb-gallery-caption {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    padding: var(--wb-s3);
+    color: Canvas;
+}
+
+.wb-gallery-caption--gradient {
+    background: linear-gradient(to top, color-mix(in srgb, CanvasText 88%, transparent), color-mix(in srgb, CanvasText 20%, transparent), transparent);
+}
+
+.wb-gallery-caption--solid {
+    background: color-mix(in srgb, CanvasText 82%, transparent);
+}
+
+.wb-gallery-caption--none {
+    background: none;
+    text-shadow: 0 1px 2px CanvasText;
+}
+
+.wb-gallery-caption--hover {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.wb-gallery-item:hover .wb-gallery-caption--hover,
+.wb-gallery-item:focus-within .wb-gallery-caption--hover {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wb-gallery-caption-title,
+.wb-gallery-caption-meta {
+    display: block;
+}
+
+.wb-gallery-caption-title {
+    font-weight: 600;
+}
+
+.wb-gallery--masonry .wb-gallery-grid {
+    grid-template-columns: repeat(var(--wb-gallery-columns), minmax(0, 1fr));
+    align-items: start;
+}
+
+.wb-gallery--masonry .wb-gallery-item:nth-child(3n + 2) {
+    transform: translateY(var(--wb-s3));
+}
+
+.wb-gallery--collage .wb-gallery-grid {
+    grid-auto-flow: dense;
+}
+
+.wb-gallery--collage .wb-gallery-item:nth-child(5n + 1) {
+    grid-column: span min(2, var(--wb-gallery-columns));
+    grid-row: span 2;
+}
+
+@media (max-width: 991px) {
+    .wb-gallery-grid {
+        grid-template-columns: repeat(min(2, var(--wb-gallery-columns)), minmax(0, 1fr));
+    }
+
+    .wb-gallery--collage .wb-gallery-item:nth-child(5n + 1) {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 640px) {
+    .wb-gallery-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wb-gallery--masonry .wb-gallery-item:nth-child(3n + 2) {
+        transform: none;
+    }
+
+    .wb-gallery--collage .wb-gallery-item:nth-child(5n + 1) {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
 @media (max-width: 767px) {
     .wb-cms-navbar-mobile-toggle {
         display: inline-flex;

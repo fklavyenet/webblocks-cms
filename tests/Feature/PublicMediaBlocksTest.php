@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Asset;
 use App\Models\Block;
+use App\Models\BlockMedia;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\Site;
@@ -208,6 +210,66 @@ class PublicMediaBlocksTest extends TestCase
         $response->assertDontSee('<h3>Gallery block</h3>', false);
         $response->assertDontSee('<p>Visual set</p>', false);
         $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
+    }
+
+    #[Test]
+    public function gallery_block_renders_saved_item_metadata_and_visible_settings_classes(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $image = $this->asset('image', 'gallery-meta.jpg', 'image/jpeg', 'media/images/gallery-meta.jpg');
+        $image->update([
+            'alt_text' => 'Fallback alt',
+            'caption' => 'Fallback caption',
+            'description' => 'Fallback description',
+        ]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $this->blockType('gallery', 'Gallery', 18)->id,
+            'source_type' => 'asset',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+            'settings' => json_encode([
+                'variant' => 'collage',
+                'columns' => '4',
+                'gap' => 'lg',
+                'aspect_ratio' => '16:9',
+                'captions_mode' => 'overlay',
+                'overlay_mode' => 'solid',
+                'lightbox_enabled' => true,
+            ], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $blockMedia = BlockMedia::query()->create([
+            'block_id' => $block->id,
+            'media_id' => $image->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $blockMedia->galleryItemTranslations()->create([
+            'locale_id' => $defaultLocaleId,
+            'alt_text' => 'Translated alt',
+            'caption' => 'Translated caption',
+            'overlay_title' => 'Translated overlay title',
+            'overlay_text' => 'Translated overlay text',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('class="wb-gallery wb-gallery--collage wb-gallery--cols-4 wb-gallery--gap-lg wb-gallery--aspect-16-9"', false);
+        $response->assertSee('alt="Translated alt"', false);
+        $response->assertSee('Translated overlay title', false);
+        $response->assertSee('Translated overlay text', false);
+        $response->assertSee('data-wb-gallery-caption="Translated caption"', false);
+        $response->assertSee('data-wb-gallery-meta="Translated overlay title"', false);
+        $response->assertDontSee('Fallback description');
     }
 
     #[Test]

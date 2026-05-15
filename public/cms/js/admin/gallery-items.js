@@ -159,7 +159,7 @@
                     ? '[data-wb-gallery-alt-summary]'
                     : (key === 'caption'
                         ? '[data-wb-gallery-caption-summary]'
-                        : (key === 'overlay_title' ? '[data-wb-gallery-overlay-summary]' : null));
+                        : ((key === 'overlay_title' || key === 'overlay_text') ? '[data-wb-gallery-overlay-summary]' : null));
 
                 if (hiddenField) {
                     hiddenField.value = field.value;
@@ -169,13 +169,38 @@
                     var summary = row.querySelector(summarySelector);
 
                     if (summary) {
+                        if (key === 'overlay_title' || key === 'overlay_text') {
+                            var overlayTitleField = row.querySelector('[data-wb-gallery-field="overlay_title"]');
+                            var overlayTextField = row.querySelector('[data-wb-gallery-field="overlay_text"]');
+                            summary.textContent = ((overlayTitleField && overlayTitleField.value.trim()) || (overlayTextField && overlayTextField.value.trim()) || 'No overlay title');
+                            return;
+                        }
+
                         summary.textContent = field.value.trim() || (key === 'alt_text'
                             ? 'No alt text'
-                            : (key === 'caption' ? 'No caption' : 'No overlay title'));
+                            : 'No caption');
                     }
                 }
             });
         });
+    }
+
+    function bindExistingRowModal(editor, row) {
+        if (!editor || !row) {
+            return;
+        }
+
+        var mediaId = row.getAttribute('data-media-id');
+        var modal = document.getElementById(modalIdFor(editor, mediaId));
+
+        if (!modal || modal.getAttribute('data-wb-gallery-modal-bound') === 'true') {
+            syncModalFromRow(row);
+            return;
+        }
+
+        bindModalFieldSync(modal, row);
+        modal.setAttribute('data-wb-gallery-modal-bound', 'true');
+        syncModalFromRow(row);
     }
 
     function appendModal(editor, asset, row) {
@@ -281,13 +306,7 @@
     document.querySelectorAll('[data-wb-gallery-items-editor]').forEach(function (editor) {
         syncEditor(editor);
         Array.prototype.slice.call(editor.querySelectorAll('[data-wb-gallery-item-row]')).forEach(function (row) {
-            var mediaId = row.getAttribute('data-media-id');
-            var assetLabel = row.querySelector('strong');
-            appendModal(editor, {
-                id: mediaId,
-                title: assetLabel ? assetLabel.textContent.trim() : '',
-                filename: assetLabel ? assetLabel.textContent.trim() : ''
-            }, row);
+            bindExistingRowModal(editor, row);
         });
         syncEditor(editor);
     });
