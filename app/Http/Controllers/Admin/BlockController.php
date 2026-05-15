@@ -725,6 +725,9 @@ class BlockController extends Controller
 
     private function managedCtasFrom(Request $request): array
     {
+        $localeCode = Locale::normalizeCode(trim((string) $request->input('locale', '')));
+        $isTranslatedLocaleEdit = $localeCode !== null;
+
         return collect([
             [
                 'key' => 'primary',
@@ -738,11 +741,11 @@ class BlockController extends Controller
                 'url' => $request->input('secondary_cta_url'),
                 'variant' => 'secondary',
             ],
-        ])->map(function (array $cta, int $index): array {
+        ])->map(function (array $cta, int $index) use ($isTranslatedLocaleEdit): array {
             return [
                 'key' => $cta['key'],
                 'label' => trim((string) ($cta['label'] ?? '')) ?: null,
-                'url' => trim((string) ($cta['url'] ?? '')) ?: null,
+                'url' => $isTranslatedLocaleEdit ? null : (trim((string) ($cta['url'] ?? '')) ?: null),
                 'variant' => $cta['variant'],
                 'sort_order' => $index,
             ];
@@ -782,6 +785,14 @@ class BlockController extends Controller
                 continue;
             }
 
+            $featureItem = $itemId && $existingItems->has($itemId)
+                ? $existingItems[$itemId]
+                : new Block;
+
+            if ($localeCode !== null && $featureItem->exists) {
+                $itemData['url'] = $featureItem->getRawOriginal('url');
+            }
+
             $payload = $itemData + [
                 'page_id' => $block->page_id,
                 'parent_id' => $block->id,
@@ -792,10 +803,6 @@ class BlockController extends Controller
                 'slot' => $block->slot,
                 'sort_order' => $index,
             ];
-
-            $featureItem = $itemId && $existingItems->has($itemId)
-                ? $existingItems[$itemId]
-                : new Block;
 
             $featureItem = $this->blockPayloadWriter->save($featureItem, $block->page, $payload, $localeCode);
 
@@ -844,6 +851,14 @@ class BlockController extends Controller
                 continue;
             }
 
+            $columnItem = $itemId && $existingItems->has($itemId)
+                ? $existingItems[$itemId]
+                : new Block;
+
+            if ($localeCode !== null && $columnItem->exists) {
+                $itemData['url'] = $columnItem->getRawOriginal('url');
+            }
+
             $payload = $itemData + [
                 'page_id' => $block->page_id,
                 'parent_id' => $block->id,
@@ -854,10 +869,6 @@ class BlockController extends Controller
                 'slot' => $block->slot,
                 'sort_order' => $index,
             ];
-
-            $columnItem = $itemId && $existingItems->has($itemId)
-                ? $existingItems[$itemId]
-                : new Block;
 
             $columnItem = $this->blockPayloadWriter->save($columnItem, $block->page, $payload, $localeCode);
 

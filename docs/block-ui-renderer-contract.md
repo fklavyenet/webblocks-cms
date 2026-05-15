@@ -96,10 +96,10 @@ Public pages now use explicit layout composition modes:
 | `list` | list primitive | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings compatibility |
 | `table` | `wb-table` pattern | acceptable | P1 public marketing/docs | keep the dedicated line-based editor and preserve legacy fallback-style settings rows |
 | `accordion` | semantic disclosure pattern | acceptable | P1 public marketing/docs | keep the first-class semantic `<details>` renderer with child blocks as items |
-| `feature-grid` | feature grid pattern | weak | P1 public marketing/docs | keep fallback rendering for now and prefer `columns` with the `cards` variant for structured use cases |
-| `stats` / `metric-card` | `wb-stat` and related metric cards | weak | P1 public marketing/docs | add real stat variants instead of fallback cards |
+| `feature-grid` | delegated `columns.variant = cards` pattern | acceptable | P1 public marketing/docs | keep it published as a compatibility alias, but prefer `columns` for new structured content |
+| `stats` / `metric-card` | delegated `columns.variant = stats` pattern | weak | P1 public marketing/docs | keep aliases honest and add real stat-specific contracts only if they become product-owned |
 | `logo-cloud` | logo grid / brand strip | weak | P1 public marketing/docs | add structured media handling if it remains productized |
-| `testimonial` | quote/testimonial card | weak | P2 content quality | decide whether quote variants are sufficient or a separate block is needed |
+| `testimonial` | delegated quote testimonial pattern | weak | P2 content quality | keep alias behavior honest unless a standalone testimonial contract becomes product-owned |
 | `timeline` | timeline pattern | weak | P2 content quality | promote only if timeline content is a real recurring use case |
 | `pricing` | pricing card/grid pattern | weak | P1 public marketing/docs | make first-class only with structured plans/features |
 | `toc` | table-of-contents navigation | acceptable | P1 public marketing/docs | keep same-page TOC collection on explicit anchored `header` blocks only |
@@ -247,6 +247,7 @@ Public pages now use explicit layout composition modes:
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: hero CTA actions should come from child `button` blocks, raw HTML should not be used for normal hero content, and legacy imported hero settings should only act as a fallback when canonical translated fields are empty.
 - Hero CTA behavior: child `button` blocks render in `wb-promo-actions`; non-button children are ignored in the CTA row.
+- Wrapper rule: `hero` now owns its renderer root and places `data-wb-public-block-type="hero"` on that root, so the slot loop must not add a generic outer public wrapper.
 
 ### `columns`
 
@@ -272,6 +273,37 @@ Public pages now use explicit layout composition modes:
 - Intended WebBlocks UI output: one grid cell that may render as plain content, `wb-card`, `wb-stat`, `wb-link-list-item`, or other shipped cell treatment depending on parent or item variant.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: `column_item` remains a simple content unit and now defers public presentation to its parent `columns` block. The current `stats` mapping is intentionally conservative because there is no dedicated numeric value field yet.
+
+### `cta`
+
+- CMS block slug: `cta`
+- Admin fields: `subtitle`, `title`, `content`, managed primary CTA, managed secondary CTA, `variant`
+- Translatable fields: `subtitle` as eyebrow, `title` as headline, `content` as supporting copy, plus child `button` labels
+- Shared fields: `variant`, child CTA URLs, child ordering
+- Intended WebBlocks UI output: promo-style `wb-card wb-promo` section with `wb-promo-copy` and `wb-promo-actions`
+- Current implementation: acceptable
+- Notes for later renderer/admin improvements: keep CTA labels locale-owned on child buttons, keep CTA URLs shared, and avoid reintroducing settings-driven CTA payloads.
+- Wrapper rule: `cta` now owns its renderer root and places `data-wb-public-block-type="cta"` on that root, so the slot loop must not add a generic outer public wrapper.
+
+### `feature-grid`
+
+- CMS block slug: `feature-grid`
+- Admin fields: `title`, `subtitle`, `content`, repeatable `feature_items`
+- Translatable fields: `title`, `subtitle`, `content`, child `feature-item` text
+- Shared fields: child ordering, child links, structure
+- Intended WebBlocks UI output: the same public card-grid structure used by `columns.variant = cards`
+- Current implementation: acceptable as a compatibility alias
+- Notes for later renderer/admin improvements: keep Feature Grid source-backed and documented, but be explicit that it currently delegates to the shared Columns cards renderer instead of owning distinct feature-grid markup.
+
+### `feature-item`
+
+- CMS block slug: `feature-item`
+- Admin fields: `title`, `url`, `content`
+- Translatable fields: `title`, `content`
+- Shared fields: `url`
+- Intended WebBlocks UI output: the same card-style item shell used by `column_item` in the Columns cards presentation
+- Current implementation: acceptable as a compatibility alias
+- Notes for later renderer/admin improvements: keep Feature Item documented as a source-backed supporting child contract while it still delegates to the shared Column Item cards presentation.
 
 ### `callout`
 
@@ -508,11 +540,11 @@ Public pages now use explicit layout composition modes:
 | `list` | first-class public renderer | acceptable | Dedicated line-based list rendering now exists; keep compatibility for legacy settings-driven content. |
 | `table` | first-class public renderer | acceptable | Dedicated line-based table rendering now exists; keep compatibility for legacy settings rows. |
 | `accordion` | first-class public renderer | acceptable | Grouped disclosure now uses semantic `<details>` and child blocks instead of fallback settings markup. |
-| `feature-grid` | first-class alias | should merge into Columns | The public renderer now delegates to `columns.variant = cards`; prefer Columns for new content. |
-| `stats` | first-class alias | should merge into Columns | The public renderer now delegates to the existing `columns.variant = stats` path. |
+| `feature-grid` | published compatibility alias | should stay transitional | The public renderer delegates to `columns.variant = cards`; prefer Columns for new content, but keep Feature Grid documented because it is source-backed and shipped. |
+| `stats` | alias-only | should merge into Columns | The public renderer delegates to the existing `columns.variant = stats` path and should stay documented as alias behavior rather than a standalone published contract. |
 | `metric-card` | first-class alias | should merge into stat primitives | The public renderer now uses the same `wb-stat` direction as the Columns stats variant. |
 | `logo-cloud` | fallback-only | should become first-class | Only promote if there is a repeatable need for structured logo/media rows. |
-| `testimonial` | first-class alias | should merge into Quote | The public renderer now delegates to the quote testimonial variant. |
+| `testimonial` | alias-only | should merge into Quote | The public renderer delegates to the quote testimonial variant and should stay documented as alias behavior rather than a standalone published contract. |
 | `timeline` | fallback-only | should become first-class | Promote only with structured milestones and a clear shipped UI pattern. |
 | `pricing` | fallback-only | should become first-class | A pricing block needs structured plan, feature, and CTA fields to be worth promoting. |
 | `toc` | first-class public renderer | acceptable | Minimal TOC rendering now uses existing `Header` anchors and `wb-link-list`; active-section behavior is still deferred. |
@@ -547,7 +579,7 @@ Public pages now use explicit layout composition modes:
 
 ### Phase 3
 
-- Make hero, card-grid or feature-grid, button-group, code, and docs navigation first-class or deliberately deprecated/fallback.
+- Make card-grid, button-group, and any future standalone stats or testimonial patterns first-class only when they become real product-owned contracts rather than aliases.
 - Add admin forms and translation registry support where needed.
 
 Phase 3 completed: core public blocks now align with WebBlocks UI primitives.

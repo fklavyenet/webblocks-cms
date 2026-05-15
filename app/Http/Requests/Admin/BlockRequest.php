@@ -849,6 +849,47 @@ class BlockRequest extends FormRequest
                     : (trim((string) ($data['title_level'] ?? '')) ?: 'h1');
             }
 
+            if ($blockType?->slug === 'columns') {
+                $isTranslatedColumnsEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+                $data['variant'] = $isTranslatedColumnsEdit
+                    ? ($this->route('block')?->getRawOriginal('variant'))
+                    : (in_array(trim((string) ($data['variant'] ?? 'cards')), ['cards', 'plain', 'stats'], true) ? trim((string) ($data['variant'] ?? 'cards')) : 'cards');
+            }
+
+            if ($blockType?->slug === 'feature-grid') {
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = null;
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
+            if (in_array($blockType?->slug, ['column_item', 'feature-item'], true)) {
+                $isTranslatedStructuredChildEdit = $data['locale'] !== null;
+
+                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
+                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
+                $data['url'] = $isTranslatedStructuredChildEdit
+                    ? ($this->route('block')?->getRawOriginal('url'))
+                    : (trim((string) ($data['url'] ?? '')) ?: null);
+                $data['asset_id'] = null;
+                $data['variant'] = null;
+                $data['meta'] = null;
+                $data['settings'] = null;
+            }
+
             if ($blockType?->slug === 'button_link') {
                 $isTranslatedButtonLinkEdit = $data['locale'] !== null;
                 $existingSettings = $this->route('block') instanceof Block

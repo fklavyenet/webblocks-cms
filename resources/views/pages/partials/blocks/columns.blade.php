@@ -14,7 +14,7 @@
     $layoutClass = $gridClass;
 @endphp
 
-<section class="wb-stack wb-gap-4">
+<section class="wb-stack wb-gap-4" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
         @if ($block->title || $block->subtitle)
             <div class="wb-stack wb-gap-1">
                 @if ($block->title)

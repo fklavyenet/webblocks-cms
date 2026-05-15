@@ -104,7 +104,7 @@ class PublicHeroBlockRenderingTest extends TestCase
     }
 
     #[Test]
-    public function hero_block_falls_back_to_default_content_when_legacy_block_type_is_not_translatable(): void
+    public function hero_block_uses_translated_content_when_the_block_type_is_now_translatable(): void
     {
         $site = Site::query()->firstOrFail();
         $turkish = Locale::query()->create([
@@ -180,13 +180,13 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get('/tr/p/hakkinda');
 
         $response->assertOk();
-        $response->assertSee('Default hero');
-        $response->assertSee('Default eyebrow');
-        $response->assertSee('Default content');
+        $response->assertSee('Turkce kahraman');
+        $response->assertSee('Yerel etiket');
+        $response->assertSee('Turkce destekleyici metin');
         $response->assertSee('Turkce CTA');
-        $response->assertDontSee('Turkce kahraman');
-        $response->assertDontSee('Yerel etiket');
-        $response->assertDontSee('Turkce destekleyici metin');
+        $response->assertDontSee('Default hero');
+        $response->assertDontSee('Default eyebrow');
+        $response->assertDontSee('Default content');
         $response->assertDontSee('Default CTA');
     }
 
@@ -683,6 +683,7 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
+        $response->assertSee('<section class="wb-card wb-promo wb-card-accent" data-wb-public-block-type="cta">', false);
         $response->assertSee('wb-promo', false);
         $response->assertSee('wb-card-accent', false);
         $response->assertSee('Ready to ship');
@@ -690,6 +691,7 @@ class PublicHeroBlockRenderingTest extends TestCase
         $response->assertSee('Launch a reusable marketing section with managed actions.');
         $response->assertSee('Get started');
         $response->assertSee('Read docs');
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="cta">', false);
     }
 
     #[Test]

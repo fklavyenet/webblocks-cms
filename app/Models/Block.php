@@ -455,12 +455,15 @@ class Block extends Model
             return true;
         }
 
-        return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+        return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'hero', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
     {
         return match ($this->typeSlug()) {
+            'hero', 'cta' => ['button'],
+            'columns' => ['column_item'],
+            'feature-grid' => ['feature-item', 'column_item'],
             'card' => ['cluster', 'button_link'],
             'sticky-navbar' => ['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'],
             'link-list' => ['link-list-item'],
@@ -914,6 +917,9 @@ class Block extends Model
             'cluster',
             'card',
             'content_header',
+            'hero',
+            'columns',
+            'cta',
             'image',
             'gallery',
             'download',

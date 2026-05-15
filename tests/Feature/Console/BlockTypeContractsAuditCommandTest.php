@@ -12,8 +12,9 @@ class BlockTypeContractsAuditCommandTest extends TestCase
     public function it_reports_published_block_contracts_in_markdown(): void
     {
         $this->artisan('block-types:contracts-audit')
-            ->expectsOutputToContain('Published block types: 36')
+            ->expectsOutputToContain('Published block types: 42')
             ->expectsOutputToContain('| `header` | Header | `content` | `text` (title) | no | `resources/views/admin/blocks/types/header.blade.php` | `resources/views/pages/partials/blocks/header.blade.php` |')
+            ->expectsOutputToContain('| `hero` | Hero | `content` | `text` (title, subtitle, content) | yes | `resources/views/admin/blocks/types/hero.blade.php` | `resources/views/pages/partials/blocks/hero.blade.php` |')
             ->expectsOutputToContain('| `image` | Image | `content` | `image` (title, subtitle) | no | `resources/views/admin/blocks/types/image.blade.php` | `resources/views/pages/partials/blocks/image.blade.php` |')
             ->expectsOutputToContain('| `sticky-navbar` | Navbar | `navigation` | shared/canonical | yes | `resources/views/admin/blocks/types/sticky-navbar.blade.php` | `resources/views/pages/partials/blocks/sticky-navbar.blade.php` |')
             ->assertExitCode(0);
@@ -26,8 +27,9 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('"published_count": 36', $output);
+        $this->assertStringContainsString('"published_count": 42', $output);
         $this->assertStringContainsString('"slug": "content_header"', $output);
+        $this->assertStringContainsString('"slug": "feature-grid"', $output);
         $this->assertStringContainsString('"admin_form_source": "resources/views/admin/blocks/types/content_header.blade.php"', $output);
         $this->assertStringContainsString('"public_renderer_source": "resources/views/pages/partials/blocks/content_header.blade.php"', $output);
         $this->assertStringContainsString('"shared_settings_fields": [', $output);
@@ -55,6 +57,12 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "breadcrumb"', $output);
         $this->assertStringContainsString('"slug": "stat-card"', $output);
         $this->assertStringContainsString('"slug": "link-list"', $output);
+        $this->assertStringContainsString('"slug": "hero"', $output);
+        $this->assertStringContainsString('"slug": "columns"', $output);
+        $this->assertStringContainsString('"slug": "column_item"', $output);
+        $this->assertStringContainsString('"slug": "cta"', $output);
+        $this->assertStringContainsString('"slug": "feature-grid"', $output);
+        $this->assertStringContainsString('"slug": "feature-item"', $output);
         $this->assertStringContainsString('"slug": "sticky-navbar"', $output);
         $this->assertStringContainsString('"slug": "navbar-brand"', $output);
         $this->assertStringContainsString('"slug": "sidebar-brand"', $output);
@@ -83,6 +91,8 @@ class BlockTypeContractsAuditCommandTest extends TestCase
     public function markdown_audit_includes_expanded_layout_and_card_contract_details(): void
     {
         $this->artisan('block-types:contracts-audit')
+            ->expectsOutputToContain('## `hero`')
+            ->expectsOutputToContain('- Allowed child type slugs: button')
             ->expectsOutputToContain('## `section`')
             ->expectsOutputToContain('- Shared/settings fields: settings.layout_name; settings.spacing')
             ->expectsOutputToContain('## `card`')

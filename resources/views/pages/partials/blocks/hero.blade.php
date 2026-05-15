@@ -28,7 +28,7 @@
         ->values();
 @endphp
 
-<section class="{{ implode(' ', $heroClasses) }}">
+<section class="{{ implode(' ', $heroClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
     <div class="{{ implode(' ', $copyClasses) }}">
         @if ($eyebrow !== '')
             <p class="wb-eyebrow">{{ $eyebrow }}</p>

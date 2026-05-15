@@ -17,7 +17,7 @@
         ->values();
 @endphp
 
-<section class="{{ implode(' ', $ctaClasses) }}">
+<section class="{{ implode(' ', $ctaClasses) }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
     <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
         @if ($block->subtitle)
             <p class="wb-eyebrow">{{ $block->subtitle }}</p>

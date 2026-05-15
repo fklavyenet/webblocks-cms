@@ -223,6 +223,14 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $breadcrumb = $contracts->resolve('breadcrumb');
         $statCard = $contracts->resolve('stat-card');
         $linkList = $contracts->resolve('link-list');
+        $hero = $contracts->resolve('hero');
+        $columns = $contracts->resolve('columns');
+        $columnItem = $contracts->resolve('column_item');
+        $cta = $contracts->resolve('cta');
+        $featureGrid = $contracts->resolve('feature-grid');
+        $featureItem = $contracts->resolve('feature-item');
+        $testimonial = $contracts->resolve('testimonial');
+        $stats = $contracts->resolve('stats');
         $section = $contracts->resolve('section');
         $container = $contracts->resolve('container');
         $cluster = $contracts->resolve('cluster');
@@ -272,6 +280,34 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame([], $statCard->knownGaps);
         $this->assertSame('clear', $linkList->currentContractStatus);
         $this->assertSame([], $linkList->knownGaps);
+        $this->assertSame(['title', 'subtitle', 'content'], $hero->translatableFields);
+        $this->assertSame(['button'], $hero->allowedChildTypeSlugs);
+        $this->assertTrue($hero->ownsPublicRootHelper);
+        $this->assertSame('transitional', $hero->currentContractStatus);
+        $this->assertSame(['title', 'subtitle', 'content'], $columns->translatableFields);
+        $this->assertSame(['column_item'], $columns->allowedChildTypeSlugs);
+        $this->assertTrue($columns->ownsPublicRootHelper);
+        $this->assertSame('clear', $columns->currentContractStatus);
+        $this->assertSame(['title', 'subtitle', 'content'], $columnItem->translatableFields);
+        $this->assertSame(['url'], $columnItem->sharedSettingsFields);
+        $this->assertFalse($columnItem->ownsPublicRootHelper);
+        $this->assertSame('clear', $columnItem->currentContractStatus);
+        $this->assertSame(['title', 'subtitle', 'content'], $cta->translatableFields);
+        $this->assertSame(['button'], $cta->allowedChildTypeSlugs);
+        $this->assertTrue($cta->ownsPublicRootHelper);
+        $this->assertSame('clear', $cta->currentContractStatus);
+        $this->assertSame(['title', 'subtitle', 'content'], $featureGrid->translatableFields);
+        $this->assertSame(['feature-item', 'column_item'], $featureGrid->allowedChildTypeSlugs);
+        $this->assertFalse($featureGrid->ownsPublicRootHelper);
+        $this->assertSame('transitional', $featureGrid->currentContractStatus);
+        $this->assertSame(['title', 'content'], $featureItem->translatableFields);
+        $this->assertSame(['url'], $featureItem->sharedSettingsFields);
+        $this->assertFalse($featureItem->ownsPublicRootHelper);
+        $this->assertSame('transitional', $featureItem->currentContractStatus);
+        $this->assertFalse($testimonial->documented);
+        $this->assertSame('not documented', $testimonial->currentContractStatus);
+        $this->assertFalse($stats->documented);
+        $this->assertSame('not documented', $stats->currentContractStatus);
         $this->assertSame(['settings.layout_name', 'settings.spacing'], $section->sharedSettingsFields);
         $this->assertSame(['settings.layout_name', 'settings.width', 'settings.flow'], $container->sharedSettingsFields);
         $this->assertSame(['settings.layout_name', 'settings.gap', 'settings.alignment', 'settings.items_alignment', 'settings.wrap', 'settings.width'], $cluster->sharedSettingsFields);
@@ -353,7 +389,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     {
         $this->seedFoundation();
 
-        foreach (['image', 'gallery', 'download', 'file', 'video', 'audio'] as $slug) {
+        foreach (['hero', 'columns', 'column_item', 'cta', 'feature-grid', 'feature-item', 'image', 'gallery', 'download', 'file', 'video', 'audio'] as $slug) {
             $blockType = BlockType::query()->where('slug', $slug)->first();
 
             $this->assertNotNull($blockType, $slug.' should exist in the synced block type catalog.');

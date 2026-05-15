@@ -108,7 +108,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
         $this->artisan('block-types:sync-core')->assertExitCode(0);
 
         $this->assertSame(1, BlockType::query()->where('slug', 'header')->count());
-        $this->assertSame(30, BlockType::query()->whereIn('slug', [
+        $this->assertSame(36, BlockType::query()->whereIn('slug', [
             'header',
             'plain_text',
             'rich-text',
@@ -117,6 +117,9 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'cluster',
             'grid',
             'content_header',
+            'hero',
+            'columns',
+            'column_item',
             'code',
             'button_link',
             'card',
@@ -127,6 +130,9 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'link-list-item',
             'toc',
             'alert',
+            'cta',
+            'feature-grid',
+            'feature-item',
             'breadcrumb',
             'header-actions',
             'sticky-navbar',

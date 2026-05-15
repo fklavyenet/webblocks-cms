@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## 1.31.27
+
+- Publish the corrected Phase 3 Marketing / Structured Content cleanup release as `v1.31.27`, superseding the accidentally published `v1.31.26` tag that pointed at the previous `v1.31.25` release commit without changing that already-published tag.
+- Include the completed contract cleanup set for `hero`, `columns`, `column_item`, `cta`, `feature-grid`, and `feature-item`, plus the missed release changes in `BlockController` and `BlockTypeSeeder` that preserve shared URLs during locale-only edits and stop legacy draft seeding from overwriting promoted core metadata.
+
+## 1.31.26
+
+- Note: the corrected package for this release work is `v1.31.27`. The already-published `v1.31.26` tag mistakenly points to the previous `v1.31.25` release commit and is left untouched.
+
+- Continue the Phase 3 Marketing / Structured Content contract cleanup by promoting the real shipped source-backed set `hero`, `columns`, `column_item`, `cta`, `feature-grid`, and `feature-item` into the published core catalog and aligning the shared contract registry, contracts audit output, shipped admin contract modal data, docs, and focused regression coverage around those contracts.
+- Keep docs and contract reporting honest about current shipped behavior by preserving `feature-grid` and `feature-item` as transitional source-backed aliases over the shared Columns or Column Item presentation paths, while `testimonial` and `stats` remain alias-only render behavior instead of being misrepresented as standalone published core contracts.
+- Preserve shared CTA and structured child URLs during locale-only edits so translated updates for promo buttons and column or feature items no longer overwrite shared canonical links, and add focused regression coverage for that save behavior.
+
 ## 1.31.25
 
 - Continue the Phase 3 block type contract cleanup for the Layout + Card group by aligning `section`, `container`, `grid`, `cluster`, `card`, and `content_header` across the shared contract registry, audit output, root-ownership reporting, request or save ownership, docs, and focused regression coverage.

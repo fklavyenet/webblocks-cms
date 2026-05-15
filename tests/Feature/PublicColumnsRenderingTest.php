@@ -29,12 +29,14 @@ class PublicColumnsRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
+        $response->assertSee('<section class="wb-stack wb-gap-4" data-wb-public-block-type="columns">', false);
         $response->assertSee('wb-grid wb-grid-2', false);
         $response->assertSee('wb-card-body wb-stack wb-gap-2', false);
         $response->assertDontSee('wb-prose', false);
         $response->assertDontSee('wb-link-list', false);
         $response->assertSee('Fast setup');
         $response->assertSee('Editor friendly');
+        $response->assertDontSee('<div class="wb-public-block" data-wb-public-block-type="columns">', false);
     }
 
     #[Test]

@@ -1064,10 +1064,15 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Sidebar Brand');
         $response->assertSee('Sidebar Navigation');
         $response->assertSee('Sidebar Footer');
+        $response->assertSee('Hero');
+        $response->assertSee('Columns');
+        $response->assertSee('Column Item');
+        $response->assertSee('CTA');
+        $response->assertSee('Feature Grid');
+        $response->assertSee('Feature Item');
         $response->assertDontSee('Heading');
         $response->assertDontSee('Sidebar Nav Item');
         $response->assertDontSee('Sidebar Nav Group');
-        $response->assertDontSee('Hero');
 
         $content = $response->getContent();
         $this->assertNotFalse($content);
@@ -5365,6 +5370,233 @@ class PageBuilderExperienceTest extends TestCase
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'English heading',
         ]);
+    }
+
+    #[Test]
+    public function cta_locale_update_changes_translated_labels_and_keeps_shared_urls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+        );
+
+        $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
+        $buttonType = BlockType::query()->where('slug', 'button')->firstOrFail();
+        $cta = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'cta',
+            'block_type_id' => $ctaType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'accent',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $cta->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'English heading',
+            'subtitle' => 'English eyebrow',
+            'content' => 'English body',
+        ]);
+
+        $primaryButton = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cta->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'url' => '/shared-primary',
+            'subtitle' => '_self',
+            'variant' => 'primary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $primaryButton->buttonTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Start now',
+        ]);
+
+        $secondaryButton = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cta->id,
+            'type' => 'button',
+            'block_type_id' => $buttonType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'url' => '/shared-secondary',
+            'subtitle' => '_self',
+            'variant' => 'secondary',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $secondaryButton->buttonTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Read docs',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $cta), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $ctaType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'subtitle' => 'Turkce etiket',
+            'title' => 'Turkce baslik',
+            'content' => 'Turkce govde',
+            'primary_cta_label' => 'Hemen basla',
+            'primary_cta_url' => '/should-be-ignored',
+            'secondary_cta_label' => 'Dokumanlari oku',
+            'secondary_cta_url' => '/also-ignored',
+            'variant' => 'soft',
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $cta->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => 'tr']));
+        $this->assertTextTranslation($cta, $turkish->id, [
+            'title' => 'Turkce baslik',
+            'subtitle' => 'Turkce etiket',
+            'content' => 'Turkce govde',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $primaryButton->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Hemen basla',
+        ]);
+        $this->assertDatabaseHas('block_button_translations', [
+            'block_id' => $secondaryButton->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Dokumanlari oku',
+        ]);
+        $this->assertSame('/shared-primary', $primaryButton->fresh()->url);
+        $this->assertSame('/shared-secondary', $secondaryButton->fresh()->url);
+        $this->assertSame('accent', $cta->fresh()->variant);
+    }
+
+    #[Test]
+    public function columns_locale_update_changes_child_translations_and_keeps_shared_child_urls(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $turkish->id],
+            ['site_id' => $site->id, 'name' => 'Hakkinda', 'slug' => 'hakkinda', 'path' => '/p/hakkinda'],
+        );
+
+        $columnsType = BlockType::query()->where('slug', 'columns')->firstOrFail();
+        $columnItemType = BlockType::query()->where('slug', 'column_item')->firstOrFail();
+        $columns = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'columns',
+            'block_type_id' => $columnsType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'variant' => 'cards',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $columns->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'English columns',
+            'subtitle' => 'English subtitle',
+            'content' => 'English intro',
+        ]);
+
+        $columnItem = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $columns->id,
+            'type' => 'column_item',
+            'block_type_id' => $columnItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'url' => '/shared-column-link',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $columnItem->textTranslations()->create([
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'English item',
+            'subtitle' => '42',
+            'content' => 'English item body',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $columns), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'block_type_id' => $columnsType->id,
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'title' => 'Turkce sutunlar',
+            'subtitle' => 'Turkce alt baslik',
+            'content' => 'Turkce giris',
+            'variant' => 'plain',
+            'column_items' => [[
+                'id' => $columnItem->id,
+                'block_type_id' => $columnItemType->id,
+                'title' => 'Turkce oge',
+                'content' => 'Turkce oge govdesi',
+                'url' => '/should-be-ignored',
+                'status' => 'published',
+                'sort_order' => 0,
+            ]],
+            'status' => 'published',
+            'locale' => 'tr',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $columns->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'locale' => 'tr']));
+        $this->assertTextTranslation($columns, $turkish->id, [
+            'title' => 'Turkce sutunlar',
+            'subtitle' => 'Turkce alt baslik',
+            'content' => 'Turkce giris',
+        ]);
+        $this->assertTextTranslation($columnItem, $turkish->id, [
+            'title' => 'Turkce oge',
+            'subtitle' => null,
+            'content' => 'Turkce oge govdesi',
+        ]);
+        $this->assertSame('/shared-column-link', $columnItem->fresh()->url);
+        $this->assertSame('cards', $columns->fresh()->variant);
     }
 
     #[Test]
