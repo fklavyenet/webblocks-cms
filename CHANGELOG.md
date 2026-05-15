@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.38
+
+- Fix the admin Gallery `Add Gallery Items` picker so its overlay now mounts under the shared admin `#wb-overlay-root` instead of inside the parent Gallery editor modal, preventing clipping by modal body overflow or max-height while keeping the editor open underneath.
+- Polish stacked Gallery modal layering with a stronger page-level backdrop, deterministic overlay ordering, and viewport-bounded internal picker scrolling so the picker header and footer stay reachable on normal desktop and smaller admin viewports.
+
 ## 1.31.37
 
 - Fix the real Gallery existing-item editor persistence bug by aligning server-rendered item modal ids with the admin Gallery row binding logic, so `Done` now updates the exact hidden `gallery_items[*][alt_text|caption|overlay_title|overlay_text]` inputs, live row summaries, and saved `block_gallery_item_translations` values for the active locale.

@@ -19,10 +19,12 @@
     $pickerPanelTitleId = $pickerPanelId.'_title';
     $pickerPanelTitle = $panelTitle ?? ($pickerMode === 'multiple' ? 'Choose Assets' : 'Choose Asset');
     $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
+    $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
 @endphp
 
 <div
     class="wb-stack wb-gap-2"
+    id="{{ $pickerOverlayOwnerId }}"
     data-wb-asset-picker-panel
     data-wb-picker-mode="{{ $pickerMode }}"
     data-wb-picker-name="{{ $pickerName }}"
@@ -31,6 +33,7 @@
     data-wb-picker-button-label="{{ $pickerButtonLabel }}"
     data-wb-picker-replace-label="{{ $pickerReplaceLabel }}"
     data-wb-picker-panel-mode="{{ $pickerPanelMode }}"
+    data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}"
 >
     @if ($pickerMode === 'multiple')
         <div class="wb-stack wb-gap-2" data-wb-picker-selected-list>
@@ -155,92 +158,100 @@
     @endif
 
     @if ($pickerPanelMode === 'overlay')
-        <div class="wb-overlay-layer wb-overlay-layer--dialog wb-gallery-picker-overlay" data-wb-picker-panel data-wb-picker-panel-mode="{{ $pickerPanelMode }}" hidden>
-            <div class="wb-overlay-backdrop wb-gallery-picker-overlay-backdrop" data-wb-picker-overlay-backdrop></div>
-            <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}">
-                <div class="wb-modal-dialog wb-gallery-picker-dialog">
-                    <div class="wb-modal-header">
-                        <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>
+        @push('overlays')
+            <div
+                class="wb-overlay-layer wb-overlay-layer--dialog wb-gallery-picker-overlay"
+                data-wb-picker-panel
+                data-wb-picker-panel-mode="{{ $pickerPanelMode }}"
+                data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}"
+                hidden
+            >
+                <div class="wb-overlay-backdrop wb-gallery-picker-overlay-backdrop" data-wb-picker-overlay-backdrop></div>
+                <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}">
+                    <div class="wb-modal-dialog wb-gallery-picker-dialog">
+                        <div class="wb-modal-header">
+                            <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>
 
-                        <button type="button" class="wb-modal-close" data-wb-picker-close aria-label="Close">
-                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                        </button>
-                    </div>
-
-                    <div class="wb-modal-body wb-stack wb-gap-3">
-                        <div class="wb-grid wb-grid-3">
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                                <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
-                            </div>
-
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
-                                <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                                    <option value="">All folders</option>
-                                    @foreach (($assetPickerFolders ?? collect()) as $folder)
-                                        <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
-                                <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                    <option value="">All kinds</option>
-                                    <option value="image" @selected($pickerAccept === 'image')>Image</option>
-                                    <option value="document" @selected($pickerAccept === 'document')>Document</option>
-                                    <option value="video">Video</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
+                            <button type="button" class="wb-modal-close" data-wb-picker-close aria-label="Close">
+                                <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                            </button>
                         </div>
 
-                        <div class="wb-grid wb-grid-3" data-wb-picker-grid>
-                            @foreach (($assetPickerAssets ?? collect()) as $asset)
-                                @if (! $pickerAccept || $asset->kind === $pickerAccept)
-                                    @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple'])
-                                @endif
-                            @endforeach
-                        </div>
+                        <div class="wb-modal-body wb-stack wb-gap-3">
+                            <div class="wb-grid wb-grid-3">
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="{{ $pickerInputId }}_asset_search">Search</label>
+                                    <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                                </div>
 
-                        <div class="wb-empty" data-wb-picker-empty hidden>
-                            <div class="wb-empty-title">No matching assets</div>
-                            <div class="wb-empty-text">Adjust the search or folder filter to find an internal asset.</div>
-                        </div>
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                                    <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
+                                        <option value="">All folders</option>
+                                        @foreach (($assetPickerFolders ?? collect()) as $folder)
+                                            <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                        @if (($inlineUpload ?? true) === true)
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-body wb-stack wb-gap-2">
-                                    <strong>Upload to Library</strong>
-                                    <div class="wb-grid wb-grid-2">
-                                        <div class="wb-stack wb-gap-1">
-                                            <label for="{{ $pickerInputId }}_inline_upload">File</label>
-                                            <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
-                                        </div>
-                                        <div class="wb-stack wb-gap-1">
-                                            <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
-                                            <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
-                                        </div>
-                                    </div>
-                                    <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                                        <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
-                                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
-                                    </div>
+                                <div class="wb-stack wb-gap-1">
+                                    <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                                    <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
+                                        <option value="">All kinds</option>
+                                        <option value="image" @selected($pickerAccept === 'image')>Image</option>
+                                        <option value="document" @selected($pickerAccept === 'document')>Document</option>
+                                        <option value="video">Video</option>
+                                        <option value="other">Other</option>
+                                    </select>
                                 </div>
                             </div>
-                        @endif
-                    </div>
 
-                    <div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">
-                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-close>Close</button>
-                        @if ($pickerMode === 'multiple')
-                            <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>Add Selected</button>
-                        @endif
+                            <div class="wb-grid wb-grid-3" data-wb-picker-grid>
+                                @foreach (($assetPickerAssets ?? collect()) as $asset)
+                                    @if (! $pickerAccept || $asset->kind === $pickerAccept)
+                                        @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple'])
+                                    @endif
+                                @endforeach
+                            </div>
+
+                            <div class="wb-empty" data-wb-picker-empty hidden>
+                                <div class="wb-empty-title">No matching assets</div>
+                                <div class="wb-empty-text">Adjust the search or folder filter to find an internal asset.</div>
+                            </div>
+
+                            @if (($inlineUpload ?? true) === true)
+                                <div class="wb-card wb-card-muted">
+                                    <div class="wb-card-body wb-stack wb-gap-2">
+                                        <strong>Upload to Library</strong>
+                                        <div class="wb-grid wb-grid-2">
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="{{ $pickerInputId }}_inline_upload">File</label>
+                                                <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
+                                            </div>
+                                            <div class="wb-stack wb-gap-1">
+                                                <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
+                                                <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
+                                            </div>
+                                        </div>
+                                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                                            <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
+                                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">
+                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-close>Close</button>
+                            @if ($pickerMode === 'multiple')
+                                <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>Add Selected</button>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endpush
     @else
         <div class="wb-card" id="{{ $pickerPanelId }}" data-wb-picker-panel data-wb-picker-panel-mode="{{ $pickerPanelMode }}" hidden>
             <div class="wb-card-body wb-stack wb-gap-3">

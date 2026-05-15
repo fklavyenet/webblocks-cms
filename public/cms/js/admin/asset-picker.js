@@ -278,14 +278,59 @@
         return root ? (root.getAttribute('data-wb-picker-panel-mode') || 'inline') : 'inline';
     }
 
+    function pickerOwnerId(root) {
+        return root ? String(root.getAttribute('data-wb-picker-owner-id') || '') : '';
+    }
+
     function pickerPanelElement(root) {
-        return root ? root.querySelector('[data-wb-picker-panel]') : null;
+        if (!root) {
+            return null;
+        }
+
+        var ownerId = pickerOwnerId(root);
+
+        if (pickerPanelMode(root) === 'overlay' && ownerId !== '') {
+            return document.querySelector('[data-wb-picker-panel][data-wb-picker-owner-id="' + ownerId + '"]');
+        }
+
+        return root.querySelector('[data-wb-picker-panel]');
     }
 
     function pickerModalElement(root) {
         var panel = pickerPanelElement(root);
 
         return panel ? panel.querySelector('.wb-modal') : null;
+    }
+
+    function pickerRootFromChild(element) {
+        var pickerRoot = element ? element.closest('[data-wb-asset-picker-panel]') : null;
+
+        if (pickerRoot) {
+            return pickerRoot;
+        }
+
+        var ownerId = element ? String(element.getAttribute('data-wb-picker-owner-id') || '') : '';
+
+        if (ownerId === '' && element) {
+            var panel = element.closest('[data-wb-picker-panel]');
+            ownerId = panel ? String(panel.getAttribute('data-wb-picker-owner-id') || '') : '';
+        }
+
+        return ownerId === '' ? null : document.getElementById(ownerId);
+    }
+
+    function visibleOverlayPanels() {
+        return Array.prototype.slice.call(document.querySelectorAll('[data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]')).filter(function (panel) {
+            return !panel.hidden;
+        });
+    }
+
+    function updateOverlayBodyLock() {
+        var hasOpenOverlay = visibleOverlayPanels().length > 0;
+
+        document.body.classList.toggle('wb-overlay-lock', hasOpenOverlay);
+        document.body.classList.toggle('overflow-y-hidden', hasOpenOverlay);
+        document.body.style.overflow = hasOpenOverlay ? 'hidden' : '';
     }
 
     function setPickerPanelOpen(root, isOpen) {
@@ -307,11 +352,19 @@
             modal.classList.toggle('is-open', isOpen);
         }
 
+        updateOverlayBodyLock();
+
         if (openButton) {
             openButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         }
 
         if (!isOpen) {
+            if (openButton) {
+                window.setTimeout(function () {
+                    openButton.focus();
+                }, 0);
+            }
+
             return;
         }
 
@@ -394,22 +447,22 @@
         var uploadButton = event.target.closest('[data-wb-picker-upload-submit]');
 
         if (openButton) {
-            openPickerPanel(openButton.closest('[data-wb-asset-picker-panel]'));
+            openPickerPanel(pickerRootFromChild(openButton));
             return;
         }
 
         if (closeButton) {
-            closePickerPanel(closeButton.closest('[data-wb-asset-picker-panel]'));
+            closePickerPanel(pickerRootFromChild(closeButton));
             return;
         }
 
         if (clearButton) {
-            resetPickerSelection(clearButton.closest('[data-wb-asset-picker-panel]'));
+            resetPickerSelection(pickerRootFromChild(clearButton));
             return;
         }
 
         if (selectButton) {
-            var pickerRoot = selectButton.closest('[data-wb-asset-picker-panel]');
+            var pickerRoot = pickerRootFromChild(selectButton);
             var asset = parseAssetPayload(selectButton.getAttribute('data-wb-asset'));
 
             setSinglePickerSelection(pickerRoot, asset);
@@ -418,7 +471,7 @@
         }
 
         if (toggleButton) {
-            var multiRoot = toggleButton.closest('[data-wb-asset-picker-panel]');
+            var multiRoot = pickerRootFromChild(toggleButton);
             var multiAsset = parseAssetPayload(toggleButton.getAttribute('data-wb-asset'));
             var isSelected = toggleButton.textContent.trim() === 'Selected';
 
@@ -434,19 +487,19 @@
         }
 
         if (removePreviewButton) {
-            removeMultiSelection(removePreviewButton.closest('[data-wb-asset-picker-panel]'), removePreviewButton.getAttribute('data-asset-id'));
+            removeMultiSelection(pickerRootFromChild(removePreviewButton), removePreviewButton.getAttribute('data-asset-id'));
             return;
         }
 
         if (applyButton) {
-            closePickerPanel(applyButton.closest('[data-wb-asset-picker-panel]'));
+            closePickerPanel(pickerRootFromChild(applyButton));
             return;
         }
 
         var overlayPanel = event.target.closest('[data-wb-picker-panel]');
 
         if (overlayPanel && (event.target === overlayPanel || event.target.closest('[data-wb-picker-overlay-backdrop]')) && overlayPanel.getAttribute('data-wb-picker-panel-mode') === 'overlay') {
-            closePickerPanel(overlayPanel.closest('[data-wb-asset-picker-panel]'));
+            closePickerPanel(pickerRootFromChild(overlayPanel));
             return;
         }
 
@@ -454,7 +507,7 @@
             return;
         }
 
-        var uploadRoot = uploadButton.closest('[data-wb-asset-picker-panel]');
+        var uploadRoot = pickerRootFromChild(uploadButton);
         var fileInput = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-input]') : null;
         var titleInput = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-title]') : null;
         var status = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-status]') : null;
@@ -513,7 +566,7 @@
         var pickerSearch = event.target.closest('[data-wb-picker-search]');
 
         if (pickerSearch) {
-            filterPickerAssets(pickerSearch.closest('[data-wb-asset-picker-panel]'));
+            filterPickerAssets(pickerRootFromChild(pickerSearch));
         }
     });
 
@@ -522,7 +575,7 @@
         var pickerKind = event.target.closest('[data-wb-picker-kind]');
 
         if (pickerFolder || pickerKind) {
-            filterPickerAssets(event.target.closest('[data-wb-asset-picker-panel]'));
+            filterPickerAssets(pickerRootFromChild(event.target));
             return;
         }
 
@@ -532,7 +585,7 @@
             return;
         }
 
-        var pickerRoot = uploadInput.closest('[data-wb-asset-picker-panel]');
+        var pickerRoot = pickerRootFromChild(uploadInput);
         var status = pickerRoot ? pickerRoot.querySelector('[data-wb-picker-upload-status]') : null;
 
         if (status) {
@@ -547,14 +600,12 @@
             return;
         }
 
-        var openPanels = Array.prototype.slice.call(document.querySelectorAll('[data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]')).filter(function (panel) {
-            return !panel.hidden;
-        });
+        var openPanels = visibleOverlayPanels();
 
         if (openPanels.length === 0) {
             return;
         }
 
-        closePickerPanel(openPanels[openPanels.length - 1].closest('[data-wb-asset-picker-panel]'));
+        closePickerPanel(pickerRootFromChild(openPanels[openPanels.length - 1]));
     });
 }());

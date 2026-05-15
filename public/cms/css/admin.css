@@ -771,23 +771,29 @@
 }
 
 .wb-gallery-picker-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vh, 2rem);
 }
 
 .wb-gallery-picker-overlay-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.52);
-    backdrop-filter: blur(2px);
+    background: rgba(15, 23, 42, 0.64);
+    backdrop-filter: blur(3px);
 }
 
 .wb-gallery-picker-modal {
     position: relative;
-    z-index: 41;
-    inline-size: min(100%, 72rem);
-    margin: var(--wb-s4) auto;
+    z-index: 71;
+    inline-size: min(72rem, calc(100vw - 2rem));
+    max-inline-size: 100%;
+    max-block-size: calc(100vh - 2rem);
+    margin: 0;
     box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
     border: 1px solid rgba(148, 163, 184, 0.28);
     background: var(--wb-surface-0, #fff);
@@ -795,9 +801,12 @@
 
 .wb-gallery-picker-dialog {
     background: inherit;
+    display: flex;
+    flex-direction: column;
+    max-block-size: inherit;
 }
 
 .wb-gallery-picker-modal .wb-modal-body {
-    max-block-size: min(70vh, 48rem);
+    max-block-size: calc(100vh - 11rem);
     overflow: auto;
 }

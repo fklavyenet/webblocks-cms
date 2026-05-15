@@ -3764,6 +3764,18 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Add, remove, and reorder gallery images. Per-item copy stays in each item editor.');
         $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
         $response->assertSee('wb-gallery-picker-overlay', false);
+        $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
+        $content = $response->getContent();
+        $this->assertNotFalse($content);
+        $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
+        $editorModalPosition = strpos($content, 'id="slot-block-editor-modal"');
+        $pickerOverlayPosition = strrpos($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"');
+        $this->assertNotFalse($overlayRootPosition);
+        $this->assertNotFalse($editorModalPosition);
+        $this->assertNotFalse($pickerOverlayPosition);
+        $this->assertTrue($overlayRootPosition < $editorModalPosition);
+        $this->assertTrue($editorModalPosition < $pickerOverlayPosition);
+        $this->assertTrue($overlayRootPosition < $pickerOverlayPosition);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
         $response->assertDontSee('Gallery is a media collection block.');
@@ -3838,6 +3850,14 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-gallery-edit-item', false);
         $response->assertSee('data-wb-gallery-caption-summary', false);
         $response->assertSee('Saved caption', false);
+        $content = $response->getContent();
+        $this->assertNotFalse($content);
+        $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', $content);
+        $editorModalPosition = strpos($content, 'id="slot-block-editor-modal"');
+        $pickerOverlayPosition = strrpos($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"');
+        $this->assertNotFalse($editorModalPosition);
+        $this->assertNotFalse($pickerOverlayPosition);
+        $this->assertTrue($editorModalPosition < $pickerOverlayPosition);
     }
 
     #[Test]
