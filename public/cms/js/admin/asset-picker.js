@@ -278,12 +278,23 @@
         return root ? (root.getAttribute('data-wb-picker-panel-mode') || 'inline') : 'inline';
     }
 
+    function pickerPanelElement(root) {
+        return root ? root.querySelector('[data-wb-picker-panel]') : null;
+    }
+
+    function pickerModalElement(root) {
+        var panel = pickerPanelElement(root);
+
+        return panel ? panel.querySelector('.wb-modal') : null;
+    }
+
     function setPickerPanelOpen(root, isOpen) {
         if (!root) {
             return;
         }
 
-        var panel = root.querySelector('[data-wb-picker-panel]');
+        var panel = pickerPanelElement(root);
+        var modal = pickerModalElement(root);
         var openButton = root.querySelector('[data-wb-picker-open]');
 
         if (!panel) {
@@ -292,8 +303,8 @@
 
         panel.hidden = !isOpen;
 
-        if (pickerPanelMode(root) === 'overlay') {
-            panel.classList.toggle('is-open', isOpen);
+        if (pickerPanelMode(root) === 'overlay' && modal) {
+            modal.classList.toggle('is-open', isOpen);
         }
 
         if (openButton) {
@@ -434,7 +445,7 @@
 
         var overlayPanel = event.target.closest('[data-wb-picker-panel]');
 
-        if (overlayPanel && event.target === overlayPanel && overlayPanel.getAttribute('data-wb-picker-panel-mode') === 'overlay') {
+        if (overlayPanel && (event.target === overlayPanel || event.target.closest('[data-wb-picker-overlay-backdrop]')) && overlayPanel.getAttribute('data-wb-picker-panel-mode') === 'overlay') {
             closePickerPanel(overlayPanel.closest('[data-wb-asset-picker-panel]'));
             return;
         }

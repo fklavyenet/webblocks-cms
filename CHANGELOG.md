@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.35
+
+- Polish the Gallery block editor so `Gallery Items` owns a normal admin card header with a live item-count badge plus header actions for `Add Gallery Items` and `Remove All`, while removing the old inline explanatory callouts from the main editing path.
+- Strengthen the Gallery media picker as a true in-modal overlay layer with a local backdrop, stronger panel separation, and live item-count or empty-state updates so the still-open Gallery editor remains stable without underlying table action bleed-through.
+
 ## 1.31.34
 
 - Move the Gallery block media picker out of the inline `Gallery Items` flow into an overlay-style picker inside the still-open Gallery editor modal, keeping the compact list stable while preserving existing add, append, remove-all, and ordering behavior.

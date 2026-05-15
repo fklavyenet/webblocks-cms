@@ -66,24 +66,39 @@
             </div>
 
             <div class="wb-tabs-panel {{ $activeTab === 'block-fields' ? 'is-active' : '' }}" id="slot-block-fields-panel">
-                <div class="wb-card wb-card-accent">
-                    <div class="wb-card-header">
-                        <strong>{{ ($selectedBlockType?->is_system ?? $block->is_system) ? 'System Block Config' : 'Content Fields' }} for {{ $selectedBlockType?->name ?? $block->typeName() }}</strong>
+                @if (($selectedBlockType?->slug ?? $block->typeSlug()) === 'gallery')
+                    @include($block->adminFormView(), [
+                        'block' => $block,
+                        'selectedBlockType' => $selectedBlockType,
+                        'assetPickerAssets' => $assetPickerAssets,
+                        'assetPickerFolders' => $assetPickerFolders,
+                        'columnItemBlockType' => $columnItemBlockType,
+                        'featureItemBlockType' => $featureItemBlockType,
+                        'linkListItemBlockType' => $linkListItemBlockType,
+                        'activeLocale' => $activeLocale,
+                        'isDefaultLocale' => $isDefaultLocale,
+                        'renderOwnCard' => true,
+                    ])
+                @else
+                    <div class="wb-card wb-card-accent">
+                        <div class="wb-card-header">
+                            <strong>{{ ($selectedBlockType?->is_system ?? $block->is_system) ? 'System Block Config' : 'Content Fields' }} for {{ $selectedBlockType?->name ?? $block->typeName() }}</strong>
+                        </div>
+                        <div class="wb-card-body">
+                            @include($block->adminFormView(), [
+                                'block' => $block,
+                                'selectedBlockType' => $selectedBlockType,
+                                'assetPickerAssets' => $assetPickerAssets,
+                                'assetPickerFolders' => $assetPickerFolders,
+                                'columnItemBlockType' => $columnItemBlockType,
+                                'featureItemBlockType' => $featureItemBlockType,
+                                'linkListItemBlockType' => $linkListItemBlockType,
+                                'activeLocale' => $activeLocale,
+                                'isDefaultLocale' => $isDefaultLocale,
+                            ])
+                        </div>
                     </div>
-                    <div class="wb-card-body">
-                        @include($block->adminFormView(), [
-                            'block' => $block,
-                            'selectedBlockType' => $selectedBlockType,
-                            'assetPickerAssets' => $assetPickerAssets,
-                            'assetPickerFolders' => $assetPickerFolders,
-                            'columnItemBlockType' => $columnItemBlockType,
-                            'featureItemBlockType' => $featureItemBlockType,
-                            'linkListItemBlockType' => $linkListItemBlockType,
-                            'activeLocale' => $activeLocale,
-                            'isDefaultLocale' => $isDefaultLocale,
-                        ])
-                    </div>
-                </div>
+                @endif
             </div>
 
             <div class="wb-tabs-panel {{ $activeTab === 'settings' ? 'is-active' : '' }}" id="slot-block-settings-panel">

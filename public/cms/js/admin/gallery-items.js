@@ -82,6 +82,36 @@
                 indexLabel.textContent = String(index + 1);
             }
         });
+
+        syncEditorCount(editor, rows.length);
+        syncEditorStates(editor, rows.length);
+    }
+
+    function syncEditorCount(editor, count) {
+        if (!editor) {
+            return;
+        }
+
+        editor.querySelectorAll('[data-wb-gallery-items-count]').forEach(function (badge) {
+            badge.textContent = String(count) + ' ' + (count === 1 ? 'item' : 'items');
+        });
+    }
+
+    function syncEditorStates(editor, count) {
+        if (!editor) {
+            return;
+        }
+
+        var emptyState = editor.querySelector('[data-wb-gallery-items-empty]');
+        var tableWrap = editor.querySelector('[data-wb-gallery-items-table]');
+
+        if (emptyState) {
+            emptyState.hidden = count !== 0;
+        }
+
+        if (tableWrap) {
+            tableWrap.hidden = count === 0;
+        }
     }
 
     function modalIdFor(editor, assetId) {
@@ -259,6 +289,7 @@
                 filename: assetLabel ? assetLabel.textContent.trim() : ''
             }, row);
         });
+        syncEditor(editor);
     });
 
     document.addEventListener('admin-sortable-list:reordered', function (event) {

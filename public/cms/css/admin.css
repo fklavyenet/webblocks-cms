@@ -769,3 +769,35 @@
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
+
+.wb-gallery-picker-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+}
+
+.wb-gallery-picker-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(2px);
+}
+
+.wb-gallery-picker-modal {
+    position: relative;
+    z-index: 41;
+    inline-size: min(100%, 72rem);
+    margin: var(--wb-s4) auto;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: var(--wb-surface-0, #fff);
+}
+
+.wb-gallery-picker-dialog {
+    background: inherit;
+}
+
+.wb-gallery-picker-modal .wb-modal-body {
+    max-block-size: min(70vh, 48rem);
+    overflow: auto;
+}

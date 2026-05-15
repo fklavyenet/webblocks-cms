@@ -3755,11 +3755,16 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Add Block: Gallery');
         $response->assertSee('Gallery Items');
+        $response->assertDontSee('Content Fields for Gallery');
         $response->assertSee('Add Gallery Items');
-        $response->assertSee('Per-item copy is edited from the compact list below.');
+        $response->assertSee('data-wb-gallery-items-count', false);
+        $response->assertSee('Add, remove, and reorder gallery images. Per-item copy stays in each item editor.');
         $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
+        $response->assertSee('wb-gallery-picker-overlay', false);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
+        $response->assertDontSee('Gallery is a media collection block.');
+        $response->assertDontSee('Alt text, caption, and overlay copy are translated per locale.');
         $response->assertDontSee('Gallery Title');
         $response->assertDontSee('Description');
         $response->assertDontSee('name="title"', false);

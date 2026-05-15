@@ -58,50 +58,193 @@
             : "gallery_items[{$index}][{$field}]";
     };
     $modalIdPrefix = $modalIdPrefix ?? 'gallery-item-editor';
+    $renderOwnCard = (bool) ($renderOwnCard ?? false);
 @endphp
 
 <div class="wb-stack wb-gap-4" data-wb-gallery-items-editor data-wb-gallery-field-prefix="{{ $rootPrefix ?? '' }}">
-    <div class="wb-alert wb-alert-info">
-        <div>Gallery is a media collection block. Use Content Header and Plain Text or Rich Text before Gallery for headings or descriptive copy.</div>
-    </div>
+    @if ($renderOwnCard)
+        <div class="wb-card wb-card-accent">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Gallery Items</strong>
+                    <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+                </div>
 
-    @if ($activeLocale && $block->supportsTranslations())
-        <div class="wb-alert wb-alert-info">
-            <div>Alt text, caption, and overlay copy are translated per locale. Media selection, order, and presentation settings stay shared across locales.</div>
-        </div>
-    @endif
-
-    <div class="wb-stack wb-gap-2">
-        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <div class="wb-stack wb-gap-1">
-                <strong>Gallery Items</strong>
-                <span class="wb-text-sm wb-text-muted">{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+                @include('admin.media.asset-picker-panel', [
+                    'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
+                    'mode' => 'multiple',
+                    'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
+                    'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
+                    'selectedAssets' => $galleryItemRows->pluck('asset'),
+                    'buttonLabel' => 'Add Gallery Items',
+                    'replaceLabel' => 'Add Gallery Items',
+                    'clearLabel' => 'Remove All',
+                    'accept' => 'image',
+                    'compactControls' => true,
+                    'panelMode' => 'overlay',
+                    'panelTitle' => 'Add Gallery Items',
+                    'controlsClass' => 'wb-card-actions wb-cluster wb-cluster-2 wb-flex-wrap wb-justify-end',
+                ])
             </div>
 
-            @include('admin.media.asset-picker-panel', [
-                'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
-                'mode' => 'multiple',
-                'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
-                'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
-                'selectedAssets' => $galleryItemRows->pluck('asset'),
-                'buttonLabel' => 'Add Gallery Items',
-                'replaceLabel' => 'Add Gallery Items',
-                'clearLabel' => 'Remove All',
-                'accept' => 'image',
-                'compactControls' => true,
-                'panelMode' => 'overlay',
-                'panelTitle' => 'Add Gallery Items',
-            ])
+            <div class="wb-card-body">
+                <div class="wb-stack wb-gap-2">
+                    <span class="wb-text-sm wb-text-muted">Add, remove, and reorder gallery images. Per-item copy stays in each item editor.</span>
+
+                    <div class="wb-card wb-card-muted" data-wb-gallery-items-empty @if (! $galleryItemRows->isEmpty()) hidden @endif>
+                        <div class="wb-card-body wb-text-sm wb-text-muted">No gallery items selected yet.</div>
+                    </div>
+
+                    <div class="wb-table-wrap" data-admin-sortable-list data-wb-gallery-items-table @if ($galleryItemRows->isEmpty()) hidden @endif>
+                        <table class="wb-table wb-table-striped wb-table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Preview</th>
+                                    <th>Item</th>
+                                    <th>Summaries</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody data-wb-gallery-items-list>
+                                @foreach ($galleryItemRows as $galleryIndex => $item)
+                                    @php
+                                        $asset = $item['asset'];
+                                        $itemLabel = $asset->title ?: $asset->filename;
+                                        $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: 'No alt text');
+                                        $captionSummary = $item['caption'] !== '' ? $item['caption'] : 'No caption';
+                                        $overlaySummary = $item['overlay_title'] !== '' ? $item['overlay_title'] : 'No overlay title';
+                                        $modalId = $modalIdPrefix.'-'.$galleryIndex.'-'.(int) $asset->id;
+                                    @endphp
+                                    <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
+                                        <td>
+                                            <div class="wb-cluster wb-cluster-2">
+                                                <button type="button" class="wb-action-btn" data-admin-sortable-handle title="Drag to reorder item" aria-label="Drag to reorder item">
+                                                    <span aria-hidden="true">::</span>
+                                                </button>
+                                                <span>{{ $galleryIndex + 1 }}</span>
+                                            </div>
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'sort_order') }}" value="{{ $galleryIndex }}" data-admin-sortable-order data-wb-gallery-field="sort_order">
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'media_id') }}" value="{{ $asset->id }}" data-wb-gallery-field="media_id">
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'alt_text') }}" value="{{ $item['alt_text'] }}" data-wb-gallery-field="alt_text">
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'caption') }}" value="{{ $item['caption'] }}" data-wb-gallery-field="caption">
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'overlay_title') }}" value="{{ $item['overlay_title'] }}" data-wb-gallery-field="overlay_title">
+                                            <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'overlay_text') }}" value="{{ $item['overlay_text'] }}" data-wb-gallery-field="overlay_text">
+                                        </td>
+                                        <td>
+                                            @if ($asset->canPreview())
+                                                <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48">
+                                            @else
+                                                <span class="wb-text-sm wb-text-muted">No preview</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <strong>{{ $itemLabel }}</strong>
+                                            <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="wb-text-sm"><strong>Alt:</strong> {{ $altSummary }}</div>
+                                            <div class="wb-text-sm"><strong>Caption:</strong> {{ $captionSummary }}</div>
+                                            <div class="wb-text-sm"><strong>Overlay:</strong> {{ $overlaySummary }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="wb-action-group">
+                                                <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" title="Edit item metadata" aria-label="Edit item metadata">
+                                                    <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="Remove item" aria-label="Remove item">
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    @push('overlays')
+                                        <div class="wb-modal wb-modal-lg" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalId }}-title" data-wb-gallery-item-modal data-media-id="{{ $asset->id }}">
+                                            <div class="wb-modal-dialog">
+                                                <div class="wb-modal-header">
+                                                    <div class="wb-stack wb-gap-1">
+                                                        <h2 class="wb-modal-title" id="{{ $modalId }}-title">Edit Gallery Item: {{ $itemLabel }}</h2>
+                                                        <span class="wb-text-sm wb-text-muted">Per-item copy belongs to the active locale.</span>
+                                                    </div>
+
+                                                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+                                                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div class="wb-modal-body wb-stack wb-gap-3">
+                                                    <div class="wb-grid wb-grid-2">
+                                                        <div class="wb-stack wb-gap-1">
+                                                            <label for="{{ $modalId }}-alt-text">Alt Text</label>
+                                                            <input id="{{ $modalId }}-alt-text" class="wb-input" type="text" value="{{ $item['alt_text'] }}" data-wb-gallery-modal-field="alt_text">
+                                                        </div>
+
+                                                        <div class="wb-stack wb-gap-1">
+                                                            <label for="{{ $modalId }}-caption">Caption</label>
+                                                            <input id="{{ $modalId }}-caption" class="wb-input" type="text" value="{{ $item['caption'] }}" data-wb-gallery-modal-field="caption">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="wb-stack wb-gap-1">
+                                                        <label for="{{ $modalId }}-overlay-title">Overlay Title</label>
+                                                        <input id="{{ $modalId }}-overlay-title" class="wb-input" type="text" value="{{ $item['overlay_title'] }}" data-wb-gallery-modal-field="overlay_title">
+                                                    </div>
+
+                                                    <div class="wb-stack wb-gap-1">
+                                                        <label for="{{ $modalId }}-overlay-text">Overlay Text</label>
+                                                        <textarea id="{{ $modalId }}-overlay-text" class="wb-textarea" rows="4" data-wb-gallery-modal-field="overlay_text">{{ $item['overlay_text'] }}</textarea>
+                                                    </div>
+
+                                                    <div class="wb-text-sm wb-text-muted">
+                                                        Credit, source text, link URL, and per-item open behavior are deferred until the gallery item model includes explicit shared behavior fields.
+                                                    </div>
+                                                </div>
+
+                                                <div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">
+                                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Done</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endpush
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
+    @else
+        <div class="wb-stack wb-gap-2">
+            <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>Gallery Items</strong>
+                    <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+                </div>
 
-        <span class="wb-text-sm wb-text-muted">Add, remove, and reorder internal images. Per-item copy is edited from the compact list below.</span>
+                @include('admin.media.asset-picker-panel', [
+                    'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
+                    'mode' => 'multiple',
+                    'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
+                    'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
+                    'selectedAssets' => $galleryItemRows->pluck('asset'),
+                    'buttonLabel' => 'Add Gallery Items',
+                    'replaceLabel' => 'Add Gallery Items',
+                    'clearLabel' => 'Remove All',
+                    'accept' => 'image',
+                    'compactControls' => true,
+                    'panelMode' => 'overlay',
+                    'panelTitle' => 'Add Gallery Items',
+                ])
+            </div>
 
-        @if ($galleryItemRows->isEmpty())
-            <div class="wb-card wb-card-muted">
+            <span class="wb-text-sm wb-text-muted">Add, remove, and reorder gallery images. Per-item copy stays in each item editor.</span>
+
+            <div class="wb-card wb-card-muted" data-wb-gallery-items-empty @if (! $galleryItemRows->isEmpty()) hidden @endif>
                 <div class="wb-card-body wb-text-sm wb-text-muted">No gallery items selected yet.</div>
             </div>
-        @else
-            <div class="wb-table-wrap" data-admin-sortable-list>
+
+            <div class="wb-table-wrap" data-admin-sortable-list data-wb-gallery-items-table @if ($galleryItemRows->isEmpty()) hidden @endif>
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
@@ -217,8 +360,8 @@
                     </tbody>
                 </table>
             </div>
-        @endif
-    </div>
+        </div>
+    @endif
 
     <template data-wb-gallery-item-template>
         <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="__MEDIA_ID__">
