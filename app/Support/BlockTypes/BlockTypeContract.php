@@ -53,7 +53,7 @@ class BlockTypeContract
             'is_system' => $this->isSystem,
             'is_container' => $this->isContainer,
             'translation_family' => $this->translationFamily,
-            'translatable_fields' => $this->translationFamilyFields,
+            'translatable_fields' => $this->translatableFields,
             'admin_form_source' => $this->adminFormSource,
             'public_renderer_source' => $this->publicRendererSource,
             'supports_children' => $this->supportsChildren,

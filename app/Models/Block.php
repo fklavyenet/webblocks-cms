@@ -914,6 +914,12 @@ class Block extends Model
             'cluster',
             'card',
             'content_header',
+            'image',
+            'gallery',
+            'download',
+            'file',
+            'video',
+            'audio',
             'sticky-navbar',
         ], true);
     }

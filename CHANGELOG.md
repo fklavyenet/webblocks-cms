@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.24
+
+- Finalize the omitted Phase 3 media or visual block contract cleanup pieces from `v1.31.23` by marking `image`, `gallery`, `download`, `file`, `video`, and `audio` as root-owning public blocks, restoring their shipped documented contract entries in the shared registry, and fixing contract audit or admin modal serialization to emit the real `translatable_fields` payload.
+- Keep the scope limited to the leftover contract model, registry, and root-ownership changes that were unintentionally left out of `v1.31.23`, without changing the broader media block request, renderer, docs, or test behavior already released.
+
 ## 1.31.23
 
 - Continue Phase 3 block-type contract cleanup by publishing the media or visual core block contracts for `image`, `gallery`, `download`, `file`, `video`, and `audio`, aligning the shared contract registry, audit output, admin modal coverage, request normalization, save behavior, media relationship ownership, public renderer root ownership, docs, and focused regression tests around one shipped source-backed contract.
