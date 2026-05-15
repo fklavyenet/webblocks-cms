@@ -3757,6 +3757,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Gallery Items');
         $response->assertSee('Choose from Media');
         $response->assertSee('Per-item copy is edited from the compact list below.');
+        $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Gallery Title');
         $response->assertDontSee('Description');
         $response->assertDontSee('name="title"', false);

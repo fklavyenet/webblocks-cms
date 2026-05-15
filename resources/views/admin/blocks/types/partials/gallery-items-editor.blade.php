@@ -71,27 +71,28 @@
         </div>
     @endif
 
-    <div class="wb-stack wb-gap-1">
-        <label>Gallery Assets</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
-            'mode' => 'multiple',
-            'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
-            'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
-            'selectedAssets' => $galleryItemRows->pluck('asset'),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Add More Assets',
-            'clearLabel' => 'Remove All',
-            'accept' => 'image',
-        ])
-        <span class="wb-text-sm wb-text-muted">Add, remove, and reorder internal images. Per-item copy is edited from the compact list below.</span>
-    </div>
-
     <div class="wb-stack wb-gap-2">
         <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>Gallery Items</strong>
-            <span class="wb-text-sm wb-text-muted">{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+            <div class="wb-stack wb-gap-1">
+                <strong>Gallery Items</strong>
+                <span class="wb-text-sm wb-text-muted">{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
+            </div>
+
+            @include('admin.media.asset-picker-panel', [
+                'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
+                'mode' => 'multiple',
+                'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
+                'fieldName' => $rootPrefix ? $rootPrefix.'[gallery_media_ids]' : 'gallery_media_ids',
+                'selectedAssets' => $galleryItemRows->pluck('asset'),
+                'buttonLabel' => 'Choose from Media',
+                'replaceLabel' => 'Add More Assets',
+                'clearLabel' => 'Remove All',
+                'accept' => 'image',
+                'compactControls' => true,
+            ])
         </div>
+
+        <span class="wb-text-sm wb-text-muted">Add, remove, and reorder internal images. Per-item copy is edited from the compact list below.</span>
 
         @if ($galleryItemRows->isEmpty())
             <div class="wb-card wb-card-muted">

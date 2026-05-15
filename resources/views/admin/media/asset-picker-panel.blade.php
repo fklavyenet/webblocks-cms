@@ -13,6 +13,7 @@
     $pickerButtonLabel = $buttonLabel ?? 'Choose from Media';
     $pickerReplaceLabel = $replaceLabel ?? 'Replace';
     $pickerClearLabel = $clearLabel ?? 'Remove';
+    $pickerCompactControls = (bool) ($compactControls ?? false);
 @endphp
 
 <div
@@ -22,6 +23,8 @@
     data-wb-picker-name="{{ $pickerName }}"
     data-wb-picker-accept="{{ $pickerAccept ?? '' }}"
     data-wb-picker-field-name="{{ $pickerFieldName }}"
+    data-wb-picker-button-label="{{ $pickerButtonLabel }}"
+    data-wb-picker-replace-label="{{ $pickerReplaceLabel }}"
 >
     @if ($pickerMode === 'multiple')
         <div class="wb-stack wb-gap-2" data-wb-picker-selected-list>
@@ -33,63 +36,117 @@
         <input type="hidden" id="{{ $pickerInputId }}" name="{{ $pickerFieldName }}" value="{{ old($pickerFieldName, $pickerSelectedAsset?->id) }}" data-wb-picker-selected-input>
     @endif
 
-    <div class="wb-card wb-card-muted">
-        <div class="wb-card-body wb-stack wb-gap-3">
-            <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <div class="wb-stack wb-gap-1" data-wb-picker-summary>
-                    @if ($pickerMode === 'multiple')
-                        @if ($pickerSelectedAssets->isEmpty())
-                            <strong>No assets selected</strong>
-                            <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
-                        @else
-                            <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
-                            <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
-                        @endif
-                    @elseif ($pickerSelectedAsset)
-                        @if ($pickerSelectedAsset->canPreview())
-                            <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
-                        @endif
-                        <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
-                        <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
-                    @else
-                        <strong>No asset selected</strong>
-                        <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
-                    @endif
-                </div>
+    @if ($pickerCompactControls)
+        <div class="wb-cluster wb-cluster-2">
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open>{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
+        </div>
 
-                <div class="wb-cluster wb-cluster-2">
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open>{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
-                </div>
-            </div>
+        <div class="wb-stack wb-gap-1" data-wb-picker-summary hidden>
+            @if ($pickerMode === 'multiple')
+                @if ($pickerSelectedAssets->isEmpty())
+                    <strong>No assets selected</strong>
+                    <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+                @else
+                    <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
+                    <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
+                @endif
+            @elseif ($pickerSelectedAsset)
+                @if ($pickerSelectedAsset->canPreview())
+                    <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
+                @endif
+                <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
+            @else
+                <strong>No asset selected</strong>
+                <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
+            @endif
+        </div>
 
-            <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid>
-                @if ($pickerMode === 'multiple')
-                    @foreach ($pickerSelectedAssets as $asset)
-                        <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
-                            <div class="wb-card-body wb-stack wb-gap-2">
-                                @if ($asset->canPreview())
-                                    <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
-                                @endif
-                                <strong>{{ $asset->title ?: $asset->filename }}</strong>
-                                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
-                            </div>
-                        </div>
-                    @endforeach
-                @elseif ($pickerSelectedAsset)
-                    <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
+        <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid hidden>
+            @if ($pickerMode === 'multiple')
+                @foreach ($pickerSelectedAssets as $asset)
+                    <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            @if ($pickerSelectedAsset->canPreview())
-                                <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="120" height="84">
+                            @if ($asset->canPreview())
+                                <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
                             @endif
-                            <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
-                            <div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
+                            <strong>{{ $asset->title ?: $asset->filename }}</strong>
+                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
                         </div>
                     </div>
-                @endif
+                @endforeach
+            @elseif ($pickerSelectedAsset)
+                <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
+                    <div class="wb-card-body wb-stack wb-gap-2">
+                        @if ($pickerSelectedAsset->canPreview())
+                            <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="120" height="84">
+                        @endif
+                        <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                        <div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                    <div class="wb-stack wb-gap-1" data-wb-picker-summary>
+                        @if ($pickerMode === 'multiple')
+                            @if ($pickerSelectedAssets->isEmpty())
+                                <strong>No assets selected</strong>
+                                <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+                            @else
+                                <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
+                                <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
+                            @endif
+                        @elseif ($pickerSelectedAsset)
+                            @if ($pickerSelectedAsset->canPreview())
+                                <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
+                            @endif
+                            <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                            <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
+                        @else
+                            <strong>No asset selected</strong>
+                            <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
+                        @endif
+                    </div>
+
+                    <div class="wb-cluster wb-cluster-2">
+                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open>{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
+                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
+                    </div>
+                </div>
+
+                <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid>
+                    @if ($pickerMode === 'multiple')
+                        @foreach ($pickerSelectedAssets as $asset)
+                            <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
+                                <div class="wb-card-body wb-stack wb-gap-2">
+                                    @if ($asset->canPreview())
+                                        <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
+                                    @endif
+                                    <strong>{{ $asset->title ?: $asset->filename }}</strong>
+                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
+                                </div>
+                            </div>
+                        @endforeach
+                    @elseif ($pickerSelectedAsset)
+                        <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
+                            <div class="wb-card-body wb-stack wb-gap-2">
+                                @if ($pickerSelectedAsset->canPreview())
+                                    <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="120" height="84">
+                                @endif
+                                <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                                <div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
+    @endif
 
     <div class="wb-card" data-wb-picker-panel hidden>
         <div class="wb-card-body wb-stack wb-gap-3">

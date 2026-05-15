@@ -22,13 +22,12 @@
         }
 
         var summary = root.querySelector('[data-wb-picker-summary]');
+        var openButton = root.querySelector('[data-wb-picker-open]');
         var clearButton = root.querySelector('[data-wb-picker-clear]');
         var mode = root.getAttribute('data-wb-picker-mode');
+        var buttonLabel = root.getAttribute('data-wb-picker-button-label') || 'Choose from Media';
+        var replaceLabel = root.getAttribute('data-wb-picker-replace-label') || 'Replace';
         var inputs = Array.prototype.slice.call(root.querySelectorAll('[data-wb-picker-selected-input]'));
-
-        if (!summary) {
-            return;
-        }
 
         if (mode === 'multiple') {
             var previews = Array.prototype.slice.call(root.querySelectorAll('[data-wb-picker-preview]'));
@@ -37,10 +36,16 @@
                 return title ? title.textContent.trim() : '';
             }).filter(Boolean);
 
-            if (inputs.length === 0) {
-                summary.innerHTML = '<strong>No assets selected</strong><div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>';
-            } else {
-                summary.innerHTML = '<strong>' + inputs.length + ' assets selected</strong><div class="wb-text-sm wb-text-muted">' + escapeHtml(labels.join(', ')) + '</div>';
+            if (summary) {
+                if (inputs.length === 0) {
+                    summary.innerHTML = '<strong>No assets selected</strong><div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>';
+                } else {
+                    summary.innerHTML = '<strong>' + inputs.length + ' assets selected</strong><div class="wb-text-sm wb-text-muted">' + escapeHtml(labels.join(', ')) + '</div>';
+                }
+            }
+
+            if (openButton) {
+                openButton.textContent = inputs.length === 0 ? buttonLabel : replaceLabel;
             }
 
             if (clearButton) {
@@ -54,7 +59,13 @@
         var previewCard = root.querySelector('[data-wb-picker-preview]');
 
         if (!input || !input.value || !previewCard) {
-            summary.innerHTML = '<strong>No asset selected</strong><div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>';
+            if (summary) {
+                summary.innerHTML = '<strong>No asset selected</strong><div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>';
+            }
+
+            if (openButton) {
+                openButton.textContent = buttonLabel;
+            }
 
             if (clearButton) {
                 clearButton.disabled = true;
@@ -78,7 +89,13 @@
             html += '<div class="wb-text-sm wb-text-muted">' + escapeHtml(metaElement.textContent.trim()) + '</div>';
         }
 
-        summary.innerHTML = html;
+        if (summary) {
+            summary.innerHTML = html;
+        }
+
+        if (openButton) {
+            openButton.textContent = replaceLabel;
+        }
 
         if (clearButton) {
             clearButton.disabled = false;

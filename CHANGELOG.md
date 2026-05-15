@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.33
+
+- Remove the redundant `Gallery Assets` selected-assets card and thumbnail grid from the Gallery block editor so the compact `Gallery Items` list remains the single canonical admin UI for adding, removing, reordering, and editing gallery items.
+
 ## 1.31.32
 
 - Refine the core `gallery` block into a compact `Gallery Items` editor so ordered media selection is managed as small list rows with per-item edit and reorder controls instead of the older large selected-assets grid.
