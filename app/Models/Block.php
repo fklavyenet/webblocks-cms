@@ -6,6 +6,7 @@ use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Locales\LocaleResolver;
 use App\Support\Search\ReindexesPublicSearch;
+use App\Support\WebBlocks;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -994,12 +995,10 @@ class Block extends Model
 
     public function navbarBrandAccessibleLabel(): ?string
     {
-        return $this->stringValueOrNull($this->title)
+        return $this->navbarBrandAriaLabel()
+            ?? $this->stringValueOrNull($this->title)
             ?? $this->translatedTextFieldValue('title')
-            ?? $this->navbarBrandAriaLabel()
-            ?? $this->stringValueOrNull($this->renderSite()?->display_name)
-            ?? $this->stringValueOrNull($this->renderSite()?->seo_title)
-            ?? $this->stringValueOrNull($this->renderSite()?->name);
+            ?? $this->siteAccessibleLabelFallback();
     }
 
     public function navbarNavigationMenuKey(): string
@@ -1027,6 +1026,19 @@ class Block extends Model
     public function sidebarLinkTarget(): string
     {
         return $this->setting('target') === '_blank' ? '_blank' : '_self';
+    }
+
+    public function sidebarBrandAriaLabel(): ?string
+    {
+        return $this->stringValueOrNull($this->setting('aria_label'));
+    }
+
+    public function sidebarBrandAccessibleLabel(): ?string
+    {
+        return $this->sidebarBrandAriaLabel()
+            ?? $this->stringValueOrNull($this->title)
+            ?? $this->translatedTextFieldValue('title')
+            ?? $this->siteAccessibleLabelFallback();
     }
 
     public function sidebarNavigationMenuKey(): ?string
@@ -1070,6 +1082,47 @@ class Block extends Model
     public function sidebarNavGroupInitiallyOpen(): bool
     {
         return (bool) $this->setting('initially_open', false);
+    }
+
+    public function sidebarNavResolvedLabel(): ?string
+    {
+        return $this->stringValueOrNull($this->title) ?? $this->translatedTextFieldValue('title');
+    }
+
+    public function sidebarNavResolvedPath(): ?string
+    {
+        $href = $this->sidebarLinkUrl();
+
+        if ($href === null || preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $href) === 1 || str_starts_with($href, '#')) {
+            return null;
+        }
+
+        $path = '/'.ltrim(parse_url($href, PHP_URL_PATH) ?? '', '/');
+
+        return $path === '/' ? '/' : rtrim($path, '/');
+    }
+
+    public function sidebarNavItemIsActive(): bool
+    {
+        $href = $this->sidebarLinkUrl();
+        $hrefPath = $this->sidebarNavResolvedPath();
+        $currentPath = '/'.ltrim(request()->path(), '/');
+        $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
+
+        return match ($this->sidebarNavItemActiveMode()) {
+            'exact' => $href !== null && url()->current() === url($href),
+            'current-page' => $hrefPath !== null && request()->routeIs('pages.show') && $hrefPath === $currentPath,
+            'manual' => $this->sidebarNavItemManualActive(),
+            default => $hrefPath !== null && $hrefPath === $currentPath,
+        };
+    }
+
+    private function siteAccessibleLabelFallback(): string
+    {
+        return $this->stringValueOrNull($this->renderSite()?->display_name)
+            ?? $this->stringValueOrNull($this->renderSite()?->seo_title)
+            ?? $this->stringValueOrNull($this->renderSite()?->name)
+            ?? WebBlocks::name();
     }
 
     public function sidebarFooterVariantClass(): string

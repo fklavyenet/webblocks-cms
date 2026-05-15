@@ -1974,6 +1974,70 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function sidebar_brand_accepts_logo_only_with_accessible_label_and_optional_url(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $sidebar = $this->slotType('sidebar', 'Sidebar', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($sidebar, 'Docs', 'docs');
+        $brandType = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
+
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/sidebar-brand-logo-only-admin.png',
+            'filename' => 'sidebar-brand-logo-only-admin.png',
+            'original_name' => 'sidebar-brand-logo-only-admin.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $formResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $brandType->id]));
+
+        $formResponse->assertOk();
+        $formResponse->assertSee('name="sidebar_brand_aria_label"', false);
+        $formResponse->assertDontSee('name="title" class="wb-input" type="text" value="" required', false);
+        $formResponse->assertDontSee('name="url" class="wb-input" type="text" value="" placeholder="Falls back to the site home URL" required', false);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'block_type_id' => $brandType->id,
+            'sort_order' => 0,
+            'title' => '',
+            'subtitle' => '',
+            'asset_id' => $asset->id,
+            'url' => '',
+            'target' => '_self',
+            'sidebar_brand_aria_label' => 'Docs Home',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionDoesntHaveErrors();
+
+        $brand = Block::query()->where('page_id', $page->id)->where('type', 'sidebar-brand')->firstOrFail();
+
+        $this->assertSame('Docs Home', $brand->sidebarBrandAriaLabel());
+        $this->assertNull($brand->fresh()->title);
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $sidebar->id,
+            'block_type_id' => $brandType->id,
+            'sort_order' => 1,
+            'title' => '',
+            'subtitle' => '',
+            'url' => '',
+            'target' => '_self',
+            'sidebar_brand_aria_label' => '',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertSessionHasErrors('title');
+    }
+
+    #[Test]
     public function sidebar_navigation_icon_validation_uses_the_catalog_without_throwing_for_new_blocks(): void
     {
         $this->seedFoundation();

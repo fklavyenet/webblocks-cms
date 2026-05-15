@@ -209,6 +209,10 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $toc = $contracts->resolve('toc');
         $html = $contracts->resolve('html');
         $navbar = $contracts->resolve('sticky-navbar');
+        $navbarBrand = $contracts->resolve('navbar-brand');
+        $sidebarBrand = $contracts->resolve('sidebar-brand');
+        $sidebarNavItem = $contracts->resolve('sidebar-nav-item');
+        $sidebarNavGroup = $contracts->resolve('sidebar-nav-group');
         $breadcrumb = $contracts->resolve('breadcrumb');
         $statCard = $contracts->resolve('stat-card');
         $linkList = $contracts->resolve('link-list');
@@ -227,6 +231,14 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame(['Trusted markup can also affect shared overlay or body-end output beyond the visible root.'], $html->knownGaps);
         $this->assertSame('clear', $navbar->currentContractStatus);
         $this->assertTrue($navbar->ownsPublicRootHelper);
+        $this->assertSame('clear', $navbarBrand->currentContractStatus);
+        $this->assertSame([], $navbarBrand->knownGaps);
+        $this->assertSame('clear', $sidebarBrand->currentContractStatus);
+        $this->assertSame([], $sidebarBrand->knownGaps);
+        $this->assertSame(['settings.url', 'settings.target', 'settings.aria_label'], $sidebarBrand->sharedSettingsFields);
+        $this->assertSame('clear', $sidebarNavItem->currentContractStatus);
+        $this->assertSame('clear', $sidebarNavGroup->currentContractStatus);
+        $this->assertSame([], $sidebarNavGroup->knownGaps);
         $this->assertSame('clear', $breadcrumb->currentContractStatus);
         $this->assertSame([], $breadcrumb->knownGaps);
         $this->assertSame('clear', $statCard->currentContractStatus);

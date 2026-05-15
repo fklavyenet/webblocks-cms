@@ -32,18 +32,25 @@
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="title">Brand Title</label>
-            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}" required>
+            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}">
+            <div class="wb-text-sm wb-text-muted">Optional when a logo is present.</div>
         </div>
 
         <div class="wb-stack wb-gap-1">
             <label for="url">URL</label>
-            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $settings['url'] ?? $block->url) }}" placeholder="/" required>
+            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $settings['url'] ?? $block->url) }}" placeholder="Falls back to the site home URL">
         </div>
     </div>
 
     <div class="wb-stack wb-gap-1">
         <label for="subtitle">Subtitle</label>
         <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="sidebar_brand_aria_label">Accessible Label</label>
+        <input id="sidebar_brand_aria_label" name="sidebar_brand_aria_label" class="wb-input" type="text" value="{{ old('sidebar_brand_aria_label', $settings['aria_label'] ?? '') }}">
+        <div class="wb-text-sm wb-text-muted">Used for logo-only brands when visible title text is empty. Falls back to the site label if left blank.</div>
     </div>
 
     <div class="wb-stack wb-gap-1">

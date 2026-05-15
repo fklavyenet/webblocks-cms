@@ -85,7 +85,7 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarBrand || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'title' => [($isContentHeader || $isCard || $isStatCard || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
@@ -108,7 +108,7 @@ class BlockRequest extends FormRequest
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
-            'url' => [(($isButtonLink || $selectedBlockType?->slug === 'link-list-item' || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem) && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:2048'],
+            'url' => [(($isButtonLink || $selectedBlockType?->slug === 'link-list-item' || $isSidebarNavItem) && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
             'target' => [($isButtonLink || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem) ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
             'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -180,6 +180,7 @@ class BlockRequest extends FormRequest
             'header_actions_show_search' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
             'sticky_navbar_mode' => [$isStickyNavbar ? 'nullable' : 'prohibited', Rule::in(['sticky', 'fixed', 'static'])],
             'navbar_brand_aria_label' => [$isNavbarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'sidebar_brand_aria_label' => [$isSidebarBrand ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'navbar_navigation_menu_key' => [$isNavbarNavigation ? 'required' : 'prohibited', Rule::in(NavigationItem::menuKeys())],
             'sidebar_navigation_menu_key' => [$isSidebarNavigation ? 'nullable' : 'prohibited', Rule::in(array_merge([''], NavigationItem::menuKeys()))],
             'sidebar_navigation_show_icons' => [$isSidebarNavigation ? 'nullable' : 'prohibited', 'boolean'],
@@ -276,6 +277,15 @@ class BlockRequest extends FormRequest
 
                 if (! $hasTitle && ! $hasLogo) {
                     $validator->errors()->add('title', 'Navbar Brand requires visible title text or a logo image.');
+                }
+            }
+
+            if ($selectedBlockType?->slug === 'sidebar-brand') {
+                $hasTitle = trim((string) $this->input('title', '')) !== '';
+                $hasLogo = (int) ($this->input('media_id') ?: $this->input('asset_id') ?: 0) > 0;
+
+                if (! $hasTitle && ! $hasLogo) {
+                    $validator->errors()->add('title', 'Sidebar Brand requires visible title text or a logo image.');
                 }
             }
 
@@ -1044,6 +1054,7 @@ class BlockRequest extends FormRequest
                 if (! $isTranslatedSidebarBrandEdit) {
                     $settings['url'] = trim((string) ($data['url'] ?? '')) ?: null;
                     $settings['target'] = ($data['target'] ?? '_self') === '_blank' ? '_blank' : '_self';
+                    $settings['aria_label'] = trim((string) ($data['sidebar_brand_aria_label'] ?? '')) ?: null;
                 }
 
                 $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;

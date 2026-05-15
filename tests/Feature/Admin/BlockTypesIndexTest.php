@@ -127,6 +127,28 @@ class BlockTypesIndexTest extends TestCase
     }
 
     #[Test]
+    public function index_contract_modal_reflects_resolved_navigation_brand_contracts(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $blockType = BlockType::query()->where('slug', 'sidebar-brand')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.block-types.index', [
+            'search' => 'sidebar brand',
+            'modal' => 'block-type-contract',
+            'contract_block_type' => $blockType->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Block Type Contract: '.$blockType->name, false);
+        $response->assertSee('<code>settings.aria_label</code>', false);
+        $response->assertSee('clear', false);
+        $response->assertSee('No documented gaps.', false);
+        $response->assertDontSee('Logo-only accessibility handling is weaker than the current Navbar Brand contract.', false);
+    }
+
+    #[Test]
     public function index_shows_a_safe_contract_fallback_for_undocumented_block_types(): void
     {
         $this->seedFoundation();

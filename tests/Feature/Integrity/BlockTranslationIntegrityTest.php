@@ -473,6 +473,59 @@ class BlockTranslationIntegrityTest extends TestCase
     }
 
     #[Test]
+    public function translated_sidebar_brand_updates_do_not_overwrite_shared_accessible_label(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $site = $this->defaultSite();
+        $turkish = $this->createLocale('tr');
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+        $page = $this->pageWithMainSlot($site);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand')->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode([
+                'url' => '/p/about',
+                'target' => '_blank',
+                'aria_label' => 'Docs Home',
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $block->block_type_id,
+            'sort_order' => 0,
+            'locale' => 'tr',
+            'title' => 'Belgeler',
+            'subtitle' => 'Yardim merkezi',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $fresh = $block->fresh(['textTranslations']);
+        $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
+
+        $this->assertSame('Docs Home', $settings['aria_label']);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $turkish->id,
+            'title' => 'Belgeler',
+            'subtitle' => 'Yardim merkezi',
+        ]);
+    }
+
+    #[Test]
     public function rich_text_block_type_exists_after_seeding(): void
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

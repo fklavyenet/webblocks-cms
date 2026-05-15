@@ -32,7 +32,7 @@
 
         <div class="wb-stack wb-gap-1">
             <label for="url">URL</label>
-            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->navbarBrandUrl()) }}" placeholder="Falls back to the site home URL" required>
+            <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->navbarBrandUrl()) }}" placeholder="Falls back to the site home URL">
         </div>
     </div>
 

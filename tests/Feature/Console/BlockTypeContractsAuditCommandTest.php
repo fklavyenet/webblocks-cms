@@ -47,7 +47,13 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "stat-card"', $output);
         $this->assertStringContainsString('"slug": "link-list"', $output);
         $this->assertStringContainsString('"slug": "sticky-navbar"', $output);
+        $this->assertStringContainsString('"slug": "navbar-brand"', $output);
+        $this->assertStringContainsString('"slug": "sidebar-brand"', $output);
+        $this->assertStringContainsString('"slug": "sidebar-nav-group"', $output);
         $this->assertStringContainsString('"owns_public_root_helper": true', $output);
         $this->assertStringNotContainsString('Renderer clearly owns a root, but `Block::ownsPublicRoot()` does not currently include `sticky-navbar`.', $output);
+        $this->assertStringNotContainsString('Public renderer can fall back to the site home URL, but the admin request currently requires a URL on default-locale edits.', $output);
+        $this->assertStringNotContainsString('Logo-only accessibility handling is weaker than the current Navbar Brand contract.', $output);
+        $this->assertStringNotContainsString('Nested group rendering does not fully reuse sidebar-nav-item helper behavior for child icon and active-state rules.', $output);
     }
 }

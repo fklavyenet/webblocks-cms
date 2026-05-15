@@ -1,22 +1,9 @@
 @php
-    $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
+    $label = $block->sidebarNavResolvedLabel();
     $icon = $block->sidebarNavItemIcon();
     $items = $block->children->where('status', 'published')->filter(fn ($child) => $child->isSidebarNavItem())->sortBy('sort_order')->values();
-    $isOpen = $block->sidebarNavGroupInitiallyOpen() || $items->contains(function ($item) {
-        $href = $item->sidebarLinkUrl();
-
-        if ($href === null || preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $href) || str_starts_with($href, '#')) {
-            return false;
-        }
-
-        $hrefPath = '/'.ltrim(parse_url($href, PHP_URL_PATH) ?? '', '/');
-        $hrefPath = $hrefPath === '/' ? '/' : rtrim($hrefPath, '/');
-        $currentPath = '/'.ltrim(request()->path(), '/');
-        $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
-
-        return $hrefPath === $currentPath;
-    });
-    $groupItemsId = 'wb-sidebar-nav-group-items-'.$block->id;
+    $isOpen = $block->sidebarNavGroupInitiallyOpen() || $items->contains(fn ($item) => $item->sidebarNavItemIsActive());
+    $groupItemsId = 'wb-nav-group-items-'.$block->id;
 @endphp
 
 @if ($label !== null && $items->isNotEmpty())
@@ -31,21 +18,7 @@
 
         <div class="wb-nav-group-items" id="{{ $groupItemsId }}" @if (! $isOpen) hidden @endif>
             @foreach ($items as $item)
-                @php
-                    $href = $item->sidebarLinkUrl();
-                    $itemLabel = $item->stringValueOrNull($item->title) ?? $item->translatedTextFieldValue('title');
-                    $currentPath = '/'.ltrim(request()->path(), '/');
-                    $currentPath = $currentPath === '/' ? '/' : rtrim($currentPath, '/');
-                    $hrefPath = $href !== null ? '/'.ltrim(parse_url($href, PHP_URL_PATH) ?? '', '/') : null;
-                    $hrefPath = $hrefPath === '/' ? '/' : rtrim((string) $hrefPath, '/');
-                    $itemActive = $href !== null && $hrefPath === $currentPath;
-                    $target = $item->sidebarLinkTarget() === '_blank';
-                @endphp
-                @if ($href !== null && $itemLabel !== null)
-                    <a href="{{ $href }}" class="wb-nav-group-item{{ $itemActive ? ' is-active' : '' }}"@if ($itemActive) aria-current="page"@endif @if ($target) target="_blank" rel="noopener noreferrer"@endif>
-                        {{ $itemLabel }}
-                    </a>
-                @endif
+                @include('pages.partials.blocks.sidebar-nav-item-link', ['item' => $item, 'nested' => true])
             @endforeach
         </div>
     </div>

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.22
+
+- Continue Phase 3 block-type contract cleanup by aligning `navbar-brand` and `sidebar-brand` around the same conservative shared URL fallback and logo-only accessible-name contract, while keeping translated visible copy and shared logo or operational settings intact.
+- Reduce sidebar navigation renderer drift by reusing the same manual sidebar item output semantics for standalone `sidebar-nav-item` blocks and nested `sidebar-nav-group` children, and update the shared contract registry, audit output, docs, and regression coverage so the resolved navigation or brand gaps match shipped behavior.
+
 ## 1.31.21
 
 - Continue Phase 3 block-type contract cleanup by aligning the persisted `sticky-navbar` Navbar block with root-owning public rendering and removing the extra generic wrapper path where Navbar already owns the real `nav.wb-navbar` root.

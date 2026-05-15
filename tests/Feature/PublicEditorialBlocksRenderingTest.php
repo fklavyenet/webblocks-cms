@@ -369,6 +369,48 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
+    public function navbar_brand_without_saved_url_falls_back_to_the_resolved_site_home_path(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $navbar = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sticky-navbar',
+            'block_type_id' => $this->blockType('sticky-navbar', 'Navbar', 18, true, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['sticky_mode' => 'static'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => true,
+        ]);
+
+        $brand = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $navbar->id,
+            'type' => 'navbar-brand',
+            'block_type_id' => $this->blockType('navbar-brand', 'Navbar Brand', 19)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $brand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Home',
+        ]);
+
+        $expectedHomePath = app(PageRouteResolver::class)->homePath($brand->renderLocaleCode(), $page->site) ?? '/';
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<a href="'.$expectedHomePath.'" class="wb-navbar-brand"', false);
+    }
+
+    #[Test]
     public function sidebar_navigation_renders_only_sidebar_nav_wrapper_with_section_and_children(): void
     {
         $page = $this->pageWithMainSlot();
@@ -664,10 +706,12 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<a href="https://example.com" class="wb-sidebar-brand" target="_blank" rel="noopener noreferrer">', false);
+        $response->assertSee('href="https://example.com"', false);
+        $response->assertSee('class="wb-sidebar-brand"', false);
+        $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
         $response->assertSee('class="wb-sidebar-brand-logo"', false);
         $response->assertSee('webblocks-ui-logo.png', false);
-        $response->assertSee('alt=""', false);
+        $response->assertSee('alt="WebBlocks UI"', false);
         $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
         $response->assertSee('<span>WebBlocks UI</span>', false);
         $response->assertSee('<span class="wb-sidebar-brand-note">UI building blocks for humans and AI</span>', false);
@@ -697,10 +741,129 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<a href="/" class="wb-sidebar-brand">', false);
+        $response->assertSee('href="/"', false);
+        $response->assertSee('class="wb-sidebar-brand"', false);
         $response->assertDontSee('wb-sidebar-brand-logo', false);
         $response->assertSee('<span class="wb-sidebar-brand-copy">', false);
         $response->assertSee('<span>Docs Home</span>', false);
+    }
+
+    #[Test]
+    public function sidebar_brand_logo_only_uses_accessible_label_then_site_fallback_without_forcing_visible_text(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $page->site->update(['display_name' => 'Docs Site']);
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/sidebar-brand-logo-only.png',
+            'filename' => 'sidebar-brand-logo-only.png',
+            'original_name' => 'sidebar-brand-logo-only.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'size' => 1234,
+            'kind' => 'image',
+            'visibility' => 'public',
+        ]);
+
+        $explicitLabelBrand = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand', 'Sidebar Brand', 15)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'asset_id' => $asset->id,
+            'settings' => json_encode(['aria_label' => 'Knowledge Base Home'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $explicitLabelBrand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => '',
+            'subtitle' => '',
+        ]);
+
+        $siteFallbackBrand = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-brand',
+            'block_type_id' => $this->blockType('sidebar-brand', 'Sidebar Brand', 15)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'asset_id' => $asset->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $siteFallbackBrand->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => '',
+            'subtitle' => '',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('aria-label="Knowledge Base Home"', false);
+        $response->assertSee('alt="Knowledge Base Home"', false);
+        $response->assertSee('aria-label="Docs Site"', false);
+        $response->assertSee('alt="Docs Site"', false);
+        $response->assertDontSee('<span class="wb-sidebar-brand-copy">', false);
+    }
+
+    #[Test]
+    public function manual_sidebar_nav_group_children_reuse_sidebar_item_output_semantics(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        $group = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'sidebar-nav-group',
+            'block_type_id' => $this->blockType('sidebar-nav-group', 'Sidebar Nav Group', 18, false, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['icon' => 'layers', 'initially_open' => false], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $group->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Patterns',
+        ]);
+
+        $child = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $group->id,
+            'type' => 'sidebar-nav-item',
+            'block_type_id' => $this->blockType('sidebar-nav-item', 'Sidebar Nav Item', 17)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['url' => '/p/about', 'target' => '_blank', 'icon' => 'rocket', 'active_mode' => 'path'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $child->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Getting Started',
+        ]);
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<div class="wb-nav-group is-open" data-wb-nav-group>', false);
+        $response->assertSee('aria-controls="wb-nav-group-items-'.$group->id.'"', false);
+        $response->assertSee('id="wb-nav-group-items-'.$group->id.'"', false);
+        $response->assertSee('class="wb-icon wb-icon-rocket wb-sidebar-icon"', false);
+        $response->assertSee('href="/p/about"', false);
+        $response->assertSee('class="wb-nav-group-item is-active"', false);
+        $response->assertSee('aria-current="page"', false);
+        $response->assertSee('target="_blank" rel="noopener noreferrer"', false);
+        $response->assertSee('>Getting Started</span>', false);
     }
 
     #[Test]
