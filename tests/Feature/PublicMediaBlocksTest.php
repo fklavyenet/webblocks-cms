@@ -205,6 +205,8 @@ class PublicMediaBlocksTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-wb-gallery-target="#'.$viewerId.'"', false);
         $response->assertSee('id="'.$viewerId.'"', false);
+        $response->assertDontSee('<h3>Gallery block</h3>', false);
+        $response->assertDontSee('<p>Visual set</p>', false);
         $this->assertSame(1, substr_count($html, 'id="wb-overlay-root"'));
     }
 

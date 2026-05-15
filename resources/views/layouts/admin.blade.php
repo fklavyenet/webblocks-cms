@@ -16,6 +16,7 @@
             'page-builder-modals' => public_path('cms/js/admin/page-builder-modals.js'),
             'page-slot-source-modals' => public_path('cms/js/admin/page-slot-source-modals.js'),
             'page-assets' => public_path('cms/js/admin/page-assets.js'),
+            'gallery-items' => public_path('cms/js/admin/gallery-items.js'),
             'rich-text-editor' => public_path('cms/js/admin/rich-text-editor.js'),
         ];
     @endphp
@@ -281,6 +282,9 @@
         @endif
         @if (is_file($adminJsAssets['page-assets']))
             <script src="{{ asset('cms/js/admin/page-assets.js') }}?v={{ filemtime($adminJsAssets['page-assets']) }}" defer></script>
+        @endif
+        @if (is_file($adminJsAssets['gallery-items']))
+            <script src="{{ asset('cms/js/admin/gallery-items.js') }}?v={{ filemtime($adminJsAssets['gallery-items']) }}" defer></script>
         @endif
         @if (is_file($adminJsAssets['rich-text-editor']))
             <script src="{{ asset('cms/js/admin/rich-text-editor.js') }}?v={{ filemtime($adminJsAssets['rich-text-editor']) }}" defer></script>

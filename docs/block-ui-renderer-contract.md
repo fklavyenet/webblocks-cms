@@ -83,7 +83,7 @@ Public pages now use explicit layout composition modes:
 | `tabs` | interactive tabs pattern | weak | P2 content quality | defer until a real shipped tabs pattern exists |
 | `button` | `wb-btn` variants | weak | P1 public marketing/docs | map all supported CMS variants and add button-group direction |
 | `image` | semantic `figure`, `img`, `figcaption` | weak | P2 content quality | honor link behavior and only add media framing when needed |
-| `gallery` | `wb-gallery` plus overlay root modal | acceptable | P1 public marketing/docs | keep using shipped gallery hooks and central overlay root |
+| `gallery` | `wb-gallery` plus overlay root modal | acceptable | P1 public marketing/docs | keep using shipped gallery hooks and central overlay root while keeping intro copy outside the Gallery block itself |
 | `download` | `wb-btn` or card-with-button CTA | acceptable | P2 content quality | add explicit card/download variants later |
 | `navigation-auto` | nav/list primitives, optional `wb-link-list` | acceptable | P1 public marketing/docs | keep simple menus simple and reserve docs sidebars for real docs shells |
 | `menu` | legacy alias of `navigation-auto` | acceptable | P3 later/custom | keep for migrated data only |
@@ -415,12 +415,14 @@ Public pages now use explicit layout composition modes:
 ### `gallery`
 
 - CMS block slug: `gallery`
-- Admin fields: `title`, `subtitle`, `gallery_media_ids`
-- Translatable fields: `title`, `subtitle`
-- Shared fields: ordered gallery media, legacy fallback settings when present
+- Admin fields: compact `Gallery Items` list rows, shared Gallery presentation settings, and per-item metadata modals
+- Translatable fields: per-gallery-item `alt_text`, `caption`, `overlay_title`, and `overlay_text` via `block_gallery_item_translations`
+- Shared fields: ordered gallery media selection and order, columns, gap, variant, aspect ratio, captions mode, overlay mode, and lightbox toggle
 - Intended WebBlocks UI output: WebBlocks gallery pattern with the viewer mounted under `#wb-overlay-root`; shipped WebBlocks UI gallery hooks should drive interaction first.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: Phase 3 now writes canonical ordered gallery media through `block_media`, keeps visible title and description on text translations, preserves legacy fallback items for older saved content, and keeps `data-wb-gallery-target` paired with one shared viewer modal under `#wb-overlay-root`.
+- Public rendering contract: Gallery no longer emits a public intro heading or paragraph. Existing legacy stored Gallery title/description values may remain in older records but are ignored by the public renderer.
+- Editorial contract: when section headings or explanatory copy are needed, use `Content Header` plus `Plain Text` or `Rich Text` before the Gallery block.
+- Notes for later renderer/admin improvements: the current renderer writes canonical ordered gallery media through `block_media`, resolves per-item locale-owned copy through `block_gallery_item_translations`, preserves legacy fallback items for older saved content, and keeps `data-wb-gallery-target` paired with one shared viewer modal under `#wb-overlay-root`.
 
 ### `download`
 

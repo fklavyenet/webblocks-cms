@@ -3,6 +3,7 @@
 namespace App\Support\SharedSlots;
 
 use App\Models\Block;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\Locale;
 use App\Models\SharedSlot;
 use App\Models\SharedSlotRevision;
@@ -134,7 +135,7 @@ class SharedSlotRevisionManager
             'slots.slotType',
             'blocks' => fn ($query) => $query
                 ->with([
-                    'blockAssets',
+                    'blockAssets.galleryItemTranslations',
                     'textTranslations',
                     'buttonTranslations',
                     'imageTranslations',
@@ -191,6 +192,17 @@ class SharedSlotRevisionManager
                             'media_id' => $asset->media_id,
                             'role' => $asset->role,
                             'position' => $asset->position,
+                            'gallery_item_translations' => $asset->galleryItemTranslations
+                                ->sortBy('locale_id')
+                                ->values()
+                                ->map(fn (BlockGalleryItemTranslation $translation) => [
+                                    'locale_id' => $translation->locale_id,
+                                    'alt_text' => $translation->alt_text,
+                                    'caption' => $translation->caption,
+                                    'overlay_title' => $translation->overlay_title,
+                                    'overlay_text' => $translation->overlay_text,
+                                ])
+                                ->all(),
                         ])
                         ->all(),
                     'text_translations' => $block->textTranslations
@@ -314,11 +326,15 @@ class SharedSlotRevisionManager
             $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
 
             foreach ($block['block_media'] ?? [] as $asset) {
-                $restoredBlock->blockAssets()->create([
+                $restoredBlockAsset = $restoredBlock->blockAssets()->create([
                     'media_id' => $asset['media_id'] ?? null,
                     'role' => $asset['role'],
                     'position' => $asset['position'],
                 ]);
+
+                foreach ($asset['gallery_item_translations'] ?? [] as $translation) {
+                    $restoredBlockAsset->galleryItemTranslations()->create($translation);
+                }
             }
 
             foreach ($block['text_translations'] ?? [] as $translation) {
@@ -466,7 +482,8 @@ class SharedSlotRevisionManager
         return $block->textTranslations()->exists()
             || $block->buttonTranslations()->exists()
             || $block->imageTranslations()->exists()
-            || $block->contactFormTranslations()->exists();
+            || $block->contactFormTranslations()->exists()
+            || $block->galleryItemTranslations()->exists();
     }
 
     private function dateOrNull(mixed $value): ?Carbon

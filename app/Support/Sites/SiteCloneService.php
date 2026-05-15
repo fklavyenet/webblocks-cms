@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
 use App\Models\BlockContactFormTranslation;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\Locale;
@@ -373,10 +374,11 @@ class SiteCloneService
     private function cloneBlocks(array $pageMap, array &$assetMap, SiteCloneOptions $options, array &$counts): void
     {
         $blockMap = [];
+        $defaultLocaleId = $this->defaultLocaleId();
 
         $blocks = Block::query()
             ->whereIn('page_id', array_keys($pageMap))
-            ->with(['blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
             ->orderBy('id')
             ->get();
 
@@ -402,7 +404,7 @@ class SiteCloneService
                     continue;
                 }
 
-                BlockAsset::query()->create([
+                $newBlockAsset = BlockAsset::query()->create([
                     'block_id' => $newBlock->id,
                     'media_id' => $this->clonedAssetId($blockAsset->media_id, $assetMap, $options, $counts),
                     'role' => $blockAsset->role,
@@ -412,6 +414,24 @@ class SiteCloneService
                 ]);
 
                 $counts['block_asset_links_cloned']++;
+
+                foreach ($blockAsset->galleryItemTranslations as $translation) {
+                    if (! $options->withTranslations && $translation->locale_id !== $defaultLocaleId) {
+                        continue;
+                    }
+
+                    BlockGalleryItemTranslation::query()->create([
+                        'block_media_id' => $newBlockAsset->id,
+                        'locale_id' => $translation->locale_id,
+                        'alt_text' => $translation->alt_text,
+                        'caption' => $translation->caption,
+                        'overlay_title' => $translation->overlay_title,
+                        'overlay_text' => $translation->overlay_text,
+                        'created_at' => $translation->created_at,
+                        'updated_at' => $translation->updated_at,
+                    ]);
+                    $counts['block_translation_rows_cloned']++;
+                }
             }
 
             $counts['block_translation_rows_cloned'] += $this->cloneBlockTranslations($block, $newBlock, $options);
@@ -593,7 +613,8 @@ class SiteCloneService
         return $block->textTranslations()->exists()
             || $block->buttonTranslations()->exists()
             || $block->imageTranslations()->exists()
-            || $block->contactFormTranslations()->exists();
+            || $block->contactFormTranslations()->exists()
+            || $block->galleryItemTranslations()->exists();
     }
 
     private function clonedAssetId(int $assetId, array &$assetMap, SiteCloneOptions $options, array &$counts): int
@@ -689,6 +710,8 @@ class SiteCloneService
                 + BlockImageTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->count()
+                + BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->count()
+                + BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->select('id'))->count()
             ) : (
                 BlockTextTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockTextTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
@@ -698,6 +721,8 @@ class SiteCloneService
                 + BlockImageTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->where('locale_id', $defaultLocaleId)->count()
                 + BlockContactFormTranslation::query()->whereIn('block_id', $sharedSlotBlockIds)->where('locale_id', $defaultLocaleId)->count()
+                + BlockGalleryItemTranslation::query()->where('locale_id', $defaultLocaleId)->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->count()
+                + BlockGalleryItemTranslation::query()->where('locale_id', $defaultLocaleId)->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $sharedSlotBlockIds)->select('id'))->count()
             ),
             'navigation_items_cloned' => $options->withNavigation ? NavigationItem::query()->where('site_id', $sourceSite->id)->count() : 0,
             'assets_linked' => $options->withMedia && ! $options->copyMediaFiles ? $assetIds->count() : 0,

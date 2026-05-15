@@ -32,7 +32,7 @@
                     'full_url' => $imageUrl,
                     'alt' => $alt,
                     'caption' => $caption,
-                    'meta' => '',
+                    'meta' => $caption,
                     'width' => $asset?->width,
                     'height' => $asset?->height,
                 ];

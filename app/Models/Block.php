@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
@@ -167,6 +168,18 @@ class Block extends Model
     public function contactFormTranslations(): HasMany
     {
         return $this->hasMany(BlockContactFormTranslation::class);
+    }
+
+    public function galleryItemTranslations(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            BlockGalleryItemTranslation::class,
+            BlockMedia::class,
+            'block_id',
+            'block_media_id',
+            'id',
+            'id',
+        );
     }
 
     public function typeSlug(): ?string
@@ -1241,17 +1254,104 @@ class Block extends Model
 
     public function galleryMedia(): Collection
     {
-        $mediaIds = $this->galleryMediaIds();
+        $galleryItems = $this->galleryItems();
 
-        if ($mediaIds === []) {
+        if ($galleryItems->isEmpty()) {
             return collect();
         }
+
+        $mediaIds = $galleryItems->pluck('media_id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
 
         return Media::query()
             ->whereIn('id', $mediaIds)
             ->get()
             ->sortBy(fn (Media $media) => array_search($media->id, $mediaIds, true))
             ->values();
+    }
+
+    public function galleryItems(): Collection
+    {
+        return $this->blockMedia
+            ->where('role', 'gallery_item')
+            ->sortBy('position')
+            ->values();
+    }
+
+    public function resolvedGalleryItemTranslation(?BlockMedia $item): ?BlockGalleryItemTranslation
+    {
+        if (! $item) {
+            return null;
+        }
+
+        $translations = $item->relationLoaded('galleryItemTranslations')
+            ? $item->galleryItemTranslations
+            : $item->galleryItemTranslations()->get();
+
+        $resolvedLocaleCode = $this->getAttribute('resolved_locale_code');
+        $resolvedLocaleId = is_string($resolvedLocaleCode) && $resolvedLocaleCode !== ''
+            ? Locale::query()->where('code', $resolvedLocaleCode)->value('id')
+            : null;
+        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+
+        return ($resolvedLocaleId ? $translations->firstWhere('locale_id', $resolvedLocaleId) : null)
+            ?? ($defaultLocaleId ? $translations->firstWhere('locale_id', $defaultLocaleId) : null)
+            ?? $translations->first();
+    }
+
+    public function galleryVariant(): string
+    {
+        return match ($this->appearanceSetting('variant')) {
+            'masonry', 'collage' => $this->appearanceSetting('variant'),
+            default => 'grid',
+        };
+    }
+
+    public function galleryColumns(): string
+    {
+        return match ($this->appearanceSetting('columns')) {
+            '2', '3', '4', '5' => $this->appearanceSetting('columns'),
+            default => '3',
+        };
+    }
+
+    public function galleryGap(): string
+    {
+        return match ($this->appearanceSetting('gap')) {
+            'none', 'sm', 'md', 'lg' => $this->appearanceSetting('gap'),
+            default => 'md',
+        };
+    }
+
+    public function galleryAspectRatio(): string
+    {
+        return match ($this->appearanceSetting('aspect_ratio')) {
+            'square', '4:3', '16:9', 'portrait' => $this->appearanceSetting('aspect_ratio'),
+            default => 'auto',
+        };
+    }
+
+    public function galleryCaptionsMode(): string
+    {
+        return match ($this->appearanceSetting('captions_mode')) {
+            'hidden', 'overlay', 'on-hover' => $this->appearanceSetting('captions_mode'),
+            default => 'below',
+        };
+    }
+
+    public function galleryOverlayMode(): string
+    {
+        return match ($this->appearanceSetting('overlay_mode')) {
+            'none', 'solid' => $this->appearanceSetting('overlay_mode'),
+            default => 'gradient',
+        };
+    }
+
+    public function galleryLightboxEnabled(): bool
+    {
+        return (bool) $this->setting('lightbox_enabled', true);
     }
 
     public function galleryAssets(): Collection

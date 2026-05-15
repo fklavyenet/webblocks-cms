@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
 use App\Models\BlockContactFormTranslation;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\BlockType;
@@ -449,6 +450,7 @@ class SitePromotionApplier
         $imageTranslations = collect($payload['block_image_translations'] ?? [])->groupBy('block_id');
         $contactTranslations = collect($payload['block_contact_form_translations'] ?? [])->groupBy('block_id');
         $blockAssets = collect($payload['block_media'] ?? [])->groupBy('block_id');
+        $galleryItemTranslations = collect($payload['block_gallery_item_translations'] ?? [])->groupBy('block_media_id');
 
         foreach ($pageMap as $sourcePageId => $targetPageId) {
             Block::query()->where('page_id', $targetPageId)->delete();
@@ -562,12 +564,29 @@ class SitePromotionApplier
                         continue;
                     }
 
-                    BlockAsset::query()->create([
+                    $createdBlockAsset = BlockAsset::query()->create([
                         'block_id' => $block->id,
                         'media_id' => $assetId,
                         'role' => $blockAsset['role'] ?? null,
                         'position' => $blockAsset['position'] ?? 0,
                     ]);
+
+                    foreach ($galleryItemTranslations[(int) ($blockAsset['id'] ?? 0)] ?? [] as $translation) {
+                        $localeId = $localeMap[(int) ($translation['locale_id'] ?? 0)] ?? null;
+
+                        if (! $localeId) {
+                            continue;
+                        }
+
+                        BlockGalleryItemTranslation::query()->create([
+                            'block_media_id' => $createdBlockAsset->id,
+                            'locale_id' => $localeId,
+                            'alt_text' => $translation['alt_text'] ?? null,
+                            'caption' => $translation['caption'] ?? null,
+                            'overlay_title' => $translation['overlay_title'] ?? null,
+                            'overlay_text' => $translation['overlay_text'] ?? null,
+                        ]);
+                    }
                 }
 
                 $translatedBlock = $block->fresh(['textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations']);

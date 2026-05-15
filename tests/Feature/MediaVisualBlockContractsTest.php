@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Block;
 use App\Models\BlockMedia;
 use App\Models\BlockType;
+use App\Models\Locale;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\PageSlot;
@@ -188,7 +189,7 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
-    public function gallery_block_round_trips_translated_copy_and_ordered_block_media(): void
+    public function gallery_block_stores_ordered_items_shared_settings_and_per_item_locale_copy(): void
     {
         $this->seedFoundation();
         $user = $this->adminUser();
@@ -202,9 +203,31 @@ class MediaVisualBlockContractsTest extends TestCase
             'slot_type_id' => $this->slotType()->id,
             'block_type_id' => $this->blockTypeId('gallery'),
             'sort_order' => 0,
-            'title' => 'Release gallery',
-            'subtitle' => 'Selected views',
-            'gallery_media_ids' => [$second->id, $first->id],
+            'gallery_variant' => 'masonry',
+            'gallery_columns' => '4',
+            'gallery_gap' => 'lg',
+            'gallery_aspect_ratio' => '16:9',
+            'gallery_captions_mode' => 'below',
+            'gallery_overlay_mode' => 'gradient',
+            'gallery_lightbox_enabled' => '1',
+            'gallery_items' => [
+                [
+                    'media_id' => $second->id,
+                    'sort_order' => 0,
+                    'alt_text' => 'Second translated alt',
+                    'caption' => 'Second caption',
+                    'overlay_title' => 'Second overlay',
+                    'overlay_text' => 'Second overlay text',
+                ],
+                [
+                    'media_id' => $first->id,
+                    'sort_order' => 1,
+                    'alt_text' => 'First translated alt',
+                    'caption' => 'First caption',
+                    'overlay_title' => 'First overlay',
+                    'overlay_text' => 'First overlay text',
+                ],
+            ],
             'status' => 'published',
         ]);
 
@@ -212,14 +235,22 @@ class MediaVisualBlockContractsTest extends TestCase
 
         $block = Block::query()->where('type', 'gallery')->firstOrFail();
 
-        $this->assertNull($block->fresh()->getRawOriginal('title'));
-        $this->assertNull($block->fresh()->getRawOriginal('subtitle'));
-        $this->assertDatabaseHas('block_text_translations', [
-            'block_id' => $block->id,
-            'title' => 'Release gallery',
-            'subtitle' => 'Selected views',
-        ]);
         $this->assertSame([$second->id, $first->id], $block->fresh()->galleryMediaIds());
+        $this->assertSame('masonry', $block->galleryVariant());
+        $this->assertSame('4', $block->galleryColumns());
+        $this->assertSame('lg', $block->galleryGap());
+        $this->assertTrue($block->galleryLightboxEnabled());
+
+        $secondRow = BlockMedia::query()->where('block_id', $block->id)->where('media_id', $second->id)->where('role', 'gallery_item')->firstOrFail();
+
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $secondRow->id,
+            'locale_id' => Page::defaultLocaleId(),
+            'alt_text' => 'Second translated alt',
+            'caption' => 'Second caption',
+            'overlay_title' => 'Second overlay',
+            'overlay_text' => 'Second overlay text',
+        ]);
     }
 
     #[Test]
@@ -326,5 +357,56 @@ class MediaVisualBlockContractsTest extends TestCase
             ->all();
 
         $this->assertSame([$first->id, $second->id], $positions);
+    }
+
+    #[Test]
+    public function gallery_locale_only_item_metadata_updates_do_not_overwrite_shared_media_order(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+        $page = $this->page();
+        $first = $this->media('image', 'gallery-locale-a.jpg', 'image/jpeg', 'media/images/gallery-locale-a.jpg');
+        $second = $this->media('image', 'gallery-locale-b.jpg', 'image/jpeg', 'media/images/gallery-locale-b.jpg');
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'sort_order' => 0,
+            'gallery_items' => [
+                ['media_id' => $first->id, 'sort_order' => 0, 'alt_text' => 'Default alt a'],
+                ['media_id' => $second->id, 'sort_order' => 1, 'alt_text' => 'Default alt b'],
+            ],
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $block = Block::query()->where('type', 'gallery')->firstOrFail();
+
+        Locale::query()->updateOrCreate(
+            ['code' => 'de'],
+            ['name' => 'German', 'native_name' => 'Deutsch', 'is_enabled' => true, 'is_default' => false],
+        );
+        $page->site->locales()->syncWithoutDetaching([
+            Locale::query()->where('code', 'de')->value('id') => ['is_enabled' => true],
+        ]);
+
+        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'sort_order' => 0,
+            'locale' => 'de',
+            'gallery_items' => [
+                ['media_id' => $first->id, 'sort_order' => 0, 'alt_text' => 'Deutsch alt a'],
+                ['media_id' => $second->id, 'sort_order' => 1, 'alt_text' => 'Deutsch alt b'],
+            ],
+            'status' => 'published',
+        ])->assertSessionDoesntHaveErrors();
+
+        $this->assertSame([$first->id, $second->id], $block->fresh()->galleryMediaIds());
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $block->fresh()->galleryItems()->firstWhere('media_id', $first->id)->id,
+            'alt_text' => 'Deutsch alt a',
+        ]);
     }
 }

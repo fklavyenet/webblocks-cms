@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
 use App\Models\BlockContactFormTranslation;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\BlockType;
@@ -73,7 +74,8 @@ class ImportDataMapper
                 $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
                 $blockMap = $this->importBlocks($payload, $allPageMap, $assetMap, $output);
                 $this->importBlockTranslations($payload, $blockMap, $localeMap, $output);
-                $this->importBlockAssets($payload, $blockMap, $assetMap, $output);
+                $blockMediaMap = $this->importBlockAssets($payload, $blockMap, $assetMap, $output);
+                $this->importBlockGalleryItemTranslations($payload, $blockMediaMap, $localeMap, $output);
                 $this->rebuildSharedSlotAssignments($sharedSlots, $output);
                 $this->importNavigation($site, $payload, $pageMap, $output);
 
@@ -758,9 +760,10 @@ class ImportDataMapper
             ->each(fn (Block $block) => $this->blockTranslationWriter->normalizeCanonicalStorage($block));
     }
 
-    private function importBlockAssets(array $payload, array $blockMap, array $assetMap, array &$output): void
+    private function importBlockAssets(array $payload, array $blockMap, array $assetMap, array &$output): array
     {
         $count = 0;
+        $blockMediaMap = [];
 
         foreach (($payload['block_media'] ?? []) as $blockAssetData) {
             $blockId = $blockMap[(int) ($blockAssetData['block_id'] ?? 0)] ?? null;
@@ -770,7 +773,7 @@ class ImportDataMapper
                 continue;
             }
 
-            BlockAsset::query()->create([
+            $blockAsset = BlockAsset::query()->create([
                 'block_id' => $blockId,
                 'media_id' => $assetId,
                 'role' => $blockAssetData['role'] ?? null,
@@ -779,10 +782,46 @@ class ImportDataMapper
                 'updated_at' => $blockAssetData['updated_at'] ?? null,
             ]);
 
+            $sourceBlockMediaId = (int) ($blockAssetData['id'] ?? 0);
+
+            if ($sourceBlockMediaId > 0) {
+                $blockMediaMap[$sourceBlockMediaId] = $blockAsset->id;
+            }
+
             $count++;
         }
 
         $output[] = 'Imported '.$count.' block media link(s).';
+
+        return $blockMediaMap;
+    }
+
+    private function importBlockGalleryItemTranslations(array $payload, array $blockMediaMap, array $localeMap, array &$output): void
+    {
+        $count = 0;
+
+        foreach (($payload['block_gallery_item_translations'] ?? []) as $translationData) {
+            $blockMediaId = $blockMediaMap[(int) ($translationData['block_media_id'] ?? 0)] ?? null;
+            $localeId = $localeMap[(int) ($translationData['locale_id'] ?? 0)] ?? null;
+
+            if (! $blockMediaId || ! $localeId) {
+                continue;
+            }
+
+            BlockGalleryItemTranslation::query()->create([
+                'block_media_id' => $blockMediaId,
+                'locale_id' => $localeId,
+                'alt_text' => $translationData['alt_text'] ?? null,
+                'caption' => $translationData['caption'] ?? null,
+                'overlay_title' => $translationData['overlay_title'] ?? null,
+                'overlay_text' => $translationData['overlay_text'] ?? null,
+                'created_at' => $translationData['created_at'] ?? null,
+                'updated_at' => $translationData['updated_at'] ?? null,
+            ]);
+            $count++;
+        }
+
+        $output[] = 'Imported '.$count.' gallery item translation row(s).';
     }
 
     private function importNavigation(Site $site, array $payload, array $pageMap, array &$output): void

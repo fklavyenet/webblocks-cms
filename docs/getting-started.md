@@ -37,6 +37,15 @@ At a high level, you can:
 
 Media and navigation are managed separately from the page editor, but they work together with page content.
 
+When you use `Gallery`, treat it as a media-collection block instead of a section-intro block.
+
+- use `Content Header` plus `Plain Text` or `Rich Text` before Gallery when you need a heading or explanatory copy
+- Gallery no longer renders its own public intro heading or paragraph
+- the old `Gallery Title` and `Description` fields are no longer normal Gallery editor fields
+- gallery items are managed as compact list rows with reorder and per-item edit controls instead of the older selected-assets grid
+- gallery media selection, ordering, and presentation stay shared across locales
+- per-item alt text, caption, overlay title, and overlay text are locale-owned
+
 For reusable public headers, the recommended pattern is:
 
 - build the menu in `Admin -> Navigation`

@@ -4,6 +4,7 @@ namespace App\Support\Sites\ExportImport;
 
 use App\Models\Block;
 use App\Models\BlockAsset;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\Locale;
 use App\Models\Media;
 use App\Models\MediaFolder;
@@ -50,7 +51,7 @@ class SiteExportDataBuilder
 
         $blocks = Block::query()
             ->whereIn('page_id', $blockPageIds)
-            ->with(['blockType', 'slotType', 'blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+            ->with(['blockType', 'slotType', 'blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
             ->orderBy('id')
             ->get();
         $blockIds = $blocks->pluck('id');
@@ -283,6 +284,17 @@ class SiteExportDataBuilder
                 'created_at' => $translation->created_at?->toDateTimeString(),
                 'updated_at' => $translation->updated_at?->toDateTimeString(),
             ]))->values()->all(),
+            'block_gallery_item_translations' => $blocks->flatMap(fn (Block $block) => $block->blockAssets->flatMap(fn ($blockAsset) => $blockAsset->galleryItemTranslations->map(fn (BlockGalleryItemTranslation $translation) => [
+                'id' => $translation->id,
+                'block_media_id' => $translation->block_media_id,
+                'locale_id' => $translation->locale_id,
+                'alt_text' => $translation->alt_text,
+                'caption' => $translation->caption,
+                'overlay_title' => $translation->overlay_title,
+                'overlay_text' => $translation->overlay_text,
+                'created_at' => $translation->created_at?->toDateTimeString(),
+                'updated_at' => $translation->updated_at?->toDateTimeString(),
+            ]))->values())->values()->all(),
             'navigation_items' => $navigationItems->map(fn (NavigationItem $item) => [
                 'id' => $item->id,
                 'site_id' => $item->site_id,
@@ -346,6 +358,7 @@ class SiteExportDataBuilder
                 'block_button_translations' => $blocks->sum(fn (Block $block) => $block->buttonTranslations->count()),
                 'block_image_translations' => $blocks->sum(fn (Block $block) => $block->imageTranslations->count()),
                 'block_contact_form_translations' => $blocks->sum(fn (Block $block) => $block->contactFormTranslations->count()),
+                'block_gallery_item_translations' => $blocks->sum(fn (Block $block) => $block->blockAssets->sum(fn ($blockAsset) => $blockAsset->galleryItemTranslations->count())),
                 'navigation_items' => $navigationItems->count(),
                 'media_folders' => $assetFolders->count(),
                 'media' => $assets->count(),

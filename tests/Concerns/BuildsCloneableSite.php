@@ -367,4 +367,57 @@ trait BuildsCloneableSite
 
         return [$sourceSite, $heroAsset, $sharedSlot];
     }
+
+    protected function addGalleryBlockToPage(Page $page, Asset $asset, Locale $defaultLocale, Locale $translatedLocale, string $slot = 'main', int $sortOrder = 2): array
+    {
+        $slotType = SlotType::query()->firstOrCreate(
+            ['slug' => $slot],
+            ['name' => ucfirst($slot), 'status' => 'published', 'sort_order' => $slot === 'header' ? 0 : 1, 'is_system' => true],
+        );
+        $galleryType = BlockType::query()->firstOrCreate(
+            ['slug' => 'gallery'],
+            ['name' => 'Gallery', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 4, 'is_system' => false],
+        );
+
+        $gallery = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $galleryType->id,
+            'source_type' => 'static',
+            'slot' => $slot,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => $sortOrder,
+            'settings' => json_encode([
+                'variant' => 'grid',
+                'columns' => '3',
+                'captions_mode' => 'below',
+                'lightbox_enabled' => true,
+            ], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $galleryItem = $gallery->blockAssets()->create([
+            'media_id' => $asset->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+
+        $galleryItem->galleryItemTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'alt_text' => 'Gallery alt',
+            'caption' => 'Gallery caption',
+            'overlay_title' => 'Gallery overlay title',
+            'overlay_text' => 'Gallery overlay text',
+        ]);
+        $galleryItem->galleryItemTranslations()->create([
+            'locale_id' => $translatedLocale->id,
+            'alt_text' => 'Galeri alternatif metni',
+            'caption' => 'Galeri aciklamasi',
+            'overlay_title' => 'Galeri katman basligi',
+            'overlay_text' => 'Galeri katman metni',
+        ]);
+
+        return [$gallery->fresh(['blockAssets.galleryItemTranslations']), $galleryItem->fresh(['galleryItemTranslations'])];
+    }
 }

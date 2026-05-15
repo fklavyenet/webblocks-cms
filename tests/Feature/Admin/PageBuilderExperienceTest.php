@@ -3741,6 +3741,29 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function gallery_admin_form_uses_compact_gallery_items_controls_without_legacy_title_or_description_fields(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $galleryType = BlockType::query()->where('slug', 'gallery')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $galleryType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Gallery');
+        $response->assertSee('Gallery Items');
+        $response->assertSee('Choose from Media');
+        $response->assertSee('Per-item copy is edited from the compact list below.');
+        $response->assertDontSee('Gallery Title');
+        $response->assertDontSee('Description');
+        $response->assertDontSee('name="title"', false);
+        $response->assertDontSee('name="subtitle"', false);
+    }
+
+    #[Test]
     public function layout_block_admin_forms_show_expected_fields_and_settings_controls(): void
     {
         $this->seedFoundation();

@@ -142,6 +142,20 @@ class BlockRequest extends FormRequest
             'gallery_media_ids.*' => ['integer', 'exists:media,id'],
             'gallery_asset_ids' => ['nullable', 'array'],
             'gallery_asset_ids.*' => ['integer', 'exists:media,id'],
+            'gallery_items' => [$isGallery ? 'nullable' : 'prohibited', 'array'],
+            'gallery_items.*.media_id' => [$isGallery ? 'required' : 'prohibited', 'integer', 'exists:media,id'],
+            'gallery_items.*.sort_order' => [$isGallery ? 'nullable' : 'prohibited', 'integer', 'min:0'],
+            'gallery_items.*.alt_text' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'gallery_items.*.caption' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'gallery_items.*.overlay_title' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'gallery_items.*.overlay_text' => [$isGallery ? 'nullable' : 'prohibited', 'string'],
+            'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['grid', 'masonry', 'collage'])],
+            'gallery_columns' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4', '5'])],
+            'gallery_gap' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['none', 'sm', 'md', 'lg'])],
+            'gallery_aspect_ratio' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
+            'gallery_captions_mode' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
+            'gallery_overlay_mode' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['none', 'gradient', 'solid'])],
+            'gallery_lightbox_enabled' => [$isGallery ? 'nullable' : 'prohibited', 'boolean'],
             'attachment_media_id' => ['nullable', 'integer', 'exists:media,id'],
             'attachment_asset_id' => ['nullable', 'integer', 'exists:media,id'],
             'column_items' => ['nullable', 'array'],
@@ -355,7 +369,9 @@ class BlockRequest extends FormRequest
             }
 
             if ($selectedBlockType?->slug === 'gallery') {
-                $galleryMediaIds = collect($this->input('gallery_media_ids', $this->input('gallery_asset_ids', [])))
+                $galleryMediaIds = collect($this->input('gallery_items', []))
+                    ->pluck('media_id')
+                    ->whenEmpty(fn ($items) => $items->merge($this->input('gallery_media_ids', $this->input('gallery_asset_ids', []))))
                     ->map(fn ($id) => (int) $id)
                     ->filter(fn ($id) => $id > 0)
                     ->values();
@@ -629,7 +645,26 @@ class BlockRequest extends FormRequest
             $data['media_id'] = $existingBlock->media_id;
         }
 
-        $galleryAssetIds = $authorization->filterAllowedMediaIds($this->user(), $data['gallery_media_ids'] ?? $data['gallery_asset_ids'] ?? []);
+        $submittedGalleryItems = collect($data['gallery_items'] ?? [])
+            ->map(function (array $item, int $index): array {
+                return [
+                    'media_id' => (int) ($item['media_id'] ?? 0),
+                    'sort_order' => (int) ($item['sort_order'] ?? $index),
+                    'alt_text' => trim((string) ($item['alt_text'] ?? '')) ?: null,
+                    'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
+                    'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
+                    'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
+                ];
+            })
+            ->sortBy('sort_order')
+            ->values();
+
+        $galleryAssetIds = $authorization->filterAllowedMediaIds(
+            $this->user(),
+            $submittedGalleryItems->isNotEmpty()
+                ? $submittedGalleryItems->pluck('media_id')->all()
+                : ($data['gallery_media_ids'] ?? $data['gallery_asset_ids'] ?? []),
+        );
         $attachmentAssetId = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['attachment_media_id']) ? (int) $data['attachment_media_id'] : (! empty($data['attachment_asset_id']) ? (int) $data['attachment_asset_id'] : null));
 
         $decodedSettings = [];
@@ -646,6 +681,7 @@ class BlockRequest extends FormRequest
         unset($data['asset_id']);
         unset($data['gallery_asset_ids']);
         unset($data['gallery_media_ids']);
+        unset($data['gallery_items']);
         unset($data['attachment_asset_id']);
         unset($data['attachment_media_id']);
 
@@ -653,6 +689,10 @@ class BlockRequest extends FormRequest
             'gallery_item' => $galleryAssetIds,
             'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
         ];
+        $data['_gallery_items'] = $submittedGalleryItems
+            ->filter(fn (array $item) => in_array($item['media_id'], $galleryAssetIds, true))
+            ->values()
+            ->all();
 
         if (! empty($data['block_type_id'])) {
             $blockType = BlockType::query()->find($data['block_type_id']);
@@ -1030,13 +1070,50 @@ class BlockRequest extends FormRequest
             }
 
             if ($blockType?->slug === 'gallery') {
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
+                $existingSettings = $this->route('block') instanceof Block
+                    ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
+                    : [];
+                $existingSettings = is_array($existingSettings) ? $existingSettings : [];
+                $isTranslatedGalleryEdit = $data['locale'] !== null;
+                $settings = $existingSettings;
+
+                if (! $isTranslatedGalleryEdit) {
+                    $settings['variant'] = in_array(trim((string) ($data['gallery_variant'] ?? 'grid')), ['grid', 'masonry', 'collage'], true)
+                        ? trim((string) ($data['gallery_variant'] ?? 'grid'))
+                        : 'grid';
+                    $settings['columns'] = in_array(trim((string) ($data['gallery_columns'] ?? '3')), ['2', '3', '4', '5'], true)
+                        ? trim((string) ($data['gallery_columns'] ?? '3'))
+                        : '3';
+                    $settings['gap'] = in_array(trim((string) ($data['gallery_gap'] ?? 'md')), ['none', 'sm', 'md', 'lg'], true)
+                        ? trim((string) ($data['gallery_gap'] ?? 'md'))
+                        : 'md';
+                    $settings['aspect_ratio'] = in_array(trim((string) ($data['gallery_aspect_ratio'] ?? 'auto')), ['auto', 'square', '4:3', '16:9', 'portrait'], true)
+                        ? trim((string) ($data['gallery_aspect_ratio'] ?? 'auto'))
+                        : 'auto';
+                    $settings['captions_mode'] = in_array(trim((string) ($data['gallery_captions_mode'] ?? 'below')), ['hidden', 'below', 'overlay', 'on-hover'], true)
+                        ? trim((string) ($data['gallery_captions_mode'] ?? 'below'))
+                        : 'below';
+                    $settings['overlay_mode'] = in_array(trim((string) ($data['gallery_overlay_mode'] ?? 'gradient')), ['none', 'gradient', 'solid'], true)
+                        ? trim((string) ($data['gallery_overlay_mode'] ?? 'gradient'))
+                        : 'gradient';
+                    $settings['lightbox_enabled'] = (bool) ($data['gallery_lightbox_enabled'] ?? true);
+                }
+
+                $data['title'] = array_key_exists('title', $data)
+                    ? (trim((string) ($data['title'] ?? '')) ?: null)
+                    : ($existingBlock?->getRawOriginal('title'));
+                $data['subtitle'] = array_key_exists('subtitle', $data)
+                    ? (trim((string) ($data['subtitle'] ?? '')) ?: null)
+                    : ($existingBlock?->getRawOriginal('subtitle'));
                 $data['content'] = null;
                 $data['url'] = null;
                 $data['variant'] = null;
                 $data['meta'] = null;
-                $data['settings'] = null;
+                $data['settings'] = json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
+
+                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
+                    $data['settings'] = null;
+                }
             }
 
             if ($blockType?->slug === 'download') {

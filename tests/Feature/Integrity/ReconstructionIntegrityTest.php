@@ -152,6 +152,43 @@ class ReconstructionIntegrityTest extends TestCase
     }
 
     #[Test]
+    public function revision_restore_restores_gallery_item_translation_rows_with_recreated_block_media_records(): void
+    {
+        [$site, $heroAsset] = $this->seedCloneableSite();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkish = Locale::query()->where('code', 'tr')->firstOrFail();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+        $aboutPage = Page::query()
+            ->where('site_id', $site->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+
+        [, $galleryItem] = $this->addGalleryBlockToPage($aboutPage, $heroAsset, $defaultLocale, $turkish);
+
+        $manager = app(PageRevisionManager::class);
+        $revision = $manager->capture($aboutPage->fresh(), $user, 'Snapshot');
+
+        $galleryItem->galleryItemTranslations()->where('locale_id', $turkish->id)->update([
+            'caption' => 'Degisen galeri aciklamasi',
+            'overlay_text' => 'Degisen katman metni',
+        ]);
+
+        $manager->restore($aboutPage->fresh(), $revision, $user);
+
+        $restoredPage = $aboutPage->fresh(['blocks.blockAssets.galleryItemTranslations']);
+        $restoredGallery = $restoredPage->blocks->firstWhere('type', 'gallery');
+        $restoredGalleryItem = $restoredGallery?->blockAssets->firstWhere('role', 'gallery_item');
+
+        $this->assertNotNull($restoredGalleryItem);
+        $this->assertSame('Gallery caption', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $defaultLocale->id)?->caption);
+        $this->assertSame('Galeri aciklamasi', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $turkish->id)?->caption);
+        $this->assertSame('Galeri katman metni', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $turkish->id)?->overlay_text);
+    }
+
+    #[Test]
     public function site_clone_copies_page_and_block_translations_and_enabled_locales_without_using_legacy_columns(): void
     {
         [$sourceSite] = $this->seedCloneableSite();

@@ -154,6 +154,58 @@ class SiteCloneServiceTest extends TestCase
     }
 
     #[Test]
+    public function it_clones_gallery_item_translation_rows_with_their_new_block_media_records(): void
+    {
+        [$sourceSite, $heroAsset] = $this->seedCloneableSite();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkish = Locale::query()->where('code', 'tr')->firstOrFail();
+        $sourceAbout = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+
+        [, $sourceGalleryItem] = $this->addGalleryBlockToPage($sourceAbout, $heroAsset, $defaultLocale, $turkish);
+
+        $result = app(SiteCloneService::class)->clone(
+            $sourceSite->id,
+            'gallery-clone',
+            SiteCloneOptions::fromArray([
+                'target_name' => 'Gallery Clone',
+                'target_handle' => 'gallery-clone',
+                'with_navigation' => true,
+                'with_media' => true,
+                'with_translations' => true,
+            ]),
+        );
+
+        $targetSite = $result->targetSite;
+        $targetAbout = Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+        $targetGallery = Block::query()->where('page_id', $targetAbout->id)->where('type', 'gallery')->firstOrFail();
+        $targetGalleryItem = $targetGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
+
+        $this->assertNotSame($sourceGalleryItem->id, $targetGalleryItem->id);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $targetGalleryItem->id,
+            'locale_id' => $defaultLocale->id,
+            'caption' => 'Gallery caption',
+            'overlay_title' => 'Gallery overlay title',
+        ]);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $targetGalleryItem->id,
+            'locale_id' => $turkish->id,
+            'caption' => 'Galeri aciklamasi',
+            'overlay_text' => 'Galeri katman metni',
+        ]);
+    }
+
+    #[Test]
     public function dry_run_counts_include_shared_slots_without_creating_hidden_source_pages(): void
     {
         [$sourceSite] = $this->seedCloneableSite();

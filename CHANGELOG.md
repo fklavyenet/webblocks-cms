@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## 1.31.32
+
+- Refine the core `gallery` block into a compact `Gallery Items` editor so ordered media selection is managed as small list rows with per-item edit and reorder controls instead of the older large selected-assets grid.
+- Remove Gallery title and description from normal Gallery editing and public rendering, keep any legacy stored values ignored by the public renderer for backward compatibility, and guide editors to use `Content Header` plus `Plain Text` or `Rich Text` before Gallery when section copy is needed.
+- Move per-gallery-item alt text, caption, overlay title, and overlay text into the new locale-owned `block_gallery_item_translations` model while keeping gallery media selection, ordering, and presentation behavior shared.
+- Carry gallery item translation rows through page revisions, Shared Slot revisions, site clone, site export/import, site promotion, safe site deletion, and export packaging, including the new `data/block_gallery_item_translations.json` archive manifest.
+- Clean up the public Gallery renderer so it preserves ordered gallery media, lightbox behavior, and the shared `#wb-overlay-root` plus `data-wb-gallery-target` contract without rendering legacy gallery heading or paragraph output.
+
 ## 1.31.31
 
 - Pin CMS-owned default WebBlocks UI CDN assets and the default icon manifest sync source to `v2.7.3` so public and admin layouts consume the released card media frame utilities instead of older `v2.7.x` assets.

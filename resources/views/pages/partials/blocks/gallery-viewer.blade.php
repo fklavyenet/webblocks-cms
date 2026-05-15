@@ -1,6 +1,7 @@
 @php
     $firstItem = $galleryItems->first();
     $viewerTitleId = $viewerId.'-title';
+    $firstItemMeta = trim((string) (($firstItem['meta'] ?? $firstItem['overlay_title'] ?? $firstItem['overlay_text'] ?? '')));
 @endphp
 
 @if ($firstItem)
@@ -30,9 +31,9 @@
                             @if ($firstItem['width']) width="{{ $firstItem['width'] }}" @endif
                             @if ($firstItem['height']) height="{{ $firstItem['height'] }}" @endif
                         >
-                        <figcaption class="wb-gallery-viewer-caption" id="{{ $viewerTitleId }}">{{ $firstItem['caption'] }}</figcaption>
+                        <figcaption class="wb-gallery-viewer-caption" id="{{ $viewerTitleId }}">{{ $firstItem['caption'] ?? '' }}</figcaption>
                     </figure>
-                    <p class="wb-gallery-viewer-meta wb-text-sm wb-text-muted wb-m-0">{{ $firstItem['meta'] }}</p>
+                    <p class="wb-gallery-viewer-meta wb-text-sm wb-text-muted wb-m-0">{{ $firstItemMeta }}</p>
                 </div>
             </div>
         </div>

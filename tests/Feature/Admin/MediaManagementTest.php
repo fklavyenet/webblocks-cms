@@ -1252,7 +1252,15 @@ class MediaManagementTest extends TestCase
             'role' => 'gallery_item',
             'position' => 1,
         ]);
-        $this->assertNull($block->fresh()->settings);
+        $this->assertSame([
+            'variant' => 'grid',
+            'columns' => '3',
+            'gap' => 'md',
+            'aspect_ratio' => 'auto',
+            'captions_mode' => 'below',
+            'overlay_mode' => 'gradient',
+            'lightbox_enabled' => true,
+        ], json_decode((string) $block->fresh()->settings, true));
     }
 
     #[Test]

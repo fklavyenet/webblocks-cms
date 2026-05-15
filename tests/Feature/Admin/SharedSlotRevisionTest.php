@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
@@ -14,6 +15,7 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\SharedSlots\SharedSlotRevisionManager;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
@@ -565,6 +567,93 @@ class SharedSlotRevisionTest extends TestCase
 
         $this->get(route('pages.show', $sourcePage->slug))
             ->assertNotFound();
+    }
+
+    #[Test]
+    public function shared_slot_revision_restore_restores_gallery_item_translation_rows(): void
+    {
+        $this->seedFoundation();
+
+        $site = $this->defaultSite();
+        $defaultLocale = $this->defaultLocale();
+        $turkish = Locale::query()->create([
+            'code' => 'tr',
+            'name' => 'Turkish',
+            'is_default' => false,
+            'is_enabled' => true,
+        ]);
+        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+        $sharedSlot = $this->sharedSlotFor($site, ['slot_name' => 'header']);
+        $headerSlotType = $this->slotType('header', 'Header', 1);
+        $galleryType = BlockType::query()->updateOrCreate(
+            ['slug' => 'gallery'],
+            ['name' => 'Gallery', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 20, 'is_system' => false],
+        );
+        $user = User::factory()->superAdmin()->create();
+        $sourcePage = $this->sourcePageFor($sharedSlot);
+        $asset = Asset::query()->create([
+            'disk' => 'public',
+            'path' => 'media/images/shared-gallery.jpg',
+            'filename' => 'shared-gallery.jpg',
+            'original_name' => 'shared-gallery.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 100,
+            'kind' => Asset::KIND_IMAGE,
+            'visibility' => 'public',
+            'title' => 'Shared Gallery',
+        ]);
+
+        $gallery = Block::query()->create([
+            'page_id' => $sourcePage->id,
+            'type' => 'gallery',
+            'block_type_id' => $galleryType->id,
+            'source_type' => 'static',
+            'slot' => 'header',
+            'slot_type_id' => $headerSlotType->id,
+            'sort_order' => 0,
+            'settings' => json_encode(['variant' => 'grid', 'lightbox_enabled' => true], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $galleryItem = $gallery->blockAssets()->create([
+            'media_id' => $asset->id,
+            'role' => 'gallery_item',
+            'position' => 0,
+        ]);
+        $galleryItem->galleryItemTranslations()->create([
+            'locale_id' => $defaultLocale->id,
+            'caption' => 'Shared gallery caption',
+            'alt_text' => 'Shared gallery alt',
+            'overlay_title' => 'Shared gallery overlay',
+            'overlay_text' => 'Shared gallery overlay text',
+        ]);
+        $galleryItem->galleryItemTranslations()->create([
+            'locale_id' => $turkish->id,
+            'caption' => 'Paylasilan galeri aciklamasi',
+            'alt_text' => 'Paylasilan galeri alternatif',
+            'overlay_title' => 'Paylasilan galeri katmani',
+            'overlay_text' => 'Paylasilan galeri metni',
+        ]);
+
+        $manager = app(SharedSlotRevisionManager::class);
+        $revision = $manager->capture($sharedSlot->fresh(), $user, 'manual_snapshot', 'Manual snapshot', 'Saved before gallery change', force: true, source: 'test');
+
+        $galleryItem->galleryItemTranslations()->where('locale_id', $turkish->id)->update([
+            'caption' => 'Degisen galeri aciklamasi',
+            'overlay_text' => 'Degisen galeri metni',
+        ]);
+
+        $manager->restore($sharedSlot->fresh(), $revision, $user);
+
+        $restoredSourcePage = $this->sourcePageFor($sharedSlot->fresh());
+        $restoredGallery = $restoredSourcePage->blocks()->with('blockAssets.galleryItemTranslations')->where('type', 'gallery')->firstOrFail();
+        $restoredGalleryItem = $restoredGallery->blockAssets->firstWhere('role', 'gallery_item');
+
+        $this->assertNotNull($restoredGalleryItem);
+        $this->assertSame('Shared gallery caption', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $defaultLocale->id)?->caption);
+        $this->assertSame('Paylasilan galeri aciklamasi', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $turkish->id)?->caption);
+        $this->assertSame('Paylasilan galeri metni', $restoredGalleryItem->galleryItemTranslations->firstWhere('locale_id', $turkish->id)?->overlay_text);
     }
 
     #[Test]

@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockAsset;
 use App\Models\BlockButtonTranslation;
 use App\Models\BlockContactFormTranslation;
+use App\Models\BlockGalleryItemTranslation;
 use App\Models\BlockImageTranslation;
 use App\Models\BlockTextTranslation;
 use App\Models\ContactMessage;
@@ -162,7 +163,8 @@ class SiteDeleteService
         return BlockTextTranslation::query()->whereIn('block_id', $blockIds)->count()
             + BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->count()
             + BlockImageTranslation::query()->whereIn('block_id', $blockIds)->count()
-            + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->count();
+            + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->count()
+            + BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->count();
     }
 
     private function contactMessageCount(Collection $pageIds, Collection $blockIds): int
@@ -198,6 +200,7 @@ class SiteDeleteService
         PageRevision::query()->where('site_id', $site->id)->delete();
 
         if ($blockIds->isNotEmpty()) {
+            BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->delete();
             BlockAsset::query()->whereIn('block_id', $blockIds)->delete();
             BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->delete();
             BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->delete();

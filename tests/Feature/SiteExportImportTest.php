@@ -359,6 +359,67 @@ class SiteExportImportTest extends TestCase
     }
 
     #[Test]
+    public function export_and_import_preserve_gallery_item_translation_rows(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        Storage::fake('public');
+
+        [$site, $heroAsset] = $this->seedCloneableSite(withFile: true);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkish = Locale::query()->where('code', 'tr')->firstOrFail();
+        $aboutPage = Page::query()
+            ->where('site_id', $site->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+
+        [, $sourceGalleryItem] = $this->addGalleryBlockToPage($aboutPage, $heroAsset, $defaultLocale, $turkish);
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk('site-exports')->path($siteExport->archive_path));
+        $galleryItemTranslations = json_decode((string) $archive->getFromName('data/block_gallery_item_translations.json'), true);
+        $archive->close();
+
+        $this->assertCount(2, $galleryItemTranslations);
+        $this->assertTrue(collect($galleryItemTranslations)->contains(fn (array $translation) => (int) ($translation['block_media_id'] ?? 0) === $sourceGalleryItem->id));
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Gallery Site',
+            'site_handle' => 'imported-gallery-site',
+        ]));
+
+        $importedSite = Site::query()->findOrFail($siteImport->target_site_id);
+        $importedAbout = Page::query()
+            ->where('site_id', $importedSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+        $importedGallery = Block::query()->where('page_id', $importedAbout->id)->where('type', 'gallery')->firstOrFail();
+        $importedGalleryItem = $importedGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
+
+        $this->assertNotSame($sourceGalleryItem->id, $importedGalleryItem->id);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $importedGalleryItem->id,
+            'locale_id' => $defaultLocale->id,
+            'caption' => 'Gallery caption',
+        ]);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $importedGalleryItem->id,
+            'locale_id' => $turkish->id,
+            'caption' => 'Galeri aciklamasi',
+            'overlay_title' => 'Galeri katman basligi',
+        ]);
+    }
+
+    #[Test]
     public function export_and_import_include_site_variables(): void
     {
         Storage::fake('site-exports');

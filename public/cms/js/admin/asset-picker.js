@@ -188,6 +188,9 @@
         selectedList.appendChild(input);
         previewGrid.appendChild(buildMultiPreview(asset));
         updatePickerSummary(root);
+        document.dispatchEvent(new CustomEvent('wb:asset-picker-selection-added', {
+            detail: { root: root, asset: asset }
+        }));
     }
 
     function removeMultiSelection(root, assetId) {
@@ -216,6 +219,9 @@
         });
 
         updatePickerSummary(root);
+        document.dispatchEvent(new CustomEvent('wb:asset-picker-selection-removed', {
+            detail: { root: root, assetId: assetId }
+        }));
     }
 
     function filterPickerAssets(root) {
@@ -291,6 +297,9 @@
                 button.textContent = 'Select';
             });
             updatePickerSummary(root);
+            document.dispatchEvent(new CustomEvent('wb:asset-picker-selection-reset', {
+                detail: { root: root }
+            }));
             return;
         }
 

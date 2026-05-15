@@ -166,6 +166,62 @@ class SitePromotionTest extends TestCase
     }
 
     #[Test]
+    public function apply_preserves_gallery_item_translation_rows_when_promoting_block_media(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-promotions');
+        Storage::fake('public');
+
+        [$sourceSite, $heroAsset] = $this->seedCloneableSite(withFile: true);
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $turkish = Locale::query()->where('code', 'tr')->firstOrFail();
+        $sourceAbout = Page::query()
+            ->where('site_id', $sourceSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+
+        $this->addGalleryBlockToPage($sourceAbout, $heroAsset, $defaultLocale, $turkish);
+
+        $targetSite = Site::query()->create([
+            'name' => 'Target Site',
+            'handle' => 'target-site',
+            'domain' => 'target.example.test',
+        ]);
+
+        $archivePath = $this->exportPromotionPackage($sourceSite, true);
+        $plan = app(SitePromotionPlanner::class)->plan($archivePath, SitePromotionOptions::fromArray([
+            'target_site_id' => $targetSite->id,
+            'strategy' => 'additive_update',
+            'apply_assets' => true,
+        ]));
+
+        app(SitePromotionApplier::class)->apply($plan->token);
+
+        $targetAbout = Page::query()
+            ->where('site_id', $targetSite->id)
+            ->whereHas('translations', fn ($query) => $query
+                ->where('locale_id', $defaultLocale->id)
+                ->where('slug', 'about'))
+            ->firstOrFail();
+        $targetGallery = $targetAbout->blocks()->where('type', 'gallery')->firstOrFail();
+        $targetGalleryItem = $targetGallery->blockAssets()->where('role', 'gallery_item')->firstOrFail();
+
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $targetGalleryItem->id,
+            'locale_id' => $defaultLocale->id,
+            'caption' => 'Gallery caption',
+        ]);
+        $this->assertDatabaseHas('block_gallery_item_translations', [
+            'block_media_id' => $targetGalleryItem->id,
+            'locale_id' => $turkish->id,
+            'caption' => 'Galeri aciklamasi',
+            'overlay_text' => 'Galeri katman metni',
+        ]);
+    }
+
+    #[Test]
     public function apply_blocks_if_safety_backup_creation_fails(): void
     {
         Storage::fake('site-exports');

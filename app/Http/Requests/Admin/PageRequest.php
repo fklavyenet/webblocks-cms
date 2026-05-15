@@ -83,6 +83,20 @@ class PageRequest extends FormRequest
             'blocks.*.gallery_media_ids.*' => ['integer', 'exists:media,id'],
             'blocks.*.gallery_asset_ids' => ['nullable', 'array'],
             'blocks.*.gallery_asset_ids.*' => ['integer', 'exists:media,id'],
+            'blocks.*.gallery_items' => ['nullable', 'array'],
+            'blocks.*.gallery_items.*.media_id' => ['required_with:blocks.*.gallery_items', 'integer', 'exists:media,id'],
+            'blocks.*.gallery_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
+            'blocks.*.gallery_items.*.alt_text' => ['nullable', 'string', 'max:255'],
+            'blocks.*.gallery_items.*.caption' => ['nullable', 'string', 'max:255'],
+            'blocks.*.gallery_items.*.overlay_title' => ['nullable', 'string', 'max:255'],
+            'blocks.*.gallery_items.*.overlay_text' => ['nullable', 'string'],
+            'blocks.*.gallery_variant' => ['nullable', Rule::in(['grid', 'masonry', 'collage'])],
+            'blocks.*.gallery_columns' => ['nullable', Rule::in(['2', '3', '4', '5'])],
+            'blocks.*.gallery_gap' => ['nullable', Rule::in(['none', 'sm', 'md', 'lg'])],
+            'blocks.*.gallery_aspect_ratio' => ['nullable', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
+            'blocks.*.gallery_captions_mode' => ['nullable', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
+            'blocks.*.gallery_overlay_mode' => ['nullable', Rule::in(['none', 'gradient', 'solid'])],
+            'blocks.*.gallery_lightbox_enabled' => ['nullable', 'boolean'],
             'blocks.*.attachment_media_id' => ['nullable', 'integer', 'exists:media,id'],
             'blocks.*.attachment_asset_id' => ['nullable', 'integer', 'exists:media,id'],
             'blocks.*.variant' => ['nullable', 'string', 'max:255'],
@@ -125,7 +139,25 @@ class PageRequest extends FormRequest
                 $blockType = ! empty($block['block_type_id'])
                     ? BlockType::query()->find($block['block_type_id'])
                     : null;
-                $galleryAssetIds = $authorization->filterAllowedMediaIds($this->user(), $block['gallery_media_ids'] ?? $block['gallery_asset_ids'] ?? []);
+                $submittedGalleryItems = collect($block['gallery_items'] ?? [])
+                    ->map(function (array $item, int $galleryIndex): array {
+                        return [
+                            'media_id' => (int) ($item['media_id'] ?? 0),
+                            'sort_order' => (int) ($item['sort_order'] ?? $galleryIndex),
+                            'alt_text' => trim((string) ($item['alt_text'] ?? '')) ?: null,
+                            'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
+                            'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
+                            'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
+                        ];
+                    })
+                    ->sortBy('sort_order')
+                    ->values();
+                $galleryAssetIds = $authorization->filterAllowedMediaIds(
+                    $this->user(),
+                    $submittedGalleryItems->isNotEmpty()
+                        ? $submittedGalleryItems->pluck('media_id')->all()
+                        : ($block['gallery_media_ids'] ?? $block['gallery_asset_ids'] ?? []),
+                );
                 $attachmentAssetId = $authorization->normalizeAllowedMediaId($this->user(), ! empty($block['attachment_media_id']) ? (int) $block['attachment_media_id'] : (! empty($block['attachment_asset_id']) ? (int) $block['attachment_asset_id'] : null));
 
                 $block['settings'] = trim((string) ($block['settings'] ?? '')) ?: null;
@@ -149,8 +181,44 @@ class PageRequest extends FormRequest
                     'gallery_item' => $galleryAssetIds,
                     'attachment' => $attachmentAssetId ? [$attachmentAssetId] : [],
                 ];
+                $block['_gallery_items'] = $submittedGalleryItems
+                    ->filter(fn (array $item) => in_array($item['media_id'], $galleryAssetIds, true))
+                    ->values()
+                    ->all();
 
-                unset($block['asset_id'], $block['gallery_asset_ids'], $block['gallery_media_ids'], $block['attachment_asset_id'], $block['attachment_media_id']);
+                if (($blockType?->slug ?? null) === 'gallery') {
+                    $settings = $decodedSettings;
+                    $settings['variant'] = in_array(trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid'))), ['grid', 'masonry', 'collage'], true)
+                        ? trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid')))
+                        : 'grid';
+                    $settings['columns'] = in_array(trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3'))), ['2', '3', '4', '5'], true)
+                        ? trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3')))
+                        : '3';
+                    $settings['gap'] = in_array(trim((string) ($block['gallery_gap'] ?? ($settings['gap'] ?? 'md'))), ['none', 'sm', 'md', 'lg'], true)
+                        ? trim((string) ($block['gallery_gap'] ?? ($settings['gap'] ?? 'md')))
+                        : 'md';
+                    $settings['aspect_ratio'] = in_array(trim((string) ($block['gallery_aspect_ratio'] ?? ($settings['aspect_ratio'] ?? 'auto'))), ['auto', 'square', '4:3', '16:9', 'portrait'], true)
+                        ? trim((string) ($block['gallery_aspect_ratio'] ?? ($settings['aspect_ratio'] ?? 'auto')))
+                        : 'auto';
+                    $settings['captions_mode'] = in_array(trim((string) ($block['gallery_captions_mode'] ?? ($settings['captions_mode'] ?? 'below'))), ['hidden', 'below', 'overlay', 'on-hover'], true)
+                        ? trim((string) ($block['gallery_captions_mode'] ?? ($settings['captions_mode'] ?? 'below')))
+                        : 'below';
+                    $settings['overlay_mode'] = in_array(trim((string) ($block['gallery_overlay_mode'] ?? ($settings['overlay_mode'] ?? 'gradient'))), ['none', 'gradient', 'solid'], true)
+                        ? trim((string) ($block['gallery_overlay_mode'] ?? ($settings['overlay_mode'] ?? 'gradient')))
+                        : 'gradient';
+                    $settings['lightbox_enabled'] = array_key_exists('gallery_lightbox_enabled', $block)
+                        ? (bool) $block['gallery_lightbox_enabled']
+                        : (bool) ($settings['lightbox_enabled'] ?? true);
+                    $block['settings'] = json_encode(array_filter($settings, fn ($value) => $value !== null && $value !== '' && $value !== []), JSON_UNESCAPED_SLASHES);
+                    $block['title'] = null;
+                    $block['subtitle'] = null;
+                    $block['content'] = null;
+                    $block['url'] = null;
+                    $block['variant'] = null;
+                    $block['meta'] = null;
+                }
+
+                unset($block['asset_id'], $block['gallery_asset_ids'], $block['gallery_media_ids'], $block['gallery_items'], $block['attachment_asset_id'], $block['attachment_media_id']);
 
                 return $block;
             })

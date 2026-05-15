@@ -26,6 +26,7 @@ class SiteTransferPackage
         'data/block_button_translations.json',
         'data/block_image_translations.json',
         'data/block_contact_form_translations.json',
+        'data/block_gallery_item_translations.json',
         'data/navigation_items.json',
         'data/media_folders.json',
         'data/media.json',
