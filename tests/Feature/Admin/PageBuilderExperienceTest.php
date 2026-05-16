@@ -1346,6 +1346,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('data-wb-tab="slot-block-picker-panel-common"', $content);
         $this->assertStringContainsString('id="slot-block-picker-panel-common"', $content);
         $this->assertStringContainsString('class="wb-tabs-panel is-active wb-stack wb-gap-0" id="slot-block-picker-panel-common"', $content);
+        $this->assertStringContainsString('class="wb-card wb-card-muted wb-slot-block-picker-results-card"', $content);
+        $this->assertStringContainsString('class="wb-table-wrap wb-slot-block-picker-table-wrap"', $content);
         $this->assertMatchesRegularExpression('/data-wb-tab="slot-block-picker-panel-layout"/s', $content);
         $this->assertMatchesRegularExpression('/id="slot-block-picker-panel-layout"/s', $content);
 

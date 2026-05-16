@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.47
+
+- Fix the slot editor `Block Types` modal layout regression from `v1.31.46` by removing the fragile picker-specific nested flex sizing rules, restoring a normal modal body flow, and keeping search, tabs, and result tables readable for both `Common` and `All`.
+- Keep the runtime-owned admin modal lifecycle from `v1.31.46` while ensuring the slot block picker still shows only one active client-side tab panel at a time and continues to open block editors normally.
+
 ## 1.31.46
 
 - Fix the slot editor `Block Types` modal so long catalogs such as `All` stay inside the viewport, keep the search toolbar visible, and scroll the results card internally without pushing content past the modal footer.

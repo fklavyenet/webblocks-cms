@@ -810,65 +810,14 @@
 
 .wb-slot-block-picker-dialog {
     background: inherit;
-    display: flex;
-    flex-direction: column;
-    min-block-size: 0;
-    max-block-size: calc(100vh - 2rem);
 }
 
-.wb-slot-block-picker-body {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    min-block-size: 0;
-    overflow: hidden;
-}
-
-.wb-slot-block-picker-results-card,
-.wb-slot-block-picker-results-body,
-.wb-slot-block-picker-results-body > .wb-tabs,
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels,
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels > .wb-tabs-panel,
-.wb-slot-block-picker-table-wrap {
-    min-block-size: 0;
-}
-
-.wb-slot-block-picker-results-card {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.wb-slot-block-picker-results-body {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.wb-slot-block-picker-results-body > .wb-tabs {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-}
-
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels,
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels > .wb-tabs-panel {
-    flex: 1 1 auto;
-}
-
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels {
-    overflow: hidden;
-}
-
-.wb-slot-block-picker-results-body > .wb-tabs > .wb-tabs-panels > .wb-tabs-panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.wb-slot-block-picker-modal .wb-modal-body {
+    max-block-size: calc(100vh - 11rem);
+    overflow: auto;
 }
 
 .wb-slot-block-picker-table-wrap {
-    flex: 1 1 auto;
     overflow: auto;
 }
 
