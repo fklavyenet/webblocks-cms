@@ -320,7 +320,7 @@
     function pickerModalElement(root) {
         var panel = pickerPanelElement(root);
 
-        return panel ? panel.querySelector('.wb-modal') : null;
+        return panel && panel.matches('.wb-modal') ? panel : (panel ? panel.querySelector('.wb-modal') : null);
     }
 
     function pickerRootFromChild(element) {
@@ -340,35 +340,8 @@
         return ownerId === '' ? null : document.getElementById(ownerId);
     }
 
-    function visibleOverlayPanels() {
-        return Array.prototype.slice.call(document.querySelectorAll('[data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]')).filter(function (panel) {
-            return !panel.hidden;
-        });
-    }
-
-    function overlayApi() {
-        return window.WBDom && window.WBDom.overlay ? window.WBDom.overlay : null;
-    }
-
     function modalApi() {
         return window.WBModal || null;
-    }
-
-    function ensureOverlayModal(panel) {
-        var overlay = overlayApi();
-
-        if (!panel || pickerPanelMode(pickerRootFromChild(panel)) !== 'overlay' || !overlay) {
-            return;
-        }
-
-        if (panel.getAttribute('data-wb-picker-runtime-ready') === 'true') {
-            return;
-        }
-
-        panel.hidden = false;
-        overlay.ensureLayer('dialog');
-        panel.hidden = true;
-        panel.setAttribute('data-wb-picker-runtime-ready', 'true');
     }
 
     function setPickerPanelOpen(root, isOpen) {
@@ -386,8 +359,8 @@
         }
 
         if (pickerPanelMode(root) === 'overlay' && modal && modalRuntime) {
-            ensureOverlayModal(panel);
             if (isOpen) {
+                panel.hidden = false;
                 modalRuntime.open(modal, openButton || null);
             } else {
                 modalRuntime.close(modal);

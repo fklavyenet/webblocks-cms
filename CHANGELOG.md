@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.42
+
+- Fix the Gallery `Add Gallery Items` overlay stacking regression by rendering the compact picker as a plain WebBlocks modal under `#wb-overlay-root`, letting the WebBlocks UI `v2.7.6` runtime own the active stacked dialog layer instead of relying on CMS-only wrapper and z-index overrides.
+
 ## 1.31.41
 
 - Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.6`, keeping public and admin layouts aligned on the current shipped CDN URLs.

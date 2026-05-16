@@ -786,23 +786,6 @@
     outline-offset: 2px;
 }
 
-.wb-gallery-picker-overlay {
-    padding: clamp(1rem, 3vh, 2rem);
-}
-
-.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked {
-    isolation: isolate;
-}
-
-.wb-gallery-picker-overlay-backdrop {
-    background: rgba(15, 23, 42, 0.64);
-    backdrop-filter: blur(3px);
-}
-
-.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-overlay-backdrop {
-    z-index: calc(var(--wb-z-modal) + 2);
-}
-
 .wb-gallery-picker-modal {
     inline-size: min(72rem, calc(100vw - 2rem));
     max-inline-size: 100%;
@@ -811,10 +794,6 @@
     box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
     border: 1px solid rgba(148, 163, 184, 0.28);
     background: var(--wb-surface-0, #fff);
-}
-
-.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-modal {
-    z-index: calc(var(--wb-z-modal) + 3);
 }
 
 .wb-gallery-picker-dialog {
