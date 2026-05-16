@@ -188,65 +188,39 @@
                 </div>
 
                 <div class="wb-modal-body wb-stack wb-gap-4 wb-slot-block-picker-body">
-                    <div class="wb-card wb-card-muted">
-                        <div class="wb-card-body">
-                            @include('admin.partials.listing-filters', [
-                                'action' => $slotBlockRoute(),
-                                'search' => [
-                                    'id' => 'slot_block_type_search',
-                                    'name' => 'block_type_search',
-                                    'label' => 'Search block types',
-                                    'value' => $pickerSearch,
-                                    'placeholder' => 'Search by name, intent, or slug',
-                                ],
-                                'selects' => [],
-                                'hidden' => [
-                                    'picker' => 1,
-                                    'locale' => $activeLocale->is_default ? null : $activeLocale->code,
-                                    'parent_id' => $pickerParentId,
-                                ],
-                                'showReset' => $showPickerReset,
-                                'resetUrl' => $resetUrl,
-                                'applyLabel' => 'Apply',
-                            ])
+                    @include('admin.partials.listing-filters', [
+                        'action' => $slotBlockRoute(),
+                        'search' => [
+                            'id' => 'slot_block_type_search',
+                            'name' => 'block_type_search',
+                            'label' => 'Search block types',
+                            'value' => $pickerSearch,
+                            'placeholder' => 'Search by name, intent, or slug',
+                        ],
+                        'selects' => [],
+                        'hidden' => [
+                            'picker' => 1,
+                            'locale' => $activeLocale->is_default ? null : $activeLocale->code,
+                            'parent_id' => $pickerParentId,
+                        ],
+                        'showReset' => $showPickerReset,
+                        'resetUrl' => $resetUrl,
+                        'applyLabel' => 'Apply',
+                    ])
 
-                            <input type="hidden" name="block_type_tab" value="{{ $pickerClientTab !== 'common' ? $pickerClientTab : 'common' }}" data-wb-slot-block-picker-tab-input>
-                        </div>
-                    </div>
+                    <input type="hidden" name="block_type_tab" value="{{ $pickerClientTab !== 'common' ? $pickerClientTab : 'common' }}" data-wb-slot-block-picker-tab-input>
 
-                    <div class="wb-card wb-card-muted wb-slot-block-picker-results-card">
-                        <div class="wb-card-body wb-stack wb-gap-4 wb-slot-block-picker-results-body">
-                            @if ($showSearchResults)
-                                <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                                        <div class="wb-stack wb-gap-1">
-                                            <strong>Search results</strong>
-                                            <span class="wb-text-sm wb-text-muted">Showing matches across the full eligible catalog.</span>
-                                        </div>
-                                        <span class="wb-text-sm wb-text-muted">{{ $matchingBlockTypes->count() }} result{{ $matchingBlockTypes->count() === 1 ? '' : 's' }}</span>
-                                    </div>
+                    @if ($showSearchResults)
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-body wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                                <div class="wb-stack wb-gap-1">
+                                    <strong>Search results</strong>
+                                    <span class="wb-text-sm wb-text-muted">Showing matches across the full eligible catalog.</span>
                                 </div>
-                            @else
-                                <div class="wb-tabs" data-wb-tabs data-wb-slot-block-picker-tabs>
-                                    <div class="wb-tabs-nav" role="tablist" aria-label="Block type catalog groups">
-                                        @foreach ($tabBlockTypes as $tabKey => $blockTypes)
-                                            <button
-                                                type="button"
-                                                id="slot-block-picker-tab-{{ $tabKey }}"
-                                                aria-selected="{{ $pickerClientTab === $tabKey ? 'true' : 'false' }}"
-                                                class="wb-tabs-btn {{ $activeTab === $tabKey ? 'is-active' : '' }}"
-                                                data-wb-tab="slot-block-picker-panel-{{ $tabKey }}"
-                                                data-wb-slot-block-picker-tab="{{ $tabKey }}"
-                                                @if ($pickerClientTab !== $tabKey) tabindex="-1" @endif
-                                            >
-                                                {{ $tabDefinitions[$tabKey]['label'] }}
-                                            </button>
-                                        @endforeach
-                                    </div>
+                                <span class="wb-text-sm wb-text-muted">{{ $matchingBlockTypes->count() }} result{{ $matchingBlockTypes->count() === 1 ? '' : 's' }}</span>
+                            </div>
+                        </div>
 
-                                    <div class="wb-tabs-panels">
-                            @endif
-                            @if ($showSearchResults)
                         @if ($visibleBlockTypes->isNotEmpty())
                             <div class="wb-table-wrap wb-slot-block-picker-table-wrap">
                                 <table class="wb-table wb-table-striped wb-table-hover">
@@ -290,9 +264,27 @@
                                 <div class="wb-empty-text">{{ $tabDefinitions[$activeTab]['emptyText'] }}</div>
                             </div>
                         @endif
-                            @else
+                    @else
+                        <div class="wb-tabs" data-wb-tabs data-wb-slot-block-picker-tabs>
+                            <div class="wb-tabs-nav" role="tablist" aria-label="Block type catalog groups">
                                 @foreach ($tabBlockTypes as $tabKey => $blockTypes)
-                                    <div class="wb-tabs-panel {{ $pickerClientTab === $tabKey ? 'is-active' : '' }} wb-stack wb-gap-0" id="slot-block-picker-panel-{{ $tabKey }}">
+                                    <button
+                                        type="button"
+                                        id="slot-block-picker-tab-{{ $tabKey }}"
+                                        aria-selected="{{ $pickerClientTab === $tabKey ? 'true' : 'false' }}"
+                                        class="wb-tabs-btn {{ $activeTab === $tabKey ? 'is-active' : '' }}"
+                                        data-wb-tab="slot-block-picker-panel-{{ $tabKey }}"
+                                        data-wb-slot-block-picker-tab="{{ $tabKey }}"
+                                        @if ($pickerClientTab !== $tabKey) tabindex="-1" @endif
+                                    >
+                                        {{ $tabDefinitions[$tabKey]['label'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <div class="wb-tabs-panels">
+                                @foreach ($tabBlockTypes as $tabKey => $blockTypes)
+                                    <div class="wb-tabs-panel {{ $pickerClientTab === $tabKey ? 'is-active' : '' }} wb-stack wb-gap-0" id="slot-block-picker-panel-{{ $tabKey }}" @if ($pickerClientTab !== $tabKey) hidden aria-hidden="true" @else aria-hidden="false" @endif>
                                         @if ($blockTypes->isNotEmpty())
                                             <div class="wb-table-wrap wb-slot-block-picker-table-wrap">
                                                 <table class="wb-table wb-table-striped wb-table-hover">
@@ -338,11 +330,9 @@
                                         @endif
                                     </div>
                                 @endforeach
-                                    </div>
-                                </div>
-                            @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">

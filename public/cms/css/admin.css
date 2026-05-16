@@ -808,10 +808,6 @@
     overflow: auto;
 }
 
-.wb-slot-block-picker-dialog {
-    background: inherit;
-}
-
 .wb-slot-block-picker-modal .wb-modal-body {
     max-block-size: calc(100vh - 11rem);
     overflow: auto;

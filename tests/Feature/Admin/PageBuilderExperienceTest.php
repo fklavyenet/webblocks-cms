@@ -1338,18 +1338,20 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('class="wb-modal-dialog wb-slot-block-picker-dialog"', $content);
         $this->assertStringContainsString('class="wb-modal-body wb-stack wb-gap-4 wb-slot-block-picker-body"', $content);
         $this->assertStringContainsString('data-wb-admin-autoload-overlay hidden', $content);
-        $this->assertGreaterThanOrEqual(2, substr_count($content, 'class="wb-card wb-card-muted"'));
+        $this->assertStringNotContainsString('wb-overlay-layer', $content);
+        $this->assertStringNotContainsString('wb-overlay-backdrop', $content);
         $this->assertMatchesRegularExpression('/data-slot-block-picker-count>\d+</', $content);
-        $this->assertStringContainsString('class="wb-card wb-card-muted wb-slot-block-picker-results-card"', $content);
-        $this->assertStringContainsString('class="wb-card-body wb-stack wb-gap-4 wb-slot-block-picker-results-body"', $content);
+        $this->assertStringContainsString('class="wb-admin-listing-filters"', $content);
         $this->assertStringContainsString('data-wb-slot-block-picker-tab="common"', $content);
         $this->assertStringContainsString('data-wb-tab="slot-block-picker-panel-common"', $content);
         $this->assertStringContainsString('id="slot-block-picker-panel-common"', $content);
-        $this->assertStringContainsString('class="wb-tabs-panel is-active wb-stack wb-gap-0" id="slot-block-picker-panel-common"', $content);
-        $this->assertStringContainsString('class="wb-card wb-card-muted wb-slot-block-picker-results-card"', $content);
         $this->assertStringContainsString('class="wb-table-wrap wb-slot-block-picker-table-wrap"', $content);
+        $this->assertStringNotContainsString('wb-slot-block-picker-results-card', $content);
+        $this->assertStringNotContainsString('wb-slot-block-picker-results-body', $content);
         $this->assertMatchesRegularExpression('/data-wb-tab="slot-block-picker-panel-layout"/s', $content);
         $this->assertMatchesRegularExpression('/id="slot-block-picker-panel-layout"/s', $content);
+        $this->assertMatchesRegularExpression('/<div class="wb-tabs-panel is-active wb-stack wb-gap-0" id="slot-block-picker-panel-common"[^>]*aria-hidden="false"/s', $content);
+        $this->assertMatchesRegularExpression('/<div class="wb-tabs-panel\s+wb-stack wb-gap-0" id="slot-block-picker-panel-layout"[^>]*hidden[^>]*aria-hidden="true"/s', $content);
 
         $listStart = strpos($content, '<div class="wb-table-wrap wb-slot-block-picker-table-wrap"');
         $footerStart = strpos($content, '<div class="wb-modal-footer');
@@ -3802,6 +3804,10 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('.wb-picker-asset-row__body', $adminCss);
         $this->assertStringContainsString('inline-size: min(64rem, calc(100vw - 2rem));', $adminCss);
         $this->assertStringNotContainsString('inline-size: min(72rem, calc(100vw - 2rem));', $adminCss);
+        $this->assertStringNotContainsString('.wb-slot-block-picker-dialog {', $adminCss);
+        $this->assertStringNotContainsString('background: inherit;', preg_replace('/\.wb-gallery-picker-dialog\s*\{[^}]*\}/s', '', $adminCss) ?: $adminCss);
+        $this->assertStringNotContainsString('wb-slot-block-picker-results-card', $adminCss);
+        $this->assertStringNotContainsString('wb-slot-block-picker-results-body', $adminCss);
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
         $this->assertNotFalse($assetPickerJs);
         $this->assertStringContainsString('modalRuntime.open(modal, openButton || null);', $assetPickerJs);
@@ -3815,6 +3821,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('data-wb-slot-block-picker-tabs', $pageBuilderModalsJs);
         $this->assertStringContainsString('data-wb-slot-block-picker-tab-input', $pageBuilderModalsJs);
         $this->assertStringContainsString('runtime.open(modal, null);', $pageBuilderModalsJs);
+        $this->assertStringContainsString('panel.hidden = !isActive;', $pageBuilderModalsJs);
+        $this->assertStringContainsString("panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');", $pageBuilderModalsJs);
         $this->assertStringNotContainsString('modal.classList.add(\'is-open\')', $pageBuilderModalsJs);
         $this->assertStringContainsString('data-wb-picker-error', $response->getContent());
         $this->assertStringNotContainsString('ensureLayer(\'dialog\')', $assetPickerJs);

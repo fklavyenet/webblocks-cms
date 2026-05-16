@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.31.48
+
+- Remove the bad inherited background rule from the slot editor `Block Types` modal so the runtime-owned dialog surface no longer picks up transparent or overlapping card visuals.
+- Stop treating WebBlocks UI `.wb-card` as the `Block Types` picker height and scroll container, keeping cards as visual grouping only while long result tables scroll through the modal body or table wrapper instead.
+- Preserve the runtime-owned admin modal lifecycle from `v1.31.46`, keep exactly one client-side picker tab panel active and visible at a time, and leave shared WebBlocks UI `.wb-card { overflow: hidden; }` behavior unchanged.
+
 ## 1.31.47
 
 - Fix the slot editor `Block Types` modal layout regression from `v1.31.46` by removing the fragile picker-specific nested flex sizing rules, restoring a normal modal body flow, and keeping search, tabs, and result tables readable for both `Common` and `All`.

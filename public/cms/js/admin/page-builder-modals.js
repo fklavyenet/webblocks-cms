@@ -37,7 +37,11 @@
 
             if (selectedPanelId) {
                 container.querySelectorAll('.wb-tabs-panel').forEach(function (panel) {
-                    panel.classList.toggle('is-active', panel.id === selectedPanelId);
+                    var isActive = panel.id === selectedPanelId;
+
+                    panel.classList.toggle('is-active', isActive);
+                    panel.hidden = !isActive;
+                    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
                 });
             }
 
