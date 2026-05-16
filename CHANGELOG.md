@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.31.44
+
+- Fix the Gallery block editor modal so it again opens with the normal WebBlocks backdrop and dimming, removing the stale CMS-owned dialog wrapper behavior that hid the active backdrop under the shared `#wb-overlay-root` runtime.
+- Fix the Gallery `Add Gallery Items` picker lifecycle so the CMS keeps one canonical picker modal in the response, avoids surfacing a stale source modal behind the runtime-owned visible picker, and continues to let WebBlocks UI `v2.7.6` own stacked overlay behavior.
+- Fix the compact Gallery picker final rendering so matching image rows render deterministically, compact empty and error states replace the stuck placeholder-like result state, and the default `Image` kind plus search and folder filtering stay aligned with the picker data contract.
+
 ## 1.31.43
 
 - Fix the Gallery `Add Gallery Items` compact picker so the detached plain WebBlocks modal uses the normal large dialog footprint instead of the previous oversized wide panel while staying under `#wb-overlay-root` and the shared WebBlocks UI `v2.7.6` overlay stack.

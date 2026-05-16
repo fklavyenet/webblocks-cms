@@ -3,18 +3,6 @@
         return;
     }
 
-    function syncVisibleModals() {
-        var pickerModal = document.getElementById('slot-block-picker-modal');
-        var pickerLayer = pickerModal ? pickerModal.closest('.wb-overlay-layer--dialog') : null;
-        var editorModal = document.getElementById('slot-block-editor-modal');
-
-        if (!pickerLayer || !editorModal) {
-            return;
-        }
-
-        pickerLayer.hidden = true;
-    }
-
     document.addEventListener('wb:tabs:change', function (event) {
         var container = event.target;
 
@@ -28,6 +16,4 @@
             hiddenInput.value = event.detail.tabId === 'slot-block-info-panel' ? 'block-info' : 'block-fields';
         }
     });
-
-    syncVisibleModals();
 }());

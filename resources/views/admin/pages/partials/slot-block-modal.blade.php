@@ -19,65 +19,61 @@
 @endphp
 
 @if ($showModal && $slotModalBlock && $slotModalSelectedBlockType)
-    <div class="wb-overlay-layer wb-overlay-layer--dialog">
-        <div class="wb-overlay-backdrop"></div>
-
-        <div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}">
-            <div class="wb-modal-dialog">
-                <div class="wb-modal-header">
-                    <div class="wb-stack wb-gap-1">
-                        <h2 class="wb-modal-title" id="slot-block-editor-title">{{ $modalTitle }}</h2>
-                        <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
-                    </div>
-
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
-                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                    </a>
+    <div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}">
+        <div class="wb-modal-dialog">
+            <div class="wb-modal-header">
+                <div class="wb-stack wb-gap-1">
+                    <h2 class="wb-modal-title" id="slot-block-editor-title">{{ $modalTitle }}</h2>
+                    <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
                 </div>
 
-                <div class="wb-modal-body wb-stack wb-gap-4">
-                    <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard block changes?">
-                        @csrf
-                        @if ($isEditMode)
-                            @method('PUT')
-                        @endif
+                <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
+                    <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                </a>
+            </div>
 
-                        <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
-                        <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
-                        <input type="hidden" name="return_url" value="{{ request('return_url') }}">
-                        @if (! empty($sharedSlot ?? null))
-                            <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
-                        @endif
-                        @unless ($activeLocale->is_default)
-                            <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                        @endunless
+            <div class="wb-modal-body wb-stack wb-gap-4">
+                <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard block changes?">
+                    @csrf
+                    @if ($isEditMode)
+                        @method('PUT')
+                    @endif
 
-                        @include('admin.blocks._form', [
-                            'block' => $slotModalBlock,
-                            'selectedBlockType' => $slotModalSelectedBlockType,
-                            'pages' => collect([$page]),
-                            'parentBlocks' => $slotParentBlocks,
-                            'blockTypes' => $blockTypes,
-                            'columnItemBlockType' => $columnItemBlockType,
-                            'featureItemBlockType' => $featureItemBlockType,
-                            'linkListItemBlockType' => $linkListItemBlockType,
-                            'slotTypes' => collect([$slot->slotType])->filter(),
-                            'assetPickerAssets' => $assetPickerAssets,
-                            'assetPickerFolders' => $assetPickerFolders,
-                            'selectedAsset' => $slotModalSelectedAsset,
-                            'selectedGalleryAssets' => $slotModalSelectedGalleryAssets,
-                            'selectedAttachmentAsset' => $slotModalSelectedAttachmentAsset,
-                            'lockPage' => true,
-                            'lockSlot' => true,
-                            'cancelUrl' => $closeUrl,
-                            'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
-                            'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Block',
-                            'modeLabel' => $isCreateMode ? 'Create' : 'Edit',
-                            'activeTab' => $activeTab,
-                            'activeLocale' => $activeLocale,
-                        ])
-                    </form>
-                </div>
+                    <input type="hidden" name="_slot_block_mode" value="{{ $slotModalMode }}">
+                    <input type="hidden" name="_slot_block_id" value="{{ $slotModalBlock->id }}">
+                    <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+                    @if (! empty($sharedSlot ?? null))
+                        <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                    @endif
+                    @unless ($activeLocale->is_default)
+                        <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                    @endunless
+
+                    @include('admin.blocks._form', [
+                        'block' => $slotModalBlock,
+                        'selectedBlockType' => $slotModalSelectedBlockType,
+                        'pages' => collect([$page]),
+                        'parentBlocks' => $slotParentBlocks,
+                        'blockTypes' => $blockTypes,
+                        'columnItemBlockType' => $columnItemBlockType,
+                        'featureItemBlockType' => $featureItemBlockType,
+                        'linkListItemBlockType' => $linkListItemBlockType,
+                        'slotTypes' => collect([$slot->slotType])->filter(),
+                        'assetPickerAssets' => $assetPickerAssets,
+                        'assetPickerFolders' => $assetPickerFolders,
+                        'selectedAsset' => $slotModalSelectedAsset,
+                        'selectedGalleryAssets' => $slotModalSelectedGalleryAssets,
+                        'selectedAttachmentAsset' => $slotModalSelectedAttachmentAsset,
+                        'lockPage' => true,
+                        'lockSlot' => true,
+                        'cancelUrl' => $closeUrl,
+                        'actionsContainerClass' => 'wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap',
+                        'submitLabel' => $isCreateMode ? 'Save New Block' : 'Save Block',
+                        'modeLabel' => $isCreateMode ? 'Create' : 'Edit',
+                        'activeTab' => $activeTab,
+                        'activeLocale' => $activeLocale,
+                    ])
+                </form>
             </div>
         </div>
     </div>

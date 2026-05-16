@@ -3779,8 +3779,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($content);
         $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
         $this->assertNotFalse($overlayRootPosition);
+        $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
+        $this->assertSame(2, substr_count($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"'));
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
+        $this->assertStringNotContainsString('<div class="wb-overlay-layer wb-overlay-layer--dialog"><div class="wb-overlay-backdrop"></div><div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal"', str_replace(["\n", ' '], '', $content));
         $adminCss = file_get_contents(public_path('cms/css/admin.css'));
         $this->assertNotFalse($adminCss);
         $this->assertStringContainsString('#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="false"]', $adminCss);
@@ -3795,8 +3798,9 @@ class PageBuilderExperienceTest extends TestCase
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
         $this->assertNotFalse($assetPickerJs);
         $this->assertStringContainsString('modalRuntime.open(modal, openButton || null);', $assetPickerJs);
-        $this->assertStringContainsString('panel.hidden = false;', $assetPickerJs);
-        $this->assertStringContainsString('return pickerPanelElement(root) || root;', $assetPickerJs);
+        $this->assertStringNotContainsString('panel.hidden = false;', $assetPickerJs);
+        $this->assertStringContainsString('return pickerActiveRuntimePanel(root) || root;', $assetPickerJs);
+        $this->assertStringContainsString('function pickerActiveRuntimePanel(root)', $assetPickerJs);
         $this->assertStringContainsString('var context = pickerContext(root);', $assetPickerJs);
         $this->assertStringContainsString('data-wb-picker-error', $response->getContent());
         $this->assertStringNotContainsString('ensureLayer(\'dialog\')', $assetPickerJs);
@@ -3860,6 +3864,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-asset-kind="image"', false);
         $response->assertSee('data-wb-asset-folder-id="'.$folder->id.'"', false);
         $response->assertSee('data-wb-asset-toggle', false);
+        $response->assertDontSee('wb-skeleton', false);
+        $response->assertDontSee('skeleton', false);
         $response->assertDontSee('Picker Guide', false);
         $response->assertDontSee('gallery-picker-guide.pdf', false);
     }
@@ -3894,6 +3900,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('No matching images');
         $response->assertSee('Upload an image or adjust the search or folder filter to find one in the shared media library.');
         $response->assertDontSee('data-wb-asset-card', false);
+        $response->assertDontSee('wb-skeleton', false);
+        $response->assertDontSee('skeleton', false);
         $response->assertSee('data-wb-picker-error', false);
     }
 
@@ -3964,6 +3972,7 @@ class PageBuilderExperienceTest extends TestCase
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', $content);
+        $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay"/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
     }
