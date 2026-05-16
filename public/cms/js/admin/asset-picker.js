@@ -325,12 +325,29 @@
         });
     }
 
-    function updateOverlayBodyLock() {
-        var hasOpenOverlay = visibleOverlayPanels().length > 0;
+    function overlayApi() {
+        return window.WBDom && window.WBDom.overlay ? window.WBDom.overlay : null;
+    }
 
-        document.body.classList.toggle('wb-overlay-lock', hasOpenOverlay);
-        document.body.classList.toggle('overflow-y-hidden', hasOpenOverlay);
-        document.body.style.overflow = hasOpenOverlay ? 'hidden' : '';
+    function modalApi() {
+        return window.WBModal || null;
+    }
+
+    function ensureOverlayModal(panel) {
+        var overlay = overlayApi();
+
+        if (!panel || pickerPanelMode(pickerRootFromChild(panel)) !== 'overlay' || !overlay) {
+            return;
+        }
+
+        if (panel.getAttribute('data-wb-picker-runtime-ready') === 'true') {
+            return;
+        }
+
+        panel.hidden = false;
+        overlay.ensureLayer('dialog');
+        panel.hidden = true;
+        panel.setAttribute('data-wb-picker-runtime-ready', 'true');
     }
 
     function setPickerPanelOpen(root, isOpen) {
@@ -339,20 +356,28 @@
         }
 
         var panel = pickerPanelElement(root);
-        var modal = pickerModalElement(root);
         var openButton = root.querySelector('[data-wb-picker-open]');
+        var modal = pickerModalElement(root);
+        var modalRuntime = modalApi();
 
         if (!panel) {
             return;
         }
 
-        panel.hidden = !isOpen;
+        if (pickerPanelMode(root) === 'overlay' && modal && modalRuntime) {
+            ensureOverlayModal(panel);
+            if (isOpen) {
+                modalRuntime.open(modal, openButton || null);
+            } else {
+                modalRuntime.close(modal);
+            }
+        } else {
+            panel.hidden = !isOpen;
 
-        if (pickerPanelMode(root) === 'overlay' && modal) {
-            modal.classList.toggle('is-open', isOpen);
+            if (modal) {
+                modal.classList.toggle('is-open', isOpen);
+            }
         }
-
-        updateOverlayBodyLock();
 
         if (openButton) {
             openButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
@@ -496,13 +521,6 @@
             return;
         }
 
-        var overlayPanel = event.target.closest('[data-wb-picker-panel]');
-
-        if (overlayPanel && (event.target === overlayPanel || event.target.closest('[data-wb-picker-overlay-backdrop]')) && overlayPanel.getAttribute('data-wb-picker-panel-mode') === 'overlay') {
-            closePickerPanel(pickerRootFromChild(overlayPanel));
-            return;
-        }
-
         if (!uploadButton) {
             return;
         }
@@ -595,17 +613,20 @@
         }
     });
 
-    document.addEventListener('keydown', function (event) {
-        if (event.key !== 'Escape') {
+    document.addEventListener('wb:modal:close', function (event) {
+        var modal = event.target.closest('.wb-modal');
+        var panel = modal ? modal.closest('[data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]') : null;
+        var root = pickerRootFromChild(panel);
+        var openButton = root ? root.querySelector('[data-wb-picker-open]') : null;
+
+        if (!panel || !root) {
             return;
         }
 
-        var openPanels = visibleOverlayPanels();
+        panel.hidden = true;
 
-        if (openPanels.length === 0) {
-            return;
+        if (openButton) {
+            openButton.setAttribute('aria-expanded', 'false');
         }
-
-        closePickerPanel(pickerRootFromChild(openPanels[openPanels.length - 1]));
     });
 }());

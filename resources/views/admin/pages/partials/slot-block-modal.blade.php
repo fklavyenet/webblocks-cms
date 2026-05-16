@@ -22,7 +22,7 @@
     <div class="wb-overlay-layer wb-overlay-layer--dialog">
         <div class="wb-overlay-backdrop"></div>
 
-        <div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title">
+        <div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}">
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
@@ -30,13 +30,13 @@
                         <span class="wb-text-sm wb-text-muted">{{ $modalDescription }}</span>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
-                    <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4">
+                    <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard block changes?">
                         @csrf
                         @if ($isEditMode)
                             @method('PUT')

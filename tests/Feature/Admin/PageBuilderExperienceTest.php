@@ -3767,8 +3767,12 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('wb-gallery-picker-overlay--stacked', false);
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
         $response->assertSee('data-wb-picker-overlay-stack="nested-gallery"', false);
-        $response->assertSee('data-wb-picker-overlay-layer="backdrop"', false);
         $response->assertSee('data-wb-picker-overlay-layer="panel"', false);
+        $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
+        $response->assertSee('data-wb-admin-dirty-form', false);
+        $response->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
+        $response->assertSee('id="slot-block-editor-modal"', false);
+        $response->assertSee('data-wb-admin-close-url=', false);
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
@@ -3777,12 +3781,10 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
         $adminCss = file_get_contents(public_path('cms/css/admin.css'));
         $this->assertNotFalse($adminCss);
-        $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked', $adminCss);
-        $this->assertStringContainsString('z-index: 2200;', $adminCss);
-        $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-overlay-backdrop', $adminCss);
-        $this->assertStringContainsString('z-index: 2201;', $adminCss);
+        $this->assertStringContainsString('#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="false"]', $adminCss);
+        $this->assertStringContainsString('pointer-events: none;', $adminCss);
         $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-modal', $adminCss);
-        $this->assertStringContainsString('z-index: 2202;', $adminCss);
+        $this->assertStringContainsString('z-index: calc(var(--wb-z-modal) + 3);', $adminCss);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
         $response->assertDontSee('Gallery is a media collection block.');
@@ -3863,6 +3865,35 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('data-wb-picker-overlay-stack="nested-gallery"', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*data-wb-picker-overlay-stack="nested-gallery"/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
+    }
+
+    #[Test]
+    public function representative_admin_modals_use_standard_close_contract_and_dirty_form_markers(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $codeType = BlockType::query()->where('slug', 'code')->firstOrFail();
+
+        $slotBlockResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $codeType->id]));
+        $pageImportResponse = $this->actingAs($user)->get(route('admin.pages.index', ['modal' => 'page-import']));
+
+        $slotBlockResponse->assertOk();
+        $slotBlockResponse->assertSee('id="slot-block-editor-modal"', false);
+        $slotBlockResponse->assertSee('data-wb-admin-close-url=', false);
+        $slotBlockResponse->assertSee('class="wb-modal-close" data-wb-dismiss="modal"', false);
+        $slotBlockResponse->assertSee('data-wb-admin-dirty-form', false);
+        $slotBlockResponse->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
+
+        $pageImportResponse->assertOk();
+        $pageImportResponse->assertSee('id="page-import-modal"', false);
+        $pageImportResponse->assertSee('data-wb-admin-close-url=', false);
+        $pageImportResponse->assertSee('class="wb-modal-close" data-wb-dismiss="modal"', false);
+        $pageImportResponse->assertSee('class="wb-btn wb-btn-secondary" data-wb-dismiss="modal"', false);
+        $pageImportResponse->assertSee('data-wb-admin-dirty-form', false);
+        $pageImportResponse->assertSee('data-wb-admin-dirty-close-confirm="Discard import changes?"', false);
     }
 
     #[Test]

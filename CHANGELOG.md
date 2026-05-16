@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.40
+
+- Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.5`, aligning admin and public overlays with the updated shared overlay stack behavior and close-request runtime contract.
+- Standardize representative CMS admin modal and picker close behavior around `wb:overlay:close-request`, so normal detail or preview modals keep standard Escape, outside-click, close-control, and dismiss-control behavior while dirty form overlays now guard discard flows without blocking confirmed programmatic close.
+
 ## 1.31.39
 
 - Fix the stacked admin Gallery `Add Gallery Items` picker so the detached overlay now uses an explicit CMS-owned z-index contract for its shell, backdrop, and panel, keeping the picker above the still-open parent Gallery editor modal after the `#wb-overlay-root` refactor.

@@ -231,7 +231,7 @@
     <div class="wb-overlay-layer wb-overlay-layer--dialog">
         <div class="wb-overlay-backdrop"></div>
 
-        <div class="wb-modal wb-modal-xl is-open" id="slot-block-picker-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-picker-title">
+        <div class="wb-modal wb-modal-xl is-open" id="slot-block-picker-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-picker-title" data-wb-admin-close-url="{{ $closeUrl }}">
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
@@ -239,7 +239,7 @@
                         <span class="wb-text-sm wb-text-muted">Choose a block type, then configure it without leaving the slot editor.@if ($pickerParentBlock) Showing block types allowed inside {{ $pickerParentBlock->typeName() }}.@endif</span>
                     </div>
 
-                    <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close block types modal">
+                    <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close block types modal">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -360,7 +360,7 @@
 
                 <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                     <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
-                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Close</a>
+                        <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Close</a>
                     </div>
                     <span class="wb-text-sm wb-text-muted">Select a block type to open its editor.</span>
                 </div>

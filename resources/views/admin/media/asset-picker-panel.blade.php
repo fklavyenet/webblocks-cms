@@ -167,13 +167,12 @@
                 data-wb-picker-overlay-stack="nested-gallery"
                 hidden
             >
-                <div class="wb-overlay-backdrop wb-gallery-picker-overlay-backdrop" data-wb-picker-overlay-backdrop data-wb-picker-overlay-layer="backdrop"></div>
                 <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}" data-wb-picker-overlay-layer="panel">
                     <div class="wb-modal-dialog wb-gallery-picker-dialog">
                         <div class="wb-modal-header">
                             <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>
 
-                            <button type="button" class="wb-modal-close" data-wb-picker-close aria-label="Close">
+                            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-picker-close aria-label="Close">
                                 <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -244,7 +243,7 @@
                         </div>
 
                         <div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">
-                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-close>Close</button>
+                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-picker-close>Close</button>
                             @if ($pickerMode === 'multiple')
                                 <button type="button" class="wb-btn wb-btn-primary" data-wb-picker-apply>Add Selected</button>
                             @endif

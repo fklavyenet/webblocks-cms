@@ -238,12 +238,12 @@
                                 <span class="wb-text-sm wb-text-muted">Choose what this slot should render.</span>
                             </div>
 
-                            <button type="button" class="wb-modal-close" data-wb-page-slot-source-modal-close aria-label="Close slot source settings">
+                            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close aria-label="Close slot source settings">
                                 <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                             </button>
                         </div>
 
-                        <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0" data-wb-page-slot-source-form>
+                        <form method="POST" action="{{ route('admin.pages.slots.source.update', [$page, $pageSlot]) }}" class="wb-stack wb-gap-0" data-wb-page-slot-source-form data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard slot source changes?">
                             @csrf
                             @method('PUT')
                             <input type="hidden" name="slot_id" value="{{ $pageSlot->id }}">
@@ -341,7 +341,7 @@
                             <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                                 <div class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap">
                                     <button type="submit" class="wb-btn wb-btn-primary">Save Source</button>
-                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-page-slot-source-modal-close>Cancel</button>
+                                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-page-slot-source-modal-close>Cancel</button>
                                 </div>
                                 <span class="wb-text-sm wb-text-muted">Slot key: <code>{{ $pageSlot->slotSlug() }}</code></span>
                             </div>

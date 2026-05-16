@@ -270,14 +270,14 @@
     @if ($previewAsset)
         <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-media-preview-overlay data-wb-close-url="{{ route('admin.media.index', $previewBaseQuery) }}">
             <div class="wb-overlay-backdrop"></div>
-            <div class="wb-modal wb-modal-xl is-open" id="media-preview-modal" role="dialog" aria-modal="true" aria-labelledby="media-preview-title">
+            <div class="wb-modal wb-modal-xl is-open" id="media-preview-modal" role="dialog" aria-modal="true" aria-labelledby="media-preview-title" data-wb-admin-close-url="{{ route('admin.media.index', $previewBaseQuery) }}">
                 <div class="wb-modal-dialog" data-wb-media-preview-panel>
                     <div class="wb-modal-header">
                         <div class="wb-stack wb-gap-1">
                             <h2 class="wb-modal-title" id="media-preview-title">{{ $previewAsset->displayTitle() }}</h2>
                             <span class="wb-text-sm wb-text-muted">{{ $previewAsset->compactMetaLabel() }}</span>
                         </div>
-                        <a href="{{ route('admin.media.index', $previewBaseQuery) }}" class="wb-modal-close" aria-label="Close"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></a>
+                        <a href="{{ route('admin.media.index', $previewBaseQuery) }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></a>
                     </div>
                     <div class="wb-modal-body wb-stack wb-gap-4">
                         <div class="wb-card wb-card-muted">
@@ -480,33 +480,4 @@
 @endpush
 
 @push('scripts')
-    <script>
-        (function () {
-            var previewOverlay = document.querySelector('[data-wb-media-preview-overlay]');
-
-            if (previewOverlay) {
-                var previewPanel = previewOverlay.querySelector('[data-wb-media-preview-panel]');
-
-                if (previewPanel) {
-                    previewPanel.addEventListener('click', function (event) {
-                        event.stopPropagation();
-                    });
-                }
-
-                previewOverlay.addEventListener('click', function (event) {
-                    var closeUrl = previewOverlay.getAttribute('data-wb-close-url');
-
-                    if (!closeUrl) {
-                        return;
-                    }
-
-                    if (previewPanel && previewPanel.contains(event.target)) {
-                        return;
-                    }
-
-                    window.location.href = closeUrl;
-                });
-            }
-        })();
-    </script>
 @endpush

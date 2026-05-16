@@ -9,19 +9,19 @@
 <div class="wb-overlay-layer wb-overlay-layer--dialog" @if (! $isOpen) hidden @endif>
     <div class="wb-overlay-backdrop"></div>
 
-    <div class="wb-modal wb-modal-lg {{ $isOpen ? 'is-open' : '' }}" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}">
+    <div class="wb-modal wb-modal-lg {{ $isOpen ? 'is-open' : '' }}" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}">
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
                     <h2 class="wb-modal-title" id="{{ $modalTitleId }}">Import Page</h2>
                     <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">Import one single-page JSON payload into the selected site as a new draft page.</span>
                 </div>
-                <a href="{{ $closeUrl }}" class="wb-modal-close" aria-label="Close page import modal">
+                <a href="{{ $closeUrl }}" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Close page import modal">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </a>
             </div>
 
-            <form method="POST" action="{{ route('admin.pages.import.store') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4">
+            <form method="POST" action="{{ route('admin.pages.import.store') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard import changes?">
                 @csrf
 
                 <input type="hidden" name="_page_import_modal" value="{{ $modalId }}">
@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
-                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary">Cancel</a>
+                    <a href="{{ $closeUrl }}" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Cancel</a>
                     <button type="submit" class="wb-btn wb-btn-primary">Import Page</button>
                 </div>
             </form>

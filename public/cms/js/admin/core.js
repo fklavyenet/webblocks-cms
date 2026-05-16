@@ -121,6 +121,129 @@
         }
     }
 
+    function getOverlayElementFromEventTarget(target) {
+        return target && typeof target.closest === 'function'
+            ? target.closest('.wb-modal, .wb-drawer, [data-wb-picker-panel][data-wb-picker-panel-mode="overlay"]')
+            : null;
+    }
+
+    function getDirtyFormForOverlay(overlay) {
+        return overlay ? overlay.querySelector('[data-wb-admin-dirty-form]') : null;
+    }
+
+    function getFormSnapshot(form) {
+        var data;
+
+        if (!form || typeof window.FormData === 'undefined') {
+            return '';
+        }
+
+        data = new window.FormData(form);
+
+        return Array.prototype.map.call(Array.from(data.entries()), function (entry) {
+            var value = entry[1];
+
+            if (value && typeof value === 'object' && typeof value.name === 'string') {
+                return entry[0] + '=' + value.name;
+            }
+
+            return entry[0] + '=' + String(value);
+        }).join('&');
+    }
+
+    function markDirtyFormSnapshot(form) {
+        if (!form) {
+            return;
+        }
+
+        form.dataset.wbAdminDirtyInitial = getFormSnapshot(form);
+    }
+
+    function isDirtyForm(form) {
+        if (!form) {
+            return false;
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(form.dataset, 'wbAdminDirtyInitial')) {
+            markDirtyFormSnapshot(form);
+        }
+
+        return form.dataset.wbAdminDirtyInitial !== getFormSnapshot(form);
+    }
+
+    function closeOverlayProgrammatically(overlay) {
+        if (!overlay) {
+            return;
+        }
+
+        if (window.WBModal && overlay.classList.contains('wb-modal')) {
+            window.WBModal.close(overlay);
+            return;
+        }
+
+        overlay.hidden = true;
+        overlay.classList.remove('is-open');
+    }
+
+    function handleOverlayCloseUrl(overlay) {
+        var closeUrl = overlay && overlay.dataset ? overlay.dataset.wbAdminCloseUrl : '';
+
+        if (!closeUrl) {
+            return;
+        }
+
+        window.location.assign(closeUrl);
+    }
+
+    function dirtyCloseMessage(form) {
+        return form && form.dataset && form.dataset.wbAdminDirtyCloseConfirm
+            ? form.dataset.wbAdminDirtyCloseConfirm
+            : 'Discard unsaved changes?';
+    }
+
+    function bindDirtyOverlayGuards() {
+        document.querySelectorAll('[data-wb-admin-dirty-form]').forEach(function (form) {
+            if (form.getAttribute('data-wb-admin-dirty-bound') === 'true') {
+                return;
+            }
+
+            markDirtyFormSnapshot(form);
+            form.setAttribute('data-wb-admin-dirty-bound', 'true');
+            form.addEventListener('submit', function () {
+                form.dataset.wbAdminDirtyInitial = getFormSnapshot(form);
+            });
+        });
+
+        document.addEventListener('wb:overlay:close-request', function (event) {
+            var overlay = getOverlayElementFromEventTarget(event.target) || (event.detail ? event.detail.overlay : null);
+            var form = getDirtyFormForOverlay(overlay);
+
+            if (!overlay || !form || !isDirtyForm(form)) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (!window.confirm(dirtyCloseMessage(form))) {
+                return;
+            }
+
+            markDirtyFormSnapshot(form);
+            closeOverlayProgrammatically(overlay);
+            handleOverlayCloseUrl(overlay);
+        });
+
+        document.addEventListener('wb:modal:close', function (event) {
+            var overlay = getOverlayElementFromEventTarget(event.target);
+
+            if (!overlay) {
+                return;
+            }
+
+            handleOverlayCloseUrl(overlay);
+        });
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
@@ -130,4 +253,5 @@
     bindAdminTransientUiReset();
     bindNavGroupToggles();
     bindSiteHandleAutosuggest();
+    bindDirtyOverlayGuards();
 }());

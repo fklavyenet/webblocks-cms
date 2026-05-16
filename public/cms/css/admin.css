@@ -12,6 +12,22 @@
     display: flex;
 }
 
+#wb-overlay-root .wb-overlay-layer,
+#wb-overlay-root .wb-overlay-layer > .wb-overlay-backdrop {
+    pointer-events: none;
+}
+
+#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="false"] {
+    pointer-events: none;
+}
+
+#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="true"],
+#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="true"] > .wb-modal-dialog,
+#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="true"] > .wb-drawer-dialog,
+#wb-overlay-root [data-wb-overlay-backdrop="true"] {
+    pointer-events: auto;
+}
+
 .wb-sidebar-footer {
     text-align: center;
 }
@@ -771,34 +787,23 @@
 }
 
 .wb-gallery-picker-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     padding: clamp(1rem, 3vh, 2rem);
-    pointer-events: auto;
 }
 
 .wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked {
-    z-index: 2200;
     isolation: isolate;
 }
 
 .wb-gallery-picker-overlay-backdrop {
-    position: absolute;
-    inset: 0;
     background: rgba(15, 23, 42, 0.64);
     backdrop-filter: blur(3px);
-    pointer-events: auto;
 }
 
 .wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-overlay-backdrop {
-    z-index: 2201;
+    z-index: calc(var(--wb-z-modal) + 2);
 }
 
 .wb-gallery-picker-modal {
-    position: relative;
     inline-size: min(72rem, calc(100vw - 2rem));
     max-inline-size: 100%;
     max-block-size: calc(100vh - 2rem);
@@ -806,11 +811,10 @@
     box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
     border: 1px solid rgba(148, 163, 184, 0.28);
     background: var(--wb-surface-0, #fff);
-    pointer-events: auto;
 }
 
 .wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-modal {
-    z-index: 2202;
+    z-index: calc(var(--wb-z-modal) + 3);
 }
 
 .wb-gallery-picker-dialog {

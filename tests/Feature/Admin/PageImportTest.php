@@ -358,5 +358,7 @@ class PageImportTest extends TestCase
         $response->assertSee('New Page');
         $response->assertSee('Import Page');
         $response->assertSee('page-import-modal', false);
+        $response->assertSee('data-wb-admin-close-url=', false);
+        $response->assertSee('data-wb-admin-dirty-form', false);
     }
 }

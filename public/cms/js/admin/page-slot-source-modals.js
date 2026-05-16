@@ -11,12 +11,8 @@
         });
     }
 
-    function updateBodyLock() {
-        var hasOpenModal = visibleModalLayers().length > 0;
-
-        document.body.classList.toggle('wb-overlay-lock', hasOpenModal);
-        document.body.classList.toggle('overflow-y-hidden', hasOpenModal);
-        document.body.style.overflow = hasOpenModal ? 'hidden' : '';
+    function modalApi() {
+        return window.WBModal || null;
     }
 
     function setModalOpen(layer, isOpen) {
@@ -25,14 +21,21 @@
         }
 
         var modal = layer.querySelector('.wb-modal');
+        var runtime = modalApi();
 
-        layer.hidden = !isOpen;
+        if (modal && runtime) {
+            if (isOpen) {
+                runtime.open(modal);
+            } else {
+                runtime.close(modal);
+            }
+        } else {
+            layer.hidden = !isOpen;
 
-        if (modal) {
-            modal.classList.toggle('is-open', isOpen);
+            if (modal) {
+                modal.classList.toggle('is-open', isOpen);
+            }
         }
-
-        updateBodyLock();
 
         if (!isOpen) {
             return;
@@ -87,8 +90,6 @@
     }
 
     document.querySelectorAll('[data-wb-page-slot-source-form]').forEach(syncSourceForm);
-    updateBodyLock();
-
     document.addEventListener('change', function (event) {
         if (!event.target.matches('[data-wb-slot-source-type]')) {
             return;
@@ -117,27 +118,17 @@
         if (closeTrigger) {
             event.preventDefault();
             setModalOpen(closeTrigger.closest(modalLayerSelector), false);
-            return;
-        }
-
-        var modalLayer = event.target.closest(modalLayerSelector);
-
-        if (modalLayer && event.target === modalLayer) {
-            setModalOpen(modalLayer, false);
         }
     });
 
-    document.addEventListener('keydown', function (event) {
-        if (event.key !== 'Escape') {
+    document.addEventListener('wb:modal:close', function (event) {
+        var modal = event.target.closest('.wb-modal');
+        var layer = modal ? modal.closest(modalLayerSelector) : null;
+
+        if (!layer) {
             return;
         }
 
-        var openLayers = visibleModalLayers();
-
-        if (openLayers.length === 0) {
-            return;
-        }
-
-        setModalOpen(openLayers[openLayers.length - 1], false);
+        layer.hidden = true;
     });
 }());

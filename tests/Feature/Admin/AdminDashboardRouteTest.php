@@ -126,7 +126,7 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
-    public function admin_layout_uses_pinned_webblocks_ui_v270_assets_and_not_master_urls(): void
+    public function admin_layout_uses_pinned_webblocks_ui_v275_assets_and_not_master_urls(): void
     {
         $user = User::factory()->editor()->create();
 
