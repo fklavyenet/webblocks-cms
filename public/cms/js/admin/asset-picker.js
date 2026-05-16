@@ -36,6 +36,43 @@
         card.setAttribute('data-wb-asset-selected', isSelected ? 'true' : 'false');
     }
 
+    function pickerContext(root) {
+        if (!root) {
+            return null;
+        }
+
+        return pickerPanelElement(root) || root;
+    }
+
+    function setPickerError(root, message) {
+        var context = pickerContext(root);
+
+        if (!context) {
+            return;
+        }
+
+        var grid = context.querySelector('[data-wb-picker-grid]');
+        var emptyState = context.querySelector('[data-wb-picker-empty]');
+        var errorState = context.querySelector('[data-wb-picker-error]');
+        var errorText = context.querySelector('[data-wb-picker-error-text]');
+
+        if (errorText && message) {
+            errorText.textContent = message;
+        }
+
+        if (errorState) {
+            errorState.hidden = !message;
+        }
+
+        if (grid) {
+            grid.hidden = !!message;
+        }
+
+        if (emptyState && message) {
+            emptyState.hidden = true;
+        }
+    }
+
     function updatePickerSummary(root) {
         if (!root) {
             return;
@@ -247,7 +284,7 @@
             }
         });
 
-        root.querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
+        (pickerContext(root) || root).querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
             var asset = parseAssetPayload(button.getAttribute('data-wb-asset'));
 
             if (String(asset.id) === String(assetId)) {
@@ -263,16 +300,20 @@
     }
 
     function filterPickerAssets(root) {
-        if (!root) {
+        var context = pickerContext(root);
+
+        if (!root || !context) {
             return;
         }
 
-        var searchValue = String((root.querySelector('[data-wb-picker-search]') || {}).value || '').toLowerCase().trim();
-        var folderValue = String((root.querySelector('[data-wb-picker-folder]') || {}).value || '');
-        var kindValue = String((root.querySelector('[data-wb-picker-kind]') || {}).value || '');
+        setPickerError(root, '');
+
+        var searchValue = String((context.querySelector('[data-wb-picker-search]') || {}).value || '').toLowerCase().trim();
+        var folderValue = String((context.querySelector('[data-wb-picker-folder]') || {}).value || '');
+        var kindValue = String((context.querySelector('[data-wb-picker-kind]') || {}).value || '');
         var visibleCount = 0;
 
-        root.querySelectorAll('[data-wb-asset-card]').forEach(function (card) {
+        context.querySelectorAll('[data-wb-asset-card]').forEach(function (card) {
             var text = String(card.getAttribute('data-wb-asset-search') || '');
             var folderId = String(card.getAttribute('data-wb-asset-folder-id') || '');
             var kind = String(card.getAttribute('data-wb-asset-kind') || '');
@@ -288,10 +329,15 @@
             }
         });
 
-        var emptyState = root.querySelector('[data-wb-picker-empty]');
+        var emptyState = context.querySelector('[data-wb-picker-empty]');
+        var grid = context.querySelector('[data-wb-picker-grid]');
 
         if (emptyState) {
             emptyState.hidden = visibleCount !== 0;
+        }
+
+        if (grid) {
+            grid.hidden = false;
         }
     }
 
@@ -423,7 +469,7 @@
                 previewGrid.innerHTML = '';
             }
 
-            root.querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
+            (pickerContext(root) || root).querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
                 setSelectionButtonState(button, false);
                 setAssetCardSelectionState(button.closest('[data-wb-asset-card]'), false);
             });
@@ -447,7 +493,7 @@
                 return input.value;
             });
 
-            root.querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
+            (pickerContext(root) || root).querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
                 var asset = parseAssetPayload(button.getAttribute('data-wb-asset'));
                 var isSelected = selectedIds.indexOf(String(asset.id)) !== -1;
 
@@ -629,4 +675,28 @@
             openButton.setAttribute('aria-expanded', 'false');
         }
     });
+
+    window.addEventListener('error', function (event) {
+        var target = event.target;
+
+        if (!target || target.tagName !== 'IMG') {
+            return;
+        }
+
+        var card = target.closest('[data-wb-asset-card]');
+        var root = pickerRootFromChild(card);
+        var context = pickerContext(root);
+
+        if (!card || !root || !context || card.hidden) {
+            return;
+        }
+
+        var otherVisibleImages = Array.prototype.slice.call(context.querySelectorAll('[data-wb-asset-card] img')).filter(function (image) {
+            return image !== target && !image.closest('[data-wb-asset-card]').hidden;
+        });
+
+        if (otherVisibleImages.length === 0) {
+            setPickerError(root, 'Media rows could not be rendered. Refresh the page and try again.');
+        }
+    }, true);
 }());

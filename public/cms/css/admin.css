@@ -787,7 +787,7 @@
 }
 
 .wb-gallery-picker-modal {
-    inline-size: min(72rem, calc(100vw - 2rem));
+    inline-size: min(64rem, calc(100vw - 2rem));
     max-inline-size: 100%;
     max-block-size: calc(100vh - 2rem);
     margin: 0;

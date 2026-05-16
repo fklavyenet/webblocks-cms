@@ -21,6 +21,16 @@
     $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
     $pickerResultsVariant = $resultsVariant ?? 'card';
+    $pickerAcceptedKinds = ['image', 'document', 'video', 'other'];
+    $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
+    $pickerVisibleAssets = collect($assetPickerAssets ?? [])
+        ->filter(fn ($asset) => $pickerInitialKind === '' || $asset->kind === $pickerInitialKind)
+        ->values();
+    $pickerHasVisibleAssets = $pickerVisibleAssets->isNotEmpty();
+    $pickerEmptyTitle = $pickerInitialKind === 'image' ? 'No matching images' : 'No matching assets';
+    $pickerEmptyText = $pickerInitialKind === 'image'
+        ? 'Upload an image or adjust the search or folder filter to find one in the shared media library.'
+        : 'Adjust the search or folder filter to find an internal asset.';
 @endphp
 
 <div
@@ -161,7 +171,7 @@
 
     @if ($pickerPanelMode === 'overlay')
         @push('overlays')
-            <div class="wb-modal wb-modal-xl wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}" data-wb-picker-panel data-wb-picker-panel-mode="{{ $pickerPanelMode }}" data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}" hidden>
+            <div class="wb-modal wb-modal-lg wb-gallery-picker-modal" id="{{ $pickerPanelId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $pickerPanelTitleId }}" data-wb-picker-panel data-wb-picker-panel-mode="{{ $pickerPanelMode }}" data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}" hidden>
                 <div class="wb-modal-dialog wb-gallery-picker-dialog">
                     <div class="wb-modal-header">
                         <h2 class="wb-modal-title" id="{{ $pickerPanelTitleId }}">{{ $pickerPanelTitle }}</h2>
@@ -191,26 +201,29 @@
                             <div class="wb-stack wb-gap-1">
                                 <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
                                 <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                    <option value="">All kinds</option>
-                                    <option value="image" @selected($pickerAccept === 'image')>Image</option>
-                                    <option value="document" @selected($pickerAccept === 'document')>Document</option>
-                                    <option value="video">Video</option>
-                                    <option value="other">Other</option>
+                                    <option value="" @selected($pickerInitialKind === '')>All kinds</option>
+                                    <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
+                                    <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
+                                    <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
+                                    <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
-                            @foreach (($assetPickerAssets ?? collect()) as $asset)
-                                @if (! $pickerAccept || $asset->kind === $pickerAccept)
-                                    @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
-                                @endif
-                            @endforeach
+                            @foreach ($pickerVisibleAssets as $asset)
+                                @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                                @endforeach
                         </div>
 
-                        <div class="wb-empty" data-wb-picker-empty hidden>
-                            <div class="wb-empty-title">No matching assets</div>
-                            <div class="wb-empty-text">Adjust the search or folder filter to find an internal asset.</div>
+                        <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
+                            <div class="wb-empty-title">{{ $pickerEmptyTitle }}</div>
+                            <div class="wb-empty-text">{{ $pickerEmptyText }}</div>
+                        </div>
+
+                        <div class="wb-empty" data-wb-picker-error hidden>
+                            <div class="wb-empty-title">Unable to load media</div>
+                            <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
                         </div>
 
                         @if (($inlineUpload ?? true) === true)
@@ -267,26 +280,29 @@
                     <div class="wb-stack wb-gap-1">
                         <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
                         <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                            <option value="">All kinds</option>
-                            <option value="image" @selected($pickerAccept === 'image')>Image</option>
-                            <option value="document" @selected($pickerAccept === 'document')>Document</option>
-                            <option value="video">Video</option>
-                            <option value="other">Other</option>
+                            <option value="" @selected($pickerInitialKind === '')>All kinds</option>
+                            <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
+                            <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
+                            <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
+                            <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
-                    @foreach (($assetPickerAssets ?? collect()) as $asset)
-                        @if (! $pickerAccept || $asset->kind === $pickerAccept)
-                            @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
-                        @endif
-                    @endforeach
+                    @foreach ($pickerVisibleAssets as $asset)
+                        @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                        @endforeach
                 </div>
 
-                <div class="wb-empty" data-wb-picker-empty hidden>
-                    <div class="wb-empty-title">No matching assets</div>
-                    <div class="wb-empty-text">Adjust the search or folder filter to find an internal asset.</div>
+                <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
+                    <div class="wb-empty-title">{{ $pickerEmptyTitle }}</div>
+                    <div class="wb-empty-text">{{ $pickerEmptyText }}</div>
+                </div>
+
+                <div class="wb-empty" data-wb-picker-error hidden>
+                    <div class="wb-empty-title">Unable to load media</div>
+                    <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
                 </div>
 
                 @if (($inlineUpload ?? true) === true)

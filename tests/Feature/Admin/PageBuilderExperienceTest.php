@@ -6,6 +6,8 @@ use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Locale;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageLayout;
@@ -3763,7 +3765,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-gallery-overlay-summary', false);
         $response->assertSee('Add, remove, and reorder gallery images. Per-item copy stays in each item editor.');
         $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
-        $response->assertSee('class="wb-modal wb-modal-xl wb-gallery-picker-modal"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg wb-gallery-picker-modal"', false);
+        $response->assertDontSee('class="wb-modal wb-modal-xl wb-gallery-picker-modal"', false);
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
@@ -3787,10 +3790,15 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('.wb-picker-results--compact', $adminCss);
         $this->assertStringContainsString('.wb-picker-asset-row[data-wb-asset-selected="true"]', $adminCss);
         $this->assertStringContainsString('.wb-picker-asset-row__body', $adminCss);
+        $this->assertStringContainsString('inline-size: min(64rem, calc(100vw - 2rem));', $adminCss);
+        $this->assertStringNotContainsString('inline-size: min(72rem, calc(100vw - 2rem));', $adminCss);
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
         $this->assertNotFalse($assetPickerJs);
         $this->assertStringContainsString('modalRuntime.open(modal, openButton || null);', $assetPickerJs);
         $this->assertStringContainsString('panel.hidden = false;', $assetPickerJs);
+        $this->assertStringContainsString('return pickerPanelElement(root) || root;', $assetPickerJs);
+        $this->assertStringContainsString('var context = pickerContext(root);', $assetPickerJs);
+        $this->assertStringContainsString('data-wb-picker-error', $response->getContent());
         $this->assertStringNotContainsString('ensureLayer(\'dialog\')', $assetPickerJs);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
@@ -3800,6 +3808,93 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Description');
         $response->assertDontSee('name="title"', false);
         $response->assertDontSee('name="subtitle"', false);
+    }
+
+    #[Test]
+    public function gallery_picker_renders_selectable_image_rows_for_default_image_filter_and_folder_options(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $galleryType = BlockType::query()->where('slug', 'gallery')->firstOrFail();
+        $folder = MediaFolder::query()->create(['name' => 'Gallery Folder']);
+
+        Media::query()->create([
+            'folder_id' => $folder->id,
+            'disk' => 'public',
+            'path' => 'media/images/gallery-picker-image.jpg',
+            'filename' => 'gallery-picker-image.jpg',
+            'original_name' => 'gallery-picker-image.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1200,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Picker Image',
+        ]);
+
+        Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/documents/gallery-picker-guide.pdf',
+            'filename' => 'gallery-picker-guide.pdf',
+            'original_name' => 'gallery-picker-guide.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 1200,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Picker Guide',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $galleryType->id]));
+
+        $response->assertOk();
+        $response->assertSee('id="gallery_media_ids_asset_kind"', false);
+        $response->assertSee('<option value="image" selected>Image</option>', false);
+        $response->assertSee('<option value="">All folders</option>', false);
+        $response->assertSee('Gallery Folder (1)', false);
+        $response->assertSee('Picker Image', false);
+        $response->assertSee('gallery-picker-image.jpg', false);
+        $response->assertSee('data-wb-asset-kind="image"', false);
+        $response->assertSee('data-wb-asset-folder-id="'.$folder->id.'"', false);
+        $response->assertSee('data-wb-asset-toggle', false);
+        $response->assertDontSee('Picker Guide', false);
+        $response->assertDontSee('gallery-picker-guide.pdf', false);
+    }
+
+    #[Test]
+    public function gallery_picker_shows_real_empty_state_when_no_images_match_default_kind_filter(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $galleryType = BlockType::query()->where('slug', 'gallery')->firstOrFail();
+
+        Media::query()->create([
+            'disk' => 'public',
+            'path' => 'media/documents/gallery-only-document.pdf',
+            'filename' => 'gallery-only-document.pdf',
+            'original_name' => 'gallery-only-document.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 1200,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Only Document',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $galleryType->id]));
+
+        $response->assertOk();
+        $response->assertSee('class="wb-empty" data-wb-picker-empty', false);
+        $response->assertSee('No matching images');
+        $response->assertSee('Upload an image or adjust the search or folder filter to find one in the shared media library.');
+        $response->assertDontSee('data-wb-asset-card', false);
+        $response->assertSee('data-wb-picker-error', false);
     }
 
     #[Test]

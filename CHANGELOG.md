@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.43
+
+- Fix the Gallery `Add Gallery Items` compact picker so the detached plain WebBlocks modal uses the normal large dialog footprint instead of the previous oversized wide panel while staying under `#wb-overlay-root` and the shared WebBlocks UI `v2.7.6` overlay stack.
+- Fix Gallery picker result rendering and filter state so the default `Image` kind shows matching media rows again, folder or search filtering can reach real empty states, and compact error messaging no longer leaves the picker looking stuck on placeholder rows.
+
 ## 1.31.42
 
 - Fix the Gallery `Add Gallery Items` overlay stacking regression by rendering the compact picker as a plain WebBlocks modal under `#wb-overlay-root`, letting the WebBlocks UI `v2.7.6` runtime own the active stacked dialog layer instead of relying on CMS-only wrapper and z-index overrides.
