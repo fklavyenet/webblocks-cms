@@ -70,7 +70,7 @@ When a `Navbar Navigation` block has visible items, CMS now renders a mobile bur
 
 In the slot editor:
 
-- the block picker opens on a curated `Common` tab by default
+- the block picker opens on a curated `Common` tab by default, every tab or search result stays in `Name A-Z` order, the modal header shows how many block types are currently listed, and long result sets scroll inside the modal without hiding the search toolbar
 - the drag handle uses a plain fallback grip marker so sortable rows remain usable even if an icon font entry is unavailable
 - `Delete All Blocks` appears only when the current page slot or Shared Slot already contains blocks, and the confirmation modal shows how many top-level and nested blocks will be removed
 

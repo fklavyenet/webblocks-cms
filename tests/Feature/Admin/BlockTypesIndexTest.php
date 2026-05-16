@@ -209,7 +209,9 @@ class BlockTypesIndexTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="blockTypeEditModal-'.$blockType->id.'"', false);
-        $response->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg"', false);
+        $response->assertSee('data-wb-admin-autoload-overlay', false);
+        $response->assertDontSee('class="wb-modal wb-modal-lg is-open"', false);
         $response->assertSee('Edit Block Type: '.$blockType->name, false);
         $response->assertSee('action="'.e(route('admin.block-types.update', $blockType)).'"', false);
         $response->assertSee('name="return_url" value="'.e(route('admin.block-types.index', ['search' => $blockType->name, 'status' => $blockType->status])).'"', false);

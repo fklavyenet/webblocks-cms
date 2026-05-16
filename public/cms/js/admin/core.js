@@ -42,7 +42,7 @@
             return;
         }
 
-        var dialogBackdrop = overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop');
+        var dialogBackdrop = overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop:not([data-wb-overlay-backdrop="true"])');
 
         if (dialogBackdrop) {
             dialogBackdrop.hidden = true;
@@ -56,6 +56,58 @@
 
         window.addEventListener('pageshow', function () {
             resetAdminTransientUiState();
+        });
+    }
+
+    function hideLegacyOverlayShell(overlay) {
+        var legacyLayer = overlay ? overlay.closest('.wb-overlay-layer--dialog') : null;
+
+        if (!legacyLayer || legacyLayer.getAttribute('data-wb-admin-legacy-hidden') === 'true') {
+            return;
+        }
+
+        legacyLayer.hidden = true;
+        legacyLayer.setAttribute('data-wb-admin-legacy-hidden', 'true');
+    }
+
+    function autoloadModalRuntime() {
+        return window.WBModal || null;
+    }
+
+    function autoloadDrawerRuntime() {
+        return window.WBDrawer || null;
+    }
+
+    function bootstrapAdminAutoloadOverlays() {
+        document.querySelectorAll('[data-wb-admin-autoload-overlay]').forEach(function (overlay) {
+            var modalRuntime = autoloadModalRuntime();
+            var drawerRuntime = autoloadDrawerRuntime();
+
+            if (overlay.getAttribute('data-wb-admin-autoload-bound') === 'true') {
+                return;
+            }
+
+            overlay.setAttribute('data-wb-admin-autoload-bound', 'true');
+            hideLegacyOverlayShell(overlay);
+
+            if (overlay.classList.contains('wb-modal') && modalRuntime) {
+                if (overlay.getAttribute('data-wb-overlay-runtime') !== 'true' && !overlay.classList.contains('is-open')) {
+                    modalRuntime.open(overlay, null);
+                }
+
+                return;
+            }
+
+            if (overlay.classList.contains('wb-drawer') && drawerRuntime) {
+                if (overlay.getAttribute('data-wb-overlay-runtime') !== 'true' && !overlay.classList.contains('is-open')) {
+                    drawerRuntime.open(overlay, null);
+                }
+
+                return;
+            }
+
+            overlay.hidden = false;
+            overlay.classList.add('is-open');
         });
     }
 
@@ -401,6 +453,7 @@
     bindAdminTransientUiReset();
     bindNavGroupToggles();
     bindSiteHandleAutosuggest();
+    bootstrapAdminAutoloadOverlays();
     bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
 }());

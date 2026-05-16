@@ -93,7 +93,9 @@ class NavigationTreeEditorTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="navigationCreateItemModal"', false);
-        $response->assertSee('class="wb-modal wb-modal-lg is-open"', false);
+        $response->assertSee('class="wb-modal wb-modal-lg"', false);
+        $response->assertSee('data-wb-admin-autoload-overlay', false);
+        $response->assertDontSee('class="wb-modal wb-modal-lg is-open"', false);
         $response->assertDontSee('wb-drawer', false);
         $response->assertSee('Parent Group', false);
         $response->assertSee('Groups render as collapsible parent sections and can contain child navigation items.', false);

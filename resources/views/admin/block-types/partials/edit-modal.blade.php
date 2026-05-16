@@ -5,10 +5,7 @@
     $isOpen = old('_block_type_modal', request('modal')) === 'edit-block-type' && (int) old('_block_type_id', request('block_type')) === $blockType->id;
 @endphp
 
-<div class="wb-overlay-layer wb-overlay-layer--dialog" @if (! $isOpen) hidden @endif>
-    <div class="wb-overlay-backdrop"></div>
-
-    <div class="wb-modal wb-modal-lg {{ $isOpen ? 'is-open' : '' }}" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}">
+<div class="wb-modal wb-modal-lg" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}" @if ($isOpen) data-wb-admin-autoload-overlay hidden @else hidden @endif>
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
@@ -39,5 +36,4 @@
                 />
             </form>
         </div>
-    </div>
 </div>

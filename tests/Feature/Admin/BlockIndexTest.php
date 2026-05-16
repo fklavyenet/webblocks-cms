@@ -106,7 +106,8 @@ class BlockIndexTest extends TestCase
             ->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $block->id]))
             ->assertOk()
             ->assertSee('Edit Block: Code (Getting Started / Main)')
-            ->assertSee('id="slot-block-editor-modal"', false);
+            ->assertSee('id="slot-block-editor-modal"', false)
+            ->assertSee('data-wb-admin-autoload-overlay', false);
     }
 
     #[Test]

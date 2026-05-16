@@ -8,7 +8,7 @@
     }
 
     function openAutoloadModal() {
-        var modal = document.querySelector('[data-wb-slot-block-modal-autoload]');
+        var modal = document.querySelector('[data-wb-slot-block-modal-autoload]:not([data-wb-admin-autoload-bound="true"])');
         var runtime = modalApi();
 
         if (!modal || !runtime) {
@@ -26,6 +26,16 @@
 
     document.addEventListener('wb:tabs:change', function (event) {
         var container = event.target;
+
+        if (container && container.matches('[data-wb-slot-block-picker-tabs]')) {
+            var pickerTabInput = document.querySelector('[data-wb-slot-block-picker-tab-input]');
+
+            if (pickerTabInput && event.detail && event.detail.tabId) {
+                pickerTabInput.value = event.detail.tabId.replace('slot-block-picker-panel-', '');
+            }
+
+            return;
+        }
 
         if (!container || !container.matches('[data-wb-slot-block-tabs]')) {
             return;

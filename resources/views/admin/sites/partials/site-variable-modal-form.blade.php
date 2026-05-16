@@ -4,10 +4,7 @@
     $publicToken = '{{ site.'.($siteVariable->key ?: 'variable_key').' }}';
 @endphp
 
-<div class="wb-overlay-layer wb-overlay-layer--dialog">
-    <div class="wb-overlay-backdrop"></div>
-
-    <div class="wb-modal wb-modal-lg is-open" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}">
+<div class="wb-modal wb-modal-lg" id="{{ $modalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $modalTitleId }}" aria-describedby="{{ $modalDescriptionId }}" data-wb-admin-close-url="{{ $closeUrl }}" data-wb-admin-autoload-overlay hidden>
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
@@ -90,5 +87,4 @@
                 />
             </form>
         </div>
-    </div>
 </div>

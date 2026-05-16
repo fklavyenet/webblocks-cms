@@ -30,6 +30,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - a system-owned `Navbar` primitive block for reusable public header wrappers, plus composable `Navbar Brand` and `Navbar Navigation` blocks that can be placed anywhere inside a Navbar descendant tree, with `Cluster` as the reusable horizontal distribution primitive for navbar rows and other grouped layouts
 - super-admin global Blocks index under `Pages` for cross-CMS block maintenance with compact `Search`, `Site`, `Page`, `Block Type`, `Status`, and `Locale` filters
 - Pages index filters and sort state persist across Edit Page, slot editor, translation editor, and save flows so editors can return to the same filtered list context without rebuilding it manually
+- the `Block Types` modal in the slot editor now keeps all block lists in `Name A-Z` order, limits filtering to search plus tab state, shows a header count badge for the current picker result set, only shows `Reset` after active search or tab changes, and keeps the search card visible while long result sets scroll inside the modal
 - Pages listing card headers now include `Import Page`, a first-class admin modal workflow for creating one new draft page from a documented single-page JSON payload without using project-specific commands
 
 ## Installation

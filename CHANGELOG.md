@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## 1.31.46
+
+- Fix the slot editor `Block Types` modal so long catalogs such as `All` stay inside the viewport, keep the search toolbar visible, and scroll the results card internally without pushing content past the modal footer.
+- Harden runtime-owned admin modal autoload behavior so migrated server-rendered modals open exactly once through WebBlocks UI `v2.7.6`, avoid legacy backdrop collisions, and preserve normal close plus dirty-form guard behavior.
+- Preserve Gallery block editor interactivity and the nested `Add Gallery Items` picker stack while keeping the canonical compact picker rows plus deterministic empty and error states intact.
+- Align the slot editor `Block Types` modal filter toolbar with the shared admin listing filter pattern by restoring the `Apply` label, showing `Reset` only when search or tab state is active, and placing `Reset` after `Apply`.
+- Simplify the `Block Types` modal by removing category and sort filters so every tab and search result stays in `Name A-Z` order, and add a header count badge for the current picker result set.
+- Separate the `Block Types` modal search toolbar and tabbed results into distinct muted cards so the filter area reads clearly apart from the picker content.
+
 ## 1.31.45
 
 - Fix the Gallery block edit modal regression after `v1.31.44` by opening the server-rendered slot block editor through the WebBlocks UI `v2.7.6` modal runtime instead of exposing it only with server-side visible classes, restoring the runtime-owned backdrop dimming, pointer lifecycle, and normal close behavior.
