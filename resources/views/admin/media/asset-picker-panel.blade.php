@@ -20,6 +20,7 @@
     $pickerPanelTitle = $panelTitle ?? ($pickerMode === 'multiple' ? 'Choose Assets' : 'Choose Asset');
     $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
+    $pickerResultsVariant = $resultsVariant ?? 'card';
 @endphp
 
 <div
@@ -34,6 +35,7 @@
     data-wb-picker-replace-label="{{ $pickerReplaceLabel }}"
     data-wb-picker-panel-mode="{{ $pickerPanelMode }}"
     data-wb-picker-owner-id="{{ $pickerOverlayOwnerId }}"
+    data-wb-picker-results-variant="{{ $pickerResultsVariant }}"
 >
     @if ($pickerMode === 'multiple')
         <div class="wb-stack wb-gap-2" data-wb-picker-selected-list>
@@ -206,10 +208,10 @@
                                 </div>
                             </div>
 
-                            <div class="wb-grid wb-grid-3" data-wb-picker-grid>
+                            <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
                                 @foreach (($assetPickerAssets ?? collect()) as $asset)
                                     @if (! $pickerAccept || $asset->kind === $pickerAccept)
-                                        @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple'])
+                                        @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
                                     @endif
                                 @endforeach
                             </div>
@@ -283,10 +285,10 @@
                     </div>
                 </div>
 
-                <div class="wb-grid wb-grid-3" data-wb-picker-grid>
+                <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
                     @foreach (($assetPickerAssets ?? collect()) as $asset)
                         @if (! $pickerAccept || $asset->kind === $pickerAccept)
-                            @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple'])
+                            @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
                         @endif
                     @endforeach
                 </div>

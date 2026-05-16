@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## 1.31.41
+
+- Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.6`, keeping public and admin layouts aligned on the current shipped CDN URLs.
+- Replace the dirty admin overlay browser confirm flow with a stacked WebBlocks confirmation modal on `wb:overlay:close-request`, so unsaved-change discard stays in the shared overlay stack while confirmed closes still finish programmatically without re-triggering the guard.
+- Compact the Gallery `Add Gallery Items` media picker into a list-style selector with small thumbnails, one-row metadata, visible selected-state styling, and the same stacked overlay plus `Add Selected` behavior.
+
 ## 1.31.40
 
 - Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.5`, aligning admin and public overlays with the updated shared overlay stack behavior and close-request runtime contract.

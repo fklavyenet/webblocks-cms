@@ -86,11 +86,12 @@
                     'replaceLabel' => 'Add Gallery Items',
                     'clearLabel' => 'Remove All',
                     'accept' => 'image',
-                    'compactControls' => true,
-                    'panelMode' => 'overlay',
-                    'panelTitle' => 'Add Gallery Items',
-                    'controlsClass' => 'wb-card-actions wb-cluster wb-cluster-2 wb-flex-wrap wb-justify-end',
-                ])
+                     'compactControls' => true,
+                     'panelMode' => 'overlay',
+                     'panelTitle' => 'Add Gallery Items',
+                     'resultsVariant' => 'compact-list',
+                     'controlsClass' => 'wb-card-actions wb-cluster wb-cluster-2 wb-flex-wrap wb-justify-end',
+                 ])
             </div>
 
             <div class="wb-card-body">
@@ -240,10 +241,11 @@
                     'replaceLabel' => 'Add Gallery Items',
                     'clearLabel' => 'Remove All',
                     'accept' => 'image',
-                    'compactControls' => true,
-                    'panelMode' => 'overlay',
-                    'panelTitle' => 'Add Gallery Items',
-                ])
+                     'compactControls' => true,
+                     'panelMode' => 'overlay',
+                     'panelTitle' => 'Add Gallery Items',
+                     'resultsVariant' => 'compact-list',
+                 ])
             </div>
 
             <span class="wb-text-sm wb-text-muted">Add, remove, and reorder gallery images. Per-item copy stays in each item editor.</span>

@@ -176,6 +176,8 @@
             return;
         }
 
+        overlay.dataset.wbAdminForceClose = 'true';
+
         if (window.WBModal && overlay.classList.contains('wb-modal')) {
             window.WBModal.close(overlay);
             return;
@@ -201,6 +203,147 @@
             : 'Discard unsaved changes?';
     }
 
+    function dirtyConfirmModalId() {
+        return 'wb-admin-dirty-close-confirm-modal';
+    }
+
+    function ensureOverlayId(overlay) {
+        if (!overlay) {
+            return '';
+        }
+
+        if (overlay.id) {
+            return overlay.id;
+        }
+
+        overlay.id = 'wb-admin-overlay-' + String(Date.now()) + '-' + String(Math.floor(Math.random() * 1000));
+
+        return overlay.id;
+    }
+
+    function dirtyConfirmModal() {
+        return document.getElementById(dirtyConfirmModalId());
+    }
+
+    function dirtyConfirmMessageElement() {
+        var modal = dirtyConfirmModal();
+
+        return modal ? modal.querySelector('[data-wb-admin-dirty-close-message]') : null;
+    }
+
+    function dirtyConfirmModalBody() {
+        var overlayRoot = document.getElementById('wb-overlay-root');
+
+        if (!overlayRoot) {
+            return null;
+        }
+
+        return [
+            '<div class="wb-modal wb-modal-sm wb-admin-dirty-close-modal" id="' + dirtyConfirmModalId() + '" role="dialog" aria-modal="true" aria-labelledby="' + dirtyConfirmModalId() + '-title" data-wb-admin-dirty-close-modal>',
+            '<div class="wb-modal-dialog">',
+            '<div class="wb-modal-header">',
+            '<h2 class="wb-modal-title" id="' + dirtyConfirmModalId() + '-title">Discard unsaved changes?</h2>',
+            '<button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Keep editing">',
+            '<i class="wb-icon wb-icon-x" aria-hidden="true"></i>',
+            '</button>',
+            '</div>',
+            '<div class="wb-modal-body wb-stack wb-gap-2">',
+            '<p data-wb-admin-dirty-close-message>Unsaved changes will be lost if you close this overlay.</p>',
+            '</div>',
+            '<div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">',
+            '<button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Keep editing</button>',
+            '<button type="button" class="wb-btn wb-btn-danger" data-wb-admin-dirty-close-confirm-action>Close without saving</button>',
+            '</div>',
+            '</div>',
+            '</div>'
+        ].join('');
+    }
+
+    function ensureDirtyCloseConfirmationModal() {
+        var overlayRoot = document.getElementById('wb-overlay-root');
+
+        if (!overlayRoot) {
+            return null;
+        }
+
+        var modal = dirtyConfirmModal();
+
+        if (modal) {
+            return modal;
+        }
+
+        overlayRoot.insertAdjacentHTML('beforeend', dirtyConfirmModalBody());
+
+        return dirtyConfirmModal();
+    }
+
+    function openDirtyCloseConfirmation(overlay, form) {
+        var modal = ensureDirtyCloseConfirmationModal();
+        var message = dirtyConfirmMessageElement();
+
+        if (!modal || !window.WBModal) {
+            return false;
+        }
+
+        if (message) {
+            message.textContent = dirtyCloseMessage(form) + ' Unsaved changes will be lost.';
+        }
+
+        modal.dataset.wbAdminDirtyOverlayId = ensureOverlayId(overlay);
+        modal.dataset.wbAdminDirtyCloseUrl = overlay.dataset ? (overlay.dataset.wbAdminCloseUrl || '') : '';
+
+        window.WBModal.open(modal, null);
+
+        return true;
+    }
+
+    function bindDirtyCloseConfirmationActions() {
+        document.addEventListener('click', function (event) {
+            var confirmButton = event.target.closest('[data-wb-admin-dirty-close-confirm-action]');
+            var modal = dirtyConfirmModal();
+            var overlay;
+
+            if (!confirmButton || !modal) {
+                return;
+            }
+
+            overlay = modal.dataset.wbAdminDirtyOverlayId !== ''
+                ? document.getElementById(modal.dataset.wbAdminDirtyOverlayId)
+                : null;
+
+            if (window.WBModal) {
+                window.WBModal.close(modal);
+            } else {
+                modal.hidden = true;
+                modal.classList.remove('is-open');
+            }
+
+            if (!overlay) {
+                return;
+            }
+
+            var form = getDirtyFormForOverlay(overlay);
+
+            if (form) {
+                markDirtyFormSnapshot(form);
+            }
+
+            closeOverlayProgrammatically(overlay);
+            handleOverlayCloseUrl(overlay);
+        });
+
+        document.addEventListener('wb:modal:close', function (event) {
+            var modal = event.target.closest('.wb-modal');
+
+            if (!modal || modal.id !== dirtyConfirmModalId()) {
+                return;
+            }
+
+            delete modal.dataset.wbAdminDirtyOverlayId;
+            delete modal.dataset.wbAdminDirtyCloseUrl;
+        });
+    }
+
     function bindDirtyOverlayGuards() {
         document.querySelectorAll('[data-wb-admin-dirty-form]').forEach(function (form) {
             if (form.getAttribute('data-wb-admin-dirty-bound') === 'true') {
@@ -218,19 +361,24 @@
             var overlay = getOverlayElementFromEventTarget(event.target) || (event.detail ? event.detail.overlay : null);
             var form = getDirtyFormForOverlay(overlay);
 
-            if (!overlay || !form || !isDirtyForm(form)) {
+            if (!overlay) {
+                return;
+            }
+
+            if (overlay.dataset && overlay.dataset.wbAdminForceClose === 'true') {
+                delete overlay.dataset.wbAdminForceClose;
+                return;
+            }
+
+            if (!form || !isDirtyForm(form)) {
                 return;
             }
 
             event.preventDefault();
 
-            if (!window.confirm(dirtyCloseMessage(form))) {
+            if (!openDirtyCloseConfirmation(overlay, form)) {
                 return;
             }
-
-            markDirtyFormSnapshot(form);
-            closeOverlayProgrammatically(overlay);
-            handleOverlayCloseUrl(overlay);
         });
 
         document.addEventListener('wb:modal:close', function (event) {
@@ -253,5 +401,6 @@
     bindAdminTransientUiReset();
     bindNavGroupToggles();
     bindSiteHandleAutosuggest();
+    bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
 }());

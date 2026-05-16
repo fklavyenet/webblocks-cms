@@ -3768,6 +3768,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
         $response->assertSee('data-wb-picker-overlay-stack="nested-gallery"', false);
         $response->assertSee('data-wb-picker-overlay-layer="panel"', false);
+        $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
+        $response->assertSee('wb-picker-results--compact', false);
         $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
         $response->assertSee('data-wb-admin-dirty-form', false);
         $response->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
@@ -3785,6 +3787,9 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('pointer-events: none;', $adminCss);
         $this->assertStringContainsString('.wb-gallery-picker-overlay.wb-gallery-picker-overlay--stacked .wb-gallery-picker-modal', $adminCss);
         $this->assertStringContainsString('z-index: calc(var(--wb-z-modal) + 3);', $adminCss);
+        $this->assertStringContainsString('.wb-picker-results--compact', $adminCss);
+        $this->assertStringContainsString('.wb-picker-asset-row[data-wb-asset-selected="true"]', $adminCss);
+        $this->assertStringContainsString('.wb-picker-asset-row__body', $adminCss);
         $response->assertDontSee('Gallery Assets');
         $response->assertDontSee('Add More Assets');
         $response->assertDontSee('Gallery is a media collection block.');
@@ -3886,6 +3891,7 @@ class PageBuilderExperienceTest extends TestCase
         $slotBlockResponse->assertSee('class="wb-modal-close" data-wb-dismiss="modal"', false);
         $slotBlockResponse->assertSee('data-wb-admin-dirty-form', false);
         $slotBlockResponse->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
+        $slotBlockResponse->assertDontSee('window.confirm(', false);
 
         $pageImportResponse->assertOk();
         $pageImportResponse->assertSee('id="page-import-modal"', false);
@@ -3894,6 +3900,17 @@ class PageBuilderExperienceTest extends TestCase
         $pageImportResponse->assertSee('class="wb-btn wb-btn-secondary" data-wb-dismiss="modal"', false);
         $pageImportResponse->assertSee('data-wb-admin-dirty-form', false);
         $pageImportResponse->assertSee('data-wb-admin-dirty-close-confirm="Discard import changes?"', false);
+
+        $adminCoreJs = file_get_contents(public_path('cms/js/admin/core.js'));
+        $this->assertNotFalse($adminCoreJs);
+        $this->assertStringContainsString('wb:overlay:close-request', $adminCoreJs);
+        $this->assertStringContainsString('data-wb-admin-dirty-close-confirm-action', $adminCoreJs);
+        $this->assertStringContainsString('Keep editing', $adminCoreJs);
+        $this->assertStringContainsString('Close without saving', $adminCoreJs);
+        $this->assertStringContainsString('Unsaved changes will be lost', $adminCoreJs);
+        $this->assertStringContainsString('overlay.dataset.wbAdminForceClose = \'true\';', $adminCoreJs);
+        $this->assertStringContainsString('if (overlay.dataset && overlay.dataset.wbAdminForceClose === \'true\')', $adminCoreJs);
+        $this->assertStringNotContainsString('window.confirm(', $adminCoreJs);
     }
 
     #[Test]

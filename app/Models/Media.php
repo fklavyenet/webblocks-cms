@@ -194,6 +194,8 @@ class Media extends Model
             'filename' => $this->filename,
             'original_name' => $this->original_name,
             'kind' => $this->kind,
+            'folder_name' => $this->folder?->name,
+            'meta_label' => $this->compactMetaLabel(),
             'url' => $this->url(),
             'previewable' => $this->canPreview(),
         ];

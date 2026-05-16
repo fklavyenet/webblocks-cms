@@ -16,6 +16,26 @@
         }
     }
 
+    function setSelectionButtonState(button, isSelected) {
+        if (!button) {
+            return;
+        }
+
+        button.textContent = isSelected ? 'Selected' : 'Select';
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        button.classList.toggle('wb-btn-primary', isSelected);
+        button.classList.toggle('wb-btn-secondary', !isSelected);
+    }
+
+    function setAssetCardSelectionState(card, isSelected) {
+        if (!card) {
+            return;
+        }
+
+        card.classList.toggle('is-selected', isSelected);
+        card.setAttribute('data-wb-asset-selected', isSelected ? 'true' : 'false');
+    }
+
     function updatePickerSummary(root) {
         if (!root) {
             return;
@@ -231,7 +251,8 @@
             var asset = parseAssetPayload(button.getAttribute('data-wb-asset'));
 
             if (String(asset.id) === String(assetId)) {
-                button.textContent = 'Select';
+                setSelectionButtonState(button, false);
+                setAssetCardSelectionState(button.closest('[data-wb-asset-card]'), false);
             }
         });
 
@@ -430,7 +451,8 @@
             }
 
             root.querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
-                button.textContent = 'Select';
+                setSelectionButtonState(button, false);
+                setAssetCardSelectionState(button.closest('[data-wb-asset-card]'), false);
             });
             updatePickerSummary(root);
             document.dispatchEvent(new CustomEvent('wb:asset-picker-selection-reset', {
@@ -454,7 +476,10 @@
 
             root.querySelectorAll('[data-wb-asset-toggle]').forEach(function (button) {
                 var asset = parseAssetPayload(button.getAttribute('data-wb-asset'));
-                button.textContent = selectedIds.indexOf(String(asset.id)) !== -1 ? 'Selected' : 'Select';
+                var isSelected = selectedIds.indexOf(String(asset.id)) !== -1;
+
+                setSelectionButtonState(button, isSelected);
+                setAssetCardSelectionState(button.closest('[data-wb-asset-card]'), isSelected);
             });
         }
     }
@@ -502,10 +527,12 @@
 
             if (isSelected) {
                 removeMultiSelection(multiRoot, multiAsset.id);
-                toggleButton.textContent = 'Select';
+                setSelectionButtonState(toggleButton, false);
+                setAssetCardSelectionState(toggleButton.closest('[data-wb-asset-card]'), false);
             } else {
                 appendMultiSelection(multiRoot, multiAsset);
-                toggleButton.textContent = 'Selected';
+                setSelectionButtonState(toggleButton, true);
+                setAssetCardSelectionState(toggleButton.closest('[data-wb-asset-card]'), true);
             }
 
             return;
