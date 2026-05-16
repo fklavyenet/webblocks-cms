@@ -3,6 +3,27 @@
         return;
     }
 
+    function modalApi() {
+        return window.WBModal || null;
+    }
+
+    function openAutoloadModal() {
+        var modal = document.querySelector('[data-wb-slot-block-modal-autoload]');
+        var runtime = modalApi();
+
+        if (!modal || !runtime) {
+            return;
+        }
+
+        if (modal.getAttribute('data-wb-overlay-runtime') === 'true' || modal.classList.contains('is-open')) {
+            return;
+        }
+
+        runtime.open(modal, null);
+    }
+
+    openAutoloadModal();
+
     document.addEventListener('wb:tabs:change', function (event) {
         var container = event.target;
 

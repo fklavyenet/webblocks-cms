@@ -3774,16 +3774,21 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-admin-dirty-form', false);
         $response->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
         $response->assertSee('id="slot-block-editor-modal"', false);
+        $response->assertSee('data-wb-slot-block-modal-autoload', false);
         $response->assertSee('data-wb-admin-close-url=', false);
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $overlayRootPosition = strpos($content, 'id="wb-overlay-root"');
         $this->assertNotFalse($overlayRootPosition);
         $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
+        $this->assertSame(1, substr_count($content, 'id="slot-block-editor-modal"'));
         $this->assertSame(2, substr_count($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"'));
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
         $this->assertStringNotContainsString('<div class="wb-overlay-layer wb-overlay-layer--dialog"><div class="wb-overlay-backdrop"></div><div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal"', str_replace(["\n", ' '], '', $content));
+        $this->assertStringContainsString('class="wb-modal wb-modal-xl" id="slot-block-editor-modal"', $content);
+        $this->assertStringContainsString('data-wb-slot-block-modal-autoload hidden', $content);
+        $this->assertStringNotContainsString('class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal"', $content);
         $adminCss = file_get_contents(public_path('cms/css/admin.css'));
         $this->assertNotFalse($adminCss);
         $this->assertStringContainsString('#wb-overlay-root [data-wb-overlay-runtime="true"][data-wb-overlay-interactive="false"]', $adminCss);
@@ -3802,6 +3807,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('return pickerActiveRuntimePanel(root) || root;', $assetPickerJs);
         $this->assertStringContainsString('function pickerActiveRuntimePanel(root)', $assetPickerJs);
         $this->assertStringContainsString('var context = pickerContext(root);', $assetPickerJs);
+        $pageBuilderModalsJs = file_get_contents(public_path('cms/js/admin/page-builder-modals.js'));
+        $this->assertNotFalse($pageBuilderModalsJs);
+        $this->assertStringContainsString('data-wb-slot-block-modal-autoload', $pageBuilderModalsJs);
+        $this->assertStringContainsString('runtime.open(modal, null);', $pageBuilderModalsJs);
+        $this->assertStringNotContainsString('modal.classList.add(\'is-open\')', $pageBuilderModalsJs);
         $this->assertStringContainsString('data-wb-picker-error', $response->getContent());
         $this->assertStringNotContainsString('ensureLayer(\'dialog\')', $assetPickerJs);
         $response->assertDontSee('Gallery Assets');
@@ -3973,6 +3983,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($content);
         $this->assertStringContainsString('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', $content);
         $this->assertSame(1, substr_count($content, 'id="gallery_media_ids_picker_panel"'));
+        $this->assertSame(1, substr_count($content, 'id="slot-block-editor-modal"'));
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay"/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
     }
@@ -3992,6 +4003,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $slotBlockResponse->assertOk();
         $slotBlockResponse->assertSee('id="slot-block-editor-modal"', false);
+        $slotBlockResponse->assertSee('data-wb-slot-block-modal-autoload', false);
         $slotBlockResponse->assertSee('data-wb-admin-close-url=', false);
         $slotBlockResponse->assertSee('class="wb-modal-close" data-wb-dismiss="modal"', false);
         $slotBlockResponse->assertSee('data-wb-admin-dirty-form', false);

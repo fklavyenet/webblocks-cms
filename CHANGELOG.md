@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.45
+
+- Fix the Gallery block edit modal regression after `v1.31.44` by opening the server-rendered slot block editor through the WebBlocks UI `v2.7.6` modal runtime instead of exposing it only with server-side visible classes, restoring the runtime-owned backdrop dimming, pointer lifecycle, and normal close behavior.
+- Preserve the nested `Add Gallery Items` picker stack above the Gallery editor while keeping the compact media rows plus empty and error states aligned with the shared WebBlocks UI overlay contract and without reintroducing the removed CMS-owned overlay wrapper.
+
 ## 1.31.44
 
 - Fix the Gallery block editor modal so it again opens with the normal WebBlocks backdrop and dimming, removing the stale CMS-owned dialog wrapper behavior that hid the active backdrop under the shared `#wb-overlay-root` runtime.

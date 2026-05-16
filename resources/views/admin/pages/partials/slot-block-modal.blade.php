@@ -19,7 +19,7 @@
 @endphp
 
 @if ($showModal && $slotModalBlock && $slotModalSelectedBlockType)
-    <div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}">
+    <div class="wb-modal wb-modal-xl" id="slot-block-editor-modal" role="dialog" aria-modal="true" aria-labelledby="slot-block-editor-title" data-wb-admin-close-url="{{ $closeUrl }}" data-wb-slot-block-modal-autoload hidden>
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
