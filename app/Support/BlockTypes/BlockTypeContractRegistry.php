@@ -432,12 +432,13 @@ class BlockTypeContractRegistry
                 'known_gaps' => [],
             ],
             'content_header' => [
-                'admin_form_fields' => ['Title', 'Title level', 'Intro text', 'Meta items'],
+                'admin_form_fields' => ['Title', 'Intro text', 'Meta items'],
                 'translatable_fields' => ['title', 'subtitle', 'meta'],
-                'shared_settings_fields' => ['variant', 'settings.alignment'],
+                'shared_settings_fields' => ['settings.alignment'],
                 'storage_fields' => [
                     'Translated title, intro, and meta copy live in block text translation rows.',
-                    'Shared title level and alignment stay on shared fields or settings.',
+                    'Content Header titles always render as H1.',
+                    'Shared alignment stays in block settings.',
                 ],
                 'media_relationship_fields' => ['Structured meta items are stored as content data rather than as media relationships.'],
                 'child_container_behavior' => ['Not a container in the current contract.'],

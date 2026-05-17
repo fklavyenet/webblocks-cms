@@ -69,6 +69,10 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'sort_order' => 5,
             'status' => 'published',
         ]);
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'content_header',
+            'description' => 'Docs-style content header with a fixed H1 title, intro text, and optional metadata items.',
+        ]);
     }
 
     #[Test]

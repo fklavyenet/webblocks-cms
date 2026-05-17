@@ -1,14 +1,13 @@
 @php
     $title = trim((string) ($block->title ?? ''));
     $introText = trim((string) ($block->subtitle ?? ''));
-    $headingTag = in_array($block->variant, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true) ? $block->variant : 'h1';
     $metaItems = $block->metaItems();
     $alignmentClass = $block->contentHeaderAlignmentClass();
     $headerClass = trim('wb-content-header '.($alignmentClass ?? ''));
 @endphp
 
 <header class="{{ $headerClass }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
-    <{{ $headingTag }} class="wb-content-title">{{ $title }}</{{ $headingTag }}>
+    <h1 class="wb-content-title">{{ $title }}</h1>
 
     @if ($introText !== '')
         <p class="wb-content-subtitle">{{ $introText }}</p>

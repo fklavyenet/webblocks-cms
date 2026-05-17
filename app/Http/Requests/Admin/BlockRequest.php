@@ -113,7 +113,7 @@ class BlockRequest extends FormRequest
             'intro_text' => [$isContentHeader ? 'nullable' : 'prohibited', 'string'],
             'meta_items' => [$isContentHeader ? 'nullable' : 'prohibited', 'array'],
             'meta_items.*' => [$isContentHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'title_level' => [$isContentHeader ? 'required' : 'prohibited', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
+            'title_level' => ['prohibited'],
             'url' => [(($isButtonLink || $selectedBlockType?->slug === 'link-list-item' || $isSidebarNavItem) && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
             'target' => [($isButtonLink || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem) ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
@@ -901,9 +901,7 @@ class BlockRequest extends FormRequest
                 $data['settings'] = $settings === []
                     ? null
                     : json_encode($settings, JSON_UNESCAPED_SLASHES);
-                $data['variant'] = $isTranslatedContentHeaderEdit
-                    ? ($this->route('block')?->getRawOriginal('variant'))
-                    : (trim((string) ($data['title_level'] ?? '')) ?: 'h1');
+                $data['variant'] = null;
             }
 
             if ($blockType?->slug === 'columns') {

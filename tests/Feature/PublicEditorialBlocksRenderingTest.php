@@ -3139,7 +3139,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'variant' => 'h1',
+            'variant' => 'h4',
             'settings' => json_encode(['alignment' => 'center'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
@@ -3202,7 +3202,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<header class="wb-content-header" data-wb-public-block-type="content-header">', false);
-        $response->assertSee('<h2 class="wb-content-title">Only title</h2>', false);
+        $response->assertSee('<h1 class="wb-content-title">Only title</h1>', false);
         $response->assertDontSee('wb-content-subtitle', false);
         $response->assertDontSee('wb-content-meta', false);
         $response->assertDontSee('wb-content-meta-divider', false);
@@ -3276,17 +3276,47 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
         $defaultResponse->assertOk();
         $defaultResponse->assertSee('<header class="wb-content-header wb-text-right" data-wb-public-block-type="content-header">', false);
-        $defaultResponse->assertSee('<h3 class="wb-content-title">English docs title</h3>', false);
+        $defaultResponse->assertSee('<h1 class="wb-content-title">English docs title</h1>', false);
         $defaultResponse->assertSee('<p class="wb-content-subtitle">English intro</p>', false);
         $defaultResponse->assertSee('<span>Updated</span>', false);
         $defaultResponse->assertSee('<span>Guide</span>', false);
 
         $turkishResponse->assertOk();
         $turkishResponse->assertSee('<header class="wb-content-header wb-text-right" data-wb-public-block-type="content-header">', false);
-        $turkishResponse->assertSee('<h3 class="wb-content-title">Turkce baslik</h3>', false);
+        $turkishResponse->assertSee('<h1 class="wb-content-title">Turkce baslik</h1>', false);
         $turkishResponse->assertSee('<p class="wb-content-subtitle">Turkce giris</p>', false);
         $turkishResponse->assertSee('<span>Guncel</span>', false);
         $turkishResponse->assertSee('<span>Rehber</span>', false);
+    }
+
+    #[Test]
+    public function content_header_ignores_legacy_saved_heading_levels_and_always_renders_h1(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'content_header',
+            'block_type_id' => $this->blockType('content_header', 'Content Header', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h6',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Legacy level title',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+
+        $response->assertOk();
+        $response->assertSee('<h1 class="wb-content-title">Legacy level title</h1>', false);
+        $response->assertDontSee('<h6 class="wb-content-title">Legacy level title</h6>', false);
     }
 
     #[Test]

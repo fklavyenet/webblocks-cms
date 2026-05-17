@@ -135,7 +135,7 @@ class CoreBlockTypeCatalogSyncer
                 'name' => 'Content Header',
                 'slug' => 'content_header',
                 'category' => 'pattern',
-                'description' => 'Docs-style content header with title, intro text, and optional metadata items.',
+                'description' => 'Docs-style content header with a fixed H1 title, intro text, and optional metadata items.',
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Simplify the `Content Header` contract by removing the admin `Title Level` field, stopping new writes of Content Header heading-level variants, and always rendering Content Header titles as `<h1 class="wb-content-title">` while safely ignoring any legacy saved heading-level values.
+
 ## 1.31.52
 
 - Fix the public Gallery variant contract so `Masonry` is no longer a barely staggered copy of `Grid`: the CMS now renders Masonry through a real CSS-column layout with natural image heights, keeps `Grid` as the equal-cell gallery, and preserves the existing featured-first `Collage` composition.

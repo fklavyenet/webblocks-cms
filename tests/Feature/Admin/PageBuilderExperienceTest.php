@@ -4198,9 +4198,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('name="title"', false);
         $response->assertSee('name="intro_text"', false);
         $response->assertSee('name="meta_items[]"', false);
-        $response->assertSee('name="title_level"', false);
+        $response->assertDontSee('name="title_level"', false);
         $response->assertSee('name="alignment"', false);
-        $response->assertSee('Title, intro text, and meta items are translated per locale. Title level and alignment stay shared across locales.');
+        $response->assertSee('Title, intro text, and meta items are translated per locale. Alignment stays shared across locales.');
     }
 
     #[Test]
@@ -4794,7 +4794,6 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'title' => 'Documentation',
             'intro_text' => 'Intro',
-            'title_level' => 'h1',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
@@ -5265,7 +5264,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function content_header_store_creates_translation_backed_fields_and_shared_settings(): void
+    public function content_header_store_creates_translation_backed_fields_and_alignment_only_settings(): void
     {
         $this->seedFoundation();
 
@@ -5282,7 +5281,6 @@ class PageBuilderExperienceTest extends TestCase
             'title' => 'Docs heading',
             'intro_text' => 'Intro copy',
             'meta_items' => ['Updated today', '5 min read', 'API'],
-            'title_level' => 'h2',
             'alignment' => 'center',
             'status' => 'published',
             '_slot_block_mode' => 'create',
@@ -5297,7 +5295,7 @@ class PageBuilderExperienceTest extends TestCase
             'title' => null,
             'subtitle' => null,
             'content' => null,
-            'variant' => 'h2',
+            'variant' => null,
         ]);
         $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $block->id,
@@ -5409,11 +5407,10 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 0,
             'title' => 'Docs heading',
             'meta_items' => ['ok', 123],
-            'title_level' => 'hero',
             'alignment' => 'diagonal',
             'status' => 'published',
             '_slot_block_mode' => 'create',
-        ])->assertSessionHasErrors(['title_level', 'alignment', 'meta_items.1']);
+        ])->assertSessionHasErrors(['alignment', 'meta_items.1']);
 
         $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
 
