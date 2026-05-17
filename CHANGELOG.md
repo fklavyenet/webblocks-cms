@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.56
+
+- Fix the Gallery `Add Gallery Items` modal sizing regression left in `v1.31.55` by constraining the Gallery picker dialog to the viewport and making only the normal `.wb-modal-body` scroll, so the modal header, sticky filters, compact result rows, and footer all stay reachable without reintroducing a nested results scroll region.
+
 ## 1.31.55
 
 - Replace the broken `v1.31.54` Gallery `Add Gallery Items` nested results-region scroll layout with a safer modal-body-scroll contract: the normal WebBlocks modal body stays the only scroll container, the compact filter card is now sticky at the top of that body, and the modal header plus footer remain owned by the standard WebBlocks UI modal structure.

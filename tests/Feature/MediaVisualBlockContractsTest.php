@@ -470,6 +470,7 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('wb-gallery-picker-dialog', false);
         $response->assertSee('wb-gallery-picker-filters-sticky', false);
         $response->assertDontSee('wb-gallery-picker-layout', false);
         $response->assertDontSee('wb-gallery-picker-results-region', false);
@@ -490,13 +491,16 @@ class MediaVisualBlockContractsTest extends TestCase
         $xpath = $this->htmlXPath($html);
         $modalBody = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
         $modalFooter = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
+        $dialog = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
         $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
         $pickerGrid = $xpath->query('//*[@data-wb-picker-grid]')->item(0);
 
+        $this->assertNotNull($dialog);
         $this->assertNotNull($modalBody);
         $this->assertNotNull($modalFooter);
         $this->assertNotNull($filtersCard);
         $this->assertNotNull($pickerGrid);
+        $this->assertSame('wb-modal-dialog wb-gallery-picker-dialog', $dialog->getAttribute('class'));
         $this->assertSame('wb-card wb-card-muted wb-gallery-picker-filters-sticky', $filtersCard->getAttribute('class'));
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $modalBody)->length);
         $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalBody)->length);
@@ -505,6 +509,10 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-error]', $modalBody)->length);
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalFooter)->length);
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-grid]', $modalFooter)->length);
+        $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]', $dialog)->length);
+        $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]', $dialog)->length);
+        $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]', $dialog)->length);
+        $this->assertMatchesRegularExpression('/<div class="wb-modal-dialog wb-gallery-picker-dialog">\s*<div class="wb-modal-header">.*<div class="wb-modal-body wb-stack wb-gap-3">.*<div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">/s', $html);
     }
 
     #[Test]

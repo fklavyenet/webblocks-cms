@@ -789,7 +789,19 @@
 .wb-gallery-picker-dialog {
     display: flex;
     flex-direction: column;
-    max-block-size: inherit;
+    max-block-size: calc(100dvh - 2rem);
+    overflow: hidden;
+}
+
+.wb-gallery-picker-dialog > .wb-modal-header,
+.wb-gallery-picker-dialog > .wb-modal-footer {
+    flex: 0 0 auto;
+}
+
+.wb-gallery-picker-dialog > .wb-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
 }
 
 .wb-gallery-picker-filters-sticky {
