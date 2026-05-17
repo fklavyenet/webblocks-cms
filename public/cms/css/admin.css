@@ -792,21 +792,12 @@
     max-block-size: inherit;
 }
 
-.wb-gallery-picker-layout {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.wb-gallery-picker-results-region {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    gap: var(--wb-s3);
-    min-height: 0;
-    overflow: auto;
+.wb-gallery-picker-filters-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-bottom: var(--wb-s1);
+    background: var(--wb-surface);
 }
 
 .wb-slot-block-picker-modal .wb-modal-body {

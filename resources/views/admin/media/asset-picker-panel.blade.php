@@ -272,8 +272,8 @@
                         </button>
                     </div>
 
-                    <div class="wb-modal-body wb-stack wb-gap-3{{ $pickerPanelMode === 'overlay' && $pickerResultsVariant === 'compact-list' && $pickerMode === 'multiple' ? ' wb-gallery-picker-layout' : '' }}">
-                        <div class="wb-card wb-card-muted" data-wb-picker-filters-card>
+                    <div class="wb-modal-body wb-stack wb-gap-3">
+                        <div class="wb-card wb-card-muted{{ $pickerResultsVariant === 'compact-list' && $pickerMode === 'multiple' ? ' wb-gallery-picker-filters-sticky' : '' }}" data-wb-picker-filters-card>
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div class="wb-grid wb-grid-3" data-wb-picker-filters>
                                     <div class="wb-stack wb-gap-1">
@@ -303,45 +303,43 @@
                             </div>
                         </div>
 
-                        <div class="wb-stack wb-gap-3{{ $pickerPanelMode === 'overlay' && $pickerResultsVariant === 'compact-list' && $pickerMode === 'multiple' ? ' wb-gallery-picker-results-region' : '' }}" data-wb-picker-results-region>
-                            <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
-                                @foreach ($pickerVisibleAssets as $asset)
-                                    @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
-                                @endforeach
-                            </div>
+                        <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
+                            @foreach ($pickerVisibleAssets as $asset)
+                                @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                            @endforeach
+                        </div>
 
-                            <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
-                                <div class="wb-empty-title">{{ $pickerEmptyTitle }}</div>
-                                <div class="wb-empty-text">{{ $pickerEmptyText }}</div>
-                            </div>
+                        <div class="wb-empty" data-wb-picker-empty @if ($pickerHasVisibleAssets) hidden @endif>
+                            <div class="wb-empty-title">{{ $pickerEmptyTitle }}</div>
+                            <div class="wb-empty-text">{{ $pickerEmptyText }}</div>
+                        </div>
 
-                            <div class="wb-empty" data-wb-picker-error hidden>
-                                <div class="wb-empty-title">Unable to load media</div>
-                                <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
-                            </div>
+                        <div class="wb-empty" data-wb-picker-error hidden>
+                            <div class="wb-empty-title">Unable to load media</div>
+                            <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
+                        </div>
 
-                            @if ($pickerShowUpload)
-                                <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-stack wb-gap-2">
-                                        <strong>Upload to Library</strong>
-                                        <div class="wb-grid wb-grid-2">
-                                            <div class="wb-stack wb-gap-1">
-                                                <label for="{{ $pickerInputId }}_inline_upload">File</label>
-                                                <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
-                                            </div>
-                                            <div class="wb-stack wb-gap-1">
-                                                <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
-                                                <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
-                                            </div>
+                        @if ($pickerShowUpload)
+                            <div class="wb-card wb-card-muted">
+                                <div class="wb-card-body wb-stack wb-gap-2">
+                                    <strong>Upload to Library</strong>
+                                    <div class="wb-grid wb-grid-2">
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_inline_upload">File</label>
+                                            <input id="{{ $pickerInputId }}_inline_upload" type="file" class="wb-input" data-wb-picker-upload-input>
                                         </div>
-                                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                                            <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
-                                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_inline_upload_title">Title</label>
+                                            <input id="{{ $pickerInputId }}_inline_upload_title" type="text" class="wb-input" data-wb-picker-upload-title>
                                         </div>
                                     </div>
+                                    <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                                        <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>Select a file to upload it to the shared media library.</span>
+                                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>Upload</button>
+                                    </div>
                                 </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">

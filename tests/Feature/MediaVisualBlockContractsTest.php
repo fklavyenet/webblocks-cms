@@ -470,8 +470,10 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
-        $response->assertSee('wb-gallery-picker-layout', false);
-        $response->assertSee('data-wb-picker-results-region', false);
+        $response->assertSee('wb-gallery-picker-filters-sticky', false);
+        $response->assertDontSee('wb-gallery-picker-layout', false);
+        $response->assertDontSee('wb-gallery-picker-results-region', false);
+        $response->assertDontSee('data-wb-picker-results-region', false);
         $response->assertDontSee('Upload to Library');
         $response->assertDontSee('data-wb-picker-summary', false);
         $response->assertDontSee('data-wb-picker-preview-grid', false);
@@ -486,16 +488,23 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $html);
 
         $xpath = $this->htmlXPath($html);
+        $modalBody = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
+        $modalFooter = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
         $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
-        $resultsRegion = $xpath->query('//*[@data-wb-picker-results-region]')->item(0);
+        $pickerGrid = $xpath->query('//*[@data-wb-picker-grid]')->item(0);
 
+        $this->assertNotNull($modalBody);
+        $this->assertNotNull($modalFooter);
         $this->assertNotNull($filtersCard);
-        $this->assertNotNull($resultsRegion);
-        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $filtersCard)->length);
-        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $resultsRegion)->length);
-        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-grid]', $resultsRegion)->length);
-        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-empty]', $resultsRegion)->length);
-        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-error]', $resultsRegion)->length);
+        $this->assertNotNull($pickerGrid);
+        $this->assertSame('wb-card wb-card-muted wb-gallery-picker-filters-sticky', $filtersCard->getAttribute('class'));
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-grid]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-empty]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-error]', $modalBody)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalFooter)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-grid]', $modalFooter)->length);
     }
 
     #[Test]
