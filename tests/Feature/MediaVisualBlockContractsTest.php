@@ -225,10 +225,14 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee($image->title ?: $image->filename, false);
         $response->assertSee($image->kind.' | '.$image->original_name, false);
         $response->assertSee('data-wb-picker-summary', false);
+        $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
+        $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('wb-picker-asset-row', false);
 
         $html = $response->getContent();
         $this->assertNotFalse($html);
         $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($image->title ?: $image->filename, '/').'/s', $html);
+        $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
         $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);

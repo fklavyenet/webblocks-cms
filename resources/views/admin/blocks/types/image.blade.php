@@ -19,6 +19,7 @@
             'panelMode' => 'overlay',
             'panelTitle' => 'Choose Image',
             'compactControls' => true,
+            'resultsVariant' => 'compact-list',
         ])
         <span>Choose an internal image asset for this block.</span>
     </div>
