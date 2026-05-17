@@ -3803,10 +3803,12 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringNotContainsString('min-block-size: 0;', $adminCss);
         $this->assertStringContainsString('.wb-picker-asset-row[data-wb-asset-selected="true"]', $adminCss);
         $this->assertStringContainsString('.wb-picker-asset-row__body', $adminCss);
-        $this->assertStringContainsString('inline-size: min(64rem, calc(100vw - 2rem));', $adminCss);
+        $this->assertStringNotContainsString('.wb-gallery-picker-modal {', $adminCss);
+        $this->assertStringNotContainsString('inline-size: min(64rem, calc(100vw - 2rem));', $adminCss);
         $this->assertStringNotContainsString('inline-size: min(72rem, calc(100vw - 2rem));', $adminCss);
         $this->assertStringNotContainsString('.wb-slot-block-picker-dialog {', $adminCss);
-        $this->assertStringNotContainsString('background: inherit;', preg_replace('/\.wb-gallery-picker-dialog\s*\{[^}]*\}/s', '', $adminCss) ?: $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-dialog {', $adminCss);
+        $this->assertStringNotContainsString('background: inherit;', $adminCss);
         $this->assertStringNotContainsString('wb-slot-block-picker-results-card', $adminCss);
         $this->assertStringNotContainsString('wb-slot-block-picker-results-body', $adminCss);
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));

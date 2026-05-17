@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.51
+
+- Fix the Gallery `Add Gallery Items` modal surface regression from `v1.31.50` by removing the CMS-owned `.wb-gallery-picker-modal` shell override and inherited picker dialog background from `public/cms/css/admin.css`, so WebBlocks UI `v2.7.6` again owns modal centering, panel surface, border, and shadow.
+- Keep the Gallery picker as a normal runtime-owned modal under `#wb-overlay-root`, preserve compact picker row readability, and continue leaving the removed `.wb-picker-results--compact { min-block-size: 0; }` override absent.
+
 ## 1.31.50
 
 - Fix the `Add Block: Gallery -> Add Gallery Items` admin freeze regression from `v1.31.49` by removing the CMS-side runtime-backdrop synchronization from `public/cms/js/admin/core.js`, leaving stacked modal backdrop visibility, pointer lifecycle, and topmost interactivity entirely to WebBlocks UI `v2.7.6`.
