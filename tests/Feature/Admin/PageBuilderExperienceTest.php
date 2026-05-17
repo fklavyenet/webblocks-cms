@@ -4035,7 +4035,6 @@ class PageBuilderExperienceTest extends TestCase
 
         $adminCoreJs = file_get_contents(public_path('cms/js/admin/core.js'));
         $this->assertNotFalse($adminCoreJs);
-        $this->assertStringContainsString('.wb-overlay-backdrop[data-wb-overlay-backdrop="true"]', $adminCoreJs);
         $this->assertStringContainsString('document.querySelectorAll(\'[data-wb-admin-autoload-overlay]\')', $adminCoreJs);
         $this->assertStringContainsString('modalRuntime.open(overlay, null);', $adminCoreJs);
         $this->assertStringContainsString('wb:overlay:close-request', $adminCoreJs);
@@ -4045,9 +4044,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('Unsaved changes will be lost', $adminCoreJs);
         $this->assertStringContainsString('overlay.dataset.wbAdminForceClose = \'true\';', $adminCoreJs);
         $this->assertStringContainsString('if (overlay.dataset && overlay.dataset.wbAdminForceClose === \'true\')', $adminCoreJs);
-        $this->assertStringContainsString('function syncAdminModalBackdrops()', $adminCoreJs);
-        $this->assertStringContainsString('backdrop.hidden = !isActiveBackdrop;', $adminCoreJs);
-        $this->assertStringContainsString('data-wb-admin-hidden-backdrop', $adminCoreJs);
+        $this->assertStringNotContainsString('function syncAdminModalBackdrops()', $adminCoreJs);
+        $this->assertStringNotContainsString('.wb-overlay-backdrop[data-wb-overlay-backdrop="true"]', $adminCoreJs);
+        $this->assertStringNotContainsString('MutationObserver', $adminCoreJs);
+        $this->assertStringNotContainsString('data-wb-admin-hidden-backdrop', $adminCoreJs);
+        $this->assertStringNotContainsString('backdrop.hidden = !isActiveBackdrop;', $adminCoreJs);
         $this->assertStringNotContainsString('window.confirm(', $adminCoreJs);
     }
 

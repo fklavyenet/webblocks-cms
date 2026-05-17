@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.50
+
+- Fix the `Add Block: Gallery -> Add Gallery Items` admin freeze regression from `v1.31.49` by removing the CMS-side runtime-backdrop synchronization from `public/cms/js/admin/core.js`, leaving stacked modal backdrop visibility, pointer lifecycle, and topmost interactivity entirely to WebBlocks UI `v2.7.6`.
+- Keep the Gallery nested picker and block editor on the shared `#wb-overlay-root` contract, preserve dirty-form close guards and fallback modal opening behavior, and keep the compact picker row-height fix from `v1.31.49` unchanged so long result rows stay readable.
+
 ## 1.31.49
 
 - Fix the stacked Edit Slot and Gallery admin modal regression by keeping server-rendered CMS modal targets on the shared `#wb-overlay-root` contract while the pinned WebBlocks UI `v2.7.6` runtime continues to own the active stacked dialog backdrop, pointer lifecycle, and topmost interactive state.
