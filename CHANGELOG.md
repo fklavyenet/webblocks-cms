@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.49
+
+- Fix the stacked Edit Slot and Gallery admin modal regression by keeping server-rendered CMS modal targets on the shared `#wb-overlay-root` contract while the pinned WebBlocks UI `v2.7.6` runtime continues to own the active stacked dialog backdrop, pointer lifecycle, and topmost interactive state.
+- Remove the compact Gallery picker `min-block-size: 0` override so dense compact media rows keep their natural content height while the picker body remains the scrollable, viewport-safe container for long result lists.
+
 ## 1.31.48
 
 - Remove the bad inherited background rule from the slot editor `Block Types` modal so the runtime-owned dialog surface no longer picks up transparent or overlapping card visuals.

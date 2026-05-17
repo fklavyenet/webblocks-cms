@@ -42,13 +42,10 @@
             return;
         }
 
-        var dialogBackdrop = overlayRoot.querySelector('.wb-overlay-layer--dialog > .wb-overlay-backdrop:not([data-wb-overlay-backdrop="true"])');
-
-        if (dialogBackdrop) {
-            dialogBackdrop.hidden = true;
-            dialogBackdrop.className = 'wb-overlay-backdrop';
-            delete dialogBackdrop.dataset.wbOverlayOwner;
-        }
+        overlayRoot.querySelectorAll('.wb-overlay-backdrop[data-wb-admin-hidden-backdrop="true"]').forEach(function (backdrop) {
+            backdrop.hidden = false;
+            delete backdrop.dataset.wbAdminHiddenBackdrop;
+        });
     }
 
     function bindAdminTransientUiReset() {
@@ -444,6 +441,67 @@
         });
     }
 
+    function overlayZIndexOffset(value) {
+        var match = String(value || '').match(/\+\s*(-?\d+)/);
+
+        return match ? parseInt(match[1], 10) : -1;
+    }
+
+    function syncAdminModalBackdrops() {
+        var overlayRoot = document.getElementById('wb-overlay-root');
+
+        if (!overlayRoot) {
+            return;
+        }
+
+        var visibleBackdrops = Array.prototype.slice.call(
+            overlayRoot.querySelectorAll('.wb-overlay-backdrop[data-wb-overlay-backdrop="true"]')
+        ).filter(function (backdrop) {
+            return !backdrop.hidden;
+        });
+        var activeBackdrop = visibleBackdrops.sort(function (left, right) {
+            return overlayZIndexOffset(left.style.zIndex) - overlayZIndexOffset(right.style.zIndex);
+        }).pop() || null;
+
+        overlayRoot.querySelectorAll('.wb-overlay-backdrop[data-wb-overlay-backdrop="true"]').forEach(function (backdrop) {
+            var isActiveBackdrop = backdrop === activeBackdrop;
+
+            backdrop.hidden = !isActiveBackdrop;
+
+            if (isActiveBackdrop) {
+                delete backdrop.dataset.wbAdminHiddenBackdrop;
+                return;
+            }
+
+            backdrop.dataset.wbAdminHiddenBackdrop = 'true';
+        });
+    }
+
+    function bindAdminModalBackdropSync() {
+        syncAdminModalBackdrops();
+
+        if (typeof MutationObserver === 'undefined') {
+            return;
+        }
+
+        var overlayRoot = document.getElementById('wb-overlay-root');
+
+        if (!overlayRoot) {
+            return;
+        }
+
+        var observer = new MutationObserver(function () {
+            syncAdminModalBackdrops();
+        });
+
+        observer.observe(overlayRoot, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['class', 'hidden', 'data-wb-overlay-interactive', 'data-wb-overlay-owner', 'style'],
+        });
+    }
+
     admin.escapeHtml = escapeHtml;
     admin.resetAdminTransientUiState = resetAdminTransientUiState;
     admin.bindAdminTransientUiReset = bindAdminTransientUiReset;
@@ -456,4 +514,5 @@
     bootstrapAdminAutoloadOverlays();
     bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
+    bindAdminModalBackdropSync();
 }());
