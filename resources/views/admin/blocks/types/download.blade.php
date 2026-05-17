@@ -1,16 +1,4 @@
 <div class="wb-stack wb-gap-4">
-    <div class="wb-grid wb-grid-2">
-        <div class="wb-stack wb-gap-1">
-            <label for="title">Download Label</label>
-            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}" required>
-        </div>
-
-        <div class="wb-stack wb-gap-1">
-            <label for="subtitle">Helper Text</label>
-            <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
-        </div>
-    </div>
-
     @include('admin.media.asset-picker-panel', [
         'name' => 'download-asset',
         'inputId' => 'asset_id',
@@ -29,6 +17,18 @@
         'selectorCardTitle' => 'Download File',
         'selectorHelperText' => 'Choose an internal document asset for this download block.',
     ])
+
+    <div class="wb-grid wb-grid-2">
+        <div class="wb-stack wb-gap-1">
+            <label for="title">Download Label</label>
+            <input id="title" name="title" class="wb-input" type="text" value="{{ old('title', $block->title) }}" required>
+        </div>
+
+        <div class="wb-stack wb-gap-1">
+            <label for="subtitle">Helper Text</label>
+            <input id="subtitle" name="subtitle" class="wb-input" type="text" value="{{ old('subtitle', $block->subtitle) }}">
+        </div>
+    </div>
 
     <div class="wb-stack wb-gap-1">
         <label for="variant">Variant</label>

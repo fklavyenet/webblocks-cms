@@ -5,6 +5,25 @@
         </div>
     @endif
 
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'file-asset',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace File',
+        'clearLabel' => 'Remove',
+        'accept' => 'file',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose File',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'File',
+        'selectorHelperText' => 'Select a Media file for the canonical file source, or leave it empty and use an external file URL.',
+    ])
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">
             <label for="title">File Title</label>
@@ -21,23 +40,4 @@
         <label for="content">Supporting Copy</label>
         <textarea id="content" name="content" class="wb-textarea" rows="4">{{ old('content', $block->content) }}</textarea>
     </div>
-
-    @include('admin.media.asset-picker-panel', [
-        'name' => 'file-asset',
-        'inputId' => 'asset_id',
-        'fieldName' => 'asset_id',
-        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-        'buttonLabel' => 'Choose from Media',
-        'replaceLabel' => 'Replace File',
-        'clearLabel' => 'Remove',
-        'accept' => 'file',
-        'panelMode' => 'overlay',
-        'panelTitle' => 'Choose File',
-        'compactControls' => true,
-        'resultsVariant' => 'compact-list',
-        'showUpload' => false,
-        'selectorCard' => true,
-        'selectorCardTitle' => 'Media File',
-        'selectorHelperText' => 'Select a Media file for the canonical file source, or leave it empty and use an external file URL.',
-    ])
 </div>

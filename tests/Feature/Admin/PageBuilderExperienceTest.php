@@ -3877,13 +3877,16 @@ class PageBuilderExperienceTest extends TestCase
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-asset_id"/s', $content);
-        $this->assertMatchesRegularExpression('/data-wb-picker-selector-card.*Media Asset.*Choose an internal image asset for this block\./s', $content);
+        $this->assertMatchesRegularExpression('/data-wb-picker-selector-card.*Media Asset.*No asset selected.*Choose an internal image asset for this block\./s', $content);
         $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $content);
         $document = new DOMDocument;
         @$document->loadHTML($content);
         $xpath = new DOMXPath($document);
         $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
         $this->assertNotNull($selectorCard);
+        $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-open and normalize-space()="Choose from Media"]', $selectorCard)->length);
+        $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-clear and normalize-space()="Remove"]', $selectorCard)->length);
+        $this->assertSame(1, $xpath->query('.//strong[normalize-space()="No asset selected"]', $selectorCard)->length);
         $this->assertSame(0, $xpath->query('.//label[@for="subtitle"]', $selectorCard)->length);
         $this->assertSame(0, $xpath->query('.//label[@for="url"]', $selectorCard)->length);
         $this->assertSame(0, $xpath->query('.//label[@for="title"]', $selectorCard)->length);

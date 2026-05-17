@@ -15,6 +15,9 @@ use App\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
+use DOMDocument;
+use DOMNode;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -85,6 +88,24 @@ class MediaVisualBlockContractsTest extends TestCase
     private function adminUser(): User
     {
         return User::factory()->superAdmin()->create();
+    }
+
+    private function htmlXPath(string $html): DOMXPath
+    {
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML($html);
+        libxml_clear_errors();
+
+        return new DOMXPath($document);
+    }
+
+    private function assertLabelsRemainOutsideSelectorCard(DOMXPath $xpath, DOMNode $selectorCard, array $fieldIds): void
+    {
+        foreach ($fieldIds as $fieldId) {
+            $this->assertSame(0, $xpath->query('.//label[@for="'.$fieldId.'"]', $selectorCard)->length);
+            $this->assertSame(1, $xpath->query('//label[@for="'.$fieldId.'"]')->length);
+        }
     }
 
     #[Test]
@@ -247,6 +268,17 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+
+        $xpath = $this->htmlXPath($html);
+        $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
+
+        $this->assertNotNull($selectorCard);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-selector-card-title and normalize-space()="Media Asset"]', $selectorCard)->length);
+        $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-open and normalize-space()="Replace Image"]', $selectorCard)->length);
+        $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-clear and normalize-space()="Remove"]', $selectorCard)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-summary]', $selectorCard)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-preview]', $selectorCard)->length);
+        $this->assertLabelsRemainOutsideSelectorCard($xpath, $selectorCard, ['subtitle', 'url', 'title']);
     }
 
     #[Test]
@@ -263,6 +295,16 @@ class MediaVisualBlockContractsTest extends TestCase
 
         $blockMatrix = [
             [
+                'type' => 'image',
+                'asset' => $image,
+                'panelTitle' => 'Choose Image',
+                'replaceLabel' => 'Replace Image',
+                'accept' => 'image',
+                'selectorCardTitle' => 'Media Asset',
+                'selectorHelp' => 'Choose an internal image asset for this block.',
+                'outsideFieldIds' => ['subtitle', 'url', 'title'],
+            ],
+            [
                 'type' => 'card',
                 'asset' => $image,
                 'panelTitle' => 'Choose Image',
@@ -270,6 +312,7 @@ class MediaVisualBlockContractsTest extends TestCase
                 'accept' => 'image',
                 'selectorCardTitle' => 'Image',
                 'selectorHelp' => 'Selecting media enables the card image. Clearing media removes the image.',
+                'outsideFieldIds' => ['image_position', 'title', 'image_alt', 'image_caption'],
             ],
             [
                 'type' => 'file',
@@ -277,8 +320,9 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose File',
                 'replaceLabel' => 'Replace File',
                 'accept' => 'file',
-                'selectorCardTitle' => 'Media File',
+                'selectorCardTitle' => 'File',
                 'selectorHelp' => 'Select a Media file for the canonical file source, or leave it empty and use an external file URL.',
+                'outsideFieldIds' => ['title', 'url', 'content'],
             ],
             [
                 'type' => 'video',
@@ -286,8 +330,9 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Video',
                 'replaceLabel' => 'Replace Video',
                 'accept' => 'video',
-                'selectorCardTitle' => 'Hosted Video',
+                'selectorCardTitle' => 'Video',
                 'selectorHelp' => 'Select a hosted Media video or leave it empty and use an external video URL.',
+                'outsideFieldIds' => ['title', 'url', 'content'],
             ],
             [
                 'type' => 'audio',
@@ -295,8 +340,9 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Audio',
                 'replaceLabel' => 'Replace Audio',
                 'accept' => 'audio',
-                'selectorCardTitle' => 'Hosted Audio',
+                'selectorCardTitle' => 'Audio',
                 'selectorHelp' => 'Select a Media audio file or leave it empty and use an external audio URL.',
+                'outsideFieldIds' => ['title', 'url', 'content'],
             ],
             [
                 'type' => 'download',
@@ -306,6 +352,7 @@ class MediaVisualBlockContractsTest extends TestCase
                 'accept' => 'file',
                 'selectorCardTitle' => 'Download File',
                 'selectorHelp' => 'Choose an internal document asset for this download block.',
+                'outsideFieldIds' => ['title', 'subtitle', 'variant'],
             ],
         ];
 
@@ -370,6 +417,16 @@ class MediaVisualBlockContractsTest extends TestCase
             $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
             $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$config['asset']->id.'"', $html);
             $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+
+            $xpath = $this->htmlXPath($html);
+            $selectorCard = $xpath->query('//*[@data-wb-picker-selector-card]')->item(0);
+
+            $this->assertNotNull($selectorCard);
+            $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-open and normalize-space()="'.$config['replaceLabel'].'"]', $selectorCard)->length);
+            $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-clear and normalize-space()="Remove"]', $selectorCard)->length);
+            $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-summary]', $selectorCard)->length);
+            $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-preview]', $selectorCard)->length);
+            $this->assertLabelsRemainOutsideSelectorCard($xpath, $selectorCard, $config['outsideFieldIds']);
         }
     }
 
