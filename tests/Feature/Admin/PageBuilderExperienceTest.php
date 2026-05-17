@@ -3843,6 +3843,33 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function image_admin_form_uses_nested_media_picker_modal_and_single_selected_summary(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $imageType = BlockType::query()->where('slug', 'image')->firstOrFail();
+
+        $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'block_type_id' => $imageType->id]));
+
+        $response->assertOk();
+        $response->assertSee('Add Block: Image');
+        $response->assertSee('Choose from Media');
+        $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
+        $response->assertSee('id="asset_id_picker_panel"', false);
+        $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-asset_id"', false);
+        $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
+        $response->assertDontSee('Close Panel', false);
+        $content = $response->getContent();
+        $this->assertNotFalse($content);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-asset_id"/s', $content);
+        $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $content);
+        $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $content);
+    }
+
+    #[Test]
     public function gallery_picker_renders_selectable_image_rows_for_default_image_filter_and_folder_options(): void
     {
         $this->seedFoundation();

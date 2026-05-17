@@ -114,6 +114,7 @@
 
         var input = root.querySelector('[data-wb-picker-selected-input]');
         var previewCard = root.querySelector('[data-wb-picker-preview]');
+        var previewGrid = root.querySelector('[data-wb-picker-preview-grid]');
 
         if (!input || !input.value || !previewCard) {
             if (summary) {
@@ -126,6 +127,10 @@
 
             if (clearButton) {
                 clearButton.disabled = true;
+            }
+
+            if (previewGrid && mode !== 'multiple') {
+                previewGrid.hidden = true;
             }
 
             return;
@@ -148,6 +153,10 @@
 
         if (summary) {
             summary.innerHTML = html;
+        }
+
+        if (previewGrid && mode !== 'multiple') {
+            previewGrid.hidden = previewGrid.childElementCount === 0;
         }
 
         if (openButton) {
@@ -218,6 +227,8 @@
             previewGrid.appendChild(buildSinglePreview(asset));
         }
 
+        previewGrid.hidden = previewGrid.childElementCount === 0;
+
         updatePickerSummary(root);
     }
 
@@ -235,6 +246,7 @@
 
         if (previewGrid) {
             previewGrid.innerHTML = '';
+            previewGrid.hidden = true;
         }
 
         updatePickerSummary(root);

@@ -21,6 +21,7 @@
     $pickerControlsClass = $controlsClass ?? 'wb-cluster wb-cluster-2';
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
     $pickerResultsVariant = $resultsVariant ?? 'card';
+    $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
     $pickerAcceptedKinds = ['image', 'document', 'video', 'other'];
     $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
     $pickerVisibleAssets = collect($assetPickerAssets ?? [])
@@ -63,7 +64,7 @@
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
         </div>
 
-        <div class="wb-stack wb-gap-1" data-wb-picker-summary hidden>
+        <div class="wb-stack wb-gap-1" data-wb-picker-summary>
             @if ($pickerMode === 'multiple')
                 @if ($pickerSelectedAssets->isEmpty())
                     <strong>No assets selected</strong>
@@ -84,7 +85,7 @@
             @endif
         </div>
 
-        <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid hidden>
+        <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid @if (! $pickerShowPreviewGrid) hidden @endif>
             @if ($pickerMode === 'multiple')
                 @foreach ($pickerSelectedAssets as $asset)
                     <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
@@ -97,7 +98,7 @@
                         </div>
                     </div>
                 @endforeach
-            @elseif ($pickerSelectedAsset)
+            @elseif ($pickerSelectedAsset && $pickerShowPreviewGrid)
                 <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
                     <div class="wb-card-body wb-stack wb-gap-2">
                         @if ($pickerSelectedAsset->canPreview())
@@ -140,7 +141,7 @@
                     </div>
                 </div>
 
-                <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid>
+                <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid @if (! $pickerShowPreviewGrid) hidden @endif>
                     @if ($pickerMode === 'multiple')
                         @foreach ($pickerSelectedAssets as $asset)
                             <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
@@ -153,7 +154,7 @@
                                 </div>
                             </div>
                         @endforeach
-                    @elseif ($pickerSelectedAsset)
+                    @elseif ($pickerSelectedAsset && $pickerShowPreviewGrid)
                         <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 @if ($pickerSelectedAsset->canPreview())

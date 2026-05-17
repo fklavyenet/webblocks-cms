@@ -189,6 +189,52 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
+    public function image_edit_form_shows_one_selected_media_summary_without_duplicate_preview_card(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $image = $this->media('image', 'hero.jpg', 'image/jpeg', 'media/images/hero.jpg');
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'image',
+            'block_type_id' => $this->blockTypeId('image'),
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'media_id' => $image->id,
+            'url' => '/product',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $block->imageTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'caption' => 'Product overview',
+            'alt_text' => 'Overview alt text',
+        ]);
+
+        $response = $this->actingAs($user)->followingRedirects()->get(route('admin.blocks.edit', $block));
+
+        $response->assertOk();
+        $response->assertSee('Replace Image');
+        $response->assertSee('Remove');
+        $response->assertSee('name="asset_id" value="'.$image->id.'"', false);
+        $response->assertSee($image->title ?: $image->filename, false);
+        $response->assertSee($image->kind.' | '.$image->original_name, false);
+        $response->assertSee('data-wb-picker-summary', false);
+
+        $html = $response->getContent();
+        $this->assertNotFalse($html);
+        $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($image->title ?: $image->filename, '/').'/s', $html);
+        $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
+        $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+    }
+
+    #[Test]
     public function gallery_block_stores_ordered_items_shared_settings_and_per_item_locale_copy(): void
     {
         $this->seedFoundation();

@@ -16,6 +16,9 @@
             'replaceLabel' => 'Replace Image',
             'clearLabel' => 'Remove',
             'accept' => 'image',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose Image',
+            'compactControls' => true,
         ])
         <span>Choose an internal image asset for this block.</span>
     </div>
