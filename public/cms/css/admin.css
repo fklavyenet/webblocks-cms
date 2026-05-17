@@ -794,22 +794,21 @@
 }
 
 .wb-gallery-picker-dialog > .wb-modal-header,
+.wb-gallery-picker-dialog > .wb-gallery-picker-filter-region,
 .wb-gallery-picker-dialog > .wb-modal-footer {
     flex: 0 0 auto;
+}
+
+.wb-gallery-picker-filter-region {
+    padding: 0 var(--wb-s4) var(--wb-s3);
+    background: var(--wb-surface);
+    border-bottom: 1px solid var(--wb-border);
 }
 
 .wb-gallery-picker-dialog > .wb-modal-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
-}
-
-.wb-gallery-picker-filters-sticky {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    margin-bottom: var(--wb-s1);
-    background: var(--wb-surface);
 }
 
 .wb-slot-block-picker-modal .wb-modal-body {

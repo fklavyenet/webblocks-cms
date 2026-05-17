@@ -28,6 +28,9 @@
     $pickerSelectorCard = (bool) ($selectorCard ?? false);
     $pickerSelectorCardTitle = $selectorCardTitle ?? null;
     $pickerSelectorHelperText = $selectorHelperText ?? null;
+    $pickerUsesDetachedFilterRegion = $pickerPanelMode === 'overlay'
+        && $pickerResultsVariant === 'compact-list'
+        && $pickerMode === 'multiple';
     $pickerAcceptedKinds = ['image', 'document', 'video', 'other', 'audio', 'file'];
     $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
     $pickerMatchesAccept = static function ($asset, string $accept): bool {
@@ -272,36 +275,72 @@
                         </button>
                     </div>
 
-                    <div class="wb-modal-body wb-stack wb-gap-3">
-                        <div class="wb-card wb-card-muted{{ $pickerResultsVariant === 'compact-list' && $pickerMode === 'multiple' ? ' wb-gallery-picker-filters-sticky' : '' }}" data-wb-picker-filters-card>
-                            <div class="wb-card-body wb-stack wb-gap-2">
-                                <div class="wb-grid wb-grid-3" data-wb-picker-filters>
-                                    <div class="wb-stack wb-gap-1">
-                                        <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                                        <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
-                                    </div>
+                    @if ($pickerUsesDetachedFilterRegion)
+                        <div class="wb-gallery-picker-filter-region">
+                            <div class="wb-card wb-card-muted" data-wb-picker-filters-card>
+                                <div class="wb-card-body wb-stack wb-gap-2">
+                                    <div class="wb-grid wb-grid-3" data-wb-picker-filters>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_search">Search</label>
+                                            <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                                        </div>
 
-                                    <div class="wb-stack wb-gap-1">
-                                        <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
-                                        <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                                            <option value="">All folders</option>
-                                            @foreach (($assetPickerFolders ?? collect()) as $folder)
-                                                <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                                            <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
+                                                <option value="">All folders</option>
+                                                @foreach (($assetPickerFolders ?? collect()) as $folder)
+                                                    <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
 
-                                    <div class="wb-stack wb-gap-1">
-                                        <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
-                                        <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                            @foreach ($pickerKindOptions as $value => $label)
-                                                <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                                            <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
+                                                @foreach ($pickerKindOptions as $value => $label)
+                                                    <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    @endif
+
+                    <div class="wb-modal-body wb-stack wb-gap-3">
+                        @unless ($pickerUsesDetachedFilterRegion)
+                            <div class="wb-card wb-card-muted" data-wb-picker-filters-card>
+                                <div class="wb-card-body wb-stack wb-gap-2">
+                                    <div class="wb-grid wb-grid-3" data-wb-picker-filters>
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_search">Search</label>
+                                            <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                                        </div>
+
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                                            <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
+                                                <option value="">All folders</option>
+                                                @foreach (($assetPickerFolders ?? collect()) as $folder)
+                                                    <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="wb-stack wb-gap-1">
+                                            <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                                            <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
+                                                @foreach ($pickerKindOptions as $value => $label)
+                                                    <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endunless
 
                         <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
                             @foreach ($pickerVisibleAssets as $asset)

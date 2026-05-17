@@ -3777,7 +3777,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
         $response->assertSee('wb-gallery-picker-dialog', false);
-        $response->assertSee('wb-gallery-picker-filters-sticky', false);
+        $response->assertSee('wb-gallery-picker-filter-region', false);
+        $response->assertDontSee('wb-gallery-picker-filters-sticky', false);
         $response->assertDontSee('wb-gallery-picker-layout', false);
         $response->assertDontSee('wb-gallery-picker-results-region', false);
         $response->assertDontSee('data-wb-picker-results-region', false);
@@ -3822,6 +3823,11 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('.wb-gallery-picker-dialog {', $adminCss);
         $this->assertStringContainsString('max-block-size: calc(100dvh - 2rem);', $adminCss);
         $this->assertStringContainsString('.wb-gallery-picker-dialog > .wb-modal-header,', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-dialog > .wb-gallery-picker-filter-region,', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-filter-region {', $adminCss);
+        $this->assertStringContainsString('padding: 0 var(--wb-s4) var(--wb-s3);', $adminCss);
+        $this->assertStringContainsString('background: var(--wb-surface);', $adminCss);
+        $this->assertStringContainsString('border-bottom: 1px solid var(--wb-border);', $adminCss);
         $this->assertStringContainsString('.wb-gallery-picker-dialog > .wb-modal-body {', $adminCss);
         $this->assertStringContainsString('overflow: hidden;', $adminCss);
         $this->assertStringContainsString('overflow: auto;', $adminCss);
@@ -3831,8 +3837,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringNotContainsString('wb-slot-block-picker-results-body', $adminCss);
         $this->assertStringNotContainsString('.wb-gallery-picker-layout {', $adminCss);
         $this->assertStringNotContainsString('.wb-gallery-picker-results-region {', $adminCss);
-        $this->assertStringContainsString('.wb-gallery-picker-filters-sticky {', $adminCss);
-        $this->assertStringContainsString('position: sticky;', $adminCss);
+        $this->assertStringNotContainsString('.wb-gallery-picker-filters-sticky {', $adminCss);
+        $this->assertStringNotContainsString('position: sticky;', $adminCss);
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
         $this->assertNotFalse($assetPickerJs);
         $this->assertStringContainsString('modalRuntime.open(modal, openButton || null);', $assetPickerJs);
@@ -3870,26 +3876,40 @@ class PageBuilderExperienceTest extends TestCase
             return $document;
         })());
         $dialog = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-dialog ")]')->item(0);
+        $modalHeader = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]')->item(0);
+        $filterRegion = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]')->item(0);
         $modalBody = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]')->item(0);
         $modalFooter = $xpath->query('//*[@id="gallery_media_ids_picker_panel"]//*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]')->item(0);
         $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
         $pickerGrid = $xpath->query('//*[@data-wb-picker-grid]')->item(0);
         $this->assertNotNull($dialog);
+        $this->assertNotNull($modalHeader);
+        $this->assertNotNull($filterRegion);
         $this->assertNotNull($modalBody);
         $this->assertNotNull($modalFooter);
         $this->assertNotNull($filtersCard);
         $this->assertNotNull($pickerGrid);
         $this->assertSame('wb-modal-dialog wb-gallery-picker-dialog', $dialog->getAttribute('class'));
-        $this->assertSame('wb-card wb-card-muted wb-gallery-picker-filters-sticky', $filtersCard->getAttribute('class'));
+        $this->assertSame('wb-gallery-picker-filter-region', $filterRegion->getAttribute('class'));
+        $this->assertSame('wb-card wb-card-muted', $filtersCard->getAttribute('class'));
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $modalBody)->length);
-        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalBody)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalBody)->length);
         $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-grid]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-empty]', $modalBody)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-error]', $modalBody)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalHeader)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-filters-card]', $filterRegion)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-grid]', $filterRegion)->length);
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $modalFooter)->length);
         $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-grid]', $modalFooter)->length);
         $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-header ")]', $dialog)->length);
+        $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]', $dialog)->length);
         $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]', $dialog)->length);
         $this->assertSame(1, $xpath->query('./*[contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]', $dialog)->length);
-        $this->assertMatchesRegularExpression('/<div class="wb-modal-dialog wb-gallery-picker-dialog">\s*<div class="wb-modal-header">.*<div class="wb-modal-body wb-stack wb-gap-3">.*<div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">/s', $content);
+        $this->assertSame(1, $xpath->query('./following-sibling::*[1][contains(concat(" ", normalize-space(@class), " "), " wb-gallery-picker-filter-region ")]', $modalHeader)->length);
+        $this->assertSame(1, $xpath->query('./following-sibling::*[1][contains(concat(" ", normalize-space(@class), " "), " wb-modal-body ")]', $filterRegion)->length);
+        $this->assertSame(1, $xpath->query('./following-sibling::*[1][contains(concat(" ", normalize-space(@class), " "), " wb-modal-footer ")]', $modalBody)->length);
+        $this->assertMatchesRegularExpression('/<div class="wb-modal-dialog wb-gallery-picker-dialog">\s*<div class="wb-modal-header">.*<div class="wb-gallery-picker-filter-region">.*<div class="wb-modal-body wb-stack wb-gap-3">.*<div class="wb-modal-footer wb-flex wb-justify-between wb-gap-2">/s', $content);
     }
 
     #[Test]

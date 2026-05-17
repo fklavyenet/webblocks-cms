@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.57
+
+- Fix the Gallery `Add Gallery Items` modal filter reachability by moving the compact search and filter card into a dedicated non-scrolling region between the modal header and the normal scrollable body, so filters stay reachable while compact media rows, empty state, and error state continue to scroll inside the standard `.wb-modal-body` without reintroducing a nested results region.
+
 ## 1.31.56
 
 - Fix the Gallery `Add Gallery Items` modal sizing regression left in `v1.31.55` by constraining the Gallery picker dialog to the viewport and making only the normal `.wb-modal-body` scroll, so the modal header, sticky filters, compact result rows, and footer all stay reachable without reintroducing a nested results scroll region.
