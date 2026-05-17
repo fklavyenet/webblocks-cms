@@ -3902,7 +3902,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, $xpath->query('//label[@for="url"]')->length);
         $this->assertSame(1, $xpath->query('//label[@for="title"]')->length);
         $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $content);
-        $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $content);
+        $this->assertStringNotContainsString('data-wb-picker-preview-grid', $content);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $content);
     }
 

@@ -242,7 +242,8 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Replace Image');
         $response->assertSee('Remove');
-        $response->assertSee('name="asset_id" value="'.$image->id.'"', false);
+        $response->assertSee('name="asset_id"', false);
+        $response->assertSee('value="'.$image->id.'"', false);
         $response->assertSee($image->title ?: $image->filename, false);
         $response->assertSee($image->kind.' | '.$image->original_name, false);
         $response->assertSee('data-wb-picker-summary', false);
@@ -265,7 +266,7 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($image->title ?: $image->filename, '/').'/s', $html);
         $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
         $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
-        $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
+        $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
 
@@ -414,7 +415,7 @@ class MediaVisualBlockContractsTest extends TestCase
             $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($config['asset']->title ?: $config['asset']->filename, '/').'/s', $html);
             $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
             $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
-            $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
+            $this->assertStringNotContainsString('data-wb-picker-preview-grid', $html);
             $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$config['asset']->id.'"', $html);
             $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
 
@@ -425,6 +426,7 @@ class MediaVisualBlockContractsTest extends TestCase
             $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-open and normalize-space()="'.$config['replaceLabel'].'"]', $selectorCard)->length);
             $this->assertSame(1, $xpath->query('.//button[@data-wb-picker-clear and normalize-space()="Remove"]', $selectorCard)->length);
             $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-summary]', $selectorCard)->length);
+            $this->assertSame(1, $xpath->query('.//strong[normalize-space()="'.($config['asset']->title ?: $config['asset']->filename).'"]', $selectorCard)->length);
             $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-preview]', $selectorCard)->length);
             $this->assertLabelsRemainOutsideSelectorCard($xpath, $selectorCard, $config['outsideFieldIds']);
         }

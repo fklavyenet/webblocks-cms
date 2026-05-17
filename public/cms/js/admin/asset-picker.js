@@ -36,6 +36,40 @@
         card.setAttribute('data-wb-asset-selected', isSelected ? 'true' : 'false');
     }
 
+    function readSingleSelection(input) {
+        if (!input || !input.value) {
+            return null;
+        }
+
+        return {
+            id: input.value,
+            title: input.getAttribute('data-wb-picker-selected-title') || '',
+            filename: input.getAttribute('data-wb-picker-selected-filename') || '',
+            original_name: input.getAttribute('data-wb-picker-selected-original-name') || '',
+            kind: input.getAttribute('data-wb-picker-selected-kind') || '',
+            url: input.getAttribute('data-wb-picker-selected-url') || '',
+            alt: input.getAttribute('data-wb-picker-selected-alt') || '',
+            previewable: input.getAttribute('data-wb-picker-selected-previewable') === 'true'
+        };
+    }
+
+    function writeSingleSelection(input, asset) {
+        if (!input) {
+            return;
+        }
+
+        input.value = asset && asset.id ? String(asset.id) : '';
+        input.setAttribute('data-wb-picker-selected-title', asset && asset.title ? String(asset.title) : '');
+        input.setAttribute('data-wb-picker-selected-filename', asset && asset.filename ? String(asset.filename) : '');
+        input.setAttribute('data-wb-picker-selected-original-name', asset && asset.original_name ? String(asset.original_name) : '');
+        input.setAttribute('data-wb-picker-selected-kind', asset && asset.kind ? String(asset.kind) : '');
+        input.setAttribute('data-wb-picker-selected-url', asset && asset.url ? String(asset.url) : '');
+        input.setAttribute('data-wb-picker-selected-alt', asset && (asset.alt || asset.title || asset.filename)
+            ? String(asset.alt || asset.title || asset.filename)
+            : '');
+        input.setAttribute('data-wb-picker-selected-previewable', asset && asset.previewable ? 'true' : 'false');
+    }
+
     function pickerContext(root) {
         if (!root) {
             return null;
@@ -113,10 +147,10 @@
         }
 
         var input = root.querySelector('[data-wb-picker-selected-input]');
-        var previewCard = root.querySelector('[data-wb-picker-preview]');
         var previewGrid = root.querySelector('[data-wb-picker-preview-grid]');
+        var selectedAsset = readSingleSelection(input);
 
-        if (!input || !input.value || !previewCard) {
+        if (!selectedAsset) {
             if (summary) {
                 summary.innerHTML = '<strong>No asset selected</strong><div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>';
             }
@@ -135,21 +169,14 @@
 
             return;
         }
-
-        var titleElement = previewCard.querySelector('strong');
-        var metaElement = previewCard.querySelector('[data-wb-picker-preview-meta]');
-        var image = previewCard.querySelector('img');
         var html = '';
 
-        if (image) {
-            html += '<img src="' + escapeHtml(image.getAttribute('src')) + '" alt="' + escapeHtml(image.getAttribute('alt')) + '" width="96" height="64">';
+        if (selectedAsset.previewable && selectedAsset.url) {
+            html += '<img src="' + escapeHtml(selectedAsset.url) + '" alt="' + escapeHtml(selectedAsset.alt || selectedAsset.title || selectedAsset.filename || 'Selected asset') + '" width="96" height="64">';
         }
 
-        html += '<strong>' + escapeHtml(titleElement ? titleElement.textContent.trim() : 'Selected asset') + '</strong>';
-
-        if (metaElement) {
-            html += '<div class="wb-text-sm wb-text-muted">' + escapeHtml(metaElement.textContent.trim()) + '</div>';
-        }
+        html += '<strong>' + escapeHtml(selectedAsset.title || selectedAsset.filename || 'Selected asset') + '</strong>';
+        html += '<div class="wb-text-sm wb-text-muted">' + escapeHtml([selectedAsset.kind, selectedAsset.original_name].filter(Boolean).join(' | ')) + '</div>';
 
         if (summary) {
             summary.innerHTML = html;
@@ -166,26 +193,6 @@
         if (clearButton) {
             clearButton.disabled = false;
         }
-    }
-
-    function buildSinglePreview(asset) {
-        var preview = document.createElement('div');
-        preview.className = 'wb-card';
-        preview.setAttribute('data-wb-picker-preview', '');
-        preview.setAttribute('data-wb-picker-preview-id', String(asset.id || ''));
-
-        var html = '<div class="wb-card-body wb-stack wb-gap-2">';
-
-        if (asset.previewable && asset.url) {
-            html += '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || 'Selected asset') + '" width="120" height="84">';
-        }
-
-        html += '<strong>' + escapeHtml(asset.title || asset.filename || 'Selected asset') + '</strong>';
-        html += '<div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>' + escapeHtml([asset.kind, asset.original_name].filter(Boolean).join(' | ')) + '</div>';
-        html += '</div>';
-        preview.innerHTML = html;
-
-        return preview;
     }
 
     function buildMultiPreview(asset) {
@@ -216,18 +223,11 @@
         var input = root.querySelector('[data-wb-picker-selected-input]');
         var previewGrid = root.querySelector('[data-wb-picker-preview-grid]');
 
-        if (!input || !previewGrid) {
+        if (!input) {
             return;
         }
 
-        input.value = asset && asset.id ? asset.id : '';
-        previewGrid.innerHTML = '';
-
-        if (asset && asset.id) {
-            previewGrid.appendChild(buildSinglePreview(asset));
-        }
-
-        previewGrid.hidden = previewGrid.childElementCount === 0;
+        writeSingleSelection(input, asset);
 
         updatePickerSummary(root);
     }
@@ -241,7 +241,7 @@
         var previewGrid = root.querySelector('[data-wb-picker-preview-grid]');
 
         if (input) {
-            input.value = '';
+            writeSingleSelection(input, null);
         }
 
         if (previewGrid) {

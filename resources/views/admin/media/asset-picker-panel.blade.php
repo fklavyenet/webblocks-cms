@@ -22,7 +22,7 @@
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
     $pickerResultsVariant = $resultsVariant ?? 'card';
     $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
-    $pickerRenderPreviewGrid = (bool) ($renderPreviewGrid ?? true);
+    $pickerRenderPreviewGrid = (bool) ($renderPreviewGrid ?? ($pickerMode === 'multiple' || ! $pickerCompactControls));
     $pickerShowSummary = (bool) ($showSummary ?? true);
     $pickerShowUpload = (bool) ($showUpload ?? ($inlineUpload ?? true));
     $pickerSelectorCard = (bool) ($selectorCard ?? false);
@@ -101,7 +101,20 @@
             @endforeach
         </div>
     @else
-        <input type="hidden" id="{{ $pickerInputId }}" name="{{ $pickerFieldName }}" value="{{ old($pickerFieldName, $pickerSelectedAsset?->id) }}" data-wb-picker-selected-input>
+        <input
+            type="hidden"
+            id="{{ $pickerInputId }}"
+            name="{{ $pickerFieldName }}"
+            value="{{ old($pickerFieldName, $pickerSelectedAsset?->id) }}"
+            data-wb-picker-selected-input
+            data-wb-picker-selected-title="{{ $pickerSelectedAsset?->title ?? '' }}"
+            data-wb-picker-selected-filename="{{ $pickerSelectedAsset?->filename ?? '' }}"
+            data-wb-picker-selected-original-name="{{ $pickerSelectedAsset?->original_name ?? '' }}"
+            data-wb-picker-selected-kind="{{ $pickerSelectedAsset?->kind ?? '' }}"
+            data-wb-picker-selected-url="{{ $pickerSelectedAsset?->url() ?? '' }}"
+            data-wb-picker-selected-alt="{{ $pickerSelectedAsset?->alt_text ?: $pickerSelectedAsset?->title ?: $pickerSelectedAsset?->filename ?? '' }}"
+            data-wb-picker-selected-previewable="{{ $pickerSelectedAsset?->canPreview() ? 'true' : 'false' }}"
+        >
     @endif
 
     @if ($pickerCompactControls)
