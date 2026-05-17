@@ -4,6 +4,8 @@
 
 - Refine the single-select block media chooser pattern so `Image`, `Card`, `File`, `Video`, `Audio`, and `Download` now keep the media selector in its own compact muted card with header-owned choose or replace plus remove actions, keep the selected-media or empty-state summary inside that card, and leave normal block content fields below the media section while the nested `#wb-overlay-root` picker modal, compact list rows, disabled inline upload, and single non-duplicated selected-media summary behavior stay unchanged.
 
+- Remove the remaining `Upload to Library` card from the Gallery `Add Gallery Items` picker so Gallery stays a selection-only multi-select modal with the existing compact list rows, default `Image` filter, selected-row state, and `Add Selected` footer flow while uploads remain owned by `Admin -> Media`.
+
 - Simplify the `Content Header` contract by removing the admin `Title Level` field, stopping new writes of Content Header heading-level variants, and always rendering Content Header titles as `<h1 class="wb-content-title">` while safely ignoring any legacy saved heading-level values.
 
 ## 1.31.52

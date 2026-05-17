@@ -431,6 +431,51 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
+    public function gallery_picker_is_selection_only_while_still_using_multi_select_compact_results(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $first = $this->media('image', 'gallery-picker-a.jpg', 'image/jpeg', 'media/images/gallery-picker-a.jpg');
+        $second = $this->media('image', 'gallery-picker-b.jpg', 'image/jpeg', 'media/images/gallery-picker-b.jpg');
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'gallery',
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->slotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        foreach ([
+            ['media_id' => $first->id, 'role' => 'gallery_item', 'position' => 0],
+            ['media_id' => $second->id, 'role' => 'gallery_item', 'position' => 1],
+        ] as $item) {
+            BlockMedia::query()->create(['block_id' => $block->id] + $item);
+        }
+
+        $response = $this->actingAs($user)->followingRedirects()->get(route('admin.blocks.edit', $block));
+
+        $response->assertOk();
+        $response->assertSee('Add Gallery Items');
+        $response->assertSee('Add Selected');
+        $response->assertSee('data-wb-picker-mode="multiple"', false);
+        $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
+        $response->assertSee('wb-picker-results--compact', false);
+        $response->assertDontSee('Upload to Library');
+
+        $html = $response->getContent();
+        $this->assertNotFalse($html);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $html);
+        $this->assertStringNotContainsString('data-wb-picker-upload-submit', $html);
+    }
+
+    #[Test]
     public function gallery_block_stores_ordered_items_shared_settings_and_per_item_locale_copy(): void
     {
         $this->seedFoundation();

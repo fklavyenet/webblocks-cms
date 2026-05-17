@@ -3776,7 +3776,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
+        $response->assertSee('Add Selected');
         $response->assertSee('data-wb-admin-dirty-form', false);
         $response->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
         $response->assertSee('id="slot-block-editor-modal"', false);
@@ -3791,6 +3793,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame(1, substr_count($content, 'id="slot-block-editor-modal"'));
         $this->assertSame(2, substr_count($content, 'data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"'));
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"/s', $content);
+        $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="slot-block-editor-modal"/s', $content);
         $this->assertStringNotContainsString('<div class="wb-overlay-layer wb-overlay-layer--dialog"><div class="wb-overlay-backdrop"></div><div class="wb-modal wb-modal-xl is-open" id="slot-block-editor-modal"', str_replace(["\n", ' '], '', $content));
         $this->assertStringContainsString('class="wb-modal wb-modal-xl" id="slot-block-editor-modal"', $content);
@@ -3840,6 +3843,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('Description');
         $response->assertDontSee('name="title"', false);
         $response->assertDontSee('name="subtitle"', false);
+        $response->assertDontSee('Upload to Library');
     }
 
     #[Test]
@@ -3982,7 +3986,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('class="wb-empty" data-wb-picker-empty', false);
         $response->assertSee('No matching images');
-        $response->assertSee('Upload an image, or adjust the search or folder filter to find one in the shared media library.');
+        $response->assertSee('Use Admin -&gt; Media to upload an image, or adjust the search or folder filter to find one in the shared media library.', false);
         $response->assertDontSee('data-wb-asset-card', false);
         $response->assertDontSee('wb-skeleton', false);
         $response->assertDontSee('skeleton', false);
