@@ -228,10 +228,17 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
         $response->assertSee('wb-picker-asset-row', false);
+        $response->assertSee('data-wb-picker-filters-card', false);
+        $response->assertSee('data-wb-picker-filters', false);
+        $response->assertSee('Search', false);
+        $response->assertSee('Folder', false);
+        $response->assertSee('Kind', false);
+        $response->assertDontSee('Upload to Library');
 
         $html = $response->getContent();
         $this->assertNotFalse($html);
         $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($image->title ?: $image->filename, '/').'/s', $html);
+        $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
         $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
         $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$image->id.'"', $html);

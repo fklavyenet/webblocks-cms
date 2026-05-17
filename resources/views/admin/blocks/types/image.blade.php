@@ -20,6 +20,7 @@
             'panelTitle' => 'Choose Image',
             'compactControls' => true,
             'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
         <span>Choose an internal image asset for this block.</span>
     </div>

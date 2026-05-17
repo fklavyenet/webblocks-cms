@@ -22,6 +22,7 @@
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
     $pickerResultsVariant = $resultsVariant ?? 'card';
     $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
+    $pickerShowUpload = (bool) ($showUpload ?? ($inlineUpload ?? true));
     $pickerAcceptedKinds = ['image', 'document', 'video', 'other'];
     $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
     $pickerVisibleAssets = collect($assetPickerAssets ?? [])
@@ -183,31 +184,35 @@
                     </div>
 
                     <div class="wb-modal-body wb-stack wb-gap-3">
-                        <div class="wb-grid wb-grid-3">
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                                <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
-                            </div>
+                        <div class="wb-card wb-card-muted" data-wb-picker-filters-card>
+                            <div class="wb-card-body wb-stack wb-gap-2">
+                                <div class="wb-grid wb-grid-3" data-wb-picker-filters>
+                                    <div class="wb-stack wb-gap-1">
+                                        <label for="{{ $pickerInputId }}_asset_search">Search</label>
+                                        <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                                    </div>
 
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
-                                <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                                    <option value="">All folders</option>
-                                    @foreach (($assetPickerFolders ?? collect()) as $folder)
-                                        <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                    <div class="wb-stack wb-gap-1">
+                                        <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                                        <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
+                                            <option value="">All folders</option>
+                                            @foreach (($assetPickerFolders ?? collect()) as $folder)
+                                                <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                            <div class="wb-stack wb-gap-1">
-                                <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
-                                <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                    <option value="" @selected($pickerInitialKind === '')>All kinds</option>
-                                    <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
-                                    <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
-                                    <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
-                                    <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
-                                </select>
+                                    <div class="wb-stack wb-gap-1">
+                                        <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                                        <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
+                                            <option value="" @selected($pickerInitialKind === '')>All kinds</option>
+                                            <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
+                                            <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
+                                            <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
+                                            <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -227,7 +232,7 @@
                             <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
                         </div>
 
-                        @if (($inlineUpload ?? true) === true)
+                        @if ($pickerShowUpload)
                             <div class="wb-card wb-card-muted">
                                 <div class="wb-card-body wb-stack wb-gap-2">
                                     <strong>Upload to Library</strong>
@@ -262,31 +267,35 @@
     @else
         <div class="wb-card" id="{{ $pickerPanelId }}" data-wb-picker-panel data-wb-picker-panel-mode="{{ $pickerPanelMode }}" hidden>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-grid wb-grid-3">
-                    <div class="wb-stack wb-gap-1">
-                        <label for="{{ $pickerInputId }}_asset_search">Search</label>
-                        <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
-                    </div>
+                <div class="wb-card wb-card-muted" data-wb-picker-filters-card>
+                    <div class="wb-card-body wb-stack wb-gap-2">
+                        <div class="wb-grid wb-grid-3" data-wb-picker-filters>
+                            <div class="wb-stack wb-gap-1">
+                                <label for="{{ $pickerInputId }}_asset_search">Search</label>
+                                <input id="{{ $pickerInputId }}_asset_search" type="text" class="wb-input" data-wb-picker-search placeholder="Search assets">
+                            </div>
 
-                    <div class="wb-stack wb-gap-1">
-                        <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
-                        <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
-                            <option value="">All folders</option>
-                            @foreach (($assetPickerFolders ?? collect()) as $folder)
-                                <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
-                            @endforeach
-                        </select>
-                    </div>
+                            <div class="wb-stack wb-gap-1">
+                                <label for="{{ $pickerInputId }}_asset_folder">Folder</label>
+                                <select id="{{ $pickerInputId }}_asset_folder" class="wb-select" data-wb-picker-folder>
+                                    <option value="">All folders</option>
+                                    @foreach (($assetPickerFolders ?? collect()) as $folder)
+                                        <option value="{{ $folder->id }}">{{ $folder->name }} ({{ $folder->assets_count }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                    <div class="wb-stack wb-gap-1">
-                        <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
-                        <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                            <option value="" @selected($pickerInitialKind === '')>All kinds</option>
-                            <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
-                            <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
-                            <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
-                            <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
-                        </select>
+                            <div class="wb-stack wb-gap-1">
+                                <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
+                                <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
+                                    <option value="" @selected($pickerInitialKind === '')>All kinds</option>
+                                    <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
+                                    <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
+                                    <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
+                                    <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -306,7 +315,7 @@
                     <div class="wb-empty-text" data-wb-picker-error-text>Close the picker and try again.</div>
                 </div>
 
-                @if (($inlineUpload ?? true) === true)
+                @if ($pickerShowUpload)
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-body wb-stack wb-gap-2">
                             <strong>Upload to Library</strong>

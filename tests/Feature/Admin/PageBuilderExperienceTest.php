@@ -3862,11 +3862,18 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-asset_id"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('data-wb-picker-filters-card', false);
+        $response->assertSee('data-wb-picker-filters', false);
+        $response->assertSee('Search', false);
+        $response->assertSee('Folder', false);
+        $response->assertSee('Kind', false);
+        $response->assertDontSee('Upload to Library');
         $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
         $response->assertDontSee('Close Panel', false);
         $content = $response->getContent();
         $this->assertNotFalse($content);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel".*data-wb-picker-panel-mode="overlay".*data-wb-picker-owner-id="wb-picker-owner-asset_id"/s', $content);
+        $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $content);
         $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $content);
         $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $content);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $content);
