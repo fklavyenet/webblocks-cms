@@ -463,16 +463,23 @@ class MediaVisualBlockContractsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Add Gallery Items');
+        $response->assertSee('Remove All');
         $response->assertSee('Add Selected');
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
         $response->assertDontSee('Upload to Library');
+        $response->assertDontSee('data-wb-picker-summary', false);
+        $response->assertDontSee('data-wb-picker-preview-grid', false);
+        $response->assertDontSee('assets selected');
+        $response->assertSee('data-wb-gallery-items-table', false);
+        $response->assertSee('data-wb-gallery-item-row', false);
 
         $html = $response->getContent();
         $this->assertNotFalse($html);
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $html);
         $this->assertStringNotContainsString('data-wb-picker-upload-submit', $html);
+        $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $html);
     }
 
     #[Test]

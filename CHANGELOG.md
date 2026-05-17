@@ -6,6 +6,8 @@
 
 - Remove the remaining `Upload to Library` card from the Gallery `Add Gallery Items` picker so Gallery stays a selection-only multi-select modal with the existing compact list rows, default `Image` filter, selected-row state, and `Add Selected` footer flow while uploads remain owned by `Admin -> Media`.
 
+- Remove the redundant selected-assets summary and thumbnail grid from the Gallery block editor so `Gallery Items` remains the single canonical selected-item UI for ordering, previews, per-item summaries, edit actions, and removal while `Add Gallery Items`, `Remove All`, and the nested multi-select `Add Selected` picker flow stay unchanged.
+
 - Simplify the `Content Header` contract by removing the admin `Title Level` field, stopping new writes of Content Header heading-level variants, and always rendering Content Header titles as `<h1 class="wb-content-title">` while safely ignoring any legacy saved heading-level values.
 
 ## 1.31.52

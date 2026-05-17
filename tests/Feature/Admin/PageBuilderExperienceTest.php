@@ -3779,6 +3779,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
         $response->assertSee('Add Selected');
+        $response->assertSee('Remove All');
         $response->assertSee('data-wb-admin-dirty-form', false);
         $response->assertSee('data-wb-admin-dirty-close-confirm="Discard block changes?"', false);
         $response->assertSee('id="slot-block-editor-modal"', false);
@@ -3844,6 +3845,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('name="title"', false);
         $response->assertDontSee('name="subtitle"', false);
         $response->assertDontSee('Upload to Library');
+        $response->assertDontSee('data-wb-picker-summary', false);
+        $response->assertDontSee('data-wb-picker-preview-grid', false);
+        $response->assertDontSee('assets selected');
     }
 
     #[Test]

@@ -22,6 +22,8 @@
     $pickerOverlayOwnerId = 'wb-picker-owner-'.preg_replace('/[^A-Za-z0-9_-]+/', '-', $pickerInputId);
     $pickerResultsVariant = $resultsVariant ?? 'card';
     $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
+    $pickerRenderPreviewGrid = (bool) ($renderPreviewGrid ?? true);
+    $pickerShowSummary = (bool) ($showSummary ?? true);
     $pickerShowUpload = (bool) ($showUpload ?? ($inlineUpload ?? true));
     $pickerSelectorCard = (bool) ($selectorCard ?? false);
     $pickerSelectorCardTitle = $selectorCardTitle ?? null;
@@ -126,52 +128,56 @@
             </div>
         @endif
 
-        <div class="wb-stack wb-gap-1" data-wb-picker-summary>
-            @if ($pickerMode === 'multiple')
-                @if ($pickerSelectedAssets->isEmpty())
-                    <strong>No assets selected</strong>
-                    <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+        @if ($pickerShowSummary)
+            <div class="wb-stack wb-gap-1" data-wb-picker-summary>
+                @if ($pickerMode === 'multiple')
+                    @if ($pickerSelectedAssets->isEmpty())
+                        <strong>No assets selected</strong>
+                        <div class="wb-text-sm wb-text-muted">Choose internal assets from the shared media library.</div>
+                    @else
+                        <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
+                        <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
+                    @endif
+                @elseif ($pickerSelectedAsset)
+                    @if ($pickerSelectedAsset->canPreview())
+                        <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
+                    @endif
+                    <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                    <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
                 @else
-                    <strong>{{ $pickerSelectedAssets->count() }} assets selected</strong>
-                    <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAssets->pluck('title')->filter()->implode(', ') ?: $pickerSelectedAssets->pluck('filename')->implode(', ') }}</div>
+                    <strong>No asset selected</strong>
+                    <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
                 @endif
-            @elseif ($pickerSelectedAsset)
-                @if ($pickerSelectedAsset->canPreview())
-                    <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="96" height="64">
-                @endif
-                <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
-                <div class="wb-text-sm wb-text-muted">{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
-            @else
-                <strong>No asset selected</strong>
-                <div class="wb-text-sm wb-text-muted">Choose an internal asset from the shared media library.</div>
-            @endif
-        </div>
+            </div>
+        @endif
 
-        <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid @if (! $pickerShowPreviewGrid) hidden @endif>
-            @if ($pickerMode === 'multiple')
-                @foreach ($pickerSelectedAssets as $asset)
-                    <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
+        @if ($pickerRenderPreviewGrid)
+            <div class="wb-grid wb-grid-3" data-wb-picker-preview-grid @if (! $pickerShowPreviewGrid) hidden @endif>
+                @if ($pickerMode === 'multiple')
+                    @foreach ($pickerSelectedAssets as $asset)
+                        <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $asset->id }}">
+                            <div class="wb-card-body wb-stack wb-gap-2">
+                                @if ($asset->canPreview())
+                                    <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
+                                @endif
+                                <strong>{{ $asset->title ?: $asset->filename }}</strong>
+                                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
+                            </div>
+                        </div>
+                    @endforeach
+                @elseif ($pickerSelectedAsset && $pickerShowPreviewGrid)
+                    <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            @if ($asset->canPreview())
-                                <img src="{{ $asset->url() }}" alt="{{ $asset->alt_text ?: $asset->title ?: $asset->filename }}" width="120" height="84">
+                            @if ($pickerSelectedAsset->canPreview())
+                                <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="120" height="84">
                             @endif
-                            <strong>{{ $asset->title ?: $asset->filename }}</strong>
-                            <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-remove-preview data-asset-id="{{ $asset->id }}">Remove</button>
+                            <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
+                            <div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
                         </div>
                     </div>
-                @endforeach
-            @elseif ($pickerSelectedAsset && $pickerShowPreviewGrid)
-                <div class="wb-card" data-wb-picker-preview data-wb-picker-preview-id="{{ $pickerSelectedAsset->id }}">
-                    <div class="wb-card-body wb-stack wb-gap-2">
-                        @if ($pickerSelectedAsset->canPreview())
-                            <img src="{{ $pickerSelectedAsset->url() }}" alt="{{ $pickerSelectedAsset->alt_text ?: $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}" width="120" height="84">
-                        @endif
-                        <strong>{{ $pickerSelectedAsset->title ?: $pickerSelectedAsset->filename }}</strong>
-                        <div class="wb-text-sm wb-text-muted" data-wb-picker-preview-meta>{{ $pickerSelectedAsset->kind }} | {{ $pickerSelectedAsset->original_name }}</div>
-                    </div>
-                </div>
-            @endif
-        </div>
+                @endif
+            </div>
+        @endif
 
         @if ($pickerSelectorHelperText)
             <div class="wb-text-sm wb-text-muted" data-wb-picker-selector-help>{{ $pickerSelectorHelperText }}</div>

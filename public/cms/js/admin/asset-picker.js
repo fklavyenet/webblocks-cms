@@ -262,7 +262,7 @@
         var existing = selectedList ? selectedList.querySelector('[value="' + String(asset.id) + '"]') : null;
         var fieldName = root.getAttribute('data-wb-picker-field-name') || 'gallery_asset_ids';
 
-        if (!selectedList || !previewGrid || existing) {
+        if (!selectedList || existing) {
             return;
         }
 
@@ -272,7 +272,9 @@
         input.value = String(asset.id);
         input.setAttribute('data-wb-picker-selected-input', '');
         selectedList.appendChild(input);
-        previewGrid.appendChild(buildMultiPreview(asset));
+        if (previewGrid) {
+            previewGrid.appendChild(buildMultiPreview(asset));
+        }
         updatePickerSummary(root);
         document.dispatchEvent(new CustomEvent('wb:asset-picker-selection-added', {
             detail: { root: root, asset: asset }
