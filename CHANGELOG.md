@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.31.53
+
 - Fix the shared compact single-media selector contract so parent block forms for `Image`, `Card`, `File`, `Download`, `Video`, and `Audio` no longer render the legacy selected preview grid under the compact selected-media summary, while nested picker modals keep their compact result rows and Gallery keeps `Gallery Items` as its unchanged canonical multi-select UI.
 
 - Refine the single-select block media chooser pattern so `Image`, `Card`, `File`, `Video`, `Audio`, and `Download` now keep the media selector in its own compact muted card with header-owned choose or replace plus remove actions, keep the selected-media or empty-state summary inside that card, and leave normal block content fields below the media section while the nested `#wb-overlay-root` picker modal, compact list rows, disabled inline upload, and single non-duplicated selected-media summary behavior stay unchanged.
