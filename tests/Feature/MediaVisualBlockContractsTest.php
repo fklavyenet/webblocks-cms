@@ -225,6 +225,9 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee($image->title ?: $image->filename, false);
         $response->assertSee($image->kind.' | '.$image->original_name, false);
         $response->assertSee('data-wb-picker-summary', false);
+        $response->assertSee('data-wb-picker-selector-card', false);
+        $response->assertSee('data-wb-picker-selector-card-title', false);
+        $response->assertSee('data-wb-picker-selector-help', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
         $response->assertSee('wb-picker-asset-row', false);
@@ -237,6 +240,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
         $html = $response->getContent();
         $this->assertNotFalse($html);
+        $this->assertMatchesRegularExpression('/data-wb-picker-selector-card.*Media Asset.*Choose an internal image asset for this block\./s', $html);
         $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($image->title ?: $image->filename, '/').'/s', $html);
         $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
         $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
@@ -264,6 +268,8 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Image',
                 'replaceLabel' => 'Replace Image',
                 'accept' => 'image',
+                'selectorCardTitle' => 'Image',
+                'selectorHelp' => 'Selecting media enables the card image. Clearing media removes the image.',
             ],
             [
                 'type' => 'file',
@@ -271,6 +277,8 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose File',
                 'replaceLabel' => 'Replace File',
                 'accept' => 'file',
+                'selectorCardTitle' => 'Media File',
+                'selectorHelp' => 'Select a Media file for the canonical file source, or leave it empty and use an external file URL.',
             ],
             [
                 'type' => 'video',
@@ -278,6 +286,8 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Video',
                 'replaceLabel' => 'Replace Video',
                 'accept' => 'video',
+                'selectorCardTitle' => 'Hosted Video',
+                'selectorHelp' => 'Select a hosted Media video or leave it empty and use an external video URL.',
             ],
             [
                 'type' => 'audio',
@@ -285,6 +295,8 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Audio',
                 'replaceLabel' => 'Replace Audio',
                 'accept' => 'audio',
+                'selectorCardTitle' => 'Hosted Audio',
+                'selectorHelp' => 'Select a Media audio file or leave it empty and use an external audio URL.',
             ],
             [
                 'type' => 'download',
@@ -292,6 +304,8 @@ class MediaVisualBlockContractsTest extends TestCase
                 'panelTitle' => 'Choose Download File',
                 'replaceLabel' => 'Replace Document',
                 'accept' => 'file',
+                'selectorCardTitle' => 'Download File',
+                'selectorHelp' => 'Choose an internal document asset for this download block.',
             ],
         ];
 
@@ -330,6 +344,11 @@ class MediaVisualBlockContractsTest extends TestCase
             $response->assertOk();
             $response->assertSee($config['replaceLabel']);
             $response->assertSee('data-wb-picker-summary', false);
+            $response->assertSee('data-wb-picker-selector-card', false);
+            $response->assertSee('data-wb-picker-selector-card-title', false);
+            $response->assertSee($config['selectorCardTitle'], false);
+            $response->assertSee('data-wb-picker-selector-help', false);
+            $response->assertSee($config['selectorHelp'], false);
             $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
             $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
             $response->assertSee('data-wb-picker-filters-card', false);
@@ -344,6 +363,7 @@ class MediaVisualBlockContractsTest extends TestCase
 
             $html = $response->getContent();
             $this->assertNotFalse($html);
+            $this->assertMatchesRegularExpression('/data-wb-picker-selector-card.*'.preg_quote($config['selectorCardTitle'], '/').'.*'.preg_quote($config['selectorHelp'], '/').'/s', $html);
             $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($config['asset']->title ?: $config['asset']->filename, '/').'/s', $html);
             $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
             $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);

@@ -22,23 +22,22 @@
         <textarea id="content" name="content" class="wb-textarea" rows="4">{{ old('content', $block->content) }}</textarea>
     </div>
 
-    <div class="wb-stack wb-gap-1">
-        <label>Hosted Audio</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => 'audio-asset',
-            'inputId' => 'asset_id',
-            'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Audio',
-            'clearLabel' => 'Remove',
-            'accept' => 'audio',
-            'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Audio',
-            'compactControls' => true,
-            'resultsVariant' => 'compact-list',
-            'showUpload' => false,
-        ])
-        <span>Select a Media audio file or leave it empty and use an external audio URL.</span>
-    </div>
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'audio-asset',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace Audio',
+        'clearLabel' => 'Remove',
+        'accept' => 'audio',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose Audio',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'Hosted Audio',
+        'selectorHelperText' => 'Select a Media audio file or leave it empty and use an external audio URL.',
+    ])
 </div>

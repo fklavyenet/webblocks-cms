@@ -11,25 +11,24 @@
         </div>
     </div>
 
-    <div class="wb-stack wb-gap-1">
-        <label>Document Asset</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => 'download-asset',
-            'inputId' => 'asset_id',
-            'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->downloadAsset()),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Document',
-            'clearLabel' => 'Remove',
-            'accept' => 'file',
-            'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Download File',
-            'compactControls' => true,
-            'resultsVariant' => 'compact-list',
-            'showUpload' => false,
-        ])
-        <span>Choose an internal document asset for this download block.</span>
-    </div>
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'download-asset',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->downloadAsset()),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace Document',
+        'clearLabel' => 'Remove',
+        'accept' => 'file',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose Download File',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'Download File',
+        'selectorHelperText' => 'Choose an internal document asset for this download block.',
+    ])
 
     <div class="wb-stack wb-gap-1">
         <label for="variant">Variant</label>

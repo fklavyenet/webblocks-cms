@@ -23,6 +23,9 @@
     $pickerResultsVariant = $resultsVariant ?? 'card';
     $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
     $pickerShowUpload = (bool) ($showUpload ?? ($inlineUpload ?? true));
+    $pickerSelectorCard = (bool) ($selectorCard ?? false);
+    $pickerSelectorCardTitle = $selectorCardTitle ?? null;
+    $pickerSelectorHelperText = $selectorHelperText ?? null;
     $pickerAcceptedKinds = ['image', 'document', 'video', 'other', 'audio', 'file'];
     $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
     $pickerMatchesAccept = static function ($asset, string $accept): bool {
@@ -100,6 +103,17 @@
     @endif
 
     @if ($pickerCompactControls)
+        @if ($pickerSelectorCard)
+            <div class="wb-card wb-card-muted" data-wb-picker-selector-card>
+                @if ($pickerSelectorCardTitle)
+                    <div class="wb-card-header">
+                        <strong data-wb-picker-selector-card-title>{{ $pickerSelectorCardTitle }}</strong>
+                    </div>
+                @endif
+
+                <div class="wb-card-body wb-stack wb-gap-3">
+        @endif
+
         <div class="{{ $pickerControlsClass }}">
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-open aria-expanded="false" aria-controls="{{ $pickerPanelId }}">{{ $pickerHasSelection ? $pickerReplaceLabel : $pickerButtonLabel }}</button>
             <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-clear @disabled(! $pickerHasSelection)>{{ $pickerClearLabel }}</button>
@@ -151,6 +165,15 @@
                 </div>
             @endif
         </div>
+
+        @if ($pickerSelectorHelperText)
+            <div class="wb-text-sm wb-text-muted" data-wb-picker-selector-help>{{ $pickerSelectorHelperText }}</div>
+        @endif
+
+        @if ($pickerSelectorCard)
+                </div>
+            </div>
+        @endif
     @else
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-3">

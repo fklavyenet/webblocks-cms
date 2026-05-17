@@ -5,25 +5,24 @@
         </div>
     @endif
 
-    <div class="wb-stack wb-gap-1">
-        <label>Media Asset</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => 'image-asset',
-            'inputId' => 'asset_id',
-            'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Image',
-            'clearLabel' => 'Remove',
-            'accept' => 'image',
-            'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Image',
-            'compactControls' => true,
-            'resultsVariant' => 'compact-list',
-            'showUpload' => false,
-        ])
-        <span>Choose an internal image asset for this block.</span>
-    </div>
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'image-asset',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace Image',
+        'clearLabel' => 'Remove',
+        'accept' => 'image',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose Image',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'Media Asset',
+        'selectorHelperText' => 'Choose an internal image asset for this block.',
+    ])
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack wb-gap-1">

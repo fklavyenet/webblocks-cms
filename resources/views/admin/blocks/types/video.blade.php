@@ -22,23 +22,22 @@
         <textarea id="content" name="content" class="wb-textarea" rows="4">{{ old('content', $block->content) }}</textarea>
     </div>
 
-    <div class="wb-stack wb-gap-1">
-        <label>Hosted Video</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => 'video-asset',
-            'inputId' => 'asset_id',
-            'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Video',
-            'clearLabel' => 'Remove',
-            'accept' => 'video',
-            'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Video',
-            'compactControls' => true,
-            'resultsVariant' => 'compact-list',
-            'showUpload' => false,
-        ])
-        <span>Select a hosted Media video or leave it empty and use an external video URL.</span>
-    </div>
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'video-asset',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace Video',
+        'clearLabel' => 'Remove',
+        'accept' => 'video',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose Video',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'Hosted Video',
+        'selectorHelperText' => 'Select a hosted Media video or leave it empty and use an external video URL.',
+    ])
 </div>

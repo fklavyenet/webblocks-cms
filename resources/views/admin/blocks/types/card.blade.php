@@ -5,25 +5,24 @@
         </div>
     @endif
 
-    <div class="wb-stack wb-gap-1">
-        <label>Media</label>
-        @include('admin.media.asset-picker-panel', [
-            'name' => 'card-image',
-            'inputId' => 'asset_id',
-            'fieldName' => 'asset_id',
-            'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
-            'buttonLabel' => 'Choose from Media',
-            'replaceLabel' => 'Replace Image',
-            'clearLabel' => 'Remove',
-            'accept' => 'image',
-            'panelMode' => 'overlay',
-            'panelTitle' => 'Choose Image',
-            'compactControls' => true,
-            'resultsVariant' => 'compact-list',
-            'showUpload' => false,
-        ])
-            <div class="wb-text-sm wb-text-muted">Selecting media enables the card image. Clearing media removes the image.</div>
-    </div>
+    @include('admin.media.asset-picker-panel', [
+        'name' => 'card-image',
+        'inputId' => 'asset_id',
+        'fieldName' => 'asset_id',
+        'selectedAsset' => old('asset_id') ? null : ($selectedAsset ?? $block->asset),
+        'buttonLabel' => 'Choose from Media',
+        'replaceLabel' => 'Replace Image',
+        'clearLabel' => 'Remove',
+        'accept' => 'image',
+        'panelMode' => 'overlay',
+        'panelTitle' => 'Choose Image',
+        'compactControls' => true,
+        'resultsVariant' => 'compact-list',
+        'showUpload' => false,
+        'selectorCard' => true,
+        'selectorCardTitle' => 'Image',
+        'selectorHelperText' => 'Selecting media enables the card image. Clearing media removes the image.',
+    ])
 
     @php
         $selectedMediaId = old('media_id', old('asset_id', $block->media_id));
