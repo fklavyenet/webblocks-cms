@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 1.31.54
+
+- Fix the Gallery `Add Gallery Items` picker layout so the search and filter card stays visible directly under the modal header while long compact media result rows scroll inside their own viewport-safe results region above the normal footer.
+
 ## 1.31.53
 
 - Fix the shared compact single-media selector contract so parent block forms for `Image`, `Card`, `File`, `Download`, `Video`, and `Audio` no longer render the legacy selected preview grid under the compact selected-media summary, while nested picker modals keep their compact result rows and Gallery keeps `Gallery Items` as its unchanged canonical multi-select UI.

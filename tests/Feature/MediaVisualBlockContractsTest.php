@@ -470,6 +470,8 @@ class MediaVisualBlockContractsTest extends TestCase
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('wb-gallery-picker-layout', false);
+        $response->assertSee('data-wb-picker-results-region', false);
         $response->assertDontSee('Upload to Library');
         $response->assertDontSee('data-wb-picker-summary', false);
         $response->assertDontSee('data-wb-picker-preview-grid', false);
@@ -482,6 +484,18 @@ class MediaVisualBlockContractsTest extends TestCase
         $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="gallery_media_ids_picker_panel".*Add Selected/s', $html);
         $this->assertStringNotContainsString('data-wb-picker-upload-submit', $html);
         $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id=', $html);
+
+        $xpath = $this->htmlXPath($html);
+        $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
+        $resultsRegion = $xpath->query('//*[@data-wb-picker-results-region]')->item(0);
+
+        $this->assertNotNull($filtersCard);
+        $this->assertNotNull($resultsRegion);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $filtersCard)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $resultsRegion)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-grid]', $resultsRegion)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-empty]', $resultsRegion)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-error]', $resultsRegion)->length);
     }
 
     #[Test]

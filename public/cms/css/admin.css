@@ -792,8 +792,20 @@
     max-block-size: inherit;
 }
 
-.wb-gallery-picker-modal .wb-modal-body {
-    max-block-size: calc(100vh - 11rem);
+.wb-gallery-picker-layout {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.wb-gallery-picker-results-region {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--wb-s3);
+    min-height: 0;
     overflow: auto;
 }
 

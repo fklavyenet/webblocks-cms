@@ -3776,6 +3776,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('data-wb-picker-owner-id="wb-picker-owner-gallery_media_ids"', false);
         $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
         $response->assertSee('wb-picker-results--compact', false);
+        $response->assertSee('wb-gallery-picker-layout', false);
+        $response->assertSee('wb-gallery-picker-results-region', false);
+        $response->assertSee('data-wb-picker-results-region', false);
         $response->assertSee('data-wb-picker-mode="multiple"', false);
         $response->assertSee('data-wb-dismiss="modal" data-wb-picker-close', false);
         $response->assertSee('Add Selected');
@@ -3818,6 +3821,8 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringNotContainsString('background: inherit;', $adminCss);
         $this->assertStringNotContainsString('wb-slot-block-picker-results-card', $adminCss);
         $this->assertStringNotContainsString('wb-slot-block-picker-results-body', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-layout {', $adminCss);
+        $this->assertStringContainsString('.wb-gallery-picker-results-region {', $adminCss);
         $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
         $this->assertNotFalse($assetPickerJs);
         $this->assertStringContainsString('modalRuntime.open(modal, openButton || null);', $assetPickerJs);
@@ -3848,6 +3853,19 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertDontSee('data-wb-picker-summary', false);
         $response->assertDontSee('data-wb-picker-preview-grid', false);
         $response->assertDontSee('assets selected');
+        $xpath = new DOMXPath((function () use ($content) {
+            $document = new DOMDocument;
+            @$document->loadHTML($content);
+
+            return $document;
+        })());
+        $filtersCard = $xpath->query('//*[@data-wb-picker-filters-card]')->item(0);
+        $resultsRegion = $xpath->query('//*[@data-wb-picker-results-region]')->item(0);
+        $this->assertNotNull($filtersCard);
+        $this->assertNotNull($resultsRegion);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-results-region]', $filtersCard)->length);
+        $this->assertSame(0, $xpath->query('.//*[@data-wb-picker-filters-card]', $resultsRegion)->length);
+        $this->assertSame(1, $xpath->query('.//*[@data-wb-picker-grid]', $resultsRegion)->length);
     }
 
     #[Test]
