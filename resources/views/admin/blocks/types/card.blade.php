@@ -16,6 +16,11 @@
             'replaceLabel' => 'Replace Image',
             'clearLabel' => 'Remove',
             'accept' => 'image',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose Image',
+            'compactControls' => true,
+            'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
             <div class="wb-text-sm wb-text-muted">Selecting media enables the card image. Clearing media removes the image.</div>
     </div>

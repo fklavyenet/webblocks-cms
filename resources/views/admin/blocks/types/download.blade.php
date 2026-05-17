@@ -21,7 +21,12 @@
             'buttonLabel' => 'Choose from Media',
             'replaceLabel' => 'Replace Document',
             'clearLabel' => 'Remove',
-            'accept' => 'document',
+            'accept' => 'file',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose Download File',
+            'compactControls' => true,
+            'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
         <span>Choose an internal document asset for this download block.</span>
     </div>

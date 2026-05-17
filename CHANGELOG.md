@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Refactor the `Image` block media chooser to open as a nested WebBlocks UI picker modal under `#wb-overlay-root`, switch its single-select results to the same compact list-row presentation used by the Gallery picker, group its Search/Folder/Kind filters inside a compact picker card, remove inline `Upload to Library` from that block-scoped picker, and keep the parent form on one non-duplicated selected-image summary while shared media uploading remains owned by `Admin -> Media`.
+- Refactor the single-select block media chooser pattern so `Image`, `Card`, `File`, `Video`, `Audio`, and `Download` now open as nested WebBlocks UI picker modals under `#wb-overlay-root`, use compact list-row results plus a muted Search/Folder/Kind filter card, remove inline `Upload to Library` from those block-scoped pickers, and keep each parent form on one non-duplicated selected-media summary while shared media uploading remains owned by `Admin -> Media`.
 
 - Simplify the `Content Header` contract by removing the admin `Title Level` field, stopping new writes of Content Header heading-level variants, and always rendering Content Header titles as `<h1 class="wb-content-title">` while safely ignoring any legacy saved heading-level values.
 

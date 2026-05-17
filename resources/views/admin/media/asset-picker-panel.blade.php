@@ -23,16 +23,56 @@
     $pickerResultsVariant = $resultsVariant ?? 'card';
     $pickerShowPreviewGrid = (bool) ($showPreviewGrid ?? ($pickerMode === 'multiple'));
     $pickerShowUpload = (bool) ($showUpload ?? ($inlineUpload ?? true));
-    $pickerAcceptedKinds = ['image', 'document', 'video', 'other'];
+    $pickerAcceptedKinds = ['image', 'document', 'video', 'other', 'audio', 'file'];
     $pickerInitialKind = in_array($pickerAccept, $pickerAcceptedKinds, true) ? $pickerAccept : '';
+    $pickerMatchesAccept = static function ($asset, string $accept): bool {
+        $mimeType = strtolower((string) ($asset->mime_type ?? ''));
+
+        return match ($accept) {
+            'image' => $asset->kind === \App\Models\Media::KIND_IMAGE,
+            'document' => $asset->kind === \App\Models\Media::KIND_DOCUMENT,
+            'video' => $asset->kind === \App\Models\Media::KIND_VIDEO,
+            'other' => $asset->kind === \App\Models\Media::KIND_OTHER,
+            'audio' => $asset->kind === \App\Models\Media::KIND_OTHER && str_starts_with($mimeType, 'audio/'),
+            'file' => in_array($asset->kind, [\App\Models\Media::KIND_DOCUMENT, \App\Models\Media::KIND_OTHER], true),
+            default => true,
+        };
+    };
+    $pickerKindOptions = collect([
+        '' => 'All kinds',
+        'image' => 'Image',
+        'document' => 'Document',
+        'video' => 'Video',
+        'other' => 'Other',
+    ]);
+
+    if ($pickerAccept === 'audio') {
+        $pickerKindOptions->put('audio', 'Audio');
+    }
+
+    if ($pickerAccept === 'file') {
+        $pickerKindOptions->put('file', 'File');
+    }
+
     $pickerVisibleAssets = collect($assetPickerAssets ?? [])
-        ->filter(fn ($asset) => $pickerInitialKind === '' || $asset->kind === $pickerInitialKind)
+        ->filter(fn ($asset) => $pickerInitialKind === '' || $pickerMatchesAccept($asset, $pickerInitialKind))
         ->values();
     $pickerHasVisibleAssets = $pickerVisibleAssets->isNotEmpty();
-    $pickerEmptyTitle = $pickerInitialKind === 'image' ? 'No matching images' : 'No matching assets';
-    $pickerEmptyText = $pickerInitialKind === 'image'
-        ? 'Upload an image or adjust the search or folder filter to find one in the shared media library.'
-        : 'Adjust the search or folder filter to find an internal asset.';
+    $pickerEmptyTitle = match ($pickerInitialKind) {
+        'image' => 'No matching images',
+        'audio' => 'No matching audio files',
+        'file' => 'No matching files',
+        default => 'No matching assets',
+    };
+    $pickerUploadLead = $pickerShowUpload
+        ? 'Upload'
+        : 'Use Admin -> Media to upload';
+    $pickerEmptyText = match ($pickerInitialKind) {
+        'image' => $pickerUploadLead.' an image, or adjust the search or folder filter to find one in the shared media library.',
+        'audio' => $pickerUploadLead.' an audio file, or adjust the search or folder filter to find one in the shared media library.',
+        'file' => $pickerUploadLead.' a file, or adjust the search or folder filter to find one in the shared media library.',
+        default => 'Adjust the search or folder filter to find an internal asset.',
+    };
 @endphp
 
 <div
@@ -205,11 +245,9 @@
                                     <div class="wb-stack wb-gap-1">
                                         <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
                                         <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                            <option value="" @selected($pickerInitialKind === '')>All kinds</option>
-                                            <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
-                                            <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
-                                            <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
-                                            <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
+                                            @foreach ($pickerKindOptions as $value => $label)
+                                                <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -288,11 +326,9 @@
                             <div class="wb-stack wb-gap-1">
                                 <label for="{{ $pickerInputId }}_asset_kind">Kind</label>
                                 <select id="{{ $pickerInputId }}_asset_kind" class="wb-select" data-wb-picker-kind>
-                                    <option value="" @selected($pickerInitialKind === '')>All kinds</option>
-                                    <option value="image" @selected($pickerInitialKind === 'image')>Image</option>
-                                    <option value="document" @selected($pickerInitialKind === 'document')>Document</option>
-                                    <option value="video" @selected($pickerInitialKind === 'video')>Video</option>
-                                    <option value="other" @selected($pickerInitialKind === 'other')>Other</option>
+                                    @foreach ($pickerKindOptions as $value => $label)
+                                        <option value="{{ $value }}" @selected($pickerInitialKind === $value)>{{ $label }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>

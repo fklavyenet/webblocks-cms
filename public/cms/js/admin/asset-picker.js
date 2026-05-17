@@ -329,9 +329,13 @@
             var text = String(card.getAttribute('data-wb-asset-search') || '');
             var folderId = String(card.getAttribute('data-wb-asset-folder-id') || '');
             var kind = String(card.getAttribute('data-wb-asset-kind') || '');
+            var mimeType = String(card.getAttribute('data-wb-asset-mime-type') || '').toLowerCase();
             var matchesSearch = searchValue === '' || text.indexOf(searchValue) !== -1;
             var matchesFolder = folderValue === '' || folderId === folderValue;
-            var matchesKind = kindValue === '' || kind === kindValue;
+            var matchesKind = kindValue === ''
+                || kind === kindValue
+                || (kindValue === 'audio' && kind === 'other' && mimeType.indexOf('audio/') === 0)
+                || (kindValue === 'file' && (kind === 'document' || kind === 'other'));
             var visible = matchesSearch && matchesFolder && matchesKind;
 
             card.hidden = !visible;

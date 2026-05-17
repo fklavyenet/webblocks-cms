@@ -32,6 +32,12 @@
             'buttonLabel' => 'Choose from Media',
             'replaceLabel' => 'Replace File',
             'clearLabel' => 'Remove',
+            'accept' => 'file',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose File',
+            'compactControls' => true,
+            'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
         <span>Select a Media file for the canonical file source, or leave it empty and use an external file URL.</span>
     </div>

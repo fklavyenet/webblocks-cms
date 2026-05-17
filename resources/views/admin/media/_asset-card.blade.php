@@ -4,7 +4,7 @@
 @endphp
 
 @if ($pickerVariant === 'compact-list')
-    <div class="wb-card wb-card-muted wb-picker-asset-row" data-wb-asset-card data-wb-asset-kind="{{ $asset->kind }}" data-wb-asset-folder-id="{{ $asset->folder_id ?? '' }}" data-wb-asset-search="{{ str()->lower(implode(' ', array_filter([$asset->title, $asset->filename, $asset->original_name, $asset->folder?->name]))) }}" data-wb-picker-variant="compact-list">
+    <div class="wb-card wb-card-muted wb-picker-asset-row" data-wb-asset-card data-wb-asset-kind="{{ $asset->kind }}" data-wb-asset-mime-type="{{ strtolower((string) ($asset->mime_type ?? '')) }}" data-wb-asset-folder-id="{{ $asset->folder_id ?? '' }}" data-wb-asset-search="{{ str()->lower(implode(' ', array_filter([$asset->title, $asset->filename, $asset->original_name, $asset->folder?->name]))) }}" data-wb-picker-variant="compact-list">
         <div class="wb-card-body wb-picker-asset-row__body">
             <div class="wb-picker-asset-row__thumb" aria-hidden="true">
                 @if ($asset->canPreview())
@@ -34,7 +34,7 @@
         </div>
     </div>
 @else
-    <div class="wb-card wb-card-muted" data-wb-asset-card data-wb-asset-kind="{{ $asset->kind }}" data-wb-asset-folder-id="{{ $asset->folder_id ?? '' }}" data-wb-asset-search="{{ str()->lower(implode(' ', array_filter([$asset->title, $asset->filename, $asset->original_name, $asset->folder?->name]))) }}">
+    <div class="wb-card wb-card-muted" data-wb-asset-card data-wb-asset-kind="{{ $asset->kind }}" data-wb-asset-mime-type="{{ strtolower((string) ($asset->mime_type ?? '')) }}" data-wb-asset-folder-id="{{ $asset->folder_id ?? '' }}" data-wb-asset-search="{{ str()->lower(implode(' ', array_filter([$asset->title, $asset->filename, $asset->original_name, $asset->folder?->name]))) }}">
         <div class="wb-card-body wb-stack wb-gap-2">
             <div class="wb-stack wb-gap-1">
                 @if ($asset->canPreview())

@@ -33,6 +33,11 @@
             'replaceLabel' => 'Replace Video',
             'clearLabel' => 'Remove',
             'accept' => 'video',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose Video',
+            'compactControls' => true,
+            'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
         <span>Select a hosted Media video or leave it empty and use an external video URL.</span>
     </div>

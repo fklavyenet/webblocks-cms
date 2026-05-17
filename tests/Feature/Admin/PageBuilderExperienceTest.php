@@ -3963,7 +3963,7 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('class="wb-empty" data-wb-picker-empty', false);
         $response->assertSee('No matching images');
-        $response->assertSee('Upload an image or adjust the search or folder filter to find one in the shared media library.');
+        $response->assertSee('Upload an image, or adjust the search or folder filter to find one in the shared media library.');
         $response->assertDontSee('data-wb-asset-card', false);
         $response->assertDontSee('wb-skeleton', false);
         $response->assertDontSee('skeleton', false);

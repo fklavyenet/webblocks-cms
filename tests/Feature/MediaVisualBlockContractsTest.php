@@ -246,6 +246,114 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
+    public function single_media_block_edit_forms_use_compact_overlay_picker_without_inline_upload_or_duplicate_preview(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $image = $this->media('image', 'card-image.jpg', 'image/jpeg', 'media/images/card-image.jpg');
+        $document = $this->media('document', 'guide.pdf', 'application/pdf', 'media/documents/guide.pdf');
+        $video = $this->media('video', 'walkthrough.mp4', 'video/mp4', 'media/videos/walkthrough.mp4');
+        $audio = $this->media('other', 'theme.mp3', 'audio/mpeg', 'media/audio/theme.mp3');
+
+        $blockMatrix = [
+            [
+                'type' => 'card',
+                'asset' => $image,
+                'panelTitle' => 'Choose Image',
+                'replaceLabel' => 'Replace Image',
+                'accept' => 'image',
+            ],
+            [
+                'type' => 'file',
+                'asset' => $document,
+                'panelTitle' => 'Choose File',
+                'replaceLabel' => 'Replace File',
+                'accept' => 'file',
+            ],
+            [
+                'type' => 'video',
+                'asset' => $video,
+                'panelTitle' => 'Choose Video',
+                'replaceLabel' => 'Replace Video',
+                'accept' => 'video',
+            ],
+            [
+                'type' => 'audio',
+                'asset' => $audio,
+                'panelTitle' => 'Choose Audio',
+                'replaceLabel' => 'Replace Audio',
+                'accept' => 'audio',
+            ],
+            [
+                'type' => 'download',
+                'asset' => $document,
+                'panelTitle' => 'Choose Download File',
+                'replaceLabel' => 'Replace Document',
+                'accept' => 'file',
+            ],
+        ];
+
+        foreach ($blockMatrix as $config) {
+            $block = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => $config['type'],
+                'block_type_id' => $this->blockTypeId($config['type']),
+                'source_type' => 'static',
+                'slot' => 'main',
+                'slot_type_id' => $this->slotType()->id,
+                'sort_order' => 0,
+                'media_id' => $config['asset']->id,
+                'status' => 'published',
+                'is_system' => false,
+                'title' => ucfirst($config['type']).' title',
+                'subtitle' => ucfirst($config['type']).' subtitle',
+                'content' => ucfirst($config['type']).' content',
+                'meta' => 'Action',
+                'url' => 'https://example.com/media-source',
+                'settings' => $config['type'] === 'download'
+                    ? json_encode(['variant' => 'secondary'], JSON_UNESCAPED_SLASHES)
+                    : null,
+            ]);
+
+            if (in_array($config['type'], ['image', 'card'], true)) {
+                $block->imageTranslations()->create([
+                    'locale_id' => Page::defaultLocaleId(),
+                    'caption' => ucfirst($config['type']).' caption',
+                    'alt_text' => ucfirst($config['type']).' alt',
+                ]);
+            }
+
+            $response = $this->actingAs($user)->followingRedirects()->get(route('admin.blocks.edit', $block));
+
+            $response->assertOk();
+            $response->assertSee($config['replaceLabel']);
+            $response->assertSee('data-wb-picker-summary', false);
+            $response->assertSee('data-wb-picker-panel-mode="overlay"', false);
+            $response->assertSee('data-wb-picker-results-variant="compact-list"', false);
+            $response->assertSee('data-wb-picker-filters-card', false);
+            $response->assertSee('data-wb-picker-filters', false);
+            $response->assertSee('wb-picker-results--compact', false);
+            $response->assertSee('Search', false);
+            $response->assertSee('Folder', false);
+            $response->assertSee('Kind', false);
+            $response->assertSee('data-wb-picker-accept="'.$config['accept'].'"', false);
+            $response->assertSee($config['panelTitle'], false);
+            $response->assertDontSee('Upload to Library');
+
+            $html = $response->getContent();
+            $this->assertNotFalse($html);
+            $this->assertMatchesRegularExpression('/data-wb-picker-summary.*'.preg_quote($config['asset']->title ?: $config['asset']->filename, '/').'/s', $html);
+            $this->assertMatchesRegularExpression('/data-wb-picker-filters-card.*Search.*Folder.*Kind/s', $html);
+            $this->assertStringNotContainsString('class="wb-grid wb-grid-3 wb-picker-results"', $html);
+            $this->assertMatchesRegularExpression('/data-wb-picker-preview-grid[^>]*hidden/s', $html);
+            $this->assertStringNotContainsString('data-wb-picker-preview data-wb-picker-preview-id="'.$config['asset']->id.'"', $html);
+            $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*id="asset_id_picker_panel"/s', $html);
+        }
+    }
+
+    #[Test]
     public function gallery_block_stores_ordered_items_shared_settings_and_per_item_locale_copy(): void
     {
         $this->seedFoundation();

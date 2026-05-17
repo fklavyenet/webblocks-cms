@@ -32,6 +32,12 @@
             'buttonLabel' => 'Choose from Media',
             'replaceLabel' => 'Replace Audio',
             'clearLabel' => 'Remove',
+            'accept' => 'audio',
+            'panelMode' => 'overlay',
+            'panelTitle' => 'Choose Audio',
+            'compactControls' => true,
+            'resultsVariant' => 'compact-list',
+            'showUpload' => false,
         ])
         <span>Select a Media audio file or leave it empty and use an external audio URL.</span>
     </div>
