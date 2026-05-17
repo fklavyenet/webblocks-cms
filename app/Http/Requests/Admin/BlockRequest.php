@@ -149,7 +149,7 @@ class BlockRequest extends FormRequest
             'gallery_items.*.caption' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'gallery_items.*.overlay_title' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
             'gallery_items.*.overlay_text' => [$isGallery ? 'nullable' : 'prohibited', 'string'],
-            'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['grid', 'masonry', 'collage'])],
+            'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['grid', 'masonry', 'masonary', 'collage'])],
             'gallery_columns' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4', '5'])],
             'gallery_gap' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['none', 'sm', 'md', 'lg'])],
             'gallery_aspect_ratio' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
@@ -1078,9 +1078,12 @@ class BlockRequest extends FormRequest
                 $settings = $existingSettings;
 
                 if (! $isTranslatedGalleryEdit) {
-                    $settings['variant'] = in_array(trim((string) ($data['gallery_variant'] ?? 'grid')), ['grid', 'masonry', 'collage'], true)
-                        ? trim((string) ($data['gallery_variant'] ?? 'grid'))
-                        : 'grid';
+                    $submittedVariant = trim((string) ($data['gallery_variant'] ?? 'grid'));
+                    $settings['variant'] = match ($submittedVariant) {
+                        'masonry', 'masonary' => 'masonry',
+                        'collage' => 'collage',
+                        default => 'grid',
+                    };
                     $settings['columns'] = in_array(trim((string) ($data['gallery_columns'] ?? '3')), ['2', '3', '4', '5'], true)
                         ? trim((string) ($data['gallery_columns'] ?? '3'))
                         : '3';

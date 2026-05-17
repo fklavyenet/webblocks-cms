@@ -3762,6 +3762,9 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Gallery Items');
         $response->assertDontSee('Content Fields for Gallery');
         $response->assertSee('Add Gallery Items');
+        $response->assertSee('value="masonry"', false);
+        $response->assertSee('Masonry');
+        $response->assertDontSee('Masonary');
         $response->assertSee('data-wb-gallery-items-count', false);
         $response->assertSee('data-wb-gallery-alt-summary', false);
         $response->assertSee('data-wb-gallery-caption-summary', false);

@@ -275,6 +275,65 @@ class PublicMediaBlocksTest extends TestCase
     }
 
     #[Test]
+    public function gallery_variants_render_distinct_public_layout_contracts_and_legacy_masonary_maps_to_masonry(): void
+    {
+        $page = $this->pageWithMainSlot();
+
+        foreach ([
+            ['handle' => 'grid', 'variant' => 'grid'],
+            ['handle' => 'masonry', 'variant' => 'masonry'],
+            ['handle' => 'legacy-masonary', 'variant' => 'masonary'],
+            ['handle' => 'collage', 'variant' => 'collage'],
+        ] as $index => $definition) {
+            $block = Block::query()->create([
+                'page_id' => $page->id,
+                'type' => 'gallery',
+                'block_type_id' => $this->blockType('gallery', 'Gallery', 18)->id,
+                'source_type' => 'asset',
+                'slot' => 'main',
+                'slot_type_id' => $this->mainSlotType()->id,
+                'sort_order' => $index,
+                'status' => 'published',
+                'is_system' => false,
+                'settings' => json_encode([
+                    'variant' => $definition['variant'],
+                    'columns' => '3',
+                    'gap' => 'md',
+                    'aspect_ratio' => '16:9',
+                    'lightbox_enabled' => true,
+                ], JSON_UNESCAPED_SLASHES),
+            ]);
+
+            foreach ([1, 2, 3] as $assetIndex) {
+                $image = $this->asset('image', $definition['handle'].'-'.$assetIndex.'.jpg', 'image/jpeg', 'media/images/'.$definition['handle'].'-'.$assetIndex.'.jpg');
+
+                BlockMedia::query()->create([
+                    'block_id' => $block->id,
+                    'media_id' => $image->id,
+                    'role' => 'gallery_item',
+                    'position' => $assetIndex - 1,
+                ]);
+            }
+        }
+
+        $response = $this->get(route('pages.show', 'about'));
+        $css = file_get_contents(public_path('cms/css/public.css'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-gallery-variant="grid"', false);
+        $response->assertSee('data-wb-gallery-variant="masonry"', false);
+        $response->assertSee('class="wb-gallery wb-gallery--masonry wb-gallery--cols-3 wb-gallery--gap-md wb-gallery--aspect-16-9"', false);
+        $response->assertSee('class="wb-gallery wb-gallery--collage wb-gallery--cols-3 wb-gallery--gap-md wb-gallery--aspect-16-9"', false);
+        $response->assertDontSee('data-wb-gallery-variant="masonary"', false);
+        $this->assertNotFalse($css);
+        $this->assertStringContainsString('.wb-gallery--masonry .wb-gallery-grid {', $css);
+        $this->assertStringContainsString('column-count: var(--wb-gallery-columns);', $css);
+        $this->assertStringContainsString('break-inside: avoid;', $css);
+        $this->assertStringNotContainsString('.wb-gallery--masonry .wb-gallery-item:nth-child(3n + 2)', $css);
+        $this->assertStringContainsString('.wb-gallery--collage .wb-gallery-item:nth-child(5n + 1) {', $css);
+    }
+
+    #[Test]
     public function video_and_audio_blocks_skip_empty_controls_when_no_source_is_available(): void
     {
         $page = $this->pageWithMainSlot();

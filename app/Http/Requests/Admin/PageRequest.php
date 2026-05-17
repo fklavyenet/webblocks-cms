@@ -90,7 +90,7 @@ class PageRequest extends FormRequest
             'blocks.*.gallery_items.*.caption' => ['nullable', 'string', 'max:255'],
             'blocks.*.gallery_items.*.overlay_title' => ['nullable', 'string', 'max:255'],
             'blocks.*.gallery_items.*.overlay_text' => ['nullable', 'string'],
-            'blocks.*.gallery_variant' => ['nullable', Rule::in(['grid', 'masonry', 'collage'])],
+            'blocks.*.gallery_variant' => ['nullable', Rule::in(['grid', 'masonry', 'masonary', 'collage'])],
             'blocks.*.gallery_columns' => ['nullable', Rule::in(['2', '3', '4', '5'])],
             'blocks.*.gallery_gap' => ['nullable', Rule::in(['none', 'sm', 'md', 'lg'])],
             'blocks.*.gallery_aspect_ratio' => ['nullable', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
@@ -188,9 +188,12 @@ class PageRequest extends FormRequest
 
                 if (($blockType?->slug ?? null) === 'gallery') {
                     $settings = $decodedSettings;
-                    $settings['variant'] = in_array(trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid'))), ['grid', 'masonry', 'collage'], true)
-                        ? trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid')))
-                        : 'grid';
+                    $submittedVariant = trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid')));
+                    $settings['variant'] = match ($submittedVariant) {
+                        'masonry', 'masonary' => 'masonry',
+                        'collage' => 'collage',
+                        default => 'grid',
+                    };
                     $settings['columns'] = in_array(trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3'))), ['2', '3', '4', '5'], true)
                         ? trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3')))
                         : '3';

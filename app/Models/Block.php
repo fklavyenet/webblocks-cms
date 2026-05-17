@@ -1304,7 +1304,8 @@ class Block extends Model
     public function galleryVariant(): string
     {
         return match ($this->appearanceSetting('variant')) {
-            'masonry', 'collage' => $this->appearanceSetting('variant'),
+            'masonry', 'masonary' => 'masonry',
+            'collage' => 'collage',
             default => 'grid',
         };
     }

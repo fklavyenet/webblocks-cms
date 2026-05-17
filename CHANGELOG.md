@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 1.31.52
+
+- Fix the public Gallery variant contract so `Masonry` is no longer a barely staggered copy of `Grid`: the CMS now renders Masonry through a real CSS-column layout with natural image heights, keeps `Grid` as the equal-cell gallery, and preserves the existing featured-first `Collage` composition.
+- Standardize the canonical Gallery variant value and visible label to `masonry` / `Masonry` while still accepting legacy saved `masonary` values and rendering them through the Masonry path for backward compatibility.
+
 ## 1.31.51
 
 - Fix the Gallery `Add Gallery Items` modal surface regression from `v1.31.50` by removing the CMS-owned `.wb-gallery-picker-modal` shell override and inherited picker dialog background from `public/cms/css/admin.css`, so WebBlocks UI `v2.7.6` again owns modal centering, panel surface, border, and shadow.

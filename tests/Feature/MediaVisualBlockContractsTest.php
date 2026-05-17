@@ -254,6 +254,38 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
+    public function gallery_block_accepts_legacy_masonary_value_but_saves_canonical_masonry_variant(): void
+    {
+        $this->seedFoundation();
+        $user = $this->adminUser();
+
+        $page = $this->page();
+        $image = $this->media('image', 'legacy-masonary.jpg', 'image/jpeg', 'media/images/legacy-masonary.jpg');
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $this->slotType()->id,
+            'block_type_id' => $this->blockTypeId('gallery'),
+            'sort_order' => 0,
+            'gallery_variant' => 'masonary',
+            'gallery_items' => [
+                [
+                    'media_id' => $image->id,
+                    'sort_order' => 0,
+                ],
+            ],
+            'status' => 'published',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors();
+
+        $block = Block::query()->where('type', 'gallery')->latest('id')->firstOrFail();
+
+        $this->assertSame('masonry', $block->galleryVariant());
+        $this->assertSame('masonry', $block->setting('variant'));
+    }
+
+    #[Test]
     public function download_file_video_and_audio_blocks_store_their_shared_sources_safely(): void
     {
         $this->seedFoundation();
