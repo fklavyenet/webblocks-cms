@@ -19,6 +19,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $viewHints = view()->getFinder()->getHints();
 
         $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE));
+        $this->assertFileExists(base_path('packages/webblocks-cms/database/migrations/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/stubs/README.md'));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertArrayHasKey(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $viewHints);
         $this->assertContains(
@@ -90,6 +93,56 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH));
         $this->assertSame(resource_path('views/welcome.blade.php'), app('view.finder')->find('welcome'));
+    }
+
+    #[Test]
+    public function package_migrations_assets_and_stubs_remain_inert_until_a_later_phase_intentionally_wires_them(): void
+    {
+        $provider = new class($this->app) extends WebBlocksCmsServiceProvider
+        {
+            /**
+             * @var array<int, string>
+             */
+            public array $loadedMigrationPaths = [];
+
+            /**
+             * @var array<int, array{paths: array<string, string>, group: string|null}>
+             */
+            public array $publishCalls = [];
+
+            public function bootMigrationBoundaryForTest(): void
+            {
+                $this->bootMigrations();
+            }
+
+            public function bootPublishingBoundariesForTest(): void
+            {
+                $this->bootAssetPublishing();
+                $this->bootStubPublishing();
+            }
+
+            protected function loadMigrationsFrom($paths): void
+            {
+                foreach ((array) $paths as $path) {
+                    $this->loadedMigrationPaths[] = $path;
+                }
+            }
+
+            public function publishes(array $paths, $groups = null): void
+            {
+                $this->publishCalls[] = [
+                    'paths' => $paths,
+                    'group' => $groups,
+                ];
+            }
+        };
+
+        $provider->bootMigrationBoundaryForTest();
+        $provider->bootPublishingBoundariesForTest();
+
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG, false));
+        $this->assertSame([], $provider->loadedMigrationPaths);
+        $this->assertSame([], $provider->publishCalls);
     }
 
     protected function routePathExists(string $path): bool

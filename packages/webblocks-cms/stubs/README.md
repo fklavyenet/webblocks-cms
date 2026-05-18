@@ -1,5 +1,9 @@
 # Reserved Package Stubs
 
-This directory is reserved for future package-owned WebBlocks CMS stubs.
+This directory is the reserved package boundary for future package-owned WebBlocks CMS stubs.
 
-Install-specific scaffolding should remain outside the CMS package unless a later focused phase intentionally defines reusable package-owned stubs.
+During the boundary pilot phase:
+
+- package stub publishing remains inert until reusable package-owned stubs are intentionally introduced
+- install-specific scaffolding remains outside the CMS package
+- no active runtime behavior depends on this directory yet

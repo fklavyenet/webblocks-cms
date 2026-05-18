@@ -240,6 +240,25 @@ The `v1.31.64` checkpoint turns the previously reserved package routes boundary 
 
 This pilot proves the package route boundary with a real package-owned diagnostic route file while intentionally avoiding any migration of active admin or public route ownership.
 
+### v1.31.65 Package Boundary Completion
+
+The `v1.31.65` checkpoint completes the remaining non-runtime package boundary pilots for migrations, public assets, stubs, and the Composer-managed update-flow target without moving active runtime ownership.
+
+- package `database/migrations/`, `public/`, and `stubs/` now keep clearer reserved-boundary marker documentation for their future package-owned roles
+- package migration loading is now explicitly guard-disabled through `webblocks-cms.boundaries.load_migrations`, so package migrations remain inert unless a later focused runtime phase intentionally wires them
+- package public asset and stub publishing remain explicit and package-tagged, but still inert because no real package-owned publishable assets or stubs exist yet
+- `webblocks:package-status` now reports migration boundary status, public asset boundary status, stub boundary status, the Composer-managed update target note, and the continued rule that root runtime remains authoritative
+- current root Composer behavior, root runtime loading, and System Update behavior remain unchanged in this checkpoint
+
+This checkpoint completes the package boundary pilot phase. The repository now has concrete, testable package boundaries for routes, views, migrations, public assets, stubs, and Composer-managed update intent while active runtime ownership still remains in the root application.
+
+### Next Phase: First Real Package-Owned Runtime Slice
+
+- choose one narrow runtime slice that is clearly package-owned and low-risk enough to move end to end
+- move only when route, view, migration, asset, or runtime ownership rules are explicit for that slice
+- verify backward compatibility and install expectations before any active runtime authority shifts from root to package
+- keep System Update behavior unchanged until a later dedicated update-flow phase intentionally redesigns it
+
 ### Next Possible Route Phase
 
 - move real package-owned routes only in a dedicated route ownership phase grouped by runtime concern, for example internal diagnostics first and audited admin or public route groups later
@@ -304,6 +323,7 @@ This pilot proves the package route boundary with a real package-owned diagnosti
 - The long-term target remains Composer-managed package updates followed by controlled runtime steps.
 - Expected post-update steps may later include migrations, block type sync, cache clear, or asset publish or sync, but only when those package-owned resources become real and intentionally wired.
 - This documentation checkpoint does not change current System Update behavior.
+- The `v1.31.65` boundary-completion checkpoint keeps this as a target note only. Current root Composer behavior and runtime update flow still remain authoritative until the first real package-owned runtime slice exists.
 
 ### Future Starter Project Split Direction
 
@@ -356,6 +376,8 @@ The `v1.31.63` pilot advances only the package view namespace boundary by adding
 
 The `v1.31.64` pilot advances only the package route boundary by adding one real package diagnostic route file under package `routes/diagnostics.php`, while keeping route loading explicitly guarded off in normal runtime. This proves package route-file ownership boundaries without moving any active root admin or public routes.
 
+The `v1.31.65` checkpoint completes the remaining inert boundary pilots by keeping package migrations explicitly guard-disabled, confirming package public asset and stub publishing remain inert until real package-owned files exist, and documenting Composer-managed package updates as the target boundary without changing the current root update flow.
+
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
 Package-owned default config has now also started for `contact`, while the root config file still remains authoritative as the install override during the transition.
@@ -369,6 +391,8 @@ Package-owned console bootstrap is now also proven through the read-only `webblo
 The package view namespace `webblocks-cms` is now also registered safely as a package-boundary pilot, and `v1.31.63` now proves that namespace with a real package-owned diagnostic view. Active root view resolution still remains authoritative because no active CMS runtime admin or public views have been moved into the package.
 
 The package route boundary is now also proven with a real package-owned diagnostic route file, but active root admin and public route resolution still remains authoritative because package diagnostic routes stay guard-disabled in normal runtime and no active root route files have been moved into the package.
+
+The package migration, public asset, and stub boundaries are now also explicitly completed as inert reserved pilots, and the Composer-managed update-flow boundary is now documented as the target direction only. No active root migrations, root public assets, root stubs behavior, or root update flow behavior has moved into package authority yet.
 
 The first package-owned PHP source move is now complete for `SearchTextNormalizer`, moved from `app/Support/Search/` to package `src/Support/Search/` with behavior kept unchanged.
 

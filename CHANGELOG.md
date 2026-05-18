@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## 1.31.65
+
+- Complete the remaining package boundary pilots by clarifying the reserved package migration, public asset, and stub directories, explicitly keeping package migration loading guard-disabled, and leaving package asset or stub publishing inert until real package-owned files exist.
+- Expand the read-only `webblocks:package-status` diagnostic command so it reports migration boundary status, public asset boundary status, stub boundary status, the Composer-managed update target note, and the continued rule that root runtime remains authoritative without publishing, migrating, clearing cache, writing files, mutating database state, or changing install or update state.
+- Add focused bootstrap coverage proving the remaining package boundaries stay inert in normal runtime, including no package migration loading and no package asset or stub publish registration while those directories still contain only reserved-boundary markers.
+- Mark the boundary pilot phase complete in the package architecture documentation and define the next phase as the first real package-owned runtime slice.
+- Keep this checkpoint intentionally non-invasive by moving no runtime code, no PHP source classes, and no active root routes, views, migrations, public assets, controllers, requests, models, services, seeders, or update-flow behavior.
+
 ## 1.31.64
 
 - Activate the Package Route Boundary Pilot by adding one package-owned diagnostic route file at `packages/webblocks-cms/routes/diagnostics.php`, proving a concrete package route-file boundary without moving any active root admin or public routes.

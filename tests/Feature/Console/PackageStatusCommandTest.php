@@ -36,17 +36,25 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('Package resources/views path present: yes')
             ->expectsOutputToContain('Package view files status: package files present (diagnostics/package-status.blade.php)')
             ->expectsOutputToContain('Package database/migrations path present: yes')
+            ->expectsOutputToContain('Package migration boundary status: reserved boundary only')
             ->expectsOutputToContain('Package migration files status: reserved only')
+            ->expectsOutputToContain('Package migration loading guard enabled: no (webblocks-cms.boundaries.load_migrations)')
+            ->expectsOutputToContain('Package migrations loaded in active runtime: no')
             ->expectsOutputToContain('Package public path present: yes')
+            ->expectsOutputToContain('Package public asset boundary status: reserved boundary only')
             ->expectsOutputToContain('Package public assets status: reserved only')
+            ->expectsOutputToContain('Package public asset publish readiness: no (tag webblocks-cms-assets remains inert until real package assets exist)')
             ->expectsOutputToContain('Package stubs path present: yes')
+            ->expectsOutputToContain('Package stub boundary status: reserved boundary only')
             ->expectsOutputToContain('Package stubs status: reserved only')
+            ->expectsOutputToContain('Package stub publish readiness: no (tag webblocks-cms-stubs remains inert until real package stubs exist)')
             ->expectsOutputToContain('Package service provider loaded: yes')
             ->expectsOutputToContain('Package view namespace registered: yes (webblocks-cms)')
             ->expectsOutputToContain('Package diagnostic view exists: yes (webblocks-cms::diagnostics.package-status)')
             ->expectsOutputToContain('Package diagnostic view render check: not run (use --view-check)')
+            ->expectsOutputToContain('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.')
             ->expectsOutputToContain('Transition note: root runtime remains authoritative unless a resource has been intentionally moved and wired.')
-            ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.')
+            ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, install-state changes, or update-state changes.')
             ->assertExitCode(0);
     }
 
@@ -57,7 +65,7 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('Package diagnostic route loaded in active runtime: no (webblocks-cms.diagnostics.package-status at /_webblocks-cms/diagnostics/package-status)')
             ->expectsOutputToContain('Package diagnostic view exists: yes (webblocks-cms::diagnostics.package-status)')
             ->expectsOutputToContain('Package diagnostic view render check: success')
-            ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.')
+            ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, install-state changes, or update-state changes.')
             ->assertExitCode(0);
     }
 }

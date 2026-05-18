@@ -23,6 +23,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const DIAGNOSTIC_ROUTE_LOADING_CONFIG = 'webblocks-cms.diagnostics.load_routes';
 
+    public const PACKAGE_MIGRATION_LOADING_CONFIG = 'webblocks-cms.boundaries.load_migrations';
+
     public const PACKAGE_CONFIG_DEFAULTS = [
         'cms.php',
         'contact.php',
@@ -106,11 +108,20 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootMigrations(): void
     {
+        if (! $this->packageMigrationsShouldLoad()) {
+            return;
+        }
+
         if ($this->migrationFiles() === []) {
             return;
         }
 
         $this->loadMigrationsFrom($this->migrationsPath());
+    }
+
+    protected function packageMigrationsShouldLoad(): bool
+    {
+        return (bool) config(self::PACKAGE_MIGRATION_LOADING_CONFIG, false);
     }
 
     protected function bootPublishing(): void
@@ -135,7 +146,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootAssetPublishing(): void
     {
-        if (! $this->directoryHasRealFiles($this->publicPath())) {
+        if (! $this->packageAssetsArePublishable()) {
             return;
         }
 
@@ -146,13 +157,23 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootStubPublishing(): void
     {
-        if (! $this->directoryHasRealFiles($this->stubsPath())) {
+        if (! $this->packageStubsArePublishable()) {
             return;
         }
 
         $this->publishes([
             $this->stubsPath() => base_path('stubs/vendor/'.self::PACKAGE_NAME),
         ], self::STUBS_PUBLISH_TAG);
+    }
+
+    protected function packageAssetsArePublishable(): bool
+    {
+        return $this->directoryHasRealFiles($this->publicPath());
+    }
+
+    protected function packageStubsArePublishable(): bool
+    {
+        return $this->directoryHasRealFiles($this->stubsPath());
     }
 
     protected function packagePath(string $path = ''): string

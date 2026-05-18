@@ -24,6 +24,7 @@ class PackageStatusCommand extends Command
         $diagnosticRouteFile = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE;
         $diagnosticRouteName = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME;
         $diagnosticRoutePath = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH;
+        $packageMigrationLoadingConfig = WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG;
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
         $viewFiles = $this->resourceFiles($packageRoot.'/resources/views');
@@ -61,11 +62,18 @@ class PackageStatusCommand extends Command
         $this->line('Package resources/views path present: '.$this->yesNo(is_dir($packageRoot.'/resources/views')));
         $this->line('Package view files status: '.$this->resourceStatus($viewFiles));
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
+        $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
+        $this->line('Package migration loading guard enabled: '.$this->yesNo($this->packageMigrationLoadingEnabled()).' ('.$packageMigrationLoadingConfig.')');
+        $this->line('Package migrations loaded in active runtime: no');
         $this->line('Package public path present: '.$this->yesNo(is_dir($packageRoot.'/public')));
+        $this->line('Package public asset boundary status: '.$this->resourceBoundaryStatus($publicFiles));
         $this->line('Package public assets status: '.$this->resourceStatus($publicFiles));
+        $this->line('Package public asset publish readiness: no (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' remains inert until real package assets exist)');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
+        $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
+        $this->line('Package stub publish readiness: no (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' remains inert until real package stubs exist)');
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
         $this->line('Package diagnostic view exists: '.$this->yesNo(view()->exists($namespacedDiagnosticView)).' ('.$namespacedDiagnosticView.')');
@@ -74,10 +82,11 @@ class PackageStatusCommand extends Command
             $namespacedDiagnosticView,
             $packageRoot
         ));
+        $this->line('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.');
         $this->newLine();
 
         $this->line('Transition note: root runtime remains authoritative unless a resource has been intentionally moved and wired.');
-        $this->line('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.');
+        $this->line('This command performs no publishing, migrations, cache clearing, file writes, database writes, install-state changes, or update-state changes.');
 
         return self::SUCCESS;
     }
@@ -109,6 +118,11 @@ class PackageStatusCommand extends Command
         return (bool) config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false);
     }
 
+    protected function packageMigrationLoadingEnabled(): bool
+    {
+        return (bool) config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG, false);
+    }
+
     protected function routeIsRegistered(string $name, string $path): bool
     {
         $route = app('router')->getRoutes()->getByName($name);
@@ -132,6 +146,15 @@ class PackageStatusCommand extends Command
         }
 
         return 'package files present ('.implode(', ', $files).')';
+    }
+
+    protected function resourceBoundaryStatus(array $files): string
+    {
+        if ($files === []) {
+            return 'reserved boundary only';
+        }
+
+        return 'pilot files present';
     }
 
     protected function viewNamespaceIsRegistered(): bool
