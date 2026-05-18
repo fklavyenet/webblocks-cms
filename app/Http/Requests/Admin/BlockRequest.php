@@ -8,6 +8,8 @@ use App\Models\Locale;
 use App\Models\Media;
 use App\Models\NavigationItem;
 use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\SharedSlot;
 use App\Models\SlotType;
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Icons\IconCatalog;
@@ -22,6 +24,21 @@ class BlockRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
+        $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+        $localeCode = Locale::normalizeCode($this->input('locale'));
+
+        if ($selectedBlockType?->slug !== 'contact_form' || $localeCode !== null || $this->has('store_submissions')) {
+            return;
+        }
+
+        $this->merge([
+            'store_submissions' => '1',
+        ]);
     }
 
     public function rules(): array
@@ -561,6 +578,17 @@ class BlockRequest extends FormRequest
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        $slotRedirectUrl = $this->slotEditorRedirectUrl();
+
+        if ($slotRedirectUrl !== null) {
+            return $slotRedirectUrl;
+        }
+
+        return parent::getRedirectUrl();
+    }
+
     private function isAllowedLinkListItemUrl(string $url): bool
     {
         $url = trim($url);
@@ -608,6 +636,88 @@ class BlockRequest extends FormRequest
         }
 
         return ! str_starts_with($url, '//');
+    }
+
+    private function slotEditorRedirectUrl(): ?string
+    {
+        $mode = trim((string) $this->input('_slot_block_mode', ''));
+
+        if (! in_array($mode, ['create', 'edit'], true)) {
+            return null;
+        }
+
+        $page = $this->route('block')?->page;
+
+        if (! $page instanceof Page) {
+            $page = Page::query()->find($this->integer('page_id'));
+        }
+
+        if (! $page instanceof Page) {
+            return null;
+        }
+
+        $sharedSlot = $this->requestedSharedSlot($page);
+        $locale = Locale::normalizeCode($this->input('locale'));
+        $returnUrl = trim((string) $this->input('return_url', ''));
+        $parameters = array_filter([
+            'locale' => $locale,
+            'return_url' => $returnUrl !== '' ? $returnUrl : null,
+        ], fn (mixed $value) => $value !== null && $value !== '');
+
+        if ($mode === 'create') {
+            $parameters['picker'] = 1;
+            $parameters['block_type_id'] = $this->integer('block_type_id') ?: null;
+            $parameters['parent_id'] = $this->filled('parent_id') ? $this->integer('parent_id') : null;
+        }
+
+        if ($mode === 'edit') {
+            $block = $this->route('block');
+
+            if (! $block instanceof Block) {
+                return null;
+            }
+
+            $parameters['edit'] = $block->id;
+        }
+
+        $parameters = array_filter($parameters, fn (mixed $value) => $value !== null && $value !== '');
+
+        if ($sharedSlot instanceof SharedSlot) {
+            return route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot] + $parameters);
+        }
+
+        $slotTypeId = $this->integer('slot_type_id') ?: (int) ($this->route('block')?->slot_type_id ?: 0);
+        $pageSlot = $slotTypeId > 0
+            ? PageSlot::query()
+                ->where('page_id', $page->id)
+                ->where('slot_type_id', $slotTypeId)
+                ->first()
+            : null;
+
+        if (! $pageSlot instanceof PageSlot) {
+            return null;
+        }
+
+        return route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot] + $parameters);
+    }
+
+    private function requestedSharedSlot(Page $page): ?SharedSlot
+    {
+        $sharedSlotId = $this->integer('shared_slot_id');
+
+        if ($sharedSlotId > 0) {
+            return SharedSlot::query()->find($sharedSlotId);
+        }
+
+        if (! $page->isSharedSlotSourcePage()) {
+            return null;
+        }
+
+        $sourceSharedSlotId = (int) data_get($page->settings, 'shared_slot_id');
+
+        return $sourceSharedSlotId > 0
+            ? SharedSlot::query()->find($sourceSharedSlotId)
+            : null;
     }
 
     public function validatedData(): array

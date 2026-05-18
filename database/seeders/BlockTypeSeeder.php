@@ -46,7 +46,6 @@ class BlockTypeSeeder extends Seeder
             'radio-group' => 'Radio Group',
             'submit' => 'Submit',
             'search' => 'Search',
-            'contact_form' => 'Contact Form',
             'product-card' => 'Product Card',
             'product-grid' => 'Product Grid',
             'pricing' => 'Pricing',

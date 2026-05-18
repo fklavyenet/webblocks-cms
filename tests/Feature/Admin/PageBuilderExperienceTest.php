@@ -1057,6 +1057,8 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertSee('Table');
         $response->assertSee('Quote');
         $response->assertSee('Alert');
+        $response->assertSee('Contact Form');
+        $response->assertSee('data-block-type-slug="contact_form"', false);
         $response->assertSee('TOC');
         $response->assertSee('Rich Text');
         $response->assertSee('data-block-type-slug="rich-text"', false);
@@ -1587,7 +1589,14 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $invalidCreate->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidCreate->assertStatus(302);
+        $location = $invalidCreate->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $plainTextType->id, $query['block_type_id'] ?? null);
+        $this->assertSame((string) $code->id, $query['parent_id'] ?? null);
         $invalidCreate->assertSessionHasErrors('parent_id');
     }
 
@@ -1797,6 +1806,169 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function invalid_add_block_modal_submit_reopens_the_add_block_modal_with_visible_validation_errors(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $contactFormType = BlockType::query()->where('slug', 'contact_form')->firstOrFail();
+        $returnUrl = route('admin.pages.index', ['site' => $page->site_id]);
+
+        $payload = [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $contactFormType->id,
+            'sort_order' => 0,
+            'heading' => 'Contact support',
+            'intro_text' => 'Reach the team.',
+            'recipient_email' => 'team@example.com',
+            'send_email_notification' => '1',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+            'return_url' => $returnUrl,
+        ];
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [
+                'page' => $page,
+                'slot' => $pageSlot,
+                'picker' => 1,
+                'block_type_id' => $contactFormType->id,
+                'return_url' => $returnUrl,
+            ]))
+            ->post(route('admin.blocks.store'), $payload);
+
+        $response->assertStatus(302);
+        $location = $response->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $contactFormType->id, $query['block_type_id'] ?? null);
+        $this->assertSame($returnUrl, $query['return_url'] ?? null);
+        $response->assertSessionHasErrors(['submit_label', 'success_message']);
+
+        $followUp = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [
+                'page' => $page,
+                'slot' => $pageSlot,
+                'picker' => 1,
+                'block_type_id' => $contactFormType->id,
+                'return_url' => $returnUrl,
+            ]))
+            ->followingRedirects()
+            ->post(route('admin.blocks.store'), $payload);
+        $content = $followUp->getContent();
+        $modalPosition = strpos($content, 'id="slot-block-editor-modal"');
+
+        $followUp->assertOk();
+        $followUp->assertSee('id="slot-block-editor-modal"', false);
+        $followUp->assertSee('data-wb-slot-block-modal-autoload', false);
+        $followUp->assertSee('Add Block: Contact Form', false);
+        $this->assertNotFalse($modalPosition);
+        $modalMarkup = substr($content, $modalPosition, 4000);
+        $this->assertIsString($modalMarkup);
+        $this->assertStringContainsString('Validation Error', $modalMarkup);
+        $this->assertStringContainsString('The submit label field is required.', $modalMarkup);
+        $followUp->assertSee('value="Contact support"', false);
+        $followUp->assertSee('Reach the team.');
+        $followUp->assertSee('name="submit_label"', false);
+        $followUp->assertSee('name="success_message"', false);
+    }
+
+    #[Test]
+    public function invalid_edit_block_modal_submit_reopens_the_edit_block_modal_with_visible_validation_errors(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $contactFormType = BlockType::query()->where('slug', 'contact_form')->firstOrFail();
+        $returnUrl = route('admin.pages.index', ['site' => $page->site_id]);
+
+        $block = Block::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $contactFormType->id,
+            'type' => 'contact_form',
+            'slot' => 'main',
+            'source_type' => 'static',
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+            'settings' => json_encode([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $this->assertDatabaseMissing('block_contact_form_translations', ['block_id' => $block->id]);
+
+        $payload = [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $contactFormType->id,
+            'sort_order' => 0,
+            'heading' => 'Updated contact form',
+            'intro_text' => 'Updated intro copy.',
+            'recipient_email' => 'team@example.com',
+            'send_email_notification' => '1',
+            'status' => 'published',
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $block->id,
+            'return_url' => $returnUrl,
+        ];
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [
+                'page' => $page,
+                'slot' => $pageSlot,
+                'edit' => $block->id,
+                'return_url' => $returnUrl,
+            ]))
+            ->put(route('admin.blocks.update', $block), $payload);
+
+        $response->assertStatus(302);
+        $location = $response->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame((string) $block->id, $query['edit'] ?? null);
+        $this->assertSame($returnUrl, $query['return_url'] ?? null);
+        $response->assertSessionHasErrors(['submit_label', 'success_message']);
+
+        $followUp = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [
+                'page' => $page,
+                'slot' => $pageSlot,
+                'edit' => $block->id,
+                'return_url' => $returnUrl,
+            ]))
+            ->followingRedirects()
+            ->put(route('admin.blocks.update', $block), $payload);
+        $content = $followUp->getContent();
+        $modalPosition = strpos($content, 'id="slot-block-editor-modal"');
+
+        $followUp->assertOk();
+        $followUp->assertSee('id="slot-block-editor-modal"', false);
+        $followUp->assertSee('data-wb-slot-block-modal-autoload', false);
+        $followUp->assertSee('Edit Block: Contact Form', false);
+        $this->assertNotFalse($modalPosition);
+        $modalMarkup = substr($content, $modalPosition, 4000);
+        $this->assertIsString($modalMarkup);
+        $this->assertStringContainsString('Validation Error', $modalMarkup);
+        $this->assertStringContainsString('The submit label field is required.', $modalMarkup);
+        $followUp->assertSee('value="Updated contact form"', false);
+        $followUp->assertSee('Updated intro copy.');
+        $followUp->assertSee('name="submit_label"', false);
+        $followUp->assertSee('name="success_message"', false);
+    }
+
+    #[Test]
     public function docs_sidebar_block_types_are_seeded_with_expected_container_rules(): void
     {
         $this->seedFoundation();
@@ -1897,7 +2069,13 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $invalidRoot->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidRoot->assertStatus(302);
+        $location = $invalidRoot->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $itemType->id, $query['block_type_id'] ?? null);
         $invalidRoot->assertSessionHasErrors('parent_id');
 
         $invalidPlainChild = $this->actingAs($user)
@@ -1914,7 +2092,14 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $invalidPlainChild->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidPlainChild->assertStatus(302);
+        $location = $invalidPlainChild->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $itemType->id, $query['block_type_id'] ?? null);
+        $this->assertSame((string) $plain->id, $query['parent_id'] ?? null);
         $invalidPlainChild->assertSessionHasErrors('parent_id');
 
         $validGroupChild = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -2014,7 +2199,13 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $invalid->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalid->assertStatus(302);
+        $location = $invalid->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $brandType->id, $query['block_type_id'] ?? null);
         $invalid->assertSessionHasErrors('media_id');
     }
 
@@ -2123,7 +2314,14 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $invalidItem->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $invalidItem->assertStatus(302);
+        $location = $invalidItem->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $itemType->id, $query['block_type_id'] ?? null);
+        $this->assertSame((string) $navigation->id, $query['parent_id'] ?? null);
         $invalidItem->assertSessionHasErrors('sidebar_nav_item_icon');
 
         $validGroup = $this->actingAs($user)->post(route('admin.blocks.store'), [
@@ -5039,7 +5237,14 @@ class PageBuilderExperienceTest extends TestCase
                 '_slot_block_mode' => 'create',
             ]);
 
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'block_type_id' => $headerType->id]));
+        $response->assertStatus(302);
+        $location = $response->headers->get('Location');
+        $this->assertNotNull($location);
+        $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('1', $query['picker'] ?? null);
+        $this->assertSame((string) $card->id, $query['parent_id'] ?? null);
+        $this->assertSame((string) $headerType->id, $query['block_type_id'] ?? null);
         $response->assertSessionHasErrors('parent_id');
         $this->assertDatabaseMissing('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $card->id]);
     }

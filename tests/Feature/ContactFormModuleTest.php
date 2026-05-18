@@ -14,6 +14,7 @@ use App\Models\Site;
 use App\Models\SlotType;
 use App\Models\User;
 use App\Support\Blocks\BlockTranslationWriter;
+use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +27,11 @@ class ContactFormModuleTest extends TestCase
     private function defaultLocale(): Locale
     {
         return Locale::query()->where('is_default', true)->firstOrFail();
+    }
+
+    private function seedFoundation(): void
+    {
+        $this->seed(FoundationSiteLocaleSeeder::class);
     }
 
     private function defaultSite(): Site
@@ -132,6 +138,104 @@ class ContactFormModuleTest extends TestCase
             'page_id' => $block->page_id,
             'email' => 'taylor@example.com',
             'status' => 'new',
+        ]);
+    }
+
+    #[Test]
+    public function contact_form_can_be_created_without_explicit_store_submissions_input(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $slotType = $this->slotType();
+        $blockType = $this->contactBlockType();
+        $site = $this->defaultSite();
+        $page = Page::query()->create([
+            'site_id' => $site->id,
+            'title' => 'Contact',
+            'slug' => 'contact',
+            'status' => 'published',
+        ]);
+        $pageSlot = PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+        ]);
+
+        PageTranslation::query()->updateOrCreate(
+            ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+            ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/p/contact'],
+        );
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'block_type_id' => $blockType->id,
+            'sort_order' => 0,
+            'heading' => 'Contact us',
+            'intro_text' => 'Send a message to the editorial team.',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message. We will get back to you soon.',
+            'recipient_email' => 'team@example.com',
+            'send_email_notification' => '1',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $block = Block::query()->where('page_id', $page->id)->where('type', 'contact_form')->firstOrFail();
+        $settings = json_decode((string) $block->getRawOriginal('settings'), true);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $this->assertSame('team@example.com', $settings['recipient_email'] ?? null);
+        $this->assertTrue((bool) ($settings['send_email_notification'] ?? false));
+        $this->assertTrue((bool) ($settings['store_submissions'] ?? false));
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact us',
+            'content' => 'Send a message to the editorial team.',
+            'submit_label' => 'Send message',
+            'success_message' => 'Thanks for your message. We will get back to you soon.',
+        ]);
+    }
+
+    #[Test]
+    public function contact_form_can_be_edited_without_explicit_store_submissions_input(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $slotType = $this->slotType();
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'block_type_id' => $block->block_type_id,
+            'sort_order' => 0,
+            'heading' => 'Contact the editorial team',
+            'intro_text' => 'Use this form to reach the editorial team.',
+            'submit_label' => 'Send update',
+            'success_message' => 'Thanks, we received your update.',
+            'recipient_email' => 'hello@example.com',
+            'send_email_notification' => '0',
+            'status' => 'published',
+        ]);
+
+        $settings = json_decode((string) $block->fresh()->getRawOriginal('settings'), true);
+
+        $response->assertRedirect();
+        $response->assertSessionDoesntHaveErrors(['store_submissions']);
+        $this->assertSame('hello@example.com', $settings['recipient_email'] ?? null);
+        $this->assertFalse((bool) ($settings['send_email_notification'] ?? true));
+        $this->assertTrue((bool) ($settings['store_submissions'] ?? false));
+        $this->assertDatabaseHas('block_contact_form_translations', [
+            'block_id' => $block->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Contact the editorial team',
+            'content' => 'Use this form to reach the editorial team.',
+            'submit_label' => 'Send update',
+            'success_message' => 'Thanks, we received your update.',
         ]);
     }
 

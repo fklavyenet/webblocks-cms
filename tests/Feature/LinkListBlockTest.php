@@ -249,7 +249,14 @@ class LinkListBlockTest extends TestCase
                     '_slot_block_mode' => 'create',
                 ]);
 
-            $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+            $response->assertStatus(302);
+            $location = $response->headers->get('Location');
+            $this->assertNotNull($location);
+            $this->assertStringStartsWith(route('admin.pages.slots.blocks', [$page, $pageSlot]), $location);
+            parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+            $this->assertSame('1', $query['picker'] ?? null);
+            $this->assertSame((string) $linkListItemType->id, $query['block_type_id'] ?? null);
+            $this->assertSame((string) $linkList->id, $query['parent_id'] ?? null);
             $response->assertSessionHasErrors('url');
             $this->assertDatabaseMissing('blocks', [
                 'page_id' => $page->id,

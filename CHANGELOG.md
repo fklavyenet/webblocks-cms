@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## 1.31.58
+
+- Fix slot block create and edit modal validation so failed saves now redirect back to the same Add Block or Edit Block modal context, keep old input, and render the validation summary inside the reopened slot editor modal instead of only behind the underlying Edit Slot page.
+
+- Fix Contact Form block create and edit validation so admin saves no longer fail when the reusable Contact Form editor omits `store_submissions`; the request now safely defaults storage to enabled, keeping the existing behavior that messages are always persisted before notification delivery.
+
+- Fix the shipped core block catalog so `Contact Form` is restored to the normal published sync path and appears again in the slot editor Block Types picker, including existing installs that receive the corrected row through `ddev artisan block-types:sync-core`.
+
 ## 1.31.57
 
 - Fix the Gallery `Add Gallery Items` modal filter reachability by moving the compact search and filter card into a dedicated non-scrolling region between the modal header and the normal scrollable body, so filters stay reachable while compact media rows, empty state, and error state continue to scroll inside the standard `.wb-modal-body` without reintroducing a nested results region.

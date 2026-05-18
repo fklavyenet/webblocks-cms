@@ -112,7 +112,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
         $this->artisan('block-types:sync-core')->assertExitCode(0);
 
         $this->assertSame(1, BlockType::query()->where('slug', 'header')->count());
-        $this->assertSame(36, BlockType::query()->whereIn('slug', [
+        $this->assertSame(37, BlockType::query()->whereIn('slug', [
             'header',
             'plain_text',
             'rich-text',
@@ -134,6 +134,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'link-list-item',
             'toc',
             'alert',
+            'contact_form',
             'cta',
             'feature-grid',
             'feature-item',
@@ -150,6 +151,38 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'sidebar-footer',
             'html',
         ])->count());
+    }
+
+    #[Test]
+    public function sync_command_creates_the_published_contact_form_core_block_type_without_duplicates(): void
+    {
+        BlockType::query()->updateOrCreate(
+            ['slug' => 'contact_form'],
+            [
+                'name' => 'Old Contact Form',
+                'category' => 'legacy',
+                'description' => 'Old contact form definition.',
+                'source_type' => 'static',
+                'is_system' => true,
+                'is_container' => true,
+                'sort_order' => 999,
+                'status' => 'draft',
+            ],
+        );
+
+        $this->artisan('block-types:sync-core')->assertExitCode(0);
+
+        $this->assertSame(1, BlockType::query()->where('slug', 'contact_form')->count());
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'contact_form',
+            'name' => 'Contact Form',
+            'category' => 'form',
+            'description' => 'Translated contact form with shared submission routing and notification settings.',
+            'source_type' => 'form',
+            'is_system' => 0,
+            'is_container' => 0,
+            'status' => 'published',
+        ]);
     }
 
     #[Test]

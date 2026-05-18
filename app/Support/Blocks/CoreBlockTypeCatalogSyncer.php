@@ -352,6 +352,17 @@ class CoreBlockTypeCatalogSyncer
                 'status' => 'published',
             ],
             [
+                'name' => 'Contact Form',
+                'slug' => 'contact_form',
+                'category' => 'form',
+                'description' => 'Translated contact form with shared submission routing and notification settings.',
+                'source_type' => 'form',
+                'is_system' => false,
+                'is_container' => false,
+                'sort_order' => 22,
+                'status' => 'published',
+            ],
+            [
                 'name' => 'CTA',
                 'slug' => 'cta',
                 'category' => 'content',
@@ -359,7 +370,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 22,
+                'sort_order' => 23,
                 'status' => 'published',
             ],
             [
@@ -370,7 +381,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 23,
+                'sort_order' => 24,
                 'status' => 'published',
             ],
             [
@@ -381,7 +392,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 24,
+                'sort_order' => 25,
                 'status' => 'published',
             ],
             [
@@ -392,7 +403,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => true,
                 'is_container' => false,
-                'sort_order' => 25,
+                'sort_order' => 26,
                 'status' => 'published',
             ],
             [
@@ -403,7 +414,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => true,
                 'is_container' => false,
-                'sort_order' => 26,
+                'sort_order' => 27,
                 'status' => 'published',
             ],
             [
@@ -414,7 +425,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => true,
                 'is_container' => true,
-                'sort_order' => 27,
+                'sort_order' => 28,
                 'status' => 'published',
             ],
             [
@@ -425,7 +436,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 28,
+                'sort_order' => 29,
                 'status' => 'published',
             ],
             [
@@ -436,7 +447,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 29,
+                'sort_order' => 30,
                 'status' => 'published',
             ],
             [
@@ -447,7 +458,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 30,
+                'sort_order' => 31,
                 'status' => 'published',
             ],
             [
@@ -458,7 +469,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 31,
+                'sort_order' => 32,
                 'status' => 'published',
             ],
             [
@@ -469,7 +480,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 32,
+                'sort_order' => 33,
                 'status' => 'published',
             ],
             [
@@ -480,7 +491,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => true,
-                'sort_order' => 33,
+                'sort_order' => 34,
                 'status' => 'published',
             ],
             [
@@ -491,7 +502,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 35,
+                'sort_order' => 36,
                 'status' => 'published',
             ],
             [
@@ -502,7 +513,7 @@ class CoreBlockTypeCatalogSyncer
                 'source_type' => 'static',
                 'is_system' => false,
                 'is_container' => false,
-                'sort_order' => 34,
+                'sort_order' => 35,
                 'status' => 'published',
             ],
             [

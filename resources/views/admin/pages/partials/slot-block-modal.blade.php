@@ -33,6 +33,15 @@
             </div>
 
             <div class="wb-modal-body wb-stack wb-gap-4">
+                @if ($errors->any())
+                    <div class="wb-alert wb-alert-danger">
+                        <div>
+                            <div class="wb-alert-title">Validation Error</div>
+                            <div>{{ $errors->first() }}</div>
+                        </div>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ $isCreateMode ? route('admin.blocks.store') : route('admin.blocks.update', $slotModalBlock) }}" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="Discard block changes?">
                     @csrf
                     @if ($isEditMode)
