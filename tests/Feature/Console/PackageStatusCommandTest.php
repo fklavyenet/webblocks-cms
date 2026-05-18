@@ -28,7 +28,11 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('- demo_media.php: package default=yes, root override=yes')
             ->expectsOutputToContain('- webblocks-updates.php: package default=yes, root override=yes')
             ->expectsOutputToContain('Package routes path present: yes')
-            ->expectsOutputToContain('Package route files status: reserved only')
+            ->expectsOutputToContain('Package route files status: package files present (diagnostics.php)')
+            ->expectsOutputToContain('Expected package diagnostic route file exists: yes (diagnostics.php)')
+            ->expectsOutputToContain('Package diagnostic route loading guard enabled: no (webblocks-cms.diagnostics.load_routes)')
+            ->expectsOutputToContain('Package diagnostic route loaded in active runtime: no (webblocks-cms.diagnostics.package-status at /_webblocks-cms/diagnostics/package-status)')
+            ->expectsOutputToContain('Active runtime route loading remains root-authoritative: yes')
             ->expectsOutputToContain('Package resources/views path present: yes')
             ->expectsOutputToContain('Package view files status: package files present (diagnostics/package-status.blade.php)')
             ->expectsOutputToContain('Package database/migrations path present: yes')
@@ -50,6 +54,7 @@ class PackageStatusCommandTest extends TestCase
     public function package_status_command_can_optionally_render_the_package_diagnostic_view_through_the_namespace(): void
     {
         $this->artisan('webblocks:package-status --view-check')
+            ->expectsOutputToContain('Package diagnostic route loaded in active runtime: no (webblocks-cms.diagnostics.package-status at /_webblocks-cms/diagnostics/package-status)')
             ->expectsOutputToContain('Package diagnostic view exists: yes (webblocks-cms::diagnostics.package-status)')
             ->expectsOutputToContain('Package diagnostic view render check: success')
             ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.')

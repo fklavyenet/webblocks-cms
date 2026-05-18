@@ -21,6 +21,9 @@ class PackageStatusCommand extends Command
         $packageRoot = dirname(__DIR__, 2);
         $diagnosticView = 'diagnostics.package-status';
         $namespacedDiagnosticView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$diagnosticView;
+        $diagnosticRouteFile = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE;
+        $diagnosticRouteName = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME;
+        $diagnosticRoutePath = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH;
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
         $viewFiles = $this->resourceFiles($packageRoot.'/resources/views');
@@ -51,6 +54,10 @@ class PackageStatusCommand extends Command
 
         $this->line('Package routes path present: '.$this->yesNo(is_dir($packageRoot.'/routes')));
         $this->line('Package route files status: '.$this->resourceStatus($routeFiles));
+        $this->line('Expected package diagnostic route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$diagnosticRouteFile)).' ('.$diagnosticRouteFile.')');
+        $this->line('Package diagnostic route loading guard enabled: '.$this->yesNo($this->diagnosticRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG.')');
+        $this->line('Package diagnostic route loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($diagnosticRouteName, $diagnosticRoutePath)).' ('.$diagnosticRouteName.' at '.$diagnosticRoutePath.')');
+        $this->line('Active runtime route loading remains root-authoritative: yes');
         $this->line('Package resources/views path present: '.$this->yesNo(is_dir($packageRoot.'/resources/views')));
         $this->line('Package view files status: '.$this->resourceStatus($viewFiles));
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
@@ -95,6 +102,22 @@ class PackageStatusCommand extends Command
         }
 
         return 'success';
+    }
+
+    protected function diagnosticRouteLoadingEnabled(): bool
+    {
+        return (bool) config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false);
+    }
+
+    protected function routeIsRegistered(string $name, string $path): bool
+    {
+        $route = app('router')->getRoutes()->getByName($name);
+
+        if ($route === null) {
+            return false;
+        }
+
+        return '/'.$route->uri() === $path;
     }
 
     protected function yesNo(bool $value): string

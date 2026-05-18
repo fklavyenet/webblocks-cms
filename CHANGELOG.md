@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## 1.31.64
+
+- Activate the Package Route Boundary Pilot by adding one package-owned diagnostic route file at `packages/webblocks-cms/routes/diagnostics.php`, proving a concrete package route-file boundary without moving any active root admin or public routes.
+- Guard package diagnostic route loading explicitly in the package service provider so package diagnostic routes stay out of normal runtime unless the internal diagnostic guard is intentionally enabled for a focused check.
+- Extend the read-only `webblocks:package-status` diagnostic command so it reports package route boundary presence, package route file status, expected diagnostic route file existence, package diagnostic route guard state, and whether that diagnostic route is currently loaded in active runtime.
+- Add focused bootstrap coverage proving the package diagnostic route file exists, stays absent from normal runtime by default, can be loaded only when the explicit guard is enabled, and does not override active root route or root view behavior.
+- Keep this checkpoint intentionally non-invasive by moving no active root admin or public routes, no root views, and no additional PHP source classes.
+
 ## 1.31.63
 
 - Activate the Package View Namespace Pilot by adding one package-owned internal diagnostic Blade view at `packages/webblocks-cms/resources/views/diagnostics/package-status.blade.php`, proving that the `webblocks-cms::` namespace now resolves a real package view without moving any active root admin or public views.

@@ -18,7 +18,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $router = $this->app['router'];
         $viewHints = view()->getFinder()->getHints();
 
-        $this->assertNull($router->getRoutes()->getByName('webblocks-cms.health'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE));
+        $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertArrayHasKey(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $viewHints);
         $this->assertContains(
             base_path('packages/webblocks-cms/resources/views'),
@@ -45,6 +46,63 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertStringContainsString('Package base path:', $rendered);
         $this->assertStringContainsString('Root runtime remains authoritative for active admin and public views.', $rendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), $welcomeViewPath);
+    }
+
+    #[Test]
+    public function package_diagnostic_route_is_explicitly_guarded_and_not_loaded_in_normal_runtime(): void
+    {
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false));
+        $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
+        $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH));
+    }
+
+    #[Test]
+    public function guarded_package_diagnostic_route_can_be_loaded_explicitly_without_conflicting_with_root_runtime_routes(): void
+    {
+        $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
+        $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH));
+
+        config()->set(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, true);
+
+        $provider = new class($this->app) extends WebBlocksCmsServiceProvider
+        {
+            /**
+             * @var array<int, string>
+             */
+            public array $loadedRouteFiles = [];
+
+            public function bootPackageRoutesForTest(): void
+            {
+                $this->bootRoutes();
+            }
+
+            protected function loadRoutesFrom($path): void
+            {
+                $this->loadedRouteFiles[] = $path;
+            }
+        };
+
+        $provider->bootPackageRoutesForTest();
+
+        $this->assertSame([
+            base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE),
+        ], $provider->loadedRouteFiles);
+        $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
+        $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH));
+        $this->assertSame(resource_path('views/welcome.blade.php'), app('view.finder')->find('welcome'));
+    }
+
+    protected function routePathExists(string $path): bool
+    {
+        $expectedPath = ltrim($path, '/');
+
+        foreach (app('router')->getRoutes() as $route) {
+            if ($route->uri() === $expectedPath) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #[Test]

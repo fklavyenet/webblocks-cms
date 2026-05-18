@@ -15,6 +15,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const VIEW_NAMESPACE = 'webblocks-cms';
 
+    public const DIAGNOSTIC_ROUTE_FILE = 'diagnostics.php';
+
+    public const DIAGNOSTIC_ROUTE_NAME = 'webblocks-cms.diagnostics.package-status';
+
+    public const DIAGNOSTIC_ROUTE_PATH = '/_webblocks-cms/diagnostics/package-status';
+
+    public const DIAGNOSTIC_ROUTE_LOADING_CONFIG = 'webblocks-cms.diagnostics.load_routes';
+
     public const PACKAGE_CONFIG_DEFAULTS = [
         'cms.php',
         'contact.php',
@@ -62,13 +70,29 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootRoutes(): void
     {
-        if ($this->routeFiles() === []) {
+        if (! $this->diagnosticRoutesShouldLoad()) {
             return;
         }
 
-        foreach ($this->routeFiles() as $file) {
+        foreach ($this->diagnosticRouteFiles() as $file) {
             $this->loadRoutesFrom($file);
         }
+    }
+
+    protected function diagnosticRoutesShouldLoad(): bool
+    {
+        return (bool) config(self::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function diagnosticRouteFiles(): array
+    {
+        return array_values(array_filter(
+            $this->routeFiles(),
+            static fn (string $file): bool => basename($file) === self::DIAGNOSTIC_ROUTE_FILE
+        ));
     }
 
     protected function bootViews(): void

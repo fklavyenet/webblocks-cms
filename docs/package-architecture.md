@@ -229,6 +229,24 @@ The `v1.31.63` checkpoint turns the previously reserved package view namespace i
 
 This pilot proves package view namespace loading with a real package-owned Blade file while intentionally avoiding any move of active root admin or public views.
 
+### v1.31.64 Package Route Boundary Pilot
+
+The `v1.31.64` checkpoint turns the previously reserved package routes boundary into a concrete, testable diagnostic route pilot without changing active route ownership.
+
+- package `routes/diagnostics.php` now exists as a real package-owned diagnostic route file for future package-internal diagnostics
+- the package service provider keeps package diagnostic route loading explicitly guarded behind `webblocks-cms.diagnostics.load_routes`, so package diagnostic routes are not loaded into normal runtime by default
+- `webblocks:package-status` now reports package route boundary presence, package route file status, expected diagnostic route file existence, guarded route-loading state, and whether the diagnostic route is currently loaded
+- active root admin and public routes remain authoritative, and no existing root admin or public route files were moved or changed in this phase
+
+This pilot proves the package route boundary with a real package-owned diagnostic route file while intentionally avoiding any migration of active admin or public route ownership.
+
+### Next Possible Route Phase
+
+- move real package-owned routes only in a dedicated route ownership phase grouped by runtime concern, for example internal diagnostics first and audited admin or public route groups later
+- keep route loading guards explicit until package-owned routes are intentionally allowed into runtime
+- define compatibility, middleware, naming, path, and conflict rules before any admin or public route migration begins
+- treat admin and public route migration as a dedicated ownership phase with an explicit compatibility plan rather than as incidental package cleanup
+
 ### Next Possible View Phase
 
 - move real package-owned views only in focused follow-up phases grouped by runtime concern, for example package-owned diagnostics first, then carefully audited admin or public view ownership later
@@ -252,6 +270,8 @@ This pilot proves package view namespace loading with a real package-owned Blade
 - Package routes should remain placeholders until a focused route-boundary phase decides which CMS routes are package-owned.
 - Active root route behavior remains authoritative during the transition.
 - Route moves must be grouped by runtime concern and verified against middleware, bindings, and admin or public behavior.
+- The `v1.31.64` pilot adds only one guarded package diagnostic route file and does not make package routes authoritative for active runtime.
+- Admin or public route migration still requires a dedicated route ownership phase plus a compatibility plan for names, paths, middleware, and downstream install expectations.
 
 ### Package View And Resource Ownership Strategy
 
@@ -334,6 +354,8 @@ The `v1.31.62` pilot makes those package resource boundaries more concrete by ad
 
 The `v1.31.63` pilot advances only the package view namespace boundary by adding one real internal diagnostic Blade view under package `resources/views/diagnostics/package-status.blade.php` and an optional read-only `webblocks:package-status --view-check` render probe. This proves package namespace-based view loading with a concrete package-owned view while leaving active root admin and public view resolution authoritative.
 
+The `v1.31.64` pilot advances only the package route boundary by adding one real package diagnostic route file under package `routes/diagnostics.php`, while keeping route loading explicitly guarded off in normal runtime. This proves package route-file ownership boundaries without moving any active root admin or public routes.
+
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
 Package-owned default config has now also started for `contact`, while the root config file still remains authoritative as the install override during the transition.
@@ -345,6 +367,8 @@ Package-owned default config has now also started for `cms`, while the root conf
 Package-owned console bootstrap is now also proven through the read-only `webblocks:package-status` diagnostic command.
 
 The package view namespace `webblocks-cms` is now also registered safely as a package-boundary pilot, and `v1.31.63` now proves that namespace with a real package-owned diagnostic view. Active root view resolution still remains authoritative because no active CMS runtime admin or public views have been moved into the package.
+
+The package route boundary is now also proven with a real package-owned diagnostic route file, but active root admin and public route resolution still remains authoritative because package diagnostic routes stay guard-disabled in normal runtime and no active root route files have been moved into the package.
 
 The first package-owned PHP source move is now complete for `SearchTextNormalizer`, moved from `app/Support/Search/` to package `src/Support/Search/` with behavior kept unchanged.
 
