@@ -8,7 +8,7 @@ use Tests\TestCase;
 class PackageStatusCommandTest extends TestCase
 {
     #[Test]
-    public function package_status_command_is_registered_and_reports_package_bootstrap_state(): void
+    public function package_status_command_is_registered_and_reports_package_resource_boundary_state_read_only(): void
     {
         $this->artisan('list')
             ->expectsOutputToContain('webblocks:package-status')
@@ -16,13 +16,21 @@ class PackageStatusCommandTest extends TestCase
 
         $this->artisan('webblocks:package-status')
             ->expectsOutputToContain('Package: fklavyenet/webblocks-cms')
-            ->expectsOutputToContain('Config files present: yes')
-            ->expectsOutputToContain('Config file count: 4')
-            ->expectsOutputToContain('Config files: cms.php, contact.php, demo_media.php, webblocks-updates.php')
-            ->expectsOutputToContain('Routes contain real files: no')
-            ->expectsOutputToContain('Views contain real files: no')
-            ->expectsOutputToContain('Migrations contain real files: no')
+            ->expectsOutputToContain('Mode: read-only diagnostic only')
+            ->expectsOutputToContain('Package resource boundary status')
+            ->expectsOutputToContain('Package base path:')
+            ->expectsOutputToContain('Package src path present: yes')
+            ->expectsOutputToContain('Package config path present: yes')
+            ->expectsOutputToContain('Package config files present: cms.php, contact.php, demo_media.php, webblocks-updates.php')
+            ->expectsOutputToContain('Package routes path present: yes')
+            ->expectsOutputToContain('Package resources/views path present: yes')
+            ->expectsOutputToContain('Package database/migrations path present: yes')
+            ->expectsOutputToContain('Package public path present: yes')
+            ->expectsOutputToContain('Package stubs path present: yes')
+            ->expectsOutputToContain('Package service provider loaded: yes')
             ->expectsOutputToContain('Root override config present: 4/4 (cms.php, contact.php, demo_media.php, webblocks-updates.php)')
+            ->expectsOutputToContain('Transition note: root runtime remains authoritative unless a resource has been intentionally moved and wired.')
+            ->expectsOutputToContain('This command does not publish files, run migrations, clear cache, or mutate install state.')
             ->assertExitCode(0);
     }
 }

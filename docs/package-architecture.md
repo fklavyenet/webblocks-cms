@@ -180,13 +180,12 @@ Support source migration map:
 - Admin, Audit, and Database: candidate after dependency isolation. `AdminPagination`, `CurrentActorResolver`, and `DestructiveDatabaseCommandGuard` are small, but each still hangs off root settings, auth, or application safety hooks.
 - WebBlocks: do not move yet. It represents product identity and version constants and is explicitly excluded from this transition step.
 
-Safest future candidates after narrow follow-up review:
+Phase 2 source checkpoint note:
 
-- `App\Support\BlockTypes\BlockTypeContract`
-- `App\Support\Contact\ContactMessageNotificationResult`
-- `App\Support\Formatting\InlineRichTextRenderer`
-- `App\Support\Formatting\SafeRichTextRenderer`
-- `App\Support\Pages\LayoutMarkup`
+- the initial low-risk helper and value-object moves completed successfully through `v1.31.60`
+- `fklavye.ddev` was updated successfully after `v1.31.60`, confirming the checkpoint remains compatible with the current local package-wired development environment
+- opportunistic low-risk PHP source moves are now intentionally paused
+- do not continue moving runtime-heavy classes without a dedicated focused phase plan and dependency audit
 
 Current blockers for higher-risk groups:
 
@@ -199,6 +198,57 @@ Current blockers for higher-risk groups:
 ### Phase 3: Move Package Resources
 
 Move clearly package-owned config, routes, views, migrations, seeders, public assets, and stubs into package-level Laravel resource folders. Introduce package load and publish behavior incrementally instead of all at once.
+
+## Next Phase: Package Resource Boundary
+
+The next transition focus after `v1.31.60` is package resource ownership, not more opportunistic helper moves.
+
+### Package Config Defaults Vs Root Install Overrides
+
+- Package `config/` should continue to define CMS-owned default values.
+- Root `config/` remains the install-owned override layer during the transition.
+- A package config file should not become authoritative for runtime behavior until the override story and bootstrap wiring are explicit and stable.
+
+### Package Migration Loading And Publishing Strategy
+
+- Package migrations should stay non-authoritative until real package-owned migrations exist and their ownership is intentionally moved.
+- When migration ownership begins, prefer package loading for CMS-owned migration files and explicit publish guidance only where install-local customization is truly needed.
+- Do not mix migration-boundary work with unrelated runtime refactors.
+
+### Package Route Ownership Strategy
+
+- Package routes should remain placeholders until a focused route-boundary phase decides which CMS routes are package-owned.
+- Active root route behavior remains authoritative during the transition.
+- Route moves must be grouped by runtime concern and verified against middleware, bindings, and admin or public behavior.
+
+### Package View And Resource Ownership Strategy
+
+- Package `resources/views` should eventually own reusable CMS product views.
+- Root `resources/views` remains authoritative until a view is intentionally moved and the package loader becomes the intended source for that view.
+- View moves should avoid mixing admin runtime changes with packaging-only work unless explicitly audited together.
+
+### Package Public Asset Publish Or Sync Strategy
+
+- Package `public/` should eventually own CMS-owned publishable assets.
+- Transition work should distinguish CMS-owned package assets from install-owned `public/site/...` overrides.
+- Asset publishing or sync should happen only when real package assets exist and the update flow clearly defines when publishing is required.
+
+### Package Stubs Strategy
+
+- Package `stubs/` should be reserved for reusable generated-file templates that belong to CMS product behavior.
+- Install-specific or project-specific scaffolding should not move into CMS package stubs by default.
+
+### Composer-Managed Update Flow And Post-Update Commands
+
+- The long-term target remains Composer-managed package updates followed by controlled runtime steps.
+- Expected post-update steps may later include migrations, block type sync, cache clear, or asset publish or sync, but only when those package-owned resources become real and intentionally wired.
+- This documentation checkpoint does not change current System Update behavior.
+
+### Future Starter Project Split Direction
+
+- The long-term direction remains a separate starter project that depends on `fklavyenet/webblocks-cms` as a package.
+- The current in-repo package exists to establish boundaries and ownership before that split is attempted.
+- The starter split should happen only after package-owned runtime resources and update flow responsibilities are clearer.
 
 ### Phase 4: Package-Managed Update Flow
 
@@ -255,5 +305,9 @@ The first BlockTypes support source move is now also complete for `BlockTypeCont
 `LayoutMarkup` has also now been audited as a possible narrow Pages helper move and remains root-owned for now because its current references still cross page-layout request validation, admin form rendering, and public slot-wrapper behavior.
 
 The first Formatting support source move is now also complete for `InlineRichTextRenderer`, moved from `app/Support/Formatting/` to package `src/Support/Formatting/` with behavior kept unchanged while `SafeRichTextRenderer` and its sanitization contract remain root-owned.
+
+The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
+
+Further opportunistic low-risk PHP source moves are now paused. Future runtime-heavy source moves require a dedicated focused phase plan and dependency audit instead of more small opportunistic migrations.
 
 It does not yet move existing CMS runtime code, change System Update behavior, create a starter project, or change the current runtime ownership boundaries.

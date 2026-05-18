@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 1.31.61
+
+- Record the completed `v1.31.60` package source checkpoint in the package architecture documentation, confirm the successful `fklavye.ddev` update after that release, and explicitly pause further opportunistic low-risk PHP source moves until a dedicated runtime-heavy dependency audit phase is planned.
+- Add a documented `Next Phase: Package Resource Boundary` plan covering package defaults versus root install overrides, migration or route or view or asset ownership strategy, stubs, Composer-managed post-update flow, and the future starter-project split direction without changing active runtime ownership yet.
+- Expand the package-owned read-only `webblocks:package-status` diagnostic command so it reports package resource boundary presence, current package config files, package service provider load status, and an explicit note that root runtime remains authoritative during the transition unless resources are intentionally moved and wired.
+- Keep this checkpoint intentionally non-invasive by moving no additional runtime-heavy PHP source classes and by leaving active routes, views, migrations, assets, and System Update behavior unchanged.
+
 ## 1.31.60
 
 - Add the initial package architecture transition documentation plus an in-repo `packages/webblocks-cms/` skeleton, including local path Composer wiring for the future package split without moving existing CMS runtime code yet.
