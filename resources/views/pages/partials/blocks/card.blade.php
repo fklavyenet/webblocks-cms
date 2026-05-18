@@ -18,7 +18,7 @@
         $url = $block->cardUrl();
         $target = $block->cardTarget();
         $hasLegacyAction = $url !== null && $actionLabel !== '';
-        $renderedDescription = app(\App\Support\Formatting\InlineRichTextRenderer::class)->render($description);
+        $renderedDescription = app(\WebBlocks\Cms\Support\Formatting\InlineRichTextRenderer::class)->render($description);
     @endphp
 
     <article class="wb-card" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">

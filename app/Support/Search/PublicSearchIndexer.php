@@ -12,6 +12,8 @@ use App\Models\Site;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PublicSharedSlotResolver;
 use Illuminate\Support\Collection;
+use WebBlocks\Cms\Support\Search\PublicSearchRebuildResult;
+use WebBlocks\Cms\Support\Search\SearchTextNormalizer;
 
 class PublicSearchIndexer
 {

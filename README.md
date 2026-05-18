@@ -232,6 +232,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - [Localization](docs/localization.md)
 - [Public Assets](docs/public-assets.md)
 - [Page Layouts](docs/page-layouts.md)
+- [Package Architecture Transition](docs/package-architecture.md)
 - [Block Type Contracts](docs/block-type-contracts.md)
 - [Renderer Contracts](docs/block-ui-renderer-contract.md)
 - [Development Workflow](DEVELOPMENT.md)

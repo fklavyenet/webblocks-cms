@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Contact;
+namespace WebBlocks\Cms\Support\Contact;
 
 final class ContactMessageNotificationResult
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Search;
+namespace WebBlocks\Cms\Support\Search;
 
 use Illuminate\Support\Str;
 

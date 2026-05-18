@@ -1,0 +1,39 @@
+<?php
+
+use App\Support\WebBlocks;
+
+return [
+    'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
+    'server_url' => env('WEBBLOCKS_UPDATES_SERVER_URL', 'https://updates.webblocksui.com'),
+    'channel' => env('WEBBLOCKS_UPDATES_CHANNEL', 'stable'),
+    'api_version' => '1',
+    'product' => WebBlocks::HANDLE,
+    'current_version' => WebBlocks::VERSION,
+    'site_url' => env('APP_URL', 'http://localhost'),
+    'instance_id' => null,
+    'timeout_seconds' => 5,
+    'connect_timeout_seconds' => 3,
+    'retry_times' => 0,
+    'retry_sleep_milliseconds' => 150,
+    'pending_cache_ttl_seconds' => 3600,
+    'installer' => [
+        'target_path' => base_path(),
+        'workspace_root' => 'app/system-updates',
+        'download_timeout_seconds' => 120,
+        'command_timeout_seconds' => 600,
+        'lock_name' => 'system-updates:run',
+        'lock_ttl_seconds' => 900,
+        'excluded_paths' => [
+            '.git',
+            '.github',
+            '.ddev',
+            'project',
+            'storage',
+            'bootstrap/cache',
+            'node_modules',
+            'vendor',
+            'public/storage',
+            'public/build',
+        ],
+    ],
+];

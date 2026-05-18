@@ -4,6 +4,7 @@ namespace App\Support\Search;
 
 use App\Models\Block;
 use Illuminate\Support\Facades\Log;
+use WebBlocks\Cms\Support\Search\SearchTextNormalizer;
 
 class BlockSearchTextExtractorRegistry
 {

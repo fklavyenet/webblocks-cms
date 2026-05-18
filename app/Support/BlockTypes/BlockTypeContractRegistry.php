@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Support\Blocks\BlockTranslationRegistry;
 use App\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeContract;
 
 class BlockTypeContractRegistry
 {

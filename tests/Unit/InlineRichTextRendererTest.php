@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Support\Formatting\InlineRichTextRenderer;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\Formatting\InlineRichTextRenderer;
 
 class InlineRichTextRendererTest extends TestCase
 {

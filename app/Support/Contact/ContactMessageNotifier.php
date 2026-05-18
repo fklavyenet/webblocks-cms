@@ -6,6 +6,7 @@ use App\Mail\ContactMessageNotification;
 use App\Models\ContactMessage;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
+use WebBlocks\Cms\Support\Contact\ContactMessageNotificationResult;
 
 class ContactMessageNotifier
 {

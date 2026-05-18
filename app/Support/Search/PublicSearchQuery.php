@@ -7,6 +7,7 @@ use App\Models\PublicSearchIndex;
 use App\Models\Site;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
+use WebBlocks\Cms\Support\Search\SearchTextNormalizer;
 
 class PublicSearchQuery
 {

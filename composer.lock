@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0cbc4dc77a1eeff75f257f6ffae9168b",
+    "content-hash": "8bdaf0827ea4773fe2a228c8fcc98090",
     "packages": [
         {
             "name": "brick/math",
@@ -6022,6 +6022,40 @@
             "time": "2025-08-08T12:00:00+00:00"
         },
         {
+            "name": "fklavyenet/webblocks-cms",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/webblocks-cms",
+                "reference": "ed06b74e9c1112695484aac4280bef7cf14b06b8"
+            },
+            "require": {
+                "illuminate/support": "^13.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "WebBlocks\\Cms\\WebBlocksCmsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "WebBlocks\\Cms\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Initial WebBlocks CMS package skeleton for the ongoing architecture transition.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "hamcrest/hamcrest-php",
             "version": "v2.1.1",
             "source": {
@@ -8076,12 +8110,14 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "fklavyenet/webblocks-cms": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.3"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

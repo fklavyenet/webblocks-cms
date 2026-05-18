@@ -1,0 +1,22 @@
+{
+    "name": "fklavyenet/webblocks-cms",
+    "description": "Initial WebBlocks CMS package skeleton for the ongoing architecture transition.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WebBlocks\\Cms\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "WebBlocks\\Cms\\WebBlocksCmsServiceProvider"
+            ]
+        }
+    }
+}

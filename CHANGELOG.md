@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## 1.31.60
+
+- Add the initial package architecture transition documentation plus an in-repo `packages/webblocks-cms/` skeleton, including local path Composer wiring for the future package split without moving existing CMS runtime code yet.
+- Refine the in-repo package service provider into a guarded bootstrap contract for future package config, routes, views, migrations, assets, and stubs, while keeping current root runtime behavior unchanged until real package-owned runtime files are moved.
+- Start the first package-owned default config move by adding package `config/webblocks-updates.php` and merging it under the existing `webblocks-updates` key while keeping the root config file in place as the install override.
+- Classify root config ownership for the package transition and add package `config/contact.php` as the next small CMS-owned default while keeping the root contact config file in place as the install override.
+- Add package `config/demo_media.php` as the next CMS-owned default config while keeping the root demo media config file in place as the install override during the transition.
+- Complete the initial CMS-owned package default config set by adding package `config/cms.php` while keeping the root CMS config file in place as the install override during the transition.
+- Prove package console bootstrap with a new read-only `webblocks:package-status` diagnostic command registered from the package service provider without moving any existing root console commands.
+- Start the PHP source transition by moving the low-risk pure helper `SearchTextNormalizer` into package `src/Support/Search/` and updating the narrow search-support references without changing runtime behavior.
+- Continue the Search support boundary transition by moving the small `PublicSearchRebuildResult` value object into package `src/Support/Search/` while keeping search indexing, schema, and query orchestration root-owned for now.
+- Audit the next non-Search Support helper candidates for the package transition and intentionally move none in this step because `MediaKindResolver`, `DatabaseExecutionStrategyResolver`, `SiteHandle`, and `SiteDomainNormalizer` still cross current controller, model, request, migration, or database-runtime risk boundaries.
+- Add the first actionable `app/Support` migration map to the package architecture documentation, grouping support namespaces by concern and classifying which areas are package-ready only after dependency isolation versus which must remain root-owned for dedicated later phases.
+- Continue the PHP source transition by moving the tiny contact notification result value object `ContactMessageNotificationResult` into package `src/Support/Contact/` while keeping contact mail sending, recipient resolution, and contact runtime services root-owned.
+- Continue the PHP source transition by moving the small block-type contract DTO `BlockTypeContract` into package `src/Support/BlockTypes/` while keeping block type registries, admin contract flows, and the audit command root-owned.
+- Audit the stateless `LayoutMarkup` helper and intentionally keep it root-owned for now because its current references still cross page-layout request validation, admin form rendering, and public slot-wrapper behavior inside the broader Pages/PublicRendering boundary.
+- Continue the PHP source transition by moving the low-risk inline formatter `InlineRichTextRenderer` into package `src/Support/Formatting/` while keeping the richer `SafeRichTextRenderer` sanitization contract root-owned for now.
+
 ## 1.31.59
 
 - Refactor `Card` into a composable WebBlocks UI shell block that owns the outer `article.wb-card` renderer and now composes nested `Card Header`, `Card Body`, and `Card Footer` region blocks instead of the older mixed promo or media contract.

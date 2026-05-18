@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\BlockTypes;
+namespace WebBlocks\Cms\Support\BlockTypes;
 
 class BlockTypeContract
 {

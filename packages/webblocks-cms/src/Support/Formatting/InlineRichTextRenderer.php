@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Formatting;
+namespace WebBlocks\Cms\Support\Formatting;
 
 use Illuminate\Support\HtmlString;
 
