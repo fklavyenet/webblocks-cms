@@ -12,7 +12,7 @@ class BlockTypeContractsAuditCommandTest extends TestCase
     public function it_reports_published_block_contracts_in_markdown(): void
     {
         $this->artisan('block-types:contracts-audit')
-            ->expectsOutputToContain('Published block types: 43')
+            ->expectsOutputToContain('Published block types: 46')
             ->expectsOutputToContain('| `header` | Header | `content` | `text` (title) | no | `resources/views/admin/blocks/types/header.blade.php` | `resources/views/pages/partials/blocks/header.blade.php` |')
             ->expectsOutputToContain('| `hero` | Hero | `content` | `text` (title, subtitle, content) | yes | `resources/views/admin/blocks/types/hero.blade.php` | `resources/views/pages/partials/blocks/hero.blade.php` |')
             ->expectsOutputToContain('| `image` | Image | `content` | `image` (title, subtitle) | no | `resources/views/admin/blocks/types/image.blade.php` | `resources/views/pages/partials/blocks/image.blade.php` |')
@@ -27,7 +27,7 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('"published_count": 43', $output);
+        $this->assertStringContainsString('"published_count": 46', $output);
         $this->assertStringContainsString('"slug": "content_header"', $output);
         $this->assertStringContainsString('"slug": "feature-grid"', $output);
         $this->assertStringContainsString('"admin_form_source": "resources/views/admin/blocks/types/content_header.blade.php"', $output);
@@ -73,13 +73,14 @@ class BlockTypeContractsAuditCommandTest extends TestCase
         $this->assertStringContainsString('"slug": "cluster"', $output);
         $this->assertStringContainsString('"slug": "card"', $output);
         $this->assertStringContainsString('"allowed_child_type_slugs": [', $output);
-        $this->assertStringContainsString('"cluster"', $output);
-        $this->assertStringContainsString('"button_link"', $output);
+        $this->assertStringContainsString('"card_header"', $output);
+        $this->assertStringContainsString('"card_body"', $output);
+        $this->assertStringContainsString('"card_footer"', $output);
         $this->assertStringContainsString('"renderer_root_contract": "Owns its public `<section>` root."', $output);
         $this->assertStringContainsString('"renderer_root_contract": "Owns its public container `<div>` root."', $output);
         $this->assertStringContainsString('"renderer_root_contract": "Owns its public cluster `<div>` root."', $output);
         $this->assertStringContainsString('"renderer_root_contract": "Owns its public grid `<div>` root."', $output);
-        $this->assertStringContainsString('"renderer_root_contract": "Owns its public card root element."', $output);
+        $this->assertStringContainsString('"renderer_root_contract": "Owns its public `article.wb-card` root."', $output);
         $this->assertStringContainsString('"owns_public_root_helper": true', $output);
         $this->assertStringNotContainsString('Renderer clearly owns a root, but `Block::ownsPublicRoot()` does not currently include `sticky-navbar`.', $output);
         $this->assertStringNotContainsString('Public renderer can fall back to the site home URL, but the admin request currently requires a URL on default-locale edits.', $output);
@@ -96,7 +97,7 @@ class BlockTypeContractsAuditCommandTest extends TestCase
             ->expectsOutputToContain('## `section`')
             ->expectsOutputToContain('- Shared/settings fields: settings.layout_name; settings.spacing')
             ->expectsOutputToContain('## `card`')
-            ->expectsOutputToContain('- Allowed child type slugs: cluster; button_link')
+            ->expectsOutputToContain('- Allowed child type slugs: card_header; card_body; card_footer')
             ->expectsOutputToContain('## `content_header`')
             ->expectsOutputToContain('- Renderer root contract: Owns its public `<header>` root.')
             ->assertExitCode(0);

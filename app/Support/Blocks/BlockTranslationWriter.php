@@ -117,7 +117,7 @@ class BlockTranslationWriter
 
     private function syncAdditionalTranslations(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
     {
-        if ($block->typeSlug() !== 'card' || ! $this->registry->supportsImageTranslations($block)) {
+        if (! $this->registry->supportsImageTranslations($block)) {
             return;
         }
 

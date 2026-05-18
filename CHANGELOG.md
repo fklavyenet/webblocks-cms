@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## 1.31.59
+
+- Refactor `Card` into a composable WebBlocks UI shell block that owns the outer `article.wb-card` renderer and now composes nested `Card Header`, `Card Body`, and `Card Footer` region blocks instead of the older mixed promo or media contract.
+
+- Add `card_header`, `card_body`, and `card_footer` as published layout-category core block types, scope those region blocks so they can only be created directly under `Card`, and keep region blocks themselves container-capable for normal nested editorial or layout children.
+
+- Update the slot editor Block Types picker so top-level block creation still shows `Card` without exposing the Card region blocks as normal top-level choices, while Add Child on a Card now defaults to the visible region-block picker state and shows `Card Header`, `Card Body`, and `Card Footer` immediately.
+
+- Align the public Card renderer contract with shipped WebBlocks UI structure: `Card` owns the outer `wb-card` shell, region renderers own `div.wb-card-header`, `div.wb-card-body`, and `div.wb-card-footer`, and the older legacy Card copy fallback still renders only when a Card has no region children.
+
+- Ensure existing installs receive the new Card region block type rows and corrected layout-category metadata through the normal `block-types:sync-core` path that System Update already runs during upgrades.
+
 ## 1.31.58
 
 - Fix slot block create and edit modal validation so failed saves now redirect back to the same Add Block or Edit Block modal context, keep old input, and render the validation summary inside the reopened slot editor modal instead of only behind the underlying Edit Slot page.

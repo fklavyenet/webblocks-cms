@@ -528,26 +528,13 @@ class BlockTranslationIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function translated_card_updates_do_not_overwrite_shared_media_link_variant_or_image_presentation_settings(): void
+    public function card_shell_updates_store_only_shared_layout_name_and_do_not_create_translation_or_image_rows(): void
     {
         $user = User::factory()->superAdmin()->create();
         $site = $this->defaultSite();
         $turkish = $this->createLocale('tr');
         $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
         $page = $this->pageWithMainSlot($site);
-        $media = Asset::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-locale.jpg',
-            'filename' => 'card-locale.jpg',
-            'original_name' => 'card-locale.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 120,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Card locale image',
-        ]);
-
         $block = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'card',
@@ -556,27 +543,9 @@ class BlockTranslationIntegrityTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->slotType()->id,
             'sort_order' => 0,
-            'media_id' => $media->id,
-            'settings' => json_encode([
-                'url' => '/services/design',
-                'target' => '_blank',
-                'variant' => 'promo',
-                'image_position' => 'top',
-                'image_align' => 'stretch',
-                'image_aspect' => 'wide',
-            ], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
-
-        app(BlockTranslationWriter::class)->sync($block, [
-            'title' => 'Design services',
-            'subtitle' => 'English subtitle',
-            'content' => 'English card content',
-            'meta' => 'Read more',
-            'image_alt' => 'English alt text',
-            'image_caption' => 'English caption',
-        ], null, true);
 
         $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
             'page_id' => $page->id,
@@ -584,12 +553,7 @@ class BlockTranslationIntegrityTest extends TestCase
             'block_type_id' => $block->block_type_id,
             'sort_order' => 0,
             'locale' => 'tr',
-            'title' => 'Tasarim hizmetleri',
-            'subtitle' => 'Turkce altyazi',
-            'content' => 'Turkce kart icerigi',
-            'action_label' => 'Daha fazla',
-            'image_alt' => 'Turkce gorsel aciklamasi',
-            'image_caption' => 'Turkce gorsel basligi',
+            'name' => 'Support card',
             'status' => 'published',
             '_slot_block_mode' => 'edit',
         ]);
@@ -597,29 +561,20 @@ class BlockTranslationIntegrityTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHasNoErrors();
 
-        $fresh = $block->fresh(['textTranslations', 'imageTranslations']);
+        $fresh = $block->fresh();
         $settings = json_decode((string) $fresh->getRawOriginal('settings'), true);
 
-        $this->assertSame($media->id, $fresh->media_id);
-        $this->assertSame('/services/design', $settings['url']);
-        $this->assertSame('_blank', $settings['target']);
-        $this->assertSame('promo', $settings['variant']);
-        $this->assertSame('top', $settings['image_position']);
-        $this->assertSame('stretch', $settings['image_align']);
-        $this->assertSame('wide', $settings['image_aspect']);
-        $this->assertDatabaseHas('block_text_translations', [
+        $this->assertSame('Support card', $settings['layout_name'] ?? null);
+        $this->assertNull($fresh->getRawOriginal('title'));
+        $this->assertNull($fresh->getRawOriginal('subtitle'));
+        $this->assertNull($fresh->getRawOriginal('content'));
+        $this->assertNull($fresh->getRawOriginal('meta'));
+        $this->assertNull($fresh->media_id);
+        $this->assertDatabaseMissing('block_text_translations', [
             'block_id' => $block->id,
-            'locale_id' => $turkish->id,
-            'title' => 'Tasarim hizmetleri',
-            'subtitle' => 'Turkce altyazi',
-            'content' => 'Turkce kart icerigi',
-            'meta' => 'Daha fazla',
         ]);
-        $this->assertDatabaseHas('block_image_translations', [
+        $this->assertDatabaseMissing('block_image_translations', [
             'block_id' => $block->id,
-            'locale_id' => $turkish->id,
-            'caption' => 'Turkce gorsel basligi',
-            'alt_text' => 'Turkce gorsel aciklamasi',
         ]);
     }
 

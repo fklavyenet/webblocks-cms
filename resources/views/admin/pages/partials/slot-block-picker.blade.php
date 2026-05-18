@@ -115,6 +115,19 @@
         $pickerTab = 'common';
     }
 
+    if ($pickerSearchTerm === '' && $pickerParentId && $pickerTab === 'common') {
+        $commonBlockTypes = $tabBlockTypes->get('common', collect());
+
+        if ($commonBlockTypes->isEmpty()) {
+            $fallbackTab = collect(['layout', 'content', 'navigation', 'advanced', 'all'])
+                ->first(fn (string $tabKey) => ($tabBlockTypes->get($tabKey) ?? collect())->isNotEmpty());
+
+            if (is_string($fallbackTab)) {
+                $pickerTab = $fallbackTab;
+            }
+        }
+    }
+
     $showSearchResults = $pickerSearchTerm !== '';
     $matchingBlockTypes = $sortBlockTypes($eligibleBlockTypes->filter($matchesSearch));
 

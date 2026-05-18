@@ -84,6 +84,7 @@ class BlockRequest extends FormRequest
         $isCluster = $selectedBlockType?->slug === 'cluster';
         $isGrid = $selectedBlockType?->slug === 'grid';
         $isCard = $selectedBlockType?->slug === 'card';
+        $isCardRegion = in_array($selectedBlockType?->slug, ['card_header', 'card_body', 'card_footer'], true);
         $isStatCard = $selectedBlockType?->slug === 'stat-card';
         $supportsAlignment = $isHeader || $isPlainText || $isContentHeader;
         $supportsSectionSpacing = $selectedBlockType?->slug === 'section';
@@ -108,14 +109,14 @@ class BlockRequest extends FormRequest
             'slot_type_id' => ['required', 'integer', 'exists:slot_types,id'],
             'sort_order' => ['required', 'integer', 'min:0'],
             'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:locales,code'],
-            'title' => [($isContentHeader || $isCard || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
-            'eyebrow' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
+            'title' => [($isContentHeader || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
+            'eyebrow' => ['prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'anchor' => [$isHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'name' => [($isLayoutPrimitive || $isStickyNavbar || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
+            'name' => [($isLayoutPrimitive || $isCard || $isCardRegion || $isStickyNavbar || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
             'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
             'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
             'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
@@ -134,15 +135,15 @@ class BlockRequest extends FormRequest
             'url' => [(($isButtonLink || $selectedBlockType?->slug === 'link-list-item' || $isSidebarNavItem) && ! $isLocaleRequest) ? 'required' : 'nullable', 'string', 'max:2048'],
             'label' => [$isButtonLink ? 'required' : 'prohibited', 'string', 'max:255'],
             'target' => [($isButtonLink || $isNavbarBrand || $isSidebarBrand || $isSidebarNavItem) ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
-            'action_label' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'card_url' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:2048'],
-            'card_target' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['_self', '_blank'])],
-            'card_variant' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['default', 'promo'])],
-            'image_alt' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'image_caption' => [$isCard ? 'nullable' : 'prohibited', 'string', 'max:255'],
-            'image_position' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['none', 'top', 'middle', 'bottom'])],
-            'image_align' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['start', 'center', 'end', 'stretch'])],
-            'image_aspect' => [$isCard ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
+            'action_label' => ['prohibited', 'string', 'max:255'],
+            'card_url' => ['prohibited', 'string', 'max:2048'],
+            'card_target' => ['prohibited', Rule::in(['_self', '_blank'])],
+            'card_variant' => ['prohibited', Rule::in(['default', 'promo'])],
+            'image_alt' => ['prohibited', 'string', 'max:255'],
+            'image_caption' => ['prohibited', 'string', 'max:255'],
+            'image_position' => ['prohibited', Rule::in(['none', 'top', 'middle', 'bottom'])],
+            'image_align' => ['prohibited', Rule::in(['start', 'center', 'end', 'stretch'])],
+            'image_aspect' => ['prohibited', Rule::in(['auto', 'square', 'wide', 'portrait'])],
             'alert_variant' => [$isAlert ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
             'layout' => [$isHero ? 'nullable' : 'nullable', 'string', 'max:255'],
             'title_tag' => [$isHero ? 'nullable' : 'nullable', Rule::in(['h1', 'h2', 'h3'])],
@@ -353,22 +354,6 @@ class BlockRequest extends FormRequest
                 }
             }
 
-            if ($selectedBlockType?->slug === 'card') {
-                $url = trim((string) $this->input('card_url', ''));
-
-                if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
-                    $validator->errors()->add('card_url', 'Card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
-                }
-
-                if ($this->filled('media_id') || $this->filled('asset_id')) {
-                    $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
-
-                    if (! $asset?->isImage()) {
-                        $validator->errors()->add('media_id', 'Card media must be an image from Media.');
-                    }
-                }
-            }
-
             if ($selectedBlockType?->slug === 'image') {
                 $url = trim((string) $this->input('url', ''));
 
@@ -430,7 +415,7 @@ class BlockRequest extends FormRequest
             }
 
             if (! $parentId) {
-                if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation', 'sidebar-nav-item', 'sidebar-nav-group'], true)) {
+                if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer'], true)) {
                     $validator->errors()->add('parent_id', 'This block type requires a supported parent block.');
 
                     return;
@@ -748,10 +733,6 @@ class BlockRequest extends FormRequest
         $data['media_id'] = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['media_id']) ? (int) $data['media_id'] : (! empty($data['asset_id']) ? (int) $data['asset_id'] : null));
 
         if ($data['media_id'] === null && $existingBlock && ! $this->has('media_id') && ! $this->has('asset_id')) {
-            $data['media_id'] = $existingBlock->media_id;
-        }
-
-        if ($data['locale'] !== null && $existingBlock && ($existingBlock->typeSlug() === 'card') && $data['media_id'] === null) {
             $data['media_id'] = $existingBlock->media_id;
         }
 
@@ -1086,52 +1067,33 @@ class BlockRequest extends FormRequest
                     : (in_array(trim((string) ($data['variant'] ?? 'primary')), ['primary', 'secondary'], true) ? trim((string) ($data['variant'] ?? 'primary')) : 'primary');
             }
 
-            if ($blockType?->slug === 'card') {
-                $isTranslatedCardEdit = $data['locale'] !== null;
+            if (in_array($blockType?->slug, ['card', 'card_header', 'card_body', 'card_footer'], true)) {
                 $existingSettings = $this->route('block') instanceof Block
                     ? json_decode((string) $this->route('block')->getRawOriginal('settings'), true)
                     : [];
                 $existingSettings = is_array($existingSettings) ? $existingSettings : [];
                 $settings = $existingSettings;
-                $submittedImagePosition = trim((string) ($data['image_position'] ?? ''));
-                $submittedImageAlign = trim((string) ($data['image_align'] ?? ''));
-                $resolvedImagePosition = in_array($submittedImagePosition, ['top', 'middle', 'bottom'], true)
-                    ? $submittedImagePosition
-                    : 'top';
-                $resolvedImageAlign = in_array($submittedImageAlign, ['start', 'center', 'end', 'stretch'], true)
-                    ? $submittedImageAlign
-                    : 'center';
+                $layoutName = trim((string) ($data['name'] ?? ''));
 
-                if (! $isTranslatedCardEdit) {
-                    $settings['url'] = trim((string) ($data['card_url'] ?? '')) ?: null;
-                    $settings['target'] = ($data['card_target'] ?? '_self') === '_blank' ? '_blank' : '_self';
-                    $settings['variant'] = in_array(trim((string) ($data['card_variant'] ?? 'default')), ['default', 'promo'], true)
-                        ? trim((string) ($data['card_variant'] ?? 'default'))
-                        : 'default';
-                    $settings['image_position'] = $resolvedImagePosition;
-                    $settings['image_align'] = $resolvedImageAlign;
-                    $settings['image_aspect'] = in_array(trim((string) ($data['image_aspect'] ?? 'auto')), ['auto', 'square', 'wide', 'portrait'], true)
-                        ? trim((string) ($data['image_aspect'] ?? 'auto'))
-                        : 'auto';
+                if ($layoutName === '') {
+                    unset($settings['layout_name']);
+                } else {
+                    $settings['layout_name'] = $layoutName;
                 }
 
-                $data['title'] = trim((string) ($data['title'] ?? '')) ?: null;
-                $data['eyebrow'] = trim((string) ($data['eyebrow'] ?? '')) ?: null;
-                $data['subtitle'] = trim((string) ($data['subtitle'] ?? '')) ?: null;
-                $data['content'] = trim((string) ($data['content'] ?? '')) ?: null;
-                $data['meta'] = trim((string) ($data['action_label'] ?? '')) ?: null;
+                $data['title'] = null;
+                $data['eyebrow'] = null;
+                $data['subtitle'] = null;
+                $data['content'] = null;
+                $data['meta'] = null;
                 $data['url'] = null;
-                $data['media_id'] = $isTranslatedCardEdit
-                    ? ($this->route('block')?->media_id)
-                    : $data['media_id'];
-                unset($data['asset_id']);
+                $data['media_id'] = null;
                 $data['variant'] = null;
+                unset($data['asset_id']);
                 $settings = array_filter($settings, fn ($value) => $value !== null && $value !== '');
-                $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
-
-                if ($data['settings'] === '[]' || $data['settings'] === '{}') {
-                    $data['settings'] = null;
-                }
+                $data['settings'] = $settings === []
+                    ? null
+                    : json_encode($settings, JSON_UNESCAPED_SLASHES);
             }
 
             if ($blockType?->slug === 'alert') {

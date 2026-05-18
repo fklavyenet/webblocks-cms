@@ -914,7 +914,7 @@ class PageController extends Controller
 
         if (! $parentId) {
             return $blockTypes
-                ->reject(fn (BlockType $blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group'], true))
+                ->reject(fn (BlockType $blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer'], true))
                 ->values();
         }
 

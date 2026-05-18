@@ -1255,21 +1255,37 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function card_is_seeded_as_published_container_block_with_limited_child_support(): void
+    public function card_and_card_regions_are_seeded_with_the_expected_container_contracts(): void
     {
         $this->seedFoundation();
 
         $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $cardHeaderType = BlockType::query()->where('slug', 'card_header')->firstOrFail();
+        $cardBodyType = BlockType::query()->where('slug', 'card_body')->firstOrFail();
+        $cardFooterType = BlockType::query()->where('slug', 'card_footer')->firstOrFail();
         $card = new Block(['type' => 'card', 'block_type_id' => $cardType->id]);
+        $cardHeader = new Block(['type' => 'card_header', 'block_type_id' => $cardHeaderType->id]);
+        $cardBody = new Block(['type' => 'card_body', 'block_type_id' => $cardBodyType->id]);
+        $cardFooter = new Block(['type' => 'card_footer', 'block_type_id' => $cardFooterType->id]);
         $card->setRelation('blockType', $cardType);
+        $cardHeader->setRelation('blockType', $cardHeaderType);
+        $cardBody->setRelation('blockType', $cardBodyType);
+        $cardFooter->setRelation('blockType', $cardFooterType);
 
         $this->assertSame('published', $cardType->status);
         $this->assertTrue($cardType->is_container);
         $this->assertTrue($card->canAcceptChildren());
-        $this->assertSame(['cluster', 'button_link'], $card->allowedChildTypeSlugs());
-        $this->assertTrue($card->canAcceptChildType('cluster'));
-        $this->assertTrue($card->canAcceptChildType('button_link'));
+        $this->assertSame(['card_header', 'card_body', 'card_footer'], $card->allowedChildTypeSlugs());
+        $this->assertTrue($card->canAcceptChildType('card_header'));
+        $this->assertTrue($card->canAcceptChildType('card_body'));
+        $this->assertTrue($card->canAcceptChildType('card_footer'));
         $this->assertFalse($card->canAcceptChildType('plain_text'));
+        $this->assertTrue($cardHeader->canAcceptChildren());
+        $this->assertTrue($cardBody->canAcceptChildren());
+        $this->assertTrue($cardFooter->canAcceptChildren());
+        $this->assertFalse($cardHeader->canAcceptChildType('card_body'));
+        $this->assertFalse($cardBody->canAcceptChildType('card_footer'));
+        $this->assertFalse($cardFooter->canAcceptChildType('card_header'));
     }
 
     #[Test]
@@ -1374,6 +1390,9 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertStringContainsString('>Quote</strong>', $commonListMarkup);
         $this->assertStringContainsString('>Alert</strong>', $commonListMarkup);
         $this->assertStringNotContainsString('>Section</strong>', $commonListMarkup);
+        $this->assertStringNotContainsString('>Card Header</strong>', $commonListMarkup);
+        $this->assertStringNotContainsString('>Card Body</strong>', $commonListMarkup);
+        $this->assertStringNotContainsString('>Card Footer</strong>', $commonListMarkup);
         $this->assertStringNotContainsString('>Link List</strong>', $commonListMarkup);
         $this->assertStringNotContainsString('>HTML (Trusted)</strong>', $commonListMarkup);
         $this->assertMatchesRegularExpression('/>Alert<\/strong>.*>Button Link<\/strong>.*>Card<\/strong>.*>Header<\/strong>.*>Quote<\/strong>.*>Rich Text<\/strong>.*>Table<\/strong>/s', $commonListMarkup);
@@ -4756,7 +4775,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function cluster_edit_modal_lists_eligible_card_parent_candidates_and_allows_move_under_card(): void
+    public function cluster_edit_modal_lists_eligible_card_footer_parent_candidates_and_allows_move_under_card_footer(): void
     {
         $this->seedFoundation();
 
@@ -4766,6 +4785,7 @@ class PageBuilderExperienceTest extends TestCase
         $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
         $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $cardFooterType = BlockType::query()->where('slug', 'card_footer')->firstOrFail();
         $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
         $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
         $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
@@ -4812,6 +4832,19 @@ class PageBuilderExperienceTest extends TestCase
         $card->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+        ]);
+
+        $cardFooter = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_footer',
+            'block_type_id' => $cardFooterType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
         ]);
 
         $cluster = Block::query()->create([
@@ -4866,13 +4899,14 @@ class PageBuilderExperienceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Section: Page Header');
         $response->assertSee('— Container: Page Header');
-        $response->assertSee('— — Card: WebBlocks UI - UI building blocks for humans and AI.', false);
+        $response->assertSee('— — Card', false);
+        $response->assertSee('— — — Card Footer', false);
         $response->assertDontSee('Cluster: Actions</option>', false);
         $response->assertDontSee('Button Link: Start Here</option>', false);
 
         $updateResponse = $this->actingAs($user)->put(route('admin.blocks.update', $cluster), [
             'page_id' => $page->id,
-            'parent_id' => $card->id,
+            'parent_id' => $cardFooter->id,
             'block_type_id' => $clusterType->id,
             'slot_type_id' => $main->id,
             'sort_order' => 0,
@@ -4883,21 +4917,21 @@ class PageBuilderExperienceTest extends TestCase
         ]);
 
         $updateResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
-        $this->assertSame($card->id, $cluster->fresh()->parent_id);
+        $this->assertSame($cardFooter->id, $cluster->fresh()->parent_id);
 
         $movedResponse = $this->get(route('pages.show', 'about'));
 
         $movedResponse->assertOk();
         $movedResponse->assertSeeInOrder([
             '<article class="wb-card" data-wb-public-block-type="card">',
-            '<div class="wb-card-footer">',
+            '<div class="wb-card-footer" data-wb-public-block-type="card-footer">',
             '<div class="wb-cluster" data-wb-public-block-type="cluster">',
             '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
         ], false);
     }
 
     #[Test]
-    public function card_still_appears_as_cluster_parent_candidate_when_container_metadata_is_stale(): void
+    public function card_footer_still_appears_as_cluster_parent_candidate_when_container_metadata_is_stale(): void
     {
         $this->seedFoundation();
 
@@ -4906,6 +4940,7 @@ class PageBuilderExperienceTest extends TestCase
         [$page, $pageSlot] = $this->pageWithSlot($main);
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
         $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $cardFooterType = BlockType::query()->where('slug', 'card_footer')->firstOrFail();
         $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
 
         $container = Block::query()->create([
@@ -4933,9 +4968,17 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
-        $card->textTranslations()->create([
-            'locale_id' => $this->defaultLocale()->id,
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
+        $cardFooter = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_footer',
+            'block_type_id' => $cardFooterType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
         ]);
 
         BlockType::query()->whereKey($cardType->id)->update(['is_container' => false]);
@@ -4957,7 +5000,7 @@ class PageBuilderExperienceTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $cluster->id]));
 
         $response->assertOk();
-        $response->assertSee('Card: WebBlocks UI - UI building blocks for humans and AI.');
+        $response->assertSee('Card Footer');
     }
 
     #[Test]
@@ -4997,11 +5040,6 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
-        $card->textTranslations()->create([
-            'locale_id' => $this->defaultLocale()->id,
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-        ]);
-
         $header = Block::query()->create([
             'page_id' => $page->id,
             'parent_id' => $container->id,
@@ -5020,7 +5058,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Container: Page Header');
-        $response->assertDontSee('Card: WebBlocks UI - UI building blocks for humans and AI.');
+        $response->assertDontSee('Card</option>', false);
     }
 
     #[Test]
@@ -5050,6 +5088,13 @@ class PageBuilderExperienceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Showing block types allowed inside Card.');
+        $response->assertSee('id="slot-block-picker-tab-layout"', false);
+        $this->assertStringContainsString('id="slot-block-picker-tab-layout"', $content);
+        $this->assertMatchesRegularExpression('/id="slot-block-picker-tab-layout"[^>]*aria-selected="true"/s', $content);
+        $this->assertMatchesRegularExpression('/<div class="wb-tabs-panel is-active wb-stack wb-gap-0" id="slot-block-picker-panel-layout"[^>]*aria-hidden="false"/s', $content);
+        $response->assertSee('>Card Header</strong>', false);
+        $response->assertSee('>Card Body</strong>', false);
+        $response->assertSee('>Card Footer</strong>', false);
         $response->assertDontSee('data-block-type-slug="rich-text"', false);
         $this->assertNotFalse($content);
         $commonPanelStart = strpos($content, 'id="slot-block-picker-panel-common"');
@@ -5057,7 +5102,7 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertNotFalse($commonPanelStart);
         $this->assertNotFalse($layoutPanelStart);
         $commonPanelMarkup = substr($content, $commonPanelStart, $layoutPanelStart - $commonPanelStart);
-        $this->assertStringContainsString('>Button Link</strong>', $commonPanelMarkup);
+        $this->assertStringNotContainsString('>Button Link</strong>', $commonPanelMarkup);
         $this->assertStringNotContainsString('>Cluster</strong>', $commonPanelMarkup);
         $this->assertStringNotContainsString('>Header</strong>', $commonPanelMarkup);
         $this->assertStringNotContainsString('>Plain Text</strong>', $commonPanelMarkup);
@@ -5068,12 +5113,80 @@ class PageBuilderExperienceTest extends TestCase
         $allResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id, 'block_type_tab' => 'all']));
 
         $allResponse->assertOk();
-        $allResponse->assertSee('>Cluster</strong>', false);
-        $allResponse->assertSee('>Button Link</strong>', false);
+        $allResponse->assertSee('>Card Header</strong>', false);
+        $allResponse->assertSee('>Card Body</strong>', false);
+        $allResponse->assertSee('>Card Footer</strong>', false);
+        $allResponse->assertDontSee('>Cluster</strong>', false);
+        $allResponse->assertDontSee('>Button Link</strong>', false);
     }
 
     #[Test]
-    public function card_nested_blocks_can_be_created_and_are_visible_in_admin_tree(): void
+    public function top_level_picker_keeps_card_regions_hidden_while_card_parent_picker_defaults_to_visible_region_choices(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $sectionType = BlockType::query()->where('slug', 'section')->firstOrFail();
+
+        $topLevelResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1]));
+
+        $topLevelResponse->assertOk();
+        $topLevelResponse->assertSee('>Card</strong>', false);
+        $topLevelResponse->assertDontSee('>Card Header</strong>', false);
+        $topLevelResponse->assertDontSee('>Card Body</strong>', false);
+        $topLevelResponse->assertDontSee('>Card Footer</strong>', false);
+        $topLevelResponse->assertSee('name="block_type_tab" value="common"', false);
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $section = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'section',
+            'block_type_id' => $sectionType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cardChildResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $card->id]));
+
+        $cardChildResponse->assertOk();
+        $cardChildResponse->assertSee('Showing block types allowed inside Card.');
+        $cardChildContent = $cardChildResponse->getContent();
+        $this->assertNotFalse($cardChildContent);
+        $this->assertMatchesRegularExpression('/id="slot-block-picker-tab-layout"[^>]*aria-selected="true"/s', $cardChildContent);
+        $this->assertMatchesRegularExpression('/<div class="wb-tabs-panel is-active wb-stack wb-gap-0" id="slot-block-picker-panel-layout"[^>]*aria-hidden="false"/s', $cardChildContent);
+        $cardChildResponse->assertSee('>Card Header</strong>', false);
+        $cardChildResponse->assertSee('>Card Body</strong>', false);
+        $cardChildResponse->assertSee('>Card Footer</strong>', false);
+
+        $sectionChildResponse = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot, 'picker' => 1, 'parent_id' => $section->id]));
+
+        $sectionChildResponse->assertOk();
+        $sectionChildResponse->assertSee('Showing block types allowed inside Section.');
+        $sectionChildResponse->assertDontSee('>Card Header</strong>', false);
+        $sectionChildResponse->assertDontSee('>Card Body</strong>', false);
+        $sectionChildResponse->assertDontSee('>Card Footer</strong>', false);
+    }
+
+    #[Test]
+    public function card_region_and_nested_action_blocks_can_be_created_and_are_visible_in_admin_tree(): void
     {
         $this->seedFoundation();
 
@@ -5084,6 +5197,7 @@ class PageBuilderExperienceTest extends TestCase
         $containerType = BlockType::query()->where('slug', 'container')->firstOrFail();
         $contentHeaderType = BlockType::query()->where('slug', 'content_header')->firstOrFail();
         $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+        $cardFooterType = BlockType::query()->where('slug', 'card_footer')->firstOrFail();
         $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
         $buttonLinkType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
 
@@ -5128,8 +5242,6 @@ class PageBuilderExperienceTest extends TestCase
             'parent_id' => $container->id,
             'block_type_id' => $cardType->id,
             'sort_order' => 1,
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'content' => 'Footer actions should be nested.',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
@@ -5140,6 +5252,18 @@ class PageBuilderExperienceTest extends TestCase
             'page_id' => $page->id,
             'slot_type_id' => $main->id,
             'parent_id' => $card->id,
+            'block_type_id' => $cardFooterType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $cardFooter = Block::query()->where('page_id', $page->id)->where('type', 'card_footer')->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $cardFooter->id,
             'block_type_id' => $clusterType->id,
             'sort_order' => 0,
             'status' => 'published',
@@ -5174,12 +5298,14 @@ class PageBuilderExperienceTest extends TestCase
             '_slot_block_mode' => 'create',
         ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
 
-        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $card->id]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'card_footer', 'parent_id' => $card->id]);
+        $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'cluster', 'parent_id' => $cardFooter->id]);
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 0]);
         $this->assertDatabaseHas('blocks', ['page_id' => $page->id, 'type' => 'button_link', 'parent_id' => $cluster->id, 'sort_order' => 1]);
         $this->assertTrue($card->fresh()->canAcceptChildren());
-        $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('cluster'));
-        $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('button_link'));
+        $this->assertTrue($card->fresh(['blockType'])->canAcceptChildType('card_footer'));
+        $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('cluster'));
+        $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('button_link'));
         $this->assertFalse($card->fresh(['blockType'])->canAcceptChildType('plain_text'));
 
         $response = $this->actingAs($user)->get(route('admin.pages.slots.blocks', [$page, $pageSlot]));
@@ -5247,6 +5373,59 @@ class PageBuilderExperienceTest extends TestCase
         $this->assertSame((string) $headerType->id, $query['block_type_id'] ?? null);
         $response->assertSessionHasErrors('parent_id');
         $this->assertDatabaseMissing('blocks', ['page_id' => $page->id, 'type' => 'header', 'parent_id' => $card->id]);
+    }
+
+    #[Test]
+    public function card_regions_require_card_parent_and_card_footer_accepts_cluster_children(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $cardFooterType = BlockType::query()->where('slug', 'card_footer')->firstOrFail();
+        $clusterType = BlockType::query()->where('slug', 'cluster')->firstOrFail();
+        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
+
+        $invalid = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot]))
+            ->post(route('admin.blocks.store'), [
+                'page_id' => $page->id,
+                'slot_type_id' => $main->id,
+                'block_type_id' => $cardFooterType->id,
+                'sort_order' => 0,
+                'status' => 'published',
+                '_slot_block_mode' => 'create',
+            ]);
+
+        $invalid->assertSessionHasErrors('parent_id');
+
+        $card = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card',
+            'block_type_id' => $cardType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $footerCreate = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'slot_type_id' => $main->id,
+            'parent_id' => $card->id,
+            'block_type_id' => $cardFooterType->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $footerCreate->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+
+        $cardFooter = Block::query()->where('page_id', $page->id)->where('type', 'card_footer')->firstOrFail();
+        $this->assertTrue($cardFooter->fresh(['blockType'])->canAcceptChildType('cluster'));
     }
 
     #[Test]
@@ -5396,7 +5575,7 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
-    public function card_store_creates_translated_eyebrow_and_shared_variant_url_and_target(): void
+    public function card_store_creates_shell_only_settings_without_translation_rows(): void
     {
         $this->seedFoundation();
 
@@ -5410,14 +5589,7 @@ class PageBuilderExperienceTest extends TestCase
             'slot_type_id' => $main->id,
             'block_type_id' => $cardType->id,
             'sort_order' => 0,
-            'eyebrow' => 'Source-visible UI system',
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'subtitle' => 'Optional support line',
-            'content' => 'Promo cards should map cleanly to the docs pattern.',
-            'action_label' => 'Read more',
-            'card_url' => '/getting-started',
-            'card_target' => '_blank',
-            'card_variant' => 'promo',
+            'name' => 'Contact card',
             'status' => 'published',
             '_slot_block_mode' => 'create',
         ]);
@@ -5433,40 +5605,10 @@ class PageBuilderExperienceTest extends TestCase
             'content' => null,
             'variant' => null,
         ]);
-        $this->assertDatabaseHas('block_text_translations', [
+        $this->assertDatabaseMissing('block_text_translations', [
             'block_id' => $block->id,
-            'locale_id' => $this->defaultLocale()->id,
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'eyebrow' => 'Source-visible UI system',
-            'subtitle' => 'Optional support line',
-            'content' => 'Promo cards should map cleanly to the docs pattern.',
-            'meta' => 'Read more',
         ]);
-        $this->assertSame('promo', $block->fresh()->cardVariant());
-        $this->assertSame('/getting-started', $block->fresh()->cardUrl());
-        $this->assertSame('_blank', $block->fresh()->cardTarget());
-    }
-
-    #[Test]
-    public function invalid_card_variant_is_rejected(): void
-    {
-        $this->seedFoundation();
-
-        $user = User::factory()->superAdmin()->create();
-        $main = $this->slotType('main', 'Main', 1);
-        [$page] = $this->pageWithSlot($main);
-        $cardType = BlockType::query()->where('slug', 'card')->firstOrFail();
-
-        $this->actingAs($user)->post(route('admin.blocks.store'), [
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'block_type_id' => $cardType->id,
-            'sort_order' => 0,
-            'title' => 'Promo card',
-            'card_variant' => 'hero',
-            'status' => 'published',
-            '_slot_block_mode' => 'create',
-        ])->assertSessionHasErrors('card_variant');
+        $this->assertSame('Contact card', $block->fresh()->setting('layout_name'));
     }
 
     #[Test]
@@ -5578,7 +5720,7 @@ class PageBuilderExperienceTest extends TestCase
             'sort_order' => 1,
             'status' => 'published',
             'is_system' => false,
-            'settings' => json_encode(['card_variant' => 'default'], JSON_UNESCAPED_SLASHES),
+            'settings' => json_encode(['layout_name' => 'Support card'], JSON_UNESCAPED_SLASHES),
         ]);
 
         $response = $this->actingAs($user)->post(route('admin.blocks.move-up', $card));

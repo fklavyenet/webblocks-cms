@@ -683,7 +683,7 @@ class SharedSlotController extends Controller
 
         if (! $parentId) {
             return $blockTypes
-                ->reject(fn ($blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group'], true))
+                ->reject(fn ($blockType) => in_array($blockType->slug, ['sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer'], true))
                 ->values();
         }
 

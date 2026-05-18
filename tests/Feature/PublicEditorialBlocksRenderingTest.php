@@ -1778,19 +1778,118 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'settings' => json_encode(['url' => '/getting-started', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
 
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Pattern-first workflow',
-            'subtitle' => 'How to build',
-            'content' => 'Start from the nearest shipped pattern and trim it to fit the page job.',
-            'meta' => 'Read more',
+        $cardHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_header',
+            'block_type_id' => $this->blockType('card_header', 'Card Header', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
         ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $cardBody = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_body',
+            'block_type_id' => $this->blockType('card_body', 'Card Body', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cardFooter = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_footer',
+            'block_type_id' => $this->blockType('card_footer', 'Card Footer', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $subtitle = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardHeader->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $subtitle->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'How to build',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($subtitle->fresh(['textTranslations']));
+
+        $title = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardBody->id,
+            'type' => 'html',
+            'block_type_id' => $this->blockType('html', 'HTML (Trusted)', 99)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'content' => '<strong>Pattern-first workflow</strong>',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $description = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardBody->id,
+            'type' => 'plain_text',
+            'block_type_id' => $this->blockType('plain_text', 'Plain Text', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $description->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => 'Start from the nearest shipped pattern and trim it to fit the page job.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($description->fresh(['textTranslations']));
+
+        $button = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardFooter->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'secondary',
+            'settings' => json_encode(['url' => '/getting-started', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $button->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Read more',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($button->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
@@ -1798,17 +1897,18 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertSeeInOrder([
             '<div class="wb-grid wb-grid-3 wb-gap-4" data-wb-public-block-type="grid">',
             '<article class="wb-card" data-wb-public-block-type="card">',
-            '<div class="wb-card-header">How to build</div>',
-            '<div class="wb-card-body wb-stack wb-gap-2">',
+            '<div class="wb-card-header" data-wb-public-block-type="card-header">',
+            '<p>How to build</p>',
+            '<div class="wb-card-body" data-wb-public-block-type="card-body">',
             '<strong>Pattern-first workflow</strong>',
-            '<p class="wb-m-0">Start from the nearest shipped pattern and trim it to fit the page job.</p>',
-            '<div class="wb-card-footer">',
+            '<p>Start from the nearest shipped pattern and trim it to fit the page job.</p>',
+            '<div class="wb-card-footer" data-wb-public-block-type="card-footer">',
             '<a href="/getting-started" class="wb-btn wb-btn-secondary">Read more</a>',
         ], false);
     }
 
     #[Test]
-    public function card_renders_translation_backed_title_and_description(): void
+    public function card_renders_nested_header_body_and_footer_regions(): void
     {
         $page = $this->pageWithMainSlot();
         $card = Block::query()->create([
@@ -1823,24 +1923,133 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'is_system' => false,
         ]);
 
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'HTML stays HTML',
-            'content' => 'You write explicit markup and attach shipped WebBlocks classes.',
+        $cardHeader = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_header',
+            'block_type_id' => $this->blockType('card_header', 'Card Header', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
         ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
+
+        $cardBody = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_body',
+            'block_type_id' => $this->blockType('card_body', 'Card Body', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $cardFooter = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $card->id,
+            'type' => 'card_footer',
+            'block_type_id' => $this->blockType('card_footer', 'Card Footer', 8)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 2,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $header = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardHeader->id,
+            'type' => 'header',
+            'block_type_id' => $this->blockType('header', 'Header', 5)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'h2',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $header->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Contact',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($header->fresh(['textTranslations']));
+
+        $richText = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardBody->id,
+            'type' => 'rich-text',
+            'block_type_id' => $this->blockType('rich-text', 'Rich Text', 6)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $richText->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'content' => '<p>Website, address, phone, and VAT details live here.</p>',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($richText->fresh(['textTranslations']));
+
+        $cluster = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cardFooter->id,
+            'type' => 'cluster',
+            'block_type_id' => $this->blockType('cluster', 'Cluster', 4)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $button = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $cluster->id,
+            'type' => 'button_link',
+            'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'variant' => 'primary',
+            'settings' => json_encode(['url' => '/contact', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $button->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Open Contact',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($button->fresh(['textTranslations']));
 
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
-        $response->assertSee('<article class="wb-card" data-wb-public-block-type="card">', false);
-        $response->assertSee('<div class="wb-card-body wb-stack wb-gap-2">', false);
-        $response->assertSee('<strong>HTML stays HTML</strong>', false);
-        $response->assertSee('<p class="wb-m-0">You write explicit markup and attach shipped WebBlocks classes.</p>', false);
+        $response->assertSeeInOrder([
+            '<article class="wb-card" data-wb-public-block-type="card">',
+            '<div class="wb-card-header" data-wb-public-block-type="card-header">',
+            '<h2 data-wb-public-block-type="header">Contact</h2>',
+            '<div class="wb-card-body" data-wb-public-block-type="card-body">',
+            '<div class="wb-rich-text wb-rich-text-readable">',
+            'Website, address, phone, and VAT details live here.',
+            '<div class="wb-card-footer" data-wb-public-block-type="card-footer">',
+            '<div class="wb-cluster" data-wb-public-block-type="cluster">',
+            '<a href="/contact" class="wb-btn wb-btn-primary">Open Contact</a>',
+        ], false);
     }
 
     #[Test]
-    public function card_description_supports_safe_inline_code_only(): void
+    public function legacy_card_without_region_children_still_renders_saved_copy_and_action(): void
     {
         $page = $this->pageWithMainSlot();
         $card = Block::query()->create([
@@ -1851,28 +2060,22 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
+            'title' => 'Pattern-first workflow',
+            'subtitle' => 'How to build',
+            'content' => 'Mode is `auto`. <script>alert(1)</script>',
+            'meta' => 'Read more',
+            'settings' => json_encode(['url' => '/getting-started', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
 
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Mode options',
-            'content' => 'Mode is `auto`. <script>alert(1)</script>',
-            'subtitle' => 'Subtitle `raw`',
-            'meta' => 'Action `raw`',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
         $response = $this->get(route('pages.show', 'about'));
 
         $response->assertOk();
+        $response->assertSee('<div class="wb-card-header">How to build</div>', false);
         $response->assertSee('<p class="wb-m-0">Mode is <code>auto</code>. &lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
-        $response->assertDontSee('<p class="wb-m-0">Mode is `auto`. &lt;script&gt;alert(1)&lt;/script&gt;</p>', false);
-        $response->assertSee('<div class="wb-card-header">Subtitle `raw`</div>', false);
-        $response->assertDontSee('<div class="wb-card-header">Subtitle <code>raw</code></div>', false);
+        $response->assertSee('<a href="/getting-started" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Read more</a>', false);
         $response->assertDontSee('<script>alert(1)</script>', false);
-        $response->assertDontSee('wb-rich-text', false);
     }
 
     #[Test]
@@ -2182,7 +2385,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     }
 
     #[Test]
-    public function promo_card_renders_webblocks_promo_markup_with_optional_eyebrow(): void
+    public function card_footer_renders_nested_cluster_actions(): void
     {
         $page = $this->pageWithMainSlot();
         $card = Block::query()->create([
@@ -2193,203 +2396,26 @@ class PublicEditorialBlocksRenderingTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'settings' => json_encode(['variant' => 'promo'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
 
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'eyebrow' => 'Source-visible UI system',
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'subtitle' => 'Docs entry card',
-            'content' => 'Use promo cards when the docs entry point should look like a shipped marketing pattern.',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<section class="wb-card wb-promo" data-wb-public-block-type="card">', false);
-        $response->assertSee('<div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">', false);
-        $response->assertSee('<p class="wb-eyebrow">Source-visible UI system</p>', false);
-        $response->assertSee('<h2 class="wb-promo-title">WebBlocks UI - UI building blocks for humans and AI.</h2>', false);
-        $response->assertSee('<p class="wb-promo-text">Use promo cards when the docs entry point should look like a shipped marketing pattern.</p>', false);
-        $response->assertDontSee('<article class="wb-card">', false);
-    }
-
-    #[Test]
-    public function promo_card_renders_child_cluster_inside_promo_actions(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $card = Block::query()->create([
+        $cardFooter = Block::query()->create([
             'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
+            'parent_id' => $card->id,
+            'type' => 'card_footer',
+            'block_type_id' => $this->blockType('card_footer', 'Card Footer', 8)->id,
             'source_type' => 'static',
             'slot' => 'main',
             'slot_type_id' => $this->mainSlotType()->id,
             'sort_order' => 0,
-            'settings' => json_encode(['variant' => 'promo', 'url' => '/legacy-action', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
             'status' => 'published',
             'is_system' => false,
         ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'eyebrow' => 'Source-visible UI system',
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'content' => 'Card promo actions should stay nested.',
-            'meta' => 'Legacy action',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
 
         $cluster = Block::query()->create([
             'page_id' => $page->id,
-            'parent_id' => $card->id,
-            'type' => 'cluster',
-            'block_type_id' => $this->blockType('cluster', 'Cluster', 4)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'settings' => json_encode(['alignment' => 'end'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        foreach ([
-            ['label' => 'Start Here', 'url' => '/start-here', 'variant' => 'primary', 'sort' => 0],
-            ['label' => 'See primitives', 'url' => '/see-primitives', 'variant' => 'secondary', 'sort' => 1],
-        ] as $button) {
-            $child = Block::query()->create([
-                'page_id' => $page->id,
-                'parent_id' => $cluster->id,
-                'type' => 'button_link',
-                'block_type_id' => $this->blockType('button_link', 'Button Link', 7)->id,
-                'source_type' => 'static',
-                'slot' => 'main',
-                'slot_type_id' => $this->mainSlotType()->id,
-                'sort_order' => $button['sort'],
-                'variant' => $button['variant'],
-                'settings' => json_encode(['url' => $button['url'], 'target' => '_self'], JSON_UNESCAPED_SLASHES),
-                'status' => 'published',
-                'is_system' => false,
-            ]);
-
-            $child->textTranslations()->create([
-                'locale_id' => Page::defaultLocaleId(),
-                'title' => $button['label'],
-            ]);
-            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($child->fresh(['textTranslations']));
-        }
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<div class="wb-promo-actions wb-cluster wb-cluster-2">', false);
-        $response->assertSee('wb-cluster-end', false);
-        $response->assertSee('<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>', false);
-        $response->assertSee('<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>', false);
-        $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
-    }
-
-    #[Test]
-    public function promo_card_uses_legacy_action_inside_promo_actions_when_no_children_exist(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'settings' => json_encode(['variant' => 'promo', 'url' => '/getting-started', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'eyebrow' => 'Source-visible UI system',
-            'title' => 'Pattern-first workflow',
-            'content' => 'Use the nearest shipped pattern first.',
-            'meta' => 'Read more',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<div class="wb-promo-actions wb-cluster wb-cluster-2">', false);
-        $response->assertSee('<a href="/getting-started" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Read more</a>', false);
-        $response->assertDontSee('<div class="wb-card-footer">', false);
-    }
-
-    #[Test]
-    public function invalid_or_missing_card_variant_falls_back_to_default_card_rendering(): void
-    {
-        $page = $this->pageWithMainSlot();
-
-        foreach ([null, 'ghost'] as $index => $variant) {
-            $card = Block::query()->create([
-                'page_id' => $page->id,
-                'type' => 'card',
-                'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-                'source_type' => 'static',
-                'slot' => 'main',
-                'slot_type_id' => $this->mainSlotType()->id,
-                'sort_order' => $index,
-                'settings' => json_encode(array_filter(['variant' => $variant], fn ($value) => $value !== null), JSON_UNESCAPED_SLASHES),
-                'status' => 'published',
-                'is_system' => false,
-            ]);
-
-            $card->textTranslations()->create([
-                'locale_id' => Page::defaultLocaleId(),
-                'title' => 'Default card '.$index,
-                'content' => 'Fallback rendering should stay on wb-card.',
-            ]);
-            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-        }
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $this->assertSame(2, substr_count($response->getContent(), '<article class="wb-card" data-wb-public-block-type="card">'));
-        $response->assertDontSee('<section class="wb-card wb-promo" data-wb-public-block-type="card">', false);
-    }
-
-    #[Test]
-    public function card_renders_child_cluster_inside_footer(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'settings' => json_encode(['url' => '/legacy-action', 'target' => '_self'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'WebBlocks UI - UI building blocks for humans and AI.',
-            'content' => 'Card footer actions should be nested content.',
-            'meta' => 'Legacy action',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $cluster = Block::query()->create([
-            'page_id' => $page->id,
-            'parent_id' => $card->id,
+            'parent_id' => $cardFooter->id,
             'type' => 'cluster',
             'block_type_id' => $this->blockType('cluster', 'Cluster', 4)->id,
             'source_type' => 'static',
@@ -2432,399 +2458,16 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder([
             '<article class="wb-card" data-wb-public-block-type="card">',
-            '<div class="wb-card-body wb-stack wb-gap-2">',
-            '<strong>WebBlocks UI - UI building blocks for humans and AI.</strong>',
-            '<div class="wb-card-footer">',
+            '<div class="wb-card-footer" data-wb-public-block-type="card-footer">',
             '<a href="/start-here" class="wb-btn wb-btn-primary">Start Here</a>',
             '<a href="/see-primitives" class="wb-btn wb-btn-secondary">See primitives</a>',
             '</div>',
             '</article>',
         ], false);
         $response->assertSee('wb-cluster-end', false);
-        $response->assertDontSee('<a href="/legacy-action" class="wb-btn wb-btn-secondary">Legacy action</a>', false);
-        $this->assertSame(1, substr_count($response->getContent(), '<div class="wb-card-footer">'));
+        $this->assertSame(1, substr_count($response->getContent(), '<div class="wb-card-footer" data-wb-public-block-type="card-footer">'));
         $this->assertStringContainsString('.wb-card-footer > .wb-cluster {', file_get_contents(public_path('cms/css/public.css')));
         $this->assertStringContainsString('width: 100%;', file_get_contents(public_path('cms/css/public.css')));
-    }
-
-    #[Test]
-    public function card_uses_legacy_action_footer_when_no_child_blocks_exist(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'settings' => json_encode(['url' => '/getting-started', 'target' => '_blank'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Pattern-first workflow',
-            'content' => 'Use the nearest shipped pattern first.',
-            'meta' => 'Read more',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<div class="wb-card-footer">', false);
-        $response->assertSee('<a href="/getting-started" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Read more</a>', false);
-        $response->assertDontSee('<div class="wb-cluster">', false);
-    }
-
-    #[Test]
-    public function card_with_media_renders_image_inside_the_body_by_default_even_without_explicit_top_position(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-public.jpg',
-            'filename' => 'card-public.jpg',
-            'original_name' => 'card-public.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Card public image',
-            'alt_text' => 'Fallback alt text',
-            'width' => 1200,
-            'height' => 800,
-        ]);
-
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'media_id' => $image->id,
-            'settings' => json_encode(['image_aspect' => 'wide'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Image card',
-            'content' => 'Card with image.',
-        ]);
-        $card->imageTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'caption' => 'Card image caption',
-            'alt_text' => 'Card image alt',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations', 'imageTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSeeInOrder([
-            '<article class="wb-card" data-wb-public-block-type="card">',
-            '<div class="wb-card-body wb-stack wb-gap-2">',
-            '<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-wide">',
-            'card-public.jpg',
-            'alt="Card image alt"',
-            '<figcaption>Card image caption</figcaption>',
-            '<strong>Image card</strong>',
-        ], false);
-    }
-
-    #[Test]
-    public function card_with_legacy_none_image_position_still_renders_the_selected_image_as_top(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-legacy-none.jpg',
-            'filename' => 'card-legacy-none.jpg',
-            'original_name' => 'card-legacy-none.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Legacy none image',
-            'width' => 800,
-            'height' => 600,
-        ]);
-
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'media_id' => $image->id,
-            'settings' => json_encode(['image_position' => 'none'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Legacy card',
-            'content' => 'Legacy content',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSeeInOrder([
-            '<div class="wb-card-body wb-stack wb-gap-2">',
-            '<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-auto">',
-            'card-legacy-none.jpg',
-            '<strong>Legacy card</strong>',
-        ], false);
-    }
-
-    #[Test]
-    public function card_without_media_keeps_rendering_without_an_image(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'No image card',
-            'content' => 'Still no image.',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<article class="wb-card" data-wb-public-block-type="card">', false);
-        $response->assertSee('<div class="wb-card-body wb-stack wb-gap-2">', false);
-        $response->assertDontSee('<figure', false);
-    }
-
-    #[Test]
-    public function card_supports_bottom_image_placement_and_end_alignment(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-bottom.jpg',
-            'filename' => 'card-bottom.jpg',
-            'original_name' => 'card-bottom.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Bottom aligned image',
-            'width' => 1200,
-            'height' => 800,
-        ]);
-
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'media_id' => $image->id,
-            'settings' => json_encode(['image_position' => 'bottom', 'image_align' => 'end'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Bottom card',
-            'content' => 'Image should render after text.',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSeeInOrder([
-            '<strong>Bottom card</strong>',
-            '<p class="wb-m-0">Image should render after text.</p>',
-            '<figure class="wb-card-media wb-card-media--end wb-card-media--aspect-auto">',
-            'card-bottom.jpg',
-        ], false);
-    }
-
-    #[Test]
-    public function card_supports_middle_image_placement_and_stretch_alignment(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-middle.jpg',
-            'filename' => 'card-middle.jpg',
-            'original_name' => 'card-middle.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Middle aligned image',
-            'width' => 1200,
-            'height' => 800,
-        ]);
-
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'media_id' => $image->id,
-            'settings' => json_encode(['image_position' => 'middle', 'image_align' => 'stretch'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Middle card',
-            'content' => 'Image should render between title and text.',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSeeInOrder([
-            '<strong>Middle card</strong>',
-            '<figure class="wb-card-media wb-card-media--stretch wb-card-media--aspect-auto">',
-            'card-middle.jpg',
-            '<p class="wb-m-0">Image should render between title and text.</p>',
-        ], false);
-
-    }
-
-    #[Test]
-    public function card_image_uses_safe_default_media_classes_when_alignment_or_aspect_are_missing_or_unknown(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-default-media-frame.jpg',
-            'filename' => 'card-default-media-frame.jpg',
-            'original_name' => 'card-default-media-frame.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Default frame image',
-            'width' => 1200,
-            'height' => 800,
-        ]);
-
-        $card = Block::query()->create([
-            'page_id' => $page->id,
-            'type' => 'card',
-            'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $this->mainSlotType()->id,
-            'sort_order' => 0,
-            'media_id' => $image->id,
-            'settings' => json_encode(['image_align' => 'bogus', 'image_aspect' => 'landscape'], JSON_UNESCAPED_SLASHES),
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $card->textTranslations()->create([
-            'locale_id' => Page::defaultLocaleId(),
-            'title' => 'Safe defaults card',
-            'content' => 'Safe defaults should still render.',
-        ]);
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $response->assertSee('<figure class="wb-card-media wb-card-media--center wb-card-media--aspect-auto">', false);
-    }
-
-    #[Test]
-    public function card_image_alignment_and_aspect_values_map_to_matching_webblocks_ui_media_modifiers(): void
-    {
-        $page = $this->pageWithMainSlot();
-        $image = Media::query()->create([
-            'disk' => 'public',
-            'path' => 'media/images/card-modifiers.jpg',
-            'filename' => 'card-modifiers.jpg',
-            'original_name' => 'card-modifiers.jpg',
-            'extension' => 'jpg',
-            'mime_type' => 'image/jpeg',
-            'size' => 1024,
-            'kind' => 'image',
-            'visibility' => 'public',
-            'title' => 'Modifier image',
-            'width' => 1200,
-            'height' => 800,
-        ]);
-
-        foreach ([
-            ['align' => 'start', 'aspect' => 'square', 'sort' => 0],
-            ['align' => 'center', 'aspect' => 'wide', 'sort' => 1],
-            ['align' => 'end', 'aspect' => 'portrait', 'sort' => 2],
-            ['align' => 'stretch', 'aspect' => 'auto', 'sort' => 3],
-        ] as $variant) {
-            $card = Block::query()->create([
-                'page_id' => $page->id,
-                'type' => 'card',
-                'block_type_id' => $this->blockType('card', 'Card', 8)->id,
-                'source_type' => 'static',
-                'slot' => 'main',
-                'slot_type_id' => $this->mainSlotType()->id,
-                'sort_order' => $variant['sort'],
-                'media_id' => $image->id,
-                'settings' => json_encode(['image_align' => $variant['align'], 'image_aspect' => $variant['aspect']], JSON_UNESCAPED_SLASHES),
-                'status' => 'published',
-                'is_system' => false,
-            ]);
-
-            $card->textTranslations()->create([
-                'locale_id' => Page::defaultLocaleId(),
-                'title' => 'Card '.$variant['sort'],
-            ]);
-            app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
-        }
-
-        $response = $this->get(route('pages.show', 'about'));
-
-        $response->assertOk();
-        $html = $response->getContent();
-        $this->assertStringContainsString('wb-card-media wb-card-media--start wb-card-media--aspect-square', $html);
-        $this->assertStringContainsString('wb-card-media wb-card-media--center wb-card-media--aspect-wide', $html);
-        $this->assertStringContainsString('wb-card-media wb-card-media--end wb-card-media--aspect-portrait', $html);
-        $this->assertStringContainsString('wb-card-media wb-card-media--stretch wb-card-media--aspect-auto', $html);
     }
 
     #[Test]

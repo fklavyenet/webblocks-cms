@@ -236,6 +236,9 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $cluster = $contracts->resolve('cluster');
         $grid = $contracts->resolve('grid');
         $card = $contracts->resolve('card');
+        $cardHeader = $contracts->resolve('card_header');
+        $cardBody = $contracts->resolve('card_body');
+        $cardFooter = $contracts->resolve('card_footer');
         $contentHeader = $contracts->resolve('content_header');
 
         $this->assertSame(['title', 'subtitle', 'content'], $code->translatableFields);
@@ -312,10 +315,16 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $this->assertSame(['settings.layout_name', 'settings.width', 'settings.flow'], $container->sharedSettingsFields);
         $this->assertSame(['settings.layout_name', 'settings.gap', 'settings.alignment', 'settings.items_alignment', 'settings.wrap', 'settings.width'], $cluster->sharedSettingsFields);
         $this->assertSame(['settings.layout_name', 'settings.columns', 'settings.gap'], $grid->sharedSettingsFields);
-        $this->assertSame(['eyebrow', 'title', 'subtitle', 'content', 'meta', 'image_alt', 'image_caption'], $card->translatableFields);
-        $this->assertSame(['cluster', 'button_link'], $card->allowedChildTypeSlugs);
-        $this->assertSame('transitional', $card->currentContractStatus);
-        $this->assertSame(['media_id', 'settings.url', 'settings.target', 'settings.variant', 'settings.image_position', 'settings.image_align', 'settings.image_aspect'], $card->sharedSettingsFields);
+        $this->assertSame([], $card->translatableFields);
+        $this->assertSame(['card_header', 'card_body', 'card_footer'], $card->allowedChildTypeSlugs);
+        $this->assertSame('clear', $card->currentContractStatus);
+        $this->assertSame(['settings.layout_name'], $card->sharedSettingsFields);
+        $this->assertSame([], $cardHeader->translatableFields);
+        $this->assertSame([], $cardBody->translatableFields);
+        $this->assertSame([], $cardFooter->translatableFields);
+        $this->assertTrue($cardHeader->ownsPublicRootHelper);
+        $this->assertTrue($cardBody->ownsPublicRootHelper);
+        $this->assertTrue($cardFooter->ownsPublicRootHelper);
         $this->assertSame(['settings.alignment'], $contentHeader->sharedSettingsFields);
         $this->assertSame(['title', 'subtitle', 'meta'], $contentHeader->translatableFields);
         $this->assertTrue($section->ownsPublicRootHelper);
@@ -327,7 +336,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
     }
 
     #[Test]
-    public function card_text_translation_normalization_keeps_translated_eyebrow_copy_available(): void
+    public function legacy_card_text_translation_normalization_keeps_existing_translated_copy_available(): void
     {
         $this->seedFoundation();
 
@@ -340,14 +349,14 @@ class BlockTypePhaseThreeContractsTest extends TestCase
             'slot' => 'main',
             'slot_type_id' => $slotType->id,
             'sort_order' => 0,
-            'settings' => json_encode(['variant' => 'promo'], JSON_UNESCAPED_SLASHES),
+            'settings' => null,
             'status' => 'published',
             'is_system' => false,
         ]);
         $card->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
-            'eyebrow' => 'Translated eyebrow',
             'title' => 'Pattern-first workflow',
+            'content' => 'Legacy card copy.',
         ]);
 
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($card->fresh(['textTranslations']));
@@ -355,7 +364,7 @@ class BlockTypePhaseThreeContractsTest extends TestCase
         $resolved = $card->fresh(['textTranslations']);
 
         $this->assertNull($resolved->getRawOriginal('title'));
-        $this->assertSame('Translated eyebrow', $resolved->textTranslations()->firstWhere('locale_id', $this->defaultLocale()->id)?->eyebrow);
+        $this->assertSame('Pattern-first workflow', $resolved->textTranslations()->firstWhere('locale_id', $this->defaultLocale()->id)?->title);
     }
 
     #[Test]

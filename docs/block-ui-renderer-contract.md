@@ -123,15 +123,13 @@ Public pages now use explicit layout composition modes:
 
 ## Card
 
-- `card` keeps `article.wb-card` or promo `section.wb-card.wb-promo` as the renderer root with `data-wb-public-block-type="card"`.
-- When `media_id` exists, the image figure renders inside `.wb-card-body`.
-- The figure uses `wb-card-media` plus one alignment modifier from `image_align`: `wb-card-media--start`, `wb-card-media--center`, `wb-card-media--end`, or `wb-card-media--stretch`.
-- The figure uses one aspect modifier from `image_aspect`: `wb-card-media--aspect-auto`, `wb-card-media--aspect-square`, `wb-card-media--aspect-wide`, or `wb-card-media--aspect-portrait`.
-- Unknown or missing `image_align` falls back safely to `center`.
-- Unknown or missing `image_aspect` falls back safely to `auto`.
-- Blank, missing, null, or legacy `image_position = none` still falls back to `top` when media exists.
-- Selected media shows the image and clearing media removes it; no-image cards remain valid.
-- Alt text stays escaped, caption stays optional, child `Cluster` or `Button Link` footer actions stay supported, and the legacy single-action fallback remains supported.
+- `card` owns `article.wb-card` as the renderer root with `data-wb-public-block-type="card"`.
+- `card_header` owns `div.wb-card-header` with `data-wb-public-block-type="card-header"`.
+- `card_body` owns `div.wb-card-body` with `data-wb-public-block-type="card-body"`.
+- `card_footer` owns `div.wb-card-footer` with `data-wb-public-block-type="card-footer"`.
+- Card regions should render their own roots directly and must not receive extra generic public wrappers.
+- The normal Card contract is composable child content through those three regions, not a built-in promo or media renderer.
+- Older saved Card rows may still use a minimal fallback renderer only when the Card has no Card region children.
 - `wb-sidebar` is reserved for a true docs/app navigation shell. Generic marketing or editorial sidebars should stay ordinary `aside` content composed from `wb-grid`, `wb-stack`, cards, callouts, and link lists.
 
 ### Slot wrappers
@@ -244,8 +242,8 @@ Public pages now use explicit layout composition modes:
 - `header`, `section`, `container`, `grid`, `cluster`, `card`, and `content_header` are root-owning layout/content-shell blocks and should not receive a generic public wrapper from the public block loop.
 - `Section` owns the semantic `<section class="wb-section">` root when needed.
 - `Container`, `Grid`, and `Cluster` own their own non-semantic layout roots unless a specific renderer intentionally chooses otherwise.
-- `Card` owns its `<article class="wb-card">` or promo `<section class="wb-card wb-promo">` root.
-- Card may optionally render a shared image inside `.wb-card-body` when selected media exists. Shared placement supports `top`, `middle`, and `bottom`, blank or legacy `none` values fall back safely to `top`, shared alignment stays canonical, and existing no-image cards keep the same root ownership and footer structure.
+- `Card` owns its `<article class="wb-card">` root.
+- `Card Header`, `Card Body`, and `Card Footer` own their matching WebBlocks UI region roots and together define the normal Card public structure.
 - `Header` owns its semantic heading root such as `<h1>` or `<h2>`.
 - `Content Header` owns its semantic `<header class="wb-content-header">` root and always renders its title as `<h1 class="wb-content-title">`.
 - Layout + Card Phase 3 standardization keeps these root-owning blocks aligned across the renderer partials, `Block::ownsPublicRoot()`, the contract registry, the read-only admin contract modal, and the contracts audit command.

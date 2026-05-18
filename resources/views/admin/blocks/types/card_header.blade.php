@@ -5,5 +5,5 @@
         <div class="wb-text-sm wb-text-muted">Admin-only label used in the block tree and parent selector.</div>
     </div>
 
-    <div class="wb-text-sm wb-text-muted">Card is now a composable shell. Add Card Header, Card Body, and Card Footer as child blocks to build the visible structure.</div>
+    <div class="wb-text-sm wb-text-muted">Card Header is a composable region. Add nested content blocks inside it.</div>
 </div>

@@ -163,15 +163,6 @@ class BlockTranslationResolver
             return;
         }
 
-        if ($block->typeSlug() === 'card') {
-            $this->applyAttributes($block, [
-                'image_caption' => $translation->caption,
-                'image_alt' => $translation->alt_text,
-            ]);
-
-            return;
-        }
-
         $this->applyResolvedFields($block, 'image', $translation);
     }
 

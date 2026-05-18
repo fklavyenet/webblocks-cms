@@ -118,32 +118,19 @@ class MediaVisualBlockContractsTest extends TestCase
     }
 
     #[Test]
-    public function card_block_round_trips_shared_media_and_translated_image_fields(): void
+    public function card_block_round_trips_shell_layout_name_without_media_contract_fields(): void
     {
         $this->seedFoundation();
         $user = $this->adminUser();
 
         $page = $this->page();
-        $image = $this->media('image', 'service-card.jpg', 'image/jpeg', 'media/images/service-card.jpg');
 
         $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
             'page_id' => $page->id,
             'slot_type_id' => $this->slotType()->id,
             'block_type_id' => $this->blockTypeId('card'),
             'sort_order' => 0,
-            'title' => 'Service card',
-            'subtitle' => 'Service summary',
-            'content' => 'Shared image cards should stay source-backed.',
-            'action_label' => 'Learn more',
-            'card_url' => '/services/design',
-            'card_target' => '_blank',
-            'card_variant' => 'promo',
-            'image_position' => 'bottom',
-            'image_align' => 'end',
-            'image_aspect' => 'wide',
-            'image_alt' => 'Design service illustration',
-            'image_caption' => 'Optional card image caption',
-            'asset_id' => $image->id,
+            'name' => 'Support shell',
             'status' => 'published',
         ]);
 
@@ -152,24 +139,10 @@ class MediaVisualBlockContractsTest extends TestCase
         $block = Block::query()->where('type', 'card')->firstOrFail();
         $settings = json_decode((string) $block->getRawOriginal('settings'), true);
 
-        $this->assertSame($image->id, $block->media_id);
-        $this->assertSame('/services/design', $settings['url']);
-        $this->assertSame('_blank', $settings['target']);
-        $this->assertSame('promo', $settings['variant']);
-        $this->assertSame('bottom', $settings['image_position']);
-        $this->assertSame('end', $settings['image_align']);
-        $this->assertSame('wide', $settings['image_aspect']);
-        $this->assertDatabaseHas('block_text_translations', [
+        $this->assertNull($block->media_id);
+        $this->assertSame('Support shell', $settings['layout_name']);
+        $this->assertDatabaseMissing('block_text_translations', [
             'block_id' => $block->id,
-            'title' => 'Service card',
-            'subtitle' => 'Service summary',
-            'content' => 'Shared image cards should stay source-backed.',
-            'meta' => 'Learn more',
-        ]);
-        $this->assertDatabaseHas('block_image_translations', [
-            'block_id' => $block->id,
-            'caption' => 'Optional card image caption',
-            'alt_text' => 'Design service illustration',
         ]);
     }
 
@@ -304,16 +277,6 @@ class MediaVisualBlockContractsTest extends TestCase
                 'selectorCardTitle' => 'Media Asset',
                 'selectorHelp' => 'Choose an internal image asset for this block.',
                 'outsideFieldIds' => ['subtitle', 'url', 'title'],
-            ],
-            [
-                'type' => 'card',
-                'asset' => $image,
-                'panelTitle' => 'Choose Image',
-                'replaceLabel' => 'Replace Image',
-                'accept' => 'image',
-                'selectorCardTitle' => 'Image',
-                'selectorHelp' => 'Selecting media enables the card image. Clearing media removes the image.',
-                'outsideFieldIds' => ['image_position', 'title', 'image_alt', 'image_caption'],
             ],
             [
                 'type' => 'file',

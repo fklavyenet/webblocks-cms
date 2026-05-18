@@ -242,10 +242,10 @@ class Block extends Model
                 : 'Layout wrapper';
         }
 
-        if ($this->typeSlug() === 'card' && $this->children->isNotEmpty()) {
+        if (in_array($this->typeSlug(), ['card', 'card_header', 'card_body', 'card_footer'], true) && $this->children->isNotEmpty()) {
             $childCount = $this->children->count();
 
-            return trim($this->cardVariant().' '.$childCount.' '.Str::plural('child block', $childCount));
+            return $childCount.' '.Str::plural('child block', $childCount);
         }
 
         if (in_array($this->typeSlug(), ['navigation-auto', 'menu', 'navbar-navigation'], true)) {
@@ -468,7 +468,7 @@ class Block extends Model
             return true;
         }
 
-        return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'hero', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
+        return in_array($slug, ['section', 'container', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
     }
 
     public function allowedChildTypeSlugs(): ?array
@@ -477,7 +477,7 @@ class Block extends Model
             'hero', 'cta' => ['button'],
             'columns' => ['column_item'],
             'feature-grid' => ['feature-item', 'column_item'],
-            'card' => ['cluster', 'button_link'],
+            'card' => ['card_header', 'card_body', 'card_footer'],
             'sticky-navbar' => ['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'],
             'link-list' => ['link-list-item'],
             'sidebar-navigation' => ['sidebar-nav-item', 'sidebar-nav-group'],
@@ -539,6 +539,14 @@ class Block extends Model
         }
 
         if (in_array($childTypeSlug, ['navbar-brand', 'navbar-navigation'], true) && ! $this->hasNavbarAncestorOrSelf()) {
+            return false;
+        }
+
+        if (in_array($childTypeSlug, ['card_header', 'card_body', 'card_footer'], true)) {
+            return $this->typeSlug() === 'card';
+        }
+
+        if (in_array($this->typeSlug(), ['card_header', 'card_body', 'card_footer'], true) && in_array($childTypeSlug, ['card_header', 'card_body', 'card_footer'], true)) {
             return false;
         }
 
@@ -993,6 +1001,9 @@ class Block extends Model
             'grid',
             'cluster',
             'card',
+            'card_header',
+            'card_body',
+            'card_footer',
             'content_header',
             'hero',
             'columns',
