@@ -1,6 +1,6 @@
 {
     "name": "fklavyenet/webblocks-cms",
-    "description": "Initial WebBlocks CMS package skeleton for the ongoing architecture transition.",
+    "description": "WebBlocks CMS core package during the ongoing architecture transition.",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -9,7 +9,8 @@
     },
     "autoload": {
         "psr-4": {
-            "WebBlocks\\Cms\\": "src/"
+            "WebBlocks\\Cms\\": "src/",
+            "WebBlocks\\Cms\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {

@@ -199,6 +199,13 @@ Current blockers for higher-risk groups:
 
 Move clearly package-owned config, routes, views, migrations, seeders, public assets, and stubs into package-level Laravel resource folders. Introduce package load and publish behavior incrementally instead of all at once.
 
+The first safe Phase 3 seeder slice is now active for low-risk catalog seeders only:
+
+- package-owned now: `IconCatalogSeeder`, `PageTypeSeeder`, `LayoutTypeSeeder`, `SlotTypeSeeder` under `packages/webblocks-cms/database/seeders/`
+- root compatibility entrypoints remain in `database/seeders/` so existing installs, tests, and current runtime or update entrypoints can keep calling `Database\Seeders\...`
+- still root-owned for now: `CoreCatalogSeeder`, `PageLayoutSeeder`, `BlockTypeSeeder`, `DatabaseSeeder`, and active System Update post-install commands
+- package seeder ownership in this phase is about namespace and boundary migration only, not about changing current root update authority
+
 ## Next Phase: Package Resource Boundary
 
 The next transition focus after `v1.31.60` is package resource ownership, not more opportunistic helper moves.
@@ -258,6 +265,39 @@ This checkpoint completes the package boundary pilot phase. The repository now h
 - move only when route, view, migration, asset, or runtime ownership rules are explicit for that slice
 - verify backward compatibility and install expectations before any active runtime authority shifts from root to package
 - keep System Update behavior unchanged until a later dedicated update-flow phase intentionally redesigns it
+
+### v1.32.0 Runtime Migration Phases 1-2
+
+The `v1.32.0` release is the first real package-owned runtime slice checkpoint. It begins package-owned runtime work with three deliberately small guarded slices that prove package runtime ownership without displacing the current CMS runtime.
+
+Phase 1: guarded package diagnostics runtime slice
+
+- package `routes/diagnostics.php` now points at a package-owned controller under `packages/webblocks-cms/src/Http/Controllers/Diagnostics/PackageDiagnosticsController.php`
+- that controller renders the existing package diagnostic view `webblocks-cms::diagnostics.package-status`
+- the diagnostics route still stays off by default behind `webblocks-cms.diagnostics.load_routes`
+- this is intentionally a reserved internal package path only and does not replace any root admin or public runtime route
+
+Phase 2A: first focused package admin slice
+
+- package `routes/admin.php` introduces one small package-owned admin runtime slice only: `admin.webblocks-cms.runtime-status` at `/admin/_webblocks-cms/runtime-status`
+- that route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/admin/runtime-status.blade.php`
+- the admin slice stays off by default behind `webblocks-cms.admin.load_routes`
+- the route is isolated under the reserved `/_webblocks-cms` admin namespace and also keeps the normal install, auth, admin-access, and super-admin system-access middleware requirements
+- root admin areas such as Pages, Media, Blocks, Users, Sites, Updates, Backups, and Export / Import remain root-owned because they still carry broader model, workflow, and install-runtime coupling
+
+Phase 2B: first focused package public slice
+
+- package `routes/public.php` introduces one small package-owned public runtime slice only: `webblocks-cms.public.runtime-status` at `/_webblocks-cms/runtime-status`
+- that route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/public/runtime-status.blade.php`
+- the public slice stays off by default behind `webblocks-cms.public.load_routes`
+- the route is isolated under a reserved package path and does not replace public page rendering, search, block rendering, multisite host resolution, locale routing, or the normal public shell
+
+Why these slices stay guarded
+
+- root runtime remains authoritative for the installed CMS until a route or view is intentionally migrated end to end
+- the reserved package paths avoid route-name and path conflicts with existing admin and public runtime
+- the guarded slices let package bootstrap, route loading, view loading, middleware behavior, and status reporting be tested without moving high-risk runtime groups too early
+- the moved slices are diagnostic or static status surfaces only, so they avoid Pages, Blocks, Sites, Updates, Install, Backup or Restore, Export or Import, Site Promotion, and broad public rendering internals
 
 ### Next Possible Route Phase
 
@@ -342,9 +382,21 @@ This checkpoint completes the package boundary pilot phase. The repository now h
 
 Shift update behavior toward Composer-managed CMS package updates plus controlled post-update steps such as migrations, catalog sync, `block-types:sync-core`, cache clear, and asset publish or sync when needed.
 
+The current readiness checkpoint now includes:
+
+- package Composer autoload for `WebBlocks\Cms\Database\Seeders\`
+- retained root path-repository development wiring to `packages/webblocks-cms`
+- explicit documentation that current root System Update behavior remains authoritative until a later dedicated update-flow phase intentionally changes it
+
 ### Phase 5: Starter Project Split
 
 Introduce the separate starter-project direction, such as `fklavyenet/webblocks-cms-starter`, so new installs start from a user-owned Laravel root that depends on the CMS package instead of cloning the CMS core repository into the project root.
+
+The current checkpoint adds only boundary-readiness groundwork for that future split:
+
+- more CMS-owned seeders now live under the package instead of the root app namespace
+- more low-risk runtime support helpers now live under package `src/Support/`
+- root compatibility wrappers remain in place so existing installs do not need an immediate namespace rewrite
 
 ### Existing-Install Migration Guidance
 
@@ -378,6 +430,14 @@ The `v1.31.64` pilot advances only the package route boundary by adding one real
 
 The `v1.31.65` checkpoint completes the remaining inert boundary pilots by keeping package migrations explicitly guard-disabled, confirming package public asset and stub publishing remain inert until real package-owned files exist, and documenting Composer-managed package updates as the target boundary without changing the current root update flow.
 
+The `v1.32.0` release starts that planned move with guarded runtime migration phases 1-2:
+
+- the package diagnostics runtime slice is real and package-owned end to end through a package controller plus the existing package diagnostic view, but it remains guard-disabled by default
+- one focused admin runtime slice is now package-owned end to end through package `routes/admin.php`, `src/Http/Controllers/Admin/PackageAdminStatusController.php`, and `resources/views/admin/runtime-status.blade.php`, but it remains guard-disabled by default on a reserved path
+- one focused public runtime slice is now package-owned end to end through package `routes/public.php`, `src/Http/Controllers/Public/PackagePublicStatusController.php`, and `resources/views/public/runtime-status.blade.php`, but it remains guard-disabled by default on a reserved path
+- `webblocks:package-status` now reports the diagnostics runtime slice, package admin slice, package public slice, and the explicit route guards in a still read-only way
+- root routes and root views remain authoritative for the existing CMS runtime outside these reserved package-only guarded paths
+
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
 Package-owned default config has now also started for `contact`, while the root config file still remains authoritative as the install override during the transition.
@@ -407,6 +467,20 @@ The first BlockTypes support source move is now also complete for `BlockTypeCont
 `LayoutMarkup` has also now been audited as a possible narrow Pages helper move and remains root-owned for now because its current references still cross page-layout request validation, admin form rendering, and public slot-wrapper behavior.
 
 The first Formatting support source move is now also complete for `InlineRichTextRenderer`, moved from `app/Support/Formatting/` to package `src/Support/Formatting/` with behavior kept unchanged while `SafeRichTextRenderer` and its sanitization contract remain root-owned.
+
+The next low-risk runtime support checkpoint is now also complete for four narrow helpers that stay close to admin query-state and pagination concerns:
+
+- `AdminPagination` now lives in package `src/Support/Admin/`
+- `BlockTypeIndexState` now lives in package `src/Support/BlockTypes/`
+- `MediaIndexState` now lives in package `src/Support/Media/`
+- `PageIndexState` now lives in package `src/Support/Pages/`
+- root `App\Support\...` classes remain as compatibility wrappers so current controller and request imports do not need a broad rewrite
+
+The first package-owned seeder boundary move is now also complete for low-risk catalogs:
+
+- package-owned now: `IconCatalogSeeder`, `PageTypeSeeder`, `LayoutTypeSeeder`, `SlotTypeSeeder`
+- root `Database\Seeders\...` classes remain as compatibility wrappers
+- `CoreCatalogSeeder`, `PageLayoutSeeder`, `BlockTypeSeeder`, and active System Update seeding remain root-owned until a later focused phase
 
 The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
 

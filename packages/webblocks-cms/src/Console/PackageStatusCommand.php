@@ -12,23 +12,32 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 class PackageStatusCommand extends Command
 {
     protected $signature = 'webblocks:package-status
-        {--view-check : Render the package diagnostic view through the package namespace}';
+    {--view-check : Render the package diagnostic view through the package namespace}';
 
     protected $description = 'Show read-only WebBlocks CMS package transition status';
 
     public function handle(): int
     {
         $packageRoot = dirname(__DIR__, 2);
+        $rootComposer = $this->composerJson(base_path('composer.json'));
+        $packageComposer = $this->composerJson($packageRoot.'/composer.json');
         $diagnosticView = 'diagnostics.package-status';
         $namespacedDiagnosticView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$diagnosticView;
         $diagnosticRouteFile = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE;
         $diagnosticRouteName = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME;
         $diagnosticRoutePath = WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH;
+        $adminRouteFile = WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_FILE;
+        $adminRouteName = WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_NAME;
+        $adminRoutePath = WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_PATH;
+        $publicRouteFile = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE;
+        $publicRouteName = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME;
+        $publicRoutePath = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH;
         $packageMigrationLoadingConfig = WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG;
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
         $viewFiles = $this->resourceFiles($packageRoot.'/resources/views');
         $migrationFiles = $this->resourceFiles($packageRoot.'/database/migrations');
+        $seederFiles = $this->resourceFiles($packageRoot.'/database/seeders');
         $publicFiles = $this->resourceFiles($packageRoot.'/public');
         $stubFiles = $this->resourceFiles($packageRoot.'/stubs');
         $shouldCheckView = (bool) $this->option('view-check');
@@ -58,14 +67,33 @@ class PackageStatusCommand extends Command
         $this->line('Expected package diagnostic route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$diagnosticRouteFile)).' ('.$diagnosticRouteFile.')');
         $this->line('Package diagnostic route loading guard enabled: '.$this->yesNo($this->diagnosticRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package diagnostic route loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($diagnosticRouteName, $diagnosticRoutePath)).' ('.$diagnosticRouteName.' at '.$diagnosticRoutePath.')');
+        $this->line('Expected package admin route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$adminRouteFile)).' ('.$adminRouteFile.')');
+        $this->line('Package admin slice loading guard enabled: '.$this->yesNo($this->packageAdminRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG.')');
+        $this->line('Package admin slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($adminRouteName, $adminRoutePath)).' ('.$adminRouteName.' at '.$adminRoutePath.')');
+        $this->line('Expected package public route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$publicRouteFile)).' ('.$publicRouteFile.')');
+        $this->line('Package public slice loading guard enabled: '.$this->yesNo($this->packagePublicRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG.')');
+        $this->line('Package public slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($publicRouteName, $publicRoutePath)).' ('.$publicRouteName.' at '.$publicRoutePath.')');
         $this->line('Active runtime route loading remains root-authoritative: yes');
         $this->line('Package resources/views path present: '.$this->yesNo(is_dir($packageRoot.'/resources/views')));
         $this->line('Package view files status: '.$this->resourceStatus($viewFiles));
+        $this->line('Package admin slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status)');
+        $this->line('Package public slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status)');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
         $this->line('Package migration loading guard enabled: '.$this->yesNo($this->packageMigrationLoadingEnabled()).' ('.$packageMigrationLoadingConfig.')');
         $this->line('Package migrations loaded in active runtime: no');
+        $this->line('Package database/seeders path present: '.$this->yesNo(is_dir($packageRoot.'/database/seeders')));
+        $this->line('Package seeder boundary status: '.$this->resourceBoundaryStatus($seederFiles));
+        $this->line('Package seeder files status: '.$this->resourceStatus($seederFiles));
+        $this->line('Package low-risk catalog seeders present: '.$this->expectedFilesStatus(
+            $packageRoot.'/database/seeders',
+            WebBlocksCmsServiceProvider::PACKAGE_SEEDER_FILES
+        ));
+        $this->line('Root catalog seeder compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('database/seeders'),
+            WebBlocksCmsServiceProvider::PACKAGE_SEEDER_FILES
+        ));
         $this->line('Package public path present: '.$this->yesNo(is_dir($packageRoot.'/public')));
         $this->line('Package public asset boundary status: '.$this->resourceBoundaryStatus($publicFiles));
         $this->line('Package public assets status: '.$this->resourceStatus($publicFiles));
@@ -77,11 +105,21 @@ class PackageStatusCommand extends Command
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
         $this->line('Package diagnostic view exists: '.$this->yesNo(view()->exists($namespacedDiagnosticView)).' ('.$namespacedDiagnosticView.')');
+        $this->line('Package low-risk runtime support moves present: '.$this->expectedFilesStatus(
+            $packageRoot.'/src/Support',
+            WebBlocksCmsServiceProvider::LOW_RISK_RUNTIME_SUPPORT_FILES
+        ));
+        $this->line('Root runtime support compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('app/Support'),
+            WebBlocksCmsServiceProvider::LOW_RISK_RUNTIME_SUPPORT_FILES
+        ));
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
             $namespacedDiagnosticView,
             $packageRoot
         ));
+        $this->line('Package Composer seeder autoload present: '.$this->yesNo($this->composerSeederAutoloadPresent($packageComposer)).' (WebBlocks\\Cms\\Database\\Seeders\\)');
+        $this->line('Root Composer path repository present: '.$this->yesNo($this->pathRepositoryPresent($rootComposer, 'packages/webblocks-cms')).' (packages/webblocks-cms)');
         $this->line('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.');
         $this->newLine();
 
@@ -121,6 +159,16 @@ class PackageStatusCommand extends Command
     protected function packageMigrationLoadingEnabled(): bool
     {
         return (bool) config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG, false);
+    }
+
+    protected function packageAdminRouteLoadingEnabled(): bool
+    {
+        return (bool) config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false);
+    }
+
+    protected function packagePublicRouteLoadingEnabled(): bool
+    {
+        return (bool) config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false);
     }
 
     protected function routeIsRegistered(string $name, string $path): bool
@@ -163,6 +211,78 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::VIEW_NAMESPACE,
             view()->getFinder()->getHints()
         );
+    }
+
+    /**
+     * @param  array<int, string>  $expectedFiles
+     */
+    protected function expectedFilesStatus(string $basePath, array $expectedFiles): string
+    {
+        $missingFiles = array_values(array_filter(
+            $expectedFiles,
+            fn (string $file): bool => ! is_file($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file))
+        ));
+
+        if ($missingFiles !== []) {
+            return 'no (missing '.implode(', ', $missingFiles).')';
+        }
+
+        return 'yes ('.implode(', ', array_map(
+            fn (string $file): string => pathinfo($file, PATHINFO_FILENAME),
+            $expectedFiles
+        )).')';
+    }
+
+    /**
+     * @param  array<int, string>  $expectedFiles
+     */
+    protected function rootCompatibilityFilesStatus(string $basePath, array $expectedFiles): string
+    {
+        $missingFiles = array_values(array_filter(
+            $expectedFiles,
+            fn (string $file): bool => ! is_file($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file))
+        ));
+
+        if ($missingFiles !== []) {
+            return 'no (missing '.implode(', ', $missingFiles).')';
+        }
+
+        return 'yes';
+    }
+
+    protected function composerSeederAutoloadPresent(array $composer): bool
+    {
+        return ($composer['autoload']['psr-4']['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) === 'database/seeders/';
+    }
+
+    protected function pathRepositoryPresent(array $composer, string $path): bool
+    {
+        foreach (($composer['repositories'] ?? []) as $repository) {
+            if (! is_array($repository)) {
+                continue;
+            }
+
+            if (($repository['type'] ?? null) !== 'path') {
+                continue;
+            }
+
+            if (($repository['url'] ?? null) === $path) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function composerJson(string $path): array
+    {
+        if (! is_file($path)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**

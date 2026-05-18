@@ -2,12 +2,6 @@
 
 namespace App\Support\Admin;
 
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Admin\AdminPagination as PackageAdminPagination;
 
-class AdminPagination
-{
-    public static function perPage(): int
-    {
-        return app(SystemSettings::class)->adminListingPerPage();
-    }
-}
+class AdminPagination extends PackageAdminPagination {}

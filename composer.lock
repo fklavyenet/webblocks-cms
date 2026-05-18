@@ -6027,7 +6027,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/webblocks-cms",
-                "reference": "ed06b74e9c1112695484aac4280bef7cf14b06b8"
+                "reference": "b9a0c55cadc78462f55627f7c023c03d22d3f188"
             },
             "require": {
                 "illuminate/support": "^13.0",
@@ -6043,13 +6043,14 @@
             },
             "autoload": {
                 "psr-4": {
-                    "WebBlocks\\Cms\\": "src/"
+                    "WebBlocks\\Cms\\": "src/",
+                    "WebBlocks\\Cms\\Database\\Seeders\\": "database/seeders/"
                 }
             },
             "license": [
                 "MIT"
             ],
-            "description": "Initial WebBlocks CMS package skeleton for the ongoing architecture transition.",
+            "description": "WebBlocks CMS core package during the ongoing architecture transition.",
             "transport-options": {
                 "symlink": true,
                 "relative": true

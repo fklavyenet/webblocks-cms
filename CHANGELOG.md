@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## 1.32.0
+
+- Start Runtime Migration Phases 1-2 by moving the guarded package diagnostics runtime slice to a package-owned controller under `packages/webblocks-cms/src/Http/Controllers/Diagnostics/`, wiring the package diagnostic route file to that handler, and rendering the existing package diagnostic view while keeping diagnostics route loading off by default behind the explicit package guard.
+- Add the first focused package admin runtime slice as one isolated super-admin-only status page under `packages/webblocks-cms/routes/admin.php` with a package-owned controller and Blade view on a reserved `/admin/_webblocks-cms/...` path, keeping normal CMS admin areas root-owned and unaffected.
+- Add the first focused package public runtime slice as one isolated static status page under `packages/webblocks-cms/routes/public.php` with a package-owned controller and Blade view on a reserved `/_webblocks-cms/...` path, keeping root public page rendering, search, multisite routing, and block rendering authoritative.
+- Extend the read-only `webblocks:package-status` command so it reports diagnostics runtime slice status, package admin slice status, package public slice status, the new route guards, and the continued no-mutation transition rule.
+- Add focused bootstrap and runtime coverage proving the new package diagnostics, admin, and public slices stay disabled by default, can be enabled explicitly through their guards, render through package-owned handlers or views, and do not override root admin or public route or view behavior.
+- Document `Runtime Migration Phases 1-2` in the package architecture guide, including what moved, what remains root-owned, and why the first real package-owned runtime slices stay isolated and guard-disabled by default.
+- Start the next low-risk package transition slice by moving package-owned catalog seeders for icons, page types, layout types, and slot types into `packages/webblocks-cms/database/seeders/`, while keeping root `Database\Seeders\...` classes as compatibility wrappers for existing installs, tests, and update entrypoints.
+- Resume low-risk runtime support migration by moving `AdminPagination`, `BlockTypeIndexState`, `MediaIndexState`, and `PageIndexState` into `packages/webblocks-cms/src/Support/` while keeping root `App\Support\...` compatibility wrappers so current controllers, requests, and tests remain stable.
+- Extend the read-only `webblocks:package-status` command and package bootstrap coverage so they report package seeder ownership, root compatibility wrappers, low-risk runtime support moves, and Composer path or seeder autoload readiness without changing current migration or update authority.
+
 ## 1.31.65
 
 - Complete the remaining package boundary pilots by clarifying the reserved package migration, public asset, and stub directories, explicitly keeping package migration loading guard-disabled, and leaving package asset or stub publishing inert until real package-owned files exist.

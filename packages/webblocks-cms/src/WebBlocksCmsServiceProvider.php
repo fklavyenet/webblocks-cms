@@ -17,11 +17,27 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const DIAGNOSTIC_ROUTE_FILE = 'diagnostics.php';
 
+    public const PACKAGE_ADMIN_ROUTE_FILE = 'admin.php';
+
+    public const PACKAGE_PUBLIC_ROUTE_FILE = 'public.php';
+
     public const DIAGNOSTIC_ROUTE_NAME = 'webblocks-cms.diagnostics.package-status';
+
+    public const PACKAGE_ADMIN_ROUTE_NAME = 'admin.webblocks-cms.runtime-status';
+
+    public const PACKAGE_PUBLIC_ROUTE_NAME = 'webblocks-cms.public.runtime-status';
 
     public const DIAGNOSTIC_ROUTE_PATH = '/_webblocks-cms/diagnostics/package-status';
 
+    public const PACKAGE_ADMIN_ROUTE_PATH = '/admin/_webblocks-cms/runtime-status';
+
+    public const PACKAGE_PUBLIC_ROUTE_PATH = '/_webblocks-cms/runtime-status';
+
     public const DIAGNOSTIC_ROUTE_LOADING_CONFIG = 'webblocks-cms.diagnostics.load_routes';
+
+    public const PACKAGE_ADMIN_ROUTE_LOADING_CONFIG = 'webblocks-cms.admin.load_routes';
+
+    public const PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG = 'webblocks-cms.public.load_routes';
 
     public const PACKAGE_MIGRATION_LOADING_CONFIG = 'webblocks-cms.boundaries.load_migrations';
 
@@ -30,6 +46,20 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'contact.php',
         'demo_media.php',
         'webblocks-updates.php',
+    ];
+
+    public const PACKAGE_SEEDER_FILES = [
+        'IconCatalogSeeder.php',
+        'PageTypeSeeder.php',
+        'LayoutTypeSeeder.php',
+        'SlotTypeSeeder.php',
+    ];
+
+    public const LOW_RISK_RUNTIME_SUPPORT_FILES = [
+        'Admin/AdminPagination.php',
+        'BlockTypes/BlockTypeIndexState.php',
+        'Media/MediaIndexState.php',
+        'Pages/PageIndexState.php',
     ];
 
     public const CONFIG_PUBLISH_TAG = 'webblocks-cms-config';
@@ -72,13 +102,20 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootRoutes(): void
     {
-        if (! $this->diagnosticRoutesShouldLoad()) {
-            return;
-        }
+        $this->loadGuardedRouteFiles(
+            $this->diagnosticRoutesShouldLoad(),
+            $this->diagnosticRouteFiles()
+        );
 
-        foreach ($this->diagnosticRouteFiles() as $file) {
-            $this->loadRoutesFrom($file);
-        }
+        $this->loadGuardedRouteFiles(
+            $this->packageAdminRoutesShouldLoad(),
+            $this->adminRouteFiles()
+        );
+
+        $this->loadGuardedRouteFiles(
+            $this->packagePublicRoutesShouldLoad(),
+            $this->publicRouteFiles()
+        );
     }
 
     protected function diagnosticRoutesShouldLoad(): bool
@@ -86,15 +123,38 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return (bool) config(self::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false);
     }
 
+    protected function packageAdminRoutesShouldLoad(): bool
+    {
+        return (bool) config(self::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false);
+    }
+
+    protected function packagePublicRoutesShouldLoad(): bool
+    {
+        return (bool) config(self::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false);
+    }
+
     /**
      * @return array<int, string>
      */
     protected function diagnosticRouteFiles(): array
     {
-        return array_values(array_filter(
-            $this->routeFiles(),
-            static fn (string $file): bool => basename($file) === self::DIAGNOSTIC_ROUTE_FILE
-        ));
+        return $this->namedRouteFiles(self::DIAGNOSTIC_ROUTE_FILE);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function adminRouteFiles(): array
+    {
+        return $this->namedRouteFiles(self::PACKAGE_ADMIN_ROUTE_FILE);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function publicRouteFiles(): array
+    {
+        return $this->namedRouteFiles(self::PACKAGE_PUBLIC_ROUTE_FILE);
     }
 
     protected function bootViews(): void
@@ -273,6 +333,31 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         sort($files);
 
         return $files;
+    }
+
+    /**
+     * @param  array<int, string>  $files
+     */
+    protected function loadGuardedRouteFiles(bool $shouldLoad, array $files): void
+    {
+        if (! $shouldLoad) {
+            return;
+        }
+
+        foreach ($files as $file) {
+            $this->loadRoutesFrom($file);
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function namedRouteFiles(string $fileName): array
+    {
+        return array_values(array_filter(
+            $this->routeFiles(),
+            static fn (string $file): bool => basename($file) === $fileName
+        ));
     }
 
     protected function directoryHasRealFiles(string $path): bool
