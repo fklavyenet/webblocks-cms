@@ -16,9 +16,16 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue($this->app->providerIsLoaded(WebBlocksCmsServiceProvider::class));
 
         $router = $this->app['router'];
+        $viewHints = view()->getFinder()->getHints();
 
         $this->assertNull($router->getRoutes()->getByName('webblocks-cms.health'));
+        $this->assertArrayHasKey(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $viewHints);
+        $this->assertContains(
+            base_path('packages/webblocks-cms/resources/views'),
+            $viewHints[WebBlocksCmsServiceProvider::VIEW_NAMESPACE]
+        );
         $this->assertFalse(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::health'));
+        $this->assertTrue(view()->exists('welcome'));
         $this->assertSame([], config('webblocks-cms', []));
     }
 

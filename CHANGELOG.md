@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 1.31.62
+
+- Start the Package Resource Boundary Pilot by hardening the in-repo package service provider around the package-owned config default set, keeping root config files as install-level overrides, registering the package view namespace safely for future package-owned views, and keeping package publish behavior explicit and inert unless a developer intentionally runs `vendor:publish`.
+- Add explicit reserved package resource boundary markers under package `routes/`, `resources/views/`, `database/migrations/`, `public/`, and `stubs/` so the next transition phase has concrete package-owned directories without moving any active root runtime resources yet.
+- Expand the read-only `webblocks:package-status` diagnostic command into a clearer resource-readiness report that lists expected package config defaults, matching root override presence, reserved versus populated package resource directories, provider load state, and the transition safety note that root runtime remains authoritative unless resources are intentionally moved and wired.
+- Keep this checkpoint intentionally non-invasive by moving no additional runtime-heavy PHP classes and by leaving active root routes, views, migrations, public assets, controllers, requests, models, services, and System Update behavior unchanged.
+
 ## 1.31.61
 
 - Record the completed `v1.31.60` package source checkpoint in the package architecture documentation, confirm the successful `fklavye.ddev` update after that release, and explicitly pause further opportunistic low-risk PHP source moves until a dedicated runtime-heavy dependency audit phase is planned.

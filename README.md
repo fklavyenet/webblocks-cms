@@ -214,6 +214,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - See the full documentation in the `docs/` directory:
 - `AGENTS.md` is the compact AI and project working contract for repository-specific implementation rules.
 - `DEVELOPMENT.md` defines the development and release workflow.
+- `ddev artisan webblocks:package-status` reports the current package-transition resource boundary in a strictly read-only way and does not publish, migrate, clear cache, or mutate install state.
 - `.editorconfig` and `pint.json` define the repository formatting standards.
 - PHP files use 2-space indentation in this repository.
 - `ddev composer format:test` checks Pint formatting and runs `scripts/check-php-indentation.php`, while `ddev composer format` applies Pint fixes.

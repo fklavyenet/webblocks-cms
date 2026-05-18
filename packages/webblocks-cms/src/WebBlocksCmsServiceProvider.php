@@ -15,6 +15,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const VIEW_NAMESPACE = 'webblocks-cms';
 
+    public const PACKAGE_CONFIG_DEFAULTS = [
+        'cms.php',
+        'contact.php',
+        'demo_media.php',
+        'webblocks-updates.php',
+    ];
+
     public const CONFIG_PUBLISH_TAG = 'webblocks-cms-config';
 
     public const ASSETS_PUBLISH_TAG = 'webblocks-cms-assets';
@@ -55,6 +62,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootRoutes(): void
     {
+        if ($this->routeFiles() === []) {
+            return;
+        }
+
         foreach ($this->routeFiles() as $file) {
             $this->loadRoutesFrom($file);
         }
@@ -62,7 +73,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootViews(): void
     {
-        if (! $this->directoryHasRealFiles($this->viewsPath())) {
+        if (! is_dir($this->viewsPath())) {
             return;
         }
 
@@ -100,12 +111,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootAssetPublishing(): void
     {
-        if (! $this->directoryHasRealFiles($this->assetsPath())) {
+        if (! $this->directoryHasRealFiles($this->publicPath())) {
             return;
         }
 
         $this->publishes([
-            $this->assetsPath() => public_path('cms'),
+            $this->publicPath() => public_path('vendor/'.self::PACKAGE_NAME),
         ], self::ASSETS_PUBLISH_TAG);
     }
 
@@ -151,9 +162,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return $this->packagePath('database/migrations');
     }
 
-    protected function assetsPath(): string
+    protected function publicPath(): string
     {
-        return $this->packagePath('public/cms');
+        return $this->packagePath('public');
     }
 
     protected function stubsPath(): string
@@ -166,7 +177,17 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
      */
     protected function configFiles(): array
     {
-        return $this->phpFiles($this->configPath());
+        $files = [];
+
+        foreach (self::PACKAGE_CONFIG_DEFAULTS as $file) {
+            $path = $this->configPath().DIRECTORY_SEPARATOR.$file;
+
+            if (is_file($path)) {
+                $files[] = $path;
+            }
+        }
+
+        return $files;
     }
 
     /**
@@ -248,7 +269,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function isPlaceholderFile(SplFileInfo $file): bool
     {
-        return in_array($file->getFilename(), ['.gitkeep', '.DS_Store'], true)
+        return in_array($file->getFilename(), ['.gitkeep', '.DS_Store', 'README.md'], true)
             || str_starts_with($file->getFilename(), '.');
     }
 }

@@ -203,6 +203,20 @@ Move clearly package-owned config, routes, views, migrations, seeders, public as
 
 The next transition focus after `v1.31.60` is package resource ownership, not more opportunistic helper moves.
 
+### v1.31.62 Package Resource Boundary Pilot
+
+The `v1.31.62` checkpoint turns the package resource boundary into a more explicit and testable pilot without transferring active runtime ownership yet.
+
+- package `routes/`, `resources/views/`, `database/migrations/`, `public/`, and `stubs/` now exist as explicit reserved package boundary directories with marker files that document future ownership intent
+- package config defaults remain CMS-owned under package `config/`
+- matching root config files remain the install-level override layer and backward-compatible application config entry points
+- the package service provider keeps package publishing explicit and package-tagged, but publishing remains inert unless a developer intentionally runs `vendor:publish`
+- the package view namespace `webblocks-cms` is now registered as a safe package boundary pilot without changing current root admin or public view resolution
+- package routes, package views, package migrations, package public assets, and package stubs are still not active authoritative runtime ownership in this phase
+- `webblocks:package-status` now reports reserved-versus-populated package resource readiness in a strictly read-only way
+
+This pilot does not move active root routes, root views, root migrations, root public assets, controllers, requests, models, services, or System Update behavior.
+
 ### Package Config Defaults Vs Root Install Overrides
 
 - Package `config/` should continue to define CMS-owned default values.
@@ -226,17 +240,26 @@ The next transition focus after `v1.31.60` is package resource ownership, not mo
 - Package `resources/views` should eventually own reusable CMS product views.
 - Root `resources/views` remains authoritative until a view is intentionally moved and the package loader becomes the intended source for that view.
 - View moves should avoid mixing admin runtime changes with packaging-only work unless explicitly audited together.
+- The current pilot safely registers the `webblocks-cms` view namespace as a reserved boundary so future package-owned views can be introduced deliberately without changing current root view resolution first.
 
 ### Package Public Asset Publish Or Sync Strategy
 
 - Package `public/` should eventually own CMS-owned publishable assets.
 - Transition work should distinguish CMS-owned package assets from install-owned `public/site/...` overrides.
 - Asset publishing or sync should happen only when real package assets exist and the update flow clearly defines when publishing is required.
+- Current publish intent remains package-tagged and explicit. No package public assets are authoritative in `v1.31.62`, and no publish step runs unless a developer intentionally invokes `vendor:publish`.
 
 ### Package Stubs Strategy
 
 - Package `stubs/` should be reserved for reusable generated-file templates that belong to CMS product behavior.
 - Install-specific or project-specific scaffolding should not move into CMS package stubs by default.
+
+### Package Publish Tag Intent
+
+- `webblocks-cms-config` is reserved for publishing package-owned CMS default config files into the install root when a developer intentionally needs that workflow.
+- `webblocks-cms-assets` is reserved for future package public asset publishing once real package-owned public assets exist.
+- `webblocks-cms-stubs` is reserved for future package-owned stubs once reusable generated-file templates are intentionally introduced.
+- These tags do not change runtime behavior on their own and remain inert until `vendor:publish` is explicitly run.
 
 ### Composer-Managed Update Flow And Post-Update Commands
 
@@ -249,6 +272,13 @@ The next transition focus after `v1.31.60` is package resource ownership, not mo
 - The long-term direction remains a separate starter project that depends on `fklavyenet/webblocks-cms` as a package.
 - The current in-repo package exists to establish boundaries and ownership before that split is attempted.
 - The starter split should happen only after package-owned runtime resources and update flow responsibilities are clearer.
+
+### Next Step After Reserved Boundaries
+
+- Move one resource type at a time from reserved boundary to active package ownership.
+- Start only when the exact runtime-loading rule, install override story, and publish/update behavior are clear for that resource type.
+- Prefer focused phase plans such as package views, package migrations, or package public assets rather than mixing multiple runtime resource types into one checkpoint.
+- Keep runtime-heavy source moves behind dedicated dependency audits instead of folding them into resource-boundary pilot work.
 
 ### Phase 4: Package-Managed Update Flow
 
@@ -282,6 +312,8 @@ This repository change is only the first low-risk transition step:
 
 The provider now defines the package bootstrap contract for future package resources, but those package resources are not yet authoritative because the current CMS runtime files still live in the root application.
 
+The `v1.31.62` pilot makes those package resource boundaries more concrete by adding explicit reserved boundary marker files under package `routes/`, `resources/views/`, `database/migrations/`, `public/`, and `stubs/`. These directories now exist as documented package-owned targets for later phases, but their contents still remain non-authoritative placeholders in this checkpoint.
+
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
 Package-owned default config has now also started for `contact`, while the root config file still remains authoritative as the install override during the transition.
@@ -291,6 +323,8 @@ Package-owned default config has now also started for `demo_media`, while the ro
 Package-owned default config has now also started for `cms`, while the root config file still remains authoritative as the install override during the transition.
 
 Package-owned console bootstrap is now also proven through the read-only `webblocks:package-status` diagnostic command.
+
+The package view namespace `webblocks-cms` is now also registered safely as a package-boundary pilot, while active root view resolution remains authoritative because no active CMS runtime views have been moved into the package.
 
 The first package-owned PHP source move is now complete for `SearchTextNormalizer`, moved from `app/Support/Search/` to package `src/Support/Search/` with behavior kept unchanged.
 
@@ -310,4 +344,4 @@ The initial low-risk helper and value-object source checkpoint is now considered
 
 Further opportunistic low-risk PHP source moves are now paused. Future runtime-heavy source moves require a dedicated focused phase plan and dependency audit instead of more small opportunistic migrations.
 
-It does not yet move existing CMS runtime code, change System Update behavior, create a starter project, or change the current runtime ownership boundaries.
+It does not yet move existing CMS runtime code, change System Update behavior, create a starter project, or change the current active runtime ownership boundaries.
