@@ -11,19 +11,23 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PackageStatusCommand extends Command
 {
-    protected $signature = 'webblocks:package-status';
+    protected $signature = 'webblocks:package-status
+        {--view-check : Render the package diagnostic view through the package namespace}';
 
     protected $description = 'Show read-only WebBlocks CMS package transition status';
 
     public function handle(): int
     {
         $packageRoot = dirname(__DIR__, 2);
+        $diagnosticView = 'diagnostics.package-status';
+        $namespacedDiagnosticView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$diagnosticView;
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
         $viewFiles = $this->resourceFiles($packageRoot.'/resources/views');
         $migrationFiles = $this->resourceFiles($packageRoot.'/database/migrations');
         $publicFiles = $this->resourceFiles($packageRoot.'/public');
         $stubFiles = $this->resourceFiles($packageRoot.'/stubs');
+        $shouldCheckView = (bool) $this->option('view-check');
 
         $this->line('Package: fklavyenet/webblocks-cms');
         $this->line('Mode: read-only diagnostic only');
@@ -57,12 +61,40 @@ class PackageStatusCommand extends Command
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
+        $this->line('Package diagnostic view exists: '.$this->yesNo(view()->exists($namespacedDiagnosticView)).' ('.$namespacedDiagnosticView.')');
+        $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
+            $shouldCheckView,
+            $namespacedDiagnosticView,
+            $packageRoot
+        ));
         $this->newLine();
 
         $this->line('Transition note: root runtime remains authoritative unless a resource has been intentionally moved and wired.');
         $this->line('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.');
 
         return self::SUCCESS;
+    }
+
+    protected function diagnosticViewRenderStatus(bool $shouldCheckView, string $viewName, string $packageRoot): string
+    {
+        if (! $shouldCheckView) {
+            return 'not run (use --view-check)';
+        }
+
+        if (! view()->exists($viewName)) {
+            return 'failed (diagnostic view missing)';
+        }
+
+        try {
+            view($viewName, [
+                'viewNamespace' => WebBlocksCmsServiceProvider::VIEW_NAMESPACE,
+                'packageBasePath' => $packageRoot,
+            ])->render();
+        } catch (\Throwable $exception) {
+            return 'failed ('.$exception::class.': '.$exception->getMessage().')';
+        }
+
+        return 'success';
     }
 
     protected function yesNo(bool $value): string

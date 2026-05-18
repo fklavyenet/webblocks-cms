@@ -30,7 +30,7 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('Package routes path present: yes')
             ->expectsOutputToContain('Package route files status: reserved only')
             ->expectsOutputToContain('Package resources/views path present: yes')
-            ->expectsOutputToContain('Package view files status: reserved only')
+            ->expectsOutputToContain('Package view files status: package files present (diagnostics/package-status.blade.php)')
             ->expectsOutputToContain('Package database/migrations path present: yes')
             ->expectsOutputToContain('Package migration files status: reserved only')
             ->expectsOutputToContain('Package public path present: yes')
@@ -39,7 +39,19 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('Package stubs status: reserved only')
             ->expectsOutputToContain('Package service provider loaded: yes')
             ->expectsOutputToContain('Package view namespace registered: yes (webblocks-cms)')
+            ->expectsOutputToContain('Package diagnostic view exists: yes (webblocks-cms::diagnostics.package-status)')
+            ->expectsOutputToContain('Package diagnostic view render check: not run (use --view-check)')
             ->expectsOutputToContain('Transition note: root runtime remains authoritative unless a resource has been intentionally moved and wired.')
+            ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.')
+            ->assertExitCode(0);
+    }
+
+    #[Test]
+    public function package_status_command_can_optionally_render_the_package_diagnostic_view_through_the_namespace(): void
+    {
+        $this->artisan('webblocks:package-status --view-check')
+            ->expectsOutputToContain('Package diagnostic view exists: yes (webblocks-cms::diagnostics.package-status)')
+            ->expectsOutputToContain('Package diagnostic view render check: success')
             ->expectsOutputToContain('This command performs no publishing, migrations, cache clearing, file writes, database writes, or install-state changes.')
             ->assertExitCode(0);
     }

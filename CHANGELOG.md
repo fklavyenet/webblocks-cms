@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## 1.31.63
+
+- Activate the Package View Namespace Pilot by adding one package-owned internal diagnostic Blade view at `packages/webblocks-cms/resources/views/diagnostics/package-status.blade.php`, proving that the `webblocks-cms::` namespace now resolves a real package view without moving any active root admin or public views.
+- Extend the read-only `webblocks:package-status` diagnostic command so it reports package diagnostic view presence and can optionally run `--view-check` to render that package view through the namespace, confirming package view loading without writing files, cache, config, database, or install state.
+- Add focused bootstrap and console coverage for package view namespace registration, package diagnostic view existence, successful namespaced rendering, and the continued rule that root runtime and root view resolution remain authoritative.
+- Keep this checkpoint intentionally non-invasive by moving no active root admin or public runtime views, no runtime routes, and no additional PHP source classes.
+
 ## 1.31.62
 
 - Start the Package Resource Boundary Pilot by hardening the in-repo package service provider around the package-owned config default set, keeping root config files as install-level overrides, registering the package view namespace safely for future package-owned views, and keeping package publish behavior explicit and inert unless a developer intentionally runs `vendor:publish`.

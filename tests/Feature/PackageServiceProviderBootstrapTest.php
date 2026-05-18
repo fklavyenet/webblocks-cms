@@ -24,9 +24,27 @@ class PackageServiceProviderBootstrapTest extends TestCase
             base_path('packages/webblocks-cms/resources/views'),
             $viewHints[WebBlocksCmsServiceProvider::VIEW_NAMESPACE]
         );
-        $this->assertFalse(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::health'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::diagnostics.package-status'));
+        $this->assertFalse(view()->exists('diagnostics.package-status'));
         $this->assertTrue(view()->exists('welcome'));
         $this->assertSame([], config('webblocks-cms', []));
+    }
+
+    #[Test]
+    public function package_diagnostic_view_renders_through_the_package_namespace_without_overriding_root_view_resolution(): void
+    {
+        $rendered = view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::diagnostics.package-status', [
+            'viewNamespace' => WebBlocksCmsServiceProvider::VIEW_NAMESPACE,
+            'packageBasePath' => base_path('packages/webblocks-cms'),
+        ])->render();
+
+        $welcomeViewPath = app('view.finder')->find('welcome');
+
+        $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $rendered);
+        $this->assertStringContainsString('View namespace: webblocks-cms', $rendered);
+        $this->assertStringContainsString('Package base path:', $rendered);
+        $this->assertStringContainsString('Root runtime remains authoritative for active admin and public views.', $rendered);
+        $this->assertSame(resource_path('views/welcome.blade.php'), $welcomeViewPath);
     }
 
     #[Test]
