@@ -42,6 +42,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG = 'webblocks-cms.public.load_routes';
 
+    public const PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG = 'webblocks-cms.public.load_status_route';
+
     public const PACKAGE_MIGRATION_LOADING_CONFIG = 'webblocks-cms.boundaries.load_migrations';
 
     public const PACKAGE_CONFIG_DEFAULTS = [
@@ -63,6 +65,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'admin/system/icons/index.blade.php',
         'admin/system/icons/partials/edit-modal.blade.php',
         'diagnostics/package-status.blade.php',
+        'public/pages/show.blade.php',
+        'public/search/show.blade.php',
         'public/runtime-status.blade.php',
     ];
 
@@ -195,12 +199,30 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function packageAdminRoutesShouldLoad(): bool
     {
-        return (bool) config(self::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false);
+        if (! (bool) config(self::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false)) {
+            return false;
+        }
+
+        if ((bool) config(self::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, false)
+            && app('router')->getRoutes()->getByName(self::PACKAGE_ADMIN_ROUTE_NAME) === null) {
+            return true;
+        }
+
+        return app('router')->getRoutes()->getByName(self::ICON_ADMIN_INDEX_ROUTE_NAME) === null;
     }
 
     protected function packagePublicRoutesShouldLoad(): bool
     {
-        return (bool) config(self::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false);
+        if (! (bool) config(self::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false)) {
+            return false;
+        }
+
+        if ((bool) config(self::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, false)
+            && app('router')->getRoutes()->getByName(self::PACKAGE_PUBLIC_ROUTE_NAME) === null) {
+            return true;
+        }
+
+        return app('router')->getRoutes()->getByName('home') === null;
     }
 
     /**

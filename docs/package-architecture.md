@@ -283,31 +283,34 @@ Phase 2A: first focused package admin slice
 
 - package `routes/admin.php` originally introduced one small package-owned admin runtime status slice: `admin.webblocks-cms.runtime-status` at `/admin/_webblocks-cms/runtime-status`
 - that status route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/admin/runtime-status.blade.php`
-- package admin route loading is now enabled by default so active package-owned admin surfaces can move into package route authority
+- package admin route loading is now enabled by default and the active CMS admin route tree now loads from package `routes/admin.php`
 - the reserved admin status route itself stays off by default behind `webblocks-cms.admin.load_status_route`
 - package admin routes keep the normal install, auth, admin-access, and super-admin system-access middleware requirements where appropriate
-- root admin areas such as Pages, Media, Blocks, Users, Sites, Updates, Backups, and Export / Import remain root-owned because they still carry broader model, workflow, and install-runtime coupling
+- most admin controllers, requests, models, views, assets, and workflow-heavy runtime logic remain root-owned even though the active admin route definitions now live in the package
 
 Phase 2B: first focused package public slice
 
-- package `routes/public.php` introduces one small package-owned public runtime slice only: `webblocks-cms.public.runtime-status` at `/_webblocks-cms/runtime-status`
+- package `routes/public.php` originally introduced one small package-owned public runtime status slice: `webblocks-cms.public.runtime-status` at `/_webblocks-cms/runtime-status`
 - that route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/public/runtime-status.blade.php`
-- the public slice stays off by default behind `webblocks-cms.public.load_routes`
-- the route is isolated under a reserved package path and does not replace public page rendering, search, block rendering, multisite host resolution, locale routing, or the normal public shell
+- package public route loading is now enabled by default and the active CMS public route tree now loads from package `routes/public.php`
+- package-owned public entry controllers now handle home, localized home, search, localized search, search JSON, page show, localized page show, contact message submit, privacy-consent sync, and the `admin-api.*` internal domain endpoints
+- package-owned public entry views now cover the page and search entry templates through `webblocks-cms::public.pages.show` and `webblocks-cms::public.search.show`
+- the reserved package public status route itself stays off by default behind `webblocks-cms.public.load_status_route`
+- multisite resolution, models, broader support code, most public layout and renderer views, and assets still remain root-owned
 
-Why these slices stay guarded
+Why these slices stay partially guarded
 
-- root runtime remains authoritative for the installed CMS until a route or view is intentionally migrated end to end
+- root runtime remains authoritative for installs outside intentionally moved package-owned slices
 - the reserved package paths avoid route-name and path conflicts with existing admin and public runtime
-- the guarded slices let package bootstrap, route loading, view loading, middleware behavior, and status reporting be tested without moving high-risk runtime groups too early
-- the moved slices are diagnostic or static status surfaces only, so they avoid Pages, Blocks, Sites, Updates, Install, Backup or Restore, Export or Import, Site Promotion, and broad public rendering internals
+- the separately guarded status routes let package bootstrap, route loading, view loading, middleware behavior, and status reporting be tested without forcing those reserved diagnostics paths into normal runtime
+- the moved runtime authority is still intentionally partial, so high-risk groups such as models, most admin implementation classes, broader support layers, migrations, assets, and System Update behavior avoid premature package ownership
 
 ### Next Possible Route Phase
 
-- move real package-owned routes only in a dedicated route ownership phase grouped by runtime concern, for example internal diagnostics first and audited admin or public route groups later
-- keep route loading guards explicit until package-owned routes are intentionally allowed into runtime
-- define compatibility, middleware, naming, path, and conflict rules before any admin or public route migration begins
-- treat admin and public route migration as a dedicated ownership phase with an explicit compatibility plan rather than as incidental package cleanup
+- continue shrinking root route compatibility loading only after the remaining admin and public implementations behind the package route files are moved or intentionally left root-owned
+- keep reserved diagnostics and runtime-status routes explicitly guarded even while normal CMS admin and public route trees are package-authoritative
+- preserve route names, paths, middleware, and redirect behavior while package route authority stays ahead of deeper runtime extraction
+- treat future route cleanup as a compatibility-reduction phase, not as proof that the CMS is already consumer-package ready
 
 ### Next Possible View Phase
 
@@ -331,22 +334,18 @@ Why these slices stay guarded
 
 ### Package Route Ownership Strategy
 
-- Package routes should remain placeholders until a focused route-boundary phase decides which CMS routes are package-owned.
-- Active root route behavior remains authoritative during the transition.
-- Route moves must be grouped by runtime concern and verified against middleware, bindings, and admin or public behavior.
-- The `v1.31.64` pilot adds only one guarded package diagnostic route file and does not make package routes authoritative for active runtime.
-- Admin or public route migration still requires a dedicated route ownership phase plus a compatibility plan for names, paths, middleware, and downstream install expectations.
-- The current guarded diagnostics, admin status, and public status slices are intentionally the only package-owned route files that participate in runtime wiring, and each stays isolated on reserved paths so existing CMS admin and public route trees remain untouched.
-- Root `routes/*.php` remains the compatibility layer for the installed CMS outside those reserved package-only guarded paths.
+- Package route ownership is now active for the CMS admin and public runtime trees through package `routes/admin.php` and `routes/public.php`.
+- Root `routes/web.php` is now reduced to install, auth, profile, and compatibility loading of those package-owned CMS route files.
+- Route moves must continue preserving middleware, bindings, names, paths, modal flows, redirects, and downstream install expectations.
+- The diagnostic, admin runtime-status, and public runtime-status routes remain separately guarded reserved paths and are not part of the normal always-on CMS route surface.
+- Route authority does not yet imply full package runtime ownership because many handlers behind those routes still depend on root models, support code, views, and assets.
 
 ### Package View And Resource Ownership Strategy
 
-- Package `resources/views` should eventually own reusable CMS product views.
-- Root `resources/views` remains authoritative until a view is intentionally moved and the package loader becomes the intended source for that view.
-- View moves should avoid mixing admin runtime changes with packaging-only work unless explicitly audited together.
-- The current pilot safely registers the `webblocks-cms` view namespace as a reserved boundary so future package-owned views can be introduced deliberately without changing current root view resolution first.
-- The current package-owned view surface is intentionally limited to one internal diagnostic view plus the guarded admin and public status slice views. Those views prove namespace ownership only and do not replace existing CMS admin or public view trees.
-- Root views remain the compatibility path for active CMS rendering outside the `webblocks-cms::` namespace and the reserved guarded runtime slices.
+- Package `resources/views` now owns the diagnostic view, the guarded admin and public runtime-status views, the icon catalog admin views, and the public page and search entry views.
+- Root `resources/views` still remains authoritative for most admin screens, public layouts, block renderers, and other broader runtime view trees.
+- View moves should stay aligned with the owning runtime path so package route authority does not drift too far ahead of the actual owning view and controller layer.
+- Root views remain the compatibility path for the majority of active CMS rendering outside the intentionally moved `webblocks-cms::` surfaces.
 
 ### Package Public Asset Publish Or Sync Strategy
 
@@ -474,6 +473,15 @@ The `v1.32.0` release starts that planned move with guarded runtime migration ph
 - `webblocks:package-status` now reports the diagnostics runtime slice, package admin slice, package public slice, and the explicit route guards in a still read-only way
 - root routes and root views remain authoritative for the existing CMS runtime outside these reserved package-only guarded paths
 - package `config/webblocks-cms.php` now owns explicit transition config values: diagnostics, public status routes, admin status routes, and package migration loading stay disabled by default, while package admin route loading is enabled for active package-owned admin route authority
+
+The current Step 1 runtime-authority checkpoint extends that boundary further:
+
+- active CMS admin routes now load from package `routes/admin.php`, with root `routes/web.php` reduced to install, auth, profile, and compatibility loading
+- active CMS public routes now load from package `routes/public.php`, including home, localized home, search, localized search, search JSON, page show, localized page show, contact submissions, privacy-consent sync, and `admin-api.*`
+- package-owned public controllers now back that public entry slice under `packages/webblocks-cms/src/Http/Controllers/Public/`
+- package-owned `ContactMessageRequest` and package-owned public entry views now back the moved public route entrypoints
+- root `App\Http\Controllers\PageController`, `PublicSearchController`, `ContactMessageController`, `PublicPrivacyConsentController`, and `App\Http\Requests\ContactMessageRequest` remain as compatibility wrappers extending the package classes
+- root models, broader support classes, most admin controllers and requests, most admin and public views, public and admin assets, migrations, and System Update behavior remain root-owned, so the package is still not ready to serve as a real independent consumer-app runtime without deeper extraction
 
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 

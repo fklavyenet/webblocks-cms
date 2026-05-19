@@ -77,6 +77,7 @@ class PackageRuntimeSlicesTest extends TestCase
     public function guarded_package_public_slice_renders_only_when_enabled_and_does_not_override_root_public_routes(): void
     {
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, true);
+        config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, true);
         $this->bootPackageRoutes();
 
         $response = $this->get(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH);

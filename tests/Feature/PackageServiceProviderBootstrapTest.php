@@ -114,7 +114,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame(false, config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG));
         $this->assertSame(true, config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG));
         $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG));
-        $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
+        $this->assertSame(true, config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
         $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG));
         $this->assertSame('fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
         $this->assertSame('fklavyenet/webblocks-cms-starter', WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME);
@@ -167,7 +167,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFalse(config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false));
         $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false));
         $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, false));
-        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false));
+        $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false));
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_NAME));
         $this->assertNotNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME));
@@ -192,6 +192,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, true);
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, true);
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, true);
+        config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, true);
 
         $provider = new class($this->app) extends WebBlocksCmsServiceProvider
         {
@@ -416,7 +417,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFalse(config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG));
         $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG));
         $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG));
-        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
+        $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
         $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG));
     }
 

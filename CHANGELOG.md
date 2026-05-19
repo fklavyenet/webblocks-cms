@@ -10,6 +10,10 @@
 - Start the Resource Authority phase by moving the active icon catalog admin index and edit-modal views into the package view namespace, updating the package controller to render `webblocks-cms::admin.system.icons.index`, and leaving root Blade files as compatibility wrappers.
 - Move the active icon catalog admin route definitions from root `routes/web.php` into package `routes/admin.php`, making the package route file authoritative for that admin surface while keeping the package admin status route separately disabled by default.
 - Complete the first Install / Update / Starter boundary pass by adding a package-owned public asset marker and starter stubs, making `webblocks-cms-assets` and `webblocks-cms-stubs` publish real package resources while package migrations intentionally remain disabled and root-compatible.
+- Continue the runtime-authority phase by making package `routes/admin.php` and `routes/public.php` the active CMS admin and public route trees while reducing root `routes/web.php` to install, auth, profile, and compatibility loading of package-owned CMS route files.
+- Move the public page, search, contact-message, and privacy-consent entry slice into package-owned controllers, form request, and `webblocks-cms::public.*` entry views while keeping root `App\Http\...` classes as compatibility wrappers.
+- Extend focused public, search, bootstrap, runtime-slice, and package-status coverage so the new package-owned route authority and public entry slice are verified without changing current root migration, asset, or System Update authority.
+- Refine the package architecture documentation and README so they describe the current package-owned runtime route authority honestly, including the remaining root-owned blockers such as models, broader support code, admin view trees, and assets.
 
 ## 1.32.1
 

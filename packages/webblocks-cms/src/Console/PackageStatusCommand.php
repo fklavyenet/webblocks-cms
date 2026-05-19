@@ -32,6 +32,7 @@ class PackageStatusCommand extends Command
         $publicRouteFile = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE;
         $publicRouteName = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME;
         $publicRoutePath = WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH;
+        $publicHomeRouteLoaded = app('router')->getRoutes()->getByName('home') !== null;
         $packageMigrationLoadingConfig = WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG;
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
@@ -89,10 +90,11 @@ class PackageStatusCommand extends Command
             && app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME) !== null
         ).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.', '.WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME.')');
         $this->line('Expected package public route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$publicRouteFile)).' ('.$publicRouteFile.')');
-        $this->line('Package public slice loading guard enabled: '.$this->yesNo($this->packagePublicRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG.')');
+        $this->line('Package public route file loading enabled: '.$this->yesNo($this->packagePublicRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package public slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($publicRouteName, $publicRoutePath)).' ('.$publicRouteName.' at '.$publicRoutePath.')');
-        $this->line('Active runtime route loading remains root-authoritative: yes');
-        $this->line('Root route compatibility state: root routes remain authoritative outside reserved package paths.');
+        $this->line('Package public runtime routes loaded in active runtime: '.$this->yesNo($publicHomeRouteLoaded).' (home, localized.home, search, pages.show, contact-messages.store, public.privacy-consent.sync, admin-api.*)');
+        $this->line('Active runtime route loading remains root-authoritative: partial (install, auth, and profile stay root-owned while CMS admin and public runtime routes now load from the package).');
+        $this->line('Root route compatibility state: root routes now remain only for install, auth, profile, and project-level extension points.');
         $this->line('Package resources/views path present: '.$this->yesNo(is_dir($packageRoot.'/resources/views')));
         $this->line('Package view files status: '.$this->resourceStatus($viewFiles));
         $this->line('Package view Composer readiness: '.$this->yesNo($providerDiscoveryPresent && $this->expectedFilesPresent(
@@ -110,7 +112,7 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
         ));
         $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
-        $this->line('Root view compatibility state: root views remain authoritative outside the package namespace.');
+        $this->line('Root view compatibility state: mixed (icon and public search/page entry views now render through the package namespace, while most admin and layout views remain root-owned).');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
