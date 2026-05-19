@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.32.2
+
 - Add package-owned `webblocks-cms.php` config defaults for diagnostics, admin, public, and migration boundary switches, keeping diagnostics, public status routes, admin status routes, and package migrations disabled by default while enabling package admin route loading for active package-owned admin routes.
 - Extend focused provider and console coverage so `webblocks:package-status` reports the new package config defaults, active package admin route loading, disabled status slices, and the still-disabled migration boundary.
 - Harden the package-owned icon catalog runtime batch by having `webblocks:package-status` and focused bootstrap coverage verify the package-owned active admin route and icon-sync command while root wrappers remain available only for backward-compatible imports.
@@ -32,6 +34,7 @@
 - Keep root `App\...` classes and root `resources/views/admin/...` files as compatibility wrappers for the moved admin slices so existing imports, route references, and downstream overrides do not break during the transition.
 - Extend package bootstrap and package-status coverage for the larger admin runtime boundary, and keep the one root rich-text editor partial concrete because compatibility checks still read that root Blade file directly instead of resolving it through the package view namespace.
 - Refine the package architecture documentation so it now describes the broader admin runtime authority honestly: the editorial admin surfaces above are package-owned, while Sites, Users, System, install flow, migrations, root runtime assets, and System Update remain root-authoritative blockers.
+- Fix the release-gate compatibility boundary exposed by the full suite after the package transition: contact form notification flow now accepts the package-authoritative `ContactMessage` model through the existing root notifier and mailable entrypoints, and the block-type contracts audit continues to report stable root compatibility view paths even though runtime authority now lives in package views.
 
 ## 1.32.1
 

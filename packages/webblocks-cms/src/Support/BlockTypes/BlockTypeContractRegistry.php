@@ -125,14 +125,15 @@ class BlockTypeContractRegistry
 
     private function viewPath(string $relativePath): ?string
     {
+        $rootRelativePath = 'resources/views/'.$relativePath;
         $packageRelativePath = 'packages/webblocks-cms/resources/views/'.$relativePath;
 
-        if (is_file(base_path($packageRelativePath))) {
-            return $packageRelativePath;
+        if (is_file(base_path($rootRelativePath))) {
+            return $rootRelativePath;
         }
 
-        return is_file(resource_path('views/'.$relativePath))
-            ? 'resources/views/'.$relativePath
+        return is_file(base_path($packageRelativePath))
+            ? $packageRelativePath
             : null;
     }
 
