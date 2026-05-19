@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Admin\IconCatalogController;
+use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
 use App\Support\Admin\AdminPagination;
 use App\Support\BlockTypes\BlockTypeIndexState;
+use App\Support\Icons\IconCatalog;
+use App\Support\Icons\WebBlocksIconManifestSyncer;
 use App\Support\Media\MediaIndexState;
 use App\Support\Pages\PageIndexState;
 use App\Support\WebBlocks;
+use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
 use Database\Seeders\LayoutTypeSeeder;
@@ -15,12 +20,17 @@ use Database\Seeders\SlotTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder as PackageCoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\IconCatalogSeeder as PackageIconCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\LayoutTypeSeeder as PackageLayoutTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\PageTypeSeeder as PackagePageTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\SlotTypeSeeder as PackageSlotTypeSeeder;
+use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController as PackageIconCatalogController;
+use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest as PackageIconCatalogItemUpdateRequest;
 use WebBlocks\Cms\Support\Admin\AdminPagination as PackageAdminPagination;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState as PackageBlockTypeIndexState;
+use WebBlocks\Cms\Support\Icons\IconCatalog as PackageIconCatalog;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer as PackageWebBlocksIconManifestSyncer;
 use WebBlocks\Cms\Support\Media\MediaIndexState as PackageMediaIndexState;
 use WebBlocks\Cms\Support\Pages\PageIndexState as PackagePageIndexState;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -43,6 +53,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/migrations/README.md'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/CoreCatalogSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/IconCatalogSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/PageTypeSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/LayoutTypeSeeder.php'));
@@ -51,14 +62,23 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/stubs/README.md'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Admin/AdminPagination.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/BlockTypes/BlockTypeIndexState.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/IconCatalog.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageIndexState.php'));
+        $this->assertFileExists(base_path('database/seeders/CoreCatalogSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/IconCatalogSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/PageTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/LayoutTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/SlotTypeSeeder.php'));
         $this->assertFileExists(base_path('app/Support/Admin/AdminPagination.php'));
         $this->assertFileExists(base_path('app/Support/BlockTypes/BlockTypeIndexState.php'));
+        $this->assertFileExists(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileExists(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
+        $this->assertFileExists(base_path('app/Support/Icons/IconCatalog.php'));
+        $this->assertFileExists(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(base_path('app/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('app/Support/Pages/PageIndexState.php'));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
@@ -75,6 +95,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFalse(view()->exists('diagnostics.package-status'));
         $this->assertTrue(view()->exists('welcome'));
         $this->assertSame([], config('webblocks-cms', []));
+        $this->assertSame('fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
+        $this->assertSame('fklavyenet/webblocks-cms-starter', WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME);
+        $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);
+        $this->assertSame('composer update fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND);
     }
 
     #[Test]
@@ -229,23 +253,33 @@ class PackageServiceProviderBootstrapTest extends TestCase
     }
 
     #[Test]
-    public function low_risk_package_seeders_and_runtime_support_classes_keep_root_compatibility_entrypoints(): void
+    public function package_seeders_and_runtime_support_classes_keep_root_compatibility_entrypoints(): void
     {
+        $this->assertTrue(class_exists(PackageCoreCatalogSeeder::class));
         $this->assertTrue(class_exists(PackageIconCatalogSeeder::class));
         $this->assertTrue(class_exists(PackagePageTypeSeeder::class));
         $this->assertTrue(class_exists(PackageLayoutTypeSeeder::class));
         $this->assertTrue(class_exists(PackageSlotTypeSeeder::class));
         $this->assertTrue(class_exists(PackageAdminPagination::class));
         $this->assertTrue(class_exists(PackageBlockTypeIndexState::class));
+        $this->assertTrue(class_exists(PackageIconCatalogController::class));
+        $this->assertTrue(class_exists(PackageIconCatalogItemUpdateRequest::class));
+        $this->assertTrue(class_exists(PackageIconCatalog::class));
+        $this->assertTrue(class_exists(PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(class_exists(PackageMediaIndexState::class));
         $this->assertTrue(class_exists(PackagePageIndexState::class));
 
+        $this->assertTrue(is_subclass_of(CoreCatalogSeeder::class, PackageCoreCatalogSeeder::class));
         $this->assertTrue(is_subclass_of(IconCatalogSeeder::class, PackageIconCatalogSeeder::class));
         $this->assertTrue(is_subclass_of(PageTypeSeeder::class, PackagePageTypeSeeder::class));
         $this->assertTrue(is_subclass_of(LayoutTypeSeeder::class, PackageLayoutTypeSeeder::class));
         $this->assertTrue(is_subclass_of(SlotTypeSeeder::class, PackageSlotTypeSeeder::class));
         $this->assertTrue(is_subclass_of(AdminPagination::class, PackageAdminPagination::class));
         $this->assertTrue(is_subclass_of(BlockTypeIndexState::class, PackageBlockTypeIndexState::class));
+        $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
+        $this->assertTrue(is_subclass_of(IconCatalogItemUpdateRequest::class, PackageIconCatalogItemUpdateRequest::class));
+        $this->assertTrue(is_subclass_of(IconCatalog::class, PackageIconCatalog::class));
+        $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(is_subclass_of(MediaIndexState::class, PackageMediaIndexState::class));
         $this->assertTrue(is_subclass_of(PageIndexState::class, PackagePageIndexState::class));
     }

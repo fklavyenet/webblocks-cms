@@ -199,11 +199,12 @@ Current blockers for higher-risk groups:
 
 Move clearly package-owned config, routes, views, migrations, seeders, public assets, and stubs into package-level Laravel resource folders. Introduce package load and publish behavior incrementally instead of all at once.
 
-The first safe Phase 3 seeder slice is now active for low-risk catalog seeders only:
+The current Phase 3 seeder slice now covers the package-owned catalog seeder boundary plus its package-owned aggregator:
 
-- package-owned now: `IconCatalogSeeder`, `PageTypeSeeder`, `LayoutTypeSeeder`, `SlotTypeSeeder` under `packages/webblocks-cms/database/seeders/`
+- package-owned now: `CoreCatalogSeeder`, `IconCatalogSeeder`, `PageTypeSeeder`, `LayoutTypeSeeder`, `SlotTypeSeeder` under `packages/webblocks-cms/database/seeders/`
 - root compatibility entrypoints remain in `database/seeders/` so existing installs, tests, and current runtime or update entrypoints can keep calling `Database\Seeders\...`
-- still root-owned for now: `CoreCatalogSeeder`, `PageLayoutSeeder`, `BlockTypeSeeder`, `DatabaseSeeder`, and active System Update post-install commands
+- the package-owned `CoreCatalogSeeder` remains only an ownership move: it still delegates to root-owned `PageLayoutSeeder` and `BlockTypeSeeder`, and current root `DatabaseSeeder` plus update entrypoints still call the root compatibility wrapper
+- still root-owned for now: `PageLayoutSeeder`, `BlockTypeSeeder`, `DatabaseSeeder`, and active System Update post-install commands
 - package seeder ownership in this phase is about namespace and boundary migration only, not about changing current root update authority
 
 ## Next Phase: Package Resource Boundary
@@ -323,6 +324,8 @@ Why these slices stay guarded
 - Package migrations should stay non-authoritative until real package-owned migrations exist and their ownership is intentionally moved.
 - When migration ownership begins, prefer package loading for CMS-owned migration files and explicit publish guidance only where install-local customization is truly needed.
 - Do not mix migration-boundary work with unrelated runtime refactors.
+- Root `database/migrations/` remains the compatibility and authority layer for current installs. Future package migrations must be additive to that compatibility story rather than an implicit replacement.
+- `PageLayoutSeeder` and `BlockTypeSeeder` remain root-owned for now because they still cross page-layout catalog, block-type sync, and broader Pages or Blocks runtime boundaries. `DatabaseSeeder` also remains root-owned as the active install entrypoint and installed-version writer.
 
 ### Package Route Ownership Strategy
 
@@ -331,6 +334,8 @@ Why these slices stay guarded
 - Route moves must be grouped by runtime concern and verified against middleware, bindings, and admin or public behavior.
 - The `v1.31.64` pilot adds only one guarded package diagnostic route file and does not make package routes authoritative for active runtime.
 - Admin or public route migration still requires a dedicated route ownership phase plus a compatibility plan for names, paths, middleware, and downstream install expectations.
+- The current guarded diagnostics, admin status, and public status slices are intentionally the only package-owned route files that participate in runtime wiring, and each stays isolated on reserved paths so existing CMS admin and public route trees remain untouched.
+- Root `routes/*.php` remains the compatibility layer for the installed CMS outside those reserved package-only guarded paths.
 
 ### Package View And Resource Ownership Strategy
 
@@ -338,6 +343,8 @@ Why these slices stay guarded
 - Root `resources/views` remains authoritative until a view is intentionally moved and the package loader becomes the intended source for that view.
 - View moves should avoid mixing admin runtime changes with packaging-only work unless explicitly audited together.
 - The current pilot safely registers the `webblocks-cms` view namespace as a reserved boundary so future package-owned views can be introduced deliberately without changing current root view resolution first.
+- The current package-owned view surface is intentionally limited to one internal diagnostic view plus the guarded admin and public status slice views. Those views prove namespace ownership only and do not replace existing CMS admin or public view trees.
+- Root views remain the compatibility path for active CMS rendering outside the `webblocks-cms::` namespace and the reserved guarded runtime slices.
 
 ### Package Public Asset Publish Or Sync Strategy
 
@@ -345,11 +352,14 @@ Why these slices stay guarded
 - Transition work should distinguish CMS-owned package assets from install-owned `public/site/...` overrides.
 - Asset publishing or sync should happen only when real package assets exist and the update flow clearly defines when publishing is required.
 - Current publish intent remains package-tagged and explicit. No package public assets are authoritative in `v1.31.62`, and no publish step runs unless a developer intentionally invokes `vendor:publish`.
+- Current root `public/cms/...` assets remain authoritative for CMS-owned assets, while install-owned `public/site/...` assets remain authoritative for per-site overrides.
+- WebBlocks UI CDN pinning and the default icon manifest sync source remain unchanged in this phase.
 
 ### Package Stubs Strategy
 
 - Package `stubs/` should be reserved for reusable generated-file templates that belong to CMS product behavior.
 - Install-specific or project-specific scaffolding should not move into CMS package stubs by default.
+- Future starter-oriented stubs may live here, but current installer behavior and root project scaffolding remain authoritative until a dedicated starter phase intentionally adopts them.
 
 ### Package Publish Tag Intent
 
@@ -364,6 +374,29 @@ Why these slices stay guarded
 - Expected post-update steps may later include migrations, block type sync, cache clear, or asset publish or sync, but only when those package-owned resources become real and intentionally wired.
 - This documentation checkpoint does not change current System Update behavior.
 - The `v1.31.65` boundary-completion checkpoint keeps this as a target note only. Current root Composer behavior and runtime update flow still remain authoritative until the first real package-owned runtime slice exists.
+
+Target install flow once the package-starter split is ready:
+
+- `composer require fklavyenet/webblocks-cms`
+- install-level Laravel root remains responsible for `.env`, root `composer.json`, `storage/`, install-owned config overrides, and any install-specific `project/` customizations that still exist during the transition
+- package discovery should load `WebBlocks\Cms\WebBlocksCmsServiceProvider`
+- package diagnostics such as `webblocks:package-status` should confirm package readiness without mutating state
+
+Target update flow once Composer-managed package updates become authoritative:
+
+- `composer update fklavyenet/webblocks-cms`
+- run migrations
+- run catalog synchronization where needed
+- run `block-types:sync-core`
+- clear caches where needed
+- publish or sync package assets only when real package assets require it
+- run package diagnostics such as `webblocks:package-status`
+- synchronize installed-version state only when the update corresponds to a real release boundary
+
+Current compatibility rule:
+
+- today, those install and update flow notes are target-state documentation only
+- current root Composer behavior, installer behavior, and in-app System Update behavior remain authoritative until a later dedicated update-flow phase intentionally changes them
 
 ### Future Starter Project Split Direction
 
@@ -397,6 +430,7 @@ The current checkpoint adds only boundary-readiness groundwork for that future s
 - more CMS-owned seeders now live under the package instead of the root app namespace
 - more low-risk runtime support helpers now live under package `src/Support/`
 - root compatibility wrappers remain in place so existing installs do not need an immediate namespace rewrite
+- package composer metadata, provider discovery, path-repository development wiring, and documented target `composer require` or `composer update` flow now form the starter-foundation readiness baseline
 
 ### Existing-Install Migration Guidance
 
@@ -479,8 +513,17 @@ The next low-risk runtime support checkpoint is now also complete for four narro
 The first package-owned seeder boundary move is now also complete for low-risk catalogs:
 
 - package-owned now: `IconCatalogSeeder`, `PageTypeSeeder`, `LayoutTypeSeeder`, `SlotTypeSeeder`
+- package-owned now also: `CoreCatalogSeeder` as the catalog aggregator boundary move
 - root `Database\Seeders\...` classes remain as compatibility wrappers
-- `CoreCatalogSeeder`, `PageLayoutSeeder`, `BlockTypeSeeder`, and active System Update seeding remain root-owned until a later focused phase
+- `CoreCatalogSeeder` still keeps root entrypoints stable by delegating through the root wrapper while continuing to call root-owned `PageLayoutSeeder` and `BlockTypeSeeder`
+- `PageLayoutSeeder`, `BlockTypeSeeder`, and active System Update seeding remain root-owned until a later focused phase
+
+The next isolated package-owned runtime batch is now also complete for icon catalog management:
+
+- package-owned now: `IconCatalogController`, `IconCatalogItemUpdateRequest`, `IconCatalog`, and `WebBlocksIconManifestSyncer`
+- root `App\Http\Controllers\Admin\IconCatalogController`, `App\Http\Requests\Admin\IconCatalogItemUpdateRequest`, and `App\Support\Icons\...` classes remain as compatibility wrappers so existing routes, commands, views, and request imports continue to resolve unchanged
+- this batch stays within the icon catalog admin and sync concern only and intentionally does not move broader Pages, Blocks, Search indexing, Sites, Updates, Install, Backup or Restore, Export or Import, or public rendering runtime ownership
+- `webblocks:package-status` now reports both the package-owned icon runtime files and the matching root compatibility wrappers as part of the read-only transition diagnostic
 
 The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
 

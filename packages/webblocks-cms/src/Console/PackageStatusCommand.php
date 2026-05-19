@@ -42,7 +42,17 @@ class PackageStatusCommand extends Command
         $stubFiles = $this->resourceFiles($packageRoot.'/stubs');
         $shouldCheckView = (bool) $this->option('view-check');
 
-        $this->line('Package: fklavyenet/webblocks-cms');
+        $providerDiscoveryPresent = $this->composerProviderDiscoveryPresent($packageComposer, WebBlocksCmsServiceProvider::class);
+        $packageComposerNamePresent = $this->composerPackageNamePresent(
+            $packageComposer,
+            WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME
+        );
+        $rootDevPathDependencyPresent = $this->rootComposerDependencyPresent(
+            $rootComposer,
+            WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME
+        );
+
+        $this->line('Package: '.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
         $this->line('Mode: read-only diagnostic only');
         $this->newLine();
 
@@ -64,6 +74,10 @@ class PackageStatusCommand extends Command
 
         $this->line('Package routes path present: '.$this->yesNo(is_dir($packageRoot.'/routes')));
         $this->line('Package route files status: '.$this->resourceStatus($routeFiles));
+        $this->line('Package route Composer readiness: '.$this->yesNo($providerDiscoveryPresent && $this->expectedFilesPresent(
+            $packageRoot.'/routes',
+            WebBlocksCmsServiceProvider::PACKAGE_ROUTE_FILES
+        )).' (provider discovery plus guarded route files)');
         $this->line('Expected package diagnostic route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$diagnosticRouteFile)).' ('.$diagnosticRouteFile.')');
         $this->line('Package diagnostic route loading guard enabled: '.$this->yesNo($this->diagnosticRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package diagnostic route loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($diagnosticRouteName, $diagnosticRoutePath)).' ('.$diagnosticRouteName.' at '.$diagnosticRoutePath.')');
@@ -74,19 +88,27 @@ class PackageStatusCommand extends Command
         $this->line('Package public slice loading guard enabled: '.$this->yesNo($this->packagePublicRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package public slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($publicRouteName, $publicRoutePath)).' ('.$publicRouteName.' at '.$publicRoutePath.')');
         $this->line('Active runtime route loading remains root-authoritative: yes');
+        $this->line('Root route compatibility state: root routes remain authoritative outside reserved package paths.');
         $this->line('Package resources/views path present: '.$this->yesNo(is_dir($packageRoot.'/resources/views')));
         $this->line('Package view files status: '.$this->resourceStatus($viewFiles));
+        $this->line('Package view Composer readiness: '.$this->yesNo($providerDiscoveryPresent && $this->expectedFilesPresent(
+            $packageRoot.'/resources/views',
+            WebBlocksCmsServiceProvider::PACKAGE_VIEW_FILES
+        )).' (provider discovery plus package view namespace)');
         $this->line('Package admin slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status)');
         $this->line('Package public slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status)');
+        $this->line('Root view compatibility state: root views remain authoritative outside the package namespace.');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
         $this->line('Package migration loading guard enabled: '.$this->yesNo($this->packageMigrationLoadingEnabled()).' ('.$packageMigrationLoadingConfig.')');
         $this->line('Package migrations loaded in active runtime: no');
+        $this->line('Legacy root migration compatibility state: yes (root database/migrations remains authoritative).');
+        $this->line('Future package migration Composer readiness: reserved boundary only (no schema-changing package migrations are active yet).');
         $this->line('Package database/seeders path present: '.$this->yesNo(is_dir($packageRoot.'/database/seeders')));
         $this->line('Package seeder boundary status: '.$this->resourceBoundaryStatus($seederFiles));
         $this->line('Package seeder files status: '.$this->resourceStatus($seederFiles));
-        $this->line('Package low-risk catalog seeders present: '.$this->expectedFilesStatus(
+        $this->line('Package catalog seeders present: '.$this->expectedFilesStatus(
             $packageRoot.'/database/seeders',
             WebBlocksCmsServiceProvider::PACKAGE_SEEDER_FILES
         ));
@@ -98,10 +120,13 @@ class PackageStatusCommand extends Command
         $this->line('Package public asset boundary status: '.$this->resourceBoundaryStatus($publicFiles));
         $this->line('Package public assets status: '.$this->resourceStatus($publicFiles));
         $this->line('Package public asset publish readiness: no (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' remains inert until real package assets exist)');
+        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain authoritative).');
+        $this->line('Future package public asset Composer readiness: reserved boundary only (current WebBlocks UI CDN pinning and root asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
         $this->line('Package stub publish readiness: no (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' remains inert until real package stubs exist)');
+        $this->line('Starter stub readiness: reserved only (no publishable starter stubs are intentionally shipped yet).');
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
         $this->line('Package diagnostic view exists: '.$this->yesNo(view()->exists($namespacedDiagnosticView)).' ('.$namespacedDiagnosticView.')');
@@ -113,13 +138,27 @@ class PackageStatusCommand extends Command
             base_path('app/Support'),
             WebBlocksCmsServiceProvider::LOW_RISK_RUNTIME_SUPPORT_FILES
         ));
+        $this->line('Package icon runtime moves present: '.$this->expectedFilesStatus(
+            $packageRoot.'/src',
+            WebBlocksCmsServiceProvider::ICON_RUNTIME_FILES
+        ));
+        $this->line('Root icon runtime compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('app'),
+            WebBlocksCmsServiceProvider::ICON_RUNTIME_FILES
+        ));
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
             $namespacedDiagnosticView,
             $packageRoot
         ));
+        $this->line('Package Composer package name present: '.$this->yesNo($packageComposerNamePresent).' ('.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME.')');
+        $this->line('Package Composer provider discovery present: '.$this->yesNo($providerDiscoveryPresent).' ('.WebBlocksCmsServiceProvider::class.')');
         $this->line('Package Composer seeder autoload present: '.$this->yesNo($this->composerSeederAutoloadPresent($packageComposer)).' (WebBlocks\\Cms\\Database\\Seeders\\)');
+        $this->line('Root Composer development path dependency present: '.$this->yesNo($rootDevPathDependencyPresent).' ('.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME.')');
         $this->line('Root Composer path repository present: '.$this->yesNo($this->pathRepositoryPresent($rootComposer, 'packages/webblocks-cms')).' (packages/webblocks-cms)');
+        $this->line('Target Composer install flow: '.WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND.' (future starter or package-consumer target only; current root install flow remains authoritative).');
+        $this->line('Target Composer update flow: '.WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND.' followed by migrations, catalog sync, block-types:sync-core, cache clear, asset publish or sync when needed, package diagnostics, and installed-version sync when release state is real.');
+        $this->line('Starter foundation readiness: partial (package metadata, provider discovery, path-repository development wiring, and documented target install or update flow are present; '.WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME.' is intentionally not created yet).');
         $this->line('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.');
         $this->newLine();
 
@@ -218,10 +257,7 @@ class PackageStatusCommand extends Command
      */
     protected function expectedFilesStatus(string $basePath, array $expectedFiles): string
     {
-        $missingFiles = array_values(array_filter(
-            $expectedFiles,
-            fn (string $file): bool => ! is_file($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file))
-        ));
+        $missingFiles = $this->missingExpectedFiles($basePath, $expectedFiles);
 
         if ($missingFiles !== []) {
             return 'no (missing '.implode(', ', $missingFiles).')';
@@ -238,10 +274,7 @@ class PackageStatusCommand extends Command
      */
     protected function rootCompatibilityFilesStatus(string $basePath, array $expectedFiles): string
     {
-        $missingFiles = array_values(array_filter(
-            $expectedFiles,
-            fn (string $file): bool => ! is_file($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file))
-        ));
+        $missingFiles = $this->missingExpectedFiles($basePath, $expectedFiles);
 
         if ($missingFiles !== []) {
             return 'no (missing '.implode(', ', $missingFiles).')';
@@ -253,6 +286,42 @@ class PackageStatusCommand extends Command
     protected function composerSeederAutoloadPresent(array $composer): bool
     {
         return ($composer['autoload']['psr-4']['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) === 'database/seeders/';
+    }
+
+    protected function composerPackageNamePresent(array $composer, string $packageName): bool
+    {
+        return ($composer['name'] ?? null) === $packageName;
+    }
+
+    protected function composerProviderDiscoveryPresent(array $composer, string $providerClass): bool
+    {
+        return in_array($providerClass, $composer['extra']['laravel']['providers'] ?? [], true);
+    }
+
+    protected function rootComposerDependencyPresent(array $composer, string $packageName): bool
+    {
+        return array_key_exists($packageName, $composer['require'] ?? [])
+            || array_key_exists($packageName, $composer['require-dev'] ?? []);
+    }
+
+    /**
+     * @param  array<int, string>  $expectedFiles
+     * @return array<int, string>
+     */
+    protected function missingExpectedFiles(string $basePath, array $expectedFiles): array
+    {
+        return array_values(array_filter(
+            $expectedFiles,
+            fn (string $file): bool => ! is_file($basePath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $file))
+        ));
+    }
+
+    /**
+     * @param  array<int, string>  $expectedFiles
+     */
+    protected function expectedFilesPresent(string $basePath, array $expectedFiles): bool
+    {
+        return $this->missingExpectedFiles($basePath, $expectedFiles) === [];
     }
 
     protected function pathRepositoryPresent(array $composer, string $path): bool

@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## 1.32.1
+
+- Continue the package seeder boundary by moving `CoreCatalogSeeder` into `packages/webblocks-cms/database/seeders/` while keeping root `Database\Seeders\CoreCatalogSeeder` as the compatibility entrypoint for existing installs, tests, and current root seeding flows.
+- Extend the read-only `webblocks:package-status` command plus focused provider coverage so they report package-owned `CoreCatalogSeeder` presence alongside the existing package catalog seeders and confirm the root compatibility wrapper remains in place.
+- Continue the first package-owned runtime migration with the isolated icon catalog management batch by moving `IconCatalogController`, `IconCatalogItemUpdateRequest`, `IconCatalog`, and `WebBlocksIconManifestSyncer` into `packages/webblocks-cms/src/` while keeping root `App\...` classes as compatibility wrappers for existing routes, commands, requests, and views.
+- Extend the read-only `webblocks:package-status` command plus focused provider coverage so they report the package-owned icon runtime batch and confirm the root compatibility wrappers remain in place.
+- Refine package resource-ownership documentation around guarded route and view slices, legacy root migrations, reserved package public assets and stubs, and the compatibility rule that current root routes, views, migrations, assets, installer flow, and System Update behavior remain authoritative outside intentionally moved package boundaries.
+- Extend the read-only `webblocks:package-status` command so it also reports route and view Composer readiness, root compatibility state for routes, views, migrations, and assets, package Composer metadata and provider discovery readiness, target Composer install and update flow notes, and starter-foundation readiness without mutating runtime or install state.
+
 ## 1.32.0
 
 - Start Runtime Migration Phases 1-2 by moving the guarded package diagnostics runtime slice to a package-owned controller under `packages/webblocks-cms/src/Http/Controllers/Diagnostics/`, wiring the package diagnostic route file to that handler, and rendering the existing package diagnostic view while keeping diagnostics route loading off by default behind the explicit package guard.

@@ -48,7 +48,20 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'webblocks-updates.php',
     ];
 
+    public const PACKAGE_ROUTE_FILES = [
+        'admin.php',
+        'diagnostics.php',
+        'public.php',
+    ];
+
+    public const PACKAGE_VIEW_FILES = [
+        'admin/runtime-status.blade.php',
+        'diagnostics/package-status.blade.php',
+        'public/runtime-status.blade.php',
+    ];
+
     public const PACKAGE_SEEDER_FILES = [
+        'CoreCatalogSeeder.php',
         'IconCatalogSeeder.php',
         'PageTypeSeeder.php',
         'LayoutTypeSeeder.php',
@@ -62,11 +75,26 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'Pages/PageIndexState.php',
     ];
 
+    public const ICON_RUNTIME_FILES = [
+        'Http/Controllers/Admin/IconCatalogController.php',
+        'Http/Requests/Admin/IconCatalogItemUpdateRequest.php',
+        'Support/Icons/IconCatalog.php',
+        'Support/Icons/WebBlocksIconManifestSyncer.php',
+    ];
+
     public const CONFIG_PUBLISH_TAG = 'webblocks-cms-config';
 
     public const ASSETS_PUBLISH_TAG = 'webblocks-cms-assets';
 
     public const STUBS_PUBLISH_TAG = 'webblocks-cms-stubs';
+
+    public const PACKAGE_COMPOSER_NAME = 'fklavyenet/webblocks-cms';
+
+    public const STARTER_PACKAGE_NAME = 'fklavyenet/webblocks-cms-starter';
+
+    public const TARGET_INSTALL_COMMAND = 'composer require fklavyenet/webblocks-cms';
+
+    public const TARGET_UPDATE_COMMAND = 'composer update fklavyenet/webblocks-cms';
 
     public function register(): void
     {

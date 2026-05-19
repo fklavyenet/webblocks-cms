@@ -7,3 +7,4 @@ During the boundary pilot phase:
 - package stub publishing remains inert until reusable package-owned stubs are intentionally introduced
 - install-specific scaffolding remains outside the CMS package
 - no active runtime behavior depends on this directory yet
+- a future starter may consume package-owned stubs, but current installer behavior and root project scaffolding remain authoritative
