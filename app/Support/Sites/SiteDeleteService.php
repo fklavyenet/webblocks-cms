@@ -19,6 +19,7 @@ use App\Models\Site;
 use App\Models\SiteLocale;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 class SiteDeleteService
@@ -164,7 +165,7 @@ class SiteDeleteService
             + BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->count()
             + BlockImageTranslation::query()->whereIn('block_id', $blockIds)->count()
             + BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->count()
-            + BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->count();
+            + $this->blockGalleryItemTranslationCount($blockIds);
     }
 
     private function contactMessageCount(Collection $pageIds, Collection $blockIds): int
@@ -200,7 +201,9 @@ class SiteDeleteService
         PageRevision::query()->where('site_id', $site->id)->delete();
 
         if ($blockIds->isNotEmpty()) {
-            BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->delete();
+            if ($this->hasBlockGalleryItemTranslationsTable()) {
+                BlockGalleryItemTranslation::query()->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))->delete();
+            }
             BlockAsset::query()->whereIn('block_id', $blockIds)->delete();
             BlockButtonTranslation::query()->whereIn('block_id', $blockIds)->delete();
             BlockContactFormTranslation::query()->whereIn('block_id', $blockIds)->delete();
@@ -217,5 +220,21 @@ class SiteDeleteService
 
         NavigationItem::query()->where('site_id', $site->id)->delete();
         SiteLocale::query()->where('site_id', $site->id)->delete();
+    }
+
+    private function blockGalleryItemTranslationCount(Collection $blockIds): int
+    {
+        if ($blockIds->isEmpty() || ! $this->hasBlockGalleryItemTranslationsTable()) {
+            return 0;
+        }
+
+        return BlockGalleryItemTranslation::query()
+            ->whereIn('block_media_id', BlockAsset::query()->whereIn('block_id', $blockIds)->select('id'))
+            ->count();
+    }
+
+    private function hasBlockGalleryItemTranslationsTable(): bool
+    {
+        return Schema::hasTable('block_gallery_item_translations');
     }
 }

@@ -17,6 +17,7 @@ use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -101,6 +102,19 @@ class SiteLocaleManagementTest extends TestCase
         foreach ($sourcePages as $sourcePage) {
             $pagesIndexResponse->assertDontSee($sourcePage->slug);
         }
+    }
+
+    #[Test]
+    public function sites_index_still_loads_when_block_gallery_item_translations_table_is_missing(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        Schema::dropIfExists('block_gallery_item_translations');
+
+        $response = $this->actingAs($user)->get(route('admin.sites.index'));
+
+        $response->assertOk();
+        $response->assertSee('Sites');
     }
 
     #[Test]
