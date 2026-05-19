@@ -1,3 +1,1 @@
-<div class="wb-text-sm wb-text-muted">
-    No public settings are available for this block yet.
-</div>
+@include('webblocks-cms::admin.blocks.settings.fallback', get_defined_vars())

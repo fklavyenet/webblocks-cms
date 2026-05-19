@@ -28,6 +28,10 @@
 - Document the partial model authority boundary honestly: root migrations remain authoritative, System Update and install flow remain unchanged, runtime asset URLs still use root `public/cms/...` compatibility paths, and consumer or starter validation remains blocked by the remaining root-owned page or block model surface.
 - Move the `Page`, `PageTranslation`, `PageSlot`, and `Block` model core into package `src/Models/` while keeping root `App\Models\...` wrappers as compatibility entrypoints.
 - Update package-owned runtime typing, package status output, and focused bootstrap coverage so the package model foundation now includes the full page and block core while root migrations, root asset paths, System Update, and the app-owned `User` model remain unchanged.
+- Move the active admin runtime for Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts into `packages/webblocks-cms`, including the package-authoritative controllers, form requests, support services, and admin view trees that now back those routes.
+- Keep root `App\...` classes and root `resources/views/admin/...` files as compatibility wrappers for the moved admin slices so existing imports, route references, and downstream overrides do not break during the transition.
+- Extend package bootstrap and package-status coverage for the larger admin runtime boundary, and keep the one root rich-text editor partial concrete because compatibility checks still read that root Blade file directly instead of resolving it through the package view namespace.
+- Refine the package architecture documentation so it now describes the broader admin runtime authority honestly: the editorial admin surfaces above are package-owned, while Sites, Users, System, install flow, migrations, root runtime assets, and System Update remain root-authoritative blockers.
 
 ## 1.32.1
 

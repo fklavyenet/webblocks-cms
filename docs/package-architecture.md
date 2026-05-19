@@ -561,6 +561,19 @@ The next isolated package-owned runtime batch is now also complete for icon cata
 - this batch stays within the icon catalog admin and sync concern only and intentionally does not move broader Pages, Blocks, Search indexing, Sites, Updates, Install, Backup or Restore, Export or Import, or public rendering runtime ownership
 - `webblocks:package-status` now reports both the package-owned icon runtime files and the matching root compatibility wrappers as part of the read-only transition diagnostic
 
+The next larger admin runtime extraction batch is now also complete for the core editorial and catalog management surfaces:
+
+- package `routes/admin.php` is now authoritative not just for icon catalog management but also for the active Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts admin route handlers
+- package-owned now: the authoritative admin controllers for those slices under `packages/webblocks-cms/src/Http/Controllers/Admin/`
+- package-owned now: the authoritative admin form requests for those slices under `packages/webblocks-cms/src/Http/Requests/Admin/`
+- package-owned now: the supporting block, media, navigation, page, page-layout, and shared-slot services under `packages/webblocks-cms/src/Support/`
+- package-owned now: the active admin Blade trees under `packages/webblocks-cms/resources/views/admin/blocks/`, `admin/media/`, `admin/navigation/`, `admin/block-types/`, `admin/pages/`, `admin/shared-slots/`, `admin/page-layouts/`, and `admin/page-layout-slots/`
+- root `App\Http\Controllers\Admin\...`, `App\Http\Requests\Admin\...`, and `App\Support\...` classes for those moved slices remain as thin compatibility wrappers extending the package classes
+- root `resources/views/admin/...` files for those moved trees now remain as compatibility wrappers that include the matching `webblocks-cms::admin.*` views
+- one exception intentionally remains concrete at the root: `resources/views/admin/blocks/types/partials/rich-text-editor.blade.php` still keeps the real markup because compatibility coverage reads that root file directly instead of resolving it only through the package namespace
+- this batch intentionally does not move Sites, Domains, Variables, Users, contact-message admin, backups, updates, system settings, system search, install flow, migrations, root runtime asset paths, or the app-owned `User` model
+- `webblocks:package-status` plus focused bootstrap coverage now report both the broader package-owned admin runtime files and the matching root compatibility wrappers
+
 The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
 
 Further opportunistic low-risk PHP source moves are now paused. Future runtime-heavy source moves require a dedicated focused phase plan and dependency audit instead of more small opportunistic migrations.
@@ -583,7 +596,8 @@ View boundaries still blocking independent package runtime:
 
 - package public layout, page shell, search shell, search modal, slot-entry views, and shipped public block-renderer partial tree are now authoritative through the `webblocks-cms::` namespace
 - root `resources/views/pages/partials/blocks/*` remains intentionally present as a compatibility wrapper layer so install-specific root block renderers and direct root view references continue to work during the transition
-- root admin rendering is still authoritative for most install screens, especially `admin/pages/*`, `admin/blocks/*`, `admin/shared-slots/*`, `admin/media/*`, `admin/sites/*`, `admin/navigation/*`, `admin/users/*`, `admin/system/*`, `admin/page-layouts/*`, and `admin/block-types/*`
+- package admin rendering is now authoritative for `admin/pages/*`, `admin/blocks/*`, `admin/shared-slots/*`, `admin/media/*`, `admin/navigation/*`, `admin/block-types/*`, `admin/page-layouts/*`, and `admin/page-layout-slots/*` through the `webblocks-cms::` namespace, while matching root Blade files remain as compatibility wrappers
+- root admin rendering remains authoritative for the still-unmoved screens, especially `admin/sites/*`, `admin/users/*`, most of `admin/system/*`, and other install or operations-focused admin areas
 
 Support and service boundaries still blocking independent package runtime:
 
@@ -595,6 +609,7 @@ Support and service boundaries still blocking independent package runtime:
 Requests, commands, assets, migrations, and update-flow blockers:
 
 - many admin Form Requests can move later with root wrappers once the owning page, block, shared-slot, media, site, and navigation batches move
+- many editorial admin Form Requests have now already moved with root wrappers, but system, site portability, update, backup, install, and other operations-oriented requests still remain root-owned
 - package-used update, backup, import, export, promotion, and installer commands should not move yet because they still depend on root environment, filesystem, archive, Composer, migration, and install-state behavior
 - root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
 - root migrations remain authoritative; package migration loading must stay disabled until a later install and update redesign defines how fresh installs and existing installs both migrate safely
@@ -627,7 +642,6 @@ Why this batch is next:
 
 ### Large batches that should wait
 
-- editorial admin batch: Pages plus Blocks plus Shared Slots plus Media picker plus Page Layouts plus Block Types should move later as one tightly coupled admin batch, not as another narrow slice
 - sites and portability batch: Sites plus Domains plus Variables plus Export or Import plus Promotion should wait until after the public rendering layer is clearer
 - migrations, assets, and System Update must remain separate dedicated phases
 

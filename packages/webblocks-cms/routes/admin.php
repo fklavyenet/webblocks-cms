@@ -1,24 +1,8 @@
 <?php
 
-use App\Http\Controllers\Admin\BlockController;
-use App\Http\Controllers\Admin\BlockTypeController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LocaleController;
-use App\Http\Controllers\Admin\MediaController;
-use App\Http\Controllers\Admin\NavigationItemController;
-use App\Http\Controllers\Admin\PageAssetController;
-use App\Http\Controllers\Admin\PageController;
-use App\Http\Controllers\Admin\PageDuplicateController;
-use App\Http\Controllers\Admin\PageImportController;
-use App\Http\Controllers\Admin\PageLayoutController;
-use App\Http\Controllers\Admin\PageLayoutSlotController;
-use App\Http\Controllers\Admin\PageRevisionController;
-use App\Http\Controllers\Admin\PageSiteMoveController;
-use App\Http\Controllers\Admin\PageSlotController;
-use App\Http\Controllers\Admin\PageTranslationController;
-use App\Http\Controllers\Admin\SharedSlotController;
-use App\Http\Controllers\Admin\SharedSlotRevisionController;
 use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SiteDomainController;
 use App\Http\Controllers\Admin\SiteExportController;
@@ -35,8 +19,24 @@ use App\Http\Controllers\Admin\VisitorReportController;
 use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
+use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
+use WebBlocks\Cms\Http\Controllers\Admin\NavigationItemController;
 use WebBlocks\Cms\Http\Controllers\Admin\PackageAdminStatusController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageAssetController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageDuplicateController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageImportController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageLayoutController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageLayoutSlotController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageRevisionController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
+use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
+use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
 
 Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
     ->prefix('admin')

@@ -109,9 +109,17 @@ class PackageStatusCommand extends Command
             $packageRoot.'/resources/views',
             WebBlocksCmsServiceProvider::ICON_VIEW_FILES
         ));
+        $this->line('Package admin runtime views present: '.$this->expectedFilesStatus(
+            $packageRoot.'/resources/views',
+            WebBlocksCmsServiceProvider::ADMIN_RUNTIME_VIEW_FILES
+        ));
         $this->line('Root icon catalog view compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
             resource_path('views'),
             WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
+        ));
+        $this->line('Root admin runtime view compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            resource_path('views'),
+            WebBlocksCmsServiceProvider::ROOT_ADMIN_RUNTIME_VIEW_WRAPPER_FILES
         ));
         $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
         $this->line('Package public block renderer partials present: '.$this->directoryResourceStatus(
@@ -198,9 +206,17 @@ class PackageStatusCommand extends Command
             $packageRoot.'/src',
             WebBlocksCmsServiceProvider::ICON_RUNTIME_FILES
         ));
+        $this->line('Package admin runtime moves present: '.$this->expectedFilesStatus(
+            $packageRoot.'/src',
+            WebBlocksCmsServiceProvider::ADMIN_RUNTIME_FILES
+        ));
         $this->line('Root icon runtime compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
             base_path('app'),
             WebBlocksCmsServiceProvider::ROOT_ICON_RUNTIME_WRAPPER_FILES
+        ));
+        $this->line('Root admin runtime compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('app'),
+            WebBlocksCmsServiceProvider::ROOT_ADMIN_RUNTIME_WRAPPER_FILES
         ));
         $this->line('Package public rendering support moves present: '.$this->expectedFilesStatus(
             $packageRoot.'/src',
@@ -224,6 +240,7 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME,
             'WebBlocks\\Cms\\Http\\Controllers\\Admin\\IconCatalogController'
         )).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.' uses the package controller directly)');
+        $this->line('Core admin runtime package authority state: yes (Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts now execute from package controllers, requests, support classes, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
         $this->line('Icon catalog sync command package authority state: '.$this->yesNo($this->syncCommandUsesPackageImplementation()).' ('.WebBlocksCmsServiceProvider::ICON_SYNC_COMMAND_NAME.' is registered by the package provider with the package command)');
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
