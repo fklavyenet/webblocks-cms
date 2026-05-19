@@ -218,6 +218,9 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - `.editorconfig` and `pint.json` define the repository formatting standards.
 - PHP files use 2-space indentation in this repository.
 - `ddev composer format:test` checks Pint formatting and runs `scripts/check-php-indentation.php`, while `ddev composer format` applies Pint fixes.
+- Package transition controls live in package `config/webblocks-cms.php`: diagnostics, public status routes, admin status routes, and package migration loading stay disabled by default, while package admin route loading is enabled so package-owned admin routes such as the icon catalog can be authoritative.
+- During the icon catalog package transition, active admin routes, `icons:sync-webblocks-ui`, and the icon catalog admin views now use package-owned controller, command, and Blade resources directly. Root icon catalog classes and views remain as compatibility wrappers for existing imports or direct view references.
+- Package public assets and starter stubs now have real publishable package resources. Use `webblocks-cms-assets` for package assets and `webblocks-cms-stubs` for starter stubs; root `public/cms`, root migrations, and current System Update behavior remain compatibility-authoritative until a dedicated install/update release flow replaces them.
 - The indentation guard currently provides targeted enforcement until the historical PHP 4-space indentation drift is cleaned up in a dedicated baseline change.
 - Repository-wide Pint cleanup is still a separate baseline task because the current codebase has historical formatting drift.
 - [Installation](docs/installation.md)

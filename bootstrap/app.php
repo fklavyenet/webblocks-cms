@@ -13,7 +13,6 @@ use App\Console\Commands\SitePromotionApplyCommand;
 use App\Console\Commands\SitePromotionDryRunCommand;
 use App\Console\Commands\SitePromotionInspectCommand;
 use App\Console\Commands\SyncCoreBlockTypesCommand;
-use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Console\Commands\SystemBackupRestoreCommand;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\RedirectIfNotInstalled;
@@ -63,7 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ResetPrimitiveBlocksCommand::class,
         SearchRebuildCommand::class,
         SyncCoreBlockTypesCommand::class,
-        SyncWebBlocksUiIconsCommand::class,
         SiteExportCommand::class,
         SiteImportCommand::class,
         SiteCloneCommand::class,

@@ -4,7 +4,6 @@ use App\Http\Controllers\Admin\BlockController;
 use App\Http\Controllers\Admin\BlockTypeController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\IconCatalogController;
 use App\Http\Controllers\Admin\LocaleController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NavigationItemController;
@@ -190,8 +189,6 @@ Route::middleware(['install.required', 'auth', 'admin.access'])->prefix('admin')
         Route::post('sites/promote/apply', [SitePromotionController::class, 'apply'])->name('sites.promote.apply');
         Route::get('sites/{site}/delete', [SiteController::class, 'deleteConfirm'])->name('sites.delete');
         Route::get('domains', [SiteDomainController::class, 'landing'])->name('domains.index');
-        Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');
-        Route::put('system/icons/{iconCatalogItem}', [IconCatalogController::class, 'update'])->name('system.icons.update');
         Route::get('sites/{site}/domains', [SiteDomainController::class, 'index'])->name('sites.domains.index');
         Route::post('sites/{site}/domains', [SiteDomainController::class, 'store'])->name('sites.domains.store');
         Route::put('sites/{site}/domains/{domain}', [SiteDomainController::class, 'update'])->name('sites.domains.update');

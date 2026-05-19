@@ -1,10 +1,10 @@
-# Reserved Package Stubs
+# Package Stubs
 
-This directory is the reserved package boundary for future package-owned WebBlocks CMS stubs.
+This directory is the package boundary for reusable WebBlocks CMS stubs.
 
-During the boundary pilot phase:
+Current transition status:
 
-- package stub publishing remains inert until reusable package-owned stubs are intentionally introduced
-- install-specific scaffolding remains outside the CMS package
-- no active runtime behavior depends on this directory yet
-- a future starter may consume package-owned stubs, but current installer behavior and root project scaffolding remain authoritative
+- `starter/` contains the first package-owned starter-project stubs
+- package stub publishing uses the `webblocks-cms-stubs` tag and publishes to `stubs/vendor/webblocks-cms`
+- install-specific scaffolding still remains outside the CMS package
+- current installer behavior and root project scaffolding remain authoritative until a dedicated starter package adopts these stubs

@@ -1,10 +1,11 @@
-# Reserved Package Public Assets
+# Package Public Assets
 
-This directory is the reserved package boundary for future package-owned WebBlocks CMS public assets.
+This directory is the package boundary for WebBlocks CMS public assets.
 
-During the boundary pilot phase:
+Current transition status:
 
-- active root public assets remain authoritative
-- package asset publishing remains inert unless real package-owned public assets are intentionally introduced later
+- active root `public/cms/...` assets remain the runtime compatibility path
+- `public/cms/package-boundary.json` is the first package-owned publishable asset marker
+- package asset publishing uses the `webblocks-cms-assets` tag and publishes to `public/vendor/webblocks-cms`
 - install-owned `public/site/...` overrides remain outside this package boundary
-- current `public/cms/...` assets and pinned WebBlocks UI CDN runtime behavior remain unchanged until a later focused package asset phase intentionally replaces or publishes CMS-owned package assets
+- pinned WebBlocks UI CDN runtime behavior remains unchanged until a later focused package asset phase moves CMS-owned runtime assets

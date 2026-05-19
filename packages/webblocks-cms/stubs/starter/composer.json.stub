@@ -1,0 +1,12 @@
+{
+  "name": "fklavyenet/webblocks-cms-starter",
+  "type": "project",
+  "description": "Starter project for WebBlocks CMS package-based installs.",
+  "license": "MIT",
+  "require": {
+    "php": "^8.3",
+    "fklavyenet/webblocks-cms": "^1.0"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

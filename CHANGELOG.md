@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+- Add package-owned `webblocks-cms.php` config defaults for diagnostics, admin, public, and migration boundary switches, keeping diagnostics, public status routes, admin status routes, and package migrations disabled by default while enabling package admin route loading for active package-owned admin routes.
+- Extend focused provider and console coverage so `webblocks:package-status` reports the new package config defaults, active package admin route loading, disabled status slices, and the still-disabled migration boundary.
+- Harden the package-owned icon catalog runtime batch by having `webblocks:package-status` and focused bootstrap coverage verify the package-owned active admin route and icon-sync command while root wrappers remain available only for backward-compatible imports.
+- Move the `icons:sync-webblocks-ui` command implementation into package `src/Console/` while keeping the root `App\Console\Commands\SyncWebBlocksUiIconsCommand` class as a compatibility wrapper.
+- Escalate the icon catalog slice from compatibility-wrapper execution to package authority by registering `icons:sync-webblocks-ui` from the package service provider and pointing the active icon catalog admin route at the package controller directly, while leaving root wrappers in place only for backward-compatible imports.
+- Start the Resource Authority phase by moving the active icon catalog admin index and edit-modal views into the package view namespace, updating the package controller to render `webblocks-cms::admin.system.icons.index`, and leaving root Blade files as compatibility wrappers.
+- Move the active icon catalog admin route definitions from root `routes/web.php` into package `routes/admin.php`, making the package route file authoritative for that admin surface while keeping the package admin status route separately disabled by default.
+- Complete the first Install / Update / Starter boundary pass by adding a package-owned public asset marker and starter stubs, making `webblocks-cms-assets` and `webblocks-cms-stubs` publish real package resources while package migrations intentionally remain disabled and root-compatible.
+
 ## 1.32.1
 
 - Continue the package seeder boundary by moving `CoreCatalogSeeder` into `packages/webblocks-cms/database/seeders/` while keeping root `Database\Seeders\CoreCatalogSeeder` as the compatibility entrypoint for existing installs, tests, and current root seeding flows.

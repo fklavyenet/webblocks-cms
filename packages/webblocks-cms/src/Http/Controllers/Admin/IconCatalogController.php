@@ -60,7 +60,7 @@ class IconCatalogController extends Controller
           ? ($icons->getCollection()->firstWhere('id', $requestedIconId) ?? IconCatalogItem::query()->find($requestedIconId))
           : null;
 
-        return view('admin.system.icons.index', [
+        return view('webblocks-cms::admin.system.icons.index', [
             'icons' => $icons,
             'filters' => $filters,
             'sources' => IconCatalogItem::query()->orderBy('source')->distinct()->pluck('source')->all(),

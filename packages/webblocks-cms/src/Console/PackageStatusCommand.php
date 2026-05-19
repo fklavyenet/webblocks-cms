@@ -82,8 +82,12 @@ class PackageStatusCommand extends Command
         $this->line('Package diagnostic route loading guard enabled: '.$this->yesNo($this->diagnosticRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package diagnostic route loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($diagnosticRouteName, $diagnosticRoutePath)).' ('.$diagnosticRouteName.' at '.$diagnosticRoutePath.')');
         $this->line('Expected package admin route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$adminRouteFile)).' ('.$adminRouteFile.')');
-        $this->line('Package admin slice loading guard enabled: '.$this->yesNo($this->packageAdminRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG.')');
+        $this->line('Package admin route file loading enabled: '.$this->yesNo($this->packageAdminRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG.')');
         $this->line('Package admin slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($adminRouteName, $adminRoutePath)).' ('.$adminRouteName.' at '.$adminRoutePath.')');
+        $this->line('Package icon catalog admin routes loaded in active runtime: '.$this->yesNo(
+            app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME) !== null
+            && app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME) !== null
+        ).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.', '.WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME.')');
         $this->line('Expected package public route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$publicRouteFile)).' ('.$publicRouteFile.')');
         $this->line('Package public slice loading guard enabled: '.$this->yesNo($this->packagePublicRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package public slice loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($publicRouteName, $publicRoutePath)).' ('.$publicRouteName.' at '.$publicRoutePath.')');
@@ -97,6 +101,15 @@ class PackageStatusCommand extends Command
         )).' (provider discovery plus package view namespace)');
         $this->line('Package admin slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status)');
         $this->line('Package public slice view exists: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status')).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status)');
+        $this->line('Package icon catalog views present: '.$this->expectedFilesStatus(
+            $packageRoot.'/resources/views',
+            WebBlocksCmsServiceProvider::ICON_VIEW_FILES
+        ));
+        $this->line('Root icon catalog view compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            resource_path('views'),
+            WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
+        ));
+        $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
         $this->line('Root view compatibility state: root views remain authoritative outside the package namespace.');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
@@ -119,14 +132,28 @@ class PackageStatusCommand extends Command
         $this->line('Package public path present: '.$this->yesNo(is_dir($packageRoot.'/public')));
         $this->line('Package public asset boundary status: '.$this->resourceBoundaryStatus($publicFiles));
         $this->line('Package public assets status: '.$this->resourceStatus($publicFiles));
-        $this->line('Package public asset publish readiness: no (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' remains inert until real package assets exist)');
+        $this->line('Package public asset files present: '.$this->expectedFilesStatus(
+            $packageRoot.'/public',
+            WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES
+        ));
+        $this->line('Package public asset publish readiness: '.$this->yesNo($this->expectedFilesPresent(
+            $packageRoot.'/public',
+            WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES
+        )).' (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' publishes package assets to public/vendor/webblocks-cms)');
         $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain authoritative).');
-        $this->line('Future package public asset Composer readiness: reserved boundary only (current WebBlocks UI CDN pinning and root asset flow stay unchanged).');
+        $this->line('Future package public asset Composer readiness: partial (package publishable asset marker exists; current WebBlocks UI CDN pinning and root asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
-        $this->line('Package stub publish readiness: no (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' remains inert until real package stubs exist)');
-        $this->line('Starter stub readiness: reserved only (no publishable starter stubs are intentionally shipped yet).');
+        $this->line('Package starter stubs present: '.$this->expectedFilesStatus(
+            $packageRoot.'/stubs',
+            WebBlocksCmsServiceProvider::PACKAGE_STUB_FILES
+        ));
+        $this->line('Package stub publish readiness: '.$this->yesNo($this->expectedFilesPresent(
+            $packageRoot.'/stubs',
+            WebBlocksCmsServiceProvider::PACKAGE_STUB_FILES
+        )).' (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' publishes starter stubs to stubs/vendor/webblocks-cms)');
+        $this->line('Starter stub readiness: yes (package-owned starter stubs are present; a separate starter package is still intentionally not created here).');
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
         $this->line('Package diagnostic view exists: '.$this->yesNo(view()->exists($namespacedDiagnosticView)).' ('.$namespacedDiagnosticView.')');
@@ -144,8 +171,13 @@ class PackageStatusCommand extends Command
         ));
         $this->line('Root icon runtime compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
             base_path('app'),
-            WebBlocksCmsServiceProvider::ICON_RUNTIME_FILES
+            WebBlocksCmsServiceProvider::ROOT_ICON_RUNTIME_WRAPPER_FILES
         ));
+        $this->line('Icon catalog admin route package authority state: '.$this->yesNo($this->routeUsesController(
+            WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME,
+            'WebBlocks\\Cms\\Http\\Controllers\\Admin\\IconCatalogController'
+        )).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.' uses the package controller directly)');
+        $this->line('Icon catalog sync command package authority state: '.$this->yesNo($this->syncCommandUsesPackageImplementation()).' ('.WebBlocksCmsServiceProvider::ICON_SYNC_COMMAND_NAME.' is registered by the package provider with the package command)');
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
             $namespacedDiagnosticView,
@@ -219,6 +251,40 @@ class PackageStatusCommand extends Command
         }
 
         return '/'.$route->uri() === $path;
+    }
+
+    protected function routeUsesController(string $name, string $controller): bool
+    {
+        $route = app('router')->getRoutes()->getByName($name);
+
+        if ($route === null) {
+            return false;
+        }
+
+        $routeController = (string) ($route->getAction('controller') ?? '');
+
+        return $routeController === $controller || str_starts_with($routeController, $controller.'@');
+    }
+
+    protected function syncCommandUsesPackageImplementation(): bool
+    {
+        $packageCommandClass = 'WebBlocks\\Cms\\Console\\SyncWebBlocksUiIconsCommand';
+        $syncerClass = 'App\\Support\\Icons\\WebBlocksIconManifestSyncer';
+
+        if (! class_exists($packageCommandClass) || ! class_exists($syncerClass)) {
+            return false;
+        }
+
+        $constructor = (new \ReflectionClass($packageCommandClass))->getConstructor();
+
+        if ($constructor === null) {
+            return false;
+        }
+
+        $parameter = $constructor->getParameters()[0] ?? null;
+        $type = $parameter?->getType();
+
+        return $type instanceof \ReflectionNamedType && $type->getName() === $syncerClass;
     }
 
     protected function yesNo(bool $value): string

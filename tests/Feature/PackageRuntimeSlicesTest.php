@@ -56,6 +56,7 @@ class PackageRuntimeSlicesTest extends TestCase
         $superAdmin = User::factory()->superAdmin()->create();
 
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, true);
+        config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, true);
         $this->bootPackageRoutes();
 
         $response = $this->actingAs($superAdmin)->get(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_PATH);

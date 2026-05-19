@@ -1,0 +1,7 @@
+{
+  "package": "fklavyenet/webblocks-cms",
+  "boundary": "public-assets",
+  "publishedPath": "public/vendor/webblocks-cms",
+  "runtimeAuthority": "root-public-cms-remains-compatible",
+  "siteOverrides": "public/site/{site_handle}"
+}

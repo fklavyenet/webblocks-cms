@@ -96,6 +96,7 @@ Current root `config/` files fall into two transition groups.
 
 CMS product default candidates:
 
+- `webblocks-cms.php`
 - `cms.php`
 - `contact.php`
 - `demo_media.php`
@@ -114,7 +115,7 @@ Laravel app-owned or install-owned config that should stay root-owned:
 - `services.php`
 - `session.php`
 
-The current low-risk transition rule is to move CMS-owned default config only when it preserves stable product behavior and clear install override semantics. The initial package-owned default set now includes `cms.php`, `contact.php`, `demo_media.php`, and `webblocks-updates.php`. The root config files remain in place during the transition as install-level overrides and backward-compatible application config entry points.
+The current low-risk transition rule is to move CMS-owned default config only when it preserves stable product behavior and clear install override semantics. The package-owned default set now includes `webblocks-cms.php`, `cms.php`, `contact.php`, `demo_media.php`, and `webblocks-updates.php`. The root config files for existing CMS behavior remain in place during the transition as install-level overrides and backward-compatible application config entry points. `webblocks-cms.php` is package-only for now and owns transition controls: diagnostics routes, public status routes, admin status routes, and package migration loading stay disabled by default, while package admin route loading is enabled so package-owned admin routes can become authoritative.
 
 ### Phase 2: Move Clearly Package-Owned Source
 
@@ -254,7 +255,7 @@ The `v1.31.65` checkpoint completes the remaining non-runtime package boundary p
 
 - package `database/migrations/`, `public/`, and `stubs/` now keep clearer reserved-boundary marker documentation for their future package-owned roles
 - package migration loading is now explicitly guard-disabled through `webblocks-cms.boundaries.load_migrations`, so package migrations remain inert unless a later focused runtime phase intentionally wires them
-- package public asset and stub publishing remain explicit and package-tagged, but still inert because no real package-owned publishable assets or stubs exist yet
+- package public asset and stub publishing remain explicit and package-tagged; they now publish the first package-owned asset marker and starter stubs without replacing root runtime assets or the current installer
 - `webblocks:package-status` now reports migration boundary status, public asset boundary status, stub boundary status, the Composer-managed update target note, and the continued rule that root runtime remains authoritative
 - current root Composer behavior, root runtime loading, and System Update behavior remain unchanged in this checkpoint
 
@@ -280,10 +281,11 @@ Phase 1: guarded package diagnostics runtime slice
 
 Phase 2A: first focused package admin slice
 
-- package `routes/admin.php` introduces one small package-owned admin runtime slice only: `admin.webblocks-cms.runtime-status` at `/admin/_webblocks-cms/runtime-status`
-- that route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/admin/runtime-status.blade.php`
-- the admin slice stays off by default behind `webblocks-cms.admin.load_routes`
-- the route is isolated under the reserved `/_webblocks-cms` admin namespace and also keeps the normal install, auth, admin-access, and super-admin system-access middleware requirements
+- package `routes/admin.php` originally introduced one small package-owned admin runtime status slice: `admin.webblocks-cms.runtime-status` at `/admin/_webblocks-cms/runtime-status`
+- that status route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/admin/runtime-status.blade.php`
+- package admin route loading is now enabled by default so active package-owned admin surfaces can move into package route authority
+- the reserved admin status route itself stays off by default behind `webblocks-cms.admin.load_status_route`
+- package admin routes keep the normal install, auth, admin-access, and super-admin system-access middleware requirements where appropriate
 - root admin areas such as Pages, Media, Blocks, Users, Sites, Updates, Backups, and Export / Import remain root-owned because they still carry broader model, workflow, and install-runtime coupling
 
 Phase 2B: first focused package public slice
@@ -351,7 +353,7 @@ Why these slices stay guarded
 - Package `public/` should eventually own CMS-owned publishable assets.
 - Transition work should distinguish CMS-owned package assets from install-owned `public/site/...` overrides.
 - Asset publishing or sync should happen only when real package assets exist and the update flow clearly defines when publishing is required.
-- Current publish intent remains package-tagged and explicit. No package public assets are authoritative in `v1.31.62`, and no publish step runs unless a developer intentionally invokes `vendor:publish`.
+- Current publish intent remains package-tagged and explicit. `public/cms/package-boundary.json` is the first package-owned publishable asset and can be published through `webblocks-cms-assets`.
 - Current root `public/cms/...` assets remain authoritative for CMS-owned assets, while install-owned `public/site/...` assets remain authoritative for per-site overrides.
 - WebBlocks UI CDN pinning and the default icon manifest sync source remain unchanged in this phase.
 
@@ -359,13 +361,13 @@ Why these slices stay guarded
 
 - Package `stubs/` should be reserved for reusable generated-file templates that belong to CMS product behavior.
 - Install-specific or project-specific scaffolding should not move into CMS package stubs by default.
-- Future starter-oriented stubs may live here, but current installer behavior and root project scaffolding remain authoritative until a dedicated starter phase intentionally adopts them.
+- Starter-oriented stubs now live under package `stubs/starter/`, but current installer behavior and root project scaffolding remain authoritative until a dedicated starter package intentionally adopts them.
 
 ### Package Publish Tag Intent
 
 - `webblocks-cms-config` is reserved for publishing package-owned CMS default config files into the install root when a developer intentionally needs that workflow.
-- `webblocks-cms-assets` is reserved for future package public asset publishing once real package-owned public assets exist.
-- `webblocks-cms-stubs` is reserved for future package-owned stubs once reusable generated-file templates are intentionally introduced.
+- `webblocks-cms-assets` publishes package-owned public assets such as `cms/package-boundary.json`.
+- `webblocks-cms-stubs` publishes package-owned starter stubs.
 - These tags do not change runtime behavior on their own and remain inert until `vendor:publish` is explicitly run.
 
 ### Composer-Managed Update Flow And Post-Update Commands
@@ -471,6 +473,7 @@ The `v1.32.0` release starts that planned move with guarded runtime migration ph
 - one focused public runtime slice is now package-owned end to end through package `routes/public.php`, `src/Http/Controllers/Public/PackagePublicStatusController.php`, and `resources/views/public/runtime-status.blade.php`, but it remains guard-disabled by default on a reserved path
 - `webblocks:package-status` now reports the diagnostics runtime slice, package admin slice, package public slice, and the explicit route guards in a still read-only way
 - root routes and root views remain authoritative for the existing CMS runtime outside these reserved package-only guarded paths
+- package `config/webblocks-cms.php` now owns explicit transition config values: diagnostics, public status routes, admin status routes, and package migration loading stay disabled by default, while package admin route loading is enabled for active package-owned admin route authority
 
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
@@ -520,8 +523,14 @@ The first package-owned seeder boundary move is now also complete for low-risk c
 
 The next isolated package-owned runtime batch is now also complete for icon catalog management:
 
-- package-owned now: `IconCatalogController`, `IconCatalogItemUpdateRequest`, `IconCatalog`, and `WebBlocksIconManifestSyncer`
+- package-owned now: `SyncWebBlocksUiIconsCommand`, `IconCatalogController`, `IconCatalogItemUpdateRequest`, `IconCatalog`, and `WebBlocksIconManifestSyncer`
 - root `App\Http\Controllers\Admin\IconCatalogController`, `App\Http\Requests\Admin\IconCatalogItemUpdateRequest`, and `App\Support\Icons\...` classes remain as compatibility wrappers so existing routes, commands, views, and request imports continue to resolve unchanged
+- root `App\Console\Commands\SyncWebBlocksUiIconsCommand` also remains as a command compatibility wrapper for existing imports, but it is no longer the active bootstrap registration
+- active icon catalog admin routes now point directly at the package controller, and `icons:sync-webblocks-ui` is now registered by the package service provider with the package command class
+- active icon catalog admin route definitions now live in package `routes/admin.php` instead of root `routes/web.php`
+- root icon catalog wrappers remain available for backward-compatible imports while the active route and console authority now live in the package
+- package-owned now also: the active icon catalog admin index and edit-modal Blade views under `packages/webblocks-cms/resources/views/admin/system/icons/`
+- root icon catalog Blade files remain as compatibility wrappers that include the package namespaced views, but the package controller renders `webblocks-cms::admin.system.icons.index` directly
 - this batch stays within the icon catalog admin and sync concern only and intentionally does not move broader Pages, Blocks, Search indexing, Sites, Updates, Install, Backup or Restore, Export or Import, or public rendering runtime ownership
 - `webblocks:package-status` now reports both the package-owned icon runtime files and the matching root compatibility wrappers as part of the read-only transition diagnostic
 

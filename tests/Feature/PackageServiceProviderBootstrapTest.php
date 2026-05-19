@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Http\Controllers\Admin\IconCatalogController;
 use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
 use App\Support\Admin\AdminPagination;
@@ -20,6 +21,7 @@ use Database\Seeders\SlotTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand as PackageSyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder as PackageCoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\IconCatalogSeeder as PackageIconCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\LayoutTypeSeeder as PackageLayoutTypeSeeder;
@@ -48,6 +50,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $router = $this->app['router'];
         $viewHints = view()->getFinder()->getHints();
 
+        $this->assertFileExists(base_path('packages/webblocks-cms/config/webblocks-cms.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE));
         $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_FILE));
         $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE));
@@ -59,13 +62,20 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/LayoutTypeSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/SlotTypeSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/public/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/package-boundary.json'));
         $this->assertFileExists(base_path('packages/webblocks-cms/stubs/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/stubs/starter/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/stubs/starter/composer.json.stub'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/stubs/starter/env.example.stub'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Admin/AdminPagination.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/BlockTypes/BlockTypeIndexState.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Console/SyncWebBlocksUiIconsCommand.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/IconCatalogController.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/IconCatalog.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/WebBlocksIconManifestSyncer.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/icons/index.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/icons/partials/edit-modal.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageIndexState.php'));
         $this->assertFileExists(base_path('database/seeders/CoreCatalogSeeder.php'));
@@ -73,17 +83,22 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('database/seeders/PageTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/LayoutTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/SlotTypeSeeder.php'));
+        $this->assertFileExists(base_path('app/Console/Commands/SyncWebBlocksUiIconsCommand.php'));
         $this->assertFileExists(base_path('app/Support/Admin/AdminPagination.php'));
         $this->assertFileExists(base_path('app/Support/BlockTypes/BlockTypeIndexState.php'));
         $this->assertFileExists(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
         $this->assertFileExists(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
         $this->assertFileExists(base_path('app/Support/Icons/IconCatalog.php'));
         $this->assertFileExists(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
+        $this->assertFileExists(resource_path('views/admin/system/icons/index.blade.php'));
+        $this->assertFileExists(resource_path('views/admin/system/icons/partials/edit-modal.blade.php'));
         $this->assertFileExists(base_path('app/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('app/Support/Pages/PageIndexState.php'));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_NAME));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME));
+        $this->assertNotNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME));
+        $this->assertNotNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME));
         $this->assertArrayHasKey(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $viewHints);
         $this->assertContains(
             base_path('packages/webblocks-cms/resources/views'),
@@ -92,9 +107,15 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::diagnostics.package-status'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.partials.edit-modal'));
         $this->assertFalse(view()->exists('diagnostics.package-status'));
         $this->assertTrue(view()->exists('welcome'));
-        $this->assertSame([], config('webblocks-cms', []));
+        $this->assertSame(false, config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG));
+        $this->assertSame(true, config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG));
+        $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG));
+        $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
+        $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG));
         $this->assertSame('fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
         $this->assertSame('fklavyenet/webblocks-cms-starter', WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME);
         $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);
@@ -144,10 +165,13 @@ class PackageServiceProviderBootstrapTest extends TestCase
     public function package_diagnostic_route_is_explicitly_guarded_and_not_loaded_in_normal_runtime(): void
     {
         $this->assertFalse(config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, false));
-        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false));
+        $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, false));
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, false));
         $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false));
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_NAME));
+        $this->assertNotNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME));
+        $this->assertNotNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_UPDATE_ROUTE_NAME));
         $this->assertNull(app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME));
         $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_PATH));
         $this->assertFalse($this->routePathExists(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_PATH));
@@ -166,6 +190,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
 
         config()->set(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG, true);
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG, true);
+        config()->set(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG, true);
         config()->set(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, true);
 
         $provider = new class($this->app) extends WebBlocksCmsServiceProvider
@@ -203,7 +228,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     }
 
     #[Test]
-    public function package_migrations_assets_and_stubs_remain_inert_until_a_later_phase_intentionally_wires_them(): void
+    public function package_migrations_stay_inert_while_assets_and_stubs_are_publishable(): void
     {
         $provider = new class($this->app) extends WebBlocksCmsServiceProvider
         {
@@ -249,7 +274,20 @@ class PackageServiceProviderBootstrapTest extends TestCase
 
         $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG, false));
         $this->assertSame([], $provider->loadedMigrationPaths);
-        $this->assertSame([], $provider->publishCalls);
+        $this->assertSame([
+            [
+                'paths' => [
+                    base_path('packages/webblocks-cms/public') => public_path('vendor/webblocks-cms'),
+                ],
+                'group' => WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG,
+            ],
+            [
+                'paths' => [
+                    base_path('packages/webblocks-cms/stubs') => base_path('stubs/vendor/webblocks-cms'),
+                ],
+                'group' => WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG,
+            ],
+        ], $provider->publishCalls);
     }
 
     #[Test]
@@ -262,6 +300,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(class_exists(PackageSlotTypeSeeder::class));
         $this->assertTrue(class_exists(PackageAdminPagination::class));
         $this->assertTrue(class_exists(PackageBlockTypeIndexState::class));
+        $this->assertTrue(class_exists(PackageSyncWebBlocksUiIconsCommand::class));
         $this->assertTrue(class_exists(PackageIconCatalogController::class));
         $this->assertTrue(class_exists(PackageIconCatalogItemUpdateRequest::class));
         $this->assertTrue(class_exists(PackageIconCatalog::class));
@@ -276,12 +315,32 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(is_subclass_of(SlotTypeSeeder::class, PackageSlotTypeSeeder::class));
         $this->assertTrue(is_subclass_of(AdminPagination::class, PackageAdminPagination::class));
         $this->assertTrue(is_subclass_of(BlockTypeIndexState::class, PackageBlockTypeIndexState::class));
+        $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
         $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
         $this->assertTrue(is_subclass_of(IconCatalogItemUpdateRequest::class, PackageIconCatalogItemUpdateRequest::class));
         $this->assertTrue(is_subclass_of(IconCatalog::class, PackageIconCatalog::class));
         $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(is_subclass_of(MediaIndexState::class, PackageMediaIndexState::class));
         $this->assertTrue(is_subclass_of(PageIndexState::class, PackagePageIndexState::class));
+    }
+
+    #[Test]
+    public function icon_catalog_runtime_uses_package_route_and_command_authority_with_root_compatibility_wrappers(): void
+    {
+        $iconRoute = app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME);
+        $constructor = (new \ReflectionClass(PackageSyncWebBlocksUiIconsCommand::class))->getConstructor();
+        $syncerParameterType = $constructor?->getParameters()[0]?->getType();
+
+        $this->assertNotNull($iconRoute);
+        $this->assertSame(
+            PackageIconCatalogController::class.'@index',
+            $iconRoute->getAction('controller')
+        );
+        $this->assertInstanceOf(\ReflectionNamedType::class, $syncerParameterType);
+        $this->assertSame(WebBlocksIconManifestSyncer::class, $syncerParameterType->getName());
+        $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
+        $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
+        $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
     }
 
     protected function routePathExists(string $path): bool
@@ -346,6 +405,19 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame('auto', config('cms.backup.execution'));
         $this->assertSame('webblocks_visitor_consent', config('cms.visitor_reports.consent_cookie_name'));
         $this->assertContains('googleother', config('cms.visitor_reports.ignored_user_agents', []));
+    }
+
+    #[Test]
+    public function package_runtime_boundary_config_defaults_keep_guarded_slices_disabled(): void
+    {
+        $packageConfigPath = base_path('packages/webblocks-cms/config/webblocks-cms.php');
+
+        $this->assertFileExists($packageConfigPath);
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG));
+        $this->assertTrue(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_LOADING_CONFIG));
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_STATUS_ROUTE_LOADING_CONFIG));
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG));
+        $this->assertFalse(config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG));
     }
 
     #[Test]
