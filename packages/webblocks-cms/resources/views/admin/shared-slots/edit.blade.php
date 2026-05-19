@@ -4,17 +4,17 @@
     $revisionsUrl = $canViewRevisions ? route('admin.shared-slots.revisions.index', $sharedSlot) : null;
 @endphp
 
-@extends('layouts.admin', ['title' => 'Edit Shared Slot', 'heading' => 'Shared Slots'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Shared Slot', 'heading' => 'Shared Slots'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$indexUrl.'">Shared Slots</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($sharedSlot->name).'</span></li></ol></nav>',
         'title' => 'Edit Shared Slot',
         'context' => '<span>'.e($sharedSlot->site?->name ?? 'Site').'</span>',
         'actions' => '<div class="wb-cluster wb-cluster-2">'.($revisionsUrl ? '<a href="'.$revisionsUrl.'" class="wb-btn wb-btn-secondary">Revision History</a>' : '').'<a href="'.$blocksUrl.'" class="wb-btn wb-btn-secondary">Edit Blocks</a><a href="'.$indexUrl.'" class="wb-btn wb-btn-secondary">Back to Shared Slots</a></div>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="$indexUrl" submit-label="Save Changes" />
+                    <x-webblocks-cms::admin.form-actions :cancel-url="$indexUrl" submit-label="Save Changes" />
                 </div>
             </form>
         </div>
@@ -52,7 +52,7 @@
                         <div class="wb-text-sm wb-text-muted">Deletion is blocked while any page slot still references this Shared Slot.</div>
                     </div>
                     <div class="wb-card-footer">
-                        <x-admin.form-actions :cancel-url="$indexUrl" :show-submit="false" :delete-submit="true" delete-label="Delete Shared Slot" />
+                        <x-webblocks-cms::admin.form-actions :cancel-url="$indexUrl" :show-submit="false" :delete-submit="true" delete-label="Delete Shared Slot" />
                     </div>
                 </form>
             </div>

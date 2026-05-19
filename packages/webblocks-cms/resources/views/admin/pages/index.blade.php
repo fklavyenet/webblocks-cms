@@ -17,21 +17,21 @@
     $closeImportUrl = route('admin.pages.index', $detailsBaseQuery);
 @endphp
 
-@extends('layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Pages', 'heading' => 'Pages'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Pages',
         'description' => null,
         'context' => '<span>'.e($siteContextDescription).'</span>',
         'count' => $totalCount,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.pages.index'),
                 'search' => [
                     'id' => 'pages_search',
@@ -259,7 +259,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => 'Pages pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => 'Pages pagination', 'compact' => true])
         </div>
 
     @endif

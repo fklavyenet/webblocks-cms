@@ -2,20 +2,81 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SlotTypeController;
+use App\Http\Controllers\Admin\SystemSearchController;
+use App\Http\Controllers\Admin\SystemSettingsController;
+use App\Http\Controllers\Admin\VisitorReportController;
 use App\Models\Page;
 use App\Models\Site;
 use App\Models\User;
 use App\Models\VisitorEvent;
+use App\Support\Search\PublicSearchSchema;
 use App\Support\System\InstalledVersionStore;
+use App\Support\Visitors\VisitorReportsQuery;
 use App\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as PackageContactMessageController;
+use WebBlocks\Cms\Http\Controllers\Admin\DashboardController as PackageDashboardController;
+use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController as PackageSystemSearchController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
+use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController as PackageVisitorReportController;
 
 class AdminDashboardRouteTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function operational_admin_runtime_routes_use_package_controllers_and_views_with_root_wrappers(): void
+    {
+        $this->assertRouteUsesPackageController('admin.dashboard', PackageDashboardController::class);
+        $this->assertRouteUsesPackageController('admin.contact-messages.index', PackageContactMessageController::class);
+        $this->assertRouteUsesPackageController('admin.reports.visitors.index', PackageVisitorReportController::class);
+        $this->assertRouteUsesPackageController('admin.slot-types.index', PackageSlotTypeController::class);
+        $this->assertRouteUsesPackageController('admin.system.search.index', PackageSystemSearchController::class);
+        $this->assertRouteUsesPackageController('admin.system.settings.edit', PackageSystemSettingsController::class);
+
+        foreach (['admin.dashboard', 'admin.contact-messages.index', 'admin.reports.visitors.index', 'admin.slot-types.index', 'admin.system.search.index', 'admin.system.settings.edit'] as $routeName) {
+            $middleware = app('router')->getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
+
+            $this->assertContains('web', $middleware);
+            $this->assertContains('install.required', $middleware);
+            $this->assertContains('auth', $middleware);
+            $this->assertContains('admin.access', $middleware);
+        }
+
+        $this->assertContains('can:access-system', app('router')->getRoutes()->getByName('admin.slot-types.index')?->gatherMiddleware() ?? []);
+        $this->assertContains('can:access-system', app('router')->getRoutes()->getByName('admin.system.search.index')?->gatherMiddleware() ?? []);
+        $this->assertContains('can:access-system', app('router')->getRoutes()->getByName('admin.system.settings.edit')?->gatherMiddleware() ?? []);
+        $this->assertTrue(view()->exists('webblocks-cms::admin.dashboard'));
+        $this->assertTrue(view()->exists('webblocks-cms::layouts.admin'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.contact-messages.index'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.reports.visitors.index'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.slot-types.index'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.system.search'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.system.settings'));
+        $this->assertStringContainsString('webblocks-cms::admin.dashboard', file_get_contents(resource_path('views/admin/dashboard.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::layouts.admin', file_get_contents(resource_path('views/layouts/admin.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.contact-messages.index', file_get_contents(resource_path('views/admin/contact-messages/index.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.reports.visitors.index', file_get_contents(resource_path('views/admin/reports/visitors/index.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.slot-types.index', file_get_contents(resource_path('views/admin/slot-types/index.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.system.search', file_get_contents(resource_path('views/admin/system/search.blade.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.system.settings', file_get_contents(resource_path('views/admin/system/settings.blade.php')));
+
+        $this->assertTrue(is_subclass_of(DashboardController::class, PackageDashboardController::class));
+        $this->assertTrue(is_subclass_of(ContactMessageController::class, PackageContactMessageController::class));
+        $this->assertTrue(is_subclass_of(VisitorReportController::class, PackageVisitorReportController::class));
+        $this->assertTrue(is_subclass_of(SlotTypeController::class, PackageSlotTypeController::class));
+        $this->assertTrue(is_subclass_of(SystemSearchController::class, PackageSystemSearchController::class));
+        $this->assertTrue(is_subclass_of(SystemSettingsController::class, PackageSystemSettingsController::class));
+        $this->assertTrue(is_subclass_of(VisitorReportsQuery::class, \WebBlocks\Cms\Support\Visitors\VisitorReportsQuery::class));
+        $this->assertTrue(is_subclass_of(PublicSearchSchema::class, \WebBlocks\Cms\Support\Search\PublicSearchSchema::class));
+    }
 
     #[Test]
     public function admin_dashboard_route_name_points_to_canonical_admin_path(): void
@@ -117,6 +178,7 @@ class AdminDashboardRouteTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('cms/js/admin/core.js', false);
+        $response->assertSee('cms/css/admin.css', false);
         $response->assertDontSee('function resetAdminTransientUiState()', false);
         $response->assertDontSee("document.body.classList.remove('wb-overlay-lock', 'overflow-y-hidden');", false);
         $response->assertDontSee("window.addEventListener('pageshow'", false);
@@ -156,6 +218,16 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
+    public function package_owned_admin_views_extend_the_package_layout_namespace(): void
+    {
+        $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/dashboard.blade.php')));
+        $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/pages/index.blade.php')));
+        $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/slot-types/index.blade.php')));
+        $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/system/search.blade.php')));
+        $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/system/settings.blade.php')));
+    }
+
+    #[Test]
     public function top_level_dashboard_redirect_uses_canonical_admin_path(): void
     {
         $user = User::factory()->editor()->create();
@@ -163,5 +235,22 @@ class AdminDashboardRouteTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertRedirect(route('admin.dashboard', absolute: false));
+    }
+
+    private function assertRouteUsesPackageController(string $routeName, string $controllerClass): void
+    {
+        $route = app('router')->getRoutes()->getByName($routeName);
+
+        $this->assertNotNull($route, 'Route '.$routeName.' should be registered.');
+
+        $controller = (string) $route->getAction('controller');
+
+        if ($routeName === 'admin.dashboard') {
+            $this->assertSame($controllerClass, $controller);
+
+            return;
+        }
+
+        $this->assertStringStartsWith($controllerClass.'@', $controller);
     }
 }

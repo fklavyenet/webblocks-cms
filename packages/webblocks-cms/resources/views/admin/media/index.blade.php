@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Media', 'heading' => 'Media'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Media', 'heading' => 'Media'])
 
 @php
     use App\Models\Media;
@@ -19,17 +19,17 @@
 @endphp
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Media',
         'description' => 'Review, filter, preview, and manage the shared media library from one compact screen.',
         'count' => $totalMediaCount,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.media.index'),
                 'search' => [
                     'id' => 'media_search',
@@ -262,7 +262,7 @@
             <div class="wb-text-sm wb-text-muted wb-media-copy-feedback" data-wb-copy-feedback aria-live="polite"></div>
         </div>
 
-        @include('admin.partials.pagination', ['paginator' => $assets, 'ariaLabel' => 'Media pagination', 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $assets, 'ariaLabel' => 'Media pagination', 'compact' => true])
     </div>
 @endsection
 
@@ -411,7 +411,7 @@
                             </div>
                         </div>
 
-                        <x-admin.form-actions
+                        <x-webblocks-cms::admin.form-actions
                             :cancel-url="route('admin.media.index', $baseQuery)"
                             container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />
@@ -468,7 +468,7 @@
                             </div>
                         </div>
 
-                        <x-admin.form-actions
+                        <x-webblocks-cms::admin.form-actions
                             :cancel-url="route('admin.media.index', $baseQuery)"
                             container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"
                         />

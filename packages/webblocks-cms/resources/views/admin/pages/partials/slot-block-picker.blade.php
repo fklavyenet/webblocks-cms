@@ -201,7 +201,7 @@
                 </div>
 
                 <div class="wb-modal-body wb-stack wb-gap-4 wb-slot-block-picker-body">
-                    @include('admin.partials.listing-filters', [
+                    @include('webblocks-cms::admin.partials.listing-filters', [
                         'action' => $slotBlockRoute(),
                         'search' => [
                             'id' => 'slot_block_type_search',

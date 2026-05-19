@@ -7,7 +7,7 @@
     $slotBlockTreeScriptPath = public_path('cms/js/admin/slot-block-tree.js');
 @endphp
 
-@extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
 
 @section('content')
     @php
@@ -38,13 +38,13 @@
         };
     @endphp
 
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">Pages</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$pagesIndexUrl.'">'.$siteName.'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'">'.$page->title.'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.($slot->slotType?->name ?? 'Slot').'</span></li></ol></nav>',
         'title' => $slotTitle,
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]).'" class="wb-btn wb-btn-secondary">Back to Page Slots</a>'.($activePreviewUrl ? '<a href="'.$activePreviewUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

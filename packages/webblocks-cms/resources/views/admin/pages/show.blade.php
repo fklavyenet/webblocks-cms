@@ -1,11 +1,11 @@
-@extends('layouts.admin', ['title' => 'Page Builder: '.$page->title, 'heading' => 'Page Builder'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Page Builder: '.$page->title, 'heading' => 'Page Builder'])
 
 @section('content')
     <div class="wb-stack wb-stack-2">
-        @include('admin.partials.page-header', [
+        @include('webblocks-cms::admin.partials.page-header', [
             'title' => 'Page Builder: '.$page->title,
             'description' => 'Build the page by arranging and editing only the blocks that belong to this page.',
-            'actions' => view('admin.partials.page-actions', ['page' => $page]),
+            'actions' => view('webblocks-cms::admin.partials.page-actions', ['page' => $page]),
         ])
 
         <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted">
@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-accent">
         <div class="wb-card-header">

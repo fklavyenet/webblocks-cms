@@ -10,16 +10,16 @@
     $canDisableIncompatibleSharedSlots = ($sharedSlotValidation?->disableEligibleSharedSlotIds->isNotEmpty() ?? false) && $selectedTargetSite && (int) $selectedTargetSite->id !== (int) $page->site_id;
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Create a new draft page by copying the current page into the same site or another accessible site.',
         'actions' => '<a href="'.$backUrl.'" class="wb-btn wb-btn-secondary">Back to Page</a>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
@@ -181,7 +181,7 @@
                         </div>
                     @endif
 
-                    <x-admin.form-actions
+                    <x-webblocks-cms::admin.form-actions
                         :cancel-url="$backUrl"
                         submit-label="Duplicate page"
                     />

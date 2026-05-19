@@ -102,7 +102,7 @@
                         </div>
                     </div>
 
-                    <x-admin.form-actions
+                    <x-webblocks-cms::admin.form-actions
                         :cancel-url="$closeUrl"
                         :show-submit="false"
                         :delete-submit="true"

@@ -1,12 +1,12 @@
-@extends('layouts.admin', ['title' => 'Create Block Type', 'heading' => 'Create Block Type'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Create Block Type', 'heading' => 'Create Block Type'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Create Block Type',
         'description' => 'Create a new block type record.',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
         <form method="POST" action="{{ route('admin.block-types.store') }}" class="wb-stack wb-gap-0">
@@ -17,7 +17,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-admin.form-actions :cancel-url="route('admin.block-types.index')" submit-label="Create" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.block-types.index')" submit-label="Create" />
             </div>
         </form>
     </div>

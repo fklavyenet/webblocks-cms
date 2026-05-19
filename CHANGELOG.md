@@ -1,9 +1,25 @@
 # Changelog
 
-## [Unreleased]
+## 1.32.3
+
+- Move the remaining safe operational admin route batch into `packages/webblocks-cms` for Slot Types and System Settings, adding package-owned controllers, the System Settings request, and package-owned admin views while preserving root `App\...` and root Blade compatibility wrappers.
+- Update package admin route authority, package-status reporting, and focused bootstrap or route coverage so the active `admin.slot-types.*` and `admin.system.settings.*` surfaces now execute through the package without changing install, update, backup/restore, export/import, promotion, auth/User, migration, config, or runtime asset URL ownership.
+- Copy admin CSS and JS source authority into `packages/webblocks-cms/public/cms/`, including `css/admin.css`, `js/admin/**`, and `js/admin-sortable-list.js`, while keeping root `public/cms/...` runtime files and admin layout asset URLs unchanged as compatibility paths.
+- Extend package asset readiness, bootstrap coverage, and transition docs so package-owned admin asset source files are tracked through the existing `webblocks-cms-assets` and package-status boundary without moving brand assets or replacing root runtime asset authority yet.
+- Move `resources/views/layouts/admin.blade.php` into package view authority as `webblocks-cms::layouts.admin`, keep the root layout as a compatibility wrapper, and update package-owned admin views to extend the package layout namespace while leaving root `public/cms` admin asset and brand runtime authority unchanged.
+- Extend focused bootstrap, dashboard, and package-status coverage so the package-owned admin layout and root wrapper are verified without moving admin CSS/JS, brand assets, auth/profile/install/app/guest layouts, migrations, updater, backup/restore, export/import, promotion, or release flow.
+- Move the remaining shared admin partial edge cases into `packages/webblocks-cms/resources/views/admin/partials`, including flash messages and page actions, while preserving root Blade compatibility wrappers and keeping admin shell/assets root-owned.
+- Extend shared admin partial rendering coverage and package-status reporting so package-owned admin views use the package namespace for flash and page-actions partials while root include paths remain available.
+- Move the selected shared admin partial/component layer into `packages/webblocks-cms/resources/views`, including page headers, listing filters, pagination, audit actor output, and form actions, while preserving root Blade compatibility wrappers.
+- Update package-owned admin views and package-status reporting so moved shared admin partials/components resolve through the `webblocks-cms::` namespace while the admin shell, admin CSS/JS, brand assets, auth/profile/install views, migrations, updater, backup/restore, export/import, promotion, and release flow remain unchanged.
+- Add the admin shell and asset ownership audit, documenting that selected shared admin partials are the safest next package batch while the admin shell and active admin CSS/JS stay blocked by explicit asset publishing and brand override strategy.
 
 ## 1.32.2
 
+- Move the focused operational admin runtime slice into `packages/webblocks-cms`, including Dashboard, Contact Messages admin review, Visitor Reports, and System Search controllers, directly supporting query/status helpers, and package-owned admin views while preserving root compatibility wrappers.
+- Extend focused operational admin and package-status coverage so active routes use package controllers, package views resolve through `webblocks-cms::`, root wrappers remain present, and excluded update, backup/restore, export/import, promotion, auth/User, migration, config, and public asset boundaries stay unchanged.
+- Move the Site and Locale admin runtime slice into `packages/webblocks-cms`, including Site, Site Domain, Site Variable, and Locale controllers, form requests, directly supporting models and support services, and package-owned admin views while preserving root compatibility wrappers.
+- Extend focused Site/Locale admin and package-status coverage so active routes use package controllers, package views resolve through `webblocks-cms::`, root wrappers remain present, and excluded install/update, migration, export/import, promotion, auth/User, and public asset boundaries stay unchanged.
 - Add package-owned `webblocks-cms.php` config defaults for diagnostics, admin, public, and migration boundary switches, keeping diagnostics, public status routes, admin status routes, and package migrations disabled by default while enabling package admin route loading for active package-owned admin routes.
 - Extend focused provider and console coverage so `webblocks:package-status` reports the new package config defaults, active package admin route loading, disabled status slices, and the still-disabled migration boundary.
 - Harden the package-owned icon catalog runtime batch by having `webblocks:package-status` and focused bootstrap coverage verify the package-owned active admin route and icon-sync command while root wrappers remain available only for backward-compatible imports.

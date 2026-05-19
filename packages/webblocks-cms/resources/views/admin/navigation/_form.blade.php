@@ -191,7 +191,7 @@
     </script>
 
     @if ($formActionsContainerClass)
-        <x-admin.form-actions
+        <x-webblocks-cms::admin.form-actions
             :cancel-url="$cancelUrl"
             :cancel-type="$cancelType"
             :submit-label="$submitLabel"

@@ -29,7 +29,7 @@
                     @include('admin.block-types._form')
                 </div>
 
-                <x-admin.form-actions
+                <x-webblocks-cms::admin.form-actions
                     :cancel-url="$closeUrl"
                     submit-label="Save Changes"
                     container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"

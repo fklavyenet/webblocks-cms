@@ -5,10 +5,10 @@
     $pageTitle = 'Add Block: '.$blockName.' ('.$blockPageName.' / '.$blockSlotName.')';
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => $selectedBlockType ? 'Fill out the editor for the selected block type.' : 'Choose the kind of block you want to add to the page.',
     ])
@@ -21,7 +21,7 @@
         </div>
     @endif
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     @include('admin.blocks._type-picker', [
         'action' => route('admin.blocks.create'),
@@ -48,7 +48,7 @@
                 </div>
 
                 <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Create" />
+                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Create" />
                 </div>
             </form>
         </div>

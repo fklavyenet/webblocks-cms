@@ -1,27 +1,20 @@
 <?php
 
-use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\LocaleController;
-use App\Http\Controllers\Admin\SiteController;
-use App\Http\Controllers\Admin\SiteDomainController;
 use App\Http\Controllers\Admin\SiteExportController;
 use App\Http\Controllers\Admin\SiteImportController;
 use App\Http\Controllers\Admin\SitePromotionController;
-use App\Http\Controllers\Admin\SiteVariableController;
-use App\Http\Controllers\Admin\SlotTypeController;
 use App\Http\Controllers\Admin\SystemBackupController;
-use App\Http\Controllers\Admin\SystemSearchController;
-use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\VisitorReportController;
 use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
+use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
 use WebBlocks\Cms\Http\Controllers\Admin\NavigationItemController;
 use WebBlocks\Cms\Http\Controllers\Admin\PackageAdminStatusController;
@@ -37,6 +30,13 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
+use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
+use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 
 Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
     ->prefix('admin')

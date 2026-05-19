@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Navigation Items', 'heading' => 'Navigation Items'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Navigation Items', 'heading' => 'Navigation Items'])
 
 @php
     $baseQuery = ['site_id' => $site->id, 'menu_key' => $activeMenuKey];
@@ -28,16 +28,16 @@
 @endphp
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Navigation Items',
         'description' => 'Manage site menus, dropdowns, and footer links.',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.navigation.index'),
                 'selects' => [
                     [

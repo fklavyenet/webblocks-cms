@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Block Types', 'heading' => 'Block Types'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Block Types', 'heading' => 'Block Types'])
 
 @section('content')
     @php
@@ -6,17 +6,17 @@
         $baseQuery = array_filter(array_merge($filters, ['page' => $blockTypes->currentPage() > 1 ? $blockTypes->currentPage() : null]));
     @endphp
 
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Block Types',
         'description' => 'Review the CMS block catalog. System block types are product-owned; non-system entries are install-specific extensions.',
         'count' => $totalCount,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.block-types.index'),
                 'search' => [
                     'id' => 'block_types_search',
@@ -165,7 +165,7 @@
             </div>
         @endif
 
-        @include('admin.partials.pagination', ['paginator' => $blockTypes, 'ariaLabel' => 'Block types pagination', 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blockTypes, 'ariaLabel' => 'Block types pagination', 'compact' => true])
     </div>
 @endsection
 

@@ -2,17 +2,17 @@
     $indexUrl = route('admin.page-layouts.index');
 @endphp
 
-@extends('layouts.admin', ['title' => 'Edit Page Layout', 'heading' => 'Page Layouts'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Page Layout', 'heading' => 'Page Layouts'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$indexUrl.'">Page Layouts</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($pageLayout->name).'</span></li></ol></nav>',
         'title' => 'Edit Page Layout',
         'context' => '<span><code>'.e($pageLayout->handle).'</code></span>',
         'actions' => '<a href="'.$indexUrl.'" class="wb-btn wb-btn-secondary">Back to Page Layouts</a>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-grid wb-grid-2">
@@ -28,7 +28,7 @@
                     </div>
 
                     <div class="wb-card-footer">
-                        <x-admin.form-actions :cancel-url="$indexUrl" submit-label="Save Changes" />
+                        <x-webblocks-cms::admin.form-actions :cancel-url="$indexUrl" submit-label="Save Changes" />
                     </div>
                 </form>
             </div>

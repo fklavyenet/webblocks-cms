@@ -7,9 +7,9 @@ use App\Models\Page;
 use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Support\Locales\LocaleResolver;
-use App\Support\Sites\SiteDomainNormalizer;
 use Illuminate\Http\Request;
 use WebBlocks\Cms\Support\Sites\ResolvedSite;
+use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteResolver;
 
 class PageRouteResolver

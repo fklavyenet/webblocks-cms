@@ -100,7 +100,7 @@
                     @endif
                 </div>
 
-                <x-admin.form-actions
+                <x-webblocks-cms::admin.form-actions
                     :cancel-url="$closeUrl"
                     :submit-label="$submitLabel"
                     container-class="wb-modal-footer wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap"

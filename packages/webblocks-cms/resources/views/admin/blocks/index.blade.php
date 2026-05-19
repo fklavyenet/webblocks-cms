@@ -1,18 +1,18 @@
-@extends('layouts.admin', ['title' => 'Blocks', 'heading' => 'Blocks'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Blocks', 'heading' => 'Blocks'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $currentPage ? 'Blocks for '.$currentPage->title : 'Blocks',
         'description' => $currentPage ? 'Inspect block instances for the selected page.' : 'Inspect and edit block instances across the CMS.',
         'count' => $totalCount,
         'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">Manage Slots</a>' : null,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.blocks.index'),
                 'search' => [
                     'id' => 'blocks_search',
@@ -126,7 +126,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $blocks, 'ariaLabel' => 'Blocks pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $blocks, 'ariaLabel' => 'Blocks pagination', 'compact' => true])
         </div>
     @endif
 @endsection

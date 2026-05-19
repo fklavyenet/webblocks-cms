@@ -102,23 +102,23 @@
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Created by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->createdByUser])</span></div>
+                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->createdByUser])</span></div>
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Last edited by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span></div>
+                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->updatedByUser])</span></div>
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Published by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span></div>
+                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->publishedByUser])</span></div>
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Archived by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span></div>
+                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->archivedByUser])</span></div>
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Review requested by</strong></div>
-                                    <div class="wb-settings-row-control"><span>@include('admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span></div>
+                                    <div class="wb-settings-row-control"><span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $page->reviewRequestedByUser])</span></div>
                                 </div>
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Created</strong></div>

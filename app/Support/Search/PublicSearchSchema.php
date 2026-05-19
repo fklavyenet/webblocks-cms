@@ -2,12 +2,6 @@
 
 namespace App\Support\Search;
 
-use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Search\PublicSearchSchema as PackagePublicSearchSchema;
 
-class PublicSearchSchema
-{
-    public function tableExists(): bool
-    {
-        return Schema::hasTable('public_search_index');
-    }
-}
+class PublicSearchSchema extends PackagePublicSearchSchema {}

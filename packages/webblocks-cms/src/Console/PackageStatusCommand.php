@@ -113,6 +113,10 @@ class PackageStatusCommand extends Command
             $packageRoot.'/resources/views',
             WebBlocksCmsServiceProvider::ADMIN_RUNTIME_VIEW_FILES
         ));
+        $this->line('Package shared admin partial views present: '.$this->expectedFilesStatus(
+            $packageRoot.'/resources/views',
+            WebBlocksCmsServiceProvider::SHARED_ADMIN_VIEW_FILES
+        ));
         $this->line('Root icon catalog view compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
             resource_path('views'),
             WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
@@ -121,7 +125,12 @@ class PackageStatusCommand extends Command
             resource_path('views'),
             WebBlocksCmsServiceProvider::ROOT_ADMIN_RUNTIME_VIEW_WRAPPER_FILES
         ));
+        $this->line('Root shared admin partial compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            resource_path('views'),
+            WebBlocksCmsServiceProvider::ROOT_SHARED_ADMIN_VIEW_WRAPPER_FILES
+        ));
         $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
+        $this->line('Shared admin partial package authority state: '.$this->yesNo($this->sharedAdminPartialsUsePackageAuthority()).' (package-owned admin views can render shared page headers, flash messages, listing filters, pagination, page actions, audit actor output, and form actions through the package namespace while root Blade wrappers remain available for compatibility).');
         $this->line('Package public block renderer partials present: '.$this->directoryResourceStatus(
             $packageBlockViewFiles,
             'files under package pages/partials/blocks'
@@ -140,7 +149,7 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.fallback',
             WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.missing-renderer',
         ])).' (Block::publicRenderView() now prefers package block partials first; root pages.partials.blocks.* remains available for install-specific or custom fallback)');
-        $this->line('Root view compatibility state: mixed (icon, public layout, public page shell, public search, slot entry views, and core public block renderers now render through the package namespace, while most admin views and install-specific root block fallbacks remain root-accessible).');
+        $this->line('Root view compatibility state: mixed (admin layout, icon, public layout, public page shell, public search, slot entry views, and core public block renderers now render through the package namespace, while many admin wrappers and install-specific root block fallbacks remain root-accessible).');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
@@ -177,8 +186,8 @@ class PackageStatusCommand extends Command
         $this->line('Active public runtime asset URLs remain root compatibility paths: '.$this->yesNo(
             $this->packagePublicLayoutUsesRootCompatibilityAssets($packageRoot)
         ).' (package public layout still references root public/cms/... assets for active runtime compatibility)');
-        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS it needs).');
-        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets now exist, but current WebBlocks UI CDN pinning and root public/cms runtime asset flow stay unchanged).');
+        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS plus admin CSS and JS source files it needs).');
+        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets plus admin CSS and JS source files now exist, but current WebBlocks UI CDN pinning and root public/cms runtime asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
@@ -241,6 +250,8 @@ class PackageStatusCommand extends Command
             'WebBlocks\\Cms\\Http\\Controllers\\Admin\\IconCatalogController'
         )).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.' uses the package controller directly)');
         $this->line('Core admin runtime package authority state: yes (Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts now execute from package controllers, requests, support classes, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
+        $this->line('Site and Locale admin runtime package authority state: '.$this->yesNo($this->siteLocaleAdminRuntimeUsesPackageAuthority()).' (Sites, Site Domains, Site Variables, and Locales now execute from package controllers, requests, support classes, models, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
+        $this->line('Operational admin runtime package authority state: '.$this->yesNo($this->operationalAdminRuntimeUsesPackageAuthority()).' (Dashboard, Contact Messages admin review, Visitor Reports, Slot Types, System Search, and System Settings now execute from package controllers, requests where applicable, support classes, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
         $this->line('Icon catalog sync command package authority state: '.$this->yesNo($this->syncCommandUsesPackageImplementation()).' ('.WebBlocksCmsServiceProvider::ICON_SYNC_COMMAND_NAME.' is registered by the package provider with the package command)');
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
@@ -349,6 +360,63 @@ class PackageStatusCommand extends Command
         $type = $parameter?->getType();
 
         return $type instanceof \ReflectionNamedType && $type->getName() === $syncerClass;
+    }
+
+    protected function siteLocaleAdminRuntimeUsesPackageAuthority(): bool
+    {
+        return $this->routeUsesController('admin.sites.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SiteController')
+            && $this->routeUsesController('admin.sites.domains.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SiteDomainController')
+            && $this->routeUsesController('admin.sites.variables.store', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SiteVariableController')
+            && $this->routeUsesController('admin.locales.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\LocaleController')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.index')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.form')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.domains.index')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.locales.index')
+            && is_file(base_path('app/Http/Controllers/Admin/SiteController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/LocaleController.php'))
+            && is_file(resource_path('views/admin/sites/index.blade.php'))
+            && is_file(resource_path('views/admin/locales/index.blade.php'));
+    }
+
+    protected function operationalAdminRuntimeUsesPackageAuthority(): bool
+    {
+        return $this->routeUsesController('admin.dashboard', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\DashboardController')
+            && $this->routeUsesController('admin.contact-messages.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\ContactMessageController')
+            && $this->routeUsesController('admin.reports.visitors.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\VisitorReportController')
+            && $this->routeUsesController('admin.system.search.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SystemSearchController')
+            && $this->routeUsesController('admin.slot-types.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SlotTypeController')
+            && $this->routeUsesController('admin.system.settings.edit', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SystemSettingsController')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.dashboard')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.contact-messages.index')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.reports.visitors.index')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search')
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings')
+            && is_file(base_path('app/Http/Controllers/Admin/DashboardController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/ContactMessageController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/SlotTypeController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/VisitorReportController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/SystemSearchController.php'))
+            && is_file(base_path('app/Http/Controllers/Admin/SystemSettingsController.php'))
+            && is_file(resource_path('views/admin/dashboard.blade.php'))
+            && is_file(resource_path('views/admin/contact-messages/index.blade.php'))
+            && is_file(resource_path('views/admin/reports/visitors/index.blade.php'))
+            && is_file(resource_path('views/admin/slot-types/index.blade.php'))
+            && is_file(resource_path('views/admin/system/search.blade.php'))
+            && is_file(resource_path('views/admin/system/settings.blade.php'));
+    }
+
+    protected function sharedAdminPartialsUsePackageAuthority(): bool
+    {
+        return $this->expectedViewsExist([
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.page-header',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.flash',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.listing-filters',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.pagination',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.page-actions',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.audit-actor',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::components.admin.form-actions',
+        ]);
     }
 
     protected function yesNo(bool $value): string

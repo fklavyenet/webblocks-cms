@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Edit Media: '.$asset->displayTitle(), 'heading' => 'Media'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Media: '.$asset->displayTitle(), 'heading' => 'Media'])
 
 @php
     $editTitle = $asset->displayTitle();
@@ -20,12 +20,12 @@
 @endphp
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Edit Media: '.$editTitle,
         'description' => 'Review file details, update metadata, and manage this media item safely.',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-grid wb-grid-2">
@@ -130,7 +130,7 @@
                 </div>
 
                 <div class="wb-card-footer">
-                    <x-admin.form-actions :cancel-url="$mediaReturnUrl" submit-label="Save changes" />
+                    <x-webblocks-cms::admin.form-actions :cancel-url="$mediaReturnUrl" submit-label="Save changes" />
                 </div>
             </div>
         </form>
@@ -249,7 +249,7 @@
                             </div>
                         </div>
 
-                        <x-admin.form-actions
+                        <x-webblocks-cms::admin.form-actions
                             :cancel-url="route('admin.media.edit', ['media' => ($media ?? $asset), 'return_url' => $mediaReturnUrl])"
                             :show-submit="false"
                             :delete-submit="true"

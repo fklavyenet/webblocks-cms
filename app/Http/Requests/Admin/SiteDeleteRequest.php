@@ -2,26 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SiteDeleteRequest as PackageSiteDeleteRequest;
 
-class SiteDeleteRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'confirm_delete' => $this->boolean('confirm_delete'),
-        ]);
-    }
-
-    public function rules(): array
-    {
-        return [
-            'confirm_delete' => ['accepted'],
-        ];
-    }
-}
+class SiteDeleteRequest extends PackageSiteDeleteRequest {}

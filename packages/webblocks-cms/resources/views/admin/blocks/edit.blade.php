@@ -4,10 +4,10 @@
     $pageTitle = 'Edit Block: '.$block->typeName().' ('.$blockPageName.' / '.$blockSlotName.')';
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Update the block content, hierarchy, and publishing behavior together.',
     ])
@@ -20,7 +20,7 @@
         </div>
     @endif
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     @include('admin.blocks._type-picker', [
         'action' => route('admin.blocks.edit', $block),
@@ -54,7 +54,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Save Changes" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.blocks.index')" submit-label="Save Changes" />
             </div>
         </form>
     </div>

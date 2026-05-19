@@ -1,7 +1,7 @@
-@extends('layouts.admin', ['title' => 'Package Admin Runtime Status', 'heading' => 'Package Admin Runtime Status'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Package Admin Runtime Status', 'heading' => 'Package Admin Runtime Status'])
 
 @section('content')
-  @include('admin.partials.page-header', [
+  @include('webblocks-cms::admin.partials.page-header', [
       'title' => 'Package Admin Runtime Status',
       'description' => 'Guarded package-owned admin runtime slice for the package transition. Root admin routes and views remain authoritative outside this reserved path.',
   ])

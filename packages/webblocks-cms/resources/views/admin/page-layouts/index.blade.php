@@ -1,13 +1,13 @@
-@extends('layouts.admin', ['title' => 'Page Layouts', 'heading' => 'Page Layouts'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Page Layouts', 'heading' => 'Page Layouts'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Page Layouts',
         'description' => 'Manage reusable public page layout definitions. Pages still store the selected layout handle on public_shell for backward compatibility.',
         'count' => $totalCount,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
@@ -65,6 +65,6 @@
             System layouts cannot be deleted. V1 supports create, edit, activate, deactivate, and ordering.
         </div>
 
-        @include('admin.partials.pagination', ['paginator' => $pageLayouts])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pageLayouts])
     </div>
 @endsection

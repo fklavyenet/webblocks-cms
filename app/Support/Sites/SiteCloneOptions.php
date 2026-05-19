@@ -2,20 +2,10 @@
 
 namespace App\Support\Sites;
 
-class SiteCloneOptions
-{
-    public function __construct(
-        public readonly ?string $targetName = null,
-        public readonly ?string $targetHandle = null,
-        public readonly ?string $targetDomain = null,
-        public readonly bool $withNavigation = true,
-        public readonly bool $withMedia = true,
-        public readonly bool $copyMediaFiles = false,
-        public readonly bool $withTranslations = true,
-        public readonly bool $overwriteTarget = false,
-        public readonly bool $dryRun = false,
-    ) {}
+use WebBlocks\Cms\Support\Sites\SiteCloneOptions as PackageSiteCloneOptions;
 
+class SiteCloneOptions extends PackageSiteCloneOptions
+{
     public static function fromArray(array $data): self
     {
         return new self(

@@ -3,16 +3,16 @@
     $sharedSlotEditUrl = route('admin.shared-slots.edit', $sharedSlot);
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Review Shared Slot revision snapshots for restore. Restoring a Shared Slot can affect every page that references it and does not modify page-owned slot assignments.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$sharedSlotEditUrl.'" class="wb-btn wb-btn-secondary">Back to Shared Slot</a><a href="'.route('admin.shared-slots.blocks.edit', $sharedSlot).'" class="wb-btn wb-btn-secondary">Edit Blocks</a></div>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
@@ -64,7 +64,7 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1 wb-text-sm">
-                                            <span>@include('admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
+                                            <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
                                             <span class="wb-text-muted">Source: {{ $revision->sourceText() }}</span>
                                             <span class="wb-text-muted">Event: {{ $revision->eventText() }}</span>
                                         </div>

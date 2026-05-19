@@ -8,16 +8,16 @@
     $clearUrl = route('admin.shared-slots.index', $showAllSites ? ['site' => 'all'] : ['site' => $activeSite?->id]);
 @endphp
 
-@extends('layouts.admin', ['title' => 'Shared Slots', 'heading' => 'Shared Slots'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Shared Slots', 'heading' => 'Shared Slots'])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Shared Slots',
         'context' => '<span>'.e($siteContextDescription).'</span>',
         'count' => $sharedSlotsReady ? $totalCount : null,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     @if (! $sharedSlotsReady)
         <div class="wb-card">
@@ -31,7 +31,7 @@
     @else
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body">
-                @include('admin.partials.listing-filters', [
+                @include('webblocks-cms::admin.partials.listing-filters', [
                     'action' => route('admin.shared-slots.index'),
                     'search' => [
                         'id' => 'shared_slots_search',
@@ -172,7 +172,7 @@
                 </div>
             </div>
 
-            @include('admin.partials.pagination', ['paginator' => $sharedSlots, 'ariaLabel' => 'Shared Slots pagination', 'compact' => true])
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $sharedSlots, 'ariaLabel' => 'Shared Slots pagination', 'compact' => true])
         </div>
     @endif
     @endif

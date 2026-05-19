@@ -4,16 +4,16 @@
     $backUrl = route('admin.pages.edit', $page);
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Move this page to another site with explicit validation and site-scoped remapping.',
         'actions' => '<a href="'.$backUrl.'" class="wb-btn wb-btn-secondary">Back to Page</a>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
@@ -56,7 +56,7 @@
                         @enderror
                     </div>
 
-                    <x-admin.form-actions
+                    <x-webblocks-cms::admin.form-actions
                         :cancel-url="$backUrl"
                         submit-label="Move to another site"
                     />

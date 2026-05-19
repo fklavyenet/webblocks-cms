@@ -4,7 +4,7 @@
     $slotBlockTreeScriptPath = public_path('cms/js/admin/slot-block-tree.js');
 @endphp
 
-@extends('layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $slotTitle, 'heading' => $slotTitle])
 
 @section('content')
     @php
@@ -27,13 +27,13 @@
         };
     @endphp
 
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="Breadcrumb"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.$sharedSlotsIndexUrl.'">Shared Slots</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.shared-slots.edit', $sharedSlot).'">'.e($sharedSlot->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">Blocks</span></li></ol></nav>',
         'title' => $slotTitle,
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.shared-slots.edit', $sharedSlot).'" class="wb-btn wb-btn-secondary">Back to Shared Slot</a></div>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">

@@ -1,12 +1,12 @@
-@extends('layouts.admin', ['title' => 'Edit Block Type: '.$blockType->name, 'heading' => 'Edit Block Type: '.$blockType->name])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Edit Block Type: '.$blockType->name, 'heading' => 'Edit Block Type: '.$blockType->name])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Edit Block Type: '.$blockType->name,
         'description' => 'Update the selected block type record.',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
         <form method="POST" action="{{ route('admin.block-types.update', $blockType) }}" class="wb-stack wb-gap-0">
@@ -19,7 +19,7 @@
             </div>
 
             <div class="wb-card-footer">
-                <x-admin.form-actions :cancel-url="$blockTypesReturnUrl" submit-label="Save Changes" />
+                <x-webblocks-cms::admin.form-actions :cancel-url="$blockTypesReturnUrl" submit-label="Save Changes" />
             </div>
         </form>
     </div>

@@ -16,16 +16,16 @@
     $pageHeaderActions = trim(ob_get_clean());
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Inspect the saved Shared Slot snapshot before restoring it. This restore will keep the same Shared Slot id and existing page slot references intact.',
         'actions' => $pageHeaderActions,
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-grid wb-grid-2">
         <div class="wb-card wb-card-muted">
@@ -35,7 +35,7 @@
                 <div><strong>Created:</strong> {{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
                 <div><strong>Source:</strong> {{ $revision->sourceText() }}</div>
                 <div><strong>Event:</strong> {{ $revision->eventText() }}</div>
-                <div><strong>User:</strong> @include('admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
+                <div><strong>User:</strong> @include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
                 <div><strong>Summary:</strong> {{ $revision->summary ?? 'None' }}</div>
                 @if ($revision->restoredFrom)
                     <div><strong>Restored From:</strong> Revision #{{ $revision->restoredFrom->id }}</div>

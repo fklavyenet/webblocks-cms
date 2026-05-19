@@ -122,7 +122,7 @@
     </div>
 
     @if ($actionsContainerClass)
-        <x-admin.form-actions
+        <x-webblocks-cms::admin.form-actions
             :cancel-url="$cancelUrl"
             :submit-label="$submitLabel"
             :container-class="$actionsContainerClass"

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Http\Controllers\Admin\LocaleController;
+use App\Http\Controllers\Admin\SiteController;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockTextTranslation;
@@ -10,20 +12,66 @@ use App\Models\Locale;
 use App\Models\Page;
 use App\Models\SharedSlot;
 use App\Models\Site;
+use App\Models\SiteLocale;
 use App\Models\SiteVariable;
 use App\Models\User;
+use App\Support\Locales\LocaleLifecycleGuard;
 use App\Support\Locales\LocaleResolver;
 use App\Support\SharedSlots\SharedSlotSourcePageManager;
+use App\Support\Sites\SiteDomainManager;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Admin\LocaleController as PackageLocaleController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteController as PackageSiteController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController as PackageSiteDomainController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController as PackageSiteVariableController;
 
 class SiteLocaleManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function site_and_locale_admin_runtime_routes_use_package_controllers_and_views_with_root_wrappers(): void
+    {
+        $this->assertRouteUsesPackageController('admin.sites.index', PackageSiteController::class);
+        $this->assertRouteUsesPackageController('admin.sites.edit', PackageSiteController::class);
+        $this->assertRouteUsesPackageController('admin.sites.domains.index', PackageSiteDomainController::class);
+        $this->assertRouteUsesPackageController('admin.sites.variables.store', PackageSiteVariableController::class);
+        $this->assertRouteUsesPackageController('admin.locales.index', PackageLocaleController::class);
+
+        foreach (['admin.sites.index', 'admin.sites.edit', 'admin.locales.index'] as $routeName) {
+            $middleware = app('router')->getRoutes()->getByName($routeName)?->gatherMiddleware() ?? [];
+
+            $this->assertContains('web', $middleware);
+            $this->assertContains('install.required', $middleware);
+            $this->assertContains('auth', $middleware);
+            $this->assertContains('admin.access', $middleware);
+        }
+
+        $this->assertTrue(view()->exists('webblocks-cms::admin.sites.index'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.sites.form'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.sites.domains.index'));
+        $this->assertTrue(view()->exists('webblocks-cms::admin.locales.index'));
+        $this->assertStringContainsString(
+            'webblocks-cms::admin.sites.index',
+            file_get_contents(resource_path('views/admin/sites/index.blade.php')),
+        );
+        $this->assertStringContainsString(
+            'webblocks-cms::admin.locales.index',
+            file_get_contents(resource_path('views/admin/locales/index.blade.php')),
+        );
+
+        $this->assertTrue(is_subclass_of(SiteController::class, PackageSiteController::class));
+        $this->assertTrue(is_subclass_of(LocaleController::class, PackageLocaleController::class));
+        $this->assertTrue(is_subclass_of(SiteVariable::class, \WebBlocks\Cms\Models\SiteVariable::class));
+        $this->assertTrue(is_subclass_of(SiteLocale::class, \WebBlocks\Cms\Models\SiteLocale::class));
+        $this->assertTrue(is_subclass_of(SiteDomainManager::class, \WebBlocks\Cms\Support\Sites\SiteDomainManager::class));
+        $this->assertTrue(is_subclass_of(LocaleLifecycleGuard::class, \WebBlocks\Cms\Support\Locales\LocaleLifecycleGuard::class));
+    }
 
     #[Test]
     public function sites_index_renders_primary_and_locale_context(): void
@@ -500,6 +548,14 @@ class SiteLocaleManagementTest extends TestCase
             'width' => 64,
             'height' => 64,
         ]);
+    }
+
+    private function assertRouteUsesPackageController(string $routeName, string $controllerClass): void
+    {
+        $route = app('router')->getRoutes()->getByName($routeName);
+
+        $this->assertNotNull($route, 'Route '.$routeName.' should be registered.');
+        $this->assertStringStartsWith($controllerClass.'@', (string) $route->getAction('controller'));
     }
 
     #[Test]

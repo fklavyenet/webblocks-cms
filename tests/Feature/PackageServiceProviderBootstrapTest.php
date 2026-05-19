@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Http\Controllers\Admin\IconCatalogController;
+use App\Http\Controllers\Admin\SlotTypeController;
+use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
+use App\Http\Requests\Admin\SystemSettingsRequest;
 use App\Models\Block;
 use App\Models\ContactMessage;
 use App\Models\Locale;
@@ -60,7 +63,10 @@ use WebBlocks\Cms\Database\Seeders\LayoutTypeSeeder as PackageLayoutTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\PageTypeSeeder as PackagePageTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\SlotTypeSeeder as PackageSlotTypeSeeder;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController as PackageIconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
 use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest as PackageIconCatalogItemUpdateRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest as PackageSystemSettingsRequest;
 use WebBlocks\Cms\Models\Block as PackageBlock;
 use WebBlocks\Cms\Models\ContactMessage as PackageContactMessage;
 use WebBlocks\Cms\Models\Locale as PackageLocale;
@@ -138,7 +144,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/BlockTypes/BlockTypeIndexState.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Console/SyncWebBlocksUiIconsCommand.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SlotTypeController.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SystemSettingsController.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/SystemSettingsRequest.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/IconCatalog.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Blocks/BlockDeletionManager.php'));
@@ -172,6 +181,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/media/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/navigation/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/block-types/index.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/slot-types/index.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/settings.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/hero.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/columns.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/gallery.blade.php'));
@@ -186,7 +197,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('app/Support/Admin/AdminPagination.php'));
         $this->assertFileExists(base_path('app/Support/BlockTypes/BlockTypeIndexState.php'));
         $this->assertFileExists(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileExists(base_path('app/Http/Controllers/Admin/SlotTypeController.php'));
+        $this->assertFileExists(base_path('app/Http/Controllers/Admin/SystemSettingsController.php'));
         $this->assertFileExists(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
+        $this->assertFileExists(base_path('app/Http/Requests/Admin/SystemSettingsRequest.php'));
         $this->assertFileExists(base_path('app/Support/Icons/IconCatalog.php'));
         $this->assertFileExists(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(base_path('app/Support/Blocks/BlockDeletionManager.php'));
@@ -220,6 +234,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(resource_path('views/admin/media/index.blade.php'));
         $this->assertFileExists(resource_path('views/admin/navigation/index.blade.php'));
         $this->assertFileExists(resource_path('views/admin/block-types/index.blade.php'));
+        $this->assertFileExists(resource_path('views/admin/slot-types/index.blade.php'));
+        $this->assertFileExists(resource_path('views/admin/system/settings.blade.php'));
         $this->assertFileExists(resource_path('views/pages/partials/blocks/hero.blade.php'));
         $this->assertFileExists(resource_path('views/pages/partials/blocks/columns.blade.php'));
         $this->assertFileExists(resource_path('views/pages/partials/blocks/gallery.blade.php'));
@@ -237,12 +253,31 @@ class PackageServiceProviderBootstrapTest extends TestCase
         );
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::diagnostics.package-status'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.runtime-status'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::layouts.admin'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.partials.edit-modal'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.page-header'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.flash'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.listing-filters'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.page-actions'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.pagination'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.audit-actor'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::components.admin.form-actions'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery'));
+        $this->assertTrue(view()->exists('admin.partials.page-header'));
+        $this->assertTrue(view()->exists('layouts.admin'));
+        $this->assertTrue(view()->exists('admin.partials.flash'));
+        $this->assertTrue(view()->exists('admin.partials.listing-filters'));
+        $this->assertTrue(view()->exists('admin.partials.page-actions'));
+        $this->assertTrue(view()->exists('admin.partials.pagination'));
+        $this->assertTrue(view()->exists('admin.partials.audit-actor'));
+        $this->assertTrue(view()->exists('admin.slot-types.index'));
+        $this->assertTrue(view()->exists('admin.system.settings'));
         $this->assertTrue(view()->exists('pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists('pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists('pages.partials.blocks.gallery'));
@@ -426,6 +461,12 @@ class PackageServiceProviderBootstrapTest extends TestCase
                 'group' => WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG,
             ],
         ], $provider->publishCalls);
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/admin.css'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/core.js'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin-sortable-list.js'));
+        $this->assertFileExists(public_path('cms/css/admin.css'));
+        $this->assertFileExists(public_path('cms/js/admin/core.js'));
+        $this->assertFileExists(public_path('cms/js/admin-sortable-list.js'));
     }
 
     #[Test]
@@ -440,7 +481,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(class_exists(PackageBlockTypeIndexState::class));
         $this->assertTrue(class_exists(PackageSyncWebBlocksUiIconsCommand::class));
         $this->assertTrue(class_exists(PackageIconCatalogController::class));
+        $this->assertTrue(class_exists(PackageSlotTypeController::class));
+        $this->assertTrue(class_exists(PackageSystemSettingsController::class));
         $this->assertTrue(class_exists(PackageIconCatalogItemUpdateRequest::class));
+        $this->assertTrue(class_exists(PackageSystemSettingsRequest::class));
         $this->assertTrue(class_exists(PackageIconCatalog::class));
         $this->assertTrue(class_exists(PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(class_exists(PackageMediaIndexState::class));
@@ -487,7 +531,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(is_subclass_of(BlockTypeIndexState::class, PackageBlockTypeIndexState::class));
         $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
         $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
+        $this->assertTrue(is_subclass_of(SlotTypeController::class, PackageSlotTypeController::class));
+        $this->assertTrue(is_subclass_of(SystemSettingsController::class, PackageSystemSettingsController::class));
         $this->assertTrue(is_subclass_of(IconCatalogItemUpdateRequest::class, PackageIconCatalogItemUpdateRequest::class));
+        $this->assertTrue(is_subclass_of(SystemSettingsRequest::class, PackageSystemSettingsRequest::class));
         $this->assertTrue(is_subclass_of(IconCatalog::class, PackageIconCatalog::class));
         $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(is_subclass_of(MediaIndexState::class, PackageMediaIndexState::class));

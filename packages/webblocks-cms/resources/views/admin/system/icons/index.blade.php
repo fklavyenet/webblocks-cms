@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Icons', 'heading' => 'Icons'])
+@extends('webblocks-cms::layouts.admin', ['title' => 'Icons', 'heading' => 'Icons'])
 
 @php
     $hasActiveFilters = $filters['search'] !== '' || $filters['source'] !== '' || $filters['tag'] !== '' || $filters['status'] !== '';
@@ -6,18 +6,18 @@
 @endphp
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Icons',
         'description' => 'Manage the install-level icon catalog used by admin pickers. WebBlocks UI provides the CSS classes and manifest; CMS stores labels, contexts, activity, and sort order.',
         'count' => $totalCount,
         'actions' => '<a href="'.e($defaultManifest).'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Open Manifest</a>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body">
-            @include('admin.partials.listing-filters', [
+            @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.system.icons.index'),
                 'search' => [
                     'id' => 'icons_search',
@@ -130,7 +130,7 @@
             </div>
         @endif
 
-        @include('admin.partials.pagination', ['paginator' => $icons, 'ariaLabel' => 'Icons pagination', 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $icons, 'ariaLabel' => 'Icons pagination', 'compact' => true])
     </div>
 @endsection
 

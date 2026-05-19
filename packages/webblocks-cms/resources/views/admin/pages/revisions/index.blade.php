@@ -4,16 +4,16 @@
     $pageEditUrl = route('admin.pages.edit', $page);
 @endphp
 
-@extends('layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
-    @include('admin.partials.page-header', [
+    @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
         'description' => 'Review page-level revision snapshots for content restore. This history is page-specific and does not replace system backups or site export packages.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$pageEditUrl.'" class="wb-btn wb-btn-secondary">Back to Page</a>'.($pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>View Page</span></a>' : '').'</div>',
     ])
 
-    @include('admin.partials.flash')
+    @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
@@ -62,7 +62,7 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1 wb-text-sm">
-                                            <span>@include('admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
+                                            <span>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</span>
                                             <span class="wb-text-muted">Source: {{ $revision->sourceText() }}</span>
                                             <span class="wb-text-muted">Event: {{ $revision->eventText() }}</span>
                                         </div>
