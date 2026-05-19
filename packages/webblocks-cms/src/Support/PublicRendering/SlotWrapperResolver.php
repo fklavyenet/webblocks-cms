@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\PublicRendering;
 
-use App\Models\Page;
 use App\Models\PageLayoutSlot;
-use App\Models\PageSlot;
 use App\Support\Pages\LayoutMarkup;
 use App\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 
 class SlotWrapperResolver
 {

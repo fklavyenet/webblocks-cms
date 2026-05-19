@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\PageTranslation;
 use App\Models\Site;
 use App\Models\SiteLocale;
 use App\Models\VisitorEvent;

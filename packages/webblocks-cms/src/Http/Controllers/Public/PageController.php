@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
-use App\Models\Page;
 use App\Support\Pages\PageRouteResolver;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Visitors\VisitorEventLogger;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PageController extends Controller

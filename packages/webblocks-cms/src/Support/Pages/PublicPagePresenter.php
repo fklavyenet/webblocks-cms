@@ -2,14 +2,14 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Block;
-use App\Models\Page;
-use App\Models\PageSlot;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Pages\PageAssetRenderer;
 use App\Support\Pages\PageLayoutManager;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\PublicRendering\SlotWrapperResolver;
 
 class PublicPagePresenter

@@ -92,8 +92,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const PUBLIC_MODEL_FOUNDATION_FILES = [
+        'Models/Block.php',
         'Models/ContactMessage.php',
         'Models/Locale.php',
+        'Models/Page.php',
+        'Models/PageSlot.php',
+        'Models/PageTranslation.php',
         'Models/PublicSearchIndex.php',
         'Models/Site.php',
         'Models/SiteDomain.php',
@@ -102,8 +106,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const ROOT_PUBLIC_MODEL_WRAPPER_FILES = [
+        'Models/Block.php',
         'Models/ContactMessage.php',
         'Models/Locale.php',
+        'Models/Page.php',
+        'Models/PageSlot.php',
+        'Models/PageTranslation.php',
         'Models/PublicSearchIndex.php',
         'Models/Site.php',
         'Models/SiteDomain.php',

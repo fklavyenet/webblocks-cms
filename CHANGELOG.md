@@ -26,6 +26,8 @@
 - Start the Public Model Compatibility Foundation batch by moving `Locale`, `Site`, `SiteDomain`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` into package `src/Models/` while keeping root `App\Models\...` classes as compatibility wrappers.
 - Update package-owned public runtime imports and package-status reporting so package public controllers, route patterns, public site resolution, search querying, visitor logging, and related support now prefer `WebBlocks\Cms\Models\...` where those model slices are package-owned, while `Page`, `PageTranslation`, `PageSlot`, `Block`, and `User` remain root-owned for now.
 - Document the partial model authority boundary honestly: root migrations remain authoritative, System Update and install flow remain unchanged, runtime asset URLs still use root `public/cms/...` compatibility paths, and consumer or starter validation remains blocked by the remaining root-owned page or block model surface.
+- Move the `Page`, `PageTranslation`, `PageSlot`, and `Block` model core into package `src/Models/` while keeping root `App\Models\...` wrappers as compatibility entrypoints.
+- Update package-owned runtime typing, package status output, and focused bootstrap coverage so the package model foundation now includes the full page and block core while root migrations, root asset paths, System Update, and the app-owned `User` model remain unchanged.
 
 ## 1.32.1
 

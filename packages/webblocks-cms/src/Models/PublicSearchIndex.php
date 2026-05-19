@@ -3,7 +3,6 @@
 namespace WebBlocks\Cms\Models;
 
 use App\Models\Locale;
-use App\Models\Page;
 use App\Models\Site;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

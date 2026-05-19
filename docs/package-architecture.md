@@ -494,13 +494,13 @@ The current Step 2 public-rendering checkpoint extends package authority further
 - root `resources/views/pages/partials/blocks/*` files now remain as thin compatibility wrappers that delegate to matching `webblocks-cms::pages.partials.blocks.*` views
 - `Block::publicRenderView()` now resolves shipped core block types to package-owned namespaced block partials first, while install-specific or custom root block renderers still remain available through the existing root fallback path when no matching package partial exists
 - the first public model compatibility foundation batch is now partial rather than fully root-owned: `Locale`, `Site`, `SiteDomain`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` now live under package `src/Models/`, while root `App\Models\...` classes remain as compatibility wrappers so existing admin imports, tests, and runtime entrypoints continue to work
-- `Page`, `PageTranslation`, `PageSlot`, and `Block` remain root-owned for now because they still sit directly on search reindexing, page-layout resolution, block translation trees, shared-slot rendering, media relationships, admin workflows, revisions, and broader page-builder behavior that would make this batch too risky
+- `Page`, `PageTranslation`, `PageSlot`, and `Block` now also live under package `src/Models/`, with root `App\Models\...` wrappers preserved as the compatibility boundary for existing admin imports, typehints, and runtime entrypoints
 - `User` remains app-owned and root-owned intentionally and is not part of the package model migration target
 - package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets
 - active runtime still serves `public/cms/...` from the root install for compatibility because package asset publishing is not yet the authoritative runtime asset path
 - root migrations remain authoritative and package migration loading stays disabled
 - System Update, install flow, backup or restore, and broader project-layer runtime remain unchanged in this batch
-- consumer or starter-package validation is still not realistic after this checkpoint because the public runtime still depends on root `Page`, `PageTranslation`, `PageSlot`, and `Block` models, root migrations, root compatibility asset paths, and broader root install/update behavior
+- consumer or starter-package validation is still not realistic after this checkpoint because the runtime still depends on root migrations, root compatibility asset paths, root-owned admin and install/update flows, and the intentionally app-owned root `User` model boundary
 
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 

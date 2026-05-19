@@ -1,0 +1,534 @@
+<?php
+
+namespace WebBlocks\Cms\Models;
+
+use App\Models\Block;
+use App\Models\Layout;
+use App\Models\Locale;
+use App\Models\NavigationItem;
+use App\Models\PageAsset;
+use App\Models\PageRevision;
+use App\Models\PageSlot;
+use App\Models\PageTranslation;
+use App\Models\PageType;
+use App\Models\Site;
+use App\Models\User;
+use App\Models\VisitorEvent;
+use App\Support\Pages\PageLayoutManager;
+use App\Support\Pages\PageRouteResolver;
+use App\Support\Search\PublicSearchIndexer;
+use App\Support\Search\ReindexesPublicSearch;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+class Page extends Model
+{
+    use HasFactory;
+    use ReindexesPublicSearch;
+
+    public const TYPE_DEFAULT = 'default';
+
+    public const TYPE_SHARED_SLOT_SOURCE = 'shared_slot_source';
+
+    private ?string $pendingDefaultTranslationName = null;
+
+    private ?string $pendingDefaultTranslationSlug = null;
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_IN_REVIEW = 'in_review';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_ARCHIVED = 'archived';
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $page): void {
+            if (! $page->page_type) {
+                $page->page_type = self::TYPE_DEFAULT;
+            }
+
+            if (! $page->status) {
+                $page->status = self::STATUS_DRAFT;
+            }
+
+            if (! $page->site_id) {
+                $page->site_id = Site::primary()?->id;
+            }
+
+            if ($page->status === self::STATUS_PUBLISHED && ! $page->published_at) {
+                $page->published_at = now();
+            }
+        });
+
+        static::saved(function (self $page): void {
+            $page->translations()->update(['site_id' => $page->site_id]);
+            $page->syncPendingDefaultTranslation();
+
+            if ($page->wasChanged('site_id')) {
+                $page->unsetRelation('translations');
+            }
+
+            static::refreshSearchForPage($page);
+        });
+
+        static::deleted(function (self $page): void {
+            app(PublicSearchIndexer::class)->deletePage($page);
+        });
+
+        static::created(function (self $page): void {
+            if (app()->runningUnitTests()) {
+                return;
+            }
+
+            $route = request()?->route();
+
+            Log::info('Page created', [
+                'page_id' => $page->id,
+                'title' => $page->name,
+                'slug' => $page->slug,
+                'status' => $page->status,
+                'page_type' => $page->page_type,
+                'user_id' => Auth::id(),
+                'route' => $route?->getName(),
+                'method' => request()?->method(),
+                'url' => request()?->fullUrl(),
+                'referrer' => request()?->headers->get('referer'),
+                'ip' => request()?->ip(),
+                'console' => app()->runningInConsole(),
+                'command' => $_SERVER['argv'][1] ?? null,
+            ]);
+        });
+    }
+
+    protected $fillable = [
+        'site_id',
+        'title',
+        'slug',
+        'page_type',
+        'page_type_id',
+        'layout_id',
+        'settings',
+        'status',
+        'published_at',
+        'review_requested_at',
+        'created_by_user_id',
+        'updated_by_user_id',
+        'published_by_user_id',
+        'archived_by_user_id',
+        'review_requested_by_user_id',
+    ];
+
+    protected $appends = [
+        'name',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'settings' => 'array',
+            'published_at' => 'datetime',
+            'review_requested_at' => 'datetime',
+        ];
+    }
+
+    public function setting(string $key, mixed $default = null): mixed
+    {
+        return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
+    }
+
+    public static function supportsSettingsColumn(): bool
+    {
+        return Schema::hasColumn((new self)->getTable(), 'settings');
+    }
+
+    public static function allowedPublicShellPresets(): array
+    {
+        return ['default', 'docs'];
+    }
+
+    public static function normalizePublicShellType(mixed $preset): string
+    {
+        $normalized = strtolower(trim((string) $preset));
+
+        return match ($normalized) {
+            'docs', 'dashboard' => 'docs',
+            default => 'default',
+        };
+    }
+
+    public static function normalizePublicShellHandle(mixed $preset): string
+    {
+        $normalized = strtolower(trim((string) $preset));
+
+        if ($normalized === '') {
+            return 'default';
+        }
+
+        return $normalized === 'dashboard'
+            ? 'docs'
+            : $normalized;
+    }
+
+    public static function normalizePublicShellPreset(mixed $preset): string
+    {
+        return self::normalizePublicShellType($preset);
+    }
+
+    public static function sanitizeSettings(mixed $settings, mixed $publicShell = null): ?array
+    {
+        if (is_string($settings)) {
+            $decoded = json_decode($settings, true);
+            $settings = is_array($decoded) ? $decoded : null;
+        }
+
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        if ($publicShell !== null || array_key_exists('public_shell', $settings)) {
+            $settings['public_shell'] = self::normalizePublicShellHandle($publicShell ?? $settings['public_shell'] ?? 'default');
+        }
+
+        return $settings === [] ? null : $settings;
+    }
+
+    public function publicShellPreset(): string
+    {
+        return self::normalizePublicShellHandle($this->setting('public_shell', 'default'));
+    }
+
+    public function resolvedPublicShellType(): string
+    {
+        return app(PageLayoutManager::class)->resolveShellType($this->publicShellPreset());
+    }
+
+    public static function workflowStatuses(): array
+    {
+        return [
+            self::STATUS_DRAFT,
+            self::STATUS_IN_REVIEW,
+            self::STATUS_PUBLISHED,
+            self::STATUS_ARCHIVED,
+        ];
+    }
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->resolvedTitle();
+    }
+
+    public function getTitleAttribute($value): ?string
+    {
+        return $this->resolvedTitle($value);
+    }
+
+    public function setTitleAttribute($value): void
+    {
+        $normalized = is_string($value) ? trim($value) : null;
+        $this->pendingDefaultTranslationName = $normalized !== '' ? $normalized : null;
+        unset($this->attributes['title']);
+    }
+
+    public function getSlugAttribute($value): ?string
+    {
+        return $this->defaultTranslation()?->slug
+            ?? $this->currentTranslation?->slug
+            ?? $this->pendingDefaultTranslationSlug
+            ?? $value;
+    }
+
+    public function setSlugAttribute($value): void
+    {
+        $normalized = is_string($value) ? trim($value) : null;
+        $this->pendingDefaultTranslationSlug = $normalized !== '' ? Str::slug($normalized) : null;
+        unset($this->attributes['slug']);
+    }
+
+    public function scopeOrderByDefaultTranslation(Builder $query, string $column, string $direction = 'asc'): Builder
+    {
+        $defaultLocaleId = self::defaultLocaleId();
+
+        if (! $defaultLocaleId || ! in_array($column, ['name', 'slug'], true)) {
+            return $query;
+        }
+
+        return $query->orderBy(
+            PageTranslation::query()
+                ->select($column)
+                ->whereColumn('page_translations.page_id', 'pages.id')
+                ->where('locale_id', $defaultLocaleId)
+                ->limit(1),
+            $direction,
+        );
+    }
+
+    public function scopeVisibleInAdmin(Builder $query): Builder
+    {
+        return $query->where('page_type', '!=', self::TYPE_SHARED_SLOT_SOURCE);
+    }
+
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
+    }
+
+    public function pageType(): BelongsTo
+    {
+        return $this->belongsTo(PageType::class);
+    }
+
+    public function layout(): BelongsTo
+    {
+        return $this->belongsTo(Layout::class);
+    }
+
+    public function translations(): HasMany
+    {
+        return $this->hasMany(PageTranslation::class);
+    }
+
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(Block::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function slots(): HasMany
+    {
+        return $this->hasMany(PageSlot::class)->orderBy('sort_order');
+    }
+
+    public function navigationItems(): HasMany
+    {
+        return $this->hasMany(NavigationItem::class);
+    }
+
+    public function visitorEvents(): HasMany
+    {
+        return $this->hasMany(VisitorEvent::class);
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(PageRevision::class)->latest('created_at');
+    }
+
+    public function pageAssets(): HasMany
+    {
+        return $this->hasMany(PageAsset::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function createdByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function updatedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id');
+    }
+
+    public function publishedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'published_by_user_id');
+    }
+
+    public function archivedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'archived_by_user_id');
+    }
+
+    public function reviewRequestedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'review_requested_by_user_id');
+    }
+
+    public function defaultTranslation(): ?PageTranslation
+    {
+        $defaultLocaleId = self::defaultLocaleId();
+
+        if (! $defaultLocaleId) {
+            return null;
+        }
+
+        if ($this->relationLoaded('currentTranslation')) {
+            $currentTranslation = $this->getRelation('currentTranslation');
+
+            if ($currentTranslation?->locale_id === $defaultLocaleId) {
+                return $currentTranslation;
+            }
+        }
+
+        return $this->translations->firstWhere('locale_id', $defaultLocaleId)
+            ?? $this->translations()->where('locale_id', $defaultLocaleId)->first();
+    }
+
+    public function translationForLocale(Locale|int|string|null $locale): ?PageTranslation
+    {
+        $localeId = match (true) {
+            $locale instanceof Locale => $locale->id,
+            is_numeric($locale) => (int) $locale,
+            is_string($locale) && $locale !== '' => Locale::query()->where('code', Locale::normalizeCode($locale))->value('id'),
+            default => null,
+        };
+
+        if (! $localeId) {
+            return null;
+        }
+
+        return $this->translations->firstWhere('locale_id', $localeId)
+            ?? $this->translations()->where('locale_id', $localeId)->first();
+    }
+
+    public function availableSiteLocales(): Collection
+    {
+        $site = $this->relationLoaded('site') ? $this->site : $this->site()->first();
+
+        if (! $site) {
+            return collect();
+        }
+
+        return $site->locales()
+            ->where('locales.is_enabled', true)
+            ->wherePivot('is_enabled', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function translationStatusForSite(): Collection
+    {
+        $translations = $this->relationLoaded('translations') ? $this->translations : $this->translations()->with('locale')->get();
+
+        return $this->availableSiteLocales()->map(function (Locale $locale) use ($translations) {
+            $translation = $translations->firstWhere('locale_id', $locale->id);
+
+            return [
+                'locale' => $locale,
+                'translation' => $translation,
+                'is_missing' => ! $translation,
+                'is_default' => $locale->is_default,
+                'public_path' => $translation ? $this->publicPath($locale->code) : null,
+                'public_url' => $translation ? $this->publicUrl($locale->code) : null,
+            ];
+        });
+    }
+
+    public function publicUrl(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->urlFor($this, $localeCode, $this->site);
+    }
+
+    public function currentHostPublicUrl(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->currentHostUrlFor($this, $localeCode);
+    }
+
+    public function canonicalUrl(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->canonicalUrlFor($this, $localeCode, $this->site);
+    }
+
+    public function publicPath(?string $localeCode = null): ?string
+    {
+        return app(PageRouteResolver::class)->pathFor($this, $localeCode, $this->site);
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED;
+    }
+
+    public function isSharedSlotSourcePage(): bool
+    {
+        return $this->page_type === self::TYPE_SHARED_SLOT_SOURCE;
+    }
+
+    public function workflowLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_IN_REVIEW => 'In Review',
+            self::STATUS_PUBLISHED => 'Published',
+            self::STATUS_ARCHIVED => 'Archived',
+            default => 'Draft',
+        };
+    }
+
+    public function workflowBadgeClass(): string
+    {
+        return match ($this->status) {
+            self::STATUS_IN_REVIEW => 'wb-status-info',
+            self::STATUS_PUBLISHED => 'wb-status-active',
+            self::STATUS_ARCHIVED => 'wb-status-danger',
+            default => 'wb-status-pending',
+        };
+    }
+
+    public static function defaultLocaleId(): ?int
+    {
+        return Locale::query()->where('is_default', true)->value('id');
+    }
+
+    private function resolvedTitle(mixed $fallback = null): ?string
+    {
+        return $this->currentTranslation?->name
+            ?? $this->defaultTranslation()?->name
+            ?? $this->pendingDefaultTranslationName
+            ?? $fallback
+            ?? null;
+    }
+
+    private function syncPendingDefaultTranslation(): void
+    {
+        $defaultLocaleId = self::defaultLocaleId();
+
+        if (! $defaultLocaleId) {
+            $this->pendingDefaultTranslationName = null;
+            $this->pendingDefaultTranslationSlug = null;
+
+            return;
+        }
+
+        if ($this->pendingDefaultTranslationName === null && $this->pendingDefaultTranslationSlug === null) {
+            return;
+        }
+
+        $existing = $this->translations()->where('locale_id', $defaultLocaleId)->first();
+        $name = $this->pendingDefaultTranslationName ?? $existing?->name;
+        $slug = $this->pendingDefaultTranslationSlug ?? $existing?->slug;
+
+        if (($slug === null || $slug === '') && is_string($name) && $name !== '') {
+            $slug = Str::slug($name);
+        }
+
+        if (! is_string($name) || $name === '' || ! is_string($slug) || $slug === '') {
+            $this->pendingDefaultTranslationName = null;
+            $this->pendingDefaultTranslationSlug = null;
+
+            return;
+        }
+
+        $this->translations()->updateOrCreate(
+            ['locale_id' => $defaultLocaleId],
+            [
+                'site_id' => $this->site_id,
+                'name' => $name,
+                'slug' => $slug,
+                'path' => PageTranslation::pathFromSlug($slug),
+            ],
+        );
+
+        $this->unsetRelation('translations');
+        $this->pendingDefaultTranslationName = null;
+        $this->pendingDefaultTranslationSlug = null;
+    }
+}
