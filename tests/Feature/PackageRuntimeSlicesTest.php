@@ -47,7 +47,7 @@ class PackageRuntimeSlicesTest extends TestCase
         $response->assertOk();
         $response->assertSee('WebBlocks CMS package diagnostic view');
         $response->assertSee('View namespace: webblocks-cms');
-        $response->assertSee('Root runtime remains authoritative for active admin and public views.');
+        $response->assertSee('Root runtime remains authoritative for install, auth, profile, migrations, and compatibility wrappers, while active public page or search shells now render from the package view namespace.');
     }
 
     #[Test]
@@ -84,7 +84,7 @@ class PackageRuntimeSlicesTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Package Public Runtime Status');
-        $response->assertSee('This is the first guarded package-owned public route and view slice.');
+        $response->assertSee('the main public layout, page shell, and search views now render from the package namespace too.');
         $response->assertSee('data-webblocks-cms-package-public-slice="status"', false);
 
         $site = Site::query()->where('is_primary', true)->firstOrFail();

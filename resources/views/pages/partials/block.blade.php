@@ -1,1 +1,1 @@
-@include($block->publicRenderView(), ['block' => $block])
+@include('webblocks-cms::pages.partials.block')

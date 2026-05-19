@@ -1,1 +1,1 @@
-@extends('pages.show')
+@extends('webblocks-cms::pages.show')

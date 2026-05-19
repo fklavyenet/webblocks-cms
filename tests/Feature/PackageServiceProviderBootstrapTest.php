@@ -135,7 +135,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $rendered);
         $this->assertStringContainsString('View namespace: webblocks-cms', $rendered);
         $this->assertStringContainsString('Package base path:', $rendered);
-        $this->assertStringContainsString('Root runtime remains authoritative for active admin and public views.', $rendered);
+        $this->assertStringContainsString('Root runtime remains authoritative for install, auth, profile, migrations, and compatibility wrappers, while active public page or search shells now render from the package view namespace.', $rendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), $welcomeViewPath);
     }
 
@@ -157,7 +157,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertStringContainsString('Package Admin Runtime Status', $adminRendered);
         $this->assertStringContainsString('Root admin pages such as Pages, Media, Blocks, Sites, Updates, Backups, and Export / Import remain root-owned.', $adminRendered);
         $this->assertStringContainsString('Package Public Runtime Status', $publicRendered);
-        $this->assertStringContainsString('root public page rendering, multisite routing, search, and block rendering remain authoritative.', $publicRendered);
+        $this->assertStringContainsString('the main public layout, page shell, and search views now render from the package namespace too.', $publicRendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), app('view.finder')->find('welcome'));
     }
 

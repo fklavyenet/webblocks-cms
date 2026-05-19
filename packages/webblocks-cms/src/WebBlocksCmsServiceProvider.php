@@ -65,9 +65,45 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'admin/system/icons/index.blade.php',
         'admin/system/icons/partials/edit-modal.blade.php',
         'diagnostics/package-status.blade.php',
+        'layouts/public.blade.php',
+        'pages/show.blade.php',
+        'pages/partials/block.blade.php',
+        'pages/partials/slot.blade.php',
         'public/pages/show.blade.php',
+        'search/show.blade.php',
+        'search/partials/modal.blade.php',
         'public/search/show.blade.php',
         'public/runtime-status.blade.php',
+    ];
+
+    public const PUBLIC_RENDERING_RUNTIME_FILES = [
+        'Support/Blocks/PublicBodyEndRegistry.php',
+        'Support/Blocks/PublicOverlayRegistry.php',
+        'Support/Blocks/TrustedHtmlOverlayExtractor.php',
+        'Support/Pages/PageRouteResolver.php',
+        'Support/Pages/PublicPagePresenter.php',
+        'Support/Pages/PublicSharedSlotResolver.php',
+        'Support/PublicRendering/SiteAssetResolver.php',
+        'Support/PublicRendering/SlotWrapperResolver.php',
+        'Support/Search/PublicSearchQuery.php',
+        'Support/Sites/ResolvedSite.php',
+        'Support/Sites/SiteResolver.php',
+        'Support/Visitors/VisitorEventLogger.php',
+    ];
+
+    public const ROOT_PUBLIC_RENDERING_RUNTIME_WRAPPER_FILES = [
+        'Support/Blocks/PublicBodyEndRegistry.php',
+        'Support/Blocks/PublicOverlayRegistry.php',
+        'Support/Blocks/TrustedHtmlOverlayExtractor.php',
+        'Support/Pages/PageRouteResolver.php',
+        'Support/Pages/PublicPagePresenter.php',
+        'Support/Pages/PublicSharedSlotResolver.php',
+        'Support/PublicRendering/SiteAssetResolver.php',
+        'Support/PublicRendering/SlotWrapperResolver.php',
+        'Support/Search/PublicSearchQuery.php',
+        'Support/Sites/ResolvedSite.php',
+        'Support/Sites/SiteResolver.php',
+        'Support/Visitors/VisitorEventLogger.php',
     ];
 
     public const ICON_VIEW_FILES = [

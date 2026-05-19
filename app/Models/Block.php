@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class Block extends Model
 {
@@ -923,15 +924,21 @@ class Block extends Model
 
     public function publicRenderView(): string
     {
-        $view = 'pages.partials.blocks.'.$this->typeSlug();
+        $view = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$this->typeSlug();
 
         if (View::exists($view)) {
             return $view;
         }
 
+        $legacyView = 'pages.partials.blocks.'.$this->typeSlug();
+
+        if (View::exists($legacyView)) {
+            return $legacyView;
+        }
+
         return App::environment('production')
-            ? 'pages.partials.blocks.fallback'
-            : 'pages.partials.blocks.missing-renderer';
+            ? $this->fallbackPublicRenderView('fallback')
+            : $this->fallbackPublicRenderView('missing-renderer');
     }
 
     public function adminFormSupported(): bool
@@ -1411,8 +1418,21 @@ class Block extends Model
     public static function supportsPublicRender(?string $slug): bool
     {
         return $slug !== null && (
-            View::exists('pages.partials.blocks.'.$slug)
+            View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug)
+            || View::exists('pages.partials.blocks.'.$slug)
+            || View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.fallback')
             || View::exists('pages.partials.blocks.fallback')
         );
+    }
+
+    private function fallbackPublicRenderView(string $slug): string
+    {
+        $packageView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug;
+
+        if (View::exists($packageView)) {
+            return $packageView;
+        }
+
+        return 'pages.partials.blocks.'.$slug;
     }
 }

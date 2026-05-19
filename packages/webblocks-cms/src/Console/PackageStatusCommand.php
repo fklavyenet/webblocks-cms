@@ -112,7 +112,7 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
         ));
         $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
-        $this->line('Root view compatibility state: mixed (icon and public search/page entry views now render through the package namespace, while most admin and layout views remain root-owned).');
+        $this->line('Root view compatibility state: mixed (icon, public layout, public page shell, public search, and slot entry views now render through the package namespace, while most admin views and the broader block-partial compatibility layer remain root-accessible).');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
@@ -142,8 +142,8 @@ class PackageStatusCommand extends Command
             $packageRoot.'/public',
             WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES
         )).' (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' publishes package assets to public/vendor/webblocks-cms)');
-        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain authoritative).');
-        $this->line('Future package public asset Composer readiness: partial (package publishable asset marker exists; current WebBlocks UI CDN pinning and root asset flow stay unchanged).');
+        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS it needs).');
+        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets now exist, but current WebBlocks UI CDN pinning and root public/cms runtime asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
@@ -174,6 +174,14 @@ class PackageStatusCommand extends Command
         $this->line('Root icon runtime compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
             base_path('app'),
             WebBlocksCmsServiceProvider::ROOT_ICON_RUNTIME_WRAPPER_FILES
+        ));
+        $this->line('Package public rendering support moves present: '.$this->expectedFilesStatus(
+            $packageRoot.'/src',
+            WebBlocksCmsServiceProvider::PUBLIC_RENDERING_RUNTIME_FILES
+        ));
+        $this->line('Root public rendering support compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('app'),
+            WebBlocksCmsServiceProvider::ROOT_PUBLIC_RENDERING_RUNTIME_WRAPPER_FILES
         ));
         $this->line('Icon catalog admin route package authority state: '.$this->yesNo($this->routeUsesController(
             WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME,

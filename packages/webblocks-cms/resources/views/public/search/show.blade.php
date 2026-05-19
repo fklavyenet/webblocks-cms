@@ -1,1 +1,1 @@
-@extends('search.show')
+@extends('webblocks-cms::search.show')
