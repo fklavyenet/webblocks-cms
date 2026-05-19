@@ -62,6 +62,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/LayoutTypeSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/database/seeders/SlotTypeSeeder.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/public/README.md'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/public.css'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/public/public-search-modal.js'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/public/sidebar-navigation.js'));
         $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/package-boundary.json'));
         $this->assertFileExists(base_path('packages/webblocks-cms/stubs/README.md'));
         $this->assertFileExists(base_path('packages/webblocks-cms/stubs/starter/README.md'));
@@ -76,6 +79,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/icons/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/icons/partials/edit-modal.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/hero.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/columns.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/gallery.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageIndexState.php'));
         $this->assertFileExists(base_path('database/seeders/CoreCatalogSeeder.php'));
@@ -92,6 +98,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
         $this->assertFileExists(resource_path('views/admin/system/icons/index.blade.php'));
         $this->assertFileExists(resource_path('views/admin/system/icons/partials/edit-modal.blade.php'));
+        $this->assertFileExists(resource_path('views/pages/partials/blocks/hero.blade.php'));
+        $this->assertFileExists(resource_path('views/pages/partials/blocks/columns.blade.php'));
+        $this->assertFileExists(resource_path('views/pages/partials/blocks/gallery.blade.php'));
         $this->assertFileExists(base_path('app/Support/Media/MediaIndexState.php'));
         $this->assertFileExists(base_path('app/Support/Pages/PageIndexState.php'));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
@@ -109,6 +118,12 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.runtime-status'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.partials.edit-modal'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.hero'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery'));
+        $this->assertTrue(view()->exists('pages.partials.blocks.hero'));
+        $this->assertTrue(view()->exists('pages.partials.blocks.columns'));
+        $this->assertTrue(view()->exists('pages.partials.blocks.gallery'));
         $this->assertFalse(view()->exists('diagnostics.package-status'));
         $this->assertTrue(view()->exists('welcome'));
         $this->assertSame(false, config(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG));

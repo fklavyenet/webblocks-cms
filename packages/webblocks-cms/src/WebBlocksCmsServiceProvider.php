@@ -125,7 +125,16 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const PACKAGE_PUBLIC_ASSET_FILES = [
+        'cms/css/public.css',
+        'cms/js/public/public-search-modal.js',
+        'cms/js/public/sidebar-navigation.js',
         'cms/package-boundary.json',
+    ];
+
+    public const ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES = [
+        'cms/css/public.css',
+        'cms/js/public/public-search-modal.js',
+        'cms/js/public/sidebar-navigation.js',
     ];
 
     public const PACKAGE_STUB_FILES = [

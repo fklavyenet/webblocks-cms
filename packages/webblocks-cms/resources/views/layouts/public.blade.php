@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
-        use App\Support\PublicRendering\SiteAssetResolver;
+        use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
+        use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;
+        use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
         use App\Support\WebBlocks;
 
         $cmsPublicCssPath = public_path('cms/css/public.css');
@@ -142,8 +144,8 @@
         @endif
 
         @php
-            $publicBodyEnd = app(\App\Support\Blocks\PublicBodyEndRegistry::class)->all();
-            $publicOverlays = app(\App\Support\Blocks\PublicOverlayRegistry::class)->all();
+            $publicBodyEnd = app(PublicBodyEndRegistry::class)->all();
+            $publicOverlays = app(PublicOverlayRegistry::class)->all();
         @endphp
         @foreach ($publicBodyEnd as $bodyEndHtml)
             {!! $bodyEndHtml !!}

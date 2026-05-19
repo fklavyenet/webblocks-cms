@@ -37,6 +37,8 @@ class PackageStatusCommand extends Command
         $configFiles = $this->phpFiles($packageRoot.'/config');
         $routeFiles = $this->resourceFiles($packageRoot.'/routes');
         $viewFiles = $this->resourceFiles($packageRoot.'/resources/views');
+        $packageBlockViewFiles = $this->resourceFiles($packageRoot.'/resources/views/pages/partials/blocks');
+        $rootBlockViewFiles = $this->resourceFiles(resource_path('views/pages/partials/blocks'));
         $migrationFiles = $this->resourceFiles($packageRoot.'/database/migrations');
         $seederFiles = $this->resourceFiles($packageRoot.'/database/seeders');
         $publicFiles = $this->resourceFiles($packageRoot.'/public');
@@ -112,7 +114,25 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::ROOT_ICON_VIEW_WRAPPER_FILES
         ));
         $this->line('Icon catalog view package authority state: '.$this->yesNo(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index')).' (package controller renders '.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.icons.index)');
-        $this->line('Root view compatibility state: mixed (icon, public layout, public page shell, public search, and slot entry views now render through the package namespace, while most admin views and the broader block-partial compatibility layer remain root-accessible).');
+        $this->line('Package public block renderer partials present: '.$this->directoryResourceStatus(
+            $packageBlockViewFiles,
+            'files under package pages/partials/blocks'
+        ));
+        $this->line('Root public block renderer compatibility wrappers present: '.$this->matchingResourceFilesStatus(
+            $packageBlockViewFiles,
+            $rootBlockViewFiles,
+            'matching root wrappers'
+        ));
+        $this->line('Public block renderer package authority state: '.$this->yesNo($this->expectedViewsExist([
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.hero',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.sticky-navbar',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.sidebar-navigation',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.fallback',
+            WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.missing-renderer',
+        ])).' (Block::publicRenderView() now prefers package block partials first; root pages.partials.blocks.* remains available for install-specific or custom fallback)');
+        $this->line('Root view compatibility state: mixed (icon, public layout, public page shell, public search, slot entry views, and core public block renderers now render through the package namespace, while most admin views and install-specific root block fallbacks remain root-accessible).');
         $this->line('Package database/migrations path present: '.$this->yesNo(is_dir($packageRoot.'/database/migrations')));
         $this->line('Package migration boundary status: '.$this->resourceBoundaryStatus($migrationFiles));
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
@@ -142,6 +162,13 @@ class PackageStatusCommand extends Command
             $packageRoot.'/public',
             WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES
         )).' (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' publishes package assets to public/vendor/webblocks-cms)');
+        $this->line('Root compatibility public assets present: '.$this->rootCompatibilityFilesStatus(
+            public_path(),
+            WebBlocksCmsServiceProvider::ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES
+        ));
+        $this->line('Active public runtime asset URLs remain root compatibility paths: '.$this->yesNo(
+            $this->packagePublicLayoutUsesRootCompatibilityAssets($packageRoot)
+        ).' (package public layout still references root public/cms/... assets for active runtime compatibility)');
         $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS it needs).');
         $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets now exist, but current WebBlocks UI CDN pinning and root public/cms runtime asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
@@ -359,6 +386,47 @@ class PackageStatusCommand extends Command
         return 'yes';
     }
 
+    /**
+     * @param  array<int, string>  $files
+     */
+    protected function directoryResourceStatus(array $files, string $label): string
+    {
+        if ($files === []) {
+            return 'no';
+        }
+
+        return 'yes ('.count($files).' '.$label.')';
+    }
+
+    /**
+     * @param  array<int, string>  $expectedFiles
+     * @param  array<int, string>  $actualFiles
+     */
+    protected function matchingResourceFilesStatus(array $expectedFiles, array $actualFiles, string $label): string
+    {
+        $missingFiles = array_values(array_diff($expectedFiles, $actualFiles));
+
+        if ($missingFiles !== []) {
+            return 'no (missing '.implode(', ', $missingFiles).')';
+        }
+
+        return 'yes ('.count($expectedFiles).' '.$label.')';
+    }
+
+    /**
+     * @param  array<int, string>  $views
+     */
+    protected function expectedViewsExist(array $views): bool
+    {
+        foreach ($views as $view) {
+            if (! view()->exists($view)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected function composerSeederAutoloadPresent(array $composer): bool
     {
         return ($composer['autoload']['psr-4']['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) === 'database/seeders/';
@@ -428,6 +496,24 @@ class PackageStatusCommand extends Command
         $decoded = json_decode((string) file_get_contents($path), true);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    protected function packagePublicLayoutUsesRootCompatibilityAssets(string $packageRoot): bool
+    {
+        $layoutPath = $packageRoot.'/resources/views/layouts/public.blade.php';
+
+        if (! is_file($layoutPath)) {
+            return false;
+        }
+
+        $contents = (string) file_get_contents($layoutPath);
+
+        return str_contains($contents, "asset('cms/css/public.css')")
+            && str_contains($contents, "asset('cms/js/public/public-search-modal.js')")
+            && str_contains($contents, "asset('cms/js/public/sidebar-navigation.js')")
+            && str_contains($contents, "public_path('cms/css/public.css')")
+            && str_contains($contents, "public_path('cms/js/public/public-search-modal.js')")
+            && str_contains($contents, "public_path('cms/js/public/sidebar-navigation.js')");
     }
 
     /**

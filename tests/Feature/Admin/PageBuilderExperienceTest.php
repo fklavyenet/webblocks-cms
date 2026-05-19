@@ -1657,7 +1657,7 @@ class PageBuilderExperienceTest extends TestCase
 
         $storeResponse->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
         $this->assertSame('admin.blocks.types.sticky-navbar', $block->adminFormView());
-        $this->assertSame('pages.partials.blocks.sticky-navbar', $block->publicRenderView());
+        $this->assertSame('webblocks-cms::pages.partials.blocks.sticky-navbar', $block->publicRenderView());
         $this->assertNull($block->textTranslations()->first()?->title);
         $this->assertSame('sticky', $settings['sticky_mode'] ?? null);
         $this->assertSame('Primary Header', $settings['layout_name'] ?? null);
@@ -2418,7 +2418,7 @@ class PageBuilderExperienceTest extends TestCase
             'include_current' => true,
         ], json_decode((string) $block->fresh()->getRawOriginal('settings'), true));
         $this->assertSame('admin.blocks.types.breadcrumb', $block->adminFormView());
-        $this->assertSame('pages.partials.blocks.breadcrumb', $block->publicRenderView());
+        $this->assertSame('webblocks-cms::pages.partials.blocks.breadcrumb', $block->publicRenderView());
     }
 
     #[Test]
@@ -2467,7 +2467,7 @@ class PageBuilderExperienceTest extends TestCase
             'is_system' => true,
         ]);
         $this->assertSame('admin.blocks.types.header-actions', $block->adminFormView());
-        $this->assertSame('pages.partials.blocks.header-actions', $block->publicRenderView());
+        $this->assertSame('webblocks-cms::pages.partials.blocks.header-actions', $block->publicRenderView());
         $this->assertSame(['show_mode_toggle' => true, 'show_accent_toggle' => false, 'show_search' => true], json_decode((string) $block->getRawOriginal('settings'), true));
     }
 

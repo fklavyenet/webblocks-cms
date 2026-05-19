@@ -21,6 +21,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PublicEditorialBlocksRenderingTest extends TestCase
 {
@@ -30,8 +31,56 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     public function canonical_public_block_renderers_exist_for_current_layout_and_content_blocks(): void
     {
         foreach (['header', 'plain_text', 'rich-text', 'section', 'container', 'cluster', 'grid', 'content_header', 'button_link', 'card', 'alert', 'breadcrumb', 'header-actions', 'sticky-navbar', 'navbar-brand', 'navbar-navigation', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer'] as $slug) {
+            $this->assertTrue(View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug));
             $this->assertTrue(View::exists('pages.partials.blocks.'.$slug));
         }
+    }
+
+    #[Test]
+    public function core_public_block_types_now_resolve_package_namespaced_renderers_first(): void
+    {
+        $this->assertSame(
+            'webblocks-cms::pages.partials.blocks.hero',
+            (new Block(['type' => 'hero']))->publicRenderView()
+        );
+        $this->assertSame(
+            'webblocks-cms::pages.partials.blocks.columns',
+            (new Block(['type' => 'columns']))->publicRenderView()
+        );
+        $this->assertSame(
+            'webblocks-cms::pages.partials.blocks.gallery',
+            (new Block(['type' => 'gallery']))->publicRenderView()
+        );
+    }
+
+    #[Test]
+    public function install_specific_root_block_renderers_still_fall_back_safely(): void
+    {
+        $finder = view()->getFinder();
+        $originalPaths = $finder->getPaths();
+
+        $finder->prependLocation(base_path('tests/Fixtures/views'));
+
+        try {
+            $block = new Block(['type' => 'test-install-only-renderer']);
+
+            $this->assertSame('pages.partials.blocks.test-install-only-renderer', $block->publicRenderView());
+            $this->assertStringContainsString(
+                'Test install-only renderer',
+                view($block->publicRenderView(), ['block' => $block])->render()
+            );
+        } finally {
+            $finder->setPaths($originalPaths);
+        }
+    }
+
+    #[Test]
+    public function unknown_block_types_still_fall_back_to_a_safe_missing_renderer_view(): void
+    {
+        $this->assertSame(
+            'webblocks-cms::pages.partials.blocks.missing-renderer',
+            (new Block(['type' => 'totally-unknown-block']))->publicRenderView()
+        );
     }
 
     #[Test]

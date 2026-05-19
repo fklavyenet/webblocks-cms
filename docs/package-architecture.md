@@ -490,12 +490,15 @@ The current Step 2 public-rendering checkpoint extends package authority further
 - root `resources/views/layouts/public.blade.php`, `resources/views/pages/show.blade.php`, `resources/views/search/show.blade.php`, `resources/views/search/partials/modal.blade.php`, `resources/views/pages/partials/slot.blade.php`, and `resources/views/pages/partials/block.blade.php` now remain only as compatibility wrappers pointing at package-owned namespaced views
 - package-owned public-rendering support now includes `PageRouteResolver`, `PublicPagePresenter`, `PublicSharedSlotResolver`, `SlotWrapperResolver`, `SiteAssetResolver`, `PublicSearchQuery`, `PublicOverlayRegistry`, `PublicBodyEndRegistry`, `TrustedHtmlOverlayExtractor`, `SiteResolver`, `ResolvedSite`, and `VisitorEventLogger`
 - root `App\Support\...` classes for those public-rendering concerns remain as compatibility wrappers extending the package classes so current imports and bindings remain stable
-- the public block renderer compatibility contract is now mixed: `Block::publicRenderView()` prefers package namespaced public block partials when they exist, but the root `pages.partials.blocks.*` tree remains the active compatibility path until the full renderer tree is moved coherently
+- package `resources/views/pages/partials/blocks/*` now owns the full shipped public block renderer partial tree as one coherent package batch
+- root `resources/views/pages/partials/blocks/*` files now remain as thin compatibility wrappers that delegate to matching `webblocks-cms::pages.partials.blocks.*` views
+- `Block::publicRenderView()` now resolves shipped core block types to package-owned namespaced block partials first, while install-specific or custom root block renderers still remain available through the existing root fallback path when no matching package partial exists
 - the model strategy for this batch intentionally remains root-owned: `Locale`, `Site`, `SiteDomain`, `Page`, `PageTranslation`, `PageSlot`, `Block`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` still stay in `App\Models\...` because they remain shared across admin and public runtime and were not safe to extract without a larger coupled model migration
-- package `public/cms/` now includes the moved layout's required public CSS and JS files, but active runtime still serves `public/cms/...` from the root install for compatibility and because package asset publishing is not yet the authoritative runtime asset path
+- package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets
+- active runtime still serves `public/cms/...` from the root install for compatibility because package asset publishing is not yet the authoritative runtime asset path
 - root migrations remain authoritative and package migration loading stays disabled
 - System Update, install flow, backup or restore, and broader project-layer runtime remain unchanged in this batch
-- consumer or starter-package validation is still not realistic after this checkpoint because the public runtime still depends on root models and on the broader root block-renderer compatibility layer
+- consumer or starter-package validation is still not realistic after this checkpoint because the public runtime still depends on root models, root migrations, root compatibility asset paths, and broader root install/update behavior
 
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
@@ -576,9 +579,9 @@ Models still blocking independent package runtime:
 
 View boundaries still blocking independent package runtime:
 
-- package public layout, page shell, search shell, search modal, and slot-entry views are now authoritative through the `webblocks-cms::` namespace, but the broader root public block-renderer partial tree under `resources/views/pages/partials/blocks/*` still remains the main compatibility layer
+- package public layout, page shell, search shell, search modal, slot-entry views, and shipped public block-renderer partial tree are now authoritative through the `webblocks-cms::` namespace
+- root `resources/views/pages/partials/blocks/*` remains intentionally present as a compatibility wrapper layer so install-specific root block renderers and direct root view references continue to work during the transition
 - root admin rendering is still authoritative for most install screens, especially `admin/pages/*`, `admin/blocks/*`, `admin/shared-slots/*`, `admin/media/*`, `admin/sites/*`, `admin/navigation/*`, `admin/users/*`, `admin/system/*`, `admin/page-layouts/*`, and `admin/block-types/*`
-- public block renderers are not yet fully package-owned as a coherent tree, even though the moved package public layout or page or search shells now sit above them
 
 Support and service boundaries still blocking independent package runtime:
 
@@ -591,32 +594,34 @@ Requests, commands, assets, migrations, and update-flow blockers:
 
 - many admin Form Requests can move later with root wrappers once the owning page, block, shared-slot, media, site, and navigation batches move
 - package-used update, backup, import, export, promotion, and installer commands should not move yet because they still depend on root environment, filesystem, archive, Composer, migration, and install-state behavior
-- root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too
+- root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
 - root migrations remain authoritative; package migration loading must stay disabled until a later install and update redesign defines how fresh installs and existing installs both migrate safely
 - System Update remains a separate phase because its blockers are environment mutation, filesystem writes, Composer execution, backups, migrations, installed-version persistence, and root operational state, not route or controller ownership
 
 ### Recommended next large batch
 
-Recommended batch: move the remaining package-used public rendering layer together.
+Recommended batch: move the model and install-boundary blockers deliberately instead of continuing to split public rendering.
 
 Scope completed in this checkpoint:
 
 - public shell and page views: `layouts.public`, `pages.show`, `search.show`, and `search/partials/modal`
 - page slot-entry rendering partials under `resources/views/pages/partials/slot*.blade.php`
+- shipped public block renderer partials under `resources/views/pages/partials/blocks/*`
 - the public rendering support layer for route resolution, public page presentation, shared-slot presentation, slot-wrapper resolution, trusted HTML overlay extraction, overlay registries, search query orchestration, site resolution, site asset resolution, and visitor event logging
 - root compatibility wrappers where route, controller, request, or view references still need backward-compatible root entrypoints
 
 Scope intentionally deferred from this batch:
 
-- full public block renderer partial ownership under `resources/views/pages/partials/blocks/*`
 - package-owned Eloquent model extraction for `Locale`, `Site`, `SiteDomain`, `Page`, `PageTranslation`, `PageSlot`, `Block`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting`
 - authoritative package runtime asset URLs and publishing flow
+- root migration authority redesign
+- System Update and install/update flow extraction
 
 Why this batch is next:
 
-- package public route and controller authority already exists, so public rendering is now the largest remaining root-owned layer directly behind package runtime
-- the package public views no longer stop at entry ownership; the package now owns the active public layout or page or search shells, but the remaining blockers are still the model layer, the broader block-renderer partial tree, and active root asset paths
-- public rendering is a more coherent next extraction than trying to split out another tiny admin slice while the real public shell and renderer stack still lives in root views
+- package public route, controller, view, support, and shipped block-renderer authority now already exists, so the remaining blockers are no longer the public renderer tree itself
+- the next high-value extraction work is the root-owned model and install/update boundary, followed by authoritative asset-path and migration strategy decisions
+- further public rendering work should stay limited to compatibility cleanup rather than another broad ownership move
 
 ### Large batches that should wait
 

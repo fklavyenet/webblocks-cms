@@ -1,1 +1,1 @@
-@include('pages.partials.blocks.column_item', ['block' => $block, 'columnsVariant' => 'cards'])
+@include('webblocks-cms::pages.partials.blocks.feature-item', get_defined_vars())

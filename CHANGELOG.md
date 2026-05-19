@@ -20,6 +20,9 @@
 - Keep the public runtime model layer root-owned for now because Pages, Blocks, Sites, Locales, Search index records, Visitor events, and related relationships still cross admin and public runtime boundaries too broadly for a safe extraction in this batch.
 - Make the package public asset boundary more concrete by adding the public layout CSS and JS used by the moved package-owned layout into `packages/webblocks-cms/public/cms/`, while keeping active runtime asset URLs rooted at `public/cms/...` for compatibility in the current phase.
 - Extend `webblocks:package-status` and focused bootstrap or runtime coverage so they report the new package-owned public view and support authority honestly, including the remaining root compatibility layer for models, broader block renderers, migrations, and runtime asset paths.
+- Move the full active public block renderer partial tree into `packages/webblocks-cms/resources/views/pages/partials/blocks/`, making the package namespace authoritative for shipped core block renderers while leaving root `resources/views/pages/partials/blocks/*` files as thin compatibility wrappers.
+- Keep install-specific or custom root block renderers available through the existing `Block::publicRenderView()` root fallback, and add focused coverage proving package block partials resolve first while safe missing-renderer fallback behavior remains unchanged.
+- Extend package-status and bootstrap coverage so public block renderer authority and public asset readiness are reported explicitly: package block partials and package public assets are present, root compatibility wrappers and root `public/cms/...` assets still exist, active runtime asset URLs still point at the root compatibility path, and root models, root migrations, and System Update remain unchanged blockers.
 
 ## 1.32.1
 
