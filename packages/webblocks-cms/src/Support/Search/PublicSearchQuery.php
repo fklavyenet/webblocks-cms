@@ -3,11 +3,11 @@
 namespace WebBlocks\Cms\Support\Search;
 
 use App\Models\Locale;
-use App\Models\PublicSearchIndex;
 use App\Models\Site;
 use App\Support\Search\PublicSearchSchema;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
+use WebBlocks\Cms\Models\PublicSearchIndex;
 
 class PublicSearchQuery
 {

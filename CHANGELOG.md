@@ -23,6 +23,9 @@
 - Move the full active public block renderer partial tree into `packages/webblocks-cms/resources/views/pages/partials/blocks/`, making the package namespace authoritative for shipped core block renderers while leaving root `resources/views/pages/partials/blocks/*` files as thin compatibility wrappers.
 - Keep install-specific or custom root block renderers available through the existing `Block::publicRenderView()` root fallback, and add focused coverage proving package block partials resolve first while safe missing-renderer fallback behavior remains unchanged.
 - Extend package-status and bootstrap coverage so public block renderer authority and public asset readiness are reported explicitly: package block partials and package public assets are present, root compatibility wrappers and root `public/cms/...` assets still exist, active runtime asset URLs still point at the root compatibility path, and root models, root migrations, and System Update remain unchanged blockers.
+- Start the Public Model Compatibility Foundation batch by moving `Locale`, `Site`, `SiteDomain`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` into package `src/Models/` while keeping root `App\Models\...` classes as compatibility wrappers.
+- Update package-owned public runtime imports and package-status reporting so package public controllers, route patterns, public site resolution, search querying, visitor logging, and related support now prefer `WebBlocks\Cms\Models\...` where those model slices are package-owned, while `Page`, `PageTranslation`, `PageSlot`, `Block`, and `User` remain root-owned for now.
+- Document the partial model authority boundary honestly: root migrations remain authoritative, System Update and install flow remain unchanged, runtime asset URLs still use root `public/cms/...` compatibility paths, and consumer or starter validation remains blocked by the remaining root-owned page or block model surface.
 
 ## 1.32.1
 

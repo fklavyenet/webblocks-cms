@@ -210,6 +210,16 @@ class PackageStatusCommand extends Command
             base_path('app'),
             WebBlocksCmsServiceProvider::ROOT_PUBLIC_RENDERING_RUNTIME_WRAPPER_FILES
         ));
+        $this->line('Package public model foundation moves present: '.$this->expectedFilesStatus(
+            $packageRoot.'/src',
+            WebBlocksCmsServiceProvider::PUBLIC_MODEL_FOUNDATION_FILES
+        ));
+        $this->line('Root public model compatibility wrappers present: '.$this->rootCompatibilityFilesStatus(
+            base_path('app'),
+            WebBlocksCmsServiceProvider::ROOT_PUBLIC_MODEL_WRAPPER_FILES
+        ));
+        $this->line('Public model foundation package authority state: partial (Locale, Site, SiteDomain, ContactMessage, PublicSearchIndex, VisitorEvent, and SystemSetting now live under package Models while root App\\Models wrappers remain active for compatibility; Page, PageTranslation, PageSlot, and Block remain root-owned due to broader admin, search, translation, layout, and media coupling).');
+        $this->line('User model ownership state: root-owned permanently for now (User remains app-owned and was not moved into the package).');
         $this->line('Icon catalog admin route package authority state: '.$this->yesNo($this->routeUsesController(
             WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME,
             'WebBlocks\\Cms\\Http\\Controllers\\Admin\\IconCatalogController'

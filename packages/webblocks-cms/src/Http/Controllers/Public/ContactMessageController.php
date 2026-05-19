@@ -3,12 +3,12 @@
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
 use App\Models\Block;
-use App\Models\ContactMessage;
 use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Contact\ContactMessageNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
+use WebBlocks\Cms\Models\ContactMessage;
 
 class ContactMessageController extends Controller
 {

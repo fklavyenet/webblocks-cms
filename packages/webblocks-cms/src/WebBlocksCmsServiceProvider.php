@@ -91,6 +91,26 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'Support/Visitors/VisitorEventLogger.php',
     ];
 
+    public const PUBLIC_MODEL_FOUNDATION_FILES = [
+        'Models/ContactMessage.php',
+        'Models/Locale.php',
+        'Models/PublicSearchIndex.php',
+        'Models/Site.php',
+        'Models/SiteDomain.php',
+        'Models/SystemSetting.php',
+        'Models/VisitorEvent.php',
+    ];
+
+    public const ROOT_PUBLIC_MODEL_WRAPPER_FILES = [
+        'Models/ContactMessage.php',
+        'Models/Locale.php',
+        'Models/PublicSearchIndex.php',
+        'Models/Site.php',
+        'Models/SiteDomain.php',
+        'Models/SystemSetting.php',
+        'Models/VisitorEvent.php',
+    ];
+
     public const ROOT_PUBLIC_RENDERING_RUNTIME_WRAPPER_FILES = [
         'Support/Blocks/PublicBodyEndRegistry.php',
         'Support/Blocks/PublicOverlayRegistry.php',

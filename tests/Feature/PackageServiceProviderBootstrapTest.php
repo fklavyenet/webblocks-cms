@@ -5,6 +5,13 @@ namespace Tests\Feature;
 use App\Console\Commands\SyncWebBlocksUiIconsCommand;
 use App\Http\Controllers\Admin\IconCatalogController;
 use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
+use App\Models\ContactMessage;
+use App\Models\Locale;
+use App\Models\PublicSearchIndex;
+use App\Models\Site;
+use App\Models\SiteDomain;
+use App\Models\SystemSetting;
+use App\Models\VisitorEvent;
 use App\Support\Admin\AdminPagination;
 use App\Support\BlockTypes\BlockTypeIndexState;
 use App\Support\Icons\IconCatalog;
@@ -29,6 +36,13 @@ use WebBlocks\Cms\Database\Seeders\PageTypeSeeder as PackagePageTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\SlotTypeSeeder as PackageSlotTypeSeeder;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController as PackageIconCatalogController;
 use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest as PackageIconCatalogItemUpdateRequest;
+use WebBlocks\Cms\Models\ContactMessage as PackageContactMessage;
+use WebBlocks\Cms\Models\Locale as PackageLocale;
+use WebBlocks\Cms\Models\PublicSearchIndex as PackagePublicSearchIndex;
+use WebBlocks\Cms\Models\Site as PackageSite;
+use WebBlocks\Cms\Models\SiteDomain as PackageSiteDomain;
+use WebBlocks\Cms\Models\SystemSetting as PackageSystemSetting;
+use WebBlocks\Cms\Models\VisitorEvent as PackageVisitorEvent;
 use WebBlocks\Cms\Support\Admin\AdminPagination as PackageAdminPagination;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState as PackageBlockTypeIndexState;
 use WebBlocks\Cms\Support\Icons\IconCatalog as PackageIconCatalog;
@@ -323,6 +337,13 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(class_exists(PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(class_exists(PackageMediaIndexState::class));
         $this->assertTrue(class_exists(PackagePageIndexState::class));
+        $this->assertTrue(class_exists(PackageLocale::class));
+        $this->assertTrue(class_exists(PackageSite::class));
+        $this->assertTrue(class_exists(PackageSiteDomain::class));
+        $this->assertTrue(class_exists(PackageContactMessage::class));
+        $this->assertTrue(class_exists(PackagePublicSearchIndex::class));
+        $this->assertTrue(class_exists(PackageVisitorEvent::class));
+        $this->assertTrue(class_exists(PackageSystemSetting::class));
 
         $this->assertTrue(is_subclass_of(CoreCatalogSeeder::class, PackageCoreCatalogSeeder::class));
         $this->assertTrue(is_subclass_of(IconCatalogSeeder::class, PackageIconCatalogSeeder::class));
@@ -338,6 +359,13 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
         $this->assertTrue(is_subclass_of(MediaIndexState::class, PackageMediaIndexState::class));
         $this->assertTrue(is_subclass_of(PageIndexState::class, PackagePageIndexState::class));
+        $this->assertTrue(is_subclass_of(Locale::class, PackageLocale::class));
+        $this->assertTrue(is_subclass_of(Site::class, PackageSite::class));
+        $this->assertTrue(is_subclass_of(SiteDomain::class, PackageSiteDomain::class));
+        $this->assertTrue(is_subclass_of(ContactMessage::class, PackageContactMessage::class));
+        $this->assertTrue(is_subclass_of(PublicSearchIndex::class, PackagePublicSearchIndex::class));
+        $this->assertTrue(is_subclass_of(VisitorEvent::class, PackageVisitorEvent::class));
+        $this->assertTrue(is_subclass_of(SystemSetting::class, PackageSystemSetting::class));
     }
 
     #[Test]

@@ -1,13 +1,13 @@
 <?php
 
 use App\Http\Controllers\AdminApi\SiteDomainApiController;
-use App\Models\Locale;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONFIG, false)) {
