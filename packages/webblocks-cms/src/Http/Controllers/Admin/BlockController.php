@@ -953,7 +953,10 @@ class BlockController extends Controller
             return;
         }
 
-        $buttonType = BlockType::query()->where('slug', 'button')->first();
+        $buttonType = BlockType::query()
+            ->whereIn('slug', ['button_link', 'button'])
+            ->orderByRaw("CASE WHEN slug = 'button_link' THEN 0 ELSE 1 END")
+            ->first();
 
         if (! $buttonType) {
             return;
@@ -965,7 +968,7 @@ class BlockController extends Controller
         $isDefaultLocaleEdit = ! $resolvedLocale || $resolvedLocale->is_default;
 
         $managedButtons = $block->children()
-            ->where('type', 'button')
+            ->whereIn('type', ['button_link', 'button'])
             ->orderBy('sort_order')
             ->limit(2)
             ->get()

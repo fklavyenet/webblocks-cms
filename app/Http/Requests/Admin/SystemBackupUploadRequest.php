@@ -2,19 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SystemBackupUploadRequest as PackageSystemBackupUploadRequest;
 
-class SystemBackupUploadRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'archive' => ['required', 'file', 'mimes:zip', 'max:51200'],
-        ];
-    }
-}
+class SystemBackupUploadRequest extends PackageSystemBackupUploadRequest {}

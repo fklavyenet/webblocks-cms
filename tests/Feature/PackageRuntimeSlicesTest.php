@@ -47,7 +47,7 @@ class PackageRuntimeSlicesTest extends TestCase
         $response->assertOk();
         $response->assertSee('WebBlocks CMS package diagnostic view');
         $response->assertSee('View namespace: webblocks-cms');
-        $response->assertSee('Root runtime remains authoritative for install, auth, profile, migrations, and compatibility wrappers, while active public page or search shells now render from the package view namespace.');
+        $response->assertSee('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.');
     }
 
     #[Test]
@@ -64,6 +64,7 @@ class PackageRuntimeSlicesTest extends TestCase
         $response->assertOk();
         $response->assertSee('Package Admin Runtime Status');
         $response->assertSee('This screen is package-owned and available only when the dedicated package admin route guard is enabled.');
+        $response->assertSee('Package-owned admin routes and views now cover the safely movable CMS runtime slices, while install/auth, users, updates, backups, export/import, promotion, and root asset URLs remain root-authoritative boundaries.');
         $response->assertSee('data-webblocks-cms-package-admin-slice="status"', false);
 
         $dashboard = $this->actingAs($superAdmin)->get(route('admin.dashboard'));

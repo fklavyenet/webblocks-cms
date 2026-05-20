@@ -333,10 +333,22 @@ class BlockTypesIndexTest extends TestCase
 
         $user = User::factory()->superAdmin()->create();
 
+        BlockType::query()->create([
+            'name' => 'Draft Legacy Demo',
+            'slug' => 'draft-legacy-demo',
+            'description' => 'Visible draft block type for status filter coverage.',
+            'category' => 'legacy',
+            'source_type' => 'static',
+            'is_system' => false,
+            'is_container' => false,
+            'sort_order' => -100,
+            'status' => 'draft',
+        ]);
+
         $response = $this->actingAs($user)->get(route('admin.block-types.index', ['status' => 'draft']));
 
         $response->assertOk();
-        $response->assertSee('Accordion');
+        $response->assertSee('Draft Legacy Demo');
         $response->assertSee('legacy');
         $response->assertDontSee('Breadcrumb');
     }

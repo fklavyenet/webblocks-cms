@@ -56,7 +56,21 @@ use Database\Seeders\SlotTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
+use WebBlocks\Cms\Console\ImportDemoMedia;
+use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\SearchRebuildCommand;
+use WebBlocks\Cms\Console\SiteCloneCommand;
+use WebBlocks\Cms\Console\SiteDeleteCommand;
+use WebBlocks\Cms\Console\SiteExportCommand;
+use WebBlocks\Cms\Console\SiteImportCommand;
+use WebBlocks\Cms\Console\SitePromotionApplyCommand;
+use WebBlocks\Cms\Console\SitePromotionDryRunCommand;
+use WebBlocks\Cms\Console\SitePromotionInspectCommand;
+use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand as PackageSyncWebBlocksUiIconsCommand;
+use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder as PackageCoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\IconCatalogSeeder as PackageIconCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\LayoutTypeSeeder as PackageLayoutTypeSeeder;
@@ -290,8 +304,28 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame(false, config(WebBlocksCmsServiceProvider::PACKAGE_MIGRATION_LOADING_CONFIG));
         $this->assertSame('fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
         $this->assertSame('fklavyenet/webblocks-cms-starter', WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME);
+        $this->assertSame([
+            PackageStatusCommand::class,
+            SearchRebuildCommand::class,
+            PackageSyncWebBlocksUiIconsCommand::class,
+            BlockTypeContractsAuditCommand::class,
+            ImportDemoMedia::class,
+            ResetPrimitiveBlocksCommand::class,
+            SiteCloneCommand::class,
+            SiteDeleteCommand::class,
+            SiteExportCommand::class,
+            SiteImportCommand::class,
+            SitePromotionApplyCommand::class,
+            SitePromotionDryRunCommand::class,
+            SitePromotionInspectCommand::class,
+            SyncCoreBlockTypesCommand::class,
+            SystemBackupRestoreCommand::class,
+        ], WebBlocksCmsServiceProvider::PACKAGE_CONSOLE_COMMANDS);
         $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);
         $this->assertSame('composer update fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND);
+        $this->assertSame('public/vendor/webblocks-cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
+        $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
+        $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
     }
 
     #[Test]
@@ -307,7 +341,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertStringContainsString('WebBlocks CMS package diagnostic view', $rendered);
         $this->assertStringContainsString('View namespace: webblocks-cms', $rendered);
         $this->assertStringContainsString('Package base path:', $rendered);
-        $this->assertStringContainsString('Root runtime remains authoritative for install, auth, profile, migrations, and compatibility wrappers, while active public page or search shells now render from the package view namespace.', $rendered);
+        $this->assertStringContainsString('Package transition consolidation is complete for all safely movable CMS-owned source. Root runtime remains authoritative for install, auth, profile, migrations, root public/cms runtime asset URLs, and compatibility wrappers.', $rendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), $welcomeViewPath);
     }
 
@@ -327,7 +361,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('Package Admin Runtime Status', $adminRendered);
-        $this->assertStringContainsString('Root admin pages such as Pages, Media, Blocks, Sites, Updates, Backups, and Export / Import remain root-owned.', $adminRendered);
+        $this->assertStringContainsString('Package-owned admin routes and views now cover the safely movable CMS runtime slices, while install/auth, users, updates, backups, export/import, promotion, and root asset URLs remain root-authoritative boundaries.', $adminRendered);
         $this->assertStringContainsString('Package Public Runtime Status', $publicRendered);
         $this->assertStringContainsString('the main public layout, page shell, and search views now render from the package namespace too.', $publicRendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), app('view.finder')->find('welcome'));
@@ -450,13 +484,13 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame([
             [
                 'paths' => [
-                    base_path('packages/webblocks-cms/public') => public_path('vendor/webblocks-cms'),
+                    base_path('packages/webblocks-cms/public') => public_path(str_replace('public/', '', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET)),
                 ],
                 'group' => WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG,
             ],
             [
                 'paths' => [
-                    base_path('packages/webblocks-cms/stubs') => base_path('stubs/vendor/webblocks-cms'),
+                    base_path('packages/webblocks-cms/stubs') => base_path(WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET),
                 ],
                 'group' => WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG,
             ],

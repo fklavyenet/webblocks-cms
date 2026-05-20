@@ -18,6 +18,8 @@ Inspected areas:
 
 The transition has advanced from boundary scaffolding into partial runtime authority.
 
+Package transition consolidation is now complete for all safely movable CMS-owned source, but the runtime still intentionally keeps several root-owned boundaries.
+
 - Active CMS admin and public route definitions are package-owned through `packages/webblocks-cms/routes/admin.php` and `packages/webblocks-cms/routes/public.php`.
 - A meaningful package runtime slice now exists for public entry controllers, many page or block support classes, selected admin controllers and requests, selected models, selected Blade views, and selected public assets.
 - Root `app/` still contains a large compatibility layer for moved package runtime classes. This is intentional and currently preserves old imports, route references, view references, and downstream app compatibility.
@@ -26,6 +28,7 @@ The transition has advanced from boundary scaffolding into partial runtime autho
 - Root `database/migrations/` remains fully authoritative. Package migration loading is intentionally disabled and the package migration directory still contains only reserved-boundary documentation.
 - Root `public/cms/` remains the active runtime asset path even where identical package-owned public assets and admin CSS or JS source copies now exist. This is still a compatibility-driven root authority, not a fully package-served asset strategy.
 - Root `config/` remains the live install override layer. Package config provides CMS defaults for a subset of files, but Laravel still reads root config as the active application config surface.
+- The final remaining split blockers are install/auth/profile runtime, the app-owned `User` model, root migration authority, root update/install operational authority, and the still-active root `public/cms/...` runtime asset path.
 
 ## Classification Legend
 
@@ -49,6 +52,13 @@ The transition has advanced from boundary scaffolding into partial runtime autho
 | Blade views | Mixed: package owns moved public and admin runtime views, the admin layout, and selected shared admin partials/components; root still owns install/auth and shared app components | package `resources/views` for moved public shells, block partials, moved admin pages, `layouts/admin.blade.php`, selected admin partials, and `components/admin/form-actions` | many root view files are one-line includes to `webblocks-cms::...` | Active admin assets, brand files, and install/auth screens still tie runtime to root | Next batch should focus on model/support cleanup for package-owned slices or admin asset and brand strategy, not an asset authority move yet |
 | Public assets under `public/cms` | Root active runtime path, package duplicate source now exists for moved public files plus admin CSS or JS source files | `packages/webblocks-cms/public/cms/...` | root files currently act as compatibility runtime copies rather than wrappers | No authoritative asset publish/sync/update strategy yet; brand assets are still root-only | Defer full runtime move until asset publishing and update flow are redesigned |
 | Config | Root live config with package-merged defaults for CMS-owned files | package `config/{cms,contact,demo_media,webblocks-updates,webblocks-cms}.php` | root config acts as install override layer | Laravel root config remains app authority; override semantics are intentional | Keep current split; next batch can document per-file target ownership more explicitly |
+
+## Consolidation Outcome
+
+- Safe CMS-owned source consolidation: complete
+- Active runtime asset URLs: still intentionally rooted at `public/cms/...`
+- Starter split readiness: not ready
+- Remaining final boundaries: install/auth/profile runtime, app-owned `User`, root migration authority, root update/install authority, and root `public/cms` runtime asset compatibility path
 
 ## Detailed Audit
 

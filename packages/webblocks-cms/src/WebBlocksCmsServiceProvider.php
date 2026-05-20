@@ -7,8 +7,21 @@ use Illuminate\Support\ServiceProvider;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
+use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\SearchRebuildCommand;
+use WebBlocks\Cms\Console\SiteCloneCommand;
+use WebBlocks\Cms\Console\SiteDeleteCommand;
+use WebBlocks\Cms\Console\SiteExportCommand;
+use WebBlocks\Cms\Console\SiteImportCommand;
+use WebBlocks\Cms\Console\SitePromotionApplyCommand;
+use WebBlocks\Cms\Console\SitePromotionDryRunCommand;
+use WebBlocks\Cms\Console\SitePromotionInspectCommand;
+use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
+use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 
 class WebBlocksCmsServiceProvider extends ServiceProvider
 {
@@ -360,6 +373,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const PACKAGE_PUBLIC_ASSET_FILES = [
         'cms/css/admin.css',
+        'cms/css/email.css',
+        'cms/css/guest.css',
         'cms/css/public.css',
         'cms/js/admin/asset-picker.js',
         'cms/js/admin/builder-items.js',
@@ -376,12 +391,17 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'cms/js/admin/slot-block-tree.js',
         'cms/js/admin-sortable-list.js',
         'cms/js/public/public-search-modal.js',
+        'cms/js/public/header-actions.js',
         'cms/js/public/sidebar-navigation.js',
+        'cms/js/public-slider.js',
+        'cms/js/privacy-consent-sync.js',
         'cms/package-boundary.json',
     ];
 
     public const ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES = [
         'cms/css/admin.css',
+        'cms/css/email.css',
+        'cms/css/guest.css',
         'cms/css/public.css',
         'cms/js/admin/asset-picker.js',
         'cms/js/admin/builder-items.js',
@@ -398,7 +418,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'cms/js/admin/slot-block-tree.js',
         'cms/js/admin-sortable-list.js',
         'cms/js/public/public-search-modal.js',
+        'cms/js/public/header-actions.js',
         'cms/js/public/sidebar-navigation.js',
+        'cms/js/public-slider.js',
+        'cms/js/privacy-consent-sync.js',
     ];
 
     public const PACKAGE_STUB_FILES = [
@@ -626,11 +649,33 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
+    public const PACKAGE_CONSOLE_COMMANDS = [
+        PackageStatusCommand::class,
+        SearchRebuildCommand::class,
+        SyncWebBlocksUiIconsCommand::class,
+        BlockTypeContractsAuditCommand::class,
+        ImportDemoMedia::class,
+        ResetPrimitiveBlocksCommand::class,
+        SiteCloneCommand::class,
+        SiteDeleteCommand::class,
+        SiteExportCommand::class,
+        SiteImportCommand::class,
+        SitePromotionApplyCommand::class,
+        SitePromotionDryRunCommand::class,
+        SitePromotionInspectCommand::class,
+        SyncCoreBlockTypesCommand::class,
+        SystemBackupRestoreCommand::class,
+    ];
+
     public const CONFIG_PUBLISH_TAG = 'webblocks-cms-config';
 
     public const ASSETS_PUBLISH_TAG = 'webblocks-cms-assets';
 
     public const STUBS_PUBLISH_TAG = 'webblocks-cms-stubs';
+
+    public const ASSETS_PUBLISH_TARGET = 'public/vendor/webblocks-cms';
+
+    public const STUBS_PUBLISH_TARGET = 'stubs/vendor/webblocks-cms';
 
     public const PACKAGE_COMPOSER_NAME = 'fklavyenet/webblocks-cms';
 
@@ -639,6 +684,31 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     public const TARGET_INSTALL_COMMAND = 'composer require fklavyenet/webblocks-cms';
 
     public const TARGET_UPDATE_COMMAND = 'composer update fklavyenet/webblocks-cms';
+
+    public const ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH = 'public/cms';
+
+    public const PACKAGE_SOURCE_AUTHORITY_DOMAINS = [
+        'CMS admin and public route trees',
+        'package-owned admin controllers, requests, support, and views for safely movable CMS runtime slices',
+        'package-owned public layout, page/search shells, and shipped public block renderers',
+        'package-owned CMS model foundation except the install-owned User model',
+        'package-owned shared admin partials and admin layout with root Blade wrappers preserved',
+        'package-owned seeder, stub, and movable public asset source files',
+    ];
+
+    public const ROOT_COMPATIBILITY_WRAPPER_DOMAINS = [
+        'App\\... compatibility wrappers for moved controllers, requests, models, and support classes',
+        'root Blade wrappers for moved admin/public views, layouts, and shared admin partials',
+        'root seeder wrappers for moved package seeders',
+        'root public/cms runtime copies that keep active asset URLs stable',
+    ];
+
+    public const STARTER_SPLIT_BLOCKERS = [
+        'install, auth, and profile runtime remain root-owned',
+        'App\\Models\\User remains install-owned',
+        'root public/cms remains the active runtime asset compatibility path',
+        'root migration authority and root update/install operational flows remain authoritative',
+    ];
 
     public function register(): void
     {
@@ -660,10 +730,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->commands([
-            PackageStatusCommand::class,
-            SyncWebBlocksUiIconsCommand::class,
-        ]);
+        $this->commands(self::PACKAGE_CONSOLE_COMMANDS);
     }
 
     protected function registerConfig(): void
@@ -802,7 +869,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            $this->publicPath() => public_path('vendor/'.self::PACKAGE_NAME),
+            $this->publicPath() => public_path(str_replace('public/', '', self::ASSETS_PUBLISH_TARGET)),
         ], self::ASSETS_PUBLISH_TAG);
     }
 
@@ -813,7 +880,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            $this->stubsPath() => base_path('stubs/vendor/'.self::PACKAGE_NAME),
+            $this->stubsPath() => base_path(self::STUBS_PUBLISH_TARGET),
         ], self::STUBS_PUBLISH_TAG);
     }
 

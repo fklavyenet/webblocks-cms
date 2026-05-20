@@ -1,11 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\SiteExportController;
-use App\Http\Controllers\Admin\SiteImportController;
-use App\Http\Controllers\Admin\SitePromotionController;
-use App\Http\Controllers\Admin\SystemBackupController;
-use App\Http\Controllers\Admin\SystemUpdateController;
-use App\Http\Controllers\Admin\UserController;
 use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,10 +26,16 @@ use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\SharedSlotRevisionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController;
+use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
+use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 
 Route::middleware(['web', 'install.required', 'auth', 'admin.access'])

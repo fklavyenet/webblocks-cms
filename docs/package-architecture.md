@@ -403,7 +403,7 @@ Current compatibility rule:
 
 - The long-term direction remains a separate starter project that depends on `fklavyenet/webblocks-cms` as a package.
 - The current in-repo package exists to establish boundaries and ownership before that split is attempted.
-- The starter split should happen only after package-owned runtime resources and update flow responsibilities are clearer.
+- The starter split should happen only after the remaining root boundaries are redesigned: install/auth/profile runtime, the app-owned `User` model, root migration authority, root update/install operational authority, and the active root `public/cms` runtime asset path.
 
 ### Next Step After Reserved Boundaries
 
@@ -448,6 +448,14 @@ The transition should prioritize low-risk incremental movement over a single rew
 ## Current Status
 
 See also: `docs/package-transition-root-ownership-audit.md` for the current root-versus-package ownership classification across `app/`, `routes/`, `resources/views/`, `database/`, `public/cms/`, and `config/` after the latest package-authority work.
+
+Package transition consolidation is complete for all safely movable CMS-owned source in this repository.
+
+- Package-owned authority now covers the safely movable CMS route, view, model, seeder, shared-partial, admin-layout, and supporting runtime source domains.
+- Root `App\...` classes, root Blade files, root seeders, and root `public/cms/...` runtime copies remain intentionally in place as compatibility wrappers or compatibility paths.
+- Active runtime asset URLs still use root `public/cms/...` compatibility paths even where matching package-owned source files exist under `packages/webblocks-cms/public/cms/...`.
+- The remaining final boundaries are install/auth/profile runtime, the app-owned `User` model, root migration authority, root update/install operational authority, and the future starter split design.
+- Because of those blockers, the package is not yet ready for starter split even though the safe CMS-owned source consolidation work is complete.
 
 This repository change is only the first low-risk transition step:
 
@@ -661,6 +669,13 @@ Requests, commands, assets, migrations, and update-flow blockers:
 - root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
 - root migrations remain authoritative; package migration loading must stay disabled until a later install and update redesign defines how fresh installs and existing installs both migrate safely
 - System Update remains a separate phase because its blockers are environment mutation, filesystem writes, Composer execution, backups, migrations, installed-version persistence, and root operational state, not route or controller ownership
+
+### Consolidation outcome
+
+- Safe CMS-owned source consolidation: complete
+- Active runtime asset URL consolidation: intentionally incomplete; root `public/cms/...` remains the compatibility runtime path
+- Starter split readiness: not ready
+- Remaining final boundaries: install/auth/profile runtime, app-owned `User`, root migration authority, root update/install authority, and the future starter split design
 
 ### Recommended next batch
 

@@ -1,19 +1,6 @@
 <?php
 
-use App\Console\Commands\BlockTypeContractsAuditCommand;
-use App\Console\Commands\ImportDemoMedia;
 use App\Console\Commands\ProjectInitCommand;
-use App\Console\Commands\ResetPrimitiveBlocksCommand;
-use App\Console\Commands\SearchRebuildCommand;
-use App\Console\Commands\SiteCloneCommand;
-use App\Console\Commands\SiteDeleteCommand;
-use App\Console\Commands\SiteExportCommand;
-use App\Console\Commands\SiteImportCommand;
-use App\Console\Commands\SitePromotionApplyCommand;
-use App\Console\Commands\SitePromotionDryRunCommand;
-use App\Console\Commands\SitePromotionInspectCommand;
-use App\Console\Commands\SyncCoreBlockTypesCommand;
-use App\Console\Commands\SystemBackupRestoreCommand;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Http\Middleware\RequireAdminAccess;
@@ -56,20 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
-        BlockTypeContractsAuditCommand::class,
-        ImportDemoMedia::class,
         ProjectInitCommand::class,
-        ResetPrimitiveBlocksCommand::class,
-        SearchRebuildCommand::class,
-        SyncCoreBlockTypesCommand::class,
-        SiteExportCommand::class,
-        SiteImportCommand::class,
-        SiteCloneCommand::class,
-        SiteDeleteCommand::class,
-        SitePromotionInspectCommand::class,
-        SitePromotionDryRunCommand::class,
-        SitePromotionApplyCommand::class,
-        SystemBackupRestoreCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

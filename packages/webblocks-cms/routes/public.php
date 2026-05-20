@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\AdminApi\SiteDomainApiController;
 use Illuminate\Support\Facades\Route;
+use WebBlocks\Cms\Http\Controllers\AdminApi\SiteDomainApiController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;

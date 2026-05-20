@@ -117,7 +117,7 @@
     @endif
 
     @if ($canExportSites)
-        @include('admin.site-transfers.partials.export-modal', [
+        @include('webblocks-cms::admin.site-transfers.partials.export-modal', [
             'modalId' => 'siteIndexExportModal',
             'modalTitle' => 'Export Site',
             'modalDescription' => 'Create a portable site export package for the selected site without leaving the Sites list.',

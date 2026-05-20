@@ -2,19 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest as PackageRunSystemUpdateRequest;
 
-class RunSystemUpdateRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return $this->user() !== null;
-    }
-
-    public function rules(): array
-    {
-        return [
-            'download_pre_update_backup' => ['nullable', 'boolean'],
-        ];
-    }
-}
+class RunSystemUpdateRequest extends PackageRunSystemUpdateRequest {}

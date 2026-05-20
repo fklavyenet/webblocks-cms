@@ -81,6 +81,7 @@ class PackageStatusCommand extends Command
             $packageRoot.'/routes',
             WebBlocksCmsServiceProvider::PACKAGE_ROUTE_FILES
         )).' (provider discovery plus guarded route files)');
+        $this->line('Package source authority domains: '.implode('; ', WebBlocksCmsServiceProvider::PACKAGE_SOURCE_AUTHORITY_DOMAINS).'.');
         $this->line('Expected package diagnostic route file exists: '.$this->yesNo(is_file($packageRoot.'/routes/'.$diagnosticRouteFile)).' ('.$diagnosticRouteFile.')');
         $this->line('Package diagnostic route loading guard enabled: '.$this->yesNo($this->diagnosticRouteLoadingEnabled()).' ('.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_LOADING_CONFIG.')');
         $this->line('Package diagnostic route loaded in active runtime: '.$this->yesNo($this->routeIsRegistered($diagnosticRouteName, $diagnosticRoutePath)).' ('.$diagnosticRouteName.' at '.$diagnosticRoutePath.')');
@@ -178,16 +179,17 @@ class PackageStatusCommand extends Command
         $this->line('Package public asset publish readiness: '.$this->yesNo($this->expectedFilesPresent(
             $packageRoot.'/public',
             WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ASSET_FILES
-        )).' (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' publishes package assets to public/vendor/webblocks-cms)');
+        )).' (tag '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG.' publishes package assets to '.WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET.')');
         $this->line('Root compatibility public assets present: '.$this->rootCompatibilityFilesStatus(
             public_path(),
             WebBlocksCmsServiceProvider::ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES
         ));
         $this->line('Active public runtime asset URLs remain root compatibility paths: '.$this->yesNo(
             $this->packagePublicLayoutUsesRootCompatibilityAssets($packageRoot)
-        ).' (package public layout still references root public/cms/... assets for active runtime compatibility)');
-        $this->line('Legacy root public asset compatibility state: yes (root public/cms and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS plus admin CSS and JS source files it needs).');
-        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets plus admin CSS and JS source files now exist, but current WebBlocks UI CDN pinning and root public/cms runtime asset flow stay unchanged).');
+        ).' (package public layout still references root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' assets for active runtime compatibility)');
+        $this->line('Root runtime asset compatibility path: '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' (active admin and public runtime asset URLs still resolve here).');
+        $this->line('Legacy root public asset compatibility state: yes (root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS plus admin CSS and JS source files it needs).');
+        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets plus admin CSS and JS source files now exist, but current WebBlocks UI CDN pinning and root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' runtime asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
@@ -198,7 +200,7 @@ class PackageStatusCommand extends Command
         $this->line('Package stub publish readiness: '.$this->yesNo($this->expectedFilesPresent(
             $packageRoot.'/stubs',
             WebBlocksCmsServiceProvider::PACKAGE_STUB_FILES
-        )).' (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' publishes starter stubs to stubs/vendor/webblocks-cms)');
+        )).' (tag '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TAG.' publishes starter stubs to '.WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET.')');
         $this->line('Starter stub readiness: yes (package-owned starter stubs are present; a separate starter package is still intentionally not created here).');
         $this->line('Package service provider loaded: '.$this->yesNo($this->laravel->providerIsLoaded(WebBlocksCmsServiceProvider::class)));
         $this->line('Package view namespace registered: '.$this->yesNo($this->viewNamespaceIsRegistered()).' ('.WebBlocksCmsServiceProvider::VIEW_NAMESPACE.')');
@@ -243,6 +245,7 @@ class PackageStatusCommand extends Command
             base_path('app'),
             WebBlocksCmsServiceProvider::ROOT_PUBLIC_MODEL_WRAPPER_FILES
         ));
+        $this->line('Root compatibility wrappers: '.implode('; ', WebBlocksCmsServiceProvider::ROOT_COMPATIBILITY_WRAPPER_DOMAINS).'.');
         $this->line('Public model foundation package authority state: yes (Block, ContactMessage, Locale, Page, PageSlot, PageTranslation, PublicSearchIndex, Site, SiteDomain, SystemSetting, and VisitorEvent now live under package Models while root App\\Models wrappers remain active for compatibility).');
         $this->line('User model ownership state: root-owned permanently for now (User remains app-owned and was not moved into the package).');
         $this->line('Icon catalog admin route package authority state: '.$this->yesNo($this->routeUsesController(
@@ -265,6 +268,8 @@ class PackageStatusCommand extends Command
         $this->line('Root Composer path repository present: '.$this->yesNo($this->pathRepositoryPresent($rootComposer, 'packages/webblocks-cms')).' (packages/webblocks-cms)');
         $this->line('Target Composer install flow: '.WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND.' (future starter or package-consumer target only; current root install flow remains authoritative).');
         $this->line('Target Composer update flow: '.WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND.' followed by migrations, catalog sync, block-types:sync-core, cache clear, asset publish or sync when needed, package diagnostics, and installed-version sync when release state is real.');
+        $this->line('Root migration/update/install/auth blockers: '.implode('; ', WebBlocksCmsServiceProvider::STARTER_SPLIT_BLOCKERS).'.');
+        $this->line('Starter split readiness: not ready (package transition consolidation is complete for all safely movable CMS-owned source, but the remaining install/auth, User, root runtime asset path, and root migration or update authority blockers still prevent a starter split).');
         $this->line('Starter foundation readiness: partial (package metadata, provider discovery, path-repository development wiring, and documented target install or update flow are present; '.WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME.' is intentionally not created yet).');
         $this->line('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.');
         $this->newLine();

@@ -23,6 +23,8 @@ use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner as PackageUpdateCommandRunner;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient as PackageUpdateServerClient;
 use ZipArchive;
 
 class SystemUpdatesTest extends TestCase
@@ -435,6 +437,7 @@ class SystemUpdatesTest extends TestCase
         ));
 
         $this->app->instance(UpdateServerClient::class, $client);
+        $this->app->instance(PackageUpdateServerClient::class, $client);
     }
 
     private function prepareSuccessfulUpdateScenario(): array
@@ -473,6 +476,7 @@ class SystemUpdatesTest extends TestCase
     {
         $runner = new FakeUpdateCommandRunner($exitCodes);
         $this->app->instance(UpdateCommandRunner::class, $runner);
+        $this->app->instance(PackageUpdateCommandRunner::class, $runner);
         $this->fakeCommandRunner = $runner;
 
         return $runner;

@@ -6189,7 +6189,7 @@ class PageBuilderExperienceTest extends TestCase
         );
 
         $ctaType = BlockType::query()->where('slug', 'cta')->firstOrFail();
-        $buttonType = BlockType::query()->where('slug', 'button')->firstOrFail();
+        $buttonType = BlockType::query()->where('slug', 'button_link')->firstOrFail();
         $cta = Block::query()->create([
             'page_id' => $page->id,
             'type' => 'cta',
@@ -6212,7 +6212,7 @@ class PageBuilderExperienceTest extends TestCase
         $primaryButton = Block::query()->create([
             'page_id' => $page->id,
             'parent_id' => $cta->id,
-            'type' => 'button',
+            'type' => 'button_link',
             'block_type_id' => $buttonType->id,
             'source_type' => 'static',
             'slot' => 'main',
@@ -6224,7 +6224,7 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
-        $primaryButton->buttonTranslations()->create([
+        $primaryButton->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Start now',
         ]);
@@ -6232,7 +6232,7 @@ class PageBuilderExperienceTest extends TestCase
         $secondaryButton = Block::query()->create([
             'page_id' => $page->id,
             'parent_id' => $cta->id,
-            'type' => 'button',
+            'type' => 'button_link',
             'block_type_id' => $buttonType->id,
             'source_type' => 'static',
             'slot' => 'main',
@@ -6244,7 +6244,7 @@ class PageBuilderExperienceTest extends TestCase
             'status' => 'published',
             'is_system' => false,
         ]);
-        $secondaryButton->buttonTranslations()->create([
+        $secondaryButton->textTranslations()->create([
             'locale_id' => $this->defaultLocale()->id,
             'title' => 'Read docs',
         ]);
@@ -6275,12 +6275,12 @@ class PageBuilderExperienceTest extends TestCase
             'subtitle' => 'Turkce etiket',
             'content' => 'Turkce govde',
         ]);
-        $this->assertDatabaseHas('block_button_translations', [
+        $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $primaryButton->id,
             'locale_id' => $turkish->id,
             'title' => 'Hemen basla',
         ]);
-        $this->assertDatabaseHas('block_button_translations', [
+        $this->assertDatabaseHas('block_text_translations', [
             'block_id' => $secondaryButton->id,
             'locale_id' => $turkish->id,
             'title' => 'Dokumanlari oku',

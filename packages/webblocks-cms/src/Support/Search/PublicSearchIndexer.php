@@ -1,0 +1,233 @@
+<?php
+
+namespace WebBlocks\Cms\Support\Search;
+
+use App\Models\Block;
+use App\Models\Locale;
+use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\PublicSearchIndex;
+use App\Models\SharedSlot;
+use App\Models\Site;
+use App\Support\Blocks\BlockTranslationResolver;
+use App\Support\Pages\PublicSharedSlotResolver;
+use Illuminate\Support\Collection;
+
+class PublicSearchIndexer
+{
+    public function __construct(
+        private readonly PublicSearchSchema $schema,
+        private readonly SearchablePageResolver $searchablePages,
+        private readonly SearchTextNormalizer $normalizer,
+        private readonly BlockSearchTextExtractorRegistry $extractors,
+        private readonly BlockTranslationResolver $blockTranslationResolver,
+        private readonly PublicSharedSlotResolver $publicSharedSlotResolver,
+    ) {}
+
+    public function rebuild(?Site $site = null, ?Locale $locale = null, ?Page $page = null): PublicSearchRebuildResult
+    {
+        $result = new PublicSearchRebuildResult;
+
+        if (! $this->schema->tableExists()) {
+            return $result;
+        }
+
+        if ($page) {
+            return $this->rebuildPage($page, $locale);
+        }
+
+        $this->clearScope($site, $locale);
+
+        $this->searchablePages->query($site)
+            ->orderBy('id')
+            ->get()
+            ->each(function (Page $candidate) use ($locale, $result): void {
+                $this->searchablePages->loadForIndexing($candidate);
+                $candidateLocales = $this->searchablePages->candidateLocales($candidate, $locale);
+                $locales = $this->searchablePages->searchableLocales($candidate, $locale);
+
+                $skippedLocales = max(0, $candidateLocales->count() - $locales->count());
+
+                if ($skippedLocales > 0) {
+                    $result->addSkipped($skippedLocales);
+                }
+
+                if ($locales->isEmpty()) {
+                    return;
+                }
+
+                foreach ($locales as $resolvedLocale) {
+                    $this->indexPageLocale($candidate, $resolvedLocale);
+                    $result->addIndexed();
+                }
+            });
+
+        return $result;
+    }
+
+    public function rebuildPage(Page|int $page, ?Locale $locale = null): PublicSearchRebuildResult
+    {
+        $result = new PublicSearchRebuildResult;
+        $page = $page instanceof Page ? $page : Page::query()->find($page);
+
+        if (! $page || ! $this->schema->tableExists()) {
+            return $result;
+        }
+
+        $this->deletePage($page, $locale);
+
+        if (! $this->searchablePages->shouldIndex($page)) {
+            return $result->addSkipped();
+        }
+
+        $this->searchablePages->loadForIndexing($page);
+        $candidateLocales = $this->searchablePages->candidateLocales($page, $locale);
+        $locales = $this->searchablePages->searchableLocales($page, $locale);
+
+        $skippedLocales = max(0, $candidateLocales->count() - $locales->count());
+
+        if ($skippedLocales > 0) {
+            $result->addSkipped($skippedLocales);
+        }
+
+        if ($locales->isEmpty()) {
+            return $result;
+        }
+
+        foreach ($locales as $resolvedLocale) {
+            $this->indexPageLocale($page, $resolvedLocale);
+            $result->addIndexed();
+        }
+
+        return $result;
+    }
+
+    public function refreshPage(Page|int $page, ?Locale $locale = null): void
+    {
+        $this->rebuildPage($page, $locale);
+    }
+
+    public function deletePage(Page|int $page, ?Locale $locale = null): void
+    {
+        if (! $this->schema->tableExists()) {
+            return;
+        }
+
+        $pageId = $page instanceof Page ? $page->id : (int) $page;
+
+        PublicSearchIndex::query()
+            ->where('page_id', $pageId)
+            ->when($locale, fn ($query) => $query->where('locale_id', $locale->id))
+            ->delete();
+    }
+
+    public function refreshSharedSlot(SharedSlot|int $sharedSlot): void
+    {
+        if (! $this->schema->tableExists()) {
+            return;
+        }
+
+        $sharedSlotId = $sharedSlot instanceof SharedSlot ? $sharedSlot->id : (int) $sharedSlot;
+
+        Page::query()
+            ->where('status', Page::STATUS_PUBLISHED)
+            ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+            ->whereHas('slots', fn ($query) => $query->where('shared_slot_id', $sharedSlotId))
+            ->pluck('id')
+            ->unique()
+            ->each(fn (int $pageId) => $this->refreshPage($pageId));
+    }
+
+    private function clearScope(?Site $site = null, ?Locale $locale = null): void
+    {
+        PublicSearchIndex::query()
+            ->when($site, fn ($query) => $query->where('site_id', $site->id))
+            ->when($locale, fn ($query) => $query->where('locale_id', $locale->id))
+            ->delete();
+    }
+
+    private function indexPageLocale(Page $page, Locale $locale): void
+    {
+        $translation = $page->translationForLocale($locale);
+        $url = $page->publicPath($locale->code);
+
+        if (! $translation || ! $url) {
+            return;
+        }
+
+        $content = $this->buildContent($page, $locale);
+        $title = $this->normalizer->normalize($translation->name);
+
+        PublicSearchIndex::query()->updateOrCreate(
+            [
+                'page_id' => $page->id,
+                'locale_id' => $locale->id,
+            ],
+            [
+                'site_id' => $page->site_id,
+                'title' => $title,
+                'excerpt' => $this->normalizer->excerpt($content),
+                'url' => $url,
+                'content' => $content,
+                'indexed_at' => now(),
+            ],
+        );
+    }
+
+    private function buildContent(Page $page, Locale $locale): string
+    {
+        $page->setRelation('currentTranslation', $page->translationForLocale($locale));
+
+        $slotContent = $page->slots
+            ->sortBy(fn (PageSlot $slot) => sprintf('%010d-%010d', (int) $slot->sort_order, (int) $slot->id))
+            ->map(function (PageSlot $slot) use ($page, $locale) {
+                if ($slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_DISABLED) {
+                    return '';
+                }
+
+                if ($slot->usesPageOwnedBlocks()) {
+                    $blocks = $page->blocks
+                        ->where('slot_type_id', $slot->slot_type_id)
+                        ->whereNull('parent_id')
+                        ->where('status', 'published')
+                        ->values();
+
+                    return $this->extractBlockTree(
+                        $this->blockTranslationResolver->resolveCollection($blocks, $locale, $page->site),
+                    );
+                }
+
+                if ($slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+                    return $this->extractBlockTree(
+                        $this->publicSharedSlotResolver->resolve($slot, $locale),
+                    );
+                }
+
+                return '';
+            })
+            ->all();
+
+        return $this->normalizer->join([
+            $page->currentTranslation?->name,
+            $page->currentTranslation?->slug,
+            $page->currentTranslation?->path,
+            $slotContent,
+        ]);
+    }
+
+    private function extractBlockTree(Collection $blocks): string
+    {
+        return $blocks
+            ->map(function (Block $block) {
+                $children = $block->children instanceof Collection
+                    ? $this->extractBlockTree($block->children)
+                    : '';
+
+                return $this->normalizer->join([
+                    $this->extractors->extract($block),
+                    $children,
+                ]);
+            })
+            ->implode(' ');
+    }
+}

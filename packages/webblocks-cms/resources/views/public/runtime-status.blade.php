@@ -13,7 +13,7 @@
           <div class="wb-stack wb-gap-3">
             <h1>Package Public Runtime Status</h1>
             <p class="wb-text-lg wb-m-0">This guarded status page still lives on a reserved path, but the main public layout, page shell, and search views now render from the package namespace too.</p>
-            <p class="wb-text-muted wb-m-0">Root compatibility wrappers remain in place while models, migrations, and the broader public block-renderer tree continue through the current compatibility layer.</p>
+            <p class="wb-text-muted wb-m-0">Root compatibility wrappers remain in place while active runtime asset URLs still use root public/cms compatibility paths and install, auth, migration, and update authority stay in the root application.</p>
           </div>
         </div>
 

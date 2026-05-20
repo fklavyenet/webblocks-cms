@@ -2,13 +2,6 @@
 
 namespace App\Support\System;
 
-class SystemBackupArchivePackage
-{
-    public const PRODUCT = 'WebBlocks CMS';
+use WebBlocks\Cms\Support\System\SystemBackupArchivePackage as PackageSystemBackupArchivePackage;
 
-    public const PACKAGE_TYPE = 'system_backup';
-
-    public const FEATURE_VERSION = 1;
-
-    public const FORMAT_VERSION = 1;
-}
+class SystemBackupArchivePackage extends PackageSystemBackupArchivePackage {}

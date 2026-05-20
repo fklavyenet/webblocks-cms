@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 1.32.4
+
+- Finalize the package-transition consolidation metadata and diagnostics so `WebBlocksCmsServiceProvider` and `webblocks:package-status` now report the real package-owned route, view, model, seeder, and movable asset-source authority alongside the intentional root compatibility wrappers.
+- Clarify in focused tests and docs that the safely movable CMS-owned source is now package-owned, while active runtime asset URLs still use root `public/cms/...` compatibility paths and the remaining boundaries stay install/auth, the app-owned `User` model, and root migration or update authority.
+- Fix the late full-suite package-transition regressions by restoring the real package-owned site transfer and site promotion views, removing recursive package/root Blade wrapper loops, and preserving the promotion screen preselection and cancel-action behavior expected by the existing admin contract.
+- Restore release-gate compatibility for contact notifications and legacy transitional block catalogs by routing contact mail through the root wrapper mailable entrypoint and keeping legacy draft compatibility rows for `text`, `tabs`, `slider`, `menu`, `faq-list`, `showcase-list`, and `contact-info`.
+
 ## 1.32.3
 
 - Move the remaining safe operational admin route batch into `packages/webblocks-cms` for Slot Types and System Settings, adding package-owned controllers, the System Settings request, and package-owned admin views while preserving root `App\...` and root Blade compatibility wrappers.
@@ -924,7 +933,7 @@
 
 ### Removed
 
-- Removed the hard-coded `webblocks:sync-ui-docs-pilot` website content generator from CMS core.
+- Removed the hard-coded UI docs pilot website content generator command from CMS core.
 - Removed the remaining core registration path for website-specific UI docs rebuild tooling so those commands no longer ship in the core command list.
 
 ## 1.4.3

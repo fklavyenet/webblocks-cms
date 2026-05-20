@@ -74,7 +74,7 @@ class SafeRichTextRendererTest extends TestCase
     {
         $html = app(SafeRichTextRenderer::class)->render('<p><strong><em>Nested</em></strong> text</p><ul><li><a href="/docs"><code>Docs</code></a></li></ul>')->toHtml();
 
-        $this->assertSame('<p><strong><em>Nested</em></strong> text</p><ul><li><a href="/docs"><code>Docs</code></a></li></ul>', $html);
+        $this->assertSame('<p><strong><em>Nested</em></strong> text</p><ul><li><a href="/docs" rel="noopener noreferrer"><code>Docs</code></a></li></ul>', $html);
     }
 
     #[Test]

@@ -28,6 +28,8 @@ This audit intentionally does not move files.
 
 The admin runtime transition is now broad enough that package-owned admin screens depend heavily on root-owned admin asset and brand resources, even though the admin layout itself is now package-owned.
 
+Package transition consolidation is complete for all safely movable CMS-owned source, but admin runtime asset URLs still intentionally remain on the root compatibility path.
+
 - Package-owned admin views now extend package `webblocks-cms::layouts.admin`.
 - Package-owned admin views now use package-owned selected shared partials for page headers, flash messages, listing filters, pagination, page actions, audit actor output, and form actions.
 - Package-owned admin views now also cover the remaining safe live operational/admin-system follow-up for `Slot Types` and `System Settings`.
@@ -36,8 +38,11 @@ The admin runtime transition is now broad enough that package-owned admin screen
 - The package-owned admin layout still directly loads active root `public/cms/css/admin.css`, many root `public/cms/js/admin/*` files, `public/cms/js/admin-sortable-list.js`, and root brand images under `public/cms/brand`.
 - The package now also carries package-owned source copies of the admin CSS and JS files under `packages/webblocks-cms/public/cms/**`, while root `public/cms/**` remains the active runtime compatibility path.
 - `webblocks:package-status` now reports selected shared admin partial/component package authority, the broader admin runtime view inventory, and package public asset readiness that now includes admin CSS and JS source files. Runtime asset authority still has not moved.
+- The remaining boundaries after this consolidation are not more safe view moves; they are the root `public/cms` runtime asset path, install/auth/profile runtime, the app-owned `User` model, root migration authority, and future starter split design.
 
 Current outcome: **the admin layout and selected shared admin partials now move through package view authority, and admin CSS or JS source files now also live in the package, while runtime asset authority remains root-owned.**
+
+Starter split outcome: **not ready yet, because admin runtime still depends on root asset URLs and broader root install/auth/update boundaries.**
 
 ## Classification Legend
 
