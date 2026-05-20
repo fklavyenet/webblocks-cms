@@ -67,6 +67,99 @@ class PackageFreshInstallMigrationTest extends TestCase
 
             $this->assertStringNotContainsString("view('admin.", $contents, $file);
             $this->assertStringNotContainsString("View::make('admin.", $contents, $file);
+            $this->assertStringNotContainsString("response()->view('admin.", $contents, $file);
+        }
+    }
+
+    #[Test]
+    public function package_owned_system_admin_renderers_use_package_view_names_for_system_screens(): void
+    {
+        $expectations = [
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SystemUpdateController.php' => [
+                "::admin.system.updates'",
+                "view('admin.system.updates'",
+                "View::make('admin.system.updates'",
+                "response()->view('admin.system.updates'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SystemBackupController.php' => [
+                "::admin.system.backups.index'",
+                "view('admin.system.backups",
+                "View::make('admin.system.backups",
+                "response()->view('admin.system.backups",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SystemSearchController.php' => [
+                "::admin.system.search'",
+                "view('admin.system.search'",
+                "View::make('admin.system.search'",
+                "response()->view('admin.system.search'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SystemSettingsController.php' => [
+                "::admin.system.settings'",
+                "view('admin.system.settings'",
+                "View::make('admin.system.settings'",
+                "response()->view('admin.system.settings'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/IconCatalogController.php' => [
+                "::admin.system.icons.index'",
+                "view('admin.system.icons",
+                "View::make('admin.system.icons",
+                "response()->view('admin.system.icons",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/BlockTypeController.php' => [
+                "::admin.block-types.index'",
+                "view('admin.system.block-types'",
+                "View::make('admin.system.block-types'",
+                "response()->view('admin.system.block-types'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/PageLayoutController.php' => [
+                "::admin.page-layouts.index'",
+                "view('admin.system.page-layouts'",
+                "View::make('admin.system.page-layouts'",
+                "response()->view('admin.system.page-layouts'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SlotTypeController.php' => [
+                "::admin.slot-types.index'",
+                "view('admin.system.slot-types'",
+                "View::make('admin.system.slot-types'",
+                "response()->view('admin.system.slot-types'",
+            ],
+        ];
+
+        foreach ($expectations as $path => [$expectedView, $unexpectedView, $unexpectedMake, $unexpectedResponseView]) {
+            $contents = (string) file_get_contents(base_path($path));
+
+            $this->assertStringContainsString($expectedView, $contents, $path);
+            $this->assertStringNotContainsString($unexpectedView, $contents, $path);
+            $this->assertStringNotContainsString($unexpectedMake, $contents, $path);
+            $this->assertStringNotContainsString($unexpectedResponseView, $contents, $path);
+        }
+    }
+
+    #[Test]
+    public function package_owned_system_admin_views_keep_package_layout_and_include_boundaries(): void
+    {
+        $views = [
+            'packages/webblocks-cms/resources/views/admin/system/updates.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/backups/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/backups/show.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/backups/upload.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/search.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/settings.blade.php',
+            'packages/webblocks-cms/resources/views/admin/system/icons/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/block-types/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/page-layouts/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/slot-types/index.blade.php',
+        ];
+
+        foreach ($views as $view) {
+            $contents = (string) file_get_contents(base_path($view));
+
+            $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", $contents, $view);
+            $this->assertStringNotContainsString("@extends('layouts.admin'", $contents, $view);
+            $this->assertStringNotContainsString("@include('admin.", $contents, $view);
+            $this->assertStringNotContainsString("@includeIf('admin.", $contents, $view);
+            $this->assertStringNotContainsString('<x-admin.', $contents, $view);
+            $this->assertStringNotContainsString('<x-auth-password-field', $contents, $view);
         }
     }
 

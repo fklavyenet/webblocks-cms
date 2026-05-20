@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Prepare v1.32.13 as a follow-up fresh-consumer admin hotfix by locking the System Updates screen to the package view namespace, confirming the package-owned `updates.blade.php` exists, and extending boundary coverage so `/admin/system/updates` stays renderable in a fresh Laravel consumer without any root `resources/views/admin/system/updates*.blade.php` files.
+- Expand static package-boundary assertions for the System admin slice so package controllers and package Blade views cannot regress to root `admin.*` render paths, layouts, includes, or root-only auth components, with explicit checks for the updates, backups, search, settings, icons, block-types, page-layouts, and slot-types screens.
+- Add focused post-install consumer smoke coverage for `/admin/system/updates` and bootstrap assertions for the package-owned System views so the exact external namespace failure is caught before release.
+
 - Prepare v1.32.12 as a follow-up fresh-consumer admin hotfix by removing the remaining root-auth component dependency from the package-owned Users admin form, keeping `/admin/users` and `/admin/users/create` renderable in a fresh Laravel consumer without root Blade component wrappers.
 - Strengthen package admin boundary coverage with broader authenticated consumer smoke tests across the active package-routed admin screens and tighter static assertions that package admin runtime code does not fall back to root `admin.*` views, includes, layouts, or the root `x-auth-password-field` component.
 

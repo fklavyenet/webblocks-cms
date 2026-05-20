@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController as PackageSystemUpdateController;
 
 class PackageConsumerInstallAuthTest extends TestCase
 {
@@ -127,5 +128,27 @@ class PackageConsumerInstallAuthTest extends TestCase
         ] as $routeName) {
             $this->actingAs($user)->get(route($routeName))->assertOk();
         }
+    }
+
+    #[Test]
+    public function system_updates_route_renders_after_install_through_the_package_view_boundary(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+        $route = app('router')->getRoutes()->getByName('admin.system.updates.index');
+        $controller = (string) $route?->getAction('controller');
+        $controllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SystemUpdateController.php'));
+
+        $this->assertNotNull($route);
+        $this->assertStringStartsWith(PackageSystemUpdateController::class.'@', $controller);
+        $this->assertStringContainsString("view('webblocks-cms::admin.system.updates'", $controllerSource);
+        $this->assertStringNotContainsString("view('admin.system.updates'", $controllerSource);
+        $this->assertStringNotContainsString("View::make('admin.system.updates'", $controllerSource);
+        $this->assertStringNotContainsString("response()->view('admin.system.updates'", $controllerSource);
+
+        $this->actingAs($user)->get(route('admin.system.updates.index'))
+            ->assertOk()
+            ->assertSee('System Updates')
+            ->assertSee('Update Summary')
+            ->assertSee('Actions');
     }
 }

@@ -197,6 +197,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/block-types/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/slot-types/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/settings.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/updates.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/backups/index.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/search.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/hero.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/columns.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/gallery.blade.php'));
@@ -280,6 +283,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::components.admin.form-actions'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.updates'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.backups.index'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery'));
@@ -292,6 +298,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists('admin.partials.audit-actor'));
         $this->assertTrue(view()->exists('admin.slot-types.index'));
         $this->assertTrue(view()->exists('admin.system.settings'));
+        $this->assertTrue(view()->exists('admin.system.updates'));
+        $this->assertTrue(view()->exists('admin.system.backups.index'));
+        $this->assertTrue(view()->exists('admin.system.search'));
         $this->assertTrue(view()->exists('pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists('pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists('pages.partials.blocks.gallery'));
