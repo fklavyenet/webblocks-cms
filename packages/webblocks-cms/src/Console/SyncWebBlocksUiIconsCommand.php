@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\Icons\WebBlocksIconManifestSyncer;
 use Illuminate\Console\Command;
 use Throwable;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
 
 class SyncWebBlocksUiIconsCommand extends Command
 {

@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Support\Admin\AdminPagination;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;

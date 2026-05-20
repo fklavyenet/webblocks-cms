@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\Media;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\Media;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Locales;
 
-use App\Models\Locale;
+use WebBlocks\Cms\Models\Locale;
 
 class LocaleLifecycleReport
 {

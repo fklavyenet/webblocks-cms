@@ -2,12 +2,8 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\Page;
-use App\Models\Site;
-use App\Support\Search\PublicSearchIndexer;
-use App\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

@@ -2,10 +2,6 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\IconCatalogItem;
-use App\Models\NavigationItem as RootNavigationItem;
-use App\Models\Page;
-use App\Models\Site;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -131,12 +127,12 @@ class NavigationItem extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(RootNavigationItem::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(RootNavigationItem::class, 'parent_id')->orderBy('position');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('position');
     }
 
     public function scopeVisible($query)

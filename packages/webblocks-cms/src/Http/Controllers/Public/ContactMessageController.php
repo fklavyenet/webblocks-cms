@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
-use App\Models\Block;
-use App\Support\Blocks\BlockTranslationResolver;
-use App\Support\Contact\ContactMessageNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
 
 class ContactMessageController extends Controller
 {

@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\LayoutType;
 use Illuminate\Database\Seeder;
+use WebBlocks\Cms\Models\LayoutType;
 
 class LayoutTypeSeeder extends Seeder
 {

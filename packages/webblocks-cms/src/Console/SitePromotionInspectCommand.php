@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\SitePromotion\SitePromotionPackageInspector;
 use Illuminate\Console\Command;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionPackageInspector;
 
 class SitePromotionInspectCommand extends Command
 {

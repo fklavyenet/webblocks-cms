@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\Site;
 use Illuminate\Console\Command;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\PublicSearchSchema;
 

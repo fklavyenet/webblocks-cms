@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\PageAsset;
 use Illuminate\Support\Collection;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
 
 class PageAssetRenderer
 {

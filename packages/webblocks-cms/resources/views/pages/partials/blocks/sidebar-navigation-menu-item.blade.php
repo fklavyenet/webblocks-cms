@@ -1,7 +1,7 @@
 @php
     $label = trim((string) $item->resolvedTitle());
     $children = $item->children->filter(fn ($child) => $child->isVisible())->values();
-    $isGroup = $item->link_type === \App\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty();
+    $isGroup = $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty();
     $isActive = $isNavigationItemActive($item);
     $href = $item->resolvedUrl();
     $target = $item->target === '_blank';

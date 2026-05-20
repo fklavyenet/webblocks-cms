@@ -2,25 +2,7 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block as RootBlock;
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockMedia;
-use App\Models\BlockTextTranslation;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\SharedSlotBlock;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationRegistry;
-use App\Support\Blocks\BlockTranslationResolver;
 use App\Support\Locales\LocaleResolver;
-use App\Support\Search\ReindexesPublicSearch;
 use App\Support\WebBlocks;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +16,9 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
 class Block extends Model
 {
@@ -128,7 +113,7 @@ class Block extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(RootBlock::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function media(): BelongsTo
@@ -143,7 +128,7 @@ class Block extends Model
 
     public function children(): HasMany
     {
-        return $this->hasMany(RootBlock::class, 'parent_id')->orderBy('sort_order')->orderBy('id');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order')->orderBy('id');
     }
 
     public function publishedChildren(): HasMany

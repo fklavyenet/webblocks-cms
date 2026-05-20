@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\SiteDomain;
+use WebBlocks\Cms\Models\SiteDomain;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;

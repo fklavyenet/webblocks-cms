@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\AdminApi;
 
-use App\Models\Site;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\Admin\SiteDomainStoreRequest;

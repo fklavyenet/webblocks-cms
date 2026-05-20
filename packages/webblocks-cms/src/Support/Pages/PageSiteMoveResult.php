@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
 
 class PageSiteMoveResult
 {

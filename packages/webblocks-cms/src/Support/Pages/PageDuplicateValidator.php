@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 

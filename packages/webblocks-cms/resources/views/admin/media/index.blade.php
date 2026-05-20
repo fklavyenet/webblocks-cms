@@ -1,7 +1,7 @@
 @extends('webblocks-cms::layouts.admin', ['title' => 'Media', 'heading' => 'Media'])
 
 @php
-    use App\Models\Media;
+    use WebBlocks\Cms\Models\Media;
 
     $showUploadModal = $openModal === 'upload-asset';
     $showFolderModal = $openModal === 'new-folder';

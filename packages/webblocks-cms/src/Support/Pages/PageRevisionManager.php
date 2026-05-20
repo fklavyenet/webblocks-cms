@@ -2,17 +2,17 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Block;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageRevision;
-use App\Models\PageSlot;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\PageSlot;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Blocks\BlockTranslationWriter;
-use App\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

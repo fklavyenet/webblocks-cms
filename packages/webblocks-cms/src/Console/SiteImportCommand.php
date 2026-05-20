@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\Sites\ExportImport\SiteImportManager;
-use App\Support\Sites\ExportImport\SiteImportOptions;
 use Illuminate\Console\Command;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportManager;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
 
 class SiteImportCommand extends Command
 {

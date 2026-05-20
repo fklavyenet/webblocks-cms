@@ -1,5 +1,5 @@
 @php
-    $slotRouteId = \App\Models\PageSlot::query()
+    $slotRouteId = \WebBlocks\Cms\Models\PageSlot::query()
         ->where('page_id', $page->id)
         ->where('slot_type_id', $item['block']->slot_type_id)
         ->value('id');

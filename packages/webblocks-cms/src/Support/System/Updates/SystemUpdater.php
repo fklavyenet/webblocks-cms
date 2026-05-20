@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use App\Models\SystemUpdateRun;
 use App\Models\User;
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Facades\Cache;

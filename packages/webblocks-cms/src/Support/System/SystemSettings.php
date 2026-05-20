@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\Locale;
-use App\Models\Site;
-use App\Models\SystemSetting;
 use App\Support\WebBlocks;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
 
 class SystemSettings
 {

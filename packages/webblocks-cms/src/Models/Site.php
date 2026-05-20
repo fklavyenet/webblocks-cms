@@ -2,13 +2,6 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\NavigationItem;
-use App\Models\SharedSlot;
-use App\Models\SiteDomain;
-use App\Models\SiteLocale;
-use App\Models\SiteVariable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -18,6 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Models\SiteLocale;
+use WebBlocks\Cms\Models\SiteVariable;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 

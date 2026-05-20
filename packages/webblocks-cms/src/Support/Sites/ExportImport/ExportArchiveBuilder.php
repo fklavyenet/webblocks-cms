@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
-use App\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;

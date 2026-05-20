@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\Site;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;

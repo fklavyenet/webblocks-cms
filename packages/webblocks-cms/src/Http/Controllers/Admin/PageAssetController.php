@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Page;
-use App\Models\PageAsset;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

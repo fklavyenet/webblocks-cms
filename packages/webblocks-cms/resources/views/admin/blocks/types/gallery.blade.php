@@ -1,6 +1,6 @@
 @php
     $selectedGalleryAssets = collect(old('gallery_media_ids', old('gallery_asset_ids', [])))
-        ->map(fn ($id) => $id ? \App\Models\Media::query()->find($id) : null)
+        ->map(fn ($id) => $id ? \WebBlocks\Cms\Models\Media::query()->find($id) : null)
         ->filter()
         ->values()
         ->whenEmpty(fn () => $selectedGalleryAssets ?? $block->galleryAssets());

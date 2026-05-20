@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Locale;
+use WebBlocks\Cms\Models\Locale;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 

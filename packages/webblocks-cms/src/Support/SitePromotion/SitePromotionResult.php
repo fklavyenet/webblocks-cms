@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\SitePromotion;
 
-use App\Models\Site;
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemBackup;
 
 class SitePromotionResult
 {

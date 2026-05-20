@@ -2,14 +2,14 @@
 
 namespace WebBlocks\Cms\Support\Users;
 
-use App\Models\Block;
-use App\Models\ContactMessage;
-use App\Models\Media;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SiteVariable;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteVariable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 

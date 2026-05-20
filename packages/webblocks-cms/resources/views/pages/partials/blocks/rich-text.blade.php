@@ -1,6 +1,6 @@
 @php
     $content = trim((string) ($block->content ?? ''));
-    $renderer = app(\App\Support\Formatting\SafeRichTextRenderer::class);
+    $renderer = app(\WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer::class);
     $rendered = $renderer->render($content)->toHtml();
 @endphp
 

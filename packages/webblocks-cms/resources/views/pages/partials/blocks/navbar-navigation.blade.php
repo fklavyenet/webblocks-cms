@@ -1,30 +1,30 @@
 @php
     $menuKey = $block->navbarNavigationMenuKey();
     $site = $block->renderSite();
-    $items = app(\App\Support\Navigation\NavigationTree::class)
+    $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
         ->buildMenuTree($menuKey, $site?->id)
         ->filter(fn ($item) => $item->isVisible())
         ->map(function ($item) {
             $item->setRelation('children', $item->children
                 ->filter(fn ($child) => $child->isVisible())
                 ->filter(function ($child) {
-                    if ($child->link_type !== \App\Models\NavigationItem::LINK_PAGE) {
+                    if ($child->link_type !== \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
                         return $child->resolvedUrl() !== null;
                     }
 
-                    return $child->page?->status === \App\Models\Page::STATUS_PUBLISHED && $child->resolvedUrl() !== null;
+                    return $child->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $child->resolvedUrl() !== null;
                 })
                 ->values());
 
             return $item;
         })
         ->filter(function ($item) {
-            if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP) {
+            if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
                 return $item->children->isNotEmpty();
             }
 
-            if ($item->link_type === \App\Models\NavigationItem::LINK_PAGE) {
-                return $item->page?->status === \App\Models\Page::STATUS_PUBLISHED && $item->resolvedUrl() !== null;
+            if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
+                return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrl() !== null;
             }
 
             return $item->resolvedUrl() !== null;
@@ -49,7 +49,7 @@
         return $path === '/' ? '/' : rtrim($path, '/');
     };
     $isItemActive = function ($item) use (&$isItemActive, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
-        if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP) {
+        if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
             return $item->children->contains(fn ($child) => $isItemActive($child));
         }
 
@@ -78,7 +78,7 @@
             $url = $item->resolvedUrl();
             $children = $item->children;
 
-            if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
+            if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
                 if ($isMobile) {
                     $html .= '<li class="wb-stack wb-gap-1">';
                     $html .= '<span class="wb-cms-navbar-mobile-group-label'.($isActive ? ' is-active' : '').'">'.e($item->resolvedTitle()).'</span>';

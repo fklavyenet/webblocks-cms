@@ -10,7 +10,6 @@ use App\Models\NavigationItem;
 use App\Models\Page;
 use App\Models\PageAsset;
 use App\Models\PageSlot;
-use App\Models\PageTranslation;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SlotType;
@@ -21,6 +20,7 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\PageTranslation;
 
 class PageDuplicateTest extends TestCase
 {

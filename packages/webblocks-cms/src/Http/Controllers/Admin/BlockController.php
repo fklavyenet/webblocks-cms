@@ -2,18 +2,18 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Admin\AdminPagination;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\Site;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

@@ -673,6 +673,7 @@ Requests, commands, assets, migrations, and update-flow blockers:
 ### Consolidation outcome
 
 - Safe CMS-owned source consolidation: complete
+- Remaining moved helper inversion cleanup: complete (`WebBlocks\Cms\Support\Blocks\BlockTranslationWriter` and `CoreBlockTypeCatalogSyncer` now own the implementation; root `App\Support\Blocks\...` classes remain only as compatibility wrappers)
 - Active runtime asset URL consolidation: intentionally incomplete; root `public/cms/...` remains the compatibility runtime path
 - Starter split readiness: not ready
 - Remaining final boundaries: install/auth/profile runtime, app-owned `User`, root migration authority, root update/install authority, and the future starter split design

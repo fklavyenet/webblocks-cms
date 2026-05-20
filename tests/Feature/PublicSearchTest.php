@@ -20,6 +20,7 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block as PackageBlock;
 
 class PublicSearchTest extends TestCase
 {
@@ -82,7 +83,7 @@ class PublicSearchTest extends TestCase
             'slug' => 'turkce-sonuc',
             'path' => '/p/turkce-sonuc',
         ]);
-        $page->blocks()->each(function (Block $block) use ($turkish) {
+        $page->blocks()->each(function (PackageBlock $block) use ($turkish) {
             $block->textTranslations()->updateOrCreate(['locale_id' => $turkish->id], ['content' => 'Merhaba arama']);
             app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
         });

@@ -13,7 +13,7 @@
         ->values();
     $legacyAssets = $legacyAssetIds->isEmpty()
         ? collect()
-        : \App\Models\Media::query()
+        : \WebBlocks\Cms\Models\Media::query()
             ->whereIn('id', $legacyAssetIds)
             ->get()
             ->sortBy(fn ($asset) => $legacyAssetIds->search($asset->id))

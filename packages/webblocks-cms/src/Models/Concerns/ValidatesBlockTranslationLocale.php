@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Models\Concerns;
 
-use App\Models\Block;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Site;
 
 trait ValidatesBlockTranslationLocale
 {

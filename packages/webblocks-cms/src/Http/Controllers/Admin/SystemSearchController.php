@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\PublicSearchIndex;
-use App\Support\Search\PublicSearchIndexer;
+use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;

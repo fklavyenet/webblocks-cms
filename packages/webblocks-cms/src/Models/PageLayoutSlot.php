@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\PageLayout;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\SlotType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

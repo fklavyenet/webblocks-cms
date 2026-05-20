@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Locale;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

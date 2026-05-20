@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\PageLayoutSlot;
-use App\Models\PageSlot;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\PageSlot;
 
 class PageLayoutSlotComparison
 {

@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Locale;
-use App\Models\PageTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\PageTranslation;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;

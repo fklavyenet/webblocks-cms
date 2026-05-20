@@ -5,7 +5,7 @@
     $requestedModal = request('modal');
     $requestedNavigationId = request()->integer('navigation');
     $editModalItem = $editableItems->firstWhere('id', $requestedNavigationId);
-    $showDocsGroupHelp = $activeMenuKey === \App\Models\NavigationItem::MENU_DOCS;
+    $showDocsGroupHelp = $activeMenuKey === \WebBlocks\Cms\Models\NavigationItem::MENU_DOCS;
     $contextLabel = 'Site: '.$site->name.' · '.$menuOptions[$activeMenuKey];
 
     $flattenTree = function ($items) use (&$flattenTree) {
@@ -145,7 +145,7 @@
             'modalDescription' => 'Update the menu, parent group, and link settings for this item.',
             'item' => $editModalItem,
             'pages' => $pages,
-            'parents' => app(\App\Support\Navigation\NavigationTree::class)->parentOptions($editModalItem->menu_key, $editModalItem->site_id, $editModalItem->id),
+            'parents' => app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)->parentOptions($editModalItem->menu_key, $editModalItem->site_id, $editModalItem->id),
             'menuOptions' => $menuOptions,
             'site' => $site,
             'activeMenuKey' => $activeMenuKey,

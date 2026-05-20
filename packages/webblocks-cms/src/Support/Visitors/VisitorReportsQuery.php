@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\Visitors;
 
-use App\Models\Locale;
-use App\Models\Site;
 use App\Models\User;
-use App\Models\VisitorEvent;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;

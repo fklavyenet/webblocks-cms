@@ -2,23 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Block;
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockTextTranslation;
-use App\Models\BlockType;
-use App\Models\Layout;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SlotType;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Blocks\BlockTranslationRegistry;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -27,6 +12,21 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Layout;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 
 class PageJsonImporter
 {

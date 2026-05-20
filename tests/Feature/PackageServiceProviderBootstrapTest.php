@@ -620,7 +620,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
             $iconRoute->getAction('controller')
         );
         $this->assertInstanceOf(\ReflectionNamedType::class, $syncerParameterType);
-        $this->assertSame(WebBlocksIconManifestSyncer::class, $syncerParameterType->getName());
+        $this->assertSame(PackageWebBlocksIconManifestSyncer::class, $syncerParameterType->getName());
         $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
         $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
         $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));

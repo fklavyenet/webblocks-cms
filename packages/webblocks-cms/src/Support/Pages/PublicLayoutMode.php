@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
+use WebBlocks\Cms\Models\Page;
 
 class PublicLayoutMode
 {

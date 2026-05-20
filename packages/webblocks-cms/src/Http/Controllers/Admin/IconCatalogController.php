@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\IconCatalogItem;
-use App\Support\Admin\AdminPagination;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;

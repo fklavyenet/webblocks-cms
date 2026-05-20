@@ -2,10 +2,7 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\SharedSlot;
-use App\Models\SharedSlotBlock as RootSharedSlotBlock;
-use App\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -46,11 +43,11 @@ class SharedSlotBlock extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(RootSharedSlotBlock::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(RootSharedSlotBlock::class, 'parent_id')->orderBy('sort_order')->orderBy('id');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order')->orderBy('id');
     }
 }

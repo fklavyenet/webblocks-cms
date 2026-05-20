@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\SystemSetting;
 use App\Support\WebBlocks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use WebBlocks\Cms\Models\SystemSetting;
 
 class InstalledVersionStore
 {
@@ -64,28 +64,27 @@ class InstalledVersionStore
 
         try {
             $connection->getPdo();
-            $connection->beginTransaction();
 
-            $probeKey = 'system_updates.version_probe.'.str()->uuid();
+            $probeSucceeded = $connection->transaction(function (): bool {
+                $probeKey = 'system_updates.version_probe.'.str()->uuid();
 
-            SystemSetting::query()->updateOrCreate(
-                ['key' => $probeKey],
-                ['value' => now()->toIso8601String()],
-            );
+                SystemSetting::query()->updateOrCreate(
+                    ['key' => $probeKey],
+                    ['value' => now()->toIso8601String()],
+                );
 
-            $value = SystemSetting::query()->where('key', $probeKey)->value('value');
-            $connection->rollBack();
+                $value = SystemSetting::query()->where('key', $probeKey)->value('value');
+                SystemSetting::query()->where('key', $probeKey)->delete();
 
-            if (! is_string($value) || $value === '') {
+                return is_string($value) && $value !== '';
+            });
+
+            if (! $probeSucceeded) {
                 return $this->check('Version persistence', 'blocked', 'System settings could not be read back after a write probe.', true);
             }
 
             return $this->check('Version persistence', 'pass', 'Installed version can be read and persisted in system settings.');
         } catch (Throwable $throwable) {
-            if ($connection->transactionLevel() > 0) {
-                $connection->rollBack();
-            }
-
             return $this->check('Version persistence', 'blocked', 'System settings are not writable: '.$throwable->getMessage(), true);
         }
     }

@@ -2,14 +2,14 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Locale;
-use App\Models\SharedSlot;
-use App\Models\SharedSlotBlock;
-use App\Models\Site;
-use App\Support\Blocks\BlockTranslationResolver;
 use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 
 class PublicSharedSlotResolver
 {

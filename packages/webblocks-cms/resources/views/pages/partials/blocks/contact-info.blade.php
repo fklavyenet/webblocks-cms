@@ -1,5 +1,5 @@
 @php
-    use App\Models\Block;
+    use WebBlocks\Cms\Models\Block;
 
     $settings = is_array($block->settings)
         ? $block->settings

@@ -9,7 +9,7 @@
     $asset = $block->downloadAsset() ?? $block->attachmentAsset() ?? $block->asset;
     $assetUrl = $asset?->url();
     $page = $block->renderPage();
-    $publishedPages = \App\Models\Page::query()
+    $publishedPages = \WebBlocks\Cms\Models\Page::query()
         ->where('status', 'published')
         ->with(['translations', 'site'])
         ->orderBy('title')

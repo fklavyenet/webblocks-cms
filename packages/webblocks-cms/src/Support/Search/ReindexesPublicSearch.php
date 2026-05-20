@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\Search;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
 
 trait ReindexesPublicSearch
 {

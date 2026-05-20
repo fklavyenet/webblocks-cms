@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\PageLayout;
-use App\Models\SlotType;
-use App\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

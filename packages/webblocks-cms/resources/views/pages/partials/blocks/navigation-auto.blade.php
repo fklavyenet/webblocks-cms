@@ -1,7 +1,7 @@
 @php
     $menuKey = $block->navigationMenuKey();
     $siteScope = $block->renderSite()?->id;
-    $items = app(\App\Support\Navigation\NavigationTree::class)
+    $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
         ->buildMenuTree($menuKey, $siteScope)
         ->filter(fn ($item) => $item->isVisible());
 
@@ -40,7 +40,7 @@
 
 @if ($items->isNotEmpty())
     <nav class="wb-stack wb-gap-2" aria-label="{{ $menuKey }} navigation" data-wb-menu-key="{{ $menuKey }}">
-        @if (in_array($menuKey, [\App\Models\NavigationItem::MENU_FOOTER, \App\Models\NavigationItem::MENU_LEGAL], true))
+        @if (in_array($menuKey, [\WebBlocks\Cms\Models\NavigationItem::MENU_FOOTER, \WebBlocks\Cms\Models\NavigationItem::MENU_LEGAL], true))
             <ul class="wb-stack wb-gap-1">{!! $renderNavigationBranch($items) !!}</ul>
         @else
             <ul class="wb-cluster wb-cluster-2 wb-cluster-between">{!! $renderNavigationBranch($items, true) !!}</ul>

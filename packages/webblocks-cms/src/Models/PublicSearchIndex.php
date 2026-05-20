@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Locale;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

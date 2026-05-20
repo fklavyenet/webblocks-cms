@@ -2,16 +2,8 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\Block;
 use App\Models\BlockAsset;
-use App\Models\BlockType;
-use App\Models\DemoAssetReference;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\Page;
-use App\Models\SlotType;
 use App\Models\User;
-use App\Support\Assets\AssetKindResolver;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
@@ -19,6 +11,14 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\DemoAssetReference;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Media\MediaKindResolver;
 
 class ImportDemoMedia extends Command
 {
@@ -100,7 +100,7 @@ class ImportDemoMedia extends Command
 
         $extension = $this->detectExtension($response, (string) ($item['source_url'] ?? ''), $contents);
         $mimeType = $this->detectMimeType($response, $contents, $extension);
-        $kind = AssetKindResolver::resolve($mimeType, $extension);
+        $kind = MediaKindResolver::resolve($mimeType, $extension);
         $path = sprintf(
             'assets/demo-content/%s/%s.%s',
             trim((string) $item['topic'], '/'),

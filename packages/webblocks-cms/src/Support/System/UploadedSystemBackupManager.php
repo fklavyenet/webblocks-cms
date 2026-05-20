@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackup;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\PageAsset;
+use WebBlocks\Cms\Models\PageAsset;
 use InvalidArgumentException;
 
 class PageAssetPathValidator

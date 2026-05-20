@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Admin;
 
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class AdminPagination
 {

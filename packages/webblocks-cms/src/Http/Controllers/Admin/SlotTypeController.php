@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\SlotType;
-use App\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;

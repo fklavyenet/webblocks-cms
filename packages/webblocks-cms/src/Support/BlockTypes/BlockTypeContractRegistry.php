@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\BlockTypes;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Support\Blocks\BlockTranslationRegistry;
-use App\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 
 class BlockTypeContractRegistry
 {

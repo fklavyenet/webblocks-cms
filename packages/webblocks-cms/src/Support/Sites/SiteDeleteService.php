@@ -2,24 +2,24 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\Block;
 use App\Models\BlockAsset;
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockTextTranslation;
-use App\Models\ContactMessage;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageRevision;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\Site;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteLocale;
 
 class SiteDeleteService

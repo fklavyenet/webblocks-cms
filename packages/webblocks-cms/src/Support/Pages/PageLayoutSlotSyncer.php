@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\PageSlot;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
 use Illuminate\Support\Facades\DB;

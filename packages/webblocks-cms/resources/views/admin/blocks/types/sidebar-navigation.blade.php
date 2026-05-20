@@ -18,7 +18,7 @@
         <label for="sidebar_navigation_menu_key">Navigation Menu</label>
         <select id="sidebar_navigation_menu_key" name="sidebar_navigation_menu_key" class="wb-select">
             <option value="">Manual child blocks</option>
-            @foreach (\App\Models\NavigationItem::menuOptions() as $key => $menuLabel)
+            @foreach (\WebBlocks\Cms\Models\NavigationItem::menuOptions() as $key => $menuLabel)
                 <option value="{{ $key }}" @selected(old('sidebar_navigation_menu_key', $settings['menu_key'] ?? '') === $key)>{{ $menuLabel }}</option>
             @endforeach
         </select>

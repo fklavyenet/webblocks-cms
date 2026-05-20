@@ -3,7 +3,7 @@
     $placeholder = $block->stringValueOrNull($block->content) ?? 'Search this site';
     $buttonLabel = $block->stringValueOrNull($block->subtitle) ?? 'Search';
     $showButton = (bool) $block->setting('show_button', true);
-    $searchPath = app(\App\Support\Pages\PageRouteResolver::class)->searchPath($block->renderLocaleCode(), $block->renderSite());
+    $searchPath = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class)->searchPath($block->renderLocaleCode(), $block->renderSite());
     $buttonClass = $block->variant === 'secondary' ? 'wb-btn wb-btn-secondary' : 'wb-btn wb-btn-primary';
 @endphp
 

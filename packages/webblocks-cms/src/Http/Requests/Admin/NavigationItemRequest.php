@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\Site;
-use App\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;

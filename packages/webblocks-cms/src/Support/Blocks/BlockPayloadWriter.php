@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use App\Models\Block;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\BlockMedia;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 
 class BlockPayloadWriter
 {

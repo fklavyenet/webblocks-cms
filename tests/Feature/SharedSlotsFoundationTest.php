@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\SharedSlot as PackageSharedSlot;
 
 class SharedSlotsFoundationTest extends TestCase
 {
@@ -288,8 +289,8 @@ class SharedSlotsFoundationTest extends TestCase
             'sort_order' => 0,
         ]);
 
-        $this->assertTrue($site->sharedSlots->contains(fn (SharedSlot $candidate) => $candidate->id === $sharedSlot->id));
-        $this->assertFalse($otherSite->sharedSlots->contains(fn (SharedSlot $candidate) => $candidate->id === $sharedSlot->id));
+        $this->assertTrue($site->sharedSlots->contains(fn (PackageSharedSlot $candidate) => $candidate->id === $sharedSlot->id));
+        $this->assertFalse($otherSite->sharedSlots->contains(fn (PackageSharedSlot $candidate) => $candidate->id === $sharedSlot->id));
         $this->assertSame($site->id, $sharedSlot->site->id);
         $this->assertSame($sharedSlot->id, $sharedSlotBlock->sharedSlot->id);
         $this->assertSame($block->id, $sharedSlotBlock->block->id);

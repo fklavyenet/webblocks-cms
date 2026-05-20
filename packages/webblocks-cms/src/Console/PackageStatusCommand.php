@@ -349,7 +349,7 @@ class PackageStatusCommand extends Command
     protected function syncCommandUsesPackageImplementation(): bool
     {
         $packageCommandClass = 'WebBlocks\\Cms\\Console\\SyncWebBlocksUiIconsCommand';
-        $syncerClass = 'App\\Support\\Icons\\WebBlocksIconManifestSyncer';
+        $syncerClass = 'WebBlocks\\Cms\\Support\\Icons\\WebBlocksIconManifestSyncer';
 
         if (! class_exists($packageCommandClass) || ! class_exists($syncerClass)) {
             return false;

@@ -2,16 +2,16 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SharedSlotBlock;
-use App\Models\SharedSlotRevision;
-use App\Models\Site;
 use App\Models\User;
-use App\Support\Pages\PageLayoutManager;
-use App\Support\Search\ReindexesPublicSearch;
-use App\Support\SharedSlots\SharedSlotSchema;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
+use WebBlocks\Cms\Models\SharedSlotRevision;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

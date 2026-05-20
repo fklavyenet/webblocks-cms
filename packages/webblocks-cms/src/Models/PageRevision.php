@@ -2,9 +2,6 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Page;
-use App\Models\PageRevision as RootPageRevision;
-use App\Models\Site;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -56,7 +53,7 @@ class PageRevision extends Model
 
     public function restoredFrom(): BelongsTo
     {
-        return $this->belongsTo(RootPageRevision::class, 'restored_from_page_revision_id');
+        return $this->belongsTo(self::class, 'restored_from_page_revision_id');
     }
 
     public function labelText(): string

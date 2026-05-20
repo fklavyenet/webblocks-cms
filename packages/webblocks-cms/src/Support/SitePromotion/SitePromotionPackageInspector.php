@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\SitePromotion;
 
-use App\Support\Sites\ExportImport\SiteTransferPackage;
-use App\Support\Sites\ExportImport\SiteTransferPathGuard;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferPackage;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferPathGuard;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

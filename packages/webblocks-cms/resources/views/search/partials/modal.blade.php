@@ -2,7 +2,7 @@
     $publicSearchInputId = 'wb-public-search-query';
     $publicSearchTitleId = 'wb-public-search-modal-title';
     $publicSearchDescriptionId = 'wb-public-search-modal-description';
-    $publicRouteResolver = app(\App\Support\Pages\PageRouteResolver::class);
+    $publicRouteResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
     $publicSearchSite = $publicRouteResolver->currentSite(request());
     $publicSearchLocale = $publicRouteResolver->currentLocale(request());
     $publicSearchSearchPath = $publicRouteResolver->searchPath($publicSearchLocale->code, $publicSearchSite);

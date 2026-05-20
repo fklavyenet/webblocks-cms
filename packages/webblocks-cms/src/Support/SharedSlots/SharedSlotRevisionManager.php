@@ -2,15 +2,15 @@
 
 namespace WebBlocks\Cms\Support\SharedSlots;
 
-use App\Models\Block;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\Locale;
-use App\Models\SharedSlot;
-use App\Models\SharedSlotRevision;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotRevision;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Blocks\BlockTranslationWriter;
-use App\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

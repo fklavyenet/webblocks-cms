@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\Sites\SiteDeleteService;
+use WebBlocks\Cms\Support\Sites\SiteDeleteService;
 use Illuminate\Console\Command;
 use RuntimeException;
 

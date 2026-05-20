@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

@@ -1,6 +1,6 @@
 @php
     $site = $block->renderSite();
-    $routeResolver = app(\App\Support\Pages\PageRouteResolver::class);
+    $routeResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
     $href = $block->sidebarLinkUrl()
         ?? $routeResolver->homePath($block->renderLocaleCode(), $site)
         ?? '/';

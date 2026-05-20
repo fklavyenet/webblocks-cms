@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Visitors;
 
-use App\Models\VisitorEvent;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Cookie;

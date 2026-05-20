@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;

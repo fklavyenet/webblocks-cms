@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Page;
-use App\Models\PageLayout;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;

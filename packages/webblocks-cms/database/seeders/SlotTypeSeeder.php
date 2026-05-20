@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\SlotType;
 use Illuminate\Database\Seeder;
 
 class SlotTypeSeeder extends Seeder

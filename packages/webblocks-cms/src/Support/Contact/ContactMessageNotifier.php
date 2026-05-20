@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Contact;
 
-use App\Mail\ContactMessageNotification;
+use WebBlocks\Cms\Mail\ContactMessageNotification;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 use WebBlocks\Cms\Models\ContactMessage;

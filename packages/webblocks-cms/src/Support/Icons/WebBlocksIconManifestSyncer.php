@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Support\Icons;
 
-use App\Models\IconCatalogItem;
 use App\Support\WebBlocks;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
+use WebBlocks\Cms\Models\IconCatalogItem;
 
 class WebBlocksIconManifestSyncer
 {

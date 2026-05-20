@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\Block;
-use App\Models\BlockType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;

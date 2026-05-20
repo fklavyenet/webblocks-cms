@@ -1,9 +1,9 @@
 @php
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
-    $siteId = $block->page?->site_id ?? \App\Models\Page::query()->whereKey($block->page_id)->value('site_id');
+    $siteId = $block->page?->site_id ?? \WebBlocks\Cms\Models\Page::query()->whereKey($block->page_id)->value('site_id');
     $navigationItemCount = $siteId
-        ? \App\Models\NavigationItem::query()->forSite($siteId)->visible()->count()
+        ? \WebBlocks\Cms\Models\NavigationItem::query()->forSite($siteId)->visible()->count()
         : 0;
 @endphp
 
@@ -27,7 +27,7 @@
     <div class="wb-stack wb-gap-1">
         <label for="navbar_navigation_menu_key">Navigation Menu</label>
         <select id="navbar_navigation_menu_key" name="navbar_navigation_menu_key" class="wb-select" required>
-            @foreach (\App\Models\NavigationItem::menuOptions() as $key => $menuLabel)
+            @foreach (\WebBlocks\Cms\Models\NavigationItem::menuOptions() as $key => $menuLabel)
                 <option value="{{ $key }}" @selected(old('navbar_navigation_menu_key', $settings['menu_key'] ?? $block->navbarNavigationMenuKey()) === $key)>{{ $menuLabel }}</option>
             @endforeach
         </select>

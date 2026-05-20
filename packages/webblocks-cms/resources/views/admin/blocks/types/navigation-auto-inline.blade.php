@@ -13,7 +13,7 @@
     <div class="wb-stack wb-gap-1">
         <label for="block_{{ $index }}_navigation_menu_key">Menu</label>
         <select id="block_{{ $index }}_navigation_menu_key" name="{{ $prefix }}[navigation_menu_key]" class="wb-select" required>
-            @foreach (\App\Models\NavigationItem::menuOptions() as $option => $label)
+            @foreach (\WebBlocks\Cms\Models\NavigationItem::menuOptions() as $option => $label)
                 <option value="{{ $option }}" @selected($menuKey === $option)>{{ $label }}</option>
             @endforeach
         </select>

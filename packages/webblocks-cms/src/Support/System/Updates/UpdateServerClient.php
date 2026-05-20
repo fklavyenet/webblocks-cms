@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;

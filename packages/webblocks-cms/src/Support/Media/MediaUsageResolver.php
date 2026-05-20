@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\Media;
 
-use App\Models\Block;
-use App\Models\BlockMedia;
-use App\Models\Media;
-use App\Models\PageTranslation;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Support\Collection;
 
 class MediaUsageResolver

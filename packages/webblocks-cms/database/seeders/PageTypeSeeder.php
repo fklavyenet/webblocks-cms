@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\PageType;
 use Illuminate\Database\Seeder;
+use WebBlocks\Cms\Models\PageType;
 
 class PageTypeSeeder extends Seeder
 {

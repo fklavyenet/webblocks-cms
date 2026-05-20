@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use Illuminate\Console\Command;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 
 class SyncCoreBlockTypesCommand extends Command
 {

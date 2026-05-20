@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration

@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Support\Locales;
 
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockTextTranslation;
-use App\Models\Locale;
-use App\Models\PageTranslation;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\PageTranslation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\SiteLocale;

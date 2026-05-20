@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackup;
 use App\Support\WebBlocks;
 
 class BackupManifestBuilder

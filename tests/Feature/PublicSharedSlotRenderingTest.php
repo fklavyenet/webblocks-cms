@@ -20,6 +20,7 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\PageSlot as PackagePageSlot;
 
 class PublicSharedSlotRenderingTest extends TestCase
 {
@@ -405,7 +406,7 @@ class PublicSharedSlotRenderingTest extends TestCase
         foreach ([$missingSourceTypeSlot, $nullSourceTypeSlot, $emptySourceTypeSlot] as $slot) {
             $this->assertTrue($slot->usesPageOwnedBlocks());
             $presented = app(PublicPagePresenter::class)->present(tap(clone $basePage, function (Page $page) use ($slot, $basePage): void {
-                $page->setRelation('slots', $basePage->slots->map(fn (PageSlot $candidate) => $candidate->id === $slot->id ? $slot : $candidate));
+                $page->setRelation('slots', $basePage->slots->map(fn (PackagePageSlot $candidate) => $candidate->id === $slot->id ? $slot : $candidate));
             }));
 
             $header = collect($presented['slots'])->firstWhere('slug', 'header');

@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\Site;
-use App\Models\SiteDomain;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteDomain;
 
 class ResolvedSite
 {

@@ -2,18 +2,18 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SharedSlot;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationRegistry;
-use App\Support\Icons\IconCatalog;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;

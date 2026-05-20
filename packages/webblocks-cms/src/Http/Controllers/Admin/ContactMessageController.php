@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\ContactMessage;
-use App\Support\Admin\AdminPagination;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;

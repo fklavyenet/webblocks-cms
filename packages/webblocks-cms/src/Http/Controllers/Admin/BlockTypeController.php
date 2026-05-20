@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\BlockType;
-use App\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

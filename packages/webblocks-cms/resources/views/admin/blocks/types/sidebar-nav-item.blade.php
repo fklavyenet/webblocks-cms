@@ -1,7 +1,7 @@
 @php
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
-    $allowedIcons = app(\App\Support\Icons\IconCatalog::class)->navigationPickerOptions(old('sidebar_nav_item_icon', $settings['icon'] ?? ''), $settings['icon'] ?? null);
+    $allowedIcons = app(\WebBlocks\Cms\Support\Icons\IconCatalog::class)->navigationPickerOptions(old('sidebar_nav_item_icon', $settings['icon'] ?? ''), $settings['icon'] ?? null);
 @endphp
 
 <div class="wb-stack wb-gap-4">

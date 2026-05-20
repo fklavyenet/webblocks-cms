@@ -20,7 +20,7 @@
 
     $columnItems = old($inputName)
         ? collect(old($inputName))->map(function (array $submittedItem, int $index) use ($block, $itemBlockType) {
-            $columnItem = new \App\Models\Block($submittedItem);
+            $columnItem = new \WebBlocks\Cms\Models\Block($submittedItem);
             $columnItem->page_id = $block->page_id;
             $columnItem->parent_id = $block->id;
             $columnItem->slot_type_id = $block->slot_type_id;
@@ -88,7 +88,7 @@
             data-empty-description="{{ $emptyDescription }}"
         >
             @include('admin.blocks.partials.column-items-editor-row', [
-                'columnItem' => new \App\Models\Block([
+                'columnItem' => new \WebBlocks\Cms\Models\Block([
                     'title' => null,
                     'subtitle' => null,
                     'content' => null,

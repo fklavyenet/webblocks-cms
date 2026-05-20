@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Site;
-use App\Models\SiteLocale;
-use App\Models\VisitorEvent;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteLocale;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\BlockMedia;
-use App\Models\MediaFolder;
-use App\Models\PageTranslation;
-use App\Models\Site;
 use App\Models\User;
-use App\Support\Media\MediaUsageResolver;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

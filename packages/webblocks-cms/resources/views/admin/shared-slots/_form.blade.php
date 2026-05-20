@@ -34,7 +34,7 @@
             <label for="shared_slot_slot_name">Slot</label>
             <input id="shared_slot_slot_name" name="slot_name" class="wb-input" type="text" list="shared-slot-name-options" value="{{ old('slot_name', $sharedSlot->slot_name) }}" maxlength="100">
             <datalist id="shared-slot-name-options">
-                @foreach (\App\Models\SharedSlot::COMMON_SLOT_NAMES as $slotName)
+                @foreach (\WebBlocks\Cms\Models\SharedSlot::COMMON_SLOT_NAMES as $slotName)
                     <option value="{{ $slotName }}"></option>
                 @endforeach
             </datalist>

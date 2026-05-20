@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Search;
 
-use App\Models\Block;
+use WebBlocks\Cms\Models\Block;
 use Illuminate\Support\Facades\Log;
 
 class BlockSearchTextExtractorRegistry

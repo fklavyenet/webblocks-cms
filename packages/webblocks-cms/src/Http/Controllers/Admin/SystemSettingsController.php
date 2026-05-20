@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;

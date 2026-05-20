@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\SystemBackup;
-use App\Support\System\BackupArchiveBuilder;
-use App\Support\System\BackupManifestBuilder;
-use App\Support\System\DatabaseDumpWriter;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Support\System\BackupArchiveBuilder;
+use WebBlocks\Cms\Support\System\BackupManifestBuilder;
+use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;

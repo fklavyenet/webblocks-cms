@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Support\System\InstalledVersionStore;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class DatabaseSeeder extends Seeder
 {

@@ -35,7 +35,7 @@
                 return $item;
             })
             ->filter(function ($item) {
-                if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP) {
+                if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
                     return $item->children->isNotEmpty();
                 }
 
@@ -44,8 +44,8 @@
             ->values();
     };
 
-    $isNavigationItemActive = function (\App\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
-        if ($item->link_type === \App\Models\NavigationItem::LINK_GROUP) {
+    $isNavigationItemActive = function (\WebBlocks\Cms\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $currentPath, $currentUrl, $normalizePath): bool {
+        if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
             return $item->children->contains(fn ($child) => $isNavigationItemActive($child));
         }
 
@@ -65,7 +65,7 @@
     };
 
     $items = $menuKey !== null
-        ? $filterVisibleItems(app(\App\Support\Navigation\NavigationTree::class)->buildMenuTree($menuKey, $block->renderSite()?->id))
+        ? $filterVisibleItems(app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)->buildMenuTree($menuKey, $block->renderSite()?->id))
         : $manualItems;
 @endphp
 

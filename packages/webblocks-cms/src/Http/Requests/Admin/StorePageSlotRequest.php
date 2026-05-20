@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SlotType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

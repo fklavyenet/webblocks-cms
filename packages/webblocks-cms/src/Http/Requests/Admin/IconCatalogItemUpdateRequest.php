@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\IconCatalogItem;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IconCatalogItemUpdateRequest extends FormRequest

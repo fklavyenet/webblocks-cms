@@ -1,5 +1,5 @@
 @php
-    $routeResolver = app(\App\Support\Pages\PageRouteResolver::class);
+    $routeResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
     $settings = json_decode((string) $block->getRawOriginal('settings'), true);
     $settings = is_array($settings) ? $settings : [];
     $showModeToggle = ($settings['show_mode_toggle'] ?? true) !== false;

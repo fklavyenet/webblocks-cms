@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\Locale;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Database\Seeder;
 
 class FoundationSiteLocaleSeeder extends Seeder

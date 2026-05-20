@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Icons;
 
-use App\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\IconCatalogItem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;

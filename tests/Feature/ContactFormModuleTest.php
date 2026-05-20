@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Mail\ContactMessageNotification as PackageContactMessageNotification;
 
 class ContactFormModuleTest extends TestCase
 {
@@ -247,7 +248,7 @@ class ContactFormModuleTest extends TestCase
 
         $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
-        Mail::assertSent(ContactMessageNotification::class, function (ContactMessageNotification $mail) use ($block): bool {
+        Mail::assertSent(PackageContactMessageNotification::class, function (PackageContactMessageNotification $mail) use ($block): bool {
             return $mail->contactMessage->block_id === $block->id;
         });
     }
@@ -294,7 +295,7 @@ class ContactFormModuleTest extends TestCase
         $this->assertSame('hello@example.com', $message->notification_recipient);
         $this->assertNotNull($message->notification_sent_at);
         $this->assertNull($message->notification_error);
-        Mail::assertSent(ContactMessageNotification::class);
+        Mail::assertSent(PackageContactMessageNotification::class);
     }
 
     #[Test]

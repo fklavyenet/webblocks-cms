@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\SharedSlot;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Validation\ValidationException;
 
 class PageSiteMoveValidator

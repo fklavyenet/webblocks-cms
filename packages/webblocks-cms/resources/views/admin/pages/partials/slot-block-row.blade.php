@@ -5,7 +5,7 @@
     $isExpanded = $expandedBlockIds->contains($block->id);
     $rowId = 'slot-block-row-'.$block->id;
     $controlledRowIds = $block->children->pluck('id')->map(fn ($id) => 'slot-block-row-'.$id)->implode(' ');
-    $blockAdminSummary = app(\App\Support\Blocks\BlockAdminSummary::class);
+    $blockAdminSummary = app(\WebBlocks\Cms\Support\Blocks\BlockAdminSummary::class);
     $rowSummary = $blockAdminSummary->primary($block);
     $childCount = $block->children->count();
     $sharedSlot = $sharedSlot ?? null;

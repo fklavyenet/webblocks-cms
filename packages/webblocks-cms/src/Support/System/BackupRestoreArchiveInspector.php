@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Support\Sites\ExportImport\SiteTransferPackage;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferPackage;
 use RuntimeException;
 use ZipArchive;
 

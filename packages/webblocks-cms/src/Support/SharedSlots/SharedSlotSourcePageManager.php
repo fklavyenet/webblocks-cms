@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Support\SharedSlots;
 
-use App\Models\Block;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SharedSlot;
-use App\Models\SharedSlotBlock;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
+use WebBlocks\Cms\Models\SlotType;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 

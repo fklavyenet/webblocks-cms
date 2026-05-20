@@ -2,14 +2,11 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\SharedSlot;
-use App\Models\SharedSlotRevision as RootSharedSlotRevision;
-use App\Models\Site;
 use App\Models\User;
-use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 class SharedSlotRevision extends Model
 {
@@ -58,7 +55,7 @@ class SharedSlotRevision extends Model
 
     public function restoredFrom(): BelongsTo
     {
-        return $this->belongsTo(RootSharedSlotRevision::class, 'restored_from_shared_slot_revision_id');
+        return $this->belongsTo(self::class, 'restored_from_shared_slot_revision_id');
     }
 
     public function labelText(): string

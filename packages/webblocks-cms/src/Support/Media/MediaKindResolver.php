@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Media;
 
-use App\Models\Media;
+use WebBlocks\Cms\Models\Media;
 
 class MediaKindResolver
 {

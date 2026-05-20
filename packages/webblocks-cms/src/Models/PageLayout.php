@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\PageLayoutSlot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

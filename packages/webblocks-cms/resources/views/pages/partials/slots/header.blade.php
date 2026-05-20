@@ -28,7 +28,7 @@
             $label = e($item->resolvedTitle());
             $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
             $isCurrent = $branchHasCurrent($item);
-            $isAction = $item->link_type === \App\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
+            $isAction = $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
 
             if ($isMobile) {
                 $html .= '<li class="wb-stack wb-gap-2">';

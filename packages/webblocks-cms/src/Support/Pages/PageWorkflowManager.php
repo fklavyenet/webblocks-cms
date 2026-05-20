@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
+use WebBlocks\Cms\Models\Page;
 use App\Models\User;
 use App\Support\Audit\CurrentActorResolver;
 use Illuminate\Validation\ValidationException;

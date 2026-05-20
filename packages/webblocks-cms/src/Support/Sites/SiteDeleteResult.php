@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\Site;
+use WebBlocks\Cms\Models\Site;
 
 class SiteDeleteResult
 {

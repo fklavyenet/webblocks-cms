@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\Sites\SiteCloneOptions;
-use App\Support\Sites\SiteCloneService;
+use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
+use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use Illuminate\Console\Command;
 use RuntimeException;
 

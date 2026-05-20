@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Support\Visitors;
 
-use App\Support\Visitors\VisitorConsent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Throwable;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 
 class VisitorEventLogger
 {

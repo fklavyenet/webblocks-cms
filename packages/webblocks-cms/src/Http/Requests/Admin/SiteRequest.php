@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\Site;
-use App\Models\SiteDomain;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;

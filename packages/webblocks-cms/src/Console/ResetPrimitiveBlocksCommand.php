@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\Block;
-use App\Models\BlockType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use Illuminate\Console\Command;
 
 class ResetPrimitiveBlocksCommand extends Command

@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\BlockTypes\BlockTypeContractRegistry;
 use Illuminate\Console\Command;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContract;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 
 class BlockTypeContractsAuditCommand extends Command
 {

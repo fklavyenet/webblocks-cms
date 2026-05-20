@@ -23,6 +23,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block as PackageBlock;
+use WebBlocks\Cms\Models\Page as PackagePage;
 
 class SharedSlotRevisionTest extends TestCase
 {
@@ -106,7 +108,7 @@ class SharedSlotRevisionTest extends TestCase
         return $page;
     }
 
-    private function sourcePageFor(SharedSlot $sharedSlot): Page
+    private function sourcePageFor(SharedSlot $sharedSlot): PackagePage
     {
         return app(SharedSlotSourcePageManager::class)->ensureFor($sharedSlot);
     }
@@ -537,7 +539,7 @@ class SharedSlotRevisionTest extends TestCase
         $sharedSlot = $sharedSlot->fresh();
         $sourcePage = $this->sourcePageFor($sharedSlot);
         $resolvedBlocks = $sourcePage->blocks()->with('textTranslations')->orderBy('sort_order')->get();
-        $resolvedTurkishBlocks = $resolvedBlocks->map(fn (Block $block) => app(BlockTranslationResolver::class)->resolve($block, $turkish));
+        $resolvedTurkishBlocks = $resolvedBlocks->map(fn (PackageBlock $block) => app(BlockTranslationResolver::class)->resolve($block, $turkish));
 
         $this->assertSame($originalSharedSlotId, $sharedSlot->id);
         $this->assertSame('Original Header', $sharedSlot->name);

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.32.5
+
+- Complete this package-authoritative runtime cleanup pass by moving the remaining package-owned helper implementations such as `BlockTranslationWriter` and `CoreBlockTypeCatalogSyncer` into `packages/webblocks-cms/src/Support/Blocks/`, switching package internals like demo media kind resolution to package-owned support classes, and leaving matching root `App\Support\...` entrypoints only as compatibility wrappers.
+- Remove the dormant old `admin/layouts`, `admin/layout-types`, and `admin/page-types` CRUD surfaces from the active package or root runtime without restoring those legacy screens, while keeping the accepted root-owned boundaries unchanged for `App\Models\User`, `App\Support\WebBlocks`, install/auth/profile entrypoints, install-update guards, root migration authority, root `public/cms/...` runtime asset paths, and required legacy aliases.
+- Update package bootstrap, admin, public, and shared-slot coverage to assert package-authoritative `WebBlocks\Cms\...` runtime classes instead of stale root-wrapper expectations, including package-owned models, support services, icon sync wiring, and contact notification mailables where behavior is intentionally package-owned now.
+- Fix the real package-transition regressions that remained after the authority shift by allowing `App\Models\User::hasSiteAccess()` to accept package `Site` instances, preserving required package-root compatibility bindings for backup or restore or promotion flows, and keeping contact, export/import, and promotion behavior aligned with the active runtime boundary.
+- Fix SQLite restore, transaction, and installed-version test lifecycle blockers in the system backup or restore layer, add focused regression coverage for the SQLite restore path, and keep the full `ddev artisan test` suite green for the accepted dirty `main` release scope.
+- Refresh the release notes and transition docs so they describe the final state honestly: safely movable CMS-owned source is package-owned, root wrappers remain only where backward-compatible entrypoints are still intentional, and package transition consolidation is complete for this pass without broadening migration, updater, installer, auth/User, or runtime asset ownership.
+
 ## 1.32.4
 
 - Finalize the package-transition consolidation metadata and diagnostics so `WebBlocksCmsServiceProvider` and `webblocks:package-status` now report the real package-owned route, view, model, seeder, and movable asset-source authority alongside the intentional root compatibility wrappers.

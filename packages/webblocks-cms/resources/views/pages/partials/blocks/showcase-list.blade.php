@@ -1,5 +1,5 @@
 @php
-    use App\Models\Block;
+    use WebBlocks\Cms\Models\Block;
 
     $settings = is_array($block->settings)
         ? $block->settings
@@ -13,7 +13,7 @@
         ->values();
     $assets = $assetIds->isEmpty()
         ? collect()
-        : \App\Models\Media::query()->whereIn('id', $assetIds)->get()->keyBy('id');
+        : \WebBlocks\Cms\Models\Media::query()->whereIn('id', $assetIds)->get()->keyBy('id');
     $galleryItems = $items
         ->flatMap(function ($item) use ($assets) {
             return collect($item['images'] ?? [])->map(function ($image) use ($assets, $item) {

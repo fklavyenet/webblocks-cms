@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Models\SystemBackup;
-use App\Models\SystemBackupRestore;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
 
 class BackupRestoreResult
 {

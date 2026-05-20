@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\NavigationItem;
-use App\Models\Site;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackup;
 use Carbon\CarbonImmutable;
 
 class UpdateResult

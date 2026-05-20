@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\Site;
-use App\Support\SitePromotion\SitePromotionApplier;
-use App\Support\SitePromotion\SitePromotionOptions;
-use App\Support\SitePromotion\SitePromotionPackageInspector;
-use App\Support\SitePromotion\SitePromotionPlanner;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionApplier;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionOptions;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionPackageInspector;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionPlanner;
 use Illuminate\Console\Command;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;

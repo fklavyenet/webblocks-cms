@@ -2,12 +2,12 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
-use App\Support\Pages\PageRouteResolver;
-use App\Support\Search\PublicSearchQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Search\PublicSearchQuery;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PublicSearchController extends Controller

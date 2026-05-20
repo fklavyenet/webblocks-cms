@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\SharedSlot;
-use App\Models\SharedSlotRevision;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotRevision;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;

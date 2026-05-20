@@ -2,19 +2,19 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Block;
 use App\Models\BlockAsset;
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockTextTranslation;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\Site;
 use App\Models\User;
-use App\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

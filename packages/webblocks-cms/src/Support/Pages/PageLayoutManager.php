@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Page;
-use App\Models\PageLayout;
-use App\Models\PageLayoutSlot;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\SlotType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 

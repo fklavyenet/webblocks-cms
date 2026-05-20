@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\Updates\SystemUpdater;
-use App\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;

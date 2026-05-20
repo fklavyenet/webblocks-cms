@@ -27,7 +27,7 @@
                         'label' => 'Status',
                         'selected' => $filters['status'] ?? '',
                         'placeholder' => 'All statuses',
-                        'options' => collect(\App\Models\ContactMessage::statuses())
+                        'options' => collect(\WebBlocks\Cms\Models\ContactMessage::statuses())
                             ->mapWithKeys(fn (string $status): array => [$status => ucfirst($status)])
                             ->all(),
                     ],

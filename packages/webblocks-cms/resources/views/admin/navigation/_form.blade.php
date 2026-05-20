@@ -1,9 +1,9 @@
 @php
-    $isPage = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_PAGE;
-    $isUrl = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_CUSTOM_URL;
-    $isGroup = old('link_type', $item->link_type ?: \App\Models\NavigationItem::LINK_PAGE) === \App\Models\NavigationItem::LINK_GROUP;
-    $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY)]);
-    $iconOptions = ($iconCatalog ?? app(\App\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
+    $isPage = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE;
+    $isUrl = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_CUSTOM_URL;
+    $isGroup = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP;
+    $cancelUrl = $cancelUrl ?? route('admin.navigation.index', ['site_id' => old('site_id', $item->site_id ?: $site->id), 'menu_key' => old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY)]);
+    $iconOptions = ($iconCatalog ?? app(\WebBlocks\Cms\Support\Icons\IconCatalog::class))->navigationPickerOptions(old('icon', $item->icon), $item->icon);
     $cancelType = $cancelType ?? 'link';
     $submitLabel = $submitLabel ?? ($item->exists ? 'Save Changes' : 'Create');
     $formActionsContainerClass = $formActionsContainerClass ?? null;
@@ -22,7 +22,7 @@
             <label for="menu_key">Menu</label>
             <select id="menu_key" name="menu_key" class="wb-select" required>
                 @foreach ($menuOptions as $key => $label)
-                    <option value="{{ $key }}" @selected(old('menu_key', $item->menu_key ?: \App\Models\NavigationItem::MENU_PRIMARY) === $key)>{{ $label }}</option>
+                    <option value="{{ $key }}" @selected(old('menu_key', $item->menu_key ?: \WebBlocks\Cms\Models\NavigationItem::MENU_PRIMARY) === $key)>{{ $label }}</option>
                 @endforeach
             </select>
             <div class="wb-text-sm wb-text-muted">This form stays within the currently selected site menu.</div>

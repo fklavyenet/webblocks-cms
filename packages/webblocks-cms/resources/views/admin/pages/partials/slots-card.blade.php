@@ -1,5 +1,5 @@
 @php
-    use App\Models\PageSlot;
+    use WebBlocks\Cms\Models\PageSlot;
 
     $pageSlots = $page->slots->sortBy('sort_order')->values();
     $availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));

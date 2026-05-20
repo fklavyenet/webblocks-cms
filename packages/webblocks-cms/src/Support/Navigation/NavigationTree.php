@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Navigation;
 
-use App\Models\NavigationItem;
-use App\Models\Site;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 

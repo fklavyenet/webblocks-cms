@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Locale;
-use App\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;

@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use App\Models\BlockType;
+use WebBlocks\Cms\Models\BlockType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;

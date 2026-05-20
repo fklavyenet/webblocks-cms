@@ -2,15 +2,15 @@
 
 namespace WebBlocks\Cms\Support\SitePromotion;
 
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Support\Pages\PageAssetPathValidator;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 
 class SitePromotionPlanner
 {

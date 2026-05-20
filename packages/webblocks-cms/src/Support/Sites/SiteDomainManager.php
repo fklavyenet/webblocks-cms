@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\Site;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Validation\ValidationException;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 
 class SiteDomainManager

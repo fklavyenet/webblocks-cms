@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Search;
 
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 

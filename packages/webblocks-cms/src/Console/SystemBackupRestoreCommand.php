@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use Illuminate\Console\Command;
 use Throwable;
 

@@ -5,6 +5,7 @@ namespace Tests\Unit\System;
 use App\Support\System\InstalledVersionStore;
 use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -34,5 +35,16 @@ class InstalledVersionStoreTest extends TestCase
     public function display_version_matches_webblocks_source_of_truth(): void
     {
         $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->displayVersion());
+    }
+
+    #[Test]
+    public function diagnostic_can_run_inside_an_existing_transaction(): void
+    {
+        DB::transaction(function (): void {
+            $diagnostic = app(InstalledVersionStore::class)->diagnostic();
+
+            $this->assertSame('pass', $diagnostic['status']);
+            $this->assertSame('Installed version can be read and persisted in system settings.', $diagnostic['message']);
+        });
     }
 }

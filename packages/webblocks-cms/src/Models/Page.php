@@ -2,22 +2,22 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Block;
-use App\Models\Layout;
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\PageAsset;
-use App\Models\PageRevision;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\PageType;
-use App\Models\Site;
 use App\Models\User;
-use App\Models\VisitorEvent;
-use App\Support\Pages\PageLayoutManager;
-use App\Support\Pages\PageRouteResolver;
-use App\Support\Search\PublicSearchIndexer;
-use App\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Layout;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\PageType;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

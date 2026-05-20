@@ -2,15 +2,6 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Http\Requests\Admin\RunSystemBackupRestoreRequest;
-use App\Http\Requests\Admin\SystemBackupUploadRequest;
-use App\Models\SystemBackup;
-use App\Models\SystemBackupRestore;
-use App\Support\Admin\AdminPagination;
-use App\Support\System\BackupRestoreArchiveInspector;
-use App\Support\System\SystemBackupManager;
-use App\Support\System\SystemBackupRestoreManager;
-use App\Support\System\UploadedSystemBackupManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,6 +11,15 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
+use WebBlocks\Cms\Http\Requests\Admin\RunSystemBackupRestoreRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SystemBackupUploadRequest;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
 
 class SystemBackupController extends Controller
 {
@@ -158,7 +158,7 @@ class SystemBackupController extends Controller
 
         return view('admin.system.backups.show', [
             'backup' => $backup->load('triggeredBy'),
-            'restoreRuns' => $this->systemBackupRestoreManager->latestRestoresForBackup($backup),
+            'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
             'inspection' => $inspection,
         ]);
     }
@@ -166,7 +166,9 @@ class SystemBackupController extends Controller
     public function restore(SystemBackup $backup, RunSystemBackupRestoreRequest $request): RedirectResponse
     {
         try {
-            $this->systemBackupRestoreManager->restoreFromBackup($backup, $request->user()?->id);
+            $compatibilityBackup = $this->resolveCompatibilityBackup($backup);
+
+            $this->resolveCompatibilityRestoreManager()->restoreFromBackup($compatibilityBackup, $request->user()?->id);
 
             return redirect()
                 ->route('admin.system.backups.index')
@@ -224,5 +226,33 @@ class SystemBackupController extends Controller
     private function systemBackupManagerPath(SystemBackup $backup): string
     {
         return Storage::disk(SystemBackupManager::ARCHIVE_DISK)->path($backup->archive_path);
+    }
+
+    private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup
+    {
+        $rootBackupModel = 'App\\Models\\SystemBackup';
+
+        if (! class_exists($rootBackupModel) || ! is_subclass_of($rootBackupModel, SystemBackup::class)) {
+            return $backup;
+        }
+
+        $compatibilityBackup = $rootBackupModel::query()->find($backup->getKey());
+
+        return $compatibilityBackup instanceof SystemBackup ? $compatibilityBackup : $backup;
+    }
+
+    private function resolveCompatibilityRestoreManager(): SystemBackupRestoreManager
+    {
+        $rootRestoreManager = 'App\\Support\\System\\SystemBackupRestoreManager';
+
+        if (! class_exists($rootRestoreManager) || ! is_subclass_of($rootRestoreManager, SystemBackupRestoreManager::class)) {
+            return $this->systemBackupRestoreManager;
+        }
+
+        $compatibilityManager = app($rootRestoreManager);
+
+        return $compatibilityManager instanceof SystemBackupRestoreManager
+            ? $compatibilityManager
+            : $this->systemBackupRestoreManager;
     }
 }

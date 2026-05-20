@@ -2,23 +2,23 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
-use App\Models\Block;
 use App\Models\BlockAsset;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SiteVariable;
-use App\Support\Pages\PageAssetPathValidator;
-use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Illuminate\Support\Collection;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteVariable;
+use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class SiteExportDataBuilder
 {

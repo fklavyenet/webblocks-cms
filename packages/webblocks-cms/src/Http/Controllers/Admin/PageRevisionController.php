@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Page;
-use App\Models\PageRevision;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;

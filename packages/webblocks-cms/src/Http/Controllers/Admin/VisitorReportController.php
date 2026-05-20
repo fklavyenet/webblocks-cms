@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Locale;
-use App\Models\Site;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;

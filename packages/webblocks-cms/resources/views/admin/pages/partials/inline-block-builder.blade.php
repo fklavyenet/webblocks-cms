@@ -1,7 +1,7 @@
 @php
     $inlineBlocks = old('blocks')
         ? collect(old('blocks'))->map(function ($submittedBlock) use ($blockTypes, $page) {
-            $block = new \App\Models\Block($submittedBlock);
+            $block = new \WebBlocks\Cms\Models\Block($submittedBlock);
             $block->page_id = $page->id;
             $block->block_type_id = $submittedBlock['block_type_id'] ?? null;
             $block->type = $blockTypes->firstWhere('id', $block->block_type_id)?->slug ?? ($submittedBlock['type'] ?? null);

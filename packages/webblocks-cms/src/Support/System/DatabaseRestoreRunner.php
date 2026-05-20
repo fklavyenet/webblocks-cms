@@ -34,15 +34,18 @@ class DatabaseRestoreRunner
 
     private function restoreSqlite(Connection $connection, string $sqlPath, array &$output): array
     {
-        $sql = File::get($sqlPath);
+        $sql = $this->normalizeSqliteRestoreSql(File::get($sqlPath));
 
         if (trim($sql) === '') {
             throw new RuntimeException('Backup SQL file is empty.');
         }
 
         $connection->unprepared($sql);
-        DB::purge($connection->getName());
-        DB::reconnect($connection->getName());
+
+        if (! $this->usesInMemorySqliteDatabase($connection)) {
+            DB::purge($connection->getName());
+            DB::reconnect($connection->getName());
+        }
 
         $output[] = 'SQLite database restored from '.basename($sqlPath).'.';
 
@@ -51,6 +54,21 @@ class DatabaseRestoreRunner
             'strategy' => 'pdo_unprepared',
             'connection' => $connection->getName(),
         ];
+    }
+
+    private function normalizeSqliteRestoreSql(string $sql): string
+    {
+        return preg_replace(
+            '/^\s*(?:BEGIN(?:\s+[A-Z]+)?\s+TRANSACTION|COMMIT)\s*;\s*$/mi',
+            '',
+            $sql,
+        ) ?? $sql;
+    }
+
+    private function usesInMemorySqliteDatabase(Connection $connection): bool
+    {
+        return $connection->getDriverName() === 'sqlite'
+            && $connection->getDatabaseName() === ':memory:';
     }
 
     private function restoreMysqlFamily(Connection $connection, string $sqlPath, array &$output): array

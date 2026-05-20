@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Database\Seeders;
 
-use App\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\IconCatalogItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 

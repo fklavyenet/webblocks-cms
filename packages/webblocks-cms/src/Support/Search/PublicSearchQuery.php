@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Search;
 
-use App\Models\Locale;
-use App\Models\Site;
-use App\Support\Search\PublicSearchSchema;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Search\PublicSearchSchema;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use WebBlocks\Cms\Models\PublicSearchIndex;

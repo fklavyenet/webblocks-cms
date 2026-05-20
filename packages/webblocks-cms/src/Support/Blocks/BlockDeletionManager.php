@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use App\Models\Block;
+use WebBlocks\Cms\Models\Block;
 use Illuminate\Support\Collection;
 
 class BlockDeletionManager

@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\Site;
-use App\Support\Sites\ExportImport\SiteExportManager;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
 use Illuminate\Console\Command;
 use RuntimeException;
 

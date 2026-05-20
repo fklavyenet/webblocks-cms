@@ -2,16 +2,16 @@
 
 namespace WebBlocks\Cms\Support\Search;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PublicSearchIndex;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Support\Blocks\BlockTranslationResolver;
-use App\Support\Pages\PublicSharedSlotResolver;
 use Illuminate\Support\Collection;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Pages\PublicSharedSlotResolver;
 
 class PublicSearchIndexer
 {

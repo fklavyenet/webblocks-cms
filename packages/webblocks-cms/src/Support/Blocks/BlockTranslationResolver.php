@@ -2,13 +2,12 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Models\Site;
-use App\Support\Blocks\BlockTranslationRegistry;
-use App\Support\Locales\LocaleResolver;
-use App\Support\Sites\SiteTokenRenderer;
 use Illuminate\Support\Collection;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use App\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Sites\SiteTokenRenderer;
 
 class BlockTranslationResolver
 {

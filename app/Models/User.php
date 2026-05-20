@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use WebBlocks\Cms\Models\Site as PackageSite;
+
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -134,14 +136,14 @@ class User extends Authenticatable
         return $this->sites()->pluck('sites.id');
     }
 
-    public function hasSiteAccess(Site|int|string|null $site): bool
+    public function hasSiteAccess(Site|PackageSite|int|string|null $site): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
         $siteId = match (true) {
-            $site instanceof Site => $site->id,
+            $site instanceof Site, $site instanceof PackageSite => $site->id,
             is_numeric($site) => (int) $site,
             default => null,
         };

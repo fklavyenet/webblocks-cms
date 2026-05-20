@@ -30,7 +30,7 @@
             $asset = $galleryMediaById->get($mediaId);
 
             if (! $asset) {
-                $asset = \App\Models\Media::query()->find($mediaId);
+                $asset = \WebBlocks\Cms\Models\Media::query()->find($mediaId);
             }
 
             if (! $asset) {

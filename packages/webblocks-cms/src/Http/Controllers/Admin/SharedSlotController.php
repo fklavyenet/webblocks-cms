@@ -2,19 +2,19 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\SharedSlot;
-use App\Models\Site;
 use App\Models\User;
-use App\Support\Admin\AdminPagination;
 use App\Support\Audit\CurrentActorResolver;
-use App\Support\Blocks\BlockDeletionManager;
-use App\Support\Blocks\BlockTranslationResolver;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

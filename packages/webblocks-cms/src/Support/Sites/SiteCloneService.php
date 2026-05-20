@@ -2,28 +2,28 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\Block;
 use App\Models\BlockAsset;
-use App\Models\BlockButtonTranslation;
-use App\Models\BlockContactFormTranslation;
-use App\Models\BlockGalleryItemTranslation;
-use App\Models\BlockImageTranslation;
-use App\Models\BlockTextTranslation;
-use App\Models\Locale;
-use App\Models\Media;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Support\Blocks\BlockTranslationWriter;
-use App\Support\SharedSlots\SharedSlotSourcePageManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockContactFormTranslation;
+use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class SiteCloneService
 {

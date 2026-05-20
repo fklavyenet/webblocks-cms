@@ -2,9 +2,9 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Site;
 use App\Models\User;
-use App\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

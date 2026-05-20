@@ -2,8 +2,6 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Models\Media;
-use App\Models\MediaFolder as RootMediaFolder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,12 +21,12 @@ class MediaFolder extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(RootMediaFolder::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(RootMediaFolder::class, 'parent_id')->orderBy('name');
+        return $this->hasMany(self::class, 'parent_id')->orderBy('name');
     }
 
     public function media(): HasMany

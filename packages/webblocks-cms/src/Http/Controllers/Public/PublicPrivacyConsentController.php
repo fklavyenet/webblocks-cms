@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
-use App\Support\Visitors\VisitorConsent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 
 class PublicPrivacyConsentController extends Controller
 {

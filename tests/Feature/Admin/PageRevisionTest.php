@@ -20,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block as PackageBlock;
 
 class PageRevisionTest extends TestCase
 {
@@ -560,9 +561,9 @@ class PageRevisionTest extends TestCase
         $this->assertSame(2, $page->blocks->count());
         $resolvedBlocks = $page->blocks
             ->sortBy('sort_order')
-            ->map(fn (Block $block) => app(BlockTranslationResolver::class)->resolve($block, $this->defaultLocale()));
+            ->map(fn (PackageBlock $block) => app(BlockTranslationResolver::class)->resolve($block, $this->defaultLocale()));
         $this->assertSame(['Columns block', 'Column child'], $resolvedBlocks->pluck('title')->values()->all());
-        $restoredChild = $page->blocks->first(function (Block $block) use ($turkish) {
+        $restoredChild = $page->blocks->first(function (PackageBlock $block) use ($turkish) {
             return $block->textTranslations->firstWhere('locale_id', $turkish->id)?->title === 'Sutun cocuk';
         });
         $this->assertNotNull($restoredChild);

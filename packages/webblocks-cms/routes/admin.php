@@ -1,6 +1,5 @@
 <?php
 
-use App\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
@@ -37,6 +36,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
     ->prefix('admin')

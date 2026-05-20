@@ -37,12 +37,12 @@
         $mimeType = strtolower((string) ($asset->mime_type ?? ''));
 
         return match ($accept) {
-            'image' => $asset->kind === \App\Models\Media::KIND_IMAGE,
-            'document' => $asset->kind === \App\Models\Media::KIND_DOCUMENT,
-            'video' => $asset->kind === \App\Models\Media::KIND_VIDEO,
-            'other' => $asset->kind === \App\Models\Media::KIND_OTHER,
-            'audio' => $asset->kind === \App\Models\Media::KIND_OTHER && str_starts_with($mimeType, 'audio/'),
-            'file' => in_array($asset->kind, [\App\Models\Media::KIND_DOCUMENT, \App\Models\Media::KIND_OTHER], true),
+            'image' => $asset->kind === \WebBlocks\Cms\Models\Media::KIND_IMAGE,
+            'document' => $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT,
+            'video' => $asset->kind === \WebBlocks\Cms\Models\Media::KIND_VIDEO,
+            'other' => $asset->kind === \WebBlocks\Cms\Models\Media::KIND_OTHER,
+            'audio' => $asset->kind === \WebBlocks\Cms\Models\Media::KIND_OTHER && str_starts_with($mimeType, 'audio/'),
+            'file' => in_array($asset->kind, [\WebBlocks\Cms\Models\Media::KIND_DOCUMENT, \WebBlocks\Cms\Models\Media::KIND_OTHER], true),
             default => true,
         };
     };

@@ -43,10 +43,10 @@
                             'selected' => $filters['type'],
                             'placeholder' => 'All types',
                             'options' => [
-                                \App\Models\SystemBackup::TYPE_MANUAL => 'Manual',
-                                \App\Models\SystemBackup::TYPE_UPLOADED => 'Uploaded',
-                                \App\Models\SystemBackup::TYPE_RESTORE_SAFETY => 'Restore safety',
-                                \App\Models\SystemBackup::TYPE_PRE_UPDATE => 'Pre update',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_MANUAL => 'Manual',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_UPLOADED => 'Uploaded',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_RESTORE_SAFETY => 'Restore safety',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_PRE_UPDATE => 'Pre update',
                             ],
                         ],
                         [
@@ -56,9 +56,9 @@
                             'selected' => $filters['status'],
                             'placeholder' => 'All statuses',
                             'options' => [
-                                \App\Models\SystemBackup::STATUS_COMPLETED => 'Completed',
-                                \App\Models\SystemBackup::STATUS_RUNNING => 'Running',
-                                \App\Models\SystemBackup::STATUS_FAILED => 'Failed',
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_COMPLETED => 'Completed',
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_RUNNING => 'Running',
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_FAILED => 'Failed',
                             ],
                         ],
                     ],

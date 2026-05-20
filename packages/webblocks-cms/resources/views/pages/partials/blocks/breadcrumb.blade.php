@@ -1,6 +1,6 @@
 @php
     $page = $block->renderPage();
-    $routeResolver = app(\App\Support\Pages\PageRouteResolver::class);
+    $routeResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
     $site = $block->renderSite();
     $localeCode = $block->renderLocaleCode();
     $currentTranslation = $page?->currentTranslation
@@ -12,7 +12,7 @@
     $homePath = $routeResolver->homePath($localeCode, $site) ?? '/';
 
     $homeTranslation = $site && $localeId
-        ? \App\Models\PageTranslation::query()
+        ? \WebBlocks\Cms\Models\PageTranslation::query()
             ->where('site_id', $site->id)
             ->where('locale_id', $localeId)
             ->where('path', '/')

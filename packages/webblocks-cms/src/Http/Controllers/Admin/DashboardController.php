@@ -2,13 +2,13 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Media;
-use App\Models\Page;
-use App\Models\SlotType;
-use App\Support\System\SystemSettings;
-use App\Support\Users\AdminAuthorization;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
