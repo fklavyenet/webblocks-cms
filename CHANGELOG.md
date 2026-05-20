@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.6
+
+- Fix the post-update reporting compatibility bug where a successful update could still be marked failed at the final `UpdateResult` construction step when the pre-update backup arrived as the root `App\Models\SystemBackup` wrapper instead of the package model.
+- Keep the updater or reporting boundary intentionally narrow by accepting both root and package `SystemBackup` instances in `UpdateResult`, and add focused regression coverage proving a completed update result can safely carry the root pre-update backup wrapper.
+
 ## 1.32.5
 
 - Complete this package-authoritative runtime cleanup pass by moving the remaining package-owned helper implementations such as `BlockTranslationWriter` and `CoreBlockTypeCatalogSyncer` into `packages/webblocks-cms/src/Support/Blocks/`, switching package internals like demo media kind resolution to package-owned support classes, and leaving matching root `App\Support\...` entrypoints only as compatibility wrappers.
