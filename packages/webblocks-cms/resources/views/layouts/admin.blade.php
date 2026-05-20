@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 @php
-    use App\Support\WebBlocks;
+    use WebBlocks\Cms\Support\WebBlocks;
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
@@ -26,7 +26,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        @include('partials.head-meta', [
+        @include('webblocks-cms::partials.head-meta', [
             'title' => $adminBrowserTitle ?? $title ?? WebBlocks::name(),
             'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
         ])
@@ -226,8 +226,10 @@
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">
-                                <a href="{{ route('profile.edit') }}" class="wb-dropdown-item">Profile</a>
-                                <hr class="wb-dropdown-divider">
+                                @if (Route::has('profile.edit'))
+                                    <a href="{{ route('profile.edit') }}" class="wb-dropdown-item">Profile</a>
+                                    <hr class="wb-dropdown-divider">
+                                @endif
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="wb-dropdown-item wb-dropdown-item-danger">Logout</button>

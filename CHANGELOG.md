@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add the first package-consumer install path for `fklavyenet/webblocks-cms` with a package-owned `webblocks:install` command that safely patches `App\Models\User`, runs the focused fresh-install CMS schema, installs `public/cms` assets, seeds baseline catalogs and settings, records the installed version, and creates the first active `super_admin` without requiring Breeze, Jetstream, Laravel UI, Fortify, or manual host route edits.
+- Keep maintenance-repo package migrations inert by default while adding focused consumer install coverage for command registration, fresh-install migration discovery, safe backup-first `User.php` patching, idempotent reruns, first-admin creation, and post-install login, admin, and public home readiness.
+
 ## 1.32.7
 
 - Fix the updater duration deprecation warning by normalizing measured millisecond durations before they are persisted onto the update run record or passed into the int-typed `UpdateResult` DTO, keeping updater behavior and output unchanged while removing the implicit float-to-int conversion path.

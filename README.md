@@ -35,6 +35,32 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 ## Installation
 
+### Fresh Laravel Package Install
+
+For a fresh Laravel application that consumes the CMS as a package:
+
+```bash
+composer require fklavyenet/webblocks-cms
+ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" --password="secret-password"
+```
+
+`webblocks:install` now:
+
+- publishes `config/webblocks-cms.php` when needed
+- safely patches `App\Models\User` with a package auth trait and creates a backup first
+- runs the package fresh-install CMS schema for clean consumers
+- installs package CMS assets into `public/cms`
+- creates `public/storage` when safe and missing
+- seeds locales, sites, page layouts, slot types, icons, and core block types idempotently
+- records the installed version and install completion marker in `system_settings`
+- creates the first active `super_admin` when one does not already exist
+
+After install, open:
+
+- login: `/login` or `/admin/login`
+- admin: `/admin`
+- public home: `/`
+
 For a fresh install, first get the source code locally:
 
 ```bash

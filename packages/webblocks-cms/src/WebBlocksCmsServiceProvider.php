@@ -3,12 +3,15 @@
 namespace WebBlocks\Cms;
 
 use FilesystemIterator;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
+use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -22,6 +25,14 @@ use WebBlocks\Cms\Console\SitePromotionInspectCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
+use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
+use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
+use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
+use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class WebBlocksCmsServiceProvider extends ServiceProvider
 {
@@ -32,6 +43,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     public const DIAGNOSTIC_ROUTE_FILE = 'diagnostics.php';
 
     public const PACKAGE_ADMIN_ROUTE_FILE = 'admin.php';
+
+    public const PACKAGE_AUTH_ROUTE_FILE = 'auth.php';
+
+    public const PACKAGE_INSTALL_ROUTE_FILE = 'install.php';
 
     public const PACKAGE_PUBLIC_ROUTE_FILE = 'public.php';
 
@@ -69,7 +84,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const PACKAGE_ROUTE_FILES = [
         'admin.php',
+        'auth.php',
         'diagnostics.php',
+        'install.php',
         'public.php',
     ];
 
@@ -712,11 +729,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        $this->registerClassAliases();
         $this->registerConfig();
     }
 
     public function boot(): void
     {
+        $this->bootMiddlewareAliases();
+        $this->bootAuthorization();
         $this->bootCommands();
         $this->bootRoutes();
         $this->bootViews();
@@ -731,6 +751,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         }
 
         $this->commands(self::PACKAGE_CONSOLE_COMMANDS);
+
+        if ($this->installCommandShouldLoad()) {
+            $this->commands([InstallWebBlocksCmsCommand::class]);
+        }
     }
 
     protected function registerConfig(): void
@@ -742,6 +766,16 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function bootRoutes(): void
     {
+        $this->loadGuardedRouteFiles(
+            $this->packageInstallRoutesShouldLoad(),
+            $this->installRouteFiles()
+        );
+
+        $this->loadGuardedRouteFiles(
+            $this->packageAuthRoutesShouldLoad(),
+            $this->authRouteFiles()
+        );
+
         $this->loadGuardedRouteFiles(
             $this->diagnosticRoutesShouldLoad(),
             $this->diagnosticRouteFiles()
@@ -777,6 +811,29 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return app('router')->getRoutes()->getByName(self::ICON_ADMIN_INDEX_ROUTE_NAME) === null;
     }
 
+    protected function packageAuthRoutesShouldLoad(): bool
+    {
+        return app('router')->getRoutes()->getByName('login') === null;
+    }
+
+    protected function packageInstallRoutesShouldLoad(): bool
+    {
+        $configured = config('webblocks-cms.install.load_routes');
+
+        if ($configured !== null) {
+            return (bool) $configured
+                && app('router')->getRoutes()->getByName('webblocks-cms.install.notice') === null;
+        }
+
+        return ! $this->runningInsideMaintenanceRepository()
+            && app('router')->getRoutes()->getByName('webblocks-cms.install.notice') === null;
+    }
+
+    protected function installCommandShouldLoad(): bool
+    {
+        return $this->app->runningUnitTests() || ! $this->runningInsideMaintenanceRepository();
+    }
+
     protected function packagePublicRoutesShouldLoad(): bool
     {
         if (! (bool) config(self::PACKAGE_PUBLIC_ROUTE_LOADING_CONFIG, false)) {
@@ -805,6 +862,16 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     protected function adminRouteFiles(): array
     {
         return $this->namedRouteFiles(self::PACKAGE_ADMIN_ROUTE_FILE);
+    }
+
+    protected function authRouteFiles(): array
+    {
+        return $this->namedRouteFiles(self::PACKAGE_AUTH_ROUTE_FILE);
+    }
+
+    protected function installRouteFiles(): array
+    {
+        return $this->namedRouteFiles(self::PACKAGE_INSTALL_ROUTE_FILE);
     }
 
     /**
@@ -840,6 +907,50 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     protected function packageMigrationsShouldLoad(): bool
     {
         return (bool) config(self::PACKAGE_MIGRATION_LOADING_CONFIG, false);
+    }
+
+    protected function runningInsideMaintenanceRepository(): bool
+    {
+        return $this->packagePath() === base_path('packages/webblocks-cms');
+    }
+
+    protected function bootMiddlewareAliases(): void
+    {
+        if (! (bool) config('webblocks-cms.middleware.register_aliases', true)) {
+            return;
+        }
+
+        Route::aliasMiddleware('admin.access', RequireAdminAccess::class);
+        Route::aliasMiddleware('internal-api.token', RequireInternalApiToken::class);
+        Route::aliasMiddleware('install.complete', RedirectIfInstalled::class);
+        Route::aliasMiddleware('install.required', RedirectIfNotInstalled::class);
+    }
+
+    protected function bootAuthorization(): void
+    {
+        Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
+        Gate::define('manage-users', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+        Gate::define('access-system', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+    }
+
+    protected function registerClassAliases(): void
+    {
+        $aliases = [
+            'App\\Models\\BlockAsset' => \WebBlocks\Cms\Models\BlockMedia::class,
+            'App\\Models\\Site' => \WebBlocks\Cms\Models\Site::class,
+            'App\\Models\\SystemBackup' => \WebBlocks\Cms\Models\SystemBackup::class,
+            'App\\Models\\SystemBackupRestore' => \WebBlocks\Cms\Models\SystemBackupRestore::class,
+            'App\\Support\\Audit\\CurrentActorResolver' => CurrentActorResolver::class,
+            'App\\Support\\Install\\InstallationGitRemoteGuard' => InstallationGitRemoteGuard::class,
+            'App\\Support\\Locales\\LocaleResolver' => LocaleResolver::class,
+            'App\\Support\\WebBlocks' => WebBlocks::class,
+        ];
+
+        foreach ($aliases as $alias => $target) {
+            if (! class_exists($alias) && class_exists($target)) {
+                class_alias($target, $alias);
+            }
+        }
     }
 
     protected function bootPublishing(): void
@@ -922,7 +1033,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     protected function migrationsPath(): string
     {
-        return $this->packagePath('database/migrations');
+        return $this->packagePath((string) config('webblocks-cms.migrations.fresh_path', 'database/migrations/fresh'));
     }
 
     protected function publicPath(): string

@@ -4,7 +4,7 @@
         use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
         use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;
         use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
-        use App\Support\WebBlocks;
+        use WebBlocks\Cms\Support\WebBlocks;
 
         $cmsPublicCssPath = public_path('cms/css/public.css');
         $publicJsAssets = [
@@ -44,7 +44,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        @include('partials.head-meta', [
+        @include('webblocks-cms::partials.head-meta', [
             'brandName' => WebBlocks::name(),
             'siteName' => $publicMeta['site_name'] ?? null,
             'siteTagline' => $publicMeta['site_tagline'] ?? null,

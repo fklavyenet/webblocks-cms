@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Support\WebBlocks;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class InstalledVersionStore
 {

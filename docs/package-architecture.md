@@ -28,6 +28,18 @@ This means:
 
 The expected starter-project direction is a separate Laravel starter such as `fklavyenet/webblocks-cms-starter`, where the user-owned project root composes the CMS package instead of embedding all CMS core files directly.
 
+## Current v1.32.8 Consumer Readiness
+
+Consumer package readiness has now started, but it is intentionally partial and explicit:
+
+- fresh Laravel consumers can install the package and run `webblocks:install`
+- the package uses a focused fresh-install migration path for clean consumer installs instead of replaying the full historical root migration chain
+- maintenance-repo package migrations remain guard-disabled and inert by default
+- `App\Models\User` remains the temporary consumer auth boundary in `v1.32.8`
+- the package installer patches `App\Models\User` automatically with a package trait and writes a timestamped backup first
+- package-owned login, logout, install notice, admin protection, public home, views, and assets are now sufficient for the first clean consumer path
+- this is still not a separate starter repository, and it does not yet remove the app-owned `User` boundary
+
 ## Target Update Architecture
 
 The long-term update flow should be Composer/package-managed and Git-agnostic.

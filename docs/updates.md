@@ -7,6 +7,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - The installed version reflects the last real release applied to the install.
 - Ordinary source development does not change the installed version.
 - The in-app updater applies published release packages, not local working-tree changes.
+- Fresh Composer consumers should install first with `composer require fklavyenet/webblocks-cms` and `ddev artisan webblocks:install` before using the normal release-based update flow.
 
 ## Operational Expectations
 

@@ -1,0 +1,715 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        $this->createUsersTableColumns();
+        $this->createCatalogTables();
+        $this->createMediaTables();
+        $this->createCoreSiteTables();
+        $this->createLayoutAndPageTables();
+        $this->createBlockAndNavigationTables();
+        $this->createOperationalTables();
+    }
+
+    public function down(): void
+    {
+        foreach ([
+            'block_gallery_item_translations',
+            'block_contact_form_translations',
+            'block_image_translations',
+            'block_button_translations',
+            'block_text_translations',
+            'system_backup_restores',
+            'system_backups',
+            'system_update_runs',
+            'public_search_index',
+            'visitor_events',
+            'contact_messages',
+            'site_imports',
+            'site_exports',
+            'icon_catalog_items',
+            'page_assets',
+            'shared_slot_revisions',
+            'shared_slot_blocks',
+            'shared_slots',
+            'page_revisions',
+            'block_media',
+            'page_slots',
+            'blocks',
+            'page_translations',
+            'pages',
+            'page_layout_slots',
+            'page_layouts',
+            'layouts',
+            'site_variables',
+            'site_domains',
+            'site_user',
+            'site_locales',
+            'locales',
+            'sites',
+            'media',
+            'media_folders',
+            'navigation_items',
+            'system_settings',
+            'block_types',
+            'slot_types',
+            'layout_types',
+            'page_types',
+        ] as $table) {
+            Schema::dropIfExists($table);
+        }
+
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table): void {
+                foreach (['role', 'is_admin', 'is_active', 'last_login_at'] as $column) {
+                    if (Schema::hasColumn('users', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }
+    }
+
+    private function createUsersTableColumns(): void
+    {
+        if (! Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table): void {
+                $table->id();
+                $table->string('name');
+                $table->string('email')->unique();
+                $table->timestamp('email_verified_at')->nullable();
+                $table->string('password');
+                $table->rememberToken();
+                $table->string('role', 32)->nullable();
+                $table->boolean('is_admin')->default(false);
+                $table->boolean('is_active')->default(true);
+                $table->timestamp('last_login_at')->nullable();
+                $table->timestamps();
+            });
+
+            return;
+        }
+
+        Schema::table('users', function (Blueprint $table): void {
+            if (! Schema::hasColumn('users', 'role')) {
+                $table->string('role', 32)->nullable()->after('password');
+            }
+
+            if (! Schema::hasColumn('users', 'is_admin')) {
+                $table->boolean('is_admin')->default(false)->after('password');
+            }
+
+            if (! Schema::hasColumn('users', 'is_active')) {
+                $table->boolean('is_active')->default(true)->after('is_admin');
+            }
+
+            if (! Schema::hasColumn('users', 'last_login_at')) {
+                $table->timestamp('last_login_at')->nullable()->after('remember_token');
+            }
+        });
+    }
+
+    private function createCatalogTables(): void
+    {
+        Schema::create('page_types', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('status')->default('published');
+            $table->timestamps();
+        });
+
+        Schema::create('layout_types', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->string('category')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('status')->default('published');
+            $table->timestamps();
+        });
+
+        Schema::create('slot_types', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->string('axis')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('status')->default('published');
+            $table->timestamps();
+        });
+
+        Schema::create('block_types', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->string('category')->nullable();
+            $table->string('source_type')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->boolean('is_container')->default(false);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('status')->default('published');
+            $table->timestamps();
+        });
+
+        Schema::create('system_settings', function (Blueprint $table): void {
+            $table->id();
+            $table->string('key')->unique();
+            $table->longText('value')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    private function createCoreSiteTables(): void
+    {
+        Schema::create('sites', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('handle')->unique();
+            $table->string('domain')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->string('display_name')->nullable();
+            $table->string('tagline')->nullable();
+            $table->foreignId('favicon_media_id')->nullable()->constrained('media')->nullOnDelete();
+            $table->foreignId('social_image_media_id')->nullable()->constrained('media')->nullOnDelete();
+            $table->string('seo_title')->nullable();
+            $table->text('seo_description')->nullable();
+            $table->text('seo_keywords')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('locales', function (Blueprint $table): void {
+            $table->id();
+            $table->string('code')->unique();
+            $table->string('name');
+            $table->boolean('is_default')->default(false);
+            $table->boolean('is_enabled')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('site_locales', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->boolean('is_enabled')->default(true);
+            $table->timestamps();
+            $table->unique(['site_id', 'locale_id']);
+        });
+
+        Schema::create('site_user', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->timestamps();
+            $table->unique(['user_id', 'site_id']);
+        });
+
+        Schema::create('site_domains', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->string('domain');
+            $table->boolean('is_primary')->default(false);
+            $table->boolean('redirect_to_primary')->default(false);
+            $table->string('status')->default('active');
+            $table->timestamps();
+            $table->unique(['site_id', 'domain']);
+        });
+
+        Schema::create('site_variables', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->string('key');
+            $table->string('label');
+            $table->text('value')->nullable();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+            $table->unique(['site_id', 'key']);
+        });
+    }
+
+    private function createLayoutAndPageTables(): void
+    {
+        Schema::create('layouts', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->foreignId('layout_type_id')->nullable()->constrained('layout_types')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('page_layouts', function (Blueprint $table): void {
+            $table->id();
+            $table->string('handle')->unique();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->boolean('is_system')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('body_class')->nullable();
+            $table->string('shell_type')->default('default');
+            $table->json('slot_schema')->nullable();
+            $table->json('wrapper_schema')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('page_layout_slots', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_layout_id')->constrained('page_layouts')->cascadeOnDelete();
+            $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
+            $table->string('slot_name');
+            $table->string('label')->nullable();
+            $table->text('description')->nullable();
+            $table->string('html_element')->default('div');
+            $table->string('html_id')->nullable();
+            $table->string('html_classes')->nullable();
+            $table->longText('before_html')->nullable();
+            $table->longText('start_html')->nullable();
+            $table->longText('end_html')->nullable();
+            $table->longText('after_html')->nullable();
+            $table->boolean('is_required')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_system')->default(false);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+            $table->unique(['page_layout_id', 'slot_name']);
+        });
+
+        Schema::create('pages', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->string('title')->nullable();
+            $table->string('slug')->nullable();
+            $table->string('page_type')->default('default');
+            $table->foreignId('page_type_id')->nullable()->constrained('page_types')->nullOnDelete();
+            $table->foreignId('layout_id')->nullable()->constrained('layouts')->nullOnDelete();
+            $table->json('settings')->nullable();
+            $table->string('status')->default('draft');
+            $table->timestamp('published_at')->nullable();
+            $table->timestamp('review_requested_at')->nullable();
+            $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('published_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('archived_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('review_requested_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+            $table->index(['site_id', 'status']);
+        });
+
+        Schema::create('page_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('name');
+            $table->string('slug');
+            $table->string('path');
+            $table->string('seo_title')->nullable();
+            $table->text('seo_description')->nullable();
+            $table->text('seo_keywords')->nullable();
+            $table->string('og_title')->nullable();
+            $table->text('og_description')->nullable();
+            $table->foreignId('og_image_media_id')->nullable()->constrained('media')->nullOnDelete();
+            $table->timestamps();
+            $table->unique(['page_id', 'locale_id']);
+            $table->index(['site_id', 'locale_id', 'path']);
+        });
+
+        Schema::create('page_assets', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->string('type');
+            $table->string('path');
+            $table->string('load_position')->default('body_end');
+            $table->boolean('is_defer')->default(true);
+            $table->boolean('is_async')->default(false);
+            $table->boolean('is_module')->default(false);
+            $table->boolean('is_enabled')->default(true);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('page_revisions', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->string('created_by')->nullable();
+            $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('source')->nullable();
+            $table->string('event')->nullable();
+            $table->string('label')->nullable();
+            $table->text('reason')->nullable();
+            $table->json('snapshot');
+            $table->foreignId('restored_from_page_revision_id')->nullable()->constrained('page_revisions')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('shared_slots', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->string('name');
+            $table->string('handle');
+            $table->string('slot_name')->nullable();
+            $table->string('public_shell')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+            $table->unique(['site_id', 'handle']);
+        });
+
+        Schema::create('page_slots', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->foreignId('slot_type_id')->constrained('slot_types')->cascadeOnDelete();
+            $table->string('source_type')->default('page');
+            $table->foreignId('shared_slot_id')->nullable()->constrained('shared_slots')->nullOnDelete();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->json('settings')->nullable();
+            $table->timestamps();
+            $table->index(['page_id', 'sort_order']);
+        });
+    }
+
+    private function createMediaTables(): void
+    {
+        Schema::create('media_folders', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('parent_id')->nullable()->constrained('media_folders')->nullOnDelete();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::create('media', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('folder_id')->nullable()->constrained('media_folders')->nullOnDelete();
+            $table->string('disk')->default('public');
+            $table->string('path');
+            $table->string('filename');
+            $table->string('original_name')->nullable();
+            $table->string('extension')->nullable();
+            $table->string('mime_type')->nullable();
+            $table->unsignedBigInteger('size')->nullable();
+            $table->string('kind')->default('other');
+            $table->string('visibility')->default('public');
+            $table->string('title')->nullable();
+            $table->string('alt_text')->nullable();
+            $table->text('caption')->nullable();
+            $table->text('description')->nullable();
+            $table->unsignedInteger('width')->nullable();
+            $table->unsignedInteger('height')->nullable();
+            $table->unsignedInteger('duration')->nullable();
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+    }
+
+    private function createBlockAndNavigationTables(): void
+    {
+        Schema::create('blocks', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('blocks')->nullOnDelete();
+            $table->string('type');
+            $table->foreignId('block_type_id')->nullable()->constrained('block_types')->nullOnDelete();
+            $table->string('source_type')->default('static');
+            $table->string('slot')->nullable();
+            $table->foreignId('slot_type_id')->nullable()->constrained('slot_types')->nullOnDelete();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->string('title')->nullable();
+            $table->string('subtitle')->nullable();
+            $table->longText('content')->nullable();
+            $table->string('url')->nullable();
+            $table->foreignId('media_id')->nullable()->constrained('media')->nullOnDelete();
+            $table->string('variant')->nullable();
+            $table->longText('meta')->nullable();
+            $table->json('settings')->nullable();
+            $table->string('status')->default('published');
+            $table->boolean('is_system')->default(false);
+            $table->timestamps();
+        });
+
+        Schema::create('block_media', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('media_id')->constrained('media')->cascadeOnDelete();
+            $table->string('role')->nullable();
+            $table->unsignedInteger('position')->default(0);
+            $table->timestamps();
+            $table->index(['block_id', 'role', 'position']);
+        });
+
+        Schema::create('shared_slot_blocks', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('shared_slot_blocks')->nullOnDelete();
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('shared_slot_revisions', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('shared_slot_id')->constrained('shared_slots')->cascadeOnDelete();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('source')->nullable();
+            $table->string('event')->nullable();
+            $table->string('source_event')->nullable();
+            $table->string('label')->nullable();
+            $table->text('summary')->nullable();
+            $table->json('snapshot');
+            $table->foreignId('restored_from_shared_slot_revision_id')->nullable()->constrained('shared_slot_revisions')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('block_text_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('title')->nullable();
+            $table->string('eyebrow')->nullable();
+            $table->string('subtitle')->nullable();
+            $table->longText('content')->nullable();
+            $table->longText('meta')->nullable();
+            $table->timestamps();
+            $table->unique(['block_id', 'locale_id']);
+        });
+
+        Schema::create('block_button_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('title')->nullable();
+            $table->timestamps();
+            $table->unique(['block_id', 'locale_id']);
+        });
+
+        Schema::create('block_image_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('caption')->nullable();
+            $table->string('alt_text')->nullable();
+            $table->timestamps();
+            $table->unique(['block_id', 'locale_id']);
+        });
+
+        Schema::create('block_contact_form_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->constrained('blocks')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('title')->nullable();
+            $table->longText('content')->nullable();
+            $table->string('submit_label')->nullable();
+            $table->longText('success_message')->nullable();
+            $table->timestamps();
+            $table->unique(['block_id', 'locale_id']);
+        });
+
+        Schema::create('block_gallery_item_translations', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_media_id')->constrained('block_media')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->string('alt_text')->nullable();
+            $table->string('caption')->nullable();
+            $table->string('overlay_title')->nullable();
+            $table->text('overlay_text')->nullable();
+            $table->timestamps();
+            $table->unique(['block_media_id', 'locale_id']);
+        });
+
+        Schema::create('navigation_items', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
+            $table->string('menu_key')->default('primary');
+            $table->foreignId('parent_id')->nullable()->constrained('navigation_items')->nullOnDelete();
+            $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
+            $table->string('title')->nullable();
+            $table->string('link_type')->default('page');
+            $table->string('url')->nullable();
+            $table->string('target')->nullable();
+            $table->string('icon')->nullable();
+            $table->unsignedInteger('position')->default(0);
+            $table->string('visibility')->default('visible');
+            $table->boolean('is_system')->default(false);
+            $table->timestamps();
+        });
+    }
+
+    private function createOperationalTables(): void
+    {
+        Schema::create('public_search_index', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('locale_id')->constrained('locales')->cascadeOnDelete();
+            $table->foreignId('page_id')->constrained('pages')->cascadeOnDelete();
+            $table->string('title');
+            $table->text('excerpt')->nullable();
+            $table->string('url');
+            $table->longText('content');
+            $table->timestamp('indexed_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('site_exports', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('status')->default('running');
+            $table->boolean('includes_media')->default(true);
+            $table->string('archive_disk')->nullable();
+            $table->string('archive_path')->nullable();
+            $table->string('archive_name')->nullable();
+            $table->unsignedBigInteger('archive_size_bytes')->nullable();
+            $table->json('summary_json')->nullable();
+            $table->json('manifest_json')->nullable();
+            $table->longText('output_log')->nullable();
+            $table->text('failure_message')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('site_imports', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('status')->default('running');
+            $table->string('source_archive_name')->nullable();
+            $table->string('archive_disk')->nullable();
+            $table->string('archive_path')->nullable();
+            $table->foreignId('target_site_id')->nullable()->constrained('sites')->nullOnDelete();
+            $table->string('imported_site_handle')->nullable();
+            $table->string('imported_site_domain')->nullable();
+            $table->json('summary_json')->nullable();
+            $table->json('manifest_json')->nullable();
+            $table->longText('output_log')->nullable();
+            $table->text('failure_message')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('contact_messages', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('block_id')->nullable()->constrained('blocks')->nullOnDelete();
+            $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
+            $table->string('name');
+            $table->string('email');
+            $table->string('subject')->nullable();
+            $table->longText('message');
+            $table->string('status')->default('new');
+            $table->string('source_url')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->text('user_agent')->nullable();
+            $table->text('referer')->nullable();
+            $table->boolean('notification_enabled')->default(false);
+            $table->string('notification_recipient')->nullable();
+            $table->timestamp('notification_sent_at')->nullable();
+            $table->text('notification_error')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('visitor_events', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('site_id')->nullable()->constrained('sites')->nullOnDelete();
+            $table->foreignId('page_id')->nullable()->constrained('pages')->nullOnDelete();
+            $table->foreignId('locale_id')->nullable()->constrained('locales')->nullOnDelete();
+            $table->string('path');
+            $table->string('tracking_mode')->default('basic');
+            $table->text('referrer')->nullable();
+            $table->string('utm_source')->nullable();
+            $table->string('utm_medium')->nullable();
+            $table->string('utm_campaign')->nullable();
+            $table->string('device_type')->nullable();
+            $table->string('browser_family')->nullable();
+            $table->string('os_family')->nullable();
+            $table->string('session_key')->nullable();
+            $table->string('ip_hash')->nullable();
+            $table->timestamp('visited_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('icon_catalog_items', function (Blueprint $table): void {
+            $table->id();
+            $table->string('source')->default('webblocks-ui');
+            $table->string('slug');
+            $table->string('label');
+            $table->string('css_class');
+            $table->json('categories')->nullable();
+            $table->json('contexts')->nullable();
+            $table->json('keywords')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamp('synced_at')->nullable();
+            $table->timestamps();
+            $table->unique(['source', 'slug']);
+        });
+
+        Schema::create('system_update_runs', function (Blueprint $table): void {
+            $table->id();
+            $table->string('from_version')->nullable();
+            $table->string('to_version')->nullable();
+            $table->string('status')->default('pending');
+            $table->text('summary')->nullable();
+            $table->longText('output')->nullable();
+            $table->unsignedInteger('warning_count')->default(0);
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->foreignId('triggered_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('system_backups', function (Blueprint $table): void {
+            $table->id();
+            $table->string('type')->default('manual');
+            $table->string('status')->default('running');
+            $table->string('label')->nullable();
+            $table->boolean('includes_database')->default(true);
+            $table->boolean('includes_uploads')->default(true);
+            $table->string('archive_disk')->nullable();
+            $table->string('archive_path')->nullable();
+            $table->string('archive_filename')->nullable();
+            $table->unsignedBigInteger('archive_size_bytes')->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->text('summary')->nullable();
+            $table->longText('output')->nullable();
+            $table->foreignId('triggered_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->text('error_message')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('system_backup_restores', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('source_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+            $table->string('source_archive_disk')->nullable();
+            $table->string('source_archive_path')->nullable();
+            $table->string('source_archive_filename')->nullable();
+            $table->foreignId('safety_backup_id')->nullable()->constrained('system_backups')->nullOnDelete();
+            $table->string('status')->default('completed');
+            $table->json('restored_parts')->nullable();
+            $table->json('manifest')->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->text('summary')->nullable();
+            $table->longText('output')->nullable();
+            $table->foreignId('triggered_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->text('error_message')->nullable();
+            $table->timestamps();
+        });
+    }
+};
