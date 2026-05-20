@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix the package fresh-install migration for MySQL and MariaDB consumer installs by replacing the auto-generated `shared_slot_revisions.restored_from_shared_slot_revision_id` foreign key name with the explicit short constraint `ss_revisions_restored_from_fk`, avoiding identifier-length failures during `webblocks:install` on fresh Laravel consumers.
+
 - Fix the root `composer.json` package metadata so tagged releases install correctly as `fklavyenet/webblocks-cms` through Composer by exposing `WebBlocks\\Cms\\` package autoloading and Laravel provider discovery at the repository root, while preserving the maintenance-repo workflow through explicit local provider loading.
 
 - Add the first package-consumer install path for `fklavyenet/webblocks-cms` with a package-owned `webblocks:install` command that safely patches `App\Models\User`, runs the focused fresh-install CMS schema, installs `public/cms` assets, seeds baseline catalogs and settings, records the installed version, and creates the first active `super_admin` without requiring Breeze, Jetstream, Laravel UI, Fortify, or manual host route edits.

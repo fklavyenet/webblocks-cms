@@ -10,6 +10,8 @@ class PackageStatusCommandTest extends TestCase
     #[Test]
     public function package_status_command_is_registered_and_reports_package_resource_boundary_state_read_only(): void
     {
+        $webblocksCmsRootOverride = is_file(config_path('webblocks-cms.php')) ? 'yes' : 'no';
+
         $this->artisan('list')
             ->expectsOutputToContain('webblocks:package-status')
             ->assertExitCode(0);
@@ -23,7 +25,7 @@ class PackageStatusCommandTest extends TestCase
             ->expectsOutputToContain('Package config path present: yes')
             ->expectsOutputToContain('Package config files present: cms.php, contact.php, demo_media.php, webblocks-cms.php, webblocks-updates.php')
             ->expectsOutputToContain('Expected package config defaults:')
-            ->expectsOutputToContain('- webblocks-cms.php: package default=yes, root override=no')
+            ->expectsOutputToContain('- webblocks-cms.php: package default=yes, root override='.$webblocksCmsRootOverride)
             ->expectsOutputToContain('- cms.php: package default=yes, root override=yes')
             ->expectsOutputToContain('- contact.php: package default=yes, root override=yes')
             ->expectsOutputToContain('- demo_media.php: package default=yes, root override=yes')

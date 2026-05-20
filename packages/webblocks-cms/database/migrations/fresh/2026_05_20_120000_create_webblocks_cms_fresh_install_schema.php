@@ -473,7 +473,11 @@ return new class extends Migration
             $table->string('label')->nullable();
             $table->text('summary')->nullable();
             $table->json('snapshot');
-            $table->foreignId('restored_from_shared_slot_revision_id')->nullable()->constrained('shared_slot_revisions')->nullOnDelete();
+            $table->foreignId('restored_from_shared_slot_revision_id')->nullable();
+            $table->foreign('restored_from_shared_slot_revision_id', 'ss_revisions_restored_from_fk')
+                ->references('id')
+                ->on('shared_slot_revisions')
+                ->nullOnDelete();
             $table->timestamps();
         });
 
