@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.12 as a follow-up fresh-consumer admin hotfix by removing the remaining root-auth component dependency from the package-owned Users admin form, keeping `/admin/users` and `/admin/users/create` renderable in a fresh Laravel consumer without root Blade component wrappers.
+- Strengthen package admin boundary coverage with broader authenticated consumer smoke tests across the active package-routed admin screens and tighter static assertions that package admin runtime code does not fall back to root `admin.*` views, includes, layouts, or the root `x-auth-password-field` component.
+
 - Prepare v1.32.11 as a fresh-Laravel consumer hotfix by removing package runtime autoload exposure for maintenance-repo `App\...`, `Database\...`, and `Project\...` classes, keeping only package PSR-4 mappings in consumer installs so Composer ambiguous class warnings no longer come from the CMS package.
 - Extend `webblocks:install` to create only the required Laravel database support tables for the configured session and cache drivers, using idempotent `Schema::hasTable()` checks for `sessions`, `cache`, and `cache_locks` without running host Laravel migrations or touching unrelated migration state.
 - Fix package-owned admin Blade and controller boundaries so package views and package renderers use `webblocks-cms::...` component and view namespaces instead of root `admin.*` wrappers, covering the reported `/admin/sites` and `/admin/navigation` failures plus related package-owned partial chains.

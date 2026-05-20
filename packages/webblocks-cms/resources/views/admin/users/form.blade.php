@@ -29,29 +29,43 @@
                                 <input id="user_email" name="email" class="wb-input" type="email" value="{{ old('email', $managedUser->email) }}" required>
                             </div>
 
-                            <x-auth-password-field
-                                id="password"
-                                name="password"
-                                :label="$managedUser->exists ? 'New Password' : 'Password'"
-                                :messages="$errors->get('password')"
-                                :required="! $managedUser->exists"
-                                :placeholder="$managedUser->exists ? 'Leave blank to keep current password' : 'Password'"
-                                wrapper-class="wb-form-group"
-                            />
+                            <div class="wb-stack-2 wb-field">
+                                <label for="password">{{ $managedUser->exists ? 'New Password' : 'Password' }}</label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    class="wb-input @if ($errors->has('password')) wb-border-danger @endif"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    placeholder="{{ $managedUser->exists ? 'Leave blank to keep current password' : 'Password' }}"
+                                    @required(! $managedUser->exists)
+                                >
+
+                                @error('password')
+                                    <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
 
                             @if ($managedUser->exists)
                                 <div class="wb-text-sm wb-text-muted">Leave both password fields blank to keep the current password unchanged.</div>
                             @endif
 
-                            <x-auth-password-field
-                                id="password_confirmation"
-                                name="password_confirmation"
-                                :label="$managedUser->exists ? 'Confirm New Password' : 'Confirm Password'"
-                                :messages="$errors->get('password_confirmation')"
-                                :required="! $managedUser->exists"
-                                :placeholder="$managedUser->exists ? 'Confirm new password' : 'Confirm password'"
-                                wrapper-class="wb-form-group"
-                            />
+                            <div class="wb-stack-2 wb-field">
+                                <label for="password_confirmation">{{ $managedUser->exists ? 'Confirm New Password' : 'Confirm Password' }}</label>
+                                <input
+                                    id="password_confirmation"
+                                    name="password_confirmation"
+                                    class="wb-input @if ($errors->has('password_confirmation')) wb-border-danger @endif"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    placeholder="{{ $managedUser->exists ? 'Confirm new password' : 'Confirm password' }}"
+                                    @required(! $managedUser->exists)
+                                >
+
+                                @error('password_confirmation')
+                                    <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">

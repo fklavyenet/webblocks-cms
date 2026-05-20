@@ -83,4 +83,49 @@ class PackageConsumerInstallAuthTest extends TestCase
         $this->actingAs($user)->get(route('admin.navigation.index'))
             ->assertOk();
     }
+
+    #[Test]
+    public function admin_users_index_and_create_routes_render_after_install(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+        $this->actingAs($user)->get(route('admin.users.index'))
+            ->assertOk();
+
+        $this->actingAs($user)->get(route('admin.users.create'))
+            ->assertOk();
+    }
+
+    #[Test]
+    public function broader_package_routed_admin_surfaces_render_after_install(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+        foreach ([
+            'admin.dashboard',
+            'admin.sites.index',
+            'admin.sites.create',
+            'admin.users.index',
+            'admin.users.create',
+            'admin.locales.index',
+            'admin.pages.index',
+            'admin.blocks.index',
+            'admin.media.index',
+            'admin.navigation.index',
+            'admin.shared-slots.index',
+            'admin.system.settings.edit',
+            'admin.block-types.index',
+            'admin.page-layouts.index',
+            'admin.slot-types.index',
+            'admin.system.icons.index',
+            'admin.system.search.index',
+            'admin.system.backups.index',
+            'admin.site-transfers.exports.index',
+            'admin.system.updates.index',
+            'admin.reports.visitors.index',
+            'admin.contact-messages.index',
+        ] as $routeName) {
+            $this->actingAs($user)->get(route($routeName))->assertOk();
+        }
+    }
 }
