@@ -226,7 +226,7 @@ class SystemUpdater
             $output[] = 'Installed version persisted as '.$toVersion;
 
             $finishedAt = CarbonImmutable::now();
-            $durationMs = $startedAt->diffInMilliseconds($finishedAt);
+            $durationMs = $this->normalizeDurationMs($startedAt->diffInMilliseconds($finishedAt));
             $status = $warningCount > 0 ? SystemUpdateRun::STATUS_SUCCESS_WITH_WARNINGS : SystemUpdateRun::STATUS_SUCCESS;
             $summary = $warningCount > 0
                 ? 'Updated to '.$toVersion.' with '.$warningCount.' warning(s).'
@@ -264,7 +264,7 @@ class SystemUpdater
             }
 
             $finishedAt = CarbonImmutable::now();
-            $durationMs = $startedAt->diffInMilliseconds($finishedAt);
+            $durationMs = $this->normalizeDurationMs($startedAt->diffInMilliseconds($finishedAt));
             $failure = $throwable instanceof UpdateException
                 ? $throwable
                 : new UpdateException(
@@ -336,6 +336,11 @@ class SystemUpdater
         $output[] = 'Package checksum verified: '.$actualChecksum;
 
         return 0;
+    }
+
+    private function normalizeDurationMs(int|float $durationMs): int
+    {
+        return (int) round($durationMs);
     }
 
     private function persistRun(SystemUpdateRun $run, string $status, string $summary, array $output, int $warningCount, CarbonImmutable $finishedAt, int $durationMs): void

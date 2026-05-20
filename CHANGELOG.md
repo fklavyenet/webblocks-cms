@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.7
+
+- Fix the updater duration deprecation warning by normalizing measured millisecond durations before they are persisted onto the update run record or passed into the int-typed `UpdateResult` DTO, keeping updater behavior and output unchanged while removing the implicit float-to-int conversion path.
+- Add focused regression coverage for updater duration normalization so fractional measured durations are stored and reported consistently without warning-producing implicit casts.
+
 ## 1.32.6
 
 - Fix the post-update reporting compatibility bug where a successful update could still be marked failed at the final `UpdateResult` construction step when the pre-update backup arrived as the root `App\Models\SystemBackup` wrapper instead of the package model.
