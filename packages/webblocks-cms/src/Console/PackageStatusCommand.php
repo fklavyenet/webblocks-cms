@@ -50,7 +50,7 @@ class PackageStatusCommand extends Command
             $packageComposer,
             WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME
         );
-        $rootDevPathDependencyPresent = $this->rootComposerDependencyPresent(
+        $rootComposerNamePresent = $this->composerPackageNamePresent(
             $rootComposer,
             WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME
         );
@@ -264,13 +264,15 @@ class PackageStatusCommand extends Command
         $this->line('Package Composer package name present: '.$this->yesNo($packageComposerNamePresent).' ('.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME.')');
         $this->line('Package Composer provider discovery present: '.$this->yesNo($providerDiscoveryPresent).' ('.WebBlocksCmsServiceProvider::class.')');
         $this->line('Package Composer seeder autoload present: '.$this->yesNo($this->composerSeederAutoloadPresent($packageComposer)).' (WebBlocks\\Cms\\Database\\Seeders\\)');
-        $this->line('Root Composer development path dependency present: '.$this->yesNo($rootDevPathDependencyPresent).' ('.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME.')');
-        $this->line('Root Composer path repository present: '.$this->yesNo($this->pathRepositoryPresent($rootComposer, 'packages/webblocks-cms')).' (packages/webblocks-cms)');
-        $this->line('Target Composer install flow: '.WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND.' (future starter or package-consumer target only; current root install flow remains authoritative).');
+        $this->line('Root Composer package name present: '.$this->yesNo($rootComposerNamePresent).' ('.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME.')');
+        $this->line('Root Composer package type package-ready: '.$this->yesNo($this->composerPackageTypePresent($rootComposer, 'library')).' (library)');
+        $this->line('Root Composer package autoload present: '.$this->yesNo($this->composerAutoloadPresent($rootComposer, 'WebBlocks\\Cms\\', 'packages/webblocks-cms/src/')).' (WebBlocks\\Cms\\ => packages/webblocks-cms/src/)');
+        $this->line('Root Composer provider discovery present: '.$this->yesNo($this->composerProviderDiscoveryPresent($rootComposer, WebBlocksCmsServiceProvider::class)).' ('.WebBlocksCmsServiceProvider::class.')');
+        $this->line('Target Composer install flow: '.WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND.' (tagged root package metadata now supports direct consumer installs, while the maintenance repo runtime remains authoritative for local source development).');
         $this->line('Target Composer update flow: '.WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND.' followed by migrations, catalog sync, block-types:sync-core, cache clear, asset publish or sync when needed, package diagnostics, and installed-version sync when release state is real.');
         $this->line('Root migration/update/install/auth blockers: '.implode('; ', WebBlocksCmsServiceProvider::STARTER_SPLIT_BLOCKERS).'.');
         $this->line('Starter split readiness: not ready (package transition consolidation is complete for all safely movable CMS-owned source, but the remaining install/auth, User, root runtime asset path, and root migration or update authority blockers still prevent a starter split).');
-        $this->line('Starter foundation readiness: partial (package metadata, provider discovery, path-repository development wiring, and documented target install or update flow are present; '.WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME.' is intentionally not created yet).');
+        $this->line('Starter foundation readiness: partial (root package metadata now supports direct Composer installation and provider discovery, while the maintenance repo still carries the remaining install/auth, User, root runtime asset path, and root migration or update authority blockers; '.WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME.' is intentionally not created yet).');
         $this->line('Composer-managed update target note: future Composer-managed package updates remain the target boundary, while current root Composer and runtime update flow stay authoritative.');
         $this->newLine();
 
@@ -542,10 +544,14 @@ class PackageStatusCommand extends Command
         return in_array($providerClass, $composer['extra']['laravel']['providers'] ?? [], true);
     }
 
-    protected function rootComposerDependencyPresent(array $composer, string $packageName): bool
+    protected function composerPackageTypePresent(array $composer, string $type): bool
     {
-        return array_key_exists($packageName, $composer['require'] ?? [])
-            || array_key_exists($packageName, $composer['require-dev'] ?? []);
+        return ($composer['type'] ?? null) === $type;
+    }
+
+    protected function composerAutoloadPresent(array $composer, string $namespace, string $path): bool
+    {
+        return ($composer['autoload']['psr-4'][$namespace] ?? null) === $path;
     }
 
     /**
@@ -566,25 +572,6 @@ class PackageStatusCommand extends Command
     protected function expectedFilesPresent(string $basePath, array $expectedFiles): bool
     {
         return $this->missingExpectedFiles($basePath, $expectedFiles) === [];
-    }
-
-    protected function pathRepositoryPresent(array $composer, string $path): bool
-    {
-        foreach (($composer['repositories'] ?? []) as $repository) {
-            if (! is_array($repository)) {
-                continue;
-            }
-
-            if (($repository['type'] ?? null) !== 'path') {
-                continue;
-            }
-
-            if (($repository['url'] ?? null) === $path) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     protected function composerJson(string $path): array

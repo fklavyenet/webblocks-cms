@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix the root `composer.json` package metadata so tagged releases install correctly as `fklavyenet/webblocks-cms` through Composer by exposing `WebBlocks\\Cms\\` package autoloading and Laravel provider discovery at the repository root, while preserving the maintenance-repo workflow through explicit local provider loading.
+
 - Add the first package-consumer install path for `fklavyenet/webblocks-cms` with a package-owned `webblocks:install` command that safely patches `App\Models\User`, runs the focused fresh-install CMS schema, installs `public/cms` assets, seeds baseline catalogs and settings, records the installed version, and creates the first active `super_admin` without requiring Breeze, Jetstream, Laravel UI, Fortify, or manual host route edits.
 - Keep maintenance-repo package migrations inert by default while adding focused consumer install coverage for command registration, fresh-install migration discovery, safe backup-first `User.php` patching, idempotent reruns, first-admin creation, and post-install login, admin, and public home readiness.
 
