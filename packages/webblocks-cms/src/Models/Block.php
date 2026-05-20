@@ -917,9 +917,19 @@ class Block extends Model
 
     public function adminFormView(): string
     {
-        $view = 'admin.blocks.types.'.$this->typeSlug();
+        $packageView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$this->typeSlug();
 
-        return View::exists($view) ? $view : 'admin.blocks.types.fallback';
+        if (View::exists($packageView)) {
+            return $packageView;
+        }
+
+        $legacyView = 'admin.blocks.types.'.$this->typeSlug();
+
+        if (View::exists($legacyView)) {
+            return $legacyView;
+        }
+
+        return $this->fallbackAdminFormView('fallback');
     }
 
     public function publicRenderView(): string
@@ -1410,9 +1420,22 @@ class Block extends Model
     public static function supportsAdminForm(?string $slug): bool
     {
         return $slug !== null && (
-            View::exists('admin.blocks.types.'.$slug)
+            View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$slug)
+            || View::exists('admin.blocks.types.'.$slug)
+            || View::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.fallback')
             || View::exists('admin.blocks.types.fallback')
         );
+    }
+
+    private function fallbackAdminFormView(string $slug): string
+    {
+        $packageView = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$slug;
+
+        if (View::exists($packageView)) {
+            return $packageView;
+        }
+
+        return 'admin.blocks.types.'.$slug;
     }
 
     public static function supportsPublicRender(?string $slug): bool

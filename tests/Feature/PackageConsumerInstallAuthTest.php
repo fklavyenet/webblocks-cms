@@ -2,6 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Block;
+use App\Models\BlockType;
+use App\Models\Page;
+use App\Models\PageSlot;
+use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -150,5 +155,49 @@ class PackageConsumerInstallAuthTest extends TestCase
             ->assertSee('System Updates')
             ->assertSee('Update Summary')
             ->assertSee('Actions');
+    }
+
+    #[Test]
+    public function fallback_block_type_admin_form_renders_after_install_through_the_package_view_boundary(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+        $page = Page::query()->firstOrFail();
+        $slotType = SlotType::query()->where('slug', 'main')->firstOrFail();
+        $pageSlot = PageSlot::query()->where('page_id', $page->id)->where('slot_type_id', $slotType->id)->firstOrFail();
+        $blockType = BlockType::query()->create([
+            'name' => 'Consumer Fallback Block',
+            'slug' => 'consumer-fallback-block',
+            'category' => 'content',
+            'description' => 'Uses the generic fallback admin form.',
+            'source_type' => 'static',
+            'status' => 'published',
+            'sort_order' => 9990,
+            'is_system' => false,
+            'is_container' => false,
+        ]);
+        $block = new Block([
+            'type' => $blockType->slug,
+            'block_type_id' => $blockType->id,
+            'page_id' => $page->id,
+            'slot_type_id' => $slotType->id,
+            'slot' => $slotType->slug,
+            'source_type' => 'static',
+            'status' => 'draft',
+        ]);
+
+        $this->assertSame('webblocks-cms::admin.blocks.types.fallback', $block->adminFormView());
+
+        $this->actingAs($user)->get(route('admin.pages.slots.blocks', [
+            'page' => $page,
+            'slot' => $pageSlot,
+            'picker' => 1,
+            'block_type_id' => $blockType->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Add Block: Consumer Fallback Block')
+            ->assertSee('Generic Block Form')
+            ->assertSee('The safe fallback form is being used.')
+            ->assertSee('name="title"', false)
+            ->assertSee('name="content"', false);
     }
 }

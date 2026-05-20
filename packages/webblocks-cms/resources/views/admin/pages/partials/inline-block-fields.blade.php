@@ -2,7 +2,14 @@
     $prefix = "blocks[{$index}]";
     $selectedBlockTypeId = old("{$prefix}.block_type_id", $block->block_type_id ?: $selectedBlockType?->id);
     $selectedSlotTypeId = old("{$prefix}.slot_type_id", $block->slot_type_id ?: $slotTypes->firstWhere('slug', $block->slot)?->id);
-    $inlineView = 'admin.blocks.types.'.$block->typeSlug().'-inline';
+    $packageInlineView = 'webblocks-cms::admin.blocks.types.'.$block->typeSlug().'-inline';
+    $legacyInlineView = 'admin.blocks.types.'.$block->typeSlug().'-inline';
+    $fallbackInlineView = view()->exists('webblocks-cms::admin.blocks.types.fallback-inline')
+        ? 'webblocks-cms::admin.blocks.types.fallback-inline'
+        : 'admin.blocks.types.fallback-inline';
+    $inlineView = view()->exists($packageInlineView)
+        ? $packageInlineView
+        : (view()->exists($legacyInlineView) ? $legacyInlineView : $fallbackInlineView);
 @endphp
 
 <input type="hidden" name="{{ $prefix }}[id]" value="{{ $block->id }}">
@@ -50,7 +57,7 @@
 
 <div class="wb-card wb-card-accent">
     <div class="wb-card-body">
-        @include(view()->exists($inlineView) ? $inlineView : 'admin.blocks.types.fallback-inline', [
+        @include($inlineView, [
             'block' => $block,
             'selectedBlockType' => $selectedBlockType,
             'slotTypes' => $slotTypes,

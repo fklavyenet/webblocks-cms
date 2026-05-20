@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.14 as a fresh-consumer admin hotfix for the package-owned Blocks runtime by making admin block form resolution prefer `webblocks-cms::admin.blocks.types.*` and the package fallback form, so unknown or product-owned block types no longer fail on missing root `admin.blocks.types.fallback` views in consumer installs.
+- Extend package boundary coverage for block admin form fallback handling with static assertions around the package block resolver, bootstrap checks for the package fallback Blade files, and authenticated post-install smoke coverage that renders the generic fallback block form through the package namespace.
+
 - Prepare v1.32.13 as a follow-up fresh-consumer admin hotfix by locking the System Updates screen to the package view namespace, confirming the package-owned `updates.blade.php` exists, and extending boundary coverage so `/admin/system/updates` stays renderable in a fresh Laravel consumer without any root `resources/views/admin/system/updates*.blade.php` files.
 - Expand static package-boundary assertions for the System admin slice so package controllers and package Blade views cannot regress to root `admin.*` render paths, layouts, includes, or root-only auth components, with explicit checks for the updates, backups, search, settings, icons, block-types, page-layouts, and slot-types screens.
 - Add focused post-install consumer smoke coverage for `/admin/system/updates` and bootstrap assertions for the package-owned System views so the exact external namespace failure is caught before release.

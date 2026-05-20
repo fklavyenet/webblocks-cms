@@ -72,6 +72,24 @@ class PackageFreshInstallMigrationTest extends TestCase
     }
 
     #[Test]
+    public function package_owned_block_admin_runtime_prefers_package_block_type_views_and_fallbacks(): void
+    {
+        $blockModel = (string) file_get_contents(base_path('packages/webblocks-cms/src/Models/Block.php'));
+        $inlineFields = (string) file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/pages/partials/inline-block-fields.blade.php'));
+        $fallbackView = (string) file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/blocks/types/fallback.blade.php'));
+        $fallbackInlineView = (string) file_get_contents(base_path('packages/webblocks-cms/resources/views/admin/blocks/types/fallback-inline.blade.php'));
+
+        $this->assertStringContainsString("WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'", $blockModel);
+        $this->assertStringContainsString("return \$this->fallbackAdminFormView('fallback');", $blockModel);
+        $this->assertStringNotContainsString("return View::exists(\$view) ? \$view : 'admin.blocks.types.fallback';", $blockModel);
+        $this->assertStringContainsString("'webblocks-cms::admin.blocks.types.fallback-inline'", $inlineFields);
+        $this->assertStringNotContainsString("@include(view()->exists(\$inlineView) ? \$inlineView : 'admin.blocks.types.fallback-inline'", $inlineFields);
+        $this->assertStringContainsString("@include('webblocks-cms::admin.media.asset-picker-panel'", $fallbackView);
+        $this->assertStringContainsString('Generic Block Form', $fallbackView);
+        $this->assertStringContainsString('Generic Block Form', $fallbackInlineView);
+    }
+
+    #[Test]
     public function package_owned_system_admin_renderers_use_package_view_names_for_system_screens(): void
     {
         $expectations = [

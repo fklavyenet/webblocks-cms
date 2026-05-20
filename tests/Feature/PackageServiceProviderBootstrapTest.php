@@ -200,6 +200,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/updates.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/backups/index.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/search.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/blocks/types/fallback.blade.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/blocks/types/fallback-inline.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/hero.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/columns.blade.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/gallery.blade.php'));
@@ -286,6 +288,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.updates'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.backups.index'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.fallback'));
+        $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.fallback-inline'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.gallery'));
@@ -301,6 +305,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(view()->exists('admin.system.updates'));
         $this->assertTrue(view()->exists('admin.system.backups.index'));
         $this->assertTrue(view()->exists('admin.system.search'));
+        $this->assertTrue(view()->exists('admin.blocks.types.fallback'));
+        $this->assertTrue(view()->exists('admin.blocks.types.fallback-inline'));
         $this->assertTrue(view()->exists('pages.partials.blocks.hero'));
         $this->assertTrue(view()->exists('pages.partials.blocks.columns'));
         $this->assertTrue(view()->exists('pages.partials.blocks.gallery'));
