@@ -6,7 +6,7 @@
         ->whenEmpty(fn () => $selectedGalleryAssets ?? $block->galleryAssets());
 @endphp
 
-@include('admin.blocks.types.partials.gallery-items-editor', [
+@include('webblocks-cms::admin.blocks.types.partials.gallery-items-editor', [
     'block' => $block,
     'selectedGalleryAssets' => $selectedGalleryAssets,
     'activeLocale' => $activeLocale ?? null,

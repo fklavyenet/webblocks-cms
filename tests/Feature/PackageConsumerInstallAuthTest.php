@@ -71,4 +71,16 @@ class PackageConsumerInstallAuthTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Install WebBlocks CMS');
     }
+
+    #[Test]
+    public function admin_sites_and_navigation_routes_render_after_install(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+        $this->actingAs($user)->get(route('admin.sites.index'))
+            ->assertOk();
+
+        $this->actingAs($user)->get(route('admin.navigation.index'))
+            ->assertOk();
+    }
 }

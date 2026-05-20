@@ -171,7 +171,7 @@
 
 @push('overlays')
     @if ($requestedModal === 'block-type-contract' && $contractBlockType)
-        @include('admin.block-types.partials.contract-modal', [
+        @include('webblocks-cms::admin.block-types.partials.contract-modal', [
             'blockType' => $contractBlockType,
             'contract' => $blockTypeContracts[$contractBlockType->id] ?? null,
             'closeUrl' => $closeUrl,
@@ -179,7 +179,7 @@
     @endif
 
     @if ($requestedModal === 'edit-block-type' && $editBlockType)
-        @include('admin.block-types.partials.edit-modal', [
+        @include('webblocks-cms::admin.block-types.partials.edit-modal', [
             'blockType' => $editBlockType,
             'closeUrl' => $closeUrl,
             'blockTypesReturnUrl' => $blockTypesReturnUrl,

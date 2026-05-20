@@ -56,7 +56,7 @@
             <div class="wb-card-body">
             <div class="wb-stack wb-gap-3" data-wb-builder-item-list="{{ $editorKey }}" @if ($enableAdminSortable) data-admin-sortable-list @endif>
                 @forelse ($columnItems as $index => $columnItem)
-                    @include('admin.blocks.partials.column-items-editor-row', [
+                    @include('webblocks-cms::admin.blocks.partials.column-items-editor-row', [
                         'columnItem' => $columnItem,
                         'index' => $index,
                         'inputName' => $inputName,
@@ -87,7 +87,7 @@
             data-empty-title="{{ $emptyTitle }}"
             data-empty-description="{{ $emptyDescription }}"
         >
-            @include('admin.blocks.partials.column-items-editor-row', [
+            @include('webblocks-cms::admin.blocks.partials.column-items-editor-row', [
                 'columnItem' => new \WebBlocks\Cms\Models\Block([
                     'title' => null,
                     'subtitle' => null,

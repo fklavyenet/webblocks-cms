@@ -28,7 +28,7 @@ class SystemUpdateController extends Controller
         $checkedAt = session('system_updates_checked_at');
         $pendingUpdate = $this->pendingUpdate();
 
-        return view('admin.system.updates', [
+        return view('webblocks-cms::admin.system.updates', [
             'report' => $report,
             'latestUpdateRun' => $this->latestUpdateRun(),
             'pendingUpdate' => $pendingUpdate,

@@ -88,7 +88,7 @@ class SystemBackupController extends Controller
                 'query' => request()->query(),
             ]);
 
-        return view('admin.system.backups.index', [
+        return view('webblocks-cms::admin.system.backups.index', [
             'backups' => $backups,
             'latestBackup' => $this->systemBackupManager->latest(),
             'freshness' => $this->systemBackupManager->freshnessSummary(),
@@ -120,7 +120,7 @@ class SystemBackupController extends Controller
 
     public function createUpload(): View
     {
-        return view('admin.system.backups.upload');
+        return view('webblocks-cms::admin.system.backups.upload');
     }
 
     public function upload(SystemBackupUploadRequest $request): RedirectResponse
@@ -156,7 +156,7 @@ class SystemBackupController extends Controller
             }
         }
 
-        return view('admin.system.backups.show', [
+        return view('webblocks-cms::admin.system.backups.show', [
             'backup' => $backup->load('triggeredBy'),
             'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
             'inspection' => $inspection,

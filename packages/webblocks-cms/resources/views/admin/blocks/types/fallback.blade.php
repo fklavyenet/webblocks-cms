@@ -31,7 +31,7 @@
 
         <div class="wb-stack wb-gap-1">
             <label>Media Asset</label>
-            @include('admin.media.asset-picker-panel', [
+            @include('webblocks-cms::admin.media.asset-picker-panel', [
                 'name' => 'fallback-asset',
                 'inputId' => 'asset_id',
                 'fieldName' => 'asset_id',

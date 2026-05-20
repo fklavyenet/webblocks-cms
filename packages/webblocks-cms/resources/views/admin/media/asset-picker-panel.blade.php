@@ -344,7 +344,7 @@
 
                         <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
                             @foreach ($pickerVisibleAssets as $asset)
-                                @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                                @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
                             @endforeach
                         </div>
 
@@ -425,7 +425,7 @@
 
                 <div class="{{ $pickerResultsVariant === 'compact-list' ? 'wb-stack wb-gap-2 wb-picker-results wb-picker-results--compact' : 'wb-grid wb-grid-3 wb-picker-results' }}" data-wb-picker-grid>
                     @foreach ($pickerVisibleAssets as $asset)
-                        @include('admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
+                        @include('webblocks-cms::admin.media._asset-card', ['asset' => $asset, 'multi' => $pickerMode === 'multiple', 'pickerVariant' => $pickerResultsVariant])
                         @endforeach
                 </div>
 

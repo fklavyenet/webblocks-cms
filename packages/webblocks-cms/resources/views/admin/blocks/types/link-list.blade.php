@@ -26,7 +26,7 @@
         <textarea id="content" name="content" class="wb-textarea" rows="5" placeholder="Optional supporting copy for this container. The public link list renders only child items.">{{ old('content', $block->content) }}</textarea>
     </div>
 
-    @include('admin.blocks.partials.column-items-editor', [
+    @include('webblocks-cms::admin.blocks.partials.column-items-editor', [
         'block' => $block,
         'inputName' => 'link_list_items',
         'itemBlockType' => $linkListItemBlockType ?? null,

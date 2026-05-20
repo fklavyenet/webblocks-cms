@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Prepare v1.32.11 as a fresh-Laravel consumer hotfix by removing package runtime autoload exposure for maintenance-repo `App\...`, `Database\...`, and `Project\...` classes, keeping only package PSR-4 mappings in consumer installs so Composer ambiguous class warnings no longer come from the CMS package.
+- Extend `webblocks:install` to create only the required Laravel database support tables for the configured session and cache drivers, using idempotent `Schema::hasTable()` checks for `sessions`, `cache`, and `cache_locks` without running host Laravel migrations or touching unrelated migration state.
+- Fix package-owned admin Blade and controller boundaries so package views and package renderers use `webblocks-cms::...` component and view namespaces instead of root `admin.*` wrappers, covering the reported `/admin/sites` and `/admin/navigation` failures plus related package-owned partial chains.
+- Add focused regression coverage for consumer Composer metadata, installer-created support tables, post-install `/admin/sites` and `/admin/navigation` readiness, and static package namespace assertions for package-owned views and PHP renderers.
+
 - Fix the package fresh-install migration for MySQL and MariaDB consumer installs by replacing the auto-generated `shared_slot_revisions.restored_from_shared_slot_revision_id` foreign key name with the explicit short constraint `ss_revisions_restored_from_fk`, avoiding identifier-length failures during `webblocks:install` on fresh Laravel consumers.
 
 - Fix the root `composer.json` package metadata so tagged releases install correctly as `fklavyenet/webblocks-cms` through Composer by exposing `WebBlocks\\Cms\\` package autoloading and Laravel provider discovery at the repository root, while preserving the maintenance-repo workflow through explicit local provider loading.

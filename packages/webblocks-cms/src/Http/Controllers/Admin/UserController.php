@@ -38,7 +38,7 @@ class UserController extends Controller
             ->paginate(AdminPagination::perPage())
             ->withQueryString();
 
-        return view('admin.users.index', [
+        return view('webblocks-cms::admin.users.index', [
             'users' => $users,
             'filters' => $filters,
             'userLifecycleGuard' => $this->lifecycleGuard,
@@ -51,7 +51,7 @@ class UserController extends Controller
     {
         abort_unless(request()->user()?->can('manage-users'), 403);
 
-        return view('admin.users.form', [
+        return view('webblocks-cms::admin.users.form', [
             'managedUser' => new User(['is_active' => true, 'role' => User::ROLE_EDITOR]),
             'pageTitle' => 'Add User',
             'formAction' => route('admin.users.store'),
@@ -76,7 +76,7 @@ class UserController extends Controller
     {
         abort_unless(request()->user()?->can('manage-users'), 403);
 
-        return view('admin.users.form', [
+        return view('webblocks-cms::admin.users.form', [
             'managedUser' => $user,
             'pageTitle' => 'Edit User: '.$user->name,
             'formAction' => route('admin.users.update', $user),

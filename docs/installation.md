@@ -65,6 +65,8 @@ What `webblocks:install` does:
 - fails clearly if `User.php` is not a recognizable `App\Models\User extends Authenticatable` class
 - runs the package fresh-install migration path for clean consumer installs
 - skips rerunning that fresh schema when CMS tables already exist
+- creates database-backed Laravel support tables only when the active host configuration requires them, currently covering `sessions`, `cache`, and `cache_locks`
+- does not run the host application's normal Laravel migration set as part of package install, so it avoids conflicts with the already-created CMS-compatible `users` table
 - installs package-owned CMS assets into `public/cms`
 - creates `public/storage` when it is missing and the environment allows it
 - seeds locales, sites, slot types, page layouts, icons, and core block types idempotently
@@ -72,6 +74,8 @@ What `webblocks:install` does:
 - creates the first active `super_admin` only when one does not already exist
 
 Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/login` or `/admin/login`, then open `/admin`.
+
+For the current `v1.32.x` package-consumer boundary, the host application's `App\Models\User` remains the auth model and install-time patch target.
 
 ## Browser Install Wizard
 

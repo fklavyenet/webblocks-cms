@@ -49,11 +49,14 @@ ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" -
 - publishes `config/webblocks-cms.php` when needed
 - safely patches `App\Models\User` with a package auth trait and creates a backup first
 - runs the package fresh-install CMS schema for clean consumers
+- creates required Laravel support tables for database-backed session and cache drivers when they are configured, without running the host application's normal migrations
 - installs package CMS assets into `public/cms`
 - creates `public/storage` when safe and missing
 - seeds locales, sites, page layouts, slot types, icons, and core block types idempotently
 - records the installed version and install completion marker in `system_settings`
 - creates the first active `super_admin` when one does not already exist
+
+For the current `v1.32.x` consumer boundary, `App\Models\User` remains host-owned and is patched in place with the CMS access trait during install.
 
 After install, open:
 

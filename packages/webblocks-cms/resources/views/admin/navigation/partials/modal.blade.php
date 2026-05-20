@@ -49,7 +49,7 @@
                         </div>
                     @endif
 
-                    @include('admin.navigation._form', [
+                    @include('webblocks-cms::admin.navigation._form', [
                         'item' => $draftItem,
                         'pages' => $pages,
                         'parents' => $modalParents,

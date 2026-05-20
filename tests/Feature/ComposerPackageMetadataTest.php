@@ -15,8 +15,20 @@ class ComposerPackageMetadataTest extends TestCase
 
         $this->assertSame('fklavyenet/webblocks-cms', $composer['name'] ?? null);
         $this->assertSame('library', $composer['type'] ?? null);
+        $this->assertSame('app/', $composer['autoload']['psr-4']['App\\'] ?? null);
         $this->assertSame('packages/webblocks-cms/src/', $composer['autoload']['psr-4']['WebBlocks\\Cms\\'] ?? null);
         $this->assertSame('packages/webblocks-cms/database/seeders/', $composer['autoload']['psr-4']['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null);
+        $this->assertSame('database/factories/', $composer['autoload']['psr-4']['Database\\Factories\\'] ?? null);
+        $this->assertSame('database/seeders/', $composer['autoload']['psr-4']['Database\\Seeders\\'] ?? null);
+        $this->assertSame('project/', $composer['autoload']['psr-4']['Project\\'] ?? null);
+        $this->assertSame([
+            'app/Models/User.php',
+            'app/Http/Controllers/Controller.php',
+            'app/Providers/AppServiceProvider.php',
+            'database/seeders/DatabaseSeeder.php',
+            'database/factories/UserFactory.php',
+            'project/',
+        ], $composer['autoload']['exclude-from-classmap'] ?? []);
         $this->assertContains(WebBlocksCmsServiceProvider::class, $composer['extra']['laravel']['providers'] ?? []);
     }
 

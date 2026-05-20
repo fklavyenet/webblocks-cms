@@ -22,7 +22,7 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    @include('admin.blocks._type-picker', [
+    @include('webblocks-cms::admin.blocks._type-picker', [
         'action' => route('admin.blocks.edit', $block),
         'selectedBlockType' => $selectedBlockType,
         'block' => $block,
@@ -42,7 +42,7 @@
             @method('PUT')
 
             <div class="wb-card-body">
-                @include('admin.blocks._form', [
+                @include('webblocks-cms::admin.blocks._form', [
                     'assetPickerAssets' => $assetPickerAssets ?? collect(),
                     'assetPickerFolders' => $assetPickerFolders ?? collect(),
                     'columnItemBlockType' => $columnItemBlockType ?? null,

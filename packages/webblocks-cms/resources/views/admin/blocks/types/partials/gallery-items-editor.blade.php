@@ -76,7 +76,7 @@
                     <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
                 </div>
 
-                @include('admin.media.asset-picker-panel', [
+                @include('webblocks-cms::admin.media.asset-picker-panel', [
                     'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
                     'mode' => 'multiple',
                     'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',
@@ -235,7 +235,7 @@
                     <span class="wb-status-pill wb-status-info" data-wb-gallery-items-count>{{ $galleryItemRows->count() }} {{ \Illuminate\Support\Str::plural('item', $galleryItemRows->count()) }}</span>
                 </div>
 
-                @include('admin.media.asset-picker-panel', [
+                @include('webblocks-cms::admin.media.asset-picker-panel', [
                     'name' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-assets' : 'gallery-assets',
                     'mode' => 'multiple',
                     'inputId' => $rootPrefix ? str_replace(['[', ']'], ['-', ''], $rootPrefix).'-gallery-media-ids' : 'gallery_media_ids',

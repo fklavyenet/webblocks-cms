@@ -179,7 +179,7 @@
                                         <div class="wb-stack wb-gap-2 wb-field">
                                             <label for="favicon_media_id">Favicon</label>
                                             @if ($canManageSiteSettings)
-                                                @include('admin.media.asset-picker-panel', [
+                                                @include('webblocks-cms::admin.media.asset-picker-panel', [
                                                     'name' => 'site-favicon',
                                                     'title' => 'Favicon',
                                                     'inputId' => 'favicon_media_id',
@@ -205,7 +205,7 @@
                                         <div class="wb-stack wb-gap-2 wb-field">
                                             <label for="social_image_media_id">Social image</label>
                                             @if ($canManageSiteSettings)
-                                                @include('admin.media.asset-picker-panel', [
+                                                @include('webblocks-cms::admin.media.asset-picker-panel', [
                                                     'name' => 'site-social-image',
                                                     'title' => 'Social image',
                                                     'inputId' => 'social_image_media_id',

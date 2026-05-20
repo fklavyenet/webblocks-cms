@@ -48,7 +48,7 @@
             </div>
 
             @if ($item->children->isNotEmpty())
-                @include('admin.navigation.partials.tree-list', ['items' => $item->children, 'depth' => $depth + 1])
+                @include('webblocks-cms::admin.navigation.partials.tree-list', ['items' => $item->children, 'depth' => $depth + 1])
             @endif
         </li>
     @endforeach

@@ -10,9 +10,11 @@ use App\Models\SlotType;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -75,7 +77,7 @@ class PackageConsumerInstallCommandTest extends TestCase
             }
         };
 
-        $provider->bootCommandsForTest();
+        $provider->{'bootCommandsForTest'}();
 
         $this->assertContains(InstallWebBlocksCmsCommand::class, $provider->commandsRegistered);
     }
@@ -163,7 +165,7 @@ PHP;
             }
         };
 
-        $provider->bootMigrationsForTest();
+        $provider->{'bootMigrationsForTest'}();
 
         $this->assertSame([
             base_path('packages/webblocks-cms/database/migrations/fresh'),
@@ -246,5 +248,71 @@ PHP;
         $this->assertDatabaseMissing('users', ['email' => 'second-admin@example.com']);
         $this->assertSame(WebBlocks::version(), SystemSetting::query()->where('key', InstalledVersionStore::VERSION_KEY)->value('value'));
         $this->assertSame(1, Site::query()->where('handle', 'default')->orWhere('handle', 'consumer-site')->count());
+    }
+
+    #[Test]
+    public function install_command_creates_database_backed_laravel_support_tables_without_running_host_migrations(): void
+    {
+        config()->set('session.driver', 'database');
+        config()->set('session.table', 'sessions');
+        config()->set('cache.default', 'database');
+        config()->set('cache.stores.database', [
+            'driver' => 'database',
+            'table' => 'cache',
+            'lock_table' => 'cache_locks',
+        ]);
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Support Admin',
+            '--email' => 'support-admin@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->assertTrue(Schema::hasTable('users'));
+        $this->assertTrue(Schema::hasTable('sessions'));
+        $this->assertTrue(Schema::hasTable('cache'));
+        $this->assertTrue(Schema::hasTable('cache_locks'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'support-admin@example.com',
+            'role' => 'super_admin',
+        ]);
+        $this->assertSame(1, DB::table('migrations')->where('migration', '0001_01_01_000000_create_users_table')->count());
+
+        $this->assertSame(0, Artisan::call('optimize:clear'));
+    }
+
+    #[Test]
+    public function install_command_support_table_creation_is_idempotent(): void
+    {
+        config()->set('session.driver', 'database');
+        config()->set('session.table', 'sessions');
+        config()->set('cache.default', 'database');
+        config()->set('cache.stores.database', [
+            'driver' => 'database',
+            'table' => 'cache',
+            'lock_table' => 'cache_locks',
+        ]);
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Idempotent Admin',
+            '--email' => 'idempotent-admin@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Idempotent Admin Two',
+            '--email' => 'idempotent-admin-two@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $this->assertTrue(Schema::hasTable('sessions'));
+        $this->assertTrue(Schema::hasTable('cache'));
+        $this->assertTrue(Schema::hasTable('cache_locks'));
+        $this->assertSame(1, User::query()->where('role', 'super_admin')->count());
     }
 }

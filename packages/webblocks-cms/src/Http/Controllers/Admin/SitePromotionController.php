@@ -35,7 +35,7 @@ class SitePromotionController extends Controller
         $plan = $this->planStore->load((string) request()->query('plan'));
         $preselectedTargetSiteId = $this->resolvePreselectedTargetSiteId();
 
-        return view('admin.sites.promote', [
+        return view('webblocks-cms::admin.sites.promote', [
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
             'plan' => $plan,
             'preselectedTargetSiteId' => $preselectedTargetSiteId,

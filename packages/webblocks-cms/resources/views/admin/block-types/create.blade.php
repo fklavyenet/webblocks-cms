@@ -13,7 +13,7 @@
             @csrf
 
             <div class="wb-card-body">
-                @include('admin.block-types._form')
+                @include('webblocks-cms::admin.block-types._form')
             </div>
 
             <div class="wb-card-footer">

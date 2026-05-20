@@ -99,14 +99,14 @@
                     <div class="wb-empty-text">Create a page link, custom URL, or dropdown group for this menu.</div>
                 </div>
             @else
-                @include('admin.navigation.partials.tree-list', ['items' => $items, 'depth' => 1])
+                @include('webblocks-cms::admin.navigation.partials.tree-list', ['items' => $items, 'depth' => 1])
             @endif
         </div>
     </div>
 @endsection
 
 @push('overlays')
-    @include('admin.navigation.partials.modal', [
+    @include('webblocks-cms::admin.navigation.partials.modal', [
         'modalId' => 'navigationCreateItemModal',
         'modalTitle' => 'Add Navigation Item',
         'modalDescription' => 'Create a normal navigation link for this menu.',
@@ -122,7 +122,7 @@
         'show' => $requestedModal === 'create-item',
     ])
 
-    @include('admin.navigation.partials.modal', [
+    @include('webblocks-cms::admin.navigation.partials.modal', [
         'modalId' => 'navigationCreateGroupModal',
         'modalTitle' => 'Add Navigation Group',
         'modalDescription' => 'Create a collapsible parent section that can contain child navigation items.',
@@ -139,7 +139,7 @@
     ])
 
     @if ($editModalItem)
-        @include('admin.navigation.partials.modal', [
+        @include('webblocks-cms::admin.navigation.partials.modal', [
             'modalId' => 'navigationEditModal-'.$editModalItem->id,
             'modalTitle' => 'Edit Navigation Item: '.$editModalItem->resolvedTitle(),
             'modalDescription' => 'Update the menu, parent group, and link settings for this item.',

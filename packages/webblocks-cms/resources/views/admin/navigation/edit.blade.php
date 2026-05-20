@@ -18,7 +18,7 @@
             @method('PUT')
 
             <div class="wb-card-body">
-                @include('admin.navigation._form')
+                @include('webblocks-cms::admin.navigation._form')
             </div>
 
             <div class="wb-card-footer">

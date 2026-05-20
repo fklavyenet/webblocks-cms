@@ -5,7 +5,7 @@
         </div>
     @endif
 
-    @include('admin.media.asset-picker-panel', [
+    @include('webblocks-cms::admin.media.asset-picker-panel', [
         'name' => 'image-asset',
         'inputId' => 'asset_id',
         'fieldName' => 'asset_id',

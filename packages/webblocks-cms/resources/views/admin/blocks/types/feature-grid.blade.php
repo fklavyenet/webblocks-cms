@@ -22,7 +22,7 @@
         <textarea id="content" name="content" class="wb-textarea" rows="5">{{ old('content', $block->content) }}</textarea>
     </div>
 
-    @include('admin.blocks.partials.column-items-editor', [
+    @include('webblocks-cms::admin.blocks.partials.column-items-editor', [
         'block' => $block,
         'inputName' => 'feature_items',
         'itemBlockType' => $featureItemBlockType ?? null,

@@ -1,5 +1,5 @@
 <div class="wb-stack wb-gap-4">
-    @include('admin.media.asset-picker-panel', [
+    @include('webblocks-cms::admin.media.asset-picker-panel', [
         'name' => 'download-asset',
         'inputId' => 'asset_id',
         'fieldName' => 'asset_id',

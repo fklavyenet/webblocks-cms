@@ -21,6 +21,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Install\InstallState;
+use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
@@ -49,6 +50,7 @@ class InstallWebBlocksCmsCommand extends Command
         private readonly EnsuresCmsUserAccess $ensuresCmsUserAccess,
         private readonly InstallState $installState,
         private readonly InstalledVersionStore $installedVersionStore,
+        private readonly LaravelSupportTableInstaller $laravelSupportTableInstaller,
     ) {
         parent::__construct();
     }
@@ -61,6 +63,7 @@ class InstallWebBlocksCmsCommand extends Command
         $this->publishPackageConfigIfMissing();
         $this->ensureUserModelIsCmsAware();
         $this->runPackageMigrations();
+        $this->ensureLaravelSupportTables();
         $this->installAssets();
         $this->ensureStorageLink();
         $this->seedCoreData();
@@ -118,6 +121,11 @@ class InstallWebBlocksCmsCommand extends Command
         ]);
 
         $this->output->write(Artisan::output());
+    }
+
+    private function ensureLaravelSupportTables(): void
+    {
+        $this->laravelSupportTableInstaller->ensureRequiredTables();
     }
 
     private function installAssets(): void

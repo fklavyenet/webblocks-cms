@@ -105,7 +105,7 @@
 
                         <div class="wb-stack wb-gap-2 wb-field">
                             <label for="og_image_media_id">Open Graph image</label>
-                            @include('admin.media.asset-picker-panel', [
+                            @include('webblocks-cms::admin.media.asset-picker-panel', [
                                 'name' => 'translation-og-image',
                                 'title' => 'Open Graph image',
                                 'inputId' => 'og_image_media_id',

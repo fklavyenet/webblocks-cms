@@ -58,7 +58,7 @@
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
 
-                    @include('admin.blocks._form', [
+                    @include('webblocks-cms::admin.blocks._form', [
                         'block' => $slotModalBlock,
                         'selectedBlockType' => $slotModalSelectedBlockType,
                         'pages' => collect([$page]),

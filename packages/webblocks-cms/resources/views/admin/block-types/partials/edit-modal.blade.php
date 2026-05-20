@@ -26,7 +26,7 @@
                 <input type="hidden" name="_block_type_id" value="{{ $blockType->id }}">
 
                 <div class="wb-modal-body">
-                    @include('admin.block-types._form')
+                    @include('webblocks-cms::admin.block-types._form')
                 </div>
 
                 <x-webblocks-cms::admin.form-actions

@@ -107,13 +107,13 @@
                         <strong>Settings for {{ $selectedBlockType?->name ?? $block->typeName() }}</strong>
                     </div>
                     <div class="wb-card-body">
-                        @includeIf('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
+                        @includeIf('webblocks-cms::admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug()), [
                             'block' => $block,
                             'selectedBlockType' => $selectedBlockType,
                         ])
 
                         @unless (view()->exists('admin.blocks.settings.'.($selectedBlockType?->slug ?? $block->typeSlug())))
-                            @include('admin.blocks.settings.fallback')
+                            @include('webblocks-cms::admin.blocks.settings.fallback')
                         @endunless
                     </div>
                 </div>

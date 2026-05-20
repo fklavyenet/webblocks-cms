@@ -11,7 +11,7 @@
 
     <div class="wb-stack wb-gap-1">
         <label>Logo</label>
-        @include('admin.media.asset-picker-panel', [
+        @include('webblocks-cms::admin.media.asset-picker-panel', [
             'name' => 'navbar-brand-logo',
             'inputId' => 'asset_id',
             'fieldName' => 'asset_id',

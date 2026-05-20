@@ -93,7 +93,7 @@
                             <div class="wb-settings-row">
                                 <div class="wb-settings-row-label"><strong>Visible fields</strong></div>
                                 <div class="wb-settings-row-control">
-                                    @include('admin.block-types.partials.contract-items', [
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                         'items' => $contract?->adminFormFields ?? [],
                                         'empty' => 'None documented.',
                                         'code' => true,
@@ -109,7 +109,7 @@
                             <div class="wb-settings-row">
                                 <div class="wb-settings-row-label"><strong>Storage ownership</strong></div>
                                 <div class="wb-settings-row-control">
-                                    @include('admin.block-types.partials.contract-items', [
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                         'items' => $contract?->storageFields ?? [],
                                         'empty' => 'None documented.',
                                     ])
@@ -118,7 +118,7 @@
                             <div class="wb-settings-row">
                                 <div class="wb-settings-row-label"><strong>Shared/settings fields</strong></div>
                                 <div class="wb-settings-row-control">
-                                    @include('admin.block-types.partials.contract-items', [
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                         'items' => $contract?->sharedSettingsFields ?? [],
                                         'empty' => 'Not applicable.',
                                         'code' => true,
@@ -140,7 +140,7 @@
                             <div class="wb-settings-row">
                                 <div class="wb-settings-row-label"><strong>Translatable fields</strong></div>
                                 <div class="wb-settings-row-control">
-                                    @include('admin.block-types.partials.contract-items', [
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                         'items' => $contract?->translatableFields ?? [],
                                         'empty' => 'Not applicable.',
                                         'code' => true,
@@ -153,7 +153,7 @@
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-header"><strong>Media / Relationships</strong></div>
                         <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                            @include('admin.block-types.partials.contract-items', [
+                            @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                 'items' => $contract?->mediaRelationshipFields ?? [],
                                 'empty' => 'Not applicable.',
                             ])
@@ -165,7 +165,7 @@
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-header"><strong>Children / Container Rules</strong></div>
                         <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                            @include('admin.block-types.partials.contract-items', [
+                            @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                 'items' => $contract?->childContainerBehavior ?? [],
                                 'empty' => 'Not applicable.',
                             ])
@@ -174,7 +174,7 @@
                                 <div class="wb-settings-row">
                                     <div class="wb-settings-row-label"><strong>Helper child whitelist</strong></div>
                                     <div class="wb-settings-row-control">
-                                        @include('admin.block-types.partials.contract-items', [
+                                        @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                             'items' => $contract->allowedChildTypeSlugs,
                                             'empty' => 'Not applicable.',
                                             'code' => true,
@@ -215,7 +215,7 @@
                         @if ($contract && $contract->knownGaps !== [])
                             <div class="wb-alert wb-alert-warning">
                                 <div>
-                                    @include('admin.block-types.partials.contract-items', [
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
                                         'items' => $contract->knownGaps,
                                         'empty' => 'No documented gaps.',
                                     ])

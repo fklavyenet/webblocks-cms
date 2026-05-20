@@ -32,7 +32,15 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Project\\": "project/"
-        }
+        },
+        "exclude-from-classmap": [
+            "app/Models/User.php",
+            "app/Http/Controllers/Controller.php",
+            "app/Providers/AppServiceProvider.php",
+            "database/seeders/DatabaseSeeder.php",
+            "database/factories/UserFactory.php",
+            "project/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
