@@ -132,12 +132,19 @@ class SystemUpdatesTest extends TestCase
         $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
 
         $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-        $this->assertSame('new-artisan', trim((string) File::get($targetRoot.'/artisan')));
-        $this->assertSame('new-bootstrap', trim((string) File::get($targetRoot.'/bootstrap/app.php')));
+        $this->assertSame('root-artisan', trim((string) File::get($targetRoot.'/artisan')));
+        $this->assertSame('root-bootstrap', trim((string) File::get($targetRoot.'/bootstrap/app.php')));
         $this->assertSame('APP_NAME=Original', trim((string) File::get($targetRoot.'/.env')));
         $this->assertSame('runtime-data', trim((string) File::get($targetRoot.'/storage/app/public/user.txt')));
         $this->assertSame('runtime-cache', trim((string) File::get($targetRoot.'/bootstrap/cache/config.php')));
         $this->assertSame("<?php\n\nreturn ['source' => 'runtime-project'];\n", File::get($targetRoot.'/project/config/sites.php'));
+        $this->assertSame("<?php\n\nreturn ['source' => 'runtime-auth'];\n", File::get($targetRoot.'/app/Models/User.php'));
+        $this->assertSame('runtime-config-override', trim((string) File::get($targetRoot.'/config/app.php')));
+        $this->assertSame('runtime-root-migration', trim((string) File::get($targetRoot.'/database/migrations/2026_01_01_000000_runtime.php')));
+        $this->assertFileExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
+        $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+        $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));
+        $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
         $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
 
         $run = SystemUpdateRun::query()->latest()->first();
@@ -147,6 +154,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('0.2.0', $run->to_version);
         $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
+        $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
         $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
@@ -480,14 +488,28 @@ class SystemUpdatesTest extends TestCase
         $targetRoot = $this->makeTemporaryDirectory('target-root');
         File::ensureDirectoryExists($targetRoot.'/bootstrap/cache');
         File::ensureDirectoryExists($targetRoot.'/storage/app/public');
-        File::put($targetRoot.'/artisan', "old-artisan\n");
-        File::put($targetRoot.'/bootstrap/app.php', "old-bootstrap\n");
-        File::put($targetRoot.'/composer.json', json_encode(['name' => 'fklavyenet/webblocks-cms'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        File::ensureDirectoryExists($targetRoot.'/app/Models');
+        File::ensureDirectoryExists($targetRoot.'/config');
+        File::ensureDirectoryExists($targetRoot.'/database/migrations');
+        File::ensureDirectoryExists($targetRoot.'/public/site/default');
+        File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates');
+        File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Legacy');
+        File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/public/cms');
+        File::put($targetRoot.'/artisan', "root-artisan\n");
+        File::put($targetRoot.'/bootstrap/app.php', "root-bootstrap\n");
+        File::put($targetRoot.'/composer.json', json_encode(['name' => 'test/install-shell'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         File::put($targetRoot.'/.env', "APP_NAME=Original\n");
         File::put($targetRoot.'/storage/app/public/user.txt', "runtime-data\n");
         File::put($targetRoot.'/bootstrap/cache/config.php', "runtime-cache\n");
+        File::put($targetRoot.'/app/Models/User.php', "<?php\n\nreturn ['source' => 'runtime-auth'];\n");
+        File::put($targetRoot.'/config/app.php', "runtime-config-override\n");
+        File::put($targetRoot.'/database/migrations/2026_01_01_000000_runtime.php', "runtime-root-migration\n");
+        File::put($targetRoot.'/public/site/default/site.css', "site-override\n");
         File::ensureDirectoryExists($targetRoot.'/project/config');
         File::put($targetRoot.'/project/config/sites.php', "<?php\n\nreturn ['source' => 'runtime-project'];\n");
+        File::put($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php', "old package update exception\n");
+        File::put($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php', "stale file\n");
+        File::put($targetRoot.'/packages/webblocks-cms/public/cms/admin.css', "old-package-css\n");
         $this->runProcess(['git', 'init'], $targetRoot);
         $this->runProcess(['git', 'remote', 'add', 'origin', 'git@github.com:fklavyenet/webblocks-cms.git'], $targetRoot);
 
@@ -495,13 +517,24 @@ class SystemUpdatesTest extends TestCase
         $archivePath = $archiveDirectory.'/webblocks-cms-0.2.0.zip';
         $archive = new ZipArchive;
         $this->assertTrue($archive->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
-        $archive->addFromString('artisan', "new-artisan\n");
-        $archive->addFromString('bootstrap/app.php', "new-bootstrap\n");
-        $archive->addFromString('composer.json', json_encode(['name' => 'fklavyenet/webblocks-cms', 'version' => '0.2.0'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        $archive->addFromString('.env', "APP_NAME=Overwritten\n");
-        $archive->addFromString('storage/app/public/user.txt', "should-not-overwrite\n");
-        $archive->addFromString('bootstrap/cache/config.php', "should-not-overwrite\n");
-        $archive->addFromString('project/config/sites.php', "<?php\n\nreturn ['source' => 'release-package'];\n");
+        $archive->addFromString('composer.json', json_encode([
+            'name' => 'fklavyenet/webblocks-cms',
+            'version' => '0.2.0',
+            'autoload' => [
+                'psr-4' => [
+                    'WebBlocks\\Cms\\' => 'src/',
+                    'WebBlocks\\Cms\\Database\\Seeders\\' => 'database/seeders/',
+                ],
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $archive->addFromString('src/Support/System/Updates/UpdateException.php', "new package update exception\n");
+        $archive->addFromString('src/Support/System/Updates/SystemUpdater.php', "package system updater\n");
+        $archive->addFromString('config/webblocks-updates.php', "<?php\n");
+        $archive->addFromString('resources/views/admin/system/updates.blade.php', '<div>package updates</div>');
+        $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
+        $archive->addFromString('routes/admin.php', "<?php\n");
+        $archive->addFromString('public/cms/admin.css', "package-css\n");
+        $archive->addFromString('stubs/starter/README.md', "package stub\n");
         $archive->close();
 
         return [$targetRoot, $archivePath, hash_file('sha256', $archivePath)];

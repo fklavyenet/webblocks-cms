@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\File;
 
 class UpdateInstaller
 {
+    private const PACKAGE_RUNTIME_PATH = 'packages/webblocks-cms';
+
     public function __construct(
         private readonly UpdateCommandRunner $commandRunner,
         private readonly InstallationGitRemoteGuard $installationGitRemoteGuard,
@@ -28,55 +30,59 @@ class UpdateInstaller
     public function applyPackage(string $packageRoot, array &$output): void
     {
         $targetPath = $this->targetPath();
+        $packageRuntimePath = $this->packageRuntimePath($targetPath);
+        $stagingPath = $packageRuntimePath.'.wb-update-new';
+        $backupPath = $packageRuntimePath.'.wb-update-old';
 
         if (! File::isDirectory($targetPath)) {
             throw new UpdateException('The application root configured for updates does not exist.', 'Missing update target path: '.$targetPath);
         }
 
-        foreach (File::allFiles($packageRoot) as $file) {
-            $sourcePath = $file->getPathname();
-            $relativePath = str_replace('\\', '/', ltrim(str_replace($packageRoot, '', $sourcePath), DIRECTORY_SEPARATOR));
+        if (! File::isDirectory($packageRoot)) {
+            throw new UpdateException('The downloaded update package could not be applied.', 'Validated package root is missing: '.$packageRoot);
+        }
 
-            if ($this->shouldSkipPath($relativePath)) {
-                continue;
+        $this->assertSafePackageRuntimePath($targetPath, $packageRuntimePath);
+        $this->assertSafePackageContents($packageRoot);
+
+        File::deleteDirectory($stagingPath);
+        File::deleteDirectory($backupPath);
+        File::ensureDirectoryExists(dirname($packageRuntimePath));
+
+        if (! File::copyDirectory($packageRoot, $stagingPath)) {
+            throw new UpdateException('The update could not apply the downloaded package.', 'Failed to stage package contents into '.$stagingPath.'.');
+        }
+
+        if (File::exists($packageRuntimePath)) {
+            if (! File::isDirectory($packageRuntimePath)) {
+                File::deleteDirectory($stagingPath);
+
+                throw new UpdateException('The update could not apply the downloaded package.', 'Package runtime path is not a directory: '.$packageRuntimePath);
             }
 
-            $destinationPath = $targetPath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            if (! @rename($packageRuntimePath, $backupPath)) {
+                File::deleteDirectory($stagingPath);
 
-            if (File::exists($destinationPath) && ! is_writable($destinationPath)) {
                 throw new UpdateException(
                     'The update could not write application files. Check file permissions and try again.',
-                    'Write permission denied for '.$relativePath.'.',
+                    'Failed to move existing package runtime out of the way: '.$packageRuntimePath,
                 );
             }
-
-            File::ensureDirectoryExists(dirname($destinationPath));
-
-            $temporaryPath = $destinationPath.'.wb-update-tmp';
-
-            if (File::exists($temporaryPath)) {
-                File::delete($temporaryPath);
-            }
-
-            File::copy($sourcePath, $temporaryPath);
-
-            $permissions = @fileperms($sourcePath);
-
-            if ($permissions !== false) {
-                @chmod($temporaryPath, $permissions & 0777);
-            }
-
-            if (! @rename($temporaryPath, $destinationPath)) {
-                File::delete($temporaryPath);
-
-                throw new UpdateException(
-                    'The update could not apply the downloaded package.',
-                    'Atomic replace failed for '.$relativePath.'.',
-                );
-            }
-
-            $output[] = 'Applied '.$relativePath;
         }
+
+        if (! @rename($stagingPath, $packageRuntimePath)) {
+            File::deleteDirectory($stagingPath);
+
+            if (File::isDirectory($backupPath)) {
+                @rename($backupPath, $packageRuntimePath);
+            }
+
+            throw new UpdateException('The update could not apply the downloaded package.', 'Failed to replace package runtime at '.$packageRuntimePath.'.');
+        }
+
+        File::deleteDirectory($backupPath);
+
+        $output[] = 'Replaced '.self::PACKAGE_RUNTIME_PATH.' with package artifact contents.';
     }
 
     public function installDependencies(array &$output): void
@@ -125,26 +131,34 @@ class UpdateInstaller
         return (string) config('webblocks-updates.installer.target_path', base_path());
     }
 
-    private function shouldSkipPath(string $relativePath): bool
+    private function packageRuntimePath(string $targetPath): string
     {
-        $normalizedPath = trim(str_replace('\\', '/', $relativePath), '/');
+        return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::PACKAGE_RUNTIME_PATH);
+    }
 
-        if ($normalizedPath === '' || $normalizedPath === '.env' || str_starts_with($normalizedPath, '.env.')) {
-            return true;
+    private function assertSafePackageRuntimePath(string $targetPath, string $packageRuntimePath): void
+    {
+        $normalizedTargetPath = rtrim(str_replace('\\', '/', $targetPath), '/');
+        $normalizedPackageRuntimePath = rtrim(str_replace('\\', '/', $packageRuntimePath), '/');
+        $expectedPath = $normalizedTargetPath.'/'.self::PACKAGE_RUNTIME_PATH;
+
+        if ($normalizedPackageRuntimePath !== $expectedPath) {
+            throw new UpdateException('The update could not apply the downloaded package.', 'Refusing to apply package outside '.self::PACKAGE_RUNTIME_PATH.'.');
         }
+    }
 
-        foreach ((array) config('webblocks-updates.installer.excluded_paths', []) as $excludedPath) {
-            $excludedPath = trim(str_replace('\\', '/', (string) $excludedPath), '/');
+    private function assertSafePackageContents(string $packageRoot): void
+    {
+        foreach (File::allFiles($packageRoot, true) as $file) {
+            $relativePath = trim(str_replace('\\', '/', str_replace($packageRoot, '', $file->getPathname())), '/');
 
-            if ($excludedPath === '') {
+            if ($relativePath === '') {
                 continue;
             }
 
-            if ($normalizedPath === $excludedPath || str_starts_with($normalizedPath, $excludedPath.'/')) {
-                return true;
+            if (preg_match('/(^|\/)\.\.(\/|$)/', $relativePath) === 1 || str_starts_with($relativePath, '/')) {
+                throw new UpdateException('The downloaded update package contains invalid paths.', 'Refusing to apply package file outside '.self::PACKAGE_RUNTIME_PATH.': '.$relativePath);
             }
         }
-
-        return false;
     }
 }

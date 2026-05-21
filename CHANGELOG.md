@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.19 by making the in-app updater package-native: update ZIP validation now requires the package-root `fklavyenet/webblocks-cms` artifact shape with package-relative PSR-4 mappings, no longer accepts the retired root-managed `artisan` archive contract, and applies validated package contents only into `packages/webblocks-cms/`.
+- Replace root-wide updater file copying with package-subtree replacement so stale package files are removed safely during update apply while install-owned root paths such as `.env`, `storage/`, `project/`, `public/site/`, root config overrides, and the root Laravel shell remain untouched during the current transition.
+
 - Prepare v1.32.18 as a consumer package hotfix by building release artifacts from the package subtree root instead of the maintenance-repository root, so installed Composer metadata now autoloads `WebBlocks\\Cms\\...` from package-relative `src/` and `database/seeders/` paths.
 - Add installed-package release artifact coverage that validates the shipped `composer.json` manifest and PSR-4 class path expectations for updater support classes such as `WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException`, preventing maintenance-repo-only autoload paths like `packages/webblocks-cms/src/` from leaking into consumer releases.
 

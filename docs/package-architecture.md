@@ -385,7 +385,10 @@ Why these slices stay partially guarded
 
 - The long-term target remains Composer-managed package updates followed by controlled runtime steps.
 - Expected post-update steps may later include migrations, block type sync, cache clear, or asset publish or sync, but only when those package-owned resources become real and intentionally wired.
-- This documentation checkpoint does not change current System Update behavior.
+- The canonical release artifact is now the package root itself, not the maintenance repository root. Update ZIPs are valid when the archive root, or one top-level wrapper directory, contains the package `composer.json`, `src/`, `config/`, `resources/`, `database/`, `routes/`, and `public/` layout expected by `fklavyenet/webblocks-cms`.
+- The old root-managed updater archive shape is intentionally retired. There are no production installs that require preserving the former `artisan` plus root `composer.json` contract, so the in-app updater no longer accepts the maintenance-repository root as a canonical update package.
+- During the current transition, the root Laravel application remains install-owned and continues to run maintenance mode, migrations, seeders, sync commands, cache clears, and installed-version persistence from the install root.
+- In-app updates now apply the validated package artifact into `packages/webblocks-cms/` only. They do not overwrite the install-owned root shell, root config overrides, root migrations, `project/`, `storage/`, `.env`, or `public/site/`.
 - The `v1.31.65` boundary-completion checkpoint keeps this as a target note only. Current root Composer behavior and runtime update flow still remain authoritative until the first real package-owned runtime slice exists.
 
 Target install flow once the package-starter split is ready:

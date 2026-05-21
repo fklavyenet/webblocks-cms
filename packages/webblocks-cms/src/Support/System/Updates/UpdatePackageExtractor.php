@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Support\Facades\File;
+use JsonException;
 use ZipArchive;
 
 class UpdatePackageExtractor
@@ -106,12 +107,45 @@ class UpdatePackageExtractor
 
         throw new UpdateException(
             'The downloaded update package does not match the expected WebBlocks CMS structure.',
-            'Package validation failed because composer.json and artisan were not found at the archive root.',
+            'Package validation failed because a package-style WebBlocks CMS composer.json and src/ were not found at the archive root.',
         );
     }
 
     private function isValidPackageRoot(string $path): bool
     {
-        return File::isFile($path.'/artisan') && File::isFile($path.'/composer.json');
+        if (! File::isFile($path.'/composer.json') || ! File::isDirectory($path.'/src')) {
+            return false;
+        }
+
+        if (File::isFile($path.'/artisan')) {
+            return false;
+        }
+
+        if (File::isDirectory($path.'/packages/webblocks-cms')) {
+            return false;
+        }
+
+        try {
+            $composer = json_decode((string) File::get($path.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return false;
+        }
+
+        if (($composer['name'] ?? null) !== 'fklavyenet/webblocks-cms') {
+            return false;
+        }
+
+        $autoload = $composer['autoload']['psr-4'] ?? [];
+
+        if (($autoload['WebBlocks\\Cms\\'] ?? null) !== 'src/') {
+            return false;
+        }
+
+        if (array_key_exists('WebBlocks\\Cms\\Database\\Seeders\\', $autoload)
+            && ($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) !== 'database/seeders/') {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -49,6 +49,7 @@ class ReleasePackageBoundaryTest extends TestCase
     {
         $installedPackageRoot = $this->buildInstalledPackageSnapshot();
 
+        $this->assertFileDoesNotExist($installedPackageRoot.'/artisan');
         $this->assertFileExists($installedPackageRoot.'/src/Support/System/Updates/UpdateException.php');
         $this->assertFileExists($installedPackageRoot.'/src/Support/System/Updates/SystemUpdater.php');
         $this->assertFileExists($installedPackageRoot.'/src/Support/System/Updates/UpdateInstaller.php');

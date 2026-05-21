@@ -23,6 +23,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`
 - install wizard for first-run setup
 - system updates, backups, site export/import tools with a direct Sites-list export shortcut, preserved navigation item icons, and package-based Site Promotion workflows
+- in-app CMS updates now consume package-rooted release ZIPs and replace only `packages/webblocks-cms/`, keeping the install-owned Laravel shell and root overrides intact during the transition
 - site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
 - relational site-scoped `site_variables` with controlled `{{ site.variable_key }}` public token replacement, tabbed `Edit Site` sections, and portability through site clone and site export/import
 - site-scoped Shared Slots that can render reusable block trees publicly inside existing page slot wrappers, can be managed from the admin, can be assigned per page slot from the Edit Page screen, now have dedicated Shared Slot revision history and restore, and participate in site export/import and site clone workflows
