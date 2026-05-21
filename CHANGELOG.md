@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prepare v1.32.20 by fixing fresh-install schema drift for `site_variables`: the package fresh schema now creates the historical `is_enabled` column plus the runtime-supporting `site_id/is_enabled` and `site_id/sort_order/id` indexes so fresh consumer installs match the active runtime query contract.
+
 - Prepare v1.32.19 by making the in-app updater package-native: update ZIP validation now requires the package-root `fklavyenet/webblocks-cms` artifact shape with package-relative PSR-4 mappings, no longer accepts the retired root-managed `artisan` archive contract, and applies validated package contents only into `packages/webblocks-cms/`.
 - Replace root-wide updater file copying with package-subtree replacement so stale package files are removed safely during update apply while install-owned root paths such as `.env`, `storage/`, `project/`, `public/site/`, root config overrides, and the root Laravel shell remain untouched during the current transition.
 

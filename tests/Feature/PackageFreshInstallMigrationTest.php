@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PackageFreshInstallMigrationTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * @return array<string, array<string, array{reason: string, why: string}>>
      */
@@ -129,6 +134,96 @@ class PackageFreshInstallMigrationTest extends TestCase
 
         $this->assertStringContainsString("foreign('restored_from_shared_slot_revision_id', 'ss_revisions_restored_from_fk')", $migration);
         $this->assertStringNotContainsString('shared_slot_revisions_restored_from_shared_slot_revision_id_foreign', $migration);
+    }
+
+    #[Test]
+    public function fresh_install_schema_keeps_site_variables_runtime_columns_and_query_contract(): void
+    {
+        $this->assertTrue(Schema::hasTable('site_variables'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'site_id'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'key'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'label'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'value'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'sort_order'));
+        $this->assertTrue(Schema::hasColumn('site_variables', 'is_enabled'));
+
+        $siteId = DB::table('sites')->insertGetId([
+            'name' => 'Fresh Schema Site',
+            'handle' => 'fresh-schema-site',
+            'domain' => null,
+            'is_primary' => true,
+            'display_name' => null,
+            'tagline' => null,
+            'favicon_media_id' => null,
+            'social_image_media_id' => null,
+            'seo_title' => null,
+            'seo_description' => null,
+            'seo_keywords' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('site_variables')->insert([
+            [
+                'site_id' => $siteId,
+                'key' => 'disabled_variable',
+                'label' => 'Disabled Variable',
+                'value' => 'disabled',
+                'sort_order' => 5,
+                'is_enabled' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'site_id' => $siteId,
+                'key' => 'first_enabled',
+                'label' => 'First Enabled',
+                'value' => 'first',
+                'sort_order' => 10,
+                'is_enabled' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'site_id' => $siteId,
+                'key' => 'second_enabled',
+                'label' => 'Second Enabled',
+                'value' => 'second',
+                'sort_order' => 20,
+                'is_enabled' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $rows = DB::table('site_variables')
+            ->where('site_id', $siteId)
+            ->whereNotNull('site_id')
+            ->where('is_enabled', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame(['first_enabled', 'second_enabled'], $rows->pluck('key')->all());
+    }
+
+    #[Test]
+    public function fresh_site_variables_schema_declares_the_historical_runtime_indexes(): void
+    {
+        $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
+        $historicalMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_05_09_000001_create_site_variables_table.php'));
+
+        foreach ([
+            '$table->unsignedInteger(\'sort_order\')->default(0);',
+            '$table->boolean(\'is_enabled\')->default(true);',
+            '$table->unique([\'site_id\', \'key\']);',
+            '$table->index([\'site_id\', \'sort_order\', \'id\']);',
+            '$table->index([\'site_id\', \'is_enabled\']);',
+        ] as $expectedFragment) {
+            $this->assertStringContainsString($expectedFragment, $historicalMigration);
+            $this->assertStringContainsString($expectedFragment, $migration);
+        }
     }
 
     #[Test]

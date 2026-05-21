@@ -236,8 +236,11 @@ return new class extends Migration
             $table->string('label');
             $table->text('value')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
+            $table->boolean('is_enabled')->default(true);
             $table->timestamps();
             $table->unique(['site_id', 'key']);
+            $table->index(['site_id', 'sort_order', 'id']);
+            $table->index(['site_id', 'is_enabled']);
         });
     }
 
