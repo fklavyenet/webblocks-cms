@@ -2,24 +2,27 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use WebBlocks\Cms\Models\Media;
-use WebBlocks\Cms\Models\MediaFolder;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
-use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteMediaRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaFolderRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaUploadRequest;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Media\MediaBulkDeleter;
+use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaIndexState;
+use WebBlocks\Cms\Support\Media\MediaInUseException;
 use WebBlocks\Cms\Support\Media\MediaKindResolver;
 use WebBlocks\Cms\Support\Media\MediaUsageFilter;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class MediaController extends Controller
@@ -42,6 +45,8 @@ class MediaController extends Controller
         private readonly MediaUsageResolver $mediaUsageResolver,
         private readonly MediaIndexState $mediaIndexState,
         private readonly AdminAuthorization $authorization,
+        private readonly MediaDeleter $mediaDeleter,
+        private readonly MediaBulkDeleter $mediaBulkDeleter,
     ) {}
 
     public function index(): View
@@ -161,26 +166,38 @@ class MediaController extends Controller
     public function destroy(Media $media): RedirectResponse
     {
         $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
-        $usages = $this->mediaUsageResolver->resolve($media);
         $returnUrl = $this->mediaIndexState->safeReturnUrlFromRequest(request());
 
-        if ($usages->isNotEmpty()) {
-            $summary = $usages->take(3)->map(fn (array $usage) => $usage['context'].': '.$usage['label'])->implode(', ');
-
+        try {
+            $this->mediaDeleter->delete($media);
+        } catch (MediaInUseException $exception) {
             return redirect()
                 ->route('admin.media.edit', array_filter([
                     'media' => $media,
                     'return_url' => $returnUrl,
                 ]))
-                ->withErrors(['asset' => 'Media cannot be deleted because it is in use. '.$summary]);
+                ->withErrors(['asset' => 'Media cannot be deleted because it is in use. '.$exception->summary()]);
         }
-
-        Storage::disk($media->disk)->delete($media->path);
-        $media->delete();
 
         return redirect()
             ->to($returnUrl ?: route('admin.media.index'))
             ->with('status', 'Media deleted successfully.');
+    }
+
+    public function bulkDestroy(BulkDeleteMediaRequest $request): RedirectResponse
+    {
+        $result = $this->mediaBulkDeleter->deleteSelected($request->user(), $request->validated('media_ids'));
+        $returnUrl = $this->mediaIndexState->safeReturnUrlFromRequest($request);
+
+        $redirect = redirect()
+            ->to($returnUrl ?: route('admin.media.index'))
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['media' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 
     public function store(MediaUploadRequest $request): RedirectResponse

@@ -296,6 +296,7 @@
                     'submitLabel' => 'Delete selected',
                     'formAttributes' => [
                         'data-wb-admin-bulk-delete-form' => true,
+                        'data-wb-admin-bulk-input-name' => 'backup_ids[]',
                     ],
                     'submitAttributes' => [
                         'data-wb-admin-bulk-delete-submit' => true,

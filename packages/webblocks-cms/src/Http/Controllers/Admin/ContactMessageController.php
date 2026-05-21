@@ -4,16 +4,21 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\ContactMessages\ContactMessageBulkDeleter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteContactMessagesRequest;
 
 class ContactMessageController extends Controller
 {
-    public function __construct(private readonly AdminAuthorization $authorization) {}
+    public function __construct(
+        private readonly AdminAuthorization $authorization,
+        private readonly ContactMessageBulkDeleter $contactMessageBulkDeleter,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -111,5 +116,20 @@ class ContactMessageController extends Controller
         return redirect()
             ->route('admin.contact-messages.index')
             ->with('status', 'Message deleted.');
+    }
+
+    public function bulkDestroy(BulkDeleteContactMessagesRequest $request): RedirectResponse
+    {
+        $result = $this->contactMessageBulkDeleter->deleteSelected($request->user(), $request->validated('contact_message_ids'));
+
+        $redirect = redirect()
+            ->route('admin.contact-messages.index')
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['contact_messages' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 }

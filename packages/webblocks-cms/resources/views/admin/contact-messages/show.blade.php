@@ -21,11 +21,7 @@
             @endforeach
         </div>
 
-        <form method="POST" action="{{ route('admin.contact-messages.destroy', $message) }}" onsubmit="return confirm('Delete this message?');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="wb-btn wb-btn-danger">Delete</button>
-        </form>
+        <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal">Delete</button>
     </div>
 
     <div class="wb-grid wb-grid-2">
@@ -78,3 +74,23 @@
         </div>
     </div>
 @endsection
+
+@push('overlays')
+    @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+        'id' => 'delete-contact-message-modal',
+        'title' => 'Delete Contact Message',
+        'description' => 'This deletes the saved contact submission.',
+        'action' => route('admin.contact-messages.destroy', $message),
+        'method' => 'DELETE',
+        'submitLabel' => 'Delete message',
+    ])
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body wb-stack wb-gap-2">
+                <div><strong>{{ $message->subject ?: 'Contact Message #'.$message->id }}</strong></div>
+                <div class="wb-text-sm wb-text-muted">From {{ $message->name }} &lt;{{ $message->email }}&gt;</div>
+            </div>
+        </div>
+
+        <p class="wb-text-sm wb-text-muted">This cannot be undone from the admin UI.</p>
+    @endcomponent
+@endpush

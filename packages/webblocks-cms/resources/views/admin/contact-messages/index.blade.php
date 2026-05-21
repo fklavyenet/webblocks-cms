@@ -62,7 +62,7 @@
             </div>
         </div>
     @else
-        <div class="wb-card">
+        <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Contact Messages</strong>
@@ -70,10 +70,22 @@
                 </div>
             </div>
             <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                    'label' => 'selected',
+                    'deleteTarget' => '#bulk-delete-contact-messages-modal',
+                    'deleteLabel' => 'Delete selected',
+                ])
+
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
                         <thead>
                             <tr>
+                                <th>
+                                    <label class="wb-checkbox" for="select_all_visible_contact_messages">
+                                        <input id="select_all_visible_contact_messages" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible contact messages">
+                                        <span class="wb-sr-only">Select all visible contact messages</span>
+                                    </label>
+                                </th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Subject</th>
@@ -86,6 +98,12 @@
                         <tbody>
                             @foreach ($messages as $message)
                                 <tr>
+                                    <td>
+                                        <label class="wb-checkbox" for="contact_message_select_{{ $message->id }}">
+                                            <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="Select message from {{ $message->name }}">
+                                            <span class="wb-sr-only">Select message from {{ $message->name }}</span>
+                                        </label>
+                                    </td>
                                     <td class="wb-contact-message-cell">
                                         <strong>{{ $message->name }}</strong>
                                     </td>
@@ -159,5 +177,41 @@
 
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $messages, 'ariaLabel' => 'Contact messages pagination', 'compact' => true])
         </div>
+
+        @push('overlays')
+            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                'id' => 'bulk-delete-contact-messages-modal',
+                'title' => 'Delete Selected Contact Messages',
+                'description' => 'This deletes the selected saved contact submissions.',
+                'action' => route('admin.contact-messages.bulk-destroy'),
+                'method' => 'DELETE',
+                'submitLabel' => 'Delete selected',
+                'formAttributes' => [
+                    'data-wb-admin-bulk-delete-form' => true,
+                    'data-wb-admin-bulk-input-name' => 'contact_message_ids[]',
+                ],
+                'submitAttributes' => [
+                    'data-wb-admin-bulk-delete-submit' => true,
+                    'disabled' => true,
+                ],
+            ])
+                <div class="wb-card wb-card-muted">
+                    <div class="wb-card-body wb-stack wb-gap-2">
+                        <strong><span data-wb-admin-bulk-modal-count>0</span> selected contact messages will be deleted.</strong>
+                        <p class="wb-text-sm wb-text-muted">This bulk action applies only to messages visible on this page. The server re-checks access for every selected message before deletion.</p>
+                    </div>
+                </div>
+
+                <div data-wb-admin-bulk-inputs></div>
+                <input type="hidden" name="contact_message_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+            @endcomponent
+        @endpush
+
+        @push('scripts')
+            @php($bulkActionsJsPath = public_path('cms/js/admin/listing-bulk-actions.js'))
+            @if (is_file($bulkActionsJsPath))
+                <script src="{{ asset('cms/js/admin/listing-bulk-actions.js') }}?v={{ filemtime($bulkActionsJsPath) }}" defer></script>
+            @endif
+        @endpush
     @endif
 @endsection

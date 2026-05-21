@@ -477,6 +477,180 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
+    public function admin_messages_list_renders_bulk_delete_selection_ui_and_modal_without_browser_confirm(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Bulk UI',
+            'message' => 'Please bulk delete this.',
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-admin-bulk-listing', false);
+        $response->assertSee('data-wb-admin-select-all-visible', false);
+        $response->assertSee('data-wb-admin-row-select', false);
+        $response->assertSee('data-wb-target="#bulk-delete-contact-messages-modal"', false);
+        $response->assertSee(route('admin.contact-messages.bulk-destroy'), false);
+        $response->assertSee('name="contact_message_ids[]"', false);
+        $response->assertSee('value="'.$message->id.'"', false);
+        $response->assertSee('data-wb-admin-bulk-modal-count', false);
+        $response->assertDontSee('confirm(', false);
+    }
+
+    #[Test]
+    public function contact_message_detail_delete_uses_cms_modal_instead_of_browser_confirm(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Taylor Editor',
+            'email' => 'taylor@example.com',
+            'subject' => 'Modal delete',
+            'message' => 'Delete through modal.',
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-target="#delete-contact-message-modal"', false);
+        $response->assertSee(route('admin.contact-messages.destroy', $message), false);
+        $response->assertSee('Delete Contact Message');
+        $response->assertDontSee('confirm(', false);
+    }
+
+    #[Test]
+    public function contact_messages_bulk_delete_requires_authentication(): void
+    {
+        $this->delete(route('admin.contact-messages.bulk-destroy'), [
+            'contact_message_ids' => [1],
+        ])->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function admin_can_bulk_delete_selected_contact_messages(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $first = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'First Sender',
+            'email' => 'first@example.com',
+            'subject' => 'First',
+            'message' => 'First message.',
+            'status' => 'new',
+        ]);
+        $second = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Second Sender',
+            'email' => 'second@example.com',
+            'subject' => 'Second',
+            'message' => 'Second message.',
+            'status' => 'new',
+        ]);
+        $unselected = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Third Sender',
+            'email' => 'third@example.com',
+            'subject' => 'Third',
+            'message' => 'Third message.',
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.contact-messages.bulk-destroy'), [
+            'contact_message_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('admin.contact-messages.index'));
+        $response->assertSessionHas('status', '2 selected messages deleted.');
+        $this->assertDatabaseMissing('contact_messages', ['id' => $first->id]);
+        $this->assertDatabaseMissing('contact_messages', ['id' => $second->id]);
+        $this->assertDatabaseHas('contact_messages', ['id' => $unselected->id]);
+    }
+
+    #[Test]
+    public function contact_messages_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->from(route('admin.contact-messages.index'))
+            ->delete(route('admin.contact-messages.bulk-destroy'), [
+                'contact_message_ids' => [],
+            ])
+            ->assertRedirect(route('admin.contact-messages.index'))
+            ->assertSessionHasErrors(['contact_message_ids']);
+
+        $this->actingAs($user)
+            ->from(route('admin.contact-messages.index'))
+            ->delete(route('admin.contact-messages.bulk-destroy'), [
+                'contact_message_ids' => [999999],
+            ])
+            ->assertRedirect(route('admin.contact-messages.index'))
+            ->assertSessionHasErrors(['contact_message_ids.0']);
+    }
+
+    #[Test]
+    public function contact_messages_bulk_delete_reports_partial_success_for_inaccessible_messages(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.test',
+            'is_primary' => false,
+            'status' => 'active',
+        ]);
+        $otherPage = Page::query()->create([
+            'site_id' => $otherSite->id,
+            'title' => 'Other Contact',
+            'slug' => 'other-contact',
+            'status' => 'published',
+        ]);
+        $allowed = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => 'Allowed Sender',
+            'email' => 'allowed@example.com',
+            'subject' => 'Allowed',
+            'message' => 'Allowed message.',
+            'status' => 'new',
+        ]);
+        $inaccessible = ContactMessage::create([
+            'page_id' => $otherPage->id,
+            'name' => 'Other Sender',
+            'email' => 'other@example.com',
+            'subject' => 'Other',
+            'message' => 'Other message.',
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.contact-messages.bulk-destroy'), [
+            'contact_message_ids' => [$allowed->id, $inaccessible->id],
+        ]);
+
+        $response->assertRedirect(route('admin.contact-messages.index'));
+        $response->assertSessionHas('status', '1 selected message deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors(['contact_messages']);
+        $this->assertDatabaseMissing('contact_messages', ['id' => $allowed->id]);
+        $this->assertDatabaseHas('contact_messages', ['id' => $inaccessible->id]);
+    }
+
+    #[Test]
     public function admin_messages_list_pagination_preserves_filters_and_uses_compact_summary(): void
     {
         $user = User::factory()->create();

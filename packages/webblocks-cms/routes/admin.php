@@ -113,6 +113,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
         Route::get('media', [MediaController::class, 'index'])->name('media.index');
         Route::post('media', [MediaController::class, 'store'])->name('media.store');
         Route::post('media/folders', [MediaController::class, 'storeFolder'])->name('media.folders.store');
+        Route::delete('media/bulk', [MediaController::class, 'bulkDestroy'])->name('media.bulk-destroy');
         Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
         Route::get('media/{media}/edit', [MediaController::class, 'edit'])->name('media.edit');
         Route::put('media/{media}', [MediaController::class, 'update'])->name('media.update');
@@ -121,6 +122,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
         Route::patch('navigation/{navigation}/visibility', [NavigationItemController::class, 'toggleVisibility'])->name('navigation.visibility');
         Route::resource('navigation', NavigationItemController::class)->except(['show']);
         Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->name('contact-messages.index');
+        Route::delete('contact-messages/bulk', [AdminContactMessageController::class, 'bulkDestroy'])->name('contact-messages.bulk-destroy');
         Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->name('contact-messages.show');
         Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->name('contact-messages.status');
         Route::delete('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'destroy'])->name('contact-messages.destroy');

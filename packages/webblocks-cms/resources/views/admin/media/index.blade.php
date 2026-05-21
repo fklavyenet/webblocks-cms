@@ -100,7 +100,7 @@
         </div>
     </div>
 
-    <div class="wb-card">
+    <div class="wb-card" data-wb-admin-bulk-listing>
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                 <strong>Media Library</strong>
@@ -125,6 +125,10 @@
                 </div>
 
                 <div class="wb-cluster wb-cluster-2 wb-media-view-toggle">
+                    <label class="wb-checkbox" for="select_all_visible_media_toolbar">
+                        <input id="select_all_visible_media_toolbar" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible media">
+                        <span>Select visible</span>
+                    </label>
                     <a href="{{ route('admin.media.index', array_merge($baseQuery, ['view' => 'list'])) }}" class="wb-btn wb-btn-secondary" @if($viewMode === 'list') aria-current="page" @endif>
                         <i class="wb-icon wb-icon-list" aria-hidden="true"></i>
                         <span>List</span>
@@ -135,6 +139,14 @@
                     </a>
                 </div>
             </div>
+
+            @if ($assets->isNotEmpty())
+                @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                    'label' => 'selected',
+                    'deleteTarget' => '#bulk-delete-media-modal',
+                    'deleteLabel' => 'Delete selected',
+                ])
+            @endif
 
             @if ($assets->isEmpty())
                 <div class="wb-empty">
@@ -151,6 +163,11 @@
                         @php($assetUsages = $asset->resolvedUsages)
                         <div class="wb-card wb-card-muted wb-media-grid-card">
                             <div class="wb-card-body wb-stack wb-gap-3">
+                                <label class="wb-checkbox" for="media_grid_select_{{ $asset->id }}">
+                                    <input id="media_grid_select_{{ $asset->id }}" type="checkbox" value="{{ $asset->id }}" data-wb-admin-row-select aria-label="Select media {{ $asset->displayTitle() }}">
+                                    <span class="wb-sr-only">Select media {{ $asset->displayTitle() }}</span>
+                                </label>
+
                                 <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-grid-preview wb-no-decoration" title="Preview media">
                                     @if ($asset->canPreview() && $asset->url())
                                         <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}">
@@ -194,6 +211,12 @@
                     <table class="wb-table wb-table-striped wb-table-hover wb-media-table">
                         <thead>
                             <tr>
+                                <th>
+                                    <label class="wb-checkbox" for="select_all_visible_media_table">
+                                        <input id="select_all_visible_media_table" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible media">
+                                        <span class="wb-sr-only">Select all visible media</span>
+                                    </label>
+                                </th>
                                 <th>Preview</th>
                                 <th>Media</th>
                                 <th>Folder</th>
@@ -206,6 +229,12 @@
                             @foreach ($assets as $asset)
                                 @php($assetUsages = $asset->resolvedUsages)
                                 <tr>
+                                    <td>
+                                        <label class="wb-checkbox" for="media_select_{{ $asset->id }}">
+                                            <input id="media_select_{{ $asset->id }}" type="checkbox" value="{{ $asset->id }}" data-wb-admin-row-select aria-label="Select media {{ $asset->displayTitle() }}">
+                                            <span class="wb-sr-only">Select media {{ $asset->displayTitle() }}</span>
+                                        </label>
+                                    </td>
                                     <td>
                                         <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-preview-box wb-no-decoration" title="Preview media">
                                             @if ($asset->canPreview() && $asset->url())
@@ -267,6 +296,37 @@
 @endsection
 
 @push('overlays')
+    @if ($assets->isNotEmpty())
+        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+            'id' => 'bulk-delete-media-modal',
+            'title' => 'Delete Selected Media',
+            'description' => 'This deletes selected media records and their stored files when they are not in use.',
+            'action' => route('admin.media.bulk-destroy'),
+            'method' => 'DELETE',
+            'submitLabel' => 'Delete selected',
+            'formAttributes' => [
+                'data-wb-admin-bulk-delete-form' => true,
+                'data-wb-admin-bulk-input-name' => 'media_ids[]',
+            ],
+            'submitAttributes' => [
+                'data-wb-admin-bulk-delete-submit' => true,
+                'disabled' => true,
+            ],
+        ])
+            <input type="hidden" name="return_url" value="{{ $currentReturnUrl }}">
+
+            <div class="wb-card wb-card-muted">
+                <div class="wb-card-body wb-stack wb-gap-2">
+                    <strong><span data-wb-admin-bulk-modal-count>0</span> selected media items will be deleted.</strong>
+                    <p class="wb-text-sm wb-text-muted">This bulk action applies only to media visible on this page. The server re-checks access and usage for every selected item before deletion.</p>
+                </div>
+            </div>
+
+            <div data-wb-admin-bulk-inputs></div>
+            <input type="hidden" name="media_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+        @endcomponent
+    @endif
+
     @if ($previewAsset)
         <div class="wb-overlay-layer wb-overlay-layer--dialog" data-wb-media-preview-overlay data-wb-close-url="{{ route('admin.media.index', $previewBaseQuery) }}">
             <div class="wb-overlay-backdrop"></div>
@@ -480,4 +540,8 @@
 @endpush
 
 @push('scripts')
+    @php($bulkActionsJsPath = public_path('cms/js/admin/listing-bulk-actions.js'))
+    @if (is_file($bulkActionsJsPath))
+        <script src="{{ asset('cms/js/admin/listing-bulk-actions.js') }}?v={{ filemtime($bulkActionsJsPath) }}" defer></script>
+    @endif
 @endpush

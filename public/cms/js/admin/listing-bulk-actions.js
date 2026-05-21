@@ -16,6 +16,8 @@
 
     function syncHiddenInputs(modal, selected) {
         var target = modal ? modal.querySelector('[data-wb-admin-bulk-inputs]') : null;
+        var form = modal ? modal.querySelector('[data-wb-admin-bulk-delete-form]') : null;
+        var inputName = form ? (form.getAttribute('data-wb-admin-bulk-input-name') || 'backup_ids[]') : 'backup_ids[]';
 
         if (!target) {
             return;
@@ -26,7 +28,7 @@
         selected.forEach(function (checkbox) {
             var input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'backup_ids[]';
+            input.name = inputName;
             input.value = checkbox.value;
             target.appendChild(input);
         });
@@ -36,7 +38,7 @@
         var selected = selectedCheckboxes(listing);
         var rows = allCheckboxes(listing);
         var count = selected.length;
-        var selectAll = listing.querySelector('[data-wb-admin-select-all-visible]');
+        var selectAllControls = Array.prototype.slice.call(listing.querySelectorAll('[data-wb-admin-select-all-visible]'));
         var actionBar = listing.querySelector('[data-wb-admin-bulk-actions]');
         var countTarget = listing.querySelector('[data-wb-admin-bulk-count]');
         var trigger = listing.querySelector('[data-wb-admin-bulk-delete-trigger]');
@@ -64,10 +66,10 @@
             modalSubmit.disabled = count === 0;
         }
 
-        if (selectAll) {
+        selectAllControls.forEach(function (selectAll) {
             selectAll.checked = rows.length > 0 && count === rows.length;
             selectAll.indeterminate = count > 0 && count < rows.length;
-        }
+        });
 
         if (modal) {
             syncHiddenInputs(modal, selected);

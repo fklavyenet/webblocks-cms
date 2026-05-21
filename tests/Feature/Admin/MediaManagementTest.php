@@ -1574,6 +1574,201 @@ class MediaManagementTest extends TestCase
     }
 
     #[Test]
+    public function media_index_renders_bulk_delete_selection_ui_and_modal_without_browser_confirm(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $asset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/bulk-ui.jpg',
+            'filename' => 'bulk-ui.jpg',
+            'original_name' => 'bulk-ui.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bulk UI asset',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.media.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-admin-bulk-listing', false);
+        $response->assertSee('data-wb-admin-select-all-visible', false);
+        $response->assertSee('data-wb-admin-row-select', false);
+        $response->assertSee('data-wb-target="#bulk-delete-media-modal"', false);
+        $response->assertSee(route('admin.media.bulk-destroy'), false);
+        $response->assertSee('name="media_ids[]"', false);
+        $response->assertSee('value="'.$asset->id.'"', false);
+        $response->assertSee('data-wb-admin-bulk-modal-count', false);
+        $response->assertDontSee('confirm(', false);
+    }
+
+    #[Test]
+    public function media_bulk_delete_requires_authentication(): void
+    {
+        $this->delete(route('admin.media.bulk-destroy'), [
+            'media_ids' => [1],
+        ])->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function admin_can_bulk_delete_selected_unused_media(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->superAdmin()->create();
+        $first = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/bulk-first.jpg',
+            'filename' => 'bulk-first.jpg',
+            'original_name' => 'bulk-first.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bulk first asset',
+        ]);
+        $second = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/documents/bulk-second.pdf',
+            'filename' => 'bulk-second.pdf',
+            'original_name' => 'bulk-second.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 2048,
+            'kind' => 'document',
+            'visibility' => 'public',
+            'title' => 'Bulk second asset',
+        ]);
+        $unselected = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/bulk-unselected.jpg',
+            'filename' => 'bulk-unselected.jpg',
+            'original_name' => 'bulk-unselected.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bulk unselected asset',
+        ]);
+
+        foreach ([$first, $second, $unselected] as $media) {
+            Storage::disk('public')->put($media->path, 'placeholder');
+        }
+
+        $response = $this->actingAs($user)->delete(route('admin.media.bulk-destroy'), [
+            'media_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('admin.media.index'));
+        $response->assertSessionHas('status', '2 selected media items deleted.');
+        $this->assertDatabaseMissing('media', ['id' => $first->id]);
+        $this->assertDatabaseMissing('media', ['id' => $second->id]);
+        $this->assertDatabaseHas('media', ['id' => $unselected->id]);
+        $this->assertFalse(Storage::disk('public')->exists($first->path));
+        $this->assertFalse(Storage::disk('public')->exists($second->path));
+        $this->assertTrue(Storage::disk('public')->exists($unselected->path));
+    }
+
+    #[Test]
+    public function media_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $this->actingAs($user)
+            ->from(route('admin.media.index'))
+            ->delete(route('admin.media.bulk-destroy'), [
+                'media_ids' => [],
+            ])
+            ->assertRedirect(route('admin.media.index'))
+            ->assertSessionHasErrors(['media_ids']);
+
+        $this->actingAs($user)
+            ->from(route('admin.media.index'))
+            ->delete(route('admin.media.bulk-destroy'), [
+                'media_ids' => [999999],
+            ])
+            ->assertRedirect(route('admin.media.index'))
+            ->assertSessionHasErrors(['media_ids.0']);
+    }
+
+    #[Test]
+    public function media_bulk_delete_respects_usage_guards_and_reports_partial_success(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->superAdmin()->create();
+        $safeAsset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/bulk-safe.jpg',
+            'filename' => 'bulk-safe.jpg',
+            'original_name' => 'bulk-safe.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bulk safe asset',
+        ]);
+        $usedAsset = Asset::create([
+            'disk' => 'public',
+            'path' => 'media/images/bulk-used.jpg',
+            'filename' => 'bulk-used.jpg',
+            'original_name' => 'bulk-used.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 1024,
+            'kind' => 'image',
+            'visibility' => 'public',
+            'title' => 'Bulk used asset',
+        ]);
+        $page = Page::create([
+            'title' => 'Bulk Media Usage Page',
+            'slug' => 'bulk-media-usage-page',
+            'page_type' => 'default',
+            'status' => 'published',
+        ]);
+        $slotType = $this->slotType();
+        $blockType = BlockType::query()->firstOrCreate(
+            ['slug' => 'image'],
+            ['name' => 'Image', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1]
+        );
+
+        Block::create([
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'type' => 'image',
+            'block_type_id' => $blockType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $slotType->id,
+            'sort_order' => 0,
+            'title' => 'Protected image',
+            'asset_id' => $usedAsset->id,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        Storage::disk('public')->put($safeAsset->path, 'safe');
+        Storage::disk('public')->put($usedAsset->path, 'used');
+
+        $response = $this->actingAs($user)->delete(route('admin.media.bulk-destroy'), [
+            'media_ids' => [$safeAsset->id, $usedAsset->id],
+        ]);
+
+        $response->assertRedirect(route('admin.media.index'));
+        $response->assertSessionHas('status', '1 selected media item deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors(['media']);
+        $this->assertDatabaseMissing('media', ['id' => $safeAsset->id]);
+        $this->assertDatabaseHas('media', ['id' => $usedAsset->id]);
+        $this->assertFalse(Storage::disk('public')->exists($safeAsset->path));
+        $this->assertTrue(Storage::disk('public')->exists($usedAsset->path));
+    }
+
+    #[Test]
     public function media_edit_keeps_usage_and_file_details_modal_without_inline_delete_ui(): void
     {
         $user = User::factory()->superAdmin()->create();
