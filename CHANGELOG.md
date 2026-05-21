@@ -2,10 +2,12 @@
 
 ## Unreleased
 
-- Add selected bulk deletion to `Admin -> Maintenance -> Backups` with page-visible checkbox selection, a WebBlocks modal confirmation flow, server-side ID validation, partial-success handling, and focused endpoint/rendering coverage.
-- Replace the Backups list browser-confirm delete buttons with CMS/WebBlocks destructive confirmation modals, keeping single delete and bulk delete on the same admin modal pattern.
-- Extend the selected bulk-delete listing pattern to Contact Messages and Media, including page-visible selection, CMS/WebBlocks destructive confirmation modals, server-side per-record authorization, Media usage-guard preservation, partial-success feedback, and focused rendering/endpoint coverage.
-- Extend the selected bulk-delete listing pattern to Pages, Site Exports, and Site Imports, keeping selection page-visible only, preserving page/site-transfer cleanup rules, replacing row browser confirms with CMS/WebBlocks modals, and moving the Pages View column immediately after the Page column.
+## 1.32.26
+
+- Add selected bulk deletion to Backups, Contact Messages, Media, Pages, Site Exports, and Site Imports, using page-visible checkbox selection only with no select-all-across-filtered-results behavior.
+- Replace browser confirmation dialogs on those destructive listing flows with CMS/WebBlocks confirmation modals, covering both selected bulk delete and row delete actions where the listing exposes deletion.
+- Preserve server-side ID validation, per-record authorization and site-scope checks, domain-specific safety rules such as Media usage guards and transfer archive cleanup, partial-success feedback, and focused rendering/endpoint coverage for the expanded bulk-delete listing pattern.
+- Move the Pages listing `View` column immediately after the `Page` column while adding the new leading bulk-selection checkbox column.
 
 - Prepare v1.32.25 as a follow-up updater target hotfix so package-native System Updates replace both the root `packages/webblocks-cms` transition copy and the active Composer autoload package runtime under `vendor/fklavyenet/webblocks-cms/...` when consumers are still installed from the transition repository shape.
 - Add regression coverage for the exact fresh-consumer failure where Composer continued loading stale `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` controllers with root `admin/site-transfers.*` view calls after a successful System Update.
