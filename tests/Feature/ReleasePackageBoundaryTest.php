@@ -69,6 +69,37 @@ class ReleasePackageBoundaryTest extends TestCase
         );
     }
 
+    #[Test]
+    public function release_artifact_and_source_checkout_package_controllers_use_namespaced_site_transfer_views(): void
+    {
+        $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+        $sourceCheckoutRoot = $this->buildRepositorySourceSnapshot();
+
+        foreach ([
+            $installedPackageRoot.'/src/Http/Controllers/Admin/SiteExportController.php',
+            $installedPackageRoot.'/src/Http/Controllers/Admin/SiteImportController.php',
+            $sourceCheckoutRoot.'/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php',
+            $sourceCheckoutRoot.'/packages/webblocks-cms/src/Http/Controllers/Admin/SiteImportController.php',
+        ] as $controllerPath) {
+            $contents = (string) file_get_contents($controllerPath);
+
+            $this->assertStringContainsString('webblocks-cms::admin.site-transfers', $contents, $controllerPath);
+
+            foreach ([
+                "view('admin/site-transfers",
+                'view("admin/site-transfers',
+                "view('admin.site-transfers",
+                'view("admin.site-transfers',
+                "response()->view('admin/site-transfers",
+                'response()->view("admin/site-transfers',
+                "response()->view('admin.site-transfers",
+                'response()->view("admin.site-transfers',
+            ] as $forbiddenViewReference) {
+                $this->assertStringNotContainsString($forbiddenViewReference, $contents, $controllerPath);
+            }
+        }
+    }
+
     protected function tearDown(): void
     {
         foreach ($this->temporaryDirectories as $directory) {
@@ -110,6 +141,26 @@ class ReleasePackageBoundaryTest extends TestCase
         }
 
         return $installedPackageRoot;
+    }
+
+    private function buildRepositorySourceSnapshot(): string
+    {
+        $stagingDirectory = $this->makeTemporaryDirectory('release-source-checkout');
+
+        $archive = new Process([
+            'git',
+            'archive',
+            '--format=tar',
+            '--worktree-attributes',
+            'HEAD',
+        ], base_path());
+        $archive->mustRun();
+
+        $extract = new Process(['tar', '-xf', '-', '-C', $stagingDirectory], base_path());
+        $extract->setInput($archive->getOutput());
+        $extract->mustRun();
+
+        return $stagingDirectory;
     }
 
     private function makeTemporaryDirectory(string $prefix): string

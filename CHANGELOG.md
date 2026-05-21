@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.24 as a follow-up fresh-consumer package-boundary hotfix by adding release-artifact and Composer source-checkout assertions for the active Site Export / Import controllers, ensuring shipped `src/...` and `packages/webblocks-cms/src/...` controller files both render `webblocks-cms::admin.site-transfers.*` package views instead of root `admin.site-transfers.*` views.
+- Strengthen the release gate around the exact fresh-consumer failure so future tags cannot ship package controllers containing `view('admin/site-transfers...')`, `view('admin.site-transfers...')`, or matching `response()->view(...)` root view calls.
+
 - Prepare v1.32.23 as a fresh-consumer package-boundary hotfix by making the Site Export / Import controllers render package-owned `webblocks-cms::admin.site-transfers.*` views instead of root `admin.site-transfers.*` Blade names, keeping fresh Laravel consumers able to open the Export / Import admin screens without root view files.
 - Extend fresh-consumer smoke coverage and static package-boundary audits for the site transfer and promotion admin surfaces so package routes, controllers, and Blade files stay namespaced through `webblocks-cms::` and do not regress to root admin layouts, includes, or components.
 

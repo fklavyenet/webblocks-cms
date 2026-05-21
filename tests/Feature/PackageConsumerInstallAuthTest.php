@@ -6,6 +6,9 @@ use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
+use App\Models\Site;
+use App\Models\SiteExport;
+use App\Models\SiteImport;
 use App\Models\SlotType;
 use App\Models\SystemBackup;
 use App\Models\User;
@@ -177,6 +180,24 @@ class PackageConsumerInstallAuthTest extends TestCase
         $exportControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $importControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SiteImportController.php'));
         $promotionControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SitePromotionController.php'));
+        $site = Site::query()->firstOrFail();
+        $siteExport = SiteExport::query()->create([
+            'site_id' => $site->id,
+            'user_id' => $user->id,
+            'status' => SiteExport::STATUS_COMPLETED,
+            'includes_media' => false,
+            'archive_disk' => 'site-exports',
+            'archive_path' => 'consumer-export.zip',
+            'archive_name' => 'consumer-export.zip',
+            'archive_size_bytes' => 1024,
+        ]);
+        $siteImport = SiteImport::query()->create([
+            'user_id' => $user->id,
+            'status' => SiteImport::STATUS_VALIDATED,
+            'source_archive_name' => 'consumer-import.zip',
+            'archive_disk' => 'site-transfers',
+            'archive_path' => 'consumer-import.zip',
+        ]);
 
         $this->assertNotNull($exportRoute);
         $this->assertNotNull($importRoute);
@@ -205,6 +226,16 @@ class PackageConsumerInstallAuthTest extends TestCase
         $this->actingAs($user)->get(route('admin.site-transfers.imports.create'))
             ->assertOk()
             ->assertSee('Run Import');
+
+        $this->actingAs($user)->get(route('admin.site-transfers.exports.show', $siteExport))
+            ->assertOk()
+            ->assertSee('Export Details')
+            ->assertDontSee('admin.site-transfers.exports.show');
+
+        $this->actingAs($user)->get(route('admin.site-transfers.imports.show', $siteImport))
+            ->assertOk()
+            ->assertSee('Import Details')
+            ->assertDontSee('admin.site-transfers.imports.show');
 
         $this->actingAs($user)->get(route('admin.sites.promote'))
             ->assertOk()
