@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.28
+
 - Add an idempotent existing-install schema repair migration so package-native System Updates and source-maintained installs create the `pages_id_site_id_unique` parent key on `pages(id, site_id)` when older databases are missing it, keeping new backups portable for the `page_translations(page_id, site_id)` composite foreign key.
 - Extend backup/restore regression coverage around guarded MySQL/MariaDB imports and the page translation parent-key contract so future releases cover both fresh schemas and already-migrated installs.
 
