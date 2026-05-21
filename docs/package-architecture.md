@@ -506,7 +506,7 @@ The current Step 1 runtime-authority checkpoint extends that boundary further:
 - package-owned public controllers now back that public entry slice under `packages/webblocks-cms/src/Http/Controllers/Public/`
 - package-owned `ContactMessageRequest` and package-owned public entry views now back the moved public route entrypoints
 - root `App\Http\Controllers\PageController`, `PublicSearchController`, `ContactMessageController`, `PublicPrivacyConsentController`, and `App\Http\Requests\ContactMessageRequest` remain as compatibility wrappers extending the package classes
-- root models and support classes remain only where they serve still-excluded domains or compatibility wrappers; Users, System, install/update, backup/restore, export/import, promotion, public/admin asset runtime paths, migrations, and System Update behavior remain root-owned, so the package is still not ready to serve as a real independent consumer-app runtime without deeper extraction
+- root models and support classes remain only where they serve still-excluded domains or compatibility wrappers; Users, System, install/update, backup/restore, public/admin asset runtime paths, migrations, and System Update behavior remain root-owned, so the package is still not ready to serve as a fully independent consumer-app runtime without deeper extraction
 
 The current Step 2 public-rendering checkpoint extends package authority further behind those already-package-owned public routes:
 
@@ -533,7 +533,7 @@ The current Site and Locale admin runtime checkpoint moves one more coherent adm
 - package-owned Form Requests, `SiteLocale` and `SiteVariable` models, and directly supporting Site or Locale support services now live under package `src/`, with root `App\...` wrappers preserved for compatibility
 - package `resources/views/admin/sites/`, `resources/views/admin/sites/domains/`, `resources/views/admin/domains/`, and `resources/views/admin/locales/` now own the active Site, Domain, and Locale admin Blade trees through the `webblocks-cms::` namespace
 - root Site, Domain, and Locale Blade files now remain as thin compatibility wrappers that render the matching package-owned views
-- this batch intentionally does not move migrations, installer/update flows, backup/restore, site export/import, site promotion, auth/profile/User ownership, root config ownership, or public/cms asset authority
+- this batch intentionally does not move migrations, installer/update flows, backup/restore, auth/profile/User ownership, root config ownership, or public/cms asset authority
 
 Package-owned default config has now started for `webblocks-updates`, while the root config file still remains authoritative as the install override during the transition.
 
@@ -621,7 +621,7 @@ The remaining safe live operational-route follow-up is now also complete:
 - package-owned requests now also include `SystemSettingsRequest` under `packages/webblocks-cms/src/Http/Requests/Admin/`
 - package `resources/views/admin/slot-types/index.blade.php` and `resources/views/admin/system/settings.blade.php` now own the active Blade surfaces through the `webblocks-cms::` namespace
 - root `App\Http\Controllers\Admin\SlotTypeController`, `App\Http\Controllers\Admin\SystemSettingsController`, `App\Http\Requests\Admin\SystemSettingsRequest`, and the matching root Blade files remain as compatibility wrappers
-- this follow-up intentionally still does not move System Update implementation, backup or restore, site export or import, site promotion, installer, auth/profile/User ownership, migrations, root config ownership, or root `public/cms` runtime asset authority
+- this follow-up intentionally still does not move System Update implementation, backup or restore, installer, auth/profile/User ownership, migrations, root config ownership, or root `public/cms` runtime asset authority
 
 The admin shell and asset boundary audit is now complete:
 
@@ -641,7 +641,7 @@ The selected shared admin partial/component batches are now package-owned:
 - root `resources/views/components/admin/form-actions.blade.php` remains as the compatibility wrapper for existing `<x-admin.form-actions>` usage
 - package-owned admin views now prefer the package namespace for the admin layout and those selected shared partials/components
 - `webblocks:package-status` now reports the selected shared admin partial/component boundary plus the admin runtime view inventory that now includes the package-owned admin layout and root wrapper
-- root admin asset URLs and runtime authority under `public/cms`, brand assets, auth/profile/install/app/guest boundaries, migrations, updater, backup/restore, export/import, promotion, and release/version work remain unchanged
+- root admin asset URLs and runtime authority under `public/cms`, brand assets, auth/profile/install/app/guest boundaries, migrations, updater, backup/restore, and release/version work remain unchanged
 
 The v1.32.15 package boundary sweep adds a static release-gate audit for package-owned admin runtime references:
 
@@ -673,7 +673,7 @@ View boundaries still blocking independent package runtime:
 - package public layout, page shell, search shell, search modal, slot-entry views, and shipped public block-renderer partial tree are now authoritative through the `webblocks-cms::` namespace
 - root `resources/views/pages/partials/blocks/*` remains intentionally present as a compatibility wrapper layer so install-specific root block renderers and direct root view references continue to work during the transition
 - package admin rendering is now authoritative for `admin/pages/*`, `admin/blocks/*`, `admin/shared-slots/*`, `admin/media/*`, `admin/navigation/*`, `admin/block-types/*`, `admin/page-layouts/*`, `admin/page-layout-slots/*`, `admin/sites/*`, `admin/domains/*`, and `admin/locales/*` through the `webblocks-cms::` namespace, while matching root Blade files remain as compatibility wrappers
-- root admin rendering remains authoritative for the still-unmoved screens, especially `admin/users/*`, the remaining update and backup areas under `admin/system/*`, install/update tools, export/import, promotion, and other install or operations-focused admin areas
+- root admin rendering remains authoritative for the still-unmoved screens, especially install/auth/profile wrappers and app-owned user edge cases, while package rendering is authoritative for the active site transfer and promotion admin screens through `webblocks-cms::`
 
 Support and service boundaries still blocking independent package runtime:
 
@@ -686,7 +686,7 @@ Requests, commands, assets, migrations, and update-flow blockers:
 
 - many admin Form Requests can move later with root wrappers once the owning page, block, shared-slot, media, site, and navigation batches move
 - many editorial admin Form Requests have now already moved with root wrappers, but system, site portability, update, backup, install, and other operations-oriented requests still remain root-owned
-- package-used update, backup, import, export, promotion, and installer commands should not move yet because they still depend on root environment, filesystem, archive, Composer, migration, and install-state behavior
+- package-used update, backup, import, export, promotion, and installer commands should remain explicitly bounded because they still depend on environment, filesystem, archive, Composer, migration, and install-state behavior
 - root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
 - root migrations remain authoritative for source-maintained checkouts with maintenance-repository root Composer autoload authority; package-native fresh consumers installed with `webblocks:install` must not run host Laravel application migrations during System Update
 - package consumer System Updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when present, and otherwise skip migration execution without marking arbitrary host migrations as run

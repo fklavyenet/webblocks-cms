@@ -292,13 +292,15 @@ class SiteExportImportAdminTest extends TestCase
     }
 
     #[Test]
-    public function legacy_imports_index_redirects_to_combined_transfer_screen(): void
+    public function imports_index_renders_package_owned_combined_transfer_pointer(): void
     {
         $user = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($user)->get(route('admin.site-transfers.imports.index'));
 
-        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+        $response->assertOk();
+        $response->assertSee('Export / Import');
+        $response->assertSee(route('admin.site-transfers.exports.index'), false);
     }
 
     #[Test]

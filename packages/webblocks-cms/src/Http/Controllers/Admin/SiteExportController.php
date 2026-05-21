@@ -2,16 +2,16 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\SiteExportRequest;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
 
 class SiteExportController extends Controller
@@ -34,7 +34,7 @@ class SiteExportController extends Controller
             ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
             ->withQueryString();
 
-        return view('admin/site-transfers/exports/index', [
+        return view('webblocks-cms::admin.site-transfers.exports.index', [
             'exports' => $exports,
             'imports' => $imports,
             'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
@@ -82,7 +82,7 @@ class SiteExportController extends Controller
 
     public function show(SiteExport $siteExport): View
     {
-        return view('admin/site-transfers/exports/show', [
+        return view('webblocks-cms::admin.site-transfers.exports.show', [
             'siteExport' => $siteExport->load(['site', 'user']),
         ]);
     }

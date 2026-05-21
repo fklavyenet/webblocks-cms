@@ -71,8 +71,11 @@ class PackageFreshInstallMigrationTest extends TestCase
         return [
             'php-root-view' => [
                 "view('admin.",
+                "view('admin/",
                 'View::make(\'admin.',
+                'View::make(\'admin/',
                 "response()->view('admin.",
+                "response()->view('admin/",
                 "component('admin.",
                 "'layouts.admin'",
                 "'admin.blocks.types.",
@@ -88,8 +91,11 @@ class PackageFreshInstallMigrationTest extends TestCase
             ],
             'routes-root-view' => [
                 "view('admin.",
+                "view('admin/",
                 'View::make(\'admin.',
+                'View::make(\'admin/',
                 "response()->view('admin.",
+                "response()->view('admin/",
                 "component('admin.",
                 "'layouts.admin'",
                 "'admin.blocks.types.",
@@ -361,6 +367,72 @@ class PackageFreshInstallMigrationTest extends TestCase
             $this->assertStringNotContainsString("@extends('layouts.admin'", $contents, $view);
             $this->assertStringNotContainsString("@include('admin.", $contents, $view);
             $this->assertStringNotContainsString("@includeIf('admin.", $contents, $view);
+            $this->assertStringNotContainsString('<x-admin.', $contents, $view);
+            $this->assertStringNotContainsString('<x-auth-password-field', $contents, $view);
+        }
+    }
+
+    #[Test]
+    public function package_owned_site_transfer_admin_renderers_use_package_view_names(): void
+    {
+        $expectations = [
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php' => [
+                "view('webblocks-cms::admin.site-transfers.exports.index'",
+                "view('webblocks-cms::admin.site-transfers.exports.show'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SiteImportController.php' => [
+                "view('webblocks-cms::admin.site-transfers.imports.index'",
+                "view('webblocks-cms::admin.site-transfers.imports.create'",
+                "view('webblocks-cms::admin.site-transfers.imports.show'",
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SitePromotionController.php' => [
+                "view('webblocks-cms::admin.sites.promote'",
+            ],
+        ];
+
+        foreach ($expectations as $path => $expectedViews) {
+            $contents = (string) file_get_contents(base_path($path));
+
+            foreach ($expectedViews as $expectedView) {
+                $this->assertStringContainsString($expectedView, $contents, $path);
+            }
+
+            foreach ([
+                "view('admin/site-transfers",
+                "view('admin.site-transfers",
+                "view('admin/site-exports",
+                "view('admin.site-exports",
+                "view('admin/site-imports",
+                "view('admin.site-imports",
+                "view('admin/site-promotions",
+                "view('admin.site-promotions",
+            ] as $unexpectedView) {
+                $this->assertStringNotContainsString($unexpectedView, $contents, $path);
+            }
+        }
+    }
+
+    #[Test]
+    public function package_owned_site_transfer_admin_views_keep_package_layout_and_include_boundaries(): void
+    {
+        $views = [
+            'packages/webblocks-cms/resources/views/admin/site-transfers/exports/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/site-transfers/exports/show.blade.php',
+            'packages/webblocks-cms/resources/views/admin/site-transfers/imports/index.blade.php',
+            'packages/webblocks-cms/resources/views/admin/site-transfers/imports/create.blade.php',
+            'packages/webblocks-cms/resources/views/admin/site-transfers/imports/show.blade.php',
+            'packages/webblocks-cms/resources/views/admin/sites/promote.blade.php',
+        ];
+
+        foreach ($views as $view) {
+            $contents = (string) file_get_contents(base_path($view));
+
+            $this->assertStringContainsString("@extends('webblocks-cms::layouts.admin'", $contents, $view);
+            $this->assertStringNotContainsString("@extends('layouts.admin'", $contents, $view);
+            $this->assertStringNotContainsString("@include('admin.", $contents, $view);
+            $this->assertStringNotContainsString("@include('admin/", $contents, $view);
+            $this->assertStringNotContainsString("@includeIf('admin.", $contents, $view);
+            $this->assertStringNotContainsString("@includeIf('admin/", $contents, $view);
             $this->assertStringNotContainsString('<x-admin.', $contents, $view);
             $this->assertStringNotContainsString('<x-auth-password-field', $contents, $view);
         }

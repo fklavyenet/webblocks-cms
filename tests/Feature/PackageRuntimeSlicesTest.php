@@ -64,7 +64,7 @@ class PackageRuntimeSlicesTest extends TestCase
         $response->assertOk();
         $response->assertSee('Package Admin Runtime Status');
         $response->assertSee('This screen is package-owned and available only when the dedicated package admin route guard is enabled.');
-        $response->assertSee('Package-owned admin routes and views now cover the safely movable CMS runtime slices, while install/auth, users, updates, backups, export/import, promotion, and root asset URLs remain root-authoritative boundaries.');
+        $response->assertSee('Package-owned admin routes and views now cover the safely movable CMS runtime slices, including site transfer and promotion screens, while install/auth, users, updates, backups, and root asset URLs remain root-authoritative boundaries.');
         $response->assertSee('data-webblocks-cms-package-admin-slice="status"', false);
 
         $dashboard = $this->actingAs($superAdmin)->get(route('admin.dashboard'));

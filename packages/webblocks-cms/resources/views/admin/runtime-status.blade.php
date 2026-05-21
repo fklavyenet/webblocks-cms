@@ -24,7 +24,7 @@
             <span>Reserved path</span>
             <code>{{ $packageRoutePath }}</code>
           </div>
-          <div class="wb-text-sm wb-text-muted">Package-owned admin routes and views now cover the safely movable CMS runtime slices, while install/auth, users, updates, backups, export/import, promotion, and root asset URLs remain root-authoritative boundaries.</div>
+          <div class="wb-text-sm wb-text-muted">Package-owned admin routes and views now cover the safely movable CMS runtime slices, including site transfer and promotion screens, while install/auth, users, updates, backups, and root asset URLs remain root-authoritative boundaries.</div>
         </div>
       </div>
     </div>

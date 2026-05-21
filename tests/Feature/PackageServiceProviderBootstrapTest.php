@@ -119,16 +119,6 @@ use WebBlocks\Cms\Support\Pages\PageWorkflowManager as PackagePageWorkflowManage
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager as PackageSharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema as PackageSharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager as PackageSharedSlotSourcePageManager;
-use WebBlocks\Cms\Support\System\Updates\SystemUpdater as PackageSystemUpdater;
-use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult as PackageUpdateCheckResult;
-use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner as PackageUpdateCommandRunner;
-use WebBlocks\Cms\Support\System\Updates\UpdateException as PackageUpdateException;
-use WebBlocks\Cms\Support\System\Updates\UpdateInstaller as PackageUpdateInstaller;
-use WebBlocks\Cms\Support\System\Updates\UpdatePackageDownloader as PackageUpdatePackageDownloader;
-use WebBlocks\Cms\Support\System\Updates\UpdatePackageExtractor as PackageUpdatePackageExtractor;
-use WebBlocks\Cms\Support\System\Updates\UpdateResult as PackageUpdateResult;
-use WebBlocks\Cms\Support\System\Updates\UpdateServerClient as PackageUpdateServerClient;
-use WebBlocks\Cms\Support\System\Updates\UpdateWorkspaceManager as PackageUpdateWorkspaceManager;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PackageServiceProviderBootstrapTest extends TestCase
@@ -396,7 +386,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('Package Admin Runtime Status', $adminRendered);
-        $this->assertStringContainsString('Package-owned admin routes and views now cover the safely movable CMS runtime slices, while install/auth, users, updates, backups, export/import, promotion, and root asset URLs remain root-authoritative boundaries.', $adminRendered);
+        $this->assertStringContainsString('Package-owned admin routes and views now cover the safely movable CMS runtime slices, including site transfer and promotion screens, while install/auth, users, updates, backups, and root asset URLs remain root-authoritative boundaries.', $adminRendered);
         $this->assertStringContainsString('Package Public Runtime Status', $publicRendered);
         $this->assertStringContainsString('the main public layout, page shell, and search views now render from the package namespace too.', $publicRendered);
         $this->assertSame(resource_path('views/welcome.blade.php'), app('view.finder')->find('welcome'));

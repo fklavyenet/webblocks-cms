@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.23 as a fresh-consumer package-boundary hotfix by making the Site Export / Import controllers render package-owned `webblocks-cms::admin.site-transfers.*` views instead of root `admin.site-transfers.*` Blade names, keeping fresh Laravel consumers able to open the Export / Import admin screens without root view files.
+- Extend fresh-consumer smoke coverage and static package-boundary audits for the site transfer and promotion admin surfaces so package routes, controllers, and Blade files stay namespaced through `webblocks-cms::` and do not regress to root admin layouts, includes, or components.
+
 - Prepare v1.32.22 as a follow-up updater hotfix by tightening `UpdateMigrationRunner` source-maintained detection: package consumers are no longer classified as root-migration-authoritative merely because their root package name and `packages/webblocks-cms` directory are present.
 - Add migration strategy diagnostics and regression coverage proving package-native consumers with an existing `users` table, a pending Laravel starter users migration, and a `packages/webblocks-cms` subtree still skip host application migrations during System Update, while the real maintenance checkout keeps source-maintained root migration authority through its explicit root Composer autoload mapping.
 

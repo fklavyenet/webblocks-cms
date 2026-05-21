@@ -72,6 +72,7 @@ The admin workflow now has two related entry points:
 
 - `Admin -> Sites` includes a per-site `Export` row action that opens a modal for the selected site, shows the site name and handle, and can include media files before creating the package.
 - `Admin -> Maintenance -> Export / Import` is the combined operational screen for transfer history and transfer actions. It shows `Site Exports` and `Site Imports` together, with `Run Export` and `Run Import` actions in the relevant listing card headers.
+- Fresh Composer consumer installs render the Export / Import screens from the package view namespace, so they do not require root `resources/views/admin/site-transfers/*` Blade files.
 
 Relationship between the tools:
 

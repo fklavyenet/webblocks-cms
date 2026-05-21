@@ -7,14 +7,17 @@ use App\Models\BlockType;
 use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
-use App\Models\User;
 use App\Models\SystemBackup;
+use App\Models\User;
 use App\Support\System\SystemBackupManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController as PackageSiteExportController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController as PackageSiteImportController;
+use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController as PackageSitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController as PackageSystemUpdateController;
 
 class PackageConsumerInstallAuthTest extends TestCase
@@ -131,6 +134,9 @@ class PackageConsumerInstallAuthTest extends TestCase
             'admin.system.search.index',
             'admin.system.backups.index',
             'admin.site-transfers.exports.index',
+            'admin.site-transfers.imports.index',
+            'admin.site-transfers.imports.create',
+            'admin.sites.promote',
             'admin.system.updates.index',
             'admin.reports.visitors.index',
             'admin.contact-messages.index',
@@ -159,6 +165,50 @@ class PackageConsumerInstallAuthTest extends TestCase
         ] as $routeName) {
             $this->actingAs($user)->get(route($routeName))->assertOk();
         }
+    }
+
+    #[Test]
+    public function site_transfer_routes_render_after_install_through_the_package_view_boundary(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+        $exportRoute = app('router')->getRoutes()->getByName('admin.site-transfers.exports.index');
+        $importRoute = app('router')->getRoutes()->getByName('admin.site-transfers.imports.index');
+        $promotionRoute = app('router')->getRoutes()->getByName('admin.sites.promote');
+        $exportControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
+        $importControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SiteImportController.php'));
+        $promotionControllerSource = (string) file_get_contents(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SitePromotionController.php'));
+
+        $this->assertNotNull($exportRoute);
+        $this->assertNotNull($importRoute);
+        $this->assertNotNull($promotionRoute);
+        $this->assertStringStartsWith(PackageSiteExportController::class.'@', (string) $exportRoute?->getAction('controller'));
+        $this->assertStringStartsWith(PackageSiteImportController::class.'@', (string) $importRoute?->getAction('controller'));
+        $this->assertStringStartsWith(PackageSitePromotionController::class.'@', (string) $promotionRoute?->getAction('controller'));
+        $this->assertStringContainsString("view('webblocks-cms::admin.site-transfers.exports.index'", $exportControllerSource);
+        $this->assertStringContainsString("view('webblocks-cms::admin.site-transfers.imports.index'", $importControllerSource);
+        $this->assertStringContainsString("view('webblocks-cms::admin.sites.promote'", $promotionControllerSource);
+        $this->assertStringNotContainsString("view('admin/site-transfers", $exportControllerSource);
+        $this->assertStringNotContainsString("view('admin.site-transfers", $exportControllerSource);
+        $this->assertStringNotContainsString("view('admin/site-transfers", $importControllerSource);
+        $this->assertStringNotContainsString("view('admin.site-transfers", $importControllerSource);
+
+        $this->actingAs($user)->get(route('admin.site-transfers.exports.index'))
+            ->assertOk()
+            ->assertSee('Site Exports')
+            ->assertSee('Site Imports');
+
+        $this->actingAs($user)->get(route('admin.site-transfers.imports.index'))
+            ->assertOk()
+            ->assertSee('Export / Import')
+            ->assertSee('Open Export / Import');
+
+        $this->actingAs($user)->get(route('admin.site-transfers.imports.create'))
+            ->assertOk()
+            ->assertSee('Run Import');
+
+        $this->actingAs($user)->get(route('admin.sites.promote'))
+            ->assertOk()
+            ->assertSee('Site Promotion');
     }
 
     #[Test]

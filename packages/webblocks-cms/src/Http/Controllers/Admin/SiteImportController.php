@@ -18,14 +18,14 @@ class SiteImportController extends Controller
         private readonly SiteImportManager $siteImportManager,
     ) {}
 
-    public function index(): RedirectResponse
+    public function index(): View
     {
-        return redirect()->route('admin.site-transfers.exports.index');
+        return view('webblocks-cms::admin.site-transfers.imports.index');
     }
 
     public function create(): View
     {
-        return view('admin/site-transfers/imports/create');
+        return view('webblocks-cms::admin.site-transfers.imports.create');
     }
 
     public function inspect(SiteImportUploadRequest $request): RedirectResponse
@@ -43,7 +43,7 @@ class SiteImportController extends Controller
 
     public function show(SiteImport $siteImport): View
     {
-        return view('admin/site-transfers/imports/show', [
+        return view('webblocks-cms::admin.site-transfers.imports.show', [
             'siteImport' => $siteImport->load(['targetSite', 'user']),
             'manifest' => $siteImport->manifest_json ?? [],
             'counts' => $siteImport->summary_json ?? [],
