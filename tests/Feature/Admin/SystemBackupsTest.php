@@ -771,14 +771,217 @@ class SystemBackupsTest extends TestCase
         $response->assertSee('Delete stuck running backup');
         $response->assertSee('name="force_running" value="1"', false);
         $response->assertSee('name="_method" value="DELETE"', false);
-        $response->assertSee('This backup is marked as running. Delete this stuck backup record anyway? Only do this if no backup process is still active.');
-        $response->assertSee('Delete this backup record and archive file? This cannot be undone.');
+        $response->assertSee('Delete Stuck Running Backup');
+        $response->assertSee('Only delete a running backup record when you are sure no backup process is still active.');
+        $response->assertSee('Delete Backup');
+        $response->assertSee('This deletes the backup record and archive file when present.');
         $response->assertSee('<th>Actions</th>', false);
         $response->assertSee('<div class="wb-action-group">', false);
+        $response->assertSee('data-wb-toggle="modal"', false);
+        $response->assertDontSee('onsubmit="return confirm', false);
         $response->assertDontSee('wb-justify-end', false);
         $response->assertDontSee('wb-backup-actions', false);
         $response->assertDontSee('<th>Type</th>', false);
         $response->assertDontSee('<th>Duration</th>', false);
+    }
+
+    #[Test]
+    public function backups_list_renders_bulk_selection_ui_and_modal_without_browser_confirm(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-ui.zip',
+            'archive_filename' => 'bulk-ui.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-admin-bulk-listing', false);
+        $response->assertSee('data-wb-admin-select-all-visible', false);
+        $response->assertSee('data-wb-admin-row-select', false);
+        $response->assertSee('data-wb-admin-bulk-actions', false);
+        $response->assertSee('data-wb-target="#bulk-delete-backups-modal"', false);
+        $response->assertSee(route('admin.system.backups.bulk-destroy'), false);
+        $response->assertSee('name="backup_ids[]"', false);
+        $response->assertSee('data-wb-admin-bulk-modal-count', false);
+        $response->assertSee('selected backups will be deleted.');
+        $response->assertSee('value="'.$backup->id.'"', false);
+        $response->assertDontSee('confirm(', false);
+    }
+
+    #[Test]
+    public function bulk_delete_requires_authentication(): void
+    {
+        $response = $this->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [1],
+        ]);
+
+        $response->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function non_super_admin_cannot_bulk_delete_backups(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->editor()->create();
+        $backup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'blocked.zip',
+            'archive_filename' => 'blocked.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [$backup->id],
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    }
+
+    #[Test]
+    public function super_admin_can_bulk_delete_selected_backups(): void
+    {
+        $backupsRoot = $this->useRealBackupsDiskRoot('bulk-delete-selected');
+
+        $user = User::factory()->superAdmin()->create();
+        $firstBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-first.zip',
+            'archive_filename' => 'bulk-first.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+        $secondBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_UPLOADED,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-second.zip',
+            'archive_filename' => 'bulk-second.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+        $unselectedBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-unselected.zip',
+            'archive_filename' => 'bulk-unselected.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+
+        foreach ([$firstBackup, $secondBackup, $unselectedBackup] as $backup) {
+            File::put($backupsRoot.'/'.$backup->archive_path, 'placeholder');
+        }
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [$firstBackup->id, $secondBackup->id],
+        ]);
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', '2 selected backups deleted.');
+        $this->assertDatabaseMissing('system_backups', ['id' => $firstBackup->id]);
+        $this->assertDatabaseMissing('system_backups', ['id' => $secondBackup->id]);
+        $this->assertDatabaseHas('system_backups', ['id' => $unselectedBackup->id]);
+        $this->assertFileDoesNotExist($backupsRoot.'/'.$firstBackup->archive_path);
+        $this->assertFileDoesNotExist($backupsRoot.'/'.$secondBackup->archive_path);
+        $this->assertFileExists($backupsRoot.'/'.$unselectedBackup->archive_path);
+    }
+
+    #[Test]
+    public function bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+
+        $missingResponse = $this->actingAs($user)->from(route('admin.system.backups.index'))->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [],
+        ]);
+
+        $missingResponse->assertRedirect(route('admin.system.backups.index'));
+        $missingResponse->assertSessionHasErrors(['backup_ids']);
+
+        $invalidResponse = $this->actingAs($user)->from(route('admin.system.backups.index'))->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [999999],
+        ]);
+
+        $invalidResponse->assertRedirect(route('admin.system.backups.index'));
+        $invalidResponse->assertSessionHasErrors(['backup_ids.0']);
+    }
+
+    #[Test]
+    public function bulk_delete_deletes_safe_backups_and_reports_partial_failures(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $safeBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_COMPLETED,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-safe.zip',
+            'archive_filename' => 'bulk-safe.zip',
+            'started_at' => now(),
+            'finished_at' => now(),
+            'summary' => 'Completed.',
+        ]);
+        $runningBackup = SystemBackup::query()->create([
+            'type' => SystemBackup::TYPE_MANUAL,
+            'status' => SystemBackup::STATUS_RUNNING,
+            'includes_database' => true,
+            'includes_uploads' => true,
+            'archive_disk' => 'backups',
+            'archive_path' => 'bulk-running.zip',
+            'archive_filename' => 'bulk-running.zip',
+            'started_at' => now(),
+            'summary' => 'Running.',
+        ]);
+
+        Storage::disk('backups')->put($safeBackup->archive_path, 'safe');
+        Storage::disk('backups')->put($runningBackup->archive_path, 'running');
+
+        $response = $this->actingAs($user)->delete(route('admin.system.backups.bulk-destroy'), [
+            'backup_ids' => [$safeBackup->id, $runningBackup->id],
+        ]);
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+        $response->assertSessionHas('status', '1 selected backup deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors(['system_backup']);
+        $this->assertDatabaseMissing('system_backups', ['id' => $safeBackup->id]);
+        $this->assertDatabaseHas('system_backups', ['id' => $runningBackup->id]);
+        $this->assertFalse(Storage::disk('backups')->exists($safeBackup->archive_path));
+        $this->assertTrue(Storage::disk('backups')->exists($runningBackup->archive_path));
     }
 
     #[Test]

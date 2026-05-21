@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSystemBackupsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemBackupRestoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemBackupUploadRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\SystemBackupBulkDeleter;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
@@ -29,6 +31,7 @@ class SystemBackupController extends Controller
         private readonly SystemBackupRestoreManager $systemBackupRestoreManager,
         private readonly UploadedSystemBackupManager $uploadedSystemBackupManager,
         private readonly BackupRestoreArchiveInspector $archiveInspector,
+        private readonly SystemBackupBulkDeleter $systemBackupBulkDeleter,
     ) {}
 
     public function index(): View
@@ -202,6 +205,21 @@ class SystemBackupController extends Controller
                 ->route('admin.system.backups.index')
                 ->withErrors(['system_backup' => $throwable->getMessage()]);
         }
+    }
+
+    public function bulkDestroy(BulkDeleteSystemBackupsRequest $request): RedirectResponse
+    {
+        $result = $this->systemBackupBulkDeleter->deleteSelected($request->validated('backup_ids'));
+
+        $redirect = redirect()
+            ->route('admin.system.backups.index')
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['system_backup' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 
     public function download(SystemBackup $backup): BinaryFileResponse

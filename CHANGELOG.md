@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add selected bulk deletion to `Admin -> Maintenance -> Backups` with page-visible checkbox selection, a WebBlocks modal confirmation flow, server-side ID validation, partial-success handling, and focused endpoint/rendering coverage.
+- Replace the Backups list browser-confirm delete buttons with CMS/WebBlocks destructive confirmation modals, keeping single delete and bulk delete on the same admin modal pattern.
+
 - Prepare v1.32.25 as a follow-up updater target hotfix so package-native System Updates replace both the root `packages/webblocks-cms` transition copy and the active Composer autoload package runtime under `vendor/fklavyenet/webblocks-cms/...` when consumers are still installed from the transition repository shape.
 - Add regression coverage for the exact fresh-consumer failure where Composer continued loading stale `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` controllers with root `admin/site-transfers.*` view calls after a successful System Update.
 

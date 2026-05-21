@@ -178,6 +178,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
             Route::post('system/backups', [SystemBackupController::class, 'store'])->name('system.backups.store');
             Route::get('system/backups/upload', [SystemBackupController::class, 'createUpload'])->name('system.backups.upload');
             Route::post('system/backups/upload', [SystemBackupController::class, 'upload'])->name('system.backups.upload.store');
+            Route::delete('system/backups/bulk', [SystemBackupController::class, 'bulkDestroy'])->name('system.backups.bulk-destroy');
             Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
             Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
             Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');

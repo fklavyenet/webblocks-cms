@@ -164,7 +164,7 @@
                 </div>
             </div>
         @else
-            <div class="wb-card">
+            <div class="wb-card" data-wb-admin-bulk-listing>
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                     <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                         <strong>Backups</strong>
@@ -181,10 +181,22 @@
                 </div>
 
                 <div class="wb-card-body">
+                    @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                        'label' => 'selected',
+                        'deleteTarget' => '#bulk-delete-backups-modal',
+                        'deleteLabel' => 'Delete selected',
+                    ])
+
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <label class="wb-checkbox" for="select_all_visible_backups">
+                                            <input id="select_all_visible_backups" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible backups">
+                                            <span class="wb-sr-only">Select all visible backups</span>
+                                        </label>
+                                    </th>
                                     <th>Created at</th>
                                     <th>Archive</th>
                                     <th>Status</th>
@@ -197,6 +209,12 @@
                             <tbody>
                                 @foreach ($backups as $backup)
                                     <tr>
+                                        <td>
+                                            <label class="wb-checkbox" for="backup_select_{{ $backup->id }}">
+                                                <input id="backup_select_{{ $backup->id }}" type="checkbox" value="{{ $backup->id }}" data-wb-admin-row-select aria-label="Select backup {{ $backup->archive_filename ?? '#'.$backup->id }}">
+                                                <span class="wb-sr-only">Select backup {{ $backup->archive_filename ?? '#'.$backup->id }}</span>
+                                            </label>
+                                        </td>
                                         <td>{{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>
                                             <div>{{ $backup->archive_filename ?? '-' }}</div>
@@ -220,26 +238,45 @@
                                                     </a>
                                                 @endif
 
-                                                <form method="POST" action="{{ route('admin.system.backups.destroy', $backup) }}" onsubmit="return confirm('{{ $backup->isRunning() ? 'This backup is marked as running. Delete this stuck backup record anyway? Only do this if no backup process is still active.' : 'Delete this backup record and archive file? This cannot be undone.' }}');">
-                                                    @csrf
-                                                    @method('DELETE')
-
-                                                    @if ($backup->isRunning())
-                                                        <input type="hidden" name="force_running" value="1">
-                                                    @endif
-
-                                                    <button
-                                                        type="submit"
-                                                        class="wb-action-btn wb-action-btn-delete"
-                                                        title="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
-                                                        aria-label="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
-                                                    >
-                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
+                                                <button
+                                                    type="button"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    title="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
+                                                    aria-label="{{ $backup->isRunning() ? 'Delete stuck running backup' : 'Delete backup' }}"
+                                                    data-wb-toggle="modal"
+                                                    data-wb-target="#delete-backup-{{ $backup->id }}-modal"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
+
+                                    @push('overlays')
+                                        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                                            'id' => 'delete-backup-'.$backup->id.'-modal',
+                                            'title' => $backup->isRunning() ? 'Delete Stuck Running Backup' : 'Delete Backup',
+                                            'description' => $backup->isRunning()
+                                                ? 'Only delete a running backup record when you are sure no backup process is still active.'
+                                                : 'This deletes the backup record and archive file when present.',
+                                            'action' => route('admin.system.backups.destroy', $backup),
+                                            'method' => 'DELETE',
+                                            'submitLabel' => $backup->isRunning() ? 'Delete stuck backup' : 'Delete backup',
+                                        ])
+                                            @if ($backup->isRunning())
+                                                <input type="hidden" name="force_running" value="1">
+                                            @endif
+
+                                            <div class="wb-card wb-card-muted">
+                                                <div class="wb-card-body wb-stack wb-gap-2">
+                                                    <div><strong>{{ $backup->archive_filename ?? 'Backup #'.$backup->id }}</strong></div>
+                                                    <div class="wb-text-sm wb-text-muted">Status {{ $backup->statusLabel() }} | Created {{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <p class="wb-text-sm wb-text-muted">This cannot be undone from the admin UI. Recovery requires another backup archive.</p>
+                                        @endcomponent
+                                    @endpush
                                 @endforeach
                             </tbody>
                         </table>
@@ -248,6 +285,41 @@
 
                 @include('webblocks-cms::admin.partials.pagination', ['paginator' => $backups])
             </div>
+
+            @push('overlays')
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'bulk-delete-backups-modal',
+                    'title' => 'Delete Selected Backups',
+                    'description' => 'This deletes the selected backup records and archive files when present.',
+                    'action' => route('admin.system.backups.bulk-destroy'),
+                    'method' => 'DELETE',
+                    'submitLabel' => 'Delete selected',
+                    'formAttributes' => [
+                        'data-wb-admin-bulk-delete-form' => true,
+                    ],
+                    'submitAttributes' => [
+                        'data-wb-admin-bulk-delete-submit' => true,
+                        'disabled' => true,
+                    ],
+                ])
+                    <div class="wb-card wb-card-muted">
+                        <div class="wb-card-body wb-stack wb-gap-2">
+                            <strong><span data-wb-admin-bulk-modal-count>0</span> selected backups will be deleted.</strong>
+                            <p class="wb-text-sm wb-text-muted">This first bulk action applies only to backups visible on this page. Active running backups are re-checked on the server and will be skipped unless they are stale.</p>
+                        </div>
+                    </div>
+
+                    <div data-wb-admin-bulk-inputs></div>
+                    <input type="hidden" name="backup_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+                @endcomponent
+            @endpush
+
+            @push('scripts')
+                @php($bulkActionsJsPath = public_path('cms/js/admin/listing-bulk-actions.js'))
+                @if (is_file($bulkActionsJsPath))
+                    <script src="{{ asset('cms/js/admin/listing-bulk-actions.js') }}?v={{ filemtime($bulkActionsJsPath) }}" defer></script>
+                @endif
+            @endpush
         @endif
     </div>
 @endsection
