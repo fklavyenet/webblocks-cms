@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.25 as a follow-up updater target hotfix so package-native System Updates replace both the root `packages/webblocks-cms` transition copy and the active Composer autoload package runtime under `vendor/fklavyenet/webblocks-cms/...` when consumers are still installed from the transition repository shape.
+- Add regression coverage for the exact fresh-consumer failure where Composer continued loading stale `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` controllers with root `admin/site-transfers.*` view calls after a successful System Update.
+
 - Prepare v1.32.24 as a follow-up fresh-consumer package-boundary hotfix by adding release-artifact and Composer source-checkout assertions for the active Site Export / Import controllers, ensuring shipped `src/...` and `packages/webblocks-cms/src/...` controller files both render `webblocks-cms::admin.site-transfers.*` package views instead of root `admin.site-transfers.*` views.
 - Strengthen the release gate around the exact fresh-consumer failure so future tags cannot ship package controllers containing `view('admin/site-transfers...')`, `view('admin.site-transfers...')`, or matching `response()->view(...)` root view calls.
 

@@ -10,6 +10,10 @@ class UpdateInstaller
 {
     private const PACKAGE_RUNTIME_PATH = 'packages/webblocks-cms';
 
+    private const COMPOSER_AUTOLOAD_PATH = 'vendor/composer/autoload_psr4.php';
+
+    private const COMPOSER_VENDOR_PACKAGE_PATH = 'vendor/fklavyenet/webblocks-cms';
+
     public function __construct(
         private readonly UpdateCommandRunner $commandRunner,
         private readonly UpdateMigrationRunner $migrationRunner,
@@ -31,9 +35,7 @@ class UpdateInstaller
     public function applyPackage(string $packageRoot, array &$output): void
     {
         $targetPath = $this->targetPath();
-        $packageRuntimePath = $this->packageRuntimePath($targetPath);
-        $stagingPath = $packageRuntimePath.'.wb-update-new';
-        $backupPath = $packageRuntimePath.'.wb-update-old';
+        $packageRuntimePaths = $this->packageRuntimePaths($targetPath);
 
         if (! File::isDirectory($targetPath)) {
             throw new UpdateException('The application root configured for updates does not exist.', 'Missing update target path: '.$targetPath);
@@ -43,8 +45,19 @@ class UpdateInstaller
             throw new UpdateException('The downloaded update package could not be applied.', 'Validated package root is missing: '.$packageRoot);
         }
 
-        $this->assertSafePackageRuntimePath($targetPath, $packageRuntimePath);
         $this->assertSafePackageContents($packageRoot);
+
+        foreach ($packageRuntimePaths as $packageRuntimePath) {
+            $this->replacePackageRuntime($targetPath, $packageRuntimePath, $packageRoot, $output);
+        }
+    }
+
+    private function replacePackageRuntime(string $targetPath, string $packageRuntimePath, string $packageRoot, array &$output): void
+    {
+        $stagingPath = $packageRuntimePath.'.wb-update-new';
+        $backupPath = $packageRuntimePath.'.wb-update-old';
+
+        $this->assertSafePackageRuntimePath($targetPath, $packageRuntimePath);
 
         File::deleteDirectory($stagingPath);
         File::deleteDirectory($backupPath);
@@ -83,7 +96,7 @@ class UpdateInstaller
 
         File::deleteDirectory($backupPath);
 
-        $output[] = 'Replaced '.self::PACKAGE_RUNTIME_PATH.' with package artifact contents.';
+        $output[] = 'Replaced '.$this->relativePath($targetPath, $packageRuntimePath).' with package artifact contents.';
     }
 
     public function installDependencies(array &$output): void
@@ -133,20 +146,116 @@ class UpdateInstaller
         return (string) config('webblocks-updates.installer.target_path', base_path());
     }
 
-    private function packageRuntimePath(string $targetPath): string
+    private function packageRuntimePaths(string $targetPath): array
+    {
+        $paths = [$this->rootPackageRuntimePath($targetPath)];
+
+        foreach ($this->composerPackageRuntimePaths($targetPath) as $composerRuntimePath) {
+            if (! in_array($composerRuntimePath, $paths, true)) {
+                $paths[] = $composerRuntimePath;
+            }
+        }
+
+        return $paths;
+    }
+
+    private function rootPackageRuntimePath(string $targetPath): string
     {
         return rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::PACKAGE_RUNTIME_PATH);
+    }
+
+    private function composerPackageRuntimePaths(string $targetPath): array
+    {
+        $autoloadPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, self::COMPOSER_AUTOLOAD_PATH);
+
+        if (! File::isFile($autoloadPath)) {
+            return [];
+        }
+
+        $autoload = require $autoloadPath;
+        $namespacePaths = $autoload['WebBlocks\\Cms\\'] ?? [];
+
+        if (is_string($namespacePaths)) {
+            $namespacePaths = [$namespacePaths];
+        }
+
+        if (! is_array($namespacePaths)) {
+            return [];
+        }
+
+        $paths = [];
+
+        foreach ($namespacePaths as $namespacePath) {
+            if (! is_string($namespacePath) || trim($namespacePath) === '') {
+                continue;
+            }
+
+            $runtimePath = $this->runtimePathFromNamespacePath($namespacePath);
+
+            if ($runtimePath === null || ! File::isDirectory($runtimePath)) {
+                continue;
+            }
+
+            $runtimePath = realpath($runtimePath) ?: $runtimePath;
+
+            if ($this->isSafeComposerRuntimePath($targetPath, $runtimePath)) {
+                $paths[] = $runtimePath;
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    private function runtimePathFromNamespacePath(string $namespacePath): ?string
+    {
+        $normalizedPath = rtrim(str_replace('\\', '/', $namespacePath), '/');
+
+        if (! str_ends_with($normalizedPath, '/src')) {
+            return null;
+        }
+
+        return str_replace('/', DIRECTORY_SEPARATOR, substr($normalizedPath, 0, -4));
     }
 
     private function assertSafePackageRuntimePath(string $targetPath, string $packageRuntimePath): void
     {
         $normalizedTargetPath = rtrim(str_replace('\\', '/', $targetPath), '/');
         $normalizedPackageRuntimePath = rtrim(str_replace('\\', '/', $packageRuntimePath), '/');
-        $expectedPath = $normalizedTargetPath.'/'.self::PACKAGE_RUNTIME_PATH;
+        $rootRuntimePath = $normalizedTargetPath.'/'.self::PACKAGE_RUNTIME_PATH;
 
-        if ($normalizedPackageRuntimePath !== $expectedPath) {
-            throw new UpdateException('The update could not apply the downloaded package.', 'Refusing to apply package outside '.self::PACKAGE_RUNTIME_PATH.'.');
+        if ($normalizedPackageRuntimePath === $rootRuntimePath) {
+            return;
         }
+
+        if ($this->isSafeComposerRuntimePath($targetPath, $packageRuntimePath)) {
+            return;
+        }
+
+        throw new UpdateException('The update could not apply the downloaded package.', 'Refusing to apply package outside the WebBlocks CMS runtime boundaries.');
+    }
+
+    private function isSafeComposerRuntimePath(string $targetPath, string $packageRuntimePath): bool
+    {
+        $normalizedTargetPath = rtrim(str_replace('\\', '/', realpath($targetPath) ?: $targetPath), '/');
+        $normalizedPackageRuntimePath = rtrim(str_replace('\\', '/', realpath($packageRuntimePath) ?: $packageRuntimePath), '/');
+        $normalizedVendorPackagePath = $normalizedTargetPath.'/'.self::COMPOSER_VENDOR_PACKAGE_PATH;
+
+        if ($normalizedPackageRuntimePath !== $normalizedVendorPackagePath
+            && ! str_starts_with($normalizedPackageRuntimePath, $normalizedVendorPackagePath.'/')) {
+            return false;
+        }
+
+        $composerPath = $packageRuntimePath.DIRECTORY_SEPARATOR.'composer.json';
+
+        if (! File::isFile($composerPath)) {
+            return false;
+        }
+
+        $composer = json_decode((string) File::get($composerPath), true);
+
+        return is_array($composer)
+            && ($composer['name'] ?? null) === 'fklavyenet/webblocks-cms'
+            && File::isDirectory($packageRuntimePath.DIRECTORY_SEPARATOR.'src');
     }
 
     private function assertSafePackageContents(string $packageRoot): void
@@ -162,5 +271,17 @@ class UpdateInstaller
                 throw new UpdateException('The downloaded update package contains invalid paths.', 'Refusing to apply package file outside '.self::PACKAGE_RUNTIME_PATH.': '.$relativePath);
             }
         }
+    }
+
+    private function relativePath(string $targetPath, string $path): string
+    {
+        $normalizedTargetPath = rtrim(str_replace('\\', '/', $targetPath), '/').'/';
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        if (str_starts_with($normalizedPath, $normalizedTargetPath)) {
+            return substr($normalizedPath, strlen($normalizedTargetPath));
+        }
+
+        return $path;
     }
 }

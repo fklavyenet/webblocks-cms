@@ -145,6 +145,9 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
         $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));
         $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
+        $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+        $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
+        $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
 
         $run = SystemUpdateRun::query()->latest()->first();
@@ -155,6 +158,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Using PHP binary: php', (string) $run->output);
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
+        $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
         $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
@@ -535,6 +539,9 @@ class SystemUpdatesTest extends TestCase
         File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates');
         File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Legacy');
         File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/public/cms');
+        File::ensureDirectoryExists($targetRoot.'/vendor/composer');
+        File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin');
+        File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates');
         File::put($targetRoot.'/artisan', "root-artisan\n");
         File::put($targetRoot.'/bootstrap/app.php', "root-bootstrap\n");
         File::put($targetRoot.'/composer.json', json_encode(['name' => 'test/install-shell'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -550,6 +557,17 @@ class SystemUpdatesTest extends TestCase
         File::put($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php', "old package update exception\n");
         File::put($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php', "stale file\n");
         File::put($targetRoot.'/packages/webblocks-cms/public/cms/admin.css', "old-package-css\n");
+        File::put($targetRoot.'/vendor/composer/autoload_psr4.php', "<?php\n\nreturn [\n    'WebBlocks\\\\Cms\\\\' => [__DIR__.'/../fklavyenet/webblocks-cms/packages/webblocks-cms/src'],\n];\n");
+        File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/composer.json', json_encode([
+            'name' => 'fklavyenet/webblocks-cms',
+            'autoload' => [
+                'psr-4' => [
+                    'WebBlocks\\Cms\\' => 'src/',
+                ],
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php', "old active vendor update exception\n");
+        File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php', "<?php\n\nreturn view('admin/site-transfers/exports/index');\n");
         $this->runProcess(['git', 'init'], $targetRoot);
         $this->runProcess(['git', 'remote', 'add', 'origin', 'git@github.com:fklavyenet/webblocks-cms.git'], $targetRoot);
 
@@ -569,6 +587,8 @@ class SystemUpdatesTest extends TestCase
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $archive->addFromString('src/Support/System/Updates/UpdateException.php', "new package update exception\n");
         $archive->addFromString('src/Support/System/Updates/SystemUpdater.php', "package system updater\n");
+        $archive->addFromString('src/Http/Controllers/Admin/SiteExportController.php', "<?php\n\nreturn view('webblocks-cms::admin.site-transfers.exports.index');\n");
+        $archive->addFromString('src/Http/Controllers/Admin/SiteImportController.php', "<?php\n\nreturn view('webblocks-cms::admin.site-transfers.imports.index');\n");
         $archive->addFromString('config/webblocks-updates.php', "<?php\n");
         $archive->addFromString('resources/views/admin/system/updates.blade.php', '<div>package updates</div>');
         $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
