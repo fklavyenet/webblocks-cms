@@ -60,6 +60,7 @@ Restore behavior is explicit:
 - restore replaces the current database
 - restore replaces `storage/app/public` when uploads are included in the archive
 - MySQL/MariaDB restores run the import with temporary foreign-key and unique-check guards, so valid full dumps remain portable even when table creation order differs between environments
+- existing installs updated through System Update also run package-owned repair migrations when needed; this keeps schema contracts such as the `pages(id, site_id)` parent key aligned with backups that contain site-scoped `page_translations` foreign keys
 
 Use Backup / Restore when you need to recover the install environment, not just one page.
 

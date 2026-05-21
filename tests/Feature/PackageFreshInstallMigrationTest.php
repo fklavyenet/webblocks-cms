@@ -237,6 +237,7 @@ class PackageFreshInstallMigrationTest extends TestCase
     {
         $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
         $historicalMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_04_25_102716_harden_page_translation_site_integrity.php'));
+        $updateMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/updates/2026_05_21_213000_ensure_pages_site_parent_key.php'));
 
         foreach ([
             "\$table->unique(['id', 'site_id'], 'pages_id_site_id_unique');",
@@ -254,6 +255,8 @@ class PackageFreshInstallMigrationTest extends TestCase
 
         $this->assertStringContainsString("\$table->unique(['id', 'site_id'], 'pages_id_site_id_unique');", $historicalMigration);
         $this->assertStringContainsString("\$table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')", $historicalMigration);
+        $this->assertStringContainsString("\$table->unique(['id', 'site_id'], self::INDEX_NAME);", $updateMigration);
+        $this->assertStringContainsString("private const INDEX_NAME = 'pages_id_site_id_unique';", $updateMigration);
     }
 
     #[Test]
