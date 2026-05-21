@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.16 as a hotfix for the package updater artifact boundary by guarding the `WebBlocks\Cms\Support\System\Updates\UpdateException` path and neighboring updater support classes that consumer installs autoload from `vendor/fklavyenet/webblocks-cms/src/...` during in-app updates.
+- Add focused package metadata, bootstrap, and release-archive integrity coverage so package-owned updater support classes resolve to real files and the release artifact includes the updater support files needed by consumer Composer autoloading.
+
 - Prepare v1.32.15 as a proactive package admin view and component boundary sweep so package-owned runtime no longer silently relies on root `admin.*`, `layouts.admin`, or root admin component names that exist only in this maintenance repository and fail in fresh consumer installs.
 - Add a static package boundary audit across package `src/`, `resources/views/`, and `routes/` with a narrow per-file allowlist for the remaining intentional block admin compatibility fallbacks, and extend fresh-consumer smoke coverage to representative package-owned admin routes plus both fallback block admin form render paths.
 

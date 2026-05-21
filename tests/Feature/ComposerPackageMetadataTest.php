@@ -3,11 +3,48 @@
 namespace Tests\Feature;
 
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
 use Tests\TestCase;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class ComposerPackageMetadataTest extends TestCase
 {
+    /**
+     * @return array<string, string>
+     */
+    private function packageUpdaterSupportClasses(): array
+    {
+        return [
+            'WebBlocks\\Cms\\Support\\System\\Updates\\SystemUpdater' => 'packages/webblocks-cms/src/Support/System/Updates/SystemUpdater.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateCheckResult' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateCheckResult.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateCommandRunner' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateCommandRunner.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateException.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateInstaller' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateInstaller.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdatePackageDownloader' => 'packages/webblocks-cms/src/Support/System/Updates/UpdatePackageDownloader.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdatePackageExtractor' => 'packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateResult' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateResult.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateServerClient' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateServerClient.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateWorkspaceManager' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateWorkspaceManager.php',
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    private function packageUpdaterSupportReferences(): array
+    {
+        return [
+            'packages/webblocks-cms/src/Http/Controllers/Admin/SystemUpdateController.php' => [
+                'WebBlocks\\Cms\\Support\\System\\Updates\\SystemUpdater',
+                'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException',
+            ],
+            'packages/webblocks-cms/src/Support/System/SystemUpdateInspector.php' => [
+                'WebBlocks\\Cms\\Support\\System\\Updates\\SystemUpdater',
+                'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateServerClient',
+            ],
+        ];
+    }
+
     #[Test]
     public function root_composer_json_exposes_installable_package_metadata(): void
     {
@@ -38,5 +75,44 @@ class ComposerPackageMetadataTest extends TestCase
         $providers = require base_path('bootstrap/providers.php');
 
         $this->assertContains(WebBlocksCmsServiceProvider::class, $providers);
+    }
+
+    #[Test]
+    public function package_composer_json_keeps_the_consumer_webblocks_namespace_pointing_at_src(): void
+    {
+        $composer = json_decode((string) file_get_contents(base_path('packages/webblocks-cms/composer.json')), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame('fklavyenet/webblocks-cms', $composer['name'] ?? null);
+        $this->assertSame('library', $composer['type'] ?? null);
+        $this->assertSame('src/', $composer['autoload']['psr-4']['WebBlocks\\Cms\\'] ?? null);
+        $this->assertSame('database/seeders/', $composer['autoload']['psr-4']['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null);
+    }
+
+    #[Test]
+    public function package_updater_support_classes_have_matching_files_and_resolve_through_autoload(): void
+    {
+        foreach ($this->packageUpdaterSupportClasses() as $className => $relativePath) {
+            $absolutePath = base_path($relativePath);
+
+            $this->assertFileExists($absolutePath, $relativePath);
+            $this->assertTrue(class_exists($className), $className);
+
+            $reflection = new ReflectionClass($className);
+
+            $this->assertSame(realpath($absolutePath), $reflection->getFileName(), $className);
+        }
+    }
+
+    #[Test]
+    public function package_owned_updater_runtime_references_only_existing_package_support_classes(): void
+    {
+        foreach ($this->packageUpdaterSupportReferences() as $relativePath => $classNames) {
+            $contents = (string) file_get_contents(base_path($relativePath));
+
+            foreach ($classNames as $className) {
+                $this->assertStringContainsString($className, $contents, $relativePath);
+                $this->assertTrue(class_exists($className), $className);
+            }
+        }
     }
 }

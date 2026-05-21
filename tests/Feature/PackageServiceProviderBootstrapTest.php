@@ -119,6 +119,16 @@ use WebBlocks\Cms\Support\Pages\PageWorkflowManager as PackagePageWorkflowManage
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager as PackageSharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema as PackageSharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager as PackageSharedSlotSourcePageManager;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdater as PackageSystemUpdater;
+use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult as PackageUpdateCheckResult;
+use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner as PackageUpdateCommandRunner;
+use WebBlocks\Cms\Support\System\Updates\UpdateException as PackageUpdateException;
+use WebBlocks\Cms\Support\System\Updates\UpdateInstaller as PackageUpdateInstaller;
+use WebBlocks\Cms\Support\System\Updates\UpdatePackageDownloader as PackageUpdatePackageDownloader;
+use WebBlocks\Cms\Support\System\Updates\UpdatePackageExtractor as PackageUpdatePackageExtractor;
+use WebBlocks\Cms\Support\System\Updates\UpdateResult as PackageUpdateResult;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient as PackageUpdateServerClient;
+use WebBlocks\Cms\Support\System\Updates\UpdateWorkspaceManager as PackageUpdateWorkspaceManager;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PackageServiceProviderBootstrapTest extends TestCase
@@ -178,6 +188,16 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageLayoutSlotComparison.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageLayoutSlotSyncer.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageDuplicator.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/SystemUpdater.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateCheckResult.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateCommandRunner.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateException.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateInstaller.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdatePackageDownloader.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateResult.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateServerClient.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateWorkspaceManager.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageDuplicateValidator.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageJsonImporter.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageSiteMover.php'));
