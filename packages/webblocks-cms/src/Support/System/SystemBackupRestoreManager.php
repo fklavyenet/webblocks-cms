@@ -155,7 +155,8 @@ class SystemBackupRestoreManager
                 restoreRecord: $restoreRecord,
             );
         } catch (Throwable $throwable) {
-            $output[] = 'Restore failed: '.$throwable->getMessage();
+            $sanitizedFailureDetail = $this->sanitizeFailureDetail($throwable->getMessage());
+            $output[] = 'Restore failed: '.$sanitizedFailureDetail;
 
             $this->recordRestoreOutcome(
                 status: SystemBackupRestore::STATUS_FAILED,
@@ -168,10 +169,10 @@ class SystemBackupRestoreManager
                 startedAt: $startedAt,
                 output: $output,
                 triggeredByUserId: $triggeredByUserId,
-                errorMessage: $throwable->getMessage(),
+                errorMessage: $sanitizedFailureDetail,
             );
 
-            throw new RuntimeException($throwable->getMessage(), previous: $throwable);
+            throw new RuntimeException($sanitizedFailureDetail, previous: $throwable);
         } finally {
             File::deleteDirectory($temporaryDirectory);
         }
@@ -328,5 +329,17 @@ class SystemBackupRestoreManager
         return SystemBackup::query()->whereKey($backup->getKey())->exists()
             ? $backup->getKey()
             : null;
+    }
+
+    private function sanitizeFailureDetail(string $message): string
+    {
+        $sanitized = preg_replace('/([?&](?:password|passwd|pwd|token|api[_-]?key|secret)=)[^&\s]+/i', '$1[redacted]', $message) ?? $message;
+        $sanitized = preg_replace('/\b(password|passwd|pwd|token|api[_-]?key|secret)=\S+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = preg_replace('/--defaults-extra-file=\S+/i', '--defaults-extra-file=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = preg_replace('/\b([A-Z_]*(?:PASSWORD|TOKEN|SECRET|APP_KEY))=[^\s]+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = str_replace(storage_path(), '[storage_path]', $sanitized);
+        $sanitized = str_replace(base_path(), '[base_path]', $sanitized);
+
+        return trim($sanitized) !== '' ? $sanitized : 'Restore failed for an unknown reason.';
     }
 }

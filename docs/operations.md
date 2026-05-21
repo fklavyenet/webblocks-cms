@@ -59,6 +59,7 @@ Restore behavior is explicit:
 - restore creates a fresh pre-restore safety backup first
 - restore replaces the current database
 - restore replaces `storage/app/public` when uploads are included in the archive
+- MySQL/MariaDB restores run the import with temporary foreign-key and unique-check guards, so valid full dumps remain portable even when table creation order differs between environments
 
 Use Backup / Restore when you need to recover the install environment, not just one page.
 

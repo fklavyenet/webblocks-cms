@@ -443,6 +443,73 @@ class SystemBackupRestoreManagerTest extends TestCase
         $this->assertSame('Pre-restore safety backup failed.', $restoreRecord->error_message);
     }
 
+    #[Test]
+    public function restore_failure_detail_is_sanitized_before_persistence_and_display(): void
+    {
+        Storage::fake('backups');
+
+        $user = User::factory()->create();
+        config()->set('filesystems.disks.public.root', $this->makeTemporaryDirectory('sanitized-failure-public-root'));
+
+        $sourceBackup = $this->createBackupRecord('restore-sanitized-source.zip');
+        $safetyBackup = $this->createBackupRecord('restore-sanitized-safety.zip', SystemBackup::TYPE_RESTORE_SAFETY);
+
+        $this->createArchive($sourceBackup->archive_path, [
+            'manifest.json' => json_encode([
+                'included_parts' => [
+                    'database' => true,
+                    'uploads' => false,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'database/database.sql' => 'select 1;',
+        ]);
+
+        $fakeBackupManager = new FakeSystemBackupManager($safetyBackup);
+        $fakeDatabaseRestoreRunner = new class extends DatabaseRestoreRunner
+        {
+            public function __construct() {}
+
+            public function restoreFrom(string $sqlPath, array &$output = []): array
+            {
+                throw new RuntimeException(
+                    'mysql --defaults-extra-file='.storage_path('app/temp/restore.cnf')
+                    .' password=secret token=abc APP_KEY=base64:key wrote '.storage_path('logs/restore.log')
+                    .' and failed at '.base_path('packages/webblocks-cms/database.sql')
+                );
+            }
+        };
+        $fakeMaintenanceRunner = new FakeRestoreMaintenanceRunner;
+
+        $this->app->instance(SystemBackupManager::class, $fakeBackupManager);
+        $this->app->instance(DatabaseRestoreRunner::class, $fakeDatabaseRestoreRunner);
+        $this->app->instance(SystemBackupRestoreMaintenanceRunner::class, $fakeMaintenanceRunner);
+
+        try {
+            app(SystemBackupRestoreManager::class)->restoreFromBackup($sourceBackup, $user->id);
+            $this->fail('Expected restore to fail for the simulated database restore error.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('--defaults-extra-file=[redacted]', $exception->getMessage());
+            $this->assertStringContainsString('password=[redacted]', $exception->getMessage());
+            $this->assertStringContainsString('token=[redacted]', $exception->getMessage());
+            $this->assertStringContainsString('APP_KEY=[redacted]', $exception->getMessage());
+            $this->assertStringContainsString('[storage_path]', $exception->getMessage());
+            $this->assertStringContainsString('[base_path]', $exception->getMessage());
+            $this->assertStringNotContainsString('secret', $exception->getMessage());
+            $this->assertStringNotContainsString(storage_path(), $exception->getMessage());
+            $this->assertStringNotContainsString(base_path(), $exception->getMessage());
+        }
+
+        $restoreRecord = SystemBackupRestore::query()->latest()->first();
+
+        $this->assertNotNull($restoreRecord);
+        $this->assertSame(SystemBackupRestore::STATUS_FAILED, $restoreRecord->status);
+        $this->assertSame($safetyBackup->id, $restoreRecord->safety_backup_id);
+        $this->assertStringContainsString('--defaults-extra-file=[redacted]', (string) $restoreRecord->error_message);
+        $this->assertStringNotContainsString('secret', (string) $restoreRecord->error_message);
+        $this->assertStringNotContainsString(storage_path(), (string) $restoreRecord->error_message);
+        $this->assertStringNotContainsString(base_path(), (string) $restoreRecord->output);
+    }
+
     private function createBackupRecord(string $archivePath, string $type = SystemBackup::TYPE_MANUAL): SystemBackup
     {
         return SystemBackup::query()->create([

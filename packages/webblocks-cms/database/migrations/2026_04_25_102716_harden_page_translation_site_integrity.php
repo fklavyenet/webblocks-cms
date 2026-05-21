@@ -47,7 +47,7 @@ return new class extends Migration
 
         if (! $this->hasIndex('pages', 'pages_id_site_id_unique')) {
             Schema::table('pages', function (Blueprint $table) {
-                $table->unique(['id', 'site_id']);
+                $table->unique(['id', 'site_id'], 'pages_id_site_id_unique');
             });
         }
 
@@ -59,7 +59,7 @@ return new class extends Migration
 
         if (! $this->hasForeignKey('page_translations', 'page_translations_page_id_site_id_foreign')) {
             Schema::table('page_translations', function (Blueprint $table) {
-                $table->foreign(['page_id', 'site_id'])->references(['id', 'site_id'])->on('pages')->cascadeOnDelete();
+                $table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')->references(['id', 'site_id'])->on('pages')->cascadeOnDelete();
             });
         }
 

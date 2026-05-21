@@ -310,6 +310,7 @@ return new class extends Migration
             $table->foreignId('review_requested_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->index(['site_id', 'status']);
+            $table->unique(['id', 'site_id'], 'pages_id_site_id_unique');
         });
 
         Schema::create('page_translations', function (Blueprint $table): void {
@@ -328,7 +329,14 @@ return new class extends Migration
             $table->foreignId('og_image_media_id')->nullable()->constrained('media')->nullOnDelete();
             $table->timestamps();
             $table->unique(['page_id', 'locale_id']);
-            $table->index(['site_id', 'locale_id', 'path']);
+            $table->unique(['site_id', 'locale_id', 'slug'], 'page_translations_site_locale_slug_unique');
+            $table->unique(['site_id', 'locale_id', 'path'], 'page_translations_site_locale_path_unique');
+            $table->index(['site_id', 'page_id'], 'page_translations_site_id_page_id_index');
+            $table->index(['locale_id', 'site_id'], 'page_translations_locale_id_site_id_index');
+            $table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')
+                ->references(['id', 'site_id'])
+                ->on('pages')
+                ->cascadeOnDelete();
         });
 
         Schema::create('page_assets', function (Blueprint $table): void {

@@ -233,6 +233,30 @@ class PackageFreshInstallMigrationTest extends TestCase
     }
 
     #[Test]
+    public function fresh_page_translation_schema_matches_site_scoped_foreign_key_contract(): void
+    {
+        $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
+        $historicalMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_04_25_102716_harden_page_translation_site_integrity.php'));
+
+        foreach ([
+            "\$table->unique(['id', 'site_id'], 'pages_id_site_id_unique');",
+            "\$table->unique(['site_id', 'locale_id', 'slug'], 'page_translations_site_locale_slug_unique');",
+            "\$table->unique(['site_id', 'locale_id', 'path'], 'page_translations_site_locale_path_unique');",
+            "\$table->index(['site_id', 'page_id'], 'page_translations_site_id_page_id_index');",
+            "\$table->index(['locale_id', 'site_id'], 'page_translations_locale_id_site_id_index');",
+            "\$table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')",
+            "->references(['id', 'site_id'])",
+            "->on('pages')",
+            "->cascadeOnDelete();",
+        ] as $expectedFragment) {
+            $this->assertStringContainsString($expectedFragment, $migration);
+        }
+
+        $this->assertStringContainsString("\$table->unique(['id', 'site_id'], 'pages_id_site_id_unique');", $historicalMigration);
+        $this->assertStringContainsString("\$table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')", $historicalMigration);
+    }
+
+    #[Test]
     public function package_owned_views_do_not_reference_root_admin_components_or_includes(): void
     {
         $this->assertPackageBoundaryAuditPasses(

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fix MySQL/MariaDB full database restores so backup SQL imports are wrapped with temporary `FOREIGN_KEY_CHECKS` and `UNIQUE_CHECKS` guards even when the dump omitted them, keeping out-of-order table creation portable across dev/test installs without weakening SQL validation.
+- Harden backup/restore failure reporting by sanitizing restore errors before they are persisted or shown in admin output, and align the package fresh-install schema with the historical `pages(id, site_id)` parent key and `page_translations(page_id, site_id)` composite foreign key/index contract.
+
 ## 1.32.26
 
 - Add selected bulk deletion to Backups, Contact Messages, Media, Pages, Site Exports, and Site Imports, using page-visible checkbox selection only with no select-all-across-filtered-results behavior.

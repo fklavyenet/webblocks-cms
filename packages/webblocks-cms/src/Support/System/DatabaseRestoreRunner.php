@@ -97,13 +97,15 @@ class DatabaseRestoreRunner
     private function runDirectMysqlRestore(string $driver, string $sqlPath, array $config): void
     {
         $defaultsFile = $this->createMysqlDefaultsFile($sqlPath, $config);
+        $restoreInputFile = null;
 
         try {
+            $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
             $command = $this->buildDirectMysqlRestoreCommand($driver, $defaultsFile, $config);
             $process = new Process($command);
             $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
 
-            $handle = fopen($sqlPath, 'rb');
+            $handle = fopen($restoreInputFile, 'rb');
 
             if ($handle === false) {
                 throw new RuntimeException('Backup SQL file could not be opened for restore.');
@@ -121,30 +123,40 @@ class DatabaseRestoreRunner
             }
         } finally {
             File::delete($defaultsFile);
+
+            if ($restoreInputFile !== null) {
+                File::delete($restoreInputFile);
+            }
         }
     }
 
     private function runDdevMysqlRestore(string $driver, string $sqlPath, array $config): void
     {
-        $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
-        $process = new Process($command);
-        $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
-
-        $handle = fopen($sqlPath, 'rb');
-
-        if ($handle === false) {
-            throw new RuntimeException('Backup SQL file could not be opened for restore.');
-        }
+        $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
 
         try {
-            $process->setInput($handle);
-            $process->run();
-        } finally {
-            fclose($handle);
-        }
+            $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
+            $process = new Process($command);
+            $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
 
-        if (! $process->isSuccessful()) {
-            throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
+            $handle = fopen($restoreInputFile, 'rb');
+
+            if ($handle === false) {
+                throw new RuntimeException('Backup SQL file could not be opened for restore.');
+            }
+
+            try {
+                $process->setInput($handle);
+                $process->run();
+            } finally {
+                fclose($handle);
+            }
+
+            if (! $process->isSuccessful()) {
+                throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
+            }
+        } finally {
+            File::delete($restoreInputFile);
         }
     }
 
@@ -205,6 +217,40 @@ class DatabaseRestoreRunner
         @chmod($defaultsFile, 0600);
 
         return $defaultsFile;
+    }
+
+    protected function createMysqlRestoreInputFile(string $sqlPath): string
+    {
+        $restoreInputFile = $sqlPath.'.restore-input.sql';
+        $source = fopen($sqlPath, 'rb');
+        $target = fopen($restoreInputFile, 'wb');
+
+        if ($source === false || $target === false) {
+            if (is_resource($source)) {
+                fclose($source);
+            }
+
+            if (is_resource($target)) {
+                fclose($target);
+            }
+
+            File::delete($restoreInputFile);
+
+            throw new RuntimeException('Backup SQL file could not be prepared for restore.');
+        }
+
+        try {
+            fwrite($target, "SET FOREIGN_KEY_CHECKS=0;\n");
+            fwrite($target, "SET UNIQUE_CHECKS=0;\n");
+            stream_copy_to_stream($source, $target);
+            fwrite($target, "\nSET UNIQUE_CHECKS=1;\n");
+            fwrite($target, "SET FOREIGN_KEY_CHECKS=1;\n");
+        } finally {
+            fclose($source);
+            fclose($target);
+        }
+
+        return $restoreInputFile;
     }
 
     private function findMysqlClientBinary(string $driver): string
