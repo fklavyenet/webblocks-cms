@@ -100,11 +100,32 @@ jobs:
           version="${{ steps.release.outputs.version }}"
           output_dir='dist'
           archive_path="${output_dir}/webblocks-cms-${version}.zip"
+          staging_dir="$(mktemp -d)"
+          package_root='packages/webblocks-cms'
 
           mkdir -p "$output_dir"
           rm -f "$archive_path" "${archive_path}.sha256"
 
-          git archive --format=zip --worktree-attributes --output "$archive_path" HEAD
+          cleanup() {
+            rm -rf "$staging_dir"
+          }
+
+          trap cleanup EXIT
+
+          git archive --format=tar --worktree-attributes HEAD "$package_root" | tar -xf - -C "$staging_dir"
+
+          package_dir="$staging_dir/$package_root"
+
+          if [ ! -f "$package_dir/composer.json" ]; then
+            printf 'Package composer.json not found at %s.\n' "$package_dir" >&2
+            exit 1
+          fi
+
+          (
+            cd "$package_dir"
+            zip -qr "$GITHUB_WORKSPACE/$archive_path" .
+          )
+
           shasum -a 256 "$archive_path" | cut -d' ' -f1 > "${archive_path}.sha256"
 
       - name: Capture archive checksum

@@ -12,6 +12,16 @@ class ComposerPackageMetadataTest extends TestCase
     /**
      * @return array<string, string>
      */
+    private function packageComposerAutoload(): array
+    {
+        $composer = json_decode((string) file_get_contents(base_path('packages/webblocks-cms/composer.json')), true, 512, JSON_THROW_ON_ERROR);
+
+        return $composer['autoload']['psr-4'] ?? [];
+    }
+
+    /**
+     * @return array<string, string>
+     */
     private function packageUpdaterSupportClasses(): array
     {
         return [
@@ -89,6 +99,27 @@ class ComposerPackageMetadataTest extends TestCase
     }
 
     #[Test]
+    public function package_composer_json_resolves_installed_update_exception_to_a_package_relative_src_path(): void
+    {
+        $autoload = $this->packageComposerAutoload();
+
+        $this->assertSame(
+            'src/Support/System/Updates/UpdateException.php',
+            $this->resolvePsr4ClassPath($autoload, 'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException')
+        );
+    }
+
+    #[Test]
+    public function package_composer_json_resolves_package_seeders_to_package_relative_database_paths(): void
+    {
+        $autoload = $this->packageComposerAutoload();
+
+        $this->assertSame('database/seeders/', $autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null);
+        $this->assertArrayHasKey('WebBlocks\\Cms\\', $autoload);
+        $this->assertArrayHasKey('WebBlocks\\Cms\\Database\\Seeders\\', $autoload);
+    }
+
+    #[Test]
     public function package_updater_support_classes_have_matching_files_and_resolve_through_autoload(): void
     {
         foreach ($this->packageUpdaterSupportClasses() as $className => $relativePath) {
@@ -114,5 +145,23 @@ class ComposerPackageMetadataTest extends TestCase
                 $this->assertTrue(class_exists($className), $className);
             }
         }
+    }
+
+    /**
+     * @param  array<string, string>  $autoload
+     */
+    private function resolvePsr4ClassPath(array $autoload, string $className): ?string
+    {
+        foreach ($autoload as $prefix => $path) {
+            if (! str_starts_with($className, $prefix)) {
+                continue;
+            }
+
+            $suffix = str_replace('\\', '/', substr($className, strlen($prefix)));
+
+            return rtrim($path, '/').'/'.$suffix.'.php';
+        }
+
+        return null;
     }
 }

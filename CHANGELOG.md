@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.18 as a consumer package hotfix by building release artifacts from the package subtree root instead of the maintenance-repository root, so installed Composer metadata now autoloads `WebBlocks\\Cms\\...` from package-relative `src/` and `database/seeders/` paths.
+- Add installed-package release artifact coverage that validates the shipped `composer.json` manifest and PSR-4 class path expectations for updater support classes such as `WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException`, preventing maintenance-repo-only autoload paths like `packages/webblocks-cms/src/` from leaking into consumer releases.
+
 - Prepare v1.32.17 as a fresh-consumer updater hotfix by making backup operations bootstrap the package-owned `backups` disk root when a new consumer install has not added the maintenance-repo filesystem disk config yet, so the mandatory pre-update backup can be created before in-app updates apply.
 - Preserve sanitized backup failure detail across the operational update boundary by recording the real pre-update backup failure reason in `system_update_runs` and `system_backups` without exposing secrets, credentials, or sensitive absolute paths, and add focused fresh-consumer and updater regression coverage for backup readiness, idempotent storage creation, and failure-detail persistence.
 
