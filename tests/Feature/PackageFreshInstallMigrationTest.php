@@ -8,6 +8,33 @@ use Tests\TestCase;
 class PackageFreshInstallMigrationTest extends TestCase
 {
     /**
+     * @return array<string, array<string, array{reason: string, why: string}>>
+     */
+    private function packageBoundaryAllowlist(): array
+    {
+        return [
+            'packages/webblocks-cms/src/Models/Block.php' => [
+                "'admin.blocks.types." => [
+                    'reason' => 'root compatibility fallback after package-first lookup',
+                    'why' => 'Block admin form resolution checks the package namespaced block type view first and uses the historical root admin block type view only as an explicit compatibility fallback for existing install-specific overrides.',
+                ],
+            ],
+            'packages/webblocks-cms/src/Http/Controllers/Admin/BlockTypeController.php' => [
+                "'admin.blocks.types." => [
+                    'reason' => 'custom install-specific/root override support',
+                    'why' => 'The block type contract index reports dedicated admin-form support when either the package-owned admin block type view or an intentional install-specific root override exists, without making the root path the primary package runtime target.',
+                ],
+            ],
+            'packages/webblocks-cms/resources/views/admin/pages/partials/inline-block-fields.blade.php' => [
+                "'admin.blocks.types." => [
+                    'reason' => 'root compatibility fallback after package-first lookup',
+                    'why' => 'Inline block field rendering resolves the package inline view and package fallback first, then keeps the legacy root block type path only as an explicit compatibility fallback for installs that still provide root-only inline block admin overrides.',
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @return array<int, string>
      */
     private function packageFiles(string $path, string $extension): array
@@ -31,6 +58,70 @@ class PackageFreshInstallMigrationTest extends TestCase
         return $files;
     }
 
+    /**
+     * @return array<string, array<int, string>>
+     */
+    private function packageBoundaryAuditPatterns(): array
+    {
+        return [
+            'php-root-view' => [
+                "view('admin.",
+                'View::make(\'admin.',
+                "response()->view('admin.",
+                "component('admin.",
+                "'layouts.admin'",
+                "'admin.blocks.types.",
+            ],
+            'blade-root-view' => [
+                "@include('admin.",
+                "@includeIf('admin.",
+                "@extends('layouts.admin')",
+                '<x-admin.',
+                '<x-auth-password-field',
+                "component('admin.",
+                "'admin.blocks.types.",
+            ],
+            'routes-root-view' => [
+                "view('admin.",
+                'View::make(\'admin.',
+                "response()->view('admin.",
+                "component('admin.",
+                "'layouts.admin'",
+                "'admin.blocks.types.",
+            ],
+        ];
+    }
+
+    private function assertPackageBoundaryAuditPasses(string $path, string $extension, array $patterns): void
+    {
+        $allowlist = $this->packageBoundaryAllowlist();
+        $this->addToAssertionCount(1);
+
+        foreach ($this->packageFiles(base_path($path), $extension) as $file) {
+            $relativePath = str_replace(base_path().'/', '', $file);
+            $contents = (string) file_get_contents($file);
+
+            foreach ($patterns as $pattern) {
+                if (! str_contains($contents, $pattern)) {
+                    continue;
+                }
+
+                $allowedPattern = $allowlist[$relativePath][$pattern] ?? null;
+
+                $this->assertNotNull(
+                    $allowedPattern,
+                    sprintf('Unexpected package boundary reference [%s] in %s', $pattern, $relativePath)
+                );
+                $this->assertIsArray($allowedPattern, sprintf('Allowlist entry must be an array for [%s] in %s', $pattern, $relativePath));
+                /** @var array{reason: string, why: string} $allowedPattern */
+                $this->assertArrayHasKey('reason', $allowedPattern, sprintf('Allowlist reason missing for [%s] in %s', $pattern, $relativePath));
+                $this->assertArrayHasKey('why', $allowedPattern, sprintf('Allowlist why missing for [%s] in %s', $pattern, $relativePath));
+                $this->assertNotSame('', trim($allowedPattern['reason']), sprintf('Allowlist reason must be non-empty for [%s] in %s', $pattern, $relativePath));
+                $this->assertNotSame('', trim($allowedPattern['why']), sprintf('Allowlist why must be non-empty for [%s] in %s', $pattern, $relativePath));
+            }
+        }
+    }
+
     #[Test]
     public function shared_slot_revision_restored_from_foreign_key_uses_an_explicit_short_name(): void
     {
@@ -43,32 +134,31 @@ class PackageFreshInstallMigrationTest extends TestCase
     #[Test]
     public function package_owned_views_do_not_reference_root_admin_components_or_includes(): void
     {
-        $views = $this->packageFiles(base_path('packages/webblocks-cms/resources/views'), 'php');
-
-        foreach ($views as $view) {
-            $contents = (string) file_get_contents($view);
-
-            $this->assertStringNotContainsString('<x-admin.', $contents, $view);
-            $this->assertStringNotContainsString('@include(\'admin.', $contents, $view);
-            $this->assertStringNotContainsString('@includeIf(\'admin.', $contents, $view);
-            $this->assertStringNotContainsString('@component(\'admin.', $contents, $view);
-            $this->assertStringNotContainsString('@extends(\'layouts.admin\'', $contents, $view);
-            $this->assertStringNotContainsString('<x-auth-password-field', $contents, $view);
-        }
+        $this->assertPackageBoundaryAuditPasses(
+            'packages/webblocks-cms/resources/views',
+            'php',
+            $this->packageBoundaryAuditPatterns()['blade-root-view']
+        );
     }
 
     #[Test]
     public function package_owned_admin_php_renderers_do_not_use_root_admin_view_names(): void
     {
-        $phpFiles = $this->packageFiles(base_path('packages/webblocks-cms/src'), 'php');
+        $this->assertPackageBoundaryAuditPasses(
+            'packages/webblocks-cms/src',
+            'php',
+            $this->packageBoundaryAuditPatterns()['php-root-view']
+        );
+    }
 
-        foreach ($phpFiles as $file) {
-            $contents = (string) file_get_contents($file);
-
-            $this->assertStringNotContainsString("view('admin.", $contents, $file);
-            $this->assertStringNotContainsString("View::make('admin.", $contents, $file);
-            $this->assertStringNotContainsString("response()->view('admin.", $contents, $file);
-        }
+    #[Test]
+    public function package_owned_routes_do_not_reference_root_admin_view_names(): void
+    {
+        $this->assertPackageBoundaryAuditPasses(
+            'packages/webblocks-cms/routes',
+            'php',
+            $this->packageBoundaryAuditPatterns()['routes-root-view']
+        );
     }
 
     #[Test]

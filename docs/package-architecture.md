@@ -640,6 +640,12 @@ The selected shared admin partial/component batches are now package-owned:
 - `webblocks:package-status` now reports the selected shared admin partial/component boundary plus the admin runtime view inventory that now includes the package-owned admin layout and root wrapper
 - root admin asset URLs and runtime authority under `public/cms`, brand assets, auth/profile/install/app/guest boundaries, migrations, updater, backup/restore, export/import, promotion, and release/version work remain unchanged
 
+The v1.32.15 package boundary sweep adds a static release-gate audit for package-owned admin runtime references:
+
+- the audit scans `packages/webblocks-cms/src/**/*.php`, `packages/webblocks-cms/resources/views/**/*.blade.php`, and `packages/webblocks-cms/routes/**/*.php`
+- it fails on root-only admin references such as `view('admin.*')`, `View::make('admin.*')`, `response()->view('admin.*')`, `@include('admin.*')`, `@includeIf('admin.*')`, `@extends('layouts.admin')`, `<x-admin.*`, `<x-auth-password-field`, `component('admin.*')`, and direct `admin.blocks.types.*` root block admin references
+- the only accepted exceptions are exact file-and-pattern allowlist entries where package runtime already checks the `webblocks-cms::...` name first and uses the root name only as an explicit compatibility fallback for existing install-specific overrides
+
 The initial low-risk helper and value-object source checkpoint is now considered successful and complete for this phase. `fklavye.ddev` also updated successfully after `v1.31.60`, confirming that the current package wiring works in the maintained development environment.
 
 Further opportunistic low-risk PHP source moves are now paused. Future runtime-heavy source moves require a dedicated focused phase plan and dependency audit instead of more small opportunistic migrations.

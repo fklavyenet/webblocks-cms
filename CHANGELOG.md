@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.15 as a proactive package admin view and component boundary sweep so package-owned runtime no longer silently relies on root `admin.*`, `layouts.admin`, or root admin component names that exist only in this maintenance repository and fail in fresh consumer installs.
+- Add a static package boundary audit across package `src/`, `resources/views/`, and `routes/` with a narrow per-file allowlist for the remaining intentional block admin compatibility fallbacks, and extend fresh-consumer smoke coverage to representative package-owned admin routes plus both fallback block admin form render paths.
+
 - Prepare v1.32.14 as a fresh-consumer admin hotfix for the package-owned Blocks runtime by making admin block form resolution prefer `webblocks-cms::admin.blocks.types.*` and the package fallback form, so unknown or product-owned block types no longer fail on missing root `admin.blocks.types.fallback` views in consumer installs.
 - Extend package boundary coverage for block admin form fallback handling with static assertions around the package block resolver, bootstrap checks for the package fallback Blade files, and authenticated post-install smoke coverage that renders the generic fallback block form through the package namespace.
 

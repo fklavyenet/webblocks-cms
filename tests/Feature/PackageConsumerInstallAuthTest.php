@@ -9,6 +9,7 @@ use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController as PackageSystemUpdateController;
@@ -136,6 +137,28 @@ class PackageConsumerInstallAuthTest extends TestCase
     }
 
     #[Test]
+    public function representative_package_owned_admin_routes_render_after_install_without_root_admin_view_dependencies(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+        foreach ([
+            'admin.dashboard',
+            'admin.pages.index',
+            'admin.pages.create',
+            'admin.blocks.index',
+            'admin.media.index',
+            'admin.navigation.index',
+            'admin.shared-slots.index',
+            'admin.block-types.index',
+            'admin.page-layouts.index',
+            'admin.slot-types.index',
+            'admin.system.settings.edit',
+        ] as $routeName) {
+            $this->actingAs($user)->get(route($routeName))->assertOk();
+        }
+    }
+
+    #[Test]
     public function system_updates_route_renders_after_install_through_the_package_view_boundary(): void
     {
         $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
@@ -199,5 +222,44 @@ class PackageConsumerInstallAuthTest extends TestCase
             ->assertSee('The safe fallback form is being used.')
             ->assertSee('name="title"', false)
             ->assertSee('name="content"', false);
+    }
+
+    #[Test]
+    public function inline_fallback_block_type_admin_form_renders_after_install_through_the_package_view_boundary(): void
+    {
+        $page = Page::query()->firstOrFail();
+        $blockType = BlockType::query()->create([
+            'name' => 'Consumer Inline Fallback Block',
+            'slug' => 'consumer-inline-fallback-block',
+            'category' => 'content',
+            'description' => 'Uses the generic fallback inline admin form.',
+            'source_type' => 'static',
+            'status' => 'published',
+            'sort_order' => 9991,
+            'is_system' => false,
+            'is_container' => false,
+        ]);
+        $slotTypes = SlotType::query()->orderBy('sort_order')->get();
+        $block = new Block([
+            'type' => $blockType->slug,
+            'block_type_id' => $blockType->id,
+            'page_id' => $page->id,
+            'slot_type_id' => $slotTypes->firstOrFail()->id,
+            'slot' => $slotTypes->firstOrFail()->slug,
+            'source_type' => 'static',
+            'status' => 'draft',
+        ]);
+
+        $rendered = View::make('webblocks-cms::admin.pages.partials.inline-block-fields', [
+            'block' => $block,
+            'index' => 0,
+            'selectedBlockType' => $blockType,
+            'slotTypes' => $slotTypes,
+        ])->render();
+
+        $this->assertStringContainsString('Generic Block Form', $rendered);
+        $this->assertStringContainsString('The safe fallback form is being used.', $rendered);
+        $this->assertStringContainsString('name="blocks[0][title]"', $rendered);
+        $this->assertStringContainsString('name="blocks[0][content]"', $rendered);
     }
 }
