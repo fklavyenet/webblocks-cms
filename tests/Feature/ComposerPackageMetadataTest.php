@@ -30,6 +30,7 @@ class ComposerPackageMetadataTest extends TestCase
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateCommandRunner' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateCommandRunner.php',
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateException.php',
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateInstaller' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateInstaller.php',
+            'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateMigrationRunner' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateMigrationRunner.php',
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdatePackageDownloader' => 'packages/webblocks-cms/src/Support/System/Updates/UpdatePackageDownloader.php',
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdatePackageExtractor' => 'packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php',
             'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateResult' => 'packages/webblocks-cms/src/Support/System/Updates/UpdateResult.php',

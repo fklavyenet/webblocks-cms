@@ -12,6 +12,7 @@ class UpdateInstaller
 
     public function __construct(
         private readonly UpdateCommandRunner $commandRunner,
+        private readonly UpdateMigrationRunner $migrationRunner,
         private readonly InstallationGitRemoteGuard $installationGitRemoteGuard,
     ) {}
 
@@ -98,8 +99,9 @@ class UpdateInstaller
 
     public function runPostInstallCommands(array &$output): void
     {
+        $this->migrationRunner->run($this->targetPath(), $output);
+
         foreach ([
-            ['migrate', '--force'],
             ['db:seed', '--class='.CoreCatalogSeeder::class, '--force'],
             ['block-types:sync-core', '--force'],
             ['config:clear'],

@@ -157,9 +157,10 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
+        $this->assertStringContainsString('Migration strategy: package-native update migrations. No package update migrations found; host application migrations were skipped.', (string) $run->output);
         $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
+        $this->assertStringNotContainsString('php artisan migrate --force', (string) $run->output);
         $this->assertCommandOrder([
-            'php artisan migrate --force',
             'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force',
             'php artisan block-types:sync-core --force',
             'php artisan config:clear',
@@ -186,7 +187,7 @@ class SystemUpdatesTest extends TestCase
 
         config()->set('webblocks-updates.installer.target_path', $targetRoot);
         $runner = $this->bindFakeCommandRunner([
-            'php artisan migrate --force' => 1,
+            'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force' => 1,
         ]);
         $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
 
@@ -203,9 +204,45 @@ class SystemUpdatesTest extends TestCase
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
         $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
-        $this->assertStringContainsString('Command failed: php artisan migrate --force', (string) $run->output);
+        $this->assertStringContainsString('Command failed: php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', (string) $run->output);
         $this->assertStringNotContainsString('php-fpm', (string) $run->output);
         $this->assertContains('php artisan up', $runner->commands);
+    }
+
+    #[Test]
+    public function package_native_update_skips_pending_host_users_migration_and_continues_post_update_steps(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('1.32.20');
+        Storage::fake('backups');
+
+        [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+        File::put($targetRoot.'/database/migrations/0001_01_01_000000_create_users_table.php', "<?php\n\nthrow new RuntimeException('host users migration should not run');\n");
+
+        config()->set('webblocks-updates.installer.target_path', $targetRoot);
+        $runner = $this->bindFakeCommandRunner();
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '1.32.21', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-1.32.21.zip', $checksum);
+
+        Http::fake([
+            'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHas('status', 'Updated to 1.32.21 successfully.');
+
+        $run = SystemUpdateRun::query()->latest()->firstOrFail();
+        $output = (string) $run->output;
+
+        $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
+        $this->assertStringContainsString('Migration strategy: package-native update migrations. No package update migrations found; host application migrations were skipped.', $output);
+        $this->assertStringNotContainsString('0001_01_01_000000_create_users_table', $output);
+        $this->assertNotContains('php artisan migrate --force', $runner->commands);
+        $this->assertContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
+        $this->assertContains('php artisan block-types:sync-core --force', $runner->commands);
+        $this->assertContains('php artisan cache:clear', $runner->commands);
+        $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
     }
 
     #[Test]
@@ -235,9 +272,8 @@ class SystemUpdatesTest extends TestCase
         $run = SystemUpdateRun::query()->latest()->first();
         $this->assertNotNull($run);
         $this->assertStringContainsString('Command failed: php artisan block-types:sync-core --force', (string) $run->output);
-        $this->assertSame('php artisan migrate --force', $runner->commands[2] ?? null);
-        $this->assertSame('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands[3] ?? null);
-        $this->assertSame('php artisan block-types:sync-core --force', $runner->commands[4] ?? null);
+        $this->assertSame('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands[2] ?? null);
+        $this->assertSame('php artisan block-types:sync-core --force', $runner->commands[3] ?? null);
     }
 
     #[Test]

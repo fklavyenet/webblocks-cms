@@ -22,10 +22,14 @@ Updates in WebBlocks CMS are release-based and package-based.
 
 When an in-app System Update is applied successfully, WebBlocks CMS runs the post-install flow in this order:
 
-- migrations with `--force`
+- migration handling for the current install strategy
 - core catalog seeding for shipped install-level catalogs
 - core block type catalog sync with `ddev artisan block-types:sync-core`
 - cache clear steps
+
+For source-maintained maintenance checkouts, migration handling keeps the historical root `database/migrations` authority and runs `artisan migrate --force`.
+
+For package-native fresh Composer consumers installed with `webblocks:install`, System Update does not run the host Laravel application's root `database/migrations` directory. This prevents pending Laravel starter migrations such as `0001_01_01_000000_create_users_table.php` from colliding with CMS tables created by the package fresh-install schema. Package consumer updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when that directory contains PHP migration files; otherwise the updater records that host migrations were skipped and continues with catalog seeding, block type sync, cache clears, and installed-version persistence.
 
 The block type sync is idempotent and keeps the database-backed `block_types` catalog aligned with the shipped core CMS catalog on existing installs:
 

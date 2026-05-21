@@ -341,7 +341,7 @@ Why these slices stay partially guarded
 - Package migrations should stay non-authoritative until real package-owned migrations exist and their ownership is intentionally moved.
 - When migration ownership begins, prefer package loading for CMS-owned migration files and explicit publish guidance only where install-local customization is truly needed.
 - Do not mix migration-boundary work with unrelated runtime refactors.
-- Root `database/migrations/` remains the compatibility and authority layer for current installs. Future package migrations must be additive to that compatibility story rather than an implicit replacement.
+- Root `database/migrations/` remains the compatibility and authority layer for source-maintained installs. Package consumer updates must use explicit package-owned update migrations and must not implicitly run host Laravel application migrations.
 - `PageLayoutSeeder` and `BlockTypeSeeder` remain root-owned for now because they still cross page-layout catalog, block-type sync, and broader Pages or Blocks runtime boundaries. `DatabaseSeeder` also remains root-owned as the active install entrypoint and installed-version writer.
 
 ### Package Route Ownership Strategy
@@ -523,7 +523,7 @@ The current Step 2 public-rendering checkpoint extends package authority further
 - `User` remains app-owned and root-owned intentionally and is not part of the package model migration target
 - package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets
 - active runtime still serves `public/cms/...` from the root install for compatibility because package asset publishing is not yet the authoritative runtime asset path
-- root migrations remain authoritative and package migration loading stays disabled
+- root migrations remain authoritative for source-maintained checkouts, while package-native System Updates skip host Laravel application migrations and only run dedicated package update migrations when present
 - System Update, install flow, backup or restore, and broader project-layer runtime remain unchanged in this batch
 - consumer or starter-package validation is still not realistic after this checkpoint because the runtime still depends on root migrations, root compatibility asset paths, root-owned admin and install/update flows, and the intentionally app-owned root `User` model boundary
 
@@ -688,7 +688,8 @@ Requests, commands, assets, migrations, and update-flow blockers:
 - many editorial admin Form Requests have now already moved with root wrappers, but system, site portability, update, backup, install, and other operations-oriented requests still remain root-owned
 - package-used update, backup, import, export, promotion, and installer commands should not move yet because they still depend on root environment, filesystem, archive, Composer, migration, and install-state behavior
 - root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
-- root migrations remain authoritative; package migration loading must stay disabled until a later install and update redesign defines how fresh installs and existing installs both migrate safely
+- root migrations remain authoritative for source-maintained checkouts; package-native fresh consumers installed with `webblocks:install` must not run host Laravel application migrations during System Update
+- package consumer System Updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when present, and otherwise skip migration execution without marking arbitrary host migrations as run
 - System Update remains a separate phase because its blockers are environment mutation, filesystem writes, Composer execution, backups, migrations, installed-version persistence, and root operational state, not route or controller ownership
 
 ### Consolidation outcome

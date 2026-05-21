@@ -156,8 +156,8 @@ class PackageStatusCommand extends Command
         $this->line('Package migration files status: '.$this->resourceStatus($migrationFiles));
         $this->line('Package migration loading guard enabled: '.$this->yesNo($this->packageMigrationLoadingEnabled()).' ('.$packageMigrationLoadingConfig.')');
         $this->line('Package migrations loaded in active runtime: no');
-        $this->line('Legacy root migration compatibility state: yes (root database/migrations remains authoritative).');
-        $this->line('Future package migration Composer readiness: reserved boundary only (no schema-changing package migrations are active yet).');
+        $this->line('Legacy root migration compatibility state: yes (root database/migrations remains authoritative for source-maintained installs).');
+        $this->line('Package update migration readiness: package consumer System Updates use packages/webblocks-cms/database/migrations/updates when PHP migrations are present and skip host application migrations otherwise.');
         $this->line('Package database/seeders path present: '.$this->yesNo(is_dir($packageRoot.'/database/seeders')));
         $this->line('Package seeder boundary status: '.$this->resourceBoundaryStatus($seederFiles));
         $this->line('Package seeder files status: '.$this->resourceStatus($seederFiles));
@@ -269,7 +269,7 @@ class PackageStatusCommand extends Command
         $this->line('Root Composer package autoload present: '.$this->yesNo($this->composerAutoloadPresent($rootComposer, 'WebBlocks\\Cms\\', 'packages/webblocks-cms/src/')).' (WebBlocks\\Cms\\ => packages/webblocks-cms/src/)');
         $this->line('Root Composer provider discovery present: '.$this->yesNo($this->composerProviderDiscoveryPresent($rootComposer, WebBlocksCmsServiceProvider::class)).' ('.WebBlocksCmsServiceProvider::class.')');
         $this->line('Target Composer install flow: '.WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND.' (tagged root package metadata now supports direct consumer installs, while the maintenance repo runtime remains authoritative for local source development).');
-        $this->line('Target Composer update flow: '.WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND.' followed by migrations, catalog sync, block-types:sync-core, cache clear, asset publish or sync when needed, package diagnostics, and installed-version sync when release state is real.');
+        $this->line('Target Composer update flow: '.WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND.' followed by package-aware migration handling, catalog sync, block-types:sync-core, cache clear, asset publish or sync when needed, package diagnostics, and installed-version sync when release state is real.');
         $this->line('Root migration/update/install/auth blockers: '.implode('; ', WebBlocksCmsServiceProvider::STARTER_SPLIT_BLOCKERS).'.');
         $this->line('Starter split readiness: not ready (package transition consolidation is complete for all safely movable CMS-owned source, but the remaining install/auth, User, root runtime asset path, and root migration or update authority blockers still prevent a starter split).');
         $this->line('Starter foundation readiness: partial (root package metadata now supports direct Composer installation and provider discovery, while the maintenance repo still carries the remaining install/auth, User, root runtime asset path, and root migration or update authority blockers; '.WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME.' is intentionally not created yet).');
