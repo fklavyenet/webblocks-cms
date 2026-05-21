@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.22 as a follow-up updater hotfix by tightening `UpdateMigrationRunner` source-maintained detection: package consumers are no longer classified as root-migration-authoritative merely because their root package name and `packages/webblocks-cms` directory are present.
+- Add migration strategy diagnostics and regression coverage proving package-native consumers with an existing `users` table, a pending Laravel starter users migration, and a `packages/webblocks-cms` subtree still skip host application migrations during System Update, while the real maintenance checkout keeps source-maintained root migration authority through its explicit root Composer autoload mapping.
+
 - Prepare v1.32.21 as a package-native updater hotfix by replacing the generic post-update `artisan migrate --force` step with an explicit migration runner: source-maintained checkouts keep root migration authority, while fresh package consumers skip host Laravel application migrations and only run dedicated package update migrations from `packages/webblocks-cms/database/migrations/updates` when present.
 - Add regression coverage for the reported 1.32.19 -> 1.32.20 consumer failure where a pending host `0001_01_01_000000_create_users_table.php` migration tried to recreate an existing `users` table during System Update, and verify the update flow still continues through catalog seeding, `block-types:sync-core`, cache clearing, and installed-version persistence.
 

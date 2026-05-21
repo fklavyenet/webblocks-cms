@@ -32,6 +32,31 @@ class UpdateMigrationRunnerTest extends TestCase
     }
 
     #[Test]
+    public function auto_strategy_treats_consumer_with_package_directory_as_package_native(): void
+    {
+        $targetRoot = $this->makeTargetRoot('fklavyenet/webblocks-cms');
+        File::ensureDirectoryExists($targetRoot.'/database/migrations');
+        File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms');
+        File::put($targetRoot.'/database/migrations/0001_01_01_000000_create_users_table.php', "<?php\n");
+
+        config()->set('webblocks-updates.installer.migration_strategy', 'auto');
+        $commandRunner = new FakeMigrationCommandRunner;
+        $output = [];
+
+        $runner = new UpdateMigrationRunner($commandRunner);
+        $report = $runner->strategyReport($targetRoot);
+        $runner->run($targetRoot, $output);
+        $joinedOutput = implode("\n", $output);
+
+        $this->assertSame('package', $report['strategy']);
+        $this->assertSame([], $commandRunner->commands);
+        $this->assertStringContainsString('Migration strategy: package-native update migrations.', $joinedOutput);
+        $this->assertStringNotContainsString('Migration strategy: source-maintained root migrations.', $joinedOutput);
+        $this->assertStringNotContainsString('php artisan migrate --force', $joinedOutput);
+        $this->assertStringNotContainsString('0001_01_01_000000_create_users_table', $joinedOutput);
+    }
+
+    #[Test]
     public function package_strategy_runs_only_dedicated_package_update_migrations_when_present(): void
     {
         $targetRoot = $this->makeTargetRoot('consumer/app');
@@ -58,6 +83,7 @@ class UpdateMigrationRunnerTest extends TestCase
     public function source_maintained_strategy_keeps_root_migration_authority(): void
     {
         $targetRoot = $this->makeTargetRoot('fklavyenet/webblocks-cms');
+        $this->writeMaintenanceRepoAutoload($targetRoot);
         File::ensureDirectoryExists($targetRoot.'/database/migrations');
         File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms');
 
@@ -69,6 +95,7 @@ class UpdateMigrationRunnerTest extends TestCase
 
         $this->assertSame(['php artisan migrate --force'], $commandRunner->commands);
         $this->assertStringContainsString('Migration strategy: source-maintained root migrations.', implode("\n", $output));
+        $this->assertStringContainsString('root composer.json owns WebBlocks\\Cms\\ autoloading from packages/webblocks-cms/src/', implode("\n", $output));
     }
 
     private function makeTargetRoot(string $composerName): string
@@ -79,6 +106,20 @@ class UpdateMigrationRunnerTest extends TestCase
         $this->temporaryDirectories[] = $path;
 
         return $path;
+    }
+
+    private function writeMaintenanceRepoAutoload(string $targetRoot): void
+    {
+        File::put($targetRoot.'/composer.json', json_encode([
+            'name' => 'fklavyenet/webblocks-cms',
+            'autoload' => [
+                'psr-4' => [
+                    'App\\' => 'app/',
+                    'WebBlocks\\Cms\\' => 'packages/webblocks-cms/src/',
+                    'WebBlocks\\Cms\\Database\\Seeders\\' => 'packages/webblocks-cms/database/seeders/',
+                ],
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     protected function tearDown(): void

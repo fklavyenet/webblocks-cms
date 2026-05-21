@@ -14,10 +14,11 @@ class UpdateMigrationRunner
 
     public function run(string $targetPath, array &$output): void
     {
-        $strategy = $this->strategy($targetPath);
+        $report = $this->strategyReport($targetPath);
+        $strategy = $report['strategy'];
 
         if ($strategy === 'source') {
-            $output[] = 'Migration strategy: source-maintained root migrations.';
+            $output[] = 'Migration strategy: source-maintained root migrations. Reason: '.$report['reason'];
             $this->commandRunner->run(
                 $this->commandRunner->artisanCommand(['migrate', '--force']),
                 $targetPath,
@@ -30,12 +31,12 @@ class UpdateMigrationRunner
         $migrationPath = $this->packageUpdateMigrationsPath($targetPath);
 
         if (! $this->hasMigrationFiles($migrationPath)) {
-            $output[] = 'Migration strategy: package-native update migrations. No package update migrations found; host application migrations were skipped.';
+            $output[] = 'Migration strategy: package-native update migrations. Reason: '.$report['reason'].'. No package update migrations found; host application migrations were skipped.';
 
             return;
         }
 
-        $output[] = 'Migration strategy: package-native update migrations at '.$migrationPath.'. Host application migrations were skipped.';
+        $output[] = 'Migration strategy: package-native update migrations at '.$migrationPath.'. Reason: '.$report['reason'].'. Host application migrations were skipped.';
         $this->commandRunner->run(
             $this->commandRunner->artisanCommand([
                 'migrate',
@@ -48,34 +49,79 @@ class UpdateMigrationRunner
         );
     }
 
-    private function strategy(string $targetPath): string
+    /**
+     * @return array{strategy: 'package'|'source', reason: string, package_update_migrations_path: string, has_package_update_migrations: bool}
+     */
+    public function strategyReport(string $targetPath): array
     {
         $configured = (string) config('webblocks-updates.installer.migration_strategy', 'auto');
+        $migrationPath = $this->packageUpdateMigrationsPath($targetPath);
 
         if (in_array($configured, ['package', 'source'], true)) {
-            return $configured;
+            return [
+                'strategy' => $configured,
+                'reason' => 'configured by webblocks-updates.installer.migration_strategy',
+                'package_update_migrations_path' => $migrationPath,
+                'has_package_update_migrations' => $this->hasMigrationFiles($migrationPath),
+            ];
         }
 
-        return $this->isSourceMaintainedInstall($targetPath) ? 'source' : 'package';
+        $sourceReason = $this->sourceMaintainedReason($targetPath);
+
+        if ($sourceReason !== null) {
+            return [
+                'strategy' => 'source',
+                'reason' => $sourceReason,
+                'package_update_migrations_path' => $migrationPath,
+                'has_package_update_migrations' => $this->hasMigrationFiles($migrationPath),
+            ];
+        }
+
+        return [
+            'strategy' => 'package',
+            'reason' => 'no source-maintained root Composer autoload authority detected',
+            'package_update_migrations_path' => $migrationPath,
+            'has_package_update_migrations' => $this->hasMigrationFiles($migrationPath),
+        ];
     }
 
-    private function isSourceMaintainedInstall(string $targetPath): bool
+    private function sourceMaintainedReason(string $targetPath): ?string
     {
         $composerPath = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'composer.json';
 
         if (! File::isFile($composerPath)) {
-            return false;
+            return null;
         }
 
         try {
             $composer = json_decode((string) File::get($composerPath), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            return false;
+            return null;
         }
 
-        return ($composer['name'] ?? null) === 'fklavyenet/webblocks-cms'
-          && File::isDirectory(rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'database/migrations')
-          && File::isDirectory(rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'packages/webblocks-cms');
+        $autoload = $composer['autoload']['psr-4'] ?? [];
+
+        if (($composer['name'] ?? null) !== 'fklavyenet/webblocks-cms') {
+            return null;
+        }
+
+        if (($autoload['WebBlocks\\Cms\\'] ?? null) !== 'packages/webblocks-cms/src/') {
+            return null;
+        }
+
+        if (($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) !== 'packages/webblocks-cms/database/seeders/') {
+            return null;
+        }
+
+        if (! File::isDirectory(rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'database/migrations')) {
+            return null;
+        }
+
+        if (! File::isDirectory(rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'packages/webblocks-cms')) {
+            return null;
+        }
+
+        return 'root composer.json owns WebBlocks\\Cms\\ autoloading from packages/webblocks-cms/src/';
     }
 
     private function packageUpdateMigrationsPath(string $targetPath): string

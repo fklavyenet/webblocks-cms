@@ -157,7 +157,8 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
-        $this->assertStringContainsString('Migration strategy: package-native update migrations. No package update migrations found; host application migrations were skipped.', (string) $run->output);
+        $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
+        $this->assertStringContainsString('No package update migrations found; host application migrations were skipped.', (string) $run->output);
         $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
         $this->assertStringNotContainsString('php artisan migrate --force', (string) $run->output);
         $this->assertCommandOrder([
@@ -217,6 +218,7 @@ class SystemUpdatesTest extends TestCase
         Storage::fake('backups');
 
         [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+        File::put($targetRoot.'/composer.json', json_encode(['name' => 'fklavyenet/webblocks-cms'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         File::put($targetRoot.'/database/migrations/0001_01_01_000000_create_users_table.php', "<?php\n\nthrow new RuntimeException('host users migration should not run');\n");
 
         config()->set('webblocks-updates.installer.target_path', $targetRoot);
@@ -236,7 +238,9 @@ class SystemUpdatesTest extends TestCase
         $output = (string) $run->output;
 
         $this->assertSame(SystemUpdateRun::STATUS_SUCCESS, $run->status);
-        $this->assertStringContainsString('Migration strategy: package-native update migrations. No package update migrations found; host application migrations were skipped.', $output);
+        $this->assertStringContainsString('Migration strategy: package-native update migrations.', $output);
+        $this->assertStringContainsString('No package update migrations found; host application migrations were skipped.', $output);
+        $this->assertStringNotContainsString('Migration strategy: source-maintained root migrations.', $output);
         $this->assertStringNotContainsString('0001_01_01_000000_create_users_table', $output);
         $this->assertNotContains('php artisan migrate --force', $runner->commands);
         $this->assertContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
