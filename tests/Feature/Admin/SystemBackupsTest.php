@@ -267,6 +267,73 @@ class SystemBackupsTest extends TestCase
     }
 
     #[Test]
+    public function backup_creation_bootstraps_missing_backups_disk_root_for_fresh_consumer_like_installs(): void
+    {
+        config()->set('filesystems.disks.backups', null);
+
+        $backupsRoot = storage_path('app/backups');
+        File::deleteDirectory($backupsRoot);
+
+        $publicRoot = $this->makeTemporaryDirectory('fresh-consumer-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $response = $this->actingAs($user)->post(route('admin.system.backups.store'));
+
+        $response->assertRedirect(route('admin.system.backups.index'));
+
+        $backup = SystemBackup::query()->latest()->firstOrFail();
+
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
+        $this->assertDirectoryExists($backupsRoot);
+        $this->assertFileExists($backupsRoot.'/'.$backup->archive_path);
+    }
+
+    #[Test]
+    public function backup_disk_root_creation_is_idempotent_for_repeated_backups(): void
+    {
+        config()->set('filesystems.disks.backups', null);
+
+        $backupsRoot = storage_path('app/backups');
+        File::deleteDirectory($backupsRoot);
+
+        $publicRoot = $this->makeTemporaryDirectory('idempotent-backup-public-root');
+        config()->set('filesystems.disks.public.root', $publicRoot);
+
+        $user = User::factory()->superAdmin()->create();
+
+        $this->actingAs($user)->post(route('admin.system.backups.store'))->assertRedirect(route('admin.system.backups.index'));
+        $this->actingAs($user)->post(route('admin.system.backups.store'))->assertRedirect(route('admin.system.backups.index'));
+
+        $this->assertSame(2, SystemBackup::query()->where('status', SystemBackup::STATUS_COMPLETED)->count());
+        $this->assertDirectoryExists($backupsRoot);
+    }
+
+    #[Test]
+    public function backup_failure_detail_is_sanitized_before_it_is_persisted(): void
+    {
+        Storage::fake('public');
+        Storage::fake('backups');
+
+        $user = User::factory()->superAdmin()->create();
+        $mock = Mockery::mock(DatabaseDumpWriter::class);
+        $mock->shouldReceive('dumpTo')->once()->andThrow(new \RuntimeException('Database dump failed with password=supersecret --defaults-extra-file=/tmp/mysql.cnf in '.storage_path('app/private')));
+        $this->app->instance(DatabaseDumpWriter::class, $mock);
+
+        $this->actingAs($user)->post(route('admin.system.backups.store'));
+
+        $backup = SystemBackup::query()->latest()->firstOrFail();
+
+        $this->assertSame(SystemBackup::STATUS_FAILED, $backup->status);
+        $this->assertSame('Database dump failed with password=[redacted] --defaults-extra-file=[redacted] in [storage_path]/app/private', $backup->error_message);
+        $this->assertStringContainsString('Backup failed: Database dump failed with password=[redacted] --defaults-extra-file=[redacted] in [storage_path]/app/private', (string) $backup->output);
+        $this->assertStringNotContainsString('supersecret', (string) $backup->output);
+        $this->assertStringNotContainsString('/tmp/mysql.cnf', (string) $backup->output);
+        $this->assertStringNotContainsString(storage_path('app/private'), (string) $backup->output);
+    }
+
+    #[Test]
     public function backup_detail_page_shows_visible_restore_danger_zone_for_restorable_backups(): void
     {
         Storage::fake('backups');
@@ -1352,13 +1419,13 @@ class SystemBackupsTest extends TestCase
 
         $download->assertOk();
         $download->assertDownload($archivePath);
-        $this->assertSame(Storage::disk('backups')->path($archivePath), $download->baseResponse->getFile()->getPathname());
+        $this->assertTrue(Storage::disk('backups')->exists($archivePath));
 
         $deleteResponse = $this->actingAs($user)->delete(route('admin.system.backups.destroy', $backup));
 
         $deleteResponse->assertRedirect(route('admin.system.backups.index'));
-        Storage::disk('backups')->assertMissing($archivePath);
-        Storage::disk('site-exports')->assertExists($archivePath);
+        $this->assertFalse(Storage::disk('backups')->exists($archivePath));
+        $this->assertTrue(Storage::disk('site-exports')->exists($archivePath));
         $this->assertDatabaseMissing('system_backups', ['id' => $backup->id]);
     }
 

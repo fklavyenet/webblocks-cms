@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -225,7 +224,7 @@ class SystemBackupController extends Controller
 
     private function systemBackupManagerPath(SystemBackup $backup): string
     {
-        return Storage::disk(SystemBackupManager::ARCHIVE_DISK)->path($backup->archive_path);
+        return $this->systemBackupManager->archiveDisk()->path($backup->archive_path);
     }
 
     private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup

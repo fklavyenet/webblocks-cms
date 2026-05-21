@@ -6,6 +6,7 @@ use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\System\BackupArchiveBuilder;
 use WebBlocks\Cms\Support\System\BackupManifestBuilder;
 use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -54,6 +55,7 @@ class SystemBackupManager
     private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
     {
         $startedAt = now();
+        $output = [];
         $backup = SystemBackup::query()->create([
             'type' => $type,
             'status' => SystemBackup::STATUS_RUNNING,
@@ -69,13 +71,14 @@ class SystemBackupManager
         $databaseDumpPath = $temporaryDirectory.'/database.sql';
         $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'.zip';
         $archiveRelativePath = $archiveFilename;
-        $archivePath = Storage::disk(self::ARCHIVE_DISK)->path($archiveRelativePath);
-        $output = [];
-
-        File::ensureDirectoryExists($temporaryDirectory);
-        File::ensureDirectoryExists((string) config('filesystems.disks.public.root'));
 
         try {
+            $archiveDisk = $this->archiveDisk();
+            $archivePath = $archiveDisk->path($archiveRelativePath);
+
+            File::ensureDirectoryExists($temporaryDirectory);
+            File::ensureDirectoryExists((string) config('filesystems.disks.public.root'));
+
             $this->markBackupCompletedForSnapshot(
                 $backup,
                 $archiveRelativePath,
@@ -101,11 +104,15 @@ class SystemBackupManager
 
             return $backup->fresh();
         } catch (Throwable $throwable) {
-            if ($archiveRelativePath !== null) {
-                Storage::disk(self::ARCHIVE_DISK)->delete($archiveRelativePath);
+            $sanitizedFailureDetail = $this->sanitizeFailureDetail($throwable->getMessage());
+
+            try {
+                $this->archiveDisk()->delete($archiveRelativePath);
+            } catch (Throwable) {
+                // Keep the original backup failure detail as the primary signal.
             }
 
-            $output[] = 'Backup failed: '.$throwable->getMessage();
+            $output[] = 'Backup failed: '.$sanitizedFailureDetail;
             $finishedAt = now();
 
             $backup->forceFill([
@@ -114,13 +121,35 @@ class SystemBackupManager
                 'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
                 'summary' => 'Backup failed.',
                 'output' => implode(PHP_EOL, $output),
-                'error_message' => $throwable->getMessage(),
+                'error_message' => $sanitizedFailureDetail,
             ])->save();
 
-            throw new RuntimeException($throwable->getMessage(), previous: $throwable);
+            throw new RuntimeException($sanitizedFailureDetail, previous: $throwable);
         } finally {
             File::deleteDirectory($temporaryDirectory);
         }
+    }
+
+    public function archiveDisk(): FilesystemAdapter
+    {
+        $configuredRoot = config('filesystems.disks.'.self::ARCHIVE_DISK.'.root');
+        $archiveRoot = is_string($configuredRoot) && trim($configuredRoot) !== ''
+            ? $configuredRoot
+            : storage_path('app/backups');
+
+        config()->set('filesystems.disks.'.self::ARCHIVE_DISK, array_merge(
+            [
+                'driver' => 'local',
+                'root' => $archiveRoot,
+                'throw' => false,
+                'report' => false,
+            ],
+            (array) config('filesystems.disks.'.self::ARCHIVE_DISK, [])
+        ));
+
+        File::ensureDirectoryExists($archiveRoot);
+
+        return Storage::disk(self::ARCHIVE_DISK);
     }
 
     private function markBackupCompletedForSnapshot(
@@ -318,6 +347,18 @@ class SystemBackupManager
     private function hasBackupTable(): bool
     {
         return Schema::hasTable('system_backups');
+    }
+
+    private function sanitizeFailureDetail(string $message): string
+    {
+        $sanitized = preg_replace('/([?&](?:password|passwd|pwd|token|api[_-]?key|secret)=)[^&\s]+/i', '$1[redacted]', $message) ?? $message;
+        $sanitized = preg_replace('/\b(password|passwd|pwd|token|api[_-]?key|secret)=\S+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = preg_replace('/--defaults-extra-file=\S+/i', '--defaults-extra-file=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = str_replace(storage_path(), '[storage_path]', $sanitized);
+        $sanitized = preg_replace('/\b([A-Z_]*(?:PASSWORD|TOKEN|SECRET|APP_KEY))=[^\s]+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = str_replace(base_path(), '[base_path]', $sanitized);
+
+        return trim($sanitized) !== '' ? $sanitized : 'Backup failed for an unknown reason.';
     }
 
     private function hasInvalidRelativePath(string $path): bool

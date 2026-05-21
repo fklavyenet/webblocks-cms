@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Support\System;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -30,7 +29,7 @@ class SystemBackupRestoreManager
     {
         $target = $this->resolveRestoreSource($reference);
         $inspection = $this->archiveInspector->inspect(
-            Storage::disk($target['archive_disk'])->path($target['archive_path'])
+            $this->systemBackupManager->archiveDisk()->path($target['archive_path'])
         );
 
         return $target + [
@@ -102,7 +101,7 @@ class SystemBackupRestoreManager
         try {
             $output[] = 'Preparing restore from '.$displayName.'.';
 
-            $disk = Storage::disk($archiveDisk);
+            $disk = $this->systemBackupManager->archiveDisk();
             $resolvedArchivePath = $disk->path($archivePath);
             $inspection = $this->archiveInspector->inspect($resolvedArchivePath);
             $output[] = 'Archive validation passed.';
@@ -202,7 +201,7 @@ class SystemBackupRestoreManager
 
         $this->systemBackupManager->assertValidArchiveRelativePath($reference);
 
-        if (! Storage::disk(SystemBackupManager::ARCHIVE_DISK)->exists($reference)) {
+        if (! $this->systemBackupManager->archiveDisk()->exists($reference)) {
             throw new RuntimeException('Backup archive ['.$reference.'] does not exist on the backups disk.');
         }
 

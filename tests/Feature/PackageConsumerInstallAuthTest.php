@@ -8,7 +8,10 @@ use App\Models\Page;
 use App\Models\PageSlot;
 use App\Models\SlotType;
 use App\Models\User;
+use App\Models\SystemBackup;
+use App\Support\System\SystemBackupManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -178,6 +181,20 @@ class PackageConsumerInstallAuthTest extends TestCase
             ->assertSee('System Updates')
             ->assertSee('Update Summary')
             ->assertSee('Actions');
+    }
+
+    #[Test]
+    public function fresh_consumer_install_can_create_a_pre_update_backup_without_root_backups_disk_config(): void
+    {
+        $user = User::query()->where('email', 'auth-admin@example.com')->firstOrFail();
+
+        config()->set('filesystems.disks.backups', null);
+        File::deleteDirectory(storage_path('app/backups'));
+
+        $backup = app(SystemBackupManager::class)->createPreUpdateBackup($user->id, 'Fresh consumer pre-update backup');
+
+        $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->status);
+        $this->assertFileExists(storage_path('app/backups/'.$backup->archive_path));
     }
 
     #[Test]

@@ -150,21 +150,32 @@ class SystemUpdateController extends Controller
     {
         $pending = Cache::get($this->pendingCacheKey());
 
+        if (! is_array($pending)) {
+            $pending = session($this->pendingSessionKey());
+        }
+
         return is_array($pending) ? $pending : null;
     }
 
     private function storePendingUpdate(array $pending): void
     {
         Cache::put($this->pendingCacheKey(), $pending, now()->addSeconds((int) config('webblocks-updates.pending_cache_ttl_seconds', 3600)));
+        session([$this->pendingSessionKey() => $pending]);
     }
 
     private function clearPendingUpdate(): void
     {
         Cache::forget($this->pendingCacheKey());
+        session()->forget($this->pendingSessionKey());
     }
 
     private function pendingCacheKey(): string
     {
         return 'system-updates:pending';
+    }
+
+    private function pendingSessionKey(): string
+    {
+        return 'system_updates.pending';
     }
 }

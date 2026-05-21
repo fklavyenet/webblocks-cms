@@ -35,6 +35,8 @@ class SystemUpdater
     public function prepareForUpdate(User $user, bool $downloadBeforeInstall = false): array
     {
         $lock = Cache::lock($this->lockName(), (int) config('webblocks-updates.installer.lock_ttl_seconds', 900));
+        $fromVersion = $this->installedVersionStore->currentVersion();
+        $toVersion = null;
 
         if (! $lock->get()) {
             throw new UpdateException('Another update is already running. Wait for it to finish before starting a new run.');
@@ -62,7 +64,6 @@ class SystemUpdater
                 throw new UpdateException('The latest release does not provide a downloadable package.');
             }
 
-            $fromVersion = $this->installedVersionStore->currentVersion();
             $toVersion = trim((string) ($release['version'] ?? $checkResult->latestVersion ?? ''));
 
             if ($toVersion === '') {
@@ -79,11 +80,17 @@ class SystemUpdater
             try {
                 $backup = $this->systemBackupManager->createPreUpdateBackup($user->getKey(), $backupLabel);
             } catch (Throwable $throwable) {
-                throw new UpdateException(
+                $sanitizedFailureDetail = $this->sanitizeFailureDetail($throwable->getMessage());
+
+                $failure = new UpdateException(
                     'Update was not installed because the pre-update backup could not be created.',
-                    $throwable->getMessage(),
+                    $sanitizedFailureDetail,
                     previous: $throwable,
                 );
+
+                $this->recordPreparationFailure($user, $fromVersion, $toVersion, $failure);
+
+                throw $failure;
             }
 
             $run = new SystemUpdateRun([
@@ -367,5 +374,42 @@ class SystemUpdater
         } catch (Throwable) {
             // Ignore lock release failures so the original update result is preserved.
         }
+    }
+
+    private function recordPreparationFailure(User $user, string $fromVersion, ?string $toVersion, UpdateException $failure): void
+    {
+        if (! Schema::hasTable('system_update_runs')) {
+            return;
+        }
+
+        $finishedAt = CarbonImmutable::now();
+
+        SystemUpdateRun::query()->create([
+            'from_version' => $fromVersion,
+            'to_version' => $toVersion ?: $fromVersion,
+            'status' => SystemUpdateRun::STATUS_FAILED,
+            'summary' => $failure->userMessage(),
+            'output' => implode(PHP_EOL, [
+                'Pre-update backup failed before update apply started.',
+                'Failure detail: '.$failure->getMessage(),
+            ]),
+            'warning_count' => 0,
+            'started_at' => $finishedAt,
+            'finished_at' => $finishedAt,
+            'duration_ms' => 0,
+            'triggered_by_user_id' => $user->getKey(),
+        ]);
+    }
+
+    private function sanitizeFailureDetail(string $message): string
+    {
+        $sanitized = preg_replace('/([?&](?:password|passwd|pwd|token|api[_-]?key|secret)=)[^&\s]+/i', '$1[redacted]', $message) ?? $message;
+        $sanitized = preg_replace('/\b(password|passwd|pwd|token|api[_-]?key|secret)=\S+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = preg_replace('/--defaults-extra-file=\S+/i', '--defaults-extra-file=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = str_replace(storage_path(), '[storage_path]', $sanitized);
+        $sanitized = preg_replace('/\b([A-Z_]*(?:PASSWORD|TOKEN|SECRET|APP_KEY))=[^\s]+/i', '$1=[redacted]', $sanitized) ?? $sanitized;
+        $sanitized = str_replace(base_path(), '[base_path]', $sanitized);
+
+        return trim($sanitized) !== '' ? $sanitized : 'Backup failed for an unknown reason.';
     }
 }

@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Support\System;
 
 use WebBlocks\Cms\Models\SystemBackup;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -13,6 +12,7 @@ class UploadedSystemBackupManager
 {
     public function __construct(
         private readonly BackupRestoreArchiveInspector $archiveInspector,
+        private readonly SystemBackupManager $systemBackupManager,
     ) {}
 
     public function import(UploadedFile $file, ?int $triggeredByUserId = null): SystemBackup
@@ -21,7 +21,7 @@ class UploadedSystemBackupManager
         $sourceFilename = $file->getClientOriginalName();
         $safeFilename = Str::lower(Str::random(8)).'-webblocks-cms-backup-upload-'.$startedAt->format('Y-m-d-His').'.zip';
         $archivePath = $safeFilename;
-        $disk = Storage::disk(SystemBackupManager::ARCHIVE_DISK);
+        $disk = $this->systemBackupManager->archiveDisk();
 
         $storedPath = $disk->putFileAs('', $file, $archivePath);
 

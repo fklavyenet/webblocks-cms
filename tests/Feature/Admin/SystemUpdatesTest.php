@@ -286,7 +286,42 @@ class SystemUpdatesTest extends TestCase
         $response->assertRedirect(route('admin.system.updates.index'));
         $response->assertSessionHasErrors(['system_update' => 'Update was not installed because the pre-update backup could not be created.']);
         $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
-        $this->assertDatabaseCount('system_update_runs', 0);
+
+        $run = SystemUpdateRun::query()->latest()->first();
+
+        $this->assertNotNull($run);
+        $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
+        $this->assertSame('Update was not installed because the pre-update backup could not be created.', $run->summary);
+        $this->assertStringContainsString('Pre-update backup failed before update apply started.', (string) $run->output);
+        $this->assertStringContainsString('Failure detail: backup disk unavailable', (string) $run->output);
+    }
+
+    #[Test]
+    public function pre_update_backup_failure_persists_sanitized_failure_detail_without_secrets(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        app(InstalledVersionStore::class)->persist('0.1.0');
+        $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+        $backupManager = Mockery::mock(SystemBackupManager::class);
+        $backupManager->shouldReceive('createPreUpdateBackup')
+            ->once()
+            ->andThrow(new \RuntimeException('Database dump failed with password=supersecret --defaults-extra-file=/tmp/mysql.cnf in '.storage_path('app/backups')));
+        $this->app->instance(SystemBackupManager::class, $backupManager);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.system.updates.index'))
+            ->post(route('admin.system.updates.store'));
+
+        $response->assertRedirect(route('admin.system.updates.index'));
+        $response->assertSessionHasErrors(['system_update' => 'Update was not installed because the pre-update backup could not be created.']);
+
+        $run = SystemUpdateRun::query()->latest()->firstOrFail();
+
+        $this->assertStringContainsString('Failure detail: Database dump failed with password=[redacted] --defaults-extra-file=[redacted] in [storage_path]', (string) $run->output);
+        $this->assertStringNotContainsString('supersecret', (string) $run->output);
+        $this->assertStringNotContainsString('/tmp/mysql.cnf', (string) $run->output);
+        $this->assertStringNotContainsString(storage_path('app/backups'), (string) $run->output);
     }
 
     #[Test]

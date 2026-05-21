@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Prepare v1.32.17 as a fresh-consumer updater hotfix by making backup operations bootstrap the package-owned `backups` disk root when a new consumer install has not added the maintenance-repo filesystem disk config yet, so the mandatory pre-update backup can be created before in-app updates apply.
+- Preserve sanitized backup failure detail across the operational update boundary by recording the real pre-update backup failure reason in `system_update_runs` and `system_backups` without exposing secrets, credentials, or sensitive absolute paths, and add focused fresh-consumer and updater regression coverage for backup readiness, idempotent storage creation, and failure-detail persistence.
+
 - Prepare v1.32.16 as a hotfix for the package updater artifact boundary by guarding the `WebBlocks\Cms\Support\System\Updates\UpdateException` path and neighboring updater support classes that consumer installs autoload from `vendor/fklavyenet/webblocks-cms/src/...` during in-app updates.
 - Add focused package metadata, bootstrap, and release-archive integrity coverage so package-owned updater support classes resolve to real files and the release artifact includes the updater support files needed by consumer Composer autoloading.
 
