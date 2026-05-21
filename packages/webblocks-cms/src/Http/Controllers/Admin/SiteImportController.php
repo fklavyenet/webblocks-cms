@@ -6,9 +6,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Throwable;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSiteImportsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteImportRunRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteImportUploadRequest;
 use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportBulkDeleter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
 
@@ -16,6 +18,7 @@ class SiteImportController extends Controller
 {
     public function __construct(
         private readonly SiteImportManager $siteImportManager,
+        private readonly SiteImportBulkDeleter $siteImportBulkDeleter,
     ) {}
 
     public function index(): View
@@ -72,5 +75,20 @@ class SiteImportController extends Controller
         return redirect()
             ->route('admin.site-transfers.exports.index')
             ->with('status', 'Site import record deleted. Imported site content remains intact.');
+    }
+
+    public function bulkDestroy(BulkDeleteSiteImportsRequest $request): RedirectResponse
+    {
+        $result = $this->siteImportBulkDeleter->deleteSelected($request->validated('site_import_ids'));
+
+        $redirect = redirect()
+            ->route('admin.site-transfers.exports.index')
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['site_imports' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 }

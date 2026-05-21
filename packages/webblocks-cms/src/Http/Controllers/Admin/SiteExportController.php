@@ -7,17 +7,20 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSiteExportsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteExportRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportBulkDeleter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
 
 class SiteExportController extends Controller
 {
     public function __construct(
         private readonly SiteExportManager $siteExportManager,
+        private readonly SiteExportBulkDeleter $siteExportBulkDeleter,
     ) {}
 
     public function index(): View
@@ -99,6 +102,21 @@ class SiteExportController extends Controller
         return redirect()
             ->route('admin.site-transfers.exports.index')
             ->with('status', 'Site export record deleted.');
+    }
+
+    public function bulkDestroy(BulkDeleteSiteExportsRequest $request): RedirectResponse
+    {
+        $result = $this->siteExportBulkDeleter->deleteSelected($request->validated('site_export_ids'));
+
+        $redirect = redirect()
+            ->route('admin.site-transfers.exports.index')
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['site_exports' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 
     private function createExport(Site $site, SiteExportRequest $request): SiteExport

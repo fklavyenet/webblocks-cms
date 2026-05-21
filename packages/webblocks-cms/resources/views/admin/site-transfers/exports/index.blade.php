@@ -14,7 +14,7 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-gap-4">
-        <div class="wb-card">
+        <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Site Exports</strong>
@@ -33,10 +33,22 @@
                         <div class="wb-empty-text">The first completed site export package will appear here with download and detail actions.</div>
                     </div>
                 @else
+                    @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                        'label' => 'selected',
+                        'deleteTarget' => '#bulk-delete-site-exports-modal',
+                        'deleteLabel' => 'Delete selected',
+                    ])
+
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <label class="wb-checkbox" for="select_all_visible_site_exports">
+                                            <input id="select_all_visible_site_exports" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible site exports">
+                                            <span class="wb-sr-only">Select all visible site exports</span>
+                                        </label>
+                                    </th>
                                     <th>Created at</th>
                                     <th>Site</th>
                                     <th>Includes media</th>
@@ -48,6 +60,12 @@
                             <tbody>
                                 @foreach ($exports as $siteExport)
                                     <tr>
+                                        <td>
+                                            <label class="wb-checkbox" for="site_export_select_{{ $siteExport->id }}">
+                                                <input id="site_export_select_{{ $siteExport->id }}" type="checkbox" value="{{ $siteExport->id }}" data-wb-admin-row-select aria-label="Select site export {{ $siteExport->archive_name ?? '#'.$siteExport->id }}">
+                                                <span class="wb-sr-only">Select site export {{ $siteExport->archive_name ?? '#'.$siteExport->id }}</span>
+                                            </label>
+                                        </td>
                                         <td>{{ $siteExport->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>{{ $siteExport->site?->name ?? '-' }}</td>
                                         <td>{{ $siteExport->includes_media ? 'Yes' : 'No' }}</td>
@@ -65,16 +83,39 @@
                                                     </a>
                                                 @endif
 
-                                                <form method="POST" action="{{ route('admin.site-transfers.exports.destroy', $siteExport) }}" onsubmit="return confirm('Delete this site export record and archive file?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete export" aria-label="Delete export">
-                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
+                                                <button
+                                                    type="button"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    title="Delete export"
+                                                    aria-label="Delete export"
+                                                    data-wb-toggle="modal"
+                                                    data-wb-target="#delete-site-export-{{ $siteExport->id }}-modal"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
+
+                                    @push('overlays')
+                                        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                                            'id' => 'delete-site-export-'.$siteExport->id.'-modal',
+                                            'title' => 'Delete Site Export',
+                                            'description' => 'This deletes the site export record and stored archive file when present.',
+                                            'action' => route('admin.site-transfers.exports.destroy', $siteExport),
+                                            'method' => 'DELETE',
+                                            'submitLabel' => 'Delete export',
+                                        ])
+                                            <div class="wb-card wb-card-muted">
+                                                <div class="wb-card-body wb-stack wb-gap-2">
+                                                    <div><strong>{{ $siteExport->archive_name ?? 'Site export #'.$siteExport->id }}</strong></div>
+                                                    <div class="wb-text-sm wb-text-muted">Status {{ $siteExport->statusLabel() }} | Site {{ $siteExport->site?->name ?? '-' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <p class="wb-text-sm wb-text-muted">This does not delete any site content.</p>
+                                        @endcomponent
+                                    @endpush
                                 @endforeach
                             </tbody>
                         </table>
@@ -85,7 +126,38 @@
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $exports, 'compact' => true, 'ariaLabel' => 'Exports pagination'])
         </div>
 
-        <div class="wb-card">
+        @if ($exports->isNotEmpty())
+            @push('overlays')
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'bulk-delete-site-exports-modal',
+                    'title' => 'Delete Selected Site Exports',
+                    'description' => 'This deletes the selected site export records and stored archive files when present.',
+                    'action' => route('admin.site-transfers.exports.bulk-destroy'),
+                    'method' => 'DELETE',
+                    'submitLabel' => 'Delete selected',
+                    'formAttributes' => [
+                        'data-wb-admin-bulk-delete-form' => true,
+                        'data-wb-admin-bulk-input-name' => 'site_export_ids[]',
+                    ],
+                    'submitAttributes' => [
+                        'data-wb-admin-bulk-delete-submit' => true,
+                        'disabled' => true,
+                    ],
+                ])
+                    <div class="wb-card wb-card-muted">
+                        <div class="wb-card-body wb-stack wb-gap-2">
+                            <strong><span data-wb-admin-bulk-modal-count>0</span> selected site exports will be deleted.</strong>
+                            <p class="wb-text-sm wb-text-muted">This applies only to exports visible on this page. Export records and archive paths are re-checked server-side before deletion.</p>
+                        </div>
+                    </div>
+
+                    <div data-wb-admin-bulk-inputs></div>
+                    <input type="hidden" name="site_export_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+                @endcomponent
+            @endpush
+        @endif
+
+        <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>Site Imports</strong>
@@ -104,10 +176,22 @@
                         <div class="wb-empty-text">Validated and completed site imports will appear here with result and log details.</div>
                     </div>
                 @else
+                    @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                        'label' => 'selected',
+                        'deleteTarget' => '#bulk-delete-site-imports-modal',
+                        'deleteLabel' => 'Delete selected',
+                    ])
+
                     <div class="wb-table-wrap">
                         <table class="wb-table wb-table-striped wb-table-hover">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <label class="wb-checkbox" for="select_all_visible_site_imports">
+                                            <input id="select_all_visible_site_imports" type="checkbox" data-wb-admin-select-all-visible aria-label="Select all visible site imports">
+                                            <span class="wb-sr-only">Select all visible site imports</span>
+                                        </label>
+                                    </th>
                                     <th>Created at</th>
                                     <th>Imported site/result</th>
                                     <th>Source package name</th>
@@ -118,6 +202,12 @@
                             <tbody>
                                 @foreach ($imports as $siteImport)
                                     <tr>
+                                        <td>
+                                            <label class="wb-checkbox" for="site_import_select_{{ $siteImport->id }}">
+                                                <input id="site_import_select_{{ $siteImport->id }}" type="checkbox" value="{{ $siteImport->id }}" data-wb-admin-row-select aria-label="Select site import {{ $siteImport->source_archive_name ?? '#'.$siteImport->id }}">
+                                                <span class="wb-sr-only">Select site import {{ $siteImport->source_archive_name ?? '#'.$siteImport->id }}</span>
+                                            </label>
+                                        </td>
                                         <td>{{ $siteImport->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>
                                             @if ($siteImport->targetSite)
@@ -134,16 +224,39 @@
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
-                                                <form method="POST" action="{{ route('admin.site-transfers.imports.destroy', $siteImport) }}" onsubmit="return confirm('Delete this import log and stored package archive? Imported site content will remain.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="Delete import log" aria-label="Delete import log">
-                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                    </button>
-                                                </form>
+                                                <button
+                                                    type="button"
+                                                    class="wb-action-btn wb-action-btn-delete"
+                                                    title="Delete import log"
+                                                    aria-label="Delete import log"
+                                                    data-wb-toggle="modal"
+                                                    data-wb-target="#delete-site-import-{{ $siteImport->id }}-modal"
+                                                >
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
+
+                                    @push('overlays')
+                                        @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                                            'id' => 'delete-site-import-'.$siteImport->id.'-modal',
+                                            'title' => 'Delete Site Import',
+                                            'description' => 'This deletes the site import log and stored package archive when present.',
+                                            'action' => route('admin.site-transfers.imports.destroy', $siteImport),
+                                            'method' => 'DELETE',
+                                            'submitLabel' => 'Delete import log',
+                                        ])
+                                            <div class="wb-card wb-card-muted">
+                                                <div class="wb-card-body wb-stack wb-gap-2">
+                                                    <div><strong>{{ $siteImport->source_archive_name ?? 'Site import #'.$siteImport->id }}</strong></div>
+                                                    <div class="wb-text-sm wb-text-muted">Status {{ $siteImport->statusLabel() }} | Result {{ $siteImport->targetSite?->name ?? ($siteImport->imported_site_handle ?? 'Pending / failed') }}</div>
+                                                </div>
+                                            </div>
+
+                                            <p class="wb-text-sm wb-text-muted">Imported site content remains intact.</p>
+                                        @endcomponent
+                                    @endpush
                                 @endforeach
                             </tbody>
                         </table>
@@ -153,6 +266,37 @@
 
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $imports, 'compact' => true, 'ariaLabel' => 'Imports pagination'])
         </div>
+
+        @if ($imports->isNotEmpty())
+            @push('overlays')
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                    'id' => 'bulk-delete-site-imports-modal',
+                    'title' => 'Delete Selected Site Imports',
+                    'description' => 'This deletes the selected site import logs and stored package archives when present.',
+                    'action' => route('admin.site-transfers.imports.bulk-destroy'),
+                    'method' => 'DELETE',
+                    'submitLabel' => 'Delete selected',
+                    'formAttributes' => [
+                        'data-wb-admin-bulk-delete-form' => true,
+                        'data-wb-admin-bulk-input-name' => 'site_import_ids[]',
+                    ],
+                    'submitAttributes' => [
+                        'data-wb-admin-bulk-delete-submit' => true,
+                        'disabled' => true,
+                    ],
+                ])
+                    <div class="wb-card wb-card-muted">
+                        <div class="wb-card-body wb-stack wb-gap-2">
+                            <strong><span data-wb-admin-bulk-modal-count>0</span> selected site imports will be deleted.</strong>
+                            <p class="wb-text-sm wb-text-muted">This applies only to imports visible on this page. Imported site content remains intact.</p>
+                        </div>
+                    </div>
+
+                    <div data-wb-admin-bulk-inputs></div>
+                    <input type="hidden" name="site_import_ids[]" value="" disabled data-wb-admin-bulk-empty-input>
+                @endcomponent
+            @endpush
+        @endif
     </div>
 
     @include('webblocks-cms::admin.site-transfers.partials.export-modal', [
@@ -165,4 +309,11 @@
         'formAction' => route('admin.site-transfers.exports.store'),
         'modalKey' => 'create-export',
     ])
+
+    @push('scripts')
+        @php($bulkActionsJsPath = public_path('cms/js/admin/listing-bulk-actions.js'))
+        @if (is_file($bulkActionsJsPath))
+            <script src="{{ asset('cms/js/admin/listing-bulk-actions.js') }}?v={{ filemtime($bulkActionsJsPath) }}" defer></script>
+        @endif
+    @endpush
 @endsection

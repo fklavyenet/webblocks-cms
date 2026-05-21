@@ -79,6 +79,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
         Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'));
         Route::post('/pages/{page}/workflow', [PageController::class, 'updateWorkflow'])->name('pages.workflow');
         Route::post('/pages/import-json', [PageImportController::class, 'store'])->name('pages.import.store');
+        Route::delete('/pages/bulk', [PageController::class, 'bulkDestroy'])->name('pages.bulk-destroy');
         Route::post('/pages/{page}/assets/{type}', [PageAssetController::class, 'store'])->name('pages.assets.store');
         Route::put('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'update'])->name('pages.assets.update');
         Route::delete('/pages/{page}/assets/{page_asset}', [PageAssetController::class, 'destroy'])->name('pages.assets.destroy');
@@ -167,12 +168,14 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
             Route::resource('block-types', BlockTypeController::class)->except(['show']);
             Route::get('site-transfers/exports', [SiteExportController::class, 'index'])->name('site-transfers.exports.index');
             Route::post('site-transfers/exports', [SiteExportController::class, 'store'])->name('site-transfers.exports.store');
+            Route::delete('site-transfers/exports/bulk', [SiteExportController::class, 'bulkDestroy'])->name('site-transfers.exports.bulk-destroy');
             Route::get('site-transfers/exports/{siteExport}', [SiteExportController::class, 'show'])->name('site-transfers.exports.show');
             Route::get('site-transfers/exports/{siteExport}/download', [SiteExportController::class, 'download'])->name('site-transfers.exports.download');
             Route::delete('site-transfers/exports/{siteExport}', [SiteExportController::class, 'destroy'])->name('site-transfers.exports.destroy');
             Route::get('site-transfers/imports', [SiteImportController::class, 'index'])->name('site-transfers.imports.index');
             Route::get('site-transfers/imports/create', [SiteImportController::class, 'create'])->name('site-transfers.imports.create');
             Route::post('site-transfers/imports/inspect', [SiteImportController::class, 'inspect'])->name('site-transfers.imports.inspect');
+            Route::delete('site-transfers/imports/bulk', [SiteImportController::class, 'bulkDestroy'])->name('site-transfers.imports.bulk-destroy');
             Route::get('site-transfers/imports/{siteImport}', [SiteImportController::class, 'show'])->name('site-transfers.imports.show');
             Route::post('site-transfers/imports/{siteImport}/run', [SiteImportController::class, 'run'])->name('site-transfers.imports.run');
             Route::delete('site-transfers/imports/{siteImport}', [SiteImportController::class, 'destroy'])->name('site-transfers.imports.destroy');

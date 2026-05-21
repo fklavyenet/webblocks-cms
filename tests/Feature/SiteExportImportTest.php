@@ -11,7 +11,9 @@ use App\Models\PageSlot;
 use App\Models\SharedSlot;
 use App\Models\Site;
 use App\Models\SiteExport;
+use App\Models\SiteImport;
 use App\Models\SlotType;
+use App\Models\User;
 use App\Support\Pages\PublicPagePresenter;
 use App\Support\Sites\ExportImport\SiteExportManager;
 use App\Support\Sites\ExportImport\SiteImportManager;
@@ -889,6 +891,204 @@ class SiteExportImportTest extends TestCase
     }
 
     #[Test]
+    public function site_transfers_index_renders_bulk_delete_selection_and_modals_without_browser_confirm(): void
+    {
+        Storage::fake('site-exports');
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $siteExport = $this->createSiteExportRecord($site, 'render-export.zip');
+        $siteImport = $this->createSiteImportRecord('render-import.zip');
+
+        $response = $this->actingAs($user)->get(route('admin.site-transfers.exports.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-admin-bulk-listing', false);
+        $response->assertSee('id="select_all_visible_site_exports"', false);
+        $response->assertSee('id="select_all_visible_site_imports"', false);
+        $response->assertSee('id="bulk-delete-site-exports-modal"', false);
+        $response->assertSee('id="bulk-delete-site-imports-modal"', false);
+        $response->assertSee('data-wb-admin-bulk-input-name="site_export_ids[]"', false);
+        $response->assertSee('data-wb-admin-bulk-input-name="site_import_ids[]"', false);
+        $response->assertSee('data-wb-target="#delete-site-export-'.$siteExport->id.'-modal"', false);
+        $response->assertSee('data-wb-target="#delete-site-import-'.$siteImport->id.'-modal"', false);
+        $response->assertDontSee('confirm(', false);
+    }
+
+    #[Test]
+    public function site_export_bulk_delete_requires_system_access(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $siteExport = $this->createSiteExportRecord($site, 'blocked-export.zip');
+        $editor = User::factory()->editor()->create();
+        $editor->sites()->sync([$site->id]);
+
+        $this->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [$siteExport->id],
+        ])->assertRedirect(route('login'));
+
+        $this->actingAs($editor)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [$siteExport->id],
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('site_exports', ['id' => $siteExport->id]);
+        Storage::disk('site-exports')->assertExists('blocked-export.zip');
+    }
+
+    #[Test]
+    public function super_admin_can_bulk_delete_selected_site_exports_and_archive_files(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $first = $this->createSiteExportRecord($site, 'first-export.zip');
+        $second = $this->createSiteExportRecord($site, 'second-export.zip');
+
+        $response = $this->actingAs($user)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+        $response->assertSessionHas('status', '2 selected site exports deleted.');
+        $this->assertDatabaseMissing('site_exports', ['id' => $first->id]);
+        $this->assertDatabaseMissing('site_exports', ['id' => $second->id]);
+        Storage::disk('site-exports')->assertMissing('first-export.zip');
+        Storage::disk('site-exports')->assertMissing('second-export.zip');
+    }
+
+    #[Test]
+    public function site_export_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $siteExport = $this->createSiteExportRecord($site, 'invalid-export.zip');
+
+        $this->actingAs($user)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [],
+        ])->assertSessionHasErrors('site_export_ids');
+
+        $this->actingAs($user)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [$siteExport->id, 999999],
+        ])->assertSessionHasErrors('site_export_ids.1');
+
+        $this->assertDatabaseHas('site_exports', ['id' => $siteExport->id]);
+        Storage::disk('site-exports')->assertExists('invalid-export.zip');
+    }
+
+    #[Test]
+    public function site_export_bulk_delete_reports_partial_failures(): void
+    {
+        Storage::fake('site-exports');
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $safe = $this->createSiteExportRecord($site, 'safe-export.zip');
+        $unsafe = SiteExport::query()->create([
+            'site_id' => $site->id,
+            'status' => SiteExport::STATUS_COMPLETED,
+            'archive_disk' => 'site-exports',
+            'archive_path' => '../unsafe-export.zip',
+            'archive_name' => 'unsafe-export.zip',
+            'archive_size_bytes' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.site-transfers.exports.bulk-destroy'), [
+            'site_export_ids' => [$safe->id, $unsafe->id],
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+        $response->assertSessionHas('status', '1 selected site export deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors('site_exports');
+        $this->assertDatabaseMissing('site_exports', ['id' => $safe->id]);
+        $this->assertDatabaseHas('site_exports', ['id' => $unsafe->id]);
+    }
+
+    #[Test]
+    public function site_import_bulk_delete_requires_system_access(): void
+    {
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+        $siteImport = $this->createSiteImportRecord('blocked-import.zip');
+        $editor = User::factory()->editor()->create();
+        $editor->sites()->sync([$site->id]);
+
+        $this->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [$siteImport->id],
+        ])->assertRedirect(route('login'));
+
+        $this->actingAs($editor)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [$siteImport->id],
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('site_imports', ['id' => $siteImport->id]);
+        Storage::disk('site-transfers')->assertExists('blocked-import.zip');
+    }
+
+    #[Test]
+    public function super_admin_can_bulk_delete_selected_site_imports_and_archive_files(): void
+    {
+        Storage::fake('site-transfers');
+        $user = User::factory()->superAdmin()->create();
+        $first = $this->createSiteImportRecord('first-import.zip');
+        $second = $this->createSiteImportRecord('second-import.zip');
+
+        $response = $this->actingAs($user)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+        $response->assertSessionHas('status', '2 selected site imports deleted.');
+        $this->assertDatabaseMissing('site_imports', ['id' => $first->id]);
+        $this->assertDatabaseMissing('site_imports', ['id' => $second->id]);
+        Storage::disk('site-transfers')->assertMissing('first-import.zip');
+        Storage::disk('site-transfers')->assertMissing('second-import.zip');
+    }
+
+    #[Test]
+    public function site_import_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        Storage::fake('site-transfers');
+        $user = User::factory()->superAdmin()->create();
+        $siteImport = $this->createSiteImportRecord('invalid-import.zip');
+
+        $this->actingAs($user)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [],
+        ])->assertSessionHasErrors('site_import_ids');
+
+        $this->actingAs($user)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [$siteImport->id, 999999],
+        ])->assertSessionHasErrors('site_import_ids.1');
+
+        $this->assertDatabaseHas('site_imports', ['id' => $siteImport->id]);
+        Storage::disk('site-transfers')->assertExists('invalid-import.zip');
+    }
+
+    #[Test]
+    public function site_import_bulk_delete_reports_partial_failures(): void
+    {
+        Storage::fake('site-transfers');
+        $user = User::factory()->superAdmin()->create();
+        $safe = $this->createSiteImportRecord('safe-import.zip');
+        $unsafe = SiteImport::query()->create([
+            'status' => SiteImport::STATUS_VALIDATED,
+            'source_archive_name' => 'unsafe-import.zip',
+            'archive_disk' => 'site-transfers',
+            'archive_path' => '../unsafe-import.zip',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('admin.site-transfers.imports.bulk-destroy'), [
+            'site_import_ids' => [$safe->id, $unsafe->id],
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.exports.index'));
+        $response->assertSessionHas('status', '1 selected site import deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors('site_imports');
+        $this->assertDatabaseMissing('site_imports', ['id' => $safe->id]);
+        $this->assertDatabaseHas('site_imports', ['id' => $unsafe->id]);
+    }
+
+    #[Test]
     public function site_import_uploads_remain_separate_from_backup_upload_storage(): void
     {
         Storage::fake('site-exports');
@@ -907,5 +1107,31 @@ class SiteExportImportTest extends TestCase
         $this->assertStringContainsString('/', $siteImport->archive_path);
         Storage::disk('site-transfers')->assertExists($siteImport->archive_path);
         $this->assertCount(0, Storage::disk('backups')->allFiles());
+    }
+
+    private function createSiteExportRecord(Site $site, string $archivePath): SiteExport
+    {
+        Storage::disk('site-exports')->put($archivePath, 'export contents');
+
+        return SiteExport::query()->create([
+            'site_id' => $site->id,
+            'status' => SiteExport::STATUS_COMPLETED,
+            'archive_disk' => 'site-exports',
+            'archive_path' => $archivePath,
+            'archive_name' => $archivePath,
+            'archive_size_bytes' => strlen('export contents'),
+        ]);
+    }
+
+    private function createSiteImportRecord(string $archivePath): SiteImport
+    {
+        Storage::disk('site-transfers')->put($archivePath, 'import contents');
+
+        return SiteImport::query()->create([
+            'status' => SiteImport::STATUS_VALIDATED,
+            'source_archive_name' => $archivePath,
+            'archive_disk' => 'site-transfers',
+            'archive_path' => $archivePath,
+        ]);
     }
 }

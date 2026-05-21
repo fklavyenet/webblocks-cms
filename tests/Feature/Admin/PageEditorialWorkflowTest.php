@@ -175,6 +175,108 @@ class PageEditorialWorkflowTest extends TestCase
     }
 
     #[Test]
+    public function pages_index_renders_bulk_selection_and_view_column_after_page_without_browser_confirm(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->editorFor($site);
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'bulk-page');
+
+        $response = $this->actingAs($user)->get(route('admin.pages.index', ['site' => $site->id]));
+
+        $response->assertOk();
+        $response->assertSee('data-wb-admin-bulk-listing', false);
+        $response->assertSee('data-wb-admin-select-all-visible', false);
+        $response->assertSee('data-wb-admin-row-select', false);
+        $response->assertSee('id="bulk-delete-pages-modal"', false);
+        $response->assertSee(route('admin.pages.bulk-destroy'), false);
+        $response->assertSee('data-wb-admin-bulk-input-name="page_ids[]"', false);
+        $response->assertSee('data-wb-target="#delete-page-'.$page->id.'-modal"', false);
+        $response->assertDontSee('confirm(', false);
+
+        $content = $response->getContent();
+        $this->assertLessThan(strpos($content, '<th>Page</th>'), strpos($content, 'Select all visible pages'));
+        $this->assertLessThan(strpos($content, '<th>View</th>'), strpos($content, '<th>Page</th>'));
+        $this->assertLessThan(strpos($content, '<th>Blocks</th>'), strpos($content, '<th>View</th>'));
+    }
+
+    #[Test]
+    public function pages_bulk_delete_requires_authentication(): void
+    {
+        $page = $this->pageFor($this->defaultSite(), Page::STATUS_DRAFT, 'guest-bulk-delete');
+
+        $response = $this->delete(route('admin.pages.bulk-destroy'), [
+            'page_ids' => [$page->id],
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    }
+
+    #[Test]
+    public function authorized_user_can_bulk_delete_selected_pages_within_scope(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->editorFor($site);
+        $first = $this->pageFor($site, Page::STATUS_DRAFT, 'bulk-first');
+        $second = $this->pageFor($site, Page::STATUS_PUBLISHED, 'bulk-second');
+
+        $response = $this->actingAs($user)->delete(route('admin.pages.bulk-destroy'), [
+            'page_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.index'));
+        $response->assertSessionHas('status', '2 selected pages deleted.');
+        $this->assertDatabaseMissing('pages', ['id' => $first->id]);
+        $this->assertDatabaseMissing('pages', ['id' => $second->id]);
+    }
+
+    #[Test]
+    public function site_scoped_user_cannot_bulk_delete_pages_outside_assigned_sites(): void
+    {
+        $site = $this->defaultSite();
+        $otherSite = Site::query()->create([
+            'name' => 'Other Site',
+            'handle' => 'other-site',
+            'domain' => 'other.example.test',
+            'is_primary' => false,
+        ]);
+        $user = $this->editorFor($site);
+        $allowed = $this->pageFor($site, Page::STATUS_DRAFT, 'allowed-bulk');
+        $outside = $this->pageFor($otherSite, Page::STATUS_DRAFT, 'outside-bulk');
+
+        $response = $this->actingAs($user)->delete(route('admin.pages.bulk-destroy'), [
+            'page_ids' => [$allowed->id, $outside->id],
+        ]);
+
+        $response->assertRedirect(route('admin.pages.index'));
+        $response->assertSessionHas('status', '1 selected page deleted. 1 could not be deleted.');
+        $response->assertSessionHasErrors('pages');
+        $this->assertDatabaseMissing('pages', ['id' => $allowed->id]);
+        $this->assertDatabaseHas('pages', ['id' => $outside->id]);
+    }
+
+    #[Test]
+    public function pages_bulk_delete_rejects_missing_or_invalid_ids_safely(): void
+    {
+        $site = $this->defaultSite();
+        $user = $this->editorFor($site);
+        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'still-here');
+
+        $missing = $this->actingAs($user)->delete(route('admin.pages.bulk-destroy'), [
+            'page_ids' => [],
+        ]);
+
+        $missing->assertSessionHasErrors('page_ids');
+
+        $invalid = $this->actingAs($user)->delete(route('admin.pages.bulk-destroy'), [
+            'page_ids' => [$page->id, 999999],
+        ]);
+
+        $invalid->assertSessionHasErrors('page_ids.1');
+        $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    }
+
+    #[Test]
     public function new_page_defaults_to_draft_when_created_from_admin(): void
     {
         $site = $this->defaultSite();

@@ -29,7 +29,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use WebBlocks\Cms\Http\Requests\Admin\BulkDeletePagesRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PageRequest;
+use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
+use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
@@ -53,6 +56,8 @@ class PageController extends Controller
         private readonly PageLayoutSlotSyncer $pageLayoutSlotSyncer,
         private readonly PageWorkflowManager $workflowManager,
         private readonly AdminAuthorization $authorization,
+        private readonly PageDeleter $pageDeleter,
+        private readonly PageBulkDeleter $pageBulkDeleter,
     ) {}
 
     public function index(Request $request): View
@@ -683,12 +688,28 @@ class PageController extends Controller
     {
         $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
         $request = request();
+        $siteId = $page->site_id;
 
-        $page->delete();
+        $this->pageDeleter->delete($page);
 
         return redirect()
-            ->to($this->pageIndexState->storedUrl($request, $page->site_id))
+            ->to($this->pageIndexState->storedUrl($request, $siteId))
             ->with('status', 'Page deleted successfully.');
+    }
+
+    public function bulkDestroy(BulkDeletePagesRequest $request): RedirectResponse
+    {
+        $result = $this->pageBulkDeleter->deleteSelected($request->user(), $request->validated('page_ids'));
+
+        $redirect = redirect()
+            ->to($this->pageIndexState->storedUrl($request))
+            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+        if ($result->hasFailures()) {
+            $redirect->withErrors(['pages' => implode(' ', $result->failureMessages())]);
+        }
+
+        return $redirect;
     }
 
     private function hasMeaningfulPageIndexQuery(Request $request): bool
