@@ -145,7 +145,10 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
         $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));
         $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
+        $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
+        $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/public/cms/js/admin/listing-bulk-actions.js')));
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+        $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
         $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
@@ -159,6 +162,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertStringContainsString('Package checksum verified', (string) $run->output);
         $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
         $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
+        $this->assertStringContainsString('Synced package public/cms assets into public/cms runtime compatibility path.', (string) $run->output);
         $this->assertStringContainsString('composer install', (string) $run->output);
         $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
         $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
@@ -594,6 +598,7 @@ class SystemUpdatesTest extends TestCase
         $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
         $archive->addFromString('routes/admin.php', "<?php\n");
         $archive->addFromString('public/cms/admin.css', "package-css\n");
+        $archive->addFromString('public/cms/js/admin/listing-bulk-actions.js', "bulk-actions-js\n");
         $archive->addFromString('stubs/starter/README.md', "package stub\n");
         $archive->close();
 

@@ -50,6 +50,8 @@ class UpdateInstaller
         foreach ($packageRuntimePaths as $packageRuntimePath) {
             $this->replacePackageRuntime($targetPath, $packageRuntimePath, $packageRoot, $output);
         }
+
+        $this->syncRootRuntimeAssets($targetPath, $packageRoot, $output);
     }
 
     private function replacePackageRuntime(string $targetPath, string $packageRuntimePath, string $packageRoot, array &$output): void
@@ -97,6 +99,29 @@ class UpdateInstaller
         File::deleteDirectory($backupPath);
 
         $output[] = 'Replaced '.$this->relativePath($targetPath, $packageRuntimePath).' with package artifact contents.';
+    }
+
+    private function syncRootRuntimeAssets(string $targetPath, string $packageRoot, array &$output): void
+    {
+        $source = $packageRoot.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'cms';
+
+        if (! File::isDirectory($source)) {
+            return;
+        }
+
+        $target = rtrim($targetPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'cms';
+
+        File::ensureDirectoryExists($target);
+
+        foreach (File::allFiles($source) as $file) {
+            $relativePath = ltrim(str_replace($source, '', $file->getPathname()), DIRECTORY_SEPARATOR);
+            $destination = $target.DIRECTORY_SEPARATOR.$relativePath;
+
+            File::ensureDirectoryExists(dirname($destination));
+            File::copy($file->getPathname(), $destination);
+        }
+
+        $output[] = 'Synced package public/cms assets into public/cms runtime compatibility path.';
     }
 
     public function installDependencies(array &$output): void

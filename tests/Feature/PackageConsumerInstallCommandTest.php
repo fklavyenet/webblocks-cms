@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Locale;
 use App\Models\Page;
 use App\Models\PageLayout;
 use App\Models\Site;
@@ -10,9 +9,8 @@ use App\Models\SlotType;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -221,6 +219,7 @@ PHP;
         $this->assertTrue(Page::query()->exists());
         $this->assertFileExists(public_path('cms/css/admin.css'));
         $this->assertFileExists(public_path('cms/js/admin/core.js'));
+        $this->assertFileExists(public_path('cms/js/admin/listing-bulk-actions.js'));
     }
 
     #[Test]

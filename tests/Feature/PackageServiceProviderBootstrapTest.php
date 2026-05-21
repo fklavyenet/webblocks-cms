@@ -348,7 +348,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         ], WebBlocksCmsServiceProvider::PACKAGE_CONSOLE_COMMANDS);
         $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);
         $this->assertSame('composer update fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_UPDATE_COMMAND);
-        $this->assertSame('public/vendor/webblocks-cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
+        $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
         $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
         $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
     }
@@ -509,7 +509,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame([
             [
                 'paths' => [
-                    base_path('packages/webblocks-cms/public') => public_path(str_replace('public/', '', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET)),
+                    base_path('packages/webblocks-cms/public/cms') => public_path(str_replace('public/', '', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET)),
                 ],
                 'group' => WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TAG,
             ],
@@ -522,9 +522,11 @@ class PackageServiceProviderBootstrapTest extends TestCase
         ], $provider->publishCalls);
         $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/admin.css'));
         $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/core.js'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js'));
         $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin-sortable-list.js'));
         $this->assertFileExists(public_path('cms/css/admin.css'));
         $this->assertFileExists(public_path('cms/js/admin/core.js'));
+        $this->assertFileExists(public_path('cms/js/admin/listing-bulk-actions.js'));
         $this->assertFileExists(public_path('cms/js/admin-sortable-list.js'));
     }
 

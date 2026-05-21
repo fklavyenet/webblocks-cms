@@ -58,6 +58,14 @@ class ReleasePackageBoundaryTest extends TestCase
     }
 
     #[Test]
+    public function release_artifact_includes_bulk_listing_admin_javascript_in_package_public_assets(): void
+    {
+        $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+
+        $this->assertFileExists($installedPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+    }
+
+    #[Test]
     public function release_artifact_composer_psr4_mapping_resolves_update_exception_to_src_path(): void
     {
         $installedPackageRoot = $this->buildInstalledPackageSnapshot();

@@ -29,6 +29,10 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
+use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
@@ -398,6 +402,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'cms/js/admin/core.js',
         'cms/js/admin/gallery-items.js',
         'cms/js/admin/inline-block-builder.js',
+        'cms/js/admin/listing-bulk-actions.js',
         'cms/js/admin/media-copy.js',
         'cms/js/admin/page-assets.js',
         'cms/js/admin/page-builder-modals.js',
@@ -425,6 +430,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         'cms/js/admin/core.js',
         'cms/js/admin/gallery-items.js',
         'cms/js/admin/inline-block-builder.js',
+        'cms/js/admin/listing-bulk-actions.js',
         'cms/js/admin/media-copy.js',
         'cms/js/admin/page-assets.js',
         'cms/js/admin/page-builder-modals.js',
@@ -690,7 +696,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     public const STUBS_PUBLISH_TAG = 'webblocks-cms-stubs';
 
-    public const ASSETS_PUBLISH_TARGET = 'public/vendor/webblocks-cms';
+    public const ASSETS_PUBLISH_TARGET = 'public/cms';
 
     public const STUBS_PUBLISH_TARGET = 'stubs/vendor/webblocks-cms';
 
@@ -936,10 +942,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     protected function registerClassAliases(): void
     {
         $aliases = [
-            'App\\Models\\BlockAsset' => \WebBlocks\Cms\Models\BlockMedia::class,
-            'App\\Models\\Site' => \WebBlocks\Cms\Models\Site::class,
-            'App\\Models\\SystemBackup' => \WebBlocks\Cms\Models\SystemBackup::class,
-            'App\\Models\\SystemBackupRestore' => \WebBlocks\Cms\Models\SystemBackupRestore::class,
+            'App\\Models\\BlockAsset' => BlockMedia::class,
+            'App\\Models\\Site' => Site::class,
+            'App\\Models\\SystemBackup' => SystemBackup::class,
+            'App\\Models\\SystemBackupRestore' => SystemBackupRestore::class,
             'App\\Support\\Audit\\CurrentActorResolver' => CurrentActorResolver::class,
             'App\\Support\\Install\\InstallationGitRemoteGuard' => InstallationGitRemoteGuard::class,
             'App\\Support\\Locales\\LocaleResolver' => LocaleResolver::class,
@@ -980,7 +986,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            $this->publicPath() => public_path(str_replace('public/', '', self::ASSETS_PUBLISH_TARGET)),
+            $this->publicPath('cms') => public_path(str_replace('public/', '', self::ASSETS_PUBLISH_TARGET)),
         ], self::ASSETS_PUBLISH_TAG);
     }
 
@@ -1036,9 +1042,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return $this->packagePath((string) config('webblocks-cms.migrations.fresh_path', 'database/migrations/fresh'));
     }
 
-    protected function publicPath(): string
+    protected function publicPath(string $path = ''): string
     {
-        return $this->packagePath('public');
+        return $this->packagePath('public'.($path !== '' ? DIRECTORY_SEPARATOR.ltrim($path, DIRECTORY_SEPARATOR) : ''));
     }
 
     protected function stubsPath(): string

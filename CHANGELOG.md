@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.32.29
+
+- Prepare v1.32.29 as a focused bulk-listing asset/package hotfix by making `cms/js/admin/listing-bulk-actions.js` an explicitly tracked package and root runtime asset, including it in package public asset coverage and the release artifact boundary.
+- Change the `webblocks-cms-assets` publish target to the active runtime compatibility path so `vendor:publish --tag=webblocks-cms-assets --force` publishes package CMS assets into `public/cms`, including `public/cms/js/admin/listing-bulk-actions.js`.
+- Sync package `public/cms` assets into the install-root `public/cms` runtime path during System Update while still replacing clean package roots and nested transition vendor package roots, so existing package-native consumers receive the bulk listing JavaScript without inline Blade scripts or install-specific logic.
+
 ## 1.32.28
 
 - Add an idempotent existing-install schema repair migration so package-native System Updates and source-maintained installs create the `pages_id_site_id_unique` parent key on `pages(id, site_id)` when older databases are missing it, keeping new backups portable for the `page_translations(page_id, site_id)` composite foreign key.

@@ -815,6 +815,7 @@ class SystemBackupsTest extends TestCase
         $response->assertSee(route('admin.system.backups.bulk-destroy'), false);
         $response->assertSee('name="backup_ids[]"', false);
         $response->assertSee('data-wb-admin-bulk-modal-count', false);
+        $response->assertSee('cms/js/admin/listing-bulk-actions.js', false);
         $response->assertSee('selected backups will be deleted.');
         $response->assertSee('value="'.$backup->id.'"', false);
         $response->assertDontSee('confirm(', false);

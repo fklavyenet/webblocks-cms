@@ -377,7 +377,7 @@ Why these slices stay partially guarded
 ### Package Publish Tag Intent
 
 - `webblocks-cms-config` is reserved for publishing package-owned CMS default config files into the install root when a developer intentionally needs that workflow.
-- `webblocks-cms-assets` publishes package-owned public assets such as `cms/package-boundary.json`.
+- `webblocks-cms-assets` publishes package-owned CMS public assets into the active runtime compatibility path at `public/cms`.
 - `webblocks-cms-stubs` publishes package-owned starter stubs.
 - These tags do not change runtime behavior on their own and remain inert until `vendor:publish` is explicitly run.
 
@@ -521,8 +521,8 @@ The current Step 2 public-rendering checkpoint extends package authority further
 - the first public model compatibility foundation batch is now partial rather than fully root-owned: `Locale`, `Site`, `SiteDomain`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` now live under package `src/Models/`, while root `App\Models\...` classes remain as compatibility wrappers so existing admin imports, tests, and runtime entrypoints continue to work
 - `Page`, `PageTranslation`, `PageSlot`, and `Block` now also live under package `src/Models/`, with root `App\Models\...` wrappers preserved as the compatibility boundary for existing admin imports, typehints, and runtime entrypoints
 - `User` remains app-owned and root-owned intentionally and is not part of the package model migration target
-- package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets
-- active runtime still serves `public/cms/...` from the root install for compatibility because package asset publishing is not yet the authoritative runtime asset path
+- package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets into the root `public/cms` compatibility path
+- active runtime still serves `public/cms/...` from the root install for compatibility, with install and System Update refreshing package-owned CMS assets into that path
 - root migrations remain authoritative for source-maintained checkouts with the explicit root Composer autoload signal, while package-native System Updates skip host Laravel application migrations and only run dedicated package update migrations when present
 - System Update, install flow, backup or restore, and broader project-layer runtime remain unchanged in this batch
 - consumer or starter-package validation is still not realistic after this checkpoint because the runtime still depends on root migrations, root compatibility asset paths, root-owned admin and install/update flows, and the intentionally app-owned root `User` model boundary
