@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.32.30
+
+- Prepare v1.32.30 as an emergency package asset hotfix by strengthening the release package boundary around `public/cms/js/admin/listing-bulk-actions.js` for the exact `vendor/fklavyenet/webblocks-cms` Composer package root.
+- Add workflow-zip and Composer source checkout coverage so both the custom release package and GitHub/Packagist tag archive shapes must include the bulk listing JavaScript where clean consumers load or publish package assets.
+- Bump the CMS runtime version constants to `1.32.30` without changing the asset publishing contract: `webblocks-cms-assets` continues to publish package `public/cms` into install-root `public/cms`.
+
 ## 1.32.29
 
 - Prepare v1.32.29 as a focused bulk-listing asset/package hotfix by making `cms/js/admin/listing-bulk-actions.js` an explicitly tracked package and root runtime asset, including it in package public asset coverage and the release artifact boundary.

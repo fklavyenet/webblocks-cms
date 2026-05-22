@@ -18,6 +18,10 @@ class ReleasePackageBoundaryTest extends TestCase
 
         $this->assertStringContainsString('/project export-ignore', $attributes);
         $this->assertStringContainsString('/.ddev export-ignore', $attributes);
+        $this->assertStringNotContainsString('/public/cms export-ignore', $attributes);
+        $this->assertStringNotContainsString('/public/cms/** export-ignore', $attributes);
+        $this->assertStringNotContainsString('/packages/webblocks-cms/public export-ignore', $attributes);
+        $this->assertStringNotContainsString('/packages/webblocks-cms/public/** export-ignore', $attributes);
     }
 
     #[Test]
@@ -63,6 +67,24 @@ class ReleasePackageBoundaryTest extends TestCase
         $installedPackageRoot = $this->buildInstalledPackageSnapshot();
 
         $this->assertFileExists($installedPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+    }
+
+    #[Test]
+    public function workflow_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
+    {
+        $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
+
+        $this->assertFileExists($vendorPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+        $this->assertFileDoesNotExist($vendorPackageRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
+    }
+
+    #[Test]
+    public function composer_source_dist_checkout_includes_bulk_listing_admin_javascript_in_root_and_package_paths(): void
+    {
+        $sourceCheckoutRoot = $this->buildRepositorySourceSnapshot();
+
+        $this->assertFileExists($sourceCheckoutRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+        $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
     }
 
     #[Test]
@@ -169,6 +191,39 @@ class ReleasePackageBoundaryTest extends TestCase
         $extract->mustRun();
 
         return $stagingDirectory;
+    }
+
+    private function buildWorkflowReleaseZipVendorPackageSnapshot(): string
+    {
+        $stagingDirectory = $this->makeTemporaryDirectory('release-workflow-zip');
+        $archivePath = $stagingDirectory.'/webblocks-cms-test.zip';
+        $packageRoot = 'packages/webblocks-cms';
+
+        $archive = new Process([
+            'git',
+            'archive',
+            '--format=tar',
+            '--worktree-attributes',
+            'HEAD',
+            $packageRoot,
+        ], base_path());
+        $archive->mustRun();
+
+        $extract = new Process(['tar', '-xf', '-', '-C', $stagingDirectory], base_path());
+        $extract->setInput($archive->getOutput());
+        $extract->mustRun();
+
+        $packageDirectory = $stagingDirectory.'/'.$packageRoot;
+        $zip = new Process(['zip', '-qr', $archivePath, '.'], $packageDirectory);
+        $zip->mustRun();
+
+        $vendorPackageRoot = $stagingDirectory.'/vendor/fklavyenet/webblocks-cms';
+        File::ensureDirectoryExists($vendorPackageRoot);
+
+        $unzip = new Process(['unzip', '-q', $archivePath, '-d', $vendorPackageRoot], base_path());
+        $unzip->mustRun();
+
+        return $vendorPackageRoot;
     }
 
     private function makeTemporaryDirectory(string $prefix): string
