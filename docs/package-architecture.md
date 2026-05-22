@@ -58,7 +58,8 @@ Intentionally still root-owned or deferred:
 - `app/Models/User.php`, base `Controller.php`, and service providers remain host-owned Laravel shell files.
 - auth/profile/install files, including the install redirect middleware, remain host-owned until the starter/install boundary is deliberately redesigned.
 - auth, profile, install, project-layer, and `App\Support\WebBlocks` remain host or transition boundaries.
-- legacy asset shims `Asset`, `AssetFolder`, `BlockAsset`, and `App\Support\Assets\...` remain to bridge older source-maintained workflows onto package media models.
+- legacy asset shims `Asset`, `AssetFolder`, `BlockAsset`, and `App\Support\Assets\...` remain to bridge older source-maintained workflows onto package media models; the unused root `Asset*Request` shims and block-translation concern wrapper have been removed.
+- empty package-counterpart root `app/` directories are removed rather than kept as transition markers.
 - root migrations, config overrides, runtime `public/cms`, root Blade compatibility wrappers, and root seeder wrappers remain outside this cleanup.
 
 The cleanup improves package transition and starter readiness because the maintenance repo now tests the same minimal app assumption as a fresh package consumer. It still does not make the repo fully starter-ready: install/auth, `User`, root migration authority, root update/install operational authority, and root runtime asset compatibility paths remain final blockers.

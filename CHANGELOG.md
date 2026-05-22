@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Remove leftover empty root `app/` transition directories after the broad compatibility-layer cleanup, delete the now-unused root asset request shims and block-translation concern wrapper, and strengthen `PackageWrapperCleanupTest` so package-counterpart wrapper directories stay absent.
 - Aggressively reduce the maintenance repo root `app/` compatibility layer toward the real package-consumer boundary by deleting redundant package-counterpart controllers, requests, mail, models, commands, and support wrappers while keeping only the host-owned install middleware boundary.
 - Add `PackageWrapperCleanupTest` as a static/runtime guard proving the root app tree stays minimal, package admin/public routes use package controllers, package commands are registered by `WebBlocksCmsServiceProvider`, and deleted root FQCNs are not required by the current package runtime.
 - Remove the redundant root command wrappers `app/Console/Commands/{BlockTypeContractsAuditCommand,ImportDemoMedia,ResetPrimitiveBlocksCommand,SiteCloneCommand,SiteDeleteCommand,SyncCoreBlockTypesCommand}.php` now that the package service provider already registers the package command implementations directly.

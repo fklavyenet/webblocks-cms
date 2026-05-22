@@ -23,7 +23,7 @@ Package transition consolidation is now complete for all safely movable CMS-owne
 - Active CMS admin and public route definitions are package-owned through `packages/webblocks-cms/routes/admin.php` and `packages/webblocks-cms/routes/public.php`.
 - A meaningful package runtime slice now exists for public entry controllers, many page or block support classes, selected admin controllers and requests, selected models, selected Blade views, and selected public assets.
 - Root `app/` no longer contains the broad compatibility layer for moved package runtime classes. Package-counterpart controllers, requests, commands, mailables, models, and support wrappers are intentionally absent; only the host-owned install redirect middleware remains under `app/Http/Middleware`.
-- Root `app/` still contains only host-owned Laravel shell files and proven transition files: auth/profile/install/project-layer, `App\Models\User`, `App\Support\WebBlocks`, service providers, and narrow legacy asset shims.
+- Root `app/` still contains only host-owned Laravel shell files and proven transition files: auth/profile/install/project-layer, `App\Models\User`, `App\Support\WebBlocks`, service providers, and narrow legacy asset shims. Empty package-counterpart directories are intentionally pruned instead of kept as transition markers.
 - Root `resources/views/` is mixed. Many admin and public rendering files are now thin compatibility wrappers to `webblocks-cms::...`, including the admin layout plus the selected shared admin partial/component layer, but install, auth, profile, and broader shared application components remain root-authoritative.
 - Root `database/migrations/` remains fully authoritative. Package migration loading is intentionally disabled and the package migration directory still contains only reserved-boundary documentation.
 - Root `public/cms/` remains the active runtime asset path even where identical package-owned public assets and admin CSS or JS source copies now exist. This is still a compatibility-driven root authority, not a fully package-served asset strategy.
@@ -37,10 +37,11 @@ Removed as package-counterpart wrappers:
 - `app/Console/Commands/*` package command wrappers, except `ProjectInitCommand`
 - `app/Http/Controllers/Admin/*`, `app/Http/Controllers/AdminApi/SiteDomainApiController.php`, and public CMS controllers
 - package-counterpart middleware wrappers under `app/Http/Middleware`, except the host install redirect middleware used by the maintenance install wizard
-- package-counterpart admin and public form requests
+- package-counterpart admin and public form requests, including the unused root `Asset*Request` compatibility shims
 - `app/Mail/ContactMessageNotification.php`
-- package-counterpart CMS models under `app/Models`, excluding `User`, `Asset`, `AssetFolder`, `BlockAsset`, and the kept asset concern
+- package-counterpart CMS models under `app/Models`, excluding `User`, `Asset`, `AssetFolder`, and `BlockAsset`
 - package-counterpart support wrappers under `app/Support` for admin, audit, block types, blocks, contact, database guard, formatting, icons, locales, media, navigation, pages, public rendering, search, shared slots, site promotion, sites, system, updates, users, and visitors
+- leftover empty root `app/` directories from removed package-counterpart wrappers
 
 Intentionally remaining in `app/`:
 
@@ -48,7 +49,7 @@ Intentionally remaining in `app/`:
 - host-owned auth/profile/install: `app/Http/Controllers/Auth/*`, `app/Http/Controllers/ProfileController.php`, `app/Http/Controllers/Install/InstallWizardController.php`, `app/Http/Middleware/RedirectIfInstalled.php`, `app/Http/Middleware/RedirectIfNotInstalled.php`, `app/Http/Requests/Auth/LoginRequest.php`, `app/Http/Requests/ProfileUpdateRequest.php`, `app/Support/Install/*`
 - app-owned identity and version edge: `app/Models/User.php`, `app/Support/WebBlocks.php`
 - operational transition: `app/Console/Commands/ProjectInitCommand.php`, `app/Support/ProjectLayer/ProjectLayer.php`, `app/Support/Search/ReindexesPublicSearch.php`
-- legacy asset transition: `app/Models/Asset.php`, `app/Models/AssetFolder.php`, `app/Models/BlockAsset.php`, `app/Models/Concerns/ValidatesBlockTranslationLocale.php`, `app/Support/Assets/*`, and the small asset request shims
+- legacy asset transition: `app/Models/Asset.php`, `app/Models/AssetFolder.php`, `app/Models/BlockAsset.php`, and `app/Support/Assets/*`
 
 `PackageWrapperCleanupTest` now guards this boundary so fresh package-consumer behavior stays the reference point and deleted root wrappers are not reintroduced casually.
 

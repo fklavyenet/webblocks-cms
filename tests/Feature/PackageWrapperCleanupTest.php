@@ -64,6 +64,14 @@ class PackageWrapperCleanupTest extends TestCase
     $this->assertSame([], $violations);
   }
 
+  #[Test]
+  public function removed_package_counterpart_directories_do_not_return(): void
+  {
+    foreach ($this->removedPackageCounterpartDirectories() as $path) {
+      $this->assertDirectoryDoesNotExist(base_path($path));
+    }
+  }
+
   /**
   * @return list<string>
   */
@@ -104,16 +112,12 @@ class PackageWrapperCleanupTest extends TestCase
       'app/Http/Controllers/ProfileController.php',
       'app/Http/Middleware/RedirectIfInstalled.php',
       'app/Http/Middleware/RedirectIfNotInstalled.php',
-      'app/Http/Requests/Admin/AssetFolderRequest.php',
-      'app/Http/Requests/Admin/AssetUpdateRequest.php',
-      'app/Http/Requests/Admin/AssetUploadRequest.php',
       'app/Http/Requests/Admin/SlotTypeRequest.php',
       'app/Http/Requests/Auth/LoginRequest.php',
       'app/Http/Requests/ProfileUpdateRequest.php',
       'app/Models/Asset.php',
       'app/Models/AssetFolder.php',
       'app/Models/BlockAsset.php',
-      'app/Models/Concerns/ValidatesBlockTranslationLocale.php',
       'app/Models/User.php',
       'app/Providers/AppServiceProvider.php',
       'app/Providers/AuthServiceProvider.php',
@@ -128,6 +132,39 @@ class PackageWrapperCleanupTest extends TestCase
       'app/Support/WebBlocks.php',
       'app/View/Components/AppLayout.php',
       'app/View/Components/GuestLayout.php',
+    ];
+  }
+
+  /**
+  * @return list<string>
+  */
+  private function removedPackageCounterpartDirectories(): array
+  {
+    return [
+      'app/Http/Controllers/Admin',
+      'app/Http/Controllers/AdminApi',
+      'app/Mail',
+      'app/Models/Concerns',
+      'app/Support/Admin',
+      'app/Support/Audit',
+      'app/Support/BlockTypes',
+      'app/Support/Blocks',
+      'app/Support/Contact',
+      'app/Support/Database',
+      'app/Support/Development',
+      'app/Support/Formatting',
+      'app/Support/Icons',
+      'app/Support/Locales',
+      'app/Support/Media',
+      'app/Support/Navigation',
+      'app/Support/Pages',
+      'app/Support/PublicRendering',
+      'app/Support/SharedSlots',
+      'app/Support/SitePromotion',
+      'app/Support/Sites',
+      'app/Support/System',
+      'app/Support/Users',
+      'app/Support/Visitors',
     ];
   }
 }
