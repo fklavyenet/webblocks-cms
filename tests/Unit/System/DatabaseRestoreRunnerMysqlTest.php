@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\System;
 
-use App\Support\System\DatabaseRestoreRunner;
+use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
 use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

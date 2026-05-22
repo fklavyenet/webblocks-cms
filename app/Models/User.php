@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use WebBlocks\Cms\Models\Site as PackageSite;
+use WebBlocks\Cms\Auth\Concerns\HasWebBlocksCmsAccess;
+use WebBlocks\Cms\Models\Site;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
@@ -19,7 +20,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasWebBlocksCmsAccess;
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
 

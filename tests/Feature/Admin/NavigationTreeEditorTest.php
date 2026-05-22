@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\IconCatalogItem;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\Site;
+use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;

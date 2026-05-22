@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
-use App\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Sites\SiteTokenRenderer;
 
 class BlockTranslationResolver

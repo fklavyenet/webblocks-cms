@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use DOMDocument;

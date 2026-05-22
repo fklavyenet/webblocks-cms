@@ -3,11 +3,11 @@
 use App\Console\Commands\ProjectInitCommand;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\RedirectIfNotInstalled;
-use App\Http\Middleware\RequireAdminAccess;
-use App\Http\Middleware\RequireInternalApiToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
+use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 
 foreach ([
     dirname(__DIR__).'/storage/framework/cache/data',

@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\Site;
-use App\Models\SiteExport;
-use App\Models\SiteImport;
-use App\Models\SlotType;
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemBackup;
 use App\Models\User;
-use App\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;

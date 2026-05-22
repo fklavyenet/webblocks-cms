@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Site;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

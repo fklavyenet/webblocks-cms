@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\System;
 
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackup;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

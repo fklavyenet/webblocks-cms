@@ -2,6 +2,6 @@
 
 namespace App\Support\Assets;
 
-use App\Support\Media\MediaUsageResolver;
+use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 
 class AssetUsageResolver extends MediaUsageResolver {}

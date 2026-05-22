@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\PublicSearchIndex;
 use App\Models\User;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

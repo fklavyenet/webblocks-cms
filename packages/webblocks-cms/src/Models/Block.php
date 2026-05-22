@@ -2,8 +2,8 @@
 
 namespace WebBlocks\Cms\Models;
 
-use App\Support\Locales\LocaleResolver;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\WebBlocks;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

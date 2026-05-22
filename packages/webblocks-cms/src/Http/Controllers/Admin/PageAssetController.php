@@ -4,7 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

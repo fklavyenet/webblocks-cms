@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\System\Updates;
 
-use App\Support\System\Updates\UpdateException;
-use App\Support\System\Updates\UpdatePackageExtractor;
+use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\System\Updates\UpdatePackageExtractor;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;

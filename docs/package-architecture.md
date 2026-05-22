@@ -40,31 +40,28 @@ Consumer package readiness has now started, but it is intentionally partial and 
 - package-owned login, logout, install notice, admin protection, public home, views, and assets are now sufficient for the first clean consumer path
 - this is still not a separate starter repository, and it does not yet remove the app-owned `User` boundary
 
-## Current Root Wrapper Cleanup State
+## Current Root App Cleanup State
 
-The package transition no longer requires every historic root `App\...` wrapper to remain present.
+The real Composer consumer app tree can be minimal while CMS runtime loads from `vendor/fklavyenet/webblocks-cms`. The maintenance repo now mirrors that boundary more closely: root `app/` no longer keeps package-counterpart wrappers by default.
 
-Removed as proven-safe redundant wrappers in the focused `app/Console/Commands`, `app/Mail`, and `app/Models` audit:
+Removed wrapper categories:
 
-- `app/Console/Commands/BlockTypeContractsAuditCommand.php`
-- `app/Console/Commands/ImportDemoMedia.php`
-- `app/Console/Commands/ResetPrimitiveBlocksCommand.php`
-- `app/Console/Commands/SiteCloneCommand.php`
-- `app/Console/Commands/SiteDeleteCommand.php`
-- `app/Console/Commands/SyncCoreBlockTypesCommand.php`
-- `app/Models/BlockButtonTranslation.php`
-- `app/Models/BlockContactFormTranslation.php`
-- `app/Models/BlockGalleryItemTranslation.php`
-- `app/Models/BlockImageTranslation.php`
+- package-counterpart console commands, except the host-owned `ProjectInitCommand`
+- CMS admin/public controllers and package-counterpart middleware whose routes now point at package classes, except the maintenance shell's install redirect middleware
+- package-counterpart admin/public form requests
+- package-counterpart mailables
+- package-counterpart CMS models
+- package-counterpart support classes across blocks, media, pages, sites, system, updates, search, visitors, and operational transfer/promotion domains
 
 Intentionally still root-owned or deferred:
 
-- `app/Models/User.php` stays install-owned and auth-owned.
-- root update, backup, restore, export, import, promotion, install, and filesystem/archive command or model boundaries still remain app-authoritative or deferred.
-- `app/Mail/ContactMessageNotification.php` still remains as a compatibility entrypoint until the contact notification boundary is intentionally narrowed.
-- many root models still remain because migrations, seeders, install-state checks, compatibility aliases, or root-only subclasses still reference them.
+- `app/Models/User.php`, base `Controller.php`, and service providers remain host-owned Laravel shell files.
+- auth/profile/install files, including the install redirect middleware, remain host-owned until the starter/install boundary is deliberately redesigned.
+- auth, profile, install, project-layer, and `App\Support\WebBlocks` remain host or transition boundaries.
+- legacy asset shims `Asset`, `AssetFolder`, `BlockAsset`, and `App\Support\Assets\...` remain to bridge older source-maintained workflows onto package media models.
+- root migrations, config overrides, runtime `public/cms`, root Blade compatibility wrappers, and root seeder wrappers remain outside this cleanup.
 
-This cleanup improves package-authority clarity, but it does not change starter-package readiness. The remaining blockers are still install/auth, `User`, root migration authority, root update or backup authority, and root runtime asset compatibility paths.
+The cleanup improves package transition and starter readiness because the maintenance repo now tests the same minimal app assumption as a fresh package consumer. It still does not make the repo fully starter-ready: install/auth, `User`, root migration authority, root update/install operational authority, and root runtime asset compatibility paths remain final blockers.
 
 ## Target Update Architecture
 
@@ -471,7 +468,7 @@ The current checkpoint adds only boundary-readiness groundwork for that future s
 
 - more CMS-owned seeders now live under the package instead of the root app namespace
 - more low-risk runtime support helpers now live under package `src/Support/`
-- root compatibility wrappers remain in place so existing installs do not need an immediate namespace rewrite
+- root `app/` compatibility wrappers are no longer kept by default; package-counterpart PHP wrappers have been removed while root Blade, seeder, and runtime asset compatibility paths remain where still needed
 - package composer metadata, provider discovery, path-repository development wiring, and documented target `composer require` or `composer update` flow now form the starter-foundation readiness baseline
 
 ### Existing-Install Migration Guidance
@@ -493,7 +490,7 @@ See also: `docs/package-transition-root-ownership-audit.md` for the current root
 Package transition consolidation is complete for all safely movable CMS-owned source in this repository.
 
 - Package-owned authority now covers the safely movable CMS route, view, model, seeder, shared-partial, admin-layout, and supporting runtime source domains.
-- Root `App\...` classes, root Blade files, root seeders, and root `public/cms/...` runtime copies remain intentionally in place as compatibility wrappers or compatibility paths.
+- Package-counterpart root `App\...` classes have been removed from the maintenance repo app tree; root Blade files, root seeders, and root `public/cms/...` runtime copies remain intentionally in place as compatibility wrappers or compatibility paths.
 - Active runtime asset URLs still use root `public/cms/...` compatibility paths even where matching package-owned source files exist under `packages/webblocks-cms/public/cms/...`.
 - The remaining final boundaries are install/auth/profile runtime, the app-owned `User` model, root migration authority, root update/install operational authority, and the future starter split design.
 - Because of those blockers, the package is not yet ready for starter split even though the safe CMS-owned source consolidation work is complete.
@@ -525,14 +522,16 @@ The `v1.32.0` release starts that planned move with guarded runtime migration ph
 - root routes and root views remain authoritative for the existing CMS runtime outside these reserved package-only guarded paths
 - package `config/webblocks-cms.php` now owns explicit transition config values: diagnostics, public status routes, admin status routes, and package migration loading stay disabled by default, while package admin route loading is enabled for active package-owned admin route authority
 
+The following historical checkpoint notes describe how package authority was introduced. Where they mention root `App\...` wrappers, the current broad root app cleanup supersedes that state: package-counterpart PHP wrappers are now intentionally absent unless listed in the current root app cleanup state above.
+
 The current Step 1 runtime-authority checkpoint extends that boundary further:
 
 - active CMS admin routes now load from package `routes/admin.php`, with root `routes/web.php` reduced to install, auth, profile, and compatibility loading
 - active CMS public routes now load from package `routes/public.php`, including home, localized home, search, localized search, search JSON, page show, localized page show, contact submissions, privacy-consent sync, and `admin-api.*`
 - package-owned public controllers now back that public entry slice under `packages/webblocks-cms/src/Http/Controllers/Public/`
 - package-owned `ContactMessageRequest` and package-owned public entry views now back the moved public route entrypoints
-- root `App\Http\Controllers\PageController`, `PublicSearchController`, `ContactMessageController`, `PublicPrivacyConsentController`, and `App\Http\Requests\ContactMessageRequest` remain as compatibility wrappers extending the package classes
-- root models and support classes remain only where they serve still-excluded domains or compatibility wrappers; Users, System, install/update, backup/restore, public/admin asset runtime paths, migrations, and System Update behavior remain root-owned, so the package is still not ready to serve as a fully independent consumer-app runtime without deeper extraction
+- root `App\Http\Controllers\PageController`, `PublicSearchController`, `ContactMessageController`, `PublicPrivacyConsentController`, and `App\Http\Requests\ContactMessageRequest` were later removed as redundant package-counterpart wrappers
+- root models and support classes remain only where they serve host-owned or explicit transition domains; Users, install/profile/auth, root public/admin asset runtime paths, migrations, and System Update behavior remain boundaries, so the package is still not ready to serve as a fully independent starter runtime without deeper extraction
 
 The current Step 2 public-rendering checkpoint extends package authority further behind those already-package-owned public routes:
 
@@ -540,12 +539,12 @@ The current Step 2 public-rendering checkpoint extends package authority further
 - package `resources/views/pages/show.blade.php`, `resources/views/search/show.blade.php`, `resources/views/search/partials/modal.blade.php`, and package `pages/partials/slot*.blade.php` now own the active public page shell, public search shell, public search modal, and slot-entry rendering layer
 - root `resources/views/layouts/public.blade.php`, `resources/views/pages/show.blade.php`, `resources/views/search/show.blade.php`, `resources/views/search/partials/modal.blade.php`, `resources/views/pages/partials/slot.blade.php`, and `resources/views/pages/partials/block.blade.php` now remain only as compatibility wrappers pointing at package-owned namespaced views
 - package-owned public-rendering support now includes `PageRouteResolver`, `PublicPagePresenter`, `PublicSharedSlotResolver`, `SlotWrapperResolver`, `SiteAssetResolver`, `PublicSearchQuery`, `PublicOverlayRegistry`, `PublicBodyEndRegistry`, `TrustedHtmlOverlayExtractor`, `SiteResolver`, `ResolvedSite`, and `VisitorEventLogger`
-- root `App\Support\...` classes for those public-rendering concerns remain as compatibility wrappers extending the package classes so current imports and bindings remain stable
+- root `App\Support\...` classes for those public-rendering concerns were later removed once package internals and routes no longer required them
 - package `resources/views/pages/partials/blocks/*` now owns the full shipped public block renderer partial tree as one coherent package batch
 - root `resources/views/pages/partials/blocks/*` files now remain as thin compatibility wrappers that delegate to matching `webblocks-cms::pages.partials.blocks.*` views
 - `Block::publicRenderView()` now resolves shipped core block types to package-owned namespaced block partials first, while install-specific or custom root block renderers still remain available through the existing root fallback path when no matching package partial exists
-- the first public model compatibility foundation batch is now partial rather than fully root-owned: `Locale`, `Site`, `SiteDomain`, `ContactMessage`, `PublicSearchIndex`, `VisitorEvent`, and `SystemSetting` now live under package `src/Models/`, while root `App\Models\...` classes remain as compatibility wrappers so existing admin imports, tests, and runtime entrypoints continue to work
-- `Page`, `PageTranslation`, `PageSlot`, and `Block` now also live under package `src/Models/`, with root `App\Models\...` wrappers preserved as the compatibility boundary for existing admin imports, typehints, and runtime entrypoints
+- the public model foundation now lives under package `src/Models/`; matching root `App\Models\...` wrappers were later removed after package/fresh-consumer tests proved they were unnecessary
+- `Page`, `PageTranslation`, `PageSlot`, and `Block` now also live under package `src/Models/`, without matching root wrappers
 - `User` remains app-owned and root-owned intentionally and is not part of the package model migration target
 - package `public/cms/` now includes the active public runtime CSS and JS files needed by the moved package-owned public layout and block-rendering layer, and `vendor:publish --tag=webblocks-cms-assets` now publishes those real package assets into the root `public/cms` compatibility path
 - active runtime still serves `public/cms/...` from the root install for compatibility, with install and System Update refreshing package-owned CMS assets into that path
@@ -556,7 +555,7 @@ The current Step 2 public-rendering checkpoint extends package authority further
 The current Site and Locale admin runtime checkpoint moves one more coherent admin slice behind the package-owned admin route tree:
 
 - package-owned controllers now handle Site admin management, Site Domain management, Site Variable management, and Locale admin management under `packages/webblocks-cms/src/Http/Controllers/Admin/`
-- package-owned Form Requests, `SiteLocale` and `SiteVariable` models, and directly supporting Site or Locale support services now live under package `src/`, with root `App\...` wrappers preserved for compatibility
+- package-owned Form Requests, `SiteLocale` and `SiteVariable` models, and directly supporting Site or Locale support services now live under package `src/`, without matching root `App\...` wrappers
 - package `resources/views/admin/sites/`, `resources/views/admin/sites/domains/`, `resources/views/admin/domains/`, and `resources/views/admin/locales/` now own the active Site, Domain, and Locale admin Blade trees through the `webblocks-cms::` namespace
 - root Site, Domain, and Locale Blade files now remain as thin compatibility wrappers that render the matching package-owned views
 - this batch intentionally does not move migrations, installer/update flows, backup/restore, auth/profile/User ownership, root config ownership, or public/cms asset authority
@@ -597,7 +596,7 @@ The next low-risk runtime support checkpoint is now also complete for four narro
 - `BlockTypeIndexState` now lives in package `src/Support/BlockTypes/`
 - `MediaIndexState` now lives in package `src/Support/Media/`
 - `PageIndexState` now lives in package `src/Support/Pages/`
-- root `App\Support\...` classes remain as compatibility wrappers so current controller and request imports do not need a broad rewrite
+- root `App\Support\...` wrappers for these helpers were later removed; package imports are authoritative
 
 The first package-owned seeder boundary move is now also complete for low-risk catalogs:
 
@@ -610,15 +609,14 @@ The first package-owned seeder boundary move is now also complete for low-risk c
 The next isolated package-owned runtime batch is now also complete for icon catalog management:
 
 - package-owned now: `SyncWebBlocksUiIconsCommand`, `IconCatalogController`, `IconCatalogItemUpdateRequest`, `IconCatalog`, and `WebBlocksIconManifestSyncer`
-- root `App\Http\Controllers\Admin\IconCatalogController`, `App\Http\Requests\Admin\IconCatalogItemUpdateRequest`, and `App\Support\Icons\...` classes remain as compatibility wrappers so existing routes, commands, views, and request imports continue to resolve unchanged
-- root `App\Console\Commands\SyncWebBlocksUiIconsCommand` also remains as a command compatibility wrapper for existing imports, but it is no longer the active bootstrap registration
+- root `App\Http\Controllers\Admin\IconCatalogController`, `App\Http\Requests\Admin\IconCatalogItemUpdateRequest`, `App\Support\Icons\...`, and `App\Console\Commands\SyncWebBlocksUiIconsCommand` were later removed as redundant package-counterpart wrappers
 - active icon catalog admin routes now point directly at the package controller, and `icons:sync-webblocks-ui` is now registered by the package service provider with the package command class
 - active icon catalog admin route definitions now live in package `routes/admin.php` instead of root `routes/web.php`
-- root icon catalog wrappers remain available for backward-compatible imports while the active route and console authority now live in the package
+- root icon catalog PHP wrappers are no longer available; active route and console authority live in the package
 - package-owned now also: the active icon catalog admin index and edit-modal Blade views under `packages/webblocks-cms/resources/views/admin/system/icons/`
 - root icon catalog Blade files remain as compatibility wrappers that include the package namespaced views, but the package controller renders `webblocks-cms::admin.system.icons.index` directly
 - this batch stays within the icon catalog admin and sync concern only and intentionally does not move broader Pages, Blocks, Search indexing, Sites, Updates, Install, Backup or Restore, Export or Import, or public rendering runtime ownership
-- `webblocks:package-status` now reports both the package-owned icon runtime files and the matching root compatibility wrappers as part of the read-only transition diagnostic
+- `webblocks:package-status` now reports package-owned icon runtime files and the absence of matching root PHP wrappers as part of the read-only transition diagnostic
 
 The next larger admin runtime extraction batch is now also complete for the core editorial and catalog management surfaces:
 
@@ -627,11 +625,11 @@ The next larger admin runtime extraction batch is now also complete for the core
 - package-owned now: the authoritative admin form requests for those slices under `packages/webblocks-cms/src/Http/Requests/Admin/`
 - package-owned now: the supporting block, media, navigation, page, page-layout, and shared-slot services under `packages/webblocks-cms/src/Support/`
 - package-owned now: the active admin Blade trees under `packages/webblocks-cms/resources/views/admin/blocks/`, `admin/media/`, `admin/navigation/`, `admin/block-types/`, `admin/pages/`, `admin/shared-slots/`, `admin/page-layouts/`, and `admin/page-layout-slots/`
-- root `App\Http\Controllers\Admin\...`, `App\Http\Requests\Admin\...`, and `App\Support\...` classes for those moved slices remain as thin compatibility wrappers extending the package classes
+- root `App\Http\Controllers\Admin\...`, `App\Http\Requests\Admin\...`, and `App\Support\...` PHP wrappers for those moved slices were later removed as redundant package-counterpart wrappers
 - root `resources/views/admin/...` files for those moved trees now remain as compatibility wrappers that include the matching `webblocks-cms::admin.*` views
 - one exception intentionally remains concrete at the root: `resources/views/admin/blocks/types/partials/rich-text-editor.blade.php` still keeps the real markup because compatibility coverage reads that root file directly instead of resolving it only through the package namespace
 - this batch intentionally does not move Users, backups, updates, system settings, install flow, migrations, root runtime asset paths, or the app-owned `User` model
-- `webblocks:package-status` plus focused bootstrap coverage now report both the broader package-owned admin runtime files and the matching root compatibility wrappers
+- `webblocks:package-status` plus focused bootstrap coverage now report the broader package-owned admin runtime files and that matching root PHP wrappers are absent
 
 The focused operational admin runtime batch is now also package-owned:
 

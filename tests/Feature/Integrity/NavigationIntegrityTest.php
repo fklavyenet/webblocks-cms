@@ -2,16 +2,16 @@
 
 namespace Tests\Feature\Integrity;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\Site;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use App\Models\User;
-use App\Support\Navigation\NavigationTree;
+use WebBlocks\Cms\Support\Navigation\NavigationTree;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;

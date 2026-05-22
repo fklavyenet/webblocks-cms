@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\System;
 
-use App\Models\SystemBackup;
-use App\Models\SystemBackupRestore;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
 use App\Models\User;
-use App\Support\System\DatabaseRestoreRunner;
-use App\Support\System\SystemBackupManager;
-use App\Support\System\SystemBackupRestoreMaintenanceRunner;
-use App\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreMaintenanceRunner;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;

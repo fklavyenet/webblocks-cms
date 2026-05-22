@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Site;
+use WebBlocks\Cms\Models\Site;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;

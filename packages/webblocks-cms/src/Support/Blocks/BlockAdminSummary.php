@@ -4,7 +4,7 @@ namespace WebBlocks\Cms\Support\Blocks;
 
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\Block;
-use App\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 
 class BlockAdminSummary
 {

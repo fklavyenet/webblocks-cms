@@ -2,50 +2,50 @@
 
 namespace Tests\Feature;
 
-use App\Console\Commands\SyncWebBlocksUiIconsCommand;
-use App\Http\Controllers\Admin\IconCatalogController;
-use App\Http\Controllers\Admin\SlotTypeController;
-use App\Http\Controllers\Admin\SystemSettingsController;
-use App\Http\Requests\Admin\IconCatalogItemUpdateRequest;
-use App\Http\Requests\Admin\SystemSettingsRequest;
-use App\Models\Block;
-use App\Models\ContactMessage;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\PublicSearchIndex;
-use App\Models\Site;
-use App\Models\SiteDomain;
-use App\Models\SystemSetting;
-use App\Models\VisitorEvent;
-use App\Support\Admin\AdminPagination;
-use App\Support\Blocks\BlockDeletionManager;
-use App\Support\Blocks\BlockPayloadWriter;
-use App\Support\Blocks\BlockTranslationResolver;
-use App\Support\BlockTypes\BlockTypeContractRegistry;
-use App\Support\BlockTypes\BlockTypeIndexState;
-use App\Support\Icons\IconCatalog;
-use App\Support\Icons\WebBlocksIconManifestSyncer;
-use App\Support\Media\MediaIndexState;
-use App\Support\Media\MediaKindResolver;
-use App\Support\Media\MediaUsageFilter;
-use App\Support\Media\MediaUsageResolver;
-use App\Support\Navigation\NavigationTree;
-use App\Support\Pages\PageDuplicateValidator;
-use App\Support\Pages\PageDuplicator;
-use App\Support\Pages\PageIndexState;
-use App\Support\Pages\PageJsonImporter;
-use App\Support\Pages\PageLayoutManager;
-use App\Support\Pages\PageLayoutSlotComparison;
-use App\Support\Pages\PageLayoutSlotSyncer;
-use App\Support\Pages\PageRevisionManager;
-use App\Support\Pages\PageSiteMover;
-use App\Support\Pages\PageSiteMoveValidator;
-use App\Support\Pages\PageWorkflowManager;
-use App\Support\SharedSlots\SharedSlotRevisionManager;
-use App\Support\SharedSlots\SharedSlotSchema;
-use App\Support\SharedSlots\SharedSlotSourcePageManager;
+use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
+use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
+use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState;
+use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
+use WebBlocks\Cms\Support\Media\MediaIndexState;
+use WebBlocks\Cms\Support\Media\MediaKindResolver;
+use WebBlocks\Cms\Support\Media\MediaUsageFilter;
+use WebBlocks\Cms\Support\Media\MediaUsageResolver;
+use WebBlocks\Cms\Support\Navigation\NavigationTree;
+use WebBlocks\Cms\Support\Pages\PageDuplicateValidator;
+use WebBlocks\Cms\Support\Pages\PageDuplicator;
+use WebBlocks\Cms\Support\Pages\PageIndexState;
+use WebBlocks\Cms\Support\Pages\PageJsonImporter;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
+use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\PageSiteMover;
+use WebBlocks\Cms\Support\Pages\PageSiteMoveValidator;
+use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use App\Support\WebBlocks;
 use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
@@ -222,37 +222,11 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('database/seeders/PageTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/LayoutTypeSeeder.php'));
         $this->assertFileExists(base_path('database/seeders/SlotTypeSeeder.php'));
-        $this->assertFileExists(base_path('app/Console/Commands/SyncWebBlocksUiIconsCommand.php'));
-        $this->assertFileExists(base_path('app/Support/Admin/AdminPagination.php'));
-        $this->assertFileExists(base_path('app/Support/BlockTypes/BlockTypeIndexState.php'));
-        $this->assertFileExists(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
-        $this->assertFileExists(base_path('app/Http/Controllers/Admin/SlotTypeController.php'));
-        $this->assertFileExists(base_path('app/Http/Controllers/Admin/SystemSettingsController.php'));
-        $this->assertFileExists(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
-        $this->assertFileExists(base_path('app/Http/Requests/Admin/SystemSettingsRequest.php'));
-        $this->assertFileExists(base_path('app/Support/Icons/IconCatalog.php'));
-        $this->assertFileExists(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
-        $this->assertFileExists(base_path('app/Support/Blocks/BlockDeletionManager.php'));
-        $this->assertFileExists(base_path('app/Support/Blocks/BlockPayloadWriter.php'));
-        $this->assertFileExists(base_path('app/Support/Blocks/BlockTranslationResolver.php'));
-        $this->assertFileExists(base_path('app/Support/Media/MediaKindResolver.php'));
-        $this->assertFileExists(base_path('app/Support/Media/MediaUsageFilter.php'));
-        $this->assertFileExists(base_path('app/Support/Media/MediaUsageResolver.php'));
-        $this->assertFileExists(base_path('app/Support/Navigation/NavigationTree.php'));
-        $this->assertFileExists(base_path('app/Support/BlockTypes/BlockTypeContractRegistry.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageWorkflowManager.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageRevisionManager.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageLayoutManager.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageLayoutSlotComparison.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageLayoutSlotSyncer.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageDuplicator.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageDuplicateValidator.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageJsonImporter.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageSiteMover.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageSiteMoveValidator.php'));
-        $this->assertFileExists(base_path('app/Support/SharedSlots/SharedSlotSchema.php'));
-        $this->assertFileExists(base_path('app/Support/SharedSlots/SharedSlotRevisionManager.php'));
-        $this->assertFileExists(base_path('app/Support/SharedSlots/SharedSlotSourcePageManager.php'));
+        $this->assertFileDoesNotExist(base_path('app/Console/Commands/SyncWebBlocksUiIconsCommand.php'));
+        $this->assertFileDoesNotExist(base_path('app/Support/Admin/AdminPagination.php'));
+        $this->assertFileDoesNotExist(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileDoesNotExist(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
+        $this->assertFileDoesNotExist(base_path('app/Support/Pages/PageWorkflowManager.php'));
         $this->assertFileExists(resource_path('views/admin/system/icons/index.blade.php'));
         $this->assertFileExists(resource_path('views/admin/system/icons/partials/edit-modal.blade.php'));
         $this->assertFileExists(resource_path('views/admin/pages/index.blade.php'));
@@ -268,8 +242,8 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(resource_path('views/pages/partials/blocks/hero.blade.php'));
         $this->assertFileExists(resource_path('views/pages/partials/blocks/columns.blade.php'));
         $this->assertFileExists(resource_path('views/pages/partials/blocks/gallery.blade.php'));
-        $this->assertFileExists(base_path('app/Support/Media/MediaIndexState.php'));
-        $this->assertFileExists(base_path('app/Support/Pages/PageIndexState.php'));
+        $this->assertFileDoesNotExist(base_path('app/Support/Media/MediaIndexState.php'));
+        $this->assertFileDoesNotExist(base_path('app/Support/Pages/PageIndexState.php'));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_NAME));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_NAME));
         $this->assertNull($router->getRoutes()->getByName(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME));
@@ -531,7 +505,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     }
 
     #[Test]
-    public function package_seeders_and_runtime_support_classes_keep_root_compatibility_entrypoints(): void
+    public function package_seeders_and_runtime_support_classes_do_not_need_root_app_wrappers(): void
     {
         $this->assertTrue(class_exists(PackageCoreCatalogSeeder::class));
         $this->assertTrue(class_exists(PackageIconCatalogSeeder::class));
@@ -588,54 +562,17 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(is_subclass_of(PageTypeSeeder::class, PackagePageTypeSeeder::class));
         $this->assertTrue(is_subclass_of(LayoutTypeSeeder::class, PackageLayoutTypeSeeder::class));
         $this->assertTrue(is_subclass_of(SlotTypeSeeder::class, PackageSlotTypeSeeder::class));
-        $this->assertTrue(is_subclass_of(AdminPagination::class, PackageAdminPagination::class));
-        $this->assertTrue(is_subclass_of(BlockTypeIndexState::class, PackageBlockTypeIndexState::class));
-        $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
-        $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
-        $this->assertTrue(is_subclass_of(SlotTypeController::class, PackageSlotTypeController::class));
-        $this->assertTrue(is_subclass_of(SystemSettingsController::class, PackageSystemSettingsController::class));
-        $this->assertTrue(is_subclass_of(IconCatalogItemUpdateRequest::class, PackageIconCatalogItemUpdateRequest::class));
-        $this->assertTrue(is_subclass_of(SystemSettingsRequest::class, PackageSystemSettingsRequest::class));
-        $this->assertTrue(is_subclass_of(IconCatalog::class, PackageIconCatalog::class));
-        $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
-        $this->assertTrue(is_subclass_of(MediaIndexState::class, PackageMediaIndexState::class));
-        $this->assertTrue(is_subclass_of(PageIndexState::class, PackagePageIndexState::class));
-        $this->assertTrue(is_subclass_of(BlockDeletionManager::class, PackageBlockDeletionManager::class));
-        $this->assertTrue(is_subclass_of(BlockPayloadWriter::class, PackageBlockPayloadWriter::class));
-        $this->assertTrue(is_subclass_of(BlockTranslationResolver::class, PackageBlockTranslationResolver::class));
-        $this->assertTrue(is_subclass_of(MediaKindResolver::class, PackageMediaKindResolver::class));
-        $this->assertTrue(is_subclass_of(MediaUsageFilter::class, PackageMediaUsageFilter::class));
-        $this->assertTrue(is_subclass_of(MediaUsageResolver::class, PackageMediaUsageResolver::class));
-        $this->assertTrue(is_subclass_of(NavigationTree::class, PackageNavigationTree::class));
-        $this->assertTrue(is_subclass_of(BlockTypeContractRegistry::class, PackageBlockTypeContractRegistry::class));
-        $this->assertTrue(is_subclass_of(PageWorkflowManager::class, PackagePageWorkflowManager::class));
-        $this->assertTrue(is_subclass_of(PageRevisionManager::class, PackagePageRevisionManager::class));
-        $this->assertTrue(is_subclass_of(PageLayoutManager::class, PackagePageLayoutManager::class));
-        $this->assertTrue(is_subclass_of(PageLayoutSlotComparison::class, PackagePageLayoutSlotComparison::class));
-        $this->assertTrue(is_subclass_of(PageLayoutSlotSyncer::class, PackagePageLayoutSlotSyncer::class));
-        $this->assertTrue(is_subclass_of(PageDuplicator::class, PackagePageDuplicator::class));
-        $this->assertTrue(is_subclass_of(PageDuplicateValidator::class, PackagePageDuplicateValidator::class));
-        $this->assertTrue(is_subclass_of(PageJsonImporter::class, PackagePageJsonImporter::class));
-        $this->assertTrue(is_subclass_of(PageSiteMover::class, PackagePageSiteMover::class));
-        $this->assertTrue(is_subclass_of(PageSiteMoveValidator::class, PackagePageSiteMoveValidator::class));
-        $this->assertTrue(is_subclass_of(SharedSlotSchema::class, PackageSharedSlotSchema::class));
-        $this->assertTrue(is_subclass_of(SharedSlotRevisionManager::class, PackageSharedSlotRevisionManager::class));
-        $this->assertTrue(is_subclass_of(SharedSlotSourcePageManager::class, PackageSharedSlotSourcePageManager::class));
-        $this->assertTrue(is_subclass_of(Locale::class, PackageLocale::class));
-        $this->assertTrue(is_subclass_of(Site::class, PackageSite::class));
-        $this->assertTrue(is_subclass_of(SiteDomain::class, PackageSiteDomain::class));
-        $this->assertTrue(is_subclass_of(Page::class, PackagePage::class));
-        $this->assertTrue(is_subclass_of(PageTranslation::class, PackagePageTranslation::class));
-        $this->assertTrue(is_subclass_of(PageSlot::class, PackagePageSlot::class));
-        $this->assertTrue(is_subclass_of(Block::class, PackageBlock::class));
-        $this->assertTrue(is_subclass_of(ContactMessage::class, PackageContactMessage::class));
-        $this->assertTrue(is_subclass_of(PublicSearchIndex::class, PackagePublicSearchIndex::class));
-        $this->assertTrue(is_subclass_of(VisitorEvent::class, PackageVisitorEvent::class));
-        $this->assertTrue(is_subclass_of(SystemSetting::class, PackageSystemSetting::class));
+        $this->assertFalse(class_exists('App\\Support\\Admin\\AdminPagination'));
+        $this->assertFalse(class_exists('App\\Support\\BlockTypes\\BlockTypeIndexState'));
+        $this->assertFalse(class_exists('App\\Console\\Commands\\SyncWebBlocksUiIconsCommand'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\IconCatalogController'));
+        $this->assertFalse(class_exists('App\\Http\\Requests\\Admin\\IconCatalogItemUpdateRequest'));
+        $this->assertFalse(class_exists('App\\Support\\Pages\\PageWorkflowManager'));
+        $this->assertFalse(class_exists('App\\Models\\Page'));
     }
 
     #[Test]
-    public function icon_catalog_runtime_uses_package_route_and_command_authority_with_root_compatibility_wrappers(): void
+    public function icon_catalog_runtime_uses_package_route_and_command_authority_without_root_app_wrappers(): void
     {
         $iconRoute = app('router')->getRoutes()->getByName(WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME);
         $constructor = (new \ReflectionClass(PackageSyncWebBlocksUiIconsCommand::class))->getConstructor();
@@ -648,9 +585,9 @@ class PackageServiceProviderBootstrapTest extends TestCase
         );
         $this->assertInstanceOf(\ReflectionNamedType::class, $syncerParameterType);
         $this->assertSame(PackageWebBlocksIconManifestSyncer::class, $syncerParameterType->getName());
-        $this->assertTrue(is_subclass_of(SyncWebBlocksUiIconsCommand::class, PackageSyncWebBlocksUiIconsCommand::class));
-        $this->assertTrue(is_subclass_of(IconCatalogController::class, PackageIconCatalogController::class));
-        $this->assertTrue(is_subclass_of(WebBlocksIconManifestSyncer::class, PackageWebBlocksIconManifestSyncer::class));
+        $this->assertFileDoesNotExist(base_path('app/Console/Commands/SyncWebBlocksUiIconsCommand.php'));
+        $this->assertFileDoesNotExist(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
+        $this->assertFileDoesNotExist(base_path('app/Support/Icons/WebBlocksIconManifestSyncer.php'));
     }
 
     protected function routePathExists(string $path): bool

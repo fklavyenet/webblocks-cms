@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\DemoAssetReference;
-use App\Models\Media;
-use App\Models\MediaFolder;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\DemoAssetReference;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SlotType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;

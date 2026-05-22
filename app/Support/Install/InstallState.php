@@ -2,15 +2,15 @@
 
 namespace App\Support\Install;
 
-use App\Models\BlockType;
-use App\Models\LayoutType;
-use App\Models\Locale;
-use App\Models\PageType;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\LayoutType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\PageType;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;

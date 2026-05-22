@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Models\VisitorEvent;
-use App\Support\Visitors\VisitorConsent;
-use App\Support\Visitors\VisitorReportsQuery;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Visitors\VisitorConsent;
+use WebBlocks\Cms\Support\Visitors\VisitorReportsQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -249,15 +249,15 @@ class PackageStatusCommand extends Command
             WebBlocksCmsServiceProvider::ROOT_PUBLIC_MODEL_WRAPPER_FILES
         ));
         $this->line('Root compatibility wrappers: '.implode('; ', WebBlocksCmsServiceProvider::ROOT_COMPATIBILITY_WRAPPER_DOMAINS).'.');
-        $this->line('Public model foundation package authority state: yes (Block, ContactMessage, Locale, Page, PageSlot, PageTranslation, PublicSearchIndex, Site, SiteDomain, SystemSetting, and VisitorEvent now live under package Models while root App\\Models wrappers remain active for compatibility).');
+        $this->line('Public model foundation package authority state: yes (Block, ContactMessage, Locale, Page, PageSlot, PageTranslation, PublicSearchIndex, Site, SiteDomain, SystemSetting, and VisitorEvent now live under package Models without root App\\Models wrappers).');
         $this->line('User model ownership state: root-owned permanently for now (User remains app-owned and was not moved into the package).');
         $this->line('Icon catalog admin route package authority state: '.$this->yesNo($this->routeUsesController(
             WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME,
             'WebBlocks\\Cms\\Http\\Controllers\\Admin\\IconCatalogController'
         )).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.' uses the package controller directly)');
-        $this->line('Core admin runtime package authority state: yes (Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts now execute from package controllers, requests, support classes, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
-        $this->line('Site and Locale admin runtime package authority state: '.$this->yesNo($this->siteLocaleAdminRuntimeUsesPackageAuthority()).' (Sites, Site Domains, Site Variables, and Locales now execute from package controllers, requests, support classes, models, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
-        $this->line('Operational admin runtime package authority state: '.$this->yesNo($this->operationalAdminRuntimeUsesPackageAuthority()).' (Dashboard, Contact Messages admin review, Visitor Reports, Slot Types, System Search, and System Settings now execute from package controllers, requests where applicable, support classes, and view trees while root App\\... and root Blade wrappers remain available for compatibility).');
+        $this->line('Core admin runtime package authority state: yes (Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts now execute from package controllers, requests, support classes, and view trees without root App\\... wrappers).');
+        $this->line('Site and Locale admin runtime package authority state: '.$this->yesNo($this->siteLocaleAdminRuntimeUsesPackageAuthority()).' (Sites, Site Domains, Site Variables, and Locales now execute from package controllers, requests, support classes, models, and view trees without root App\\... wrappers).');
+        $this->line('Operational admin runtime package authority state: '.$this->yesNo($this->operationalAdminRuntimeUsesPackageAuthority()).' (Dashboard, Contact Messages admin review, Visitor Reports, Slot Types, System Search, and System Settings now execute from package controllers, requests where applicable, support classes, and view trees without root App\\... wrappers).');
         $this->line('Icon catalog sync command package authority state: '.$this->yesNo($this->syncCommandUsesPackageImplementation()).' ('.WebBlocksCmsServiceProvider::ICON_SYNC_COMMAND_NAME.' is registered by the package provider with the package command)');
         $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
             $shouldCheckView,
@@ -381,11 +381,7 @@ class PackageStatusCommand extends Command
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.index')
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.form')
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.sites.domains.index')
-            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.locales.index')
-            && is_file(base_path('app/Http/Controllers/Admin/SiteController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/LocaleController.php'))
-            && is_file(resource_path('views/admin/sites/index.blade.php'))
-            && is_file(resource_path('views/admin/locales/index.blade.php'));
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.locales.index');
     }
 
     protected function operationalAdminRuntimeUsesPackageAuthority(): bool
@@ -401,19 +397,7 @@ class PackageStatusCommand extends Command
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.reports.visitors.index')
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index')
             && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search')
-            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings')
-            && is_file(base_path('app/Http/Controllers/Admin/DashboardController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/ContactMessageController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/SlotTypeController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/VisitorReportController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/SystemSearchController.php'))
-            && is_file(base_path('app/Http/Controllers/Admin/SystemSettingsController.php'))
-            && is_file(resource_path('views/admin/dashboard.blade.php'))
-            && is_file(resource_path('views/admin/contact-messages/index.blade.php'))
-            && is_file(resource_path('views/admin/reports/visitors/index.blade.php'))
-            && is_file(resource_path('views/admin/slot-types/index.blade.php'))
-            && is_file(resource_path('views/admin/system/search.blade.php'))
-            && is_file(resource_path('views/admin/system/settings.blade.php'));
+            && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings');
     }
 
     protected function sharedAdminPartialsUsePackageAuthority(): bool

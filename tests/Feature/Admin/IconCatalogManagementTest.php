@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\IconCatalogItem;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\Icons\WebBlocksIconManifestSyncer;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Database\Seeders\IconCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;

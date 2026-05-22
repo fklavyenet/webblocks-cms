@@ -2,22 +2,22 @@
 
 namespace Tests\Feature;
 
-use App\Models\ContactMessage;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PublicSearchIndex;
-use App\Models\Site;
-use App\Models\SiteDomain;
-use App\Models\SystemBackup;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Models\SystemBackup;
 use App\Models\User;
-use App\Models\VisitorEvent;
-use App\Support\SitePromotion\SitePromotionApplier;
-use App\Support\SitePromotion\SitePromotionOptions;
-use App\Support\SitePromotion\SitePromotionPackageInspector;
-use App\Support\SitePromotion\SitePromotionPlanner;
-use App\Support\Sites\ExportImport\SiteExportManager;
-use App\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionApplier;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionOptions;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionPackageInspector;
+use WebBlocks\Cms\Support\SitePromotion\SitePromotionPlanner;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

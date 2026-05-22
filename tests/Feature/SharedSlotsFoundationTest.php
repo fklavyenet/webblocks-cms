@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\SharedSlotBlock;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationWriter;
-use App\Support\Pages\PublicPagePresenter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\SharedSlotBlock;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;

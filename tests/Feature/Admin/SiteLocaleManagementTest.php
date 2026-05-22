@@ -2,23 +2,18 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Http\Controllers\Admin\LocaleController;
-use App\Http\Controllers\Admin\SiteController;
 use App\Models\Asset;
-use App\Models\Block;
-use App\Models\BlockTextTranslation;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SiteLocale;
-use App\Models\SiteVariable;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteVariable;
 use App\Models\User;
-use App\Support\Locales\LocaleLifecycleGuard;
-use App\Support\Locales\LocaleResolver;
-use App\Support\SharedSlots\SharedSlotSourcePageManager;
-use App\Support\Sites\SiteDomainManager;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +30,7 @@ class SiteLocaleManagementTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function site_and_locale_admin_runtime_routes_use_package_controllers_and_views_with_root_wrappers(): void
+    public function site_and_locale_admin_runtime_routes_use_package_controllers_and_views_without_root_app_wrappers(): void
     {
         $this->assertRouteUsesPackageController('admin.sites.index', PackageSiteController::class);
         $this->assertRouteUsesPackageController('admin.sites.edit', PackageSiteController::class);
@@ -65,12 +60,12 @@ class SiteLocaleManagementTest extends TestCase
             file_get_contents(resource_path('views/admin/locales/index.blade.php')),
         );
 
-        $this->assertTrue(is_subclass_of(SiteController::class, PackageSiteController::class));
-        $this->assertTrue(is_subclass_of(LocaleController::class, PackageLocaleController::class));
-        $this->assertTrue(is_subclass_of(SiteVariable::class, \WebBlocks\Cms\Models\SiteVariable::class));
-        $this->assertTrue(is_subclass_of(SiteLocale::class, \WebBlocks\Cms\Models\SiteLocale::class));
-        $this->assertTrue(is_subclass_of(SiteDomainManager::class, \WebBlocks\Cms\Support\Sites\SiteDomainManager::class));
-        $this->assertTrue(is_subclass_of(LocaleLifecycleGuard::class, \WebBlocks\Cms\Support\Locales\LocaleLifecycleGuard::class));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\SiteController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\LocaleController'));
+        $this->assertFalse(class_exists('App\\Models\\SiteVariable'));
+        $this->assertFalse(class_exists('App\\Models\\SiteLocale'));
+        $this->assertFalse(class_exists('App\\Support\\Sites\\SiteDomainManager'));
+        $this->assertFalse(class_exists('App\\Support\\Locales\\LocaleLifecycleGuard'));
     }
 
     #[Test]

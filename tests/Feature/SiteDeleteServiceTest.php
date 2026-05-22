@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\ContactMessage;
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageRevision;
-use App\Models\PageSlot;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Sites\SiteDeleteService;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Sites\SiteDeleteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

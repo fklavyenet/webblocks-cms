@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Site;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
 use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;

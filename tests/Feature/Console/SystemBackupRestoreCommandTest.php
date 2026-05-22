@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Console;
 
-use App\Console\Commands\SystemBackupRestoreCommand;
-use App\Models\SystemBackup;
-use App\Support\System\BackupRestoreInspection;
-use App\Support\System\BackupRestoreResult;
-use App\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Support\System\BackupRestoreInspection;
+use WebBlocks\Cms\Support\System\BackupRestoreResult;
+use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;

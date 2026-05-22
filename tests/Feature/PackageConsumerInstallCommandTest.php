@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Page;
-use App\Models\PageLayout;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;

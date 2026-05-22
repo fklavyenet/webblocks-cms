@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Site;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

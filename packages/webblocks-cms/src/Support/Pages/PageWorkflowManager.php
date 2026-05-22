@@ -4,7 +4,7 @@ namespace WebBlocks\Cms\Support\Pages;
 
 use WebBlocks\Cms\Models\Page;
 use App\Models\User;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use Illuminate\Validation\ValidationException;
 
 class PageWorkflowManager

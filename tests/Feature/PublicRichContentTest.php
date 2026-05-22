@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationWriter;
-use App\Support\Blocks\PublicBodyEndRegistry;
-use App\Support\Blocks\PublicOverlayRegistry;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
+use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

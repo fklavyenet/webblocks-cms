@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\BlockType;
+use WebBlocks\Cms\Models\BlockType;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Support\Pages;
 
 use App\Models\User;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;

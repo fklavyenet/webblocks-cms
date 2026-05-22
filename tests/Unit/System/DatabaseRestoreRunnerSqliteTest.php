@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\System;
 
-use App\Support\System\DatabaseExecutionStrategyResolver;
-use App\Support\System\DatabaseRestoreRunner;
-use App\Support\System\SqlDumpContentValidator;
+use WebBlocks\Cms\Support\System\DatabaseExecutionStrategyResolver;
+use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
+use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;

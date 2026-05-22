@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\Site;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;

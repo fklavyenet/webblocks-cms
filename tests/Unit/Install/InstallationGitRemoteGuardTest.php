@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Install;
 
-use App\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;

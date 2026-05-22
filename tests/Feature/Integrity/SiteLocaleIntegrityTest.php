@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Integrity;
 
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\Site;
-use App\Support\Sites\SiteCloneOptions;
-use App\Support\Sites\SiteCloneService;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
+use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

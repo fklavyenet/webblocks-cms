@@ -2,9 +2,8 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use App\Models\SystemBackup as RootSystemBackup;
 use Carbon\CarbonImmutable;
-use WebBlocks\Cms\Models\SystemBackup as PackageSystemBackup;
+use WebBlocks\Cms\Models\SystemBackup;
 
 class UpdateResult
 {
@@ -18,6 +17,6 @@ class UpdateResult
         public readonly CarbonImmutable $startedAt,
         public readonly CarbonImmutable $finishedAt,
         public readonly int $durationMs,
-        public readonly RootSystemBackup|PackageSystemBackup|null $preUpdateBackup = null,
+        public readonly ?SystemBackup $preUpdateBackup = null,
     ) {}
 }

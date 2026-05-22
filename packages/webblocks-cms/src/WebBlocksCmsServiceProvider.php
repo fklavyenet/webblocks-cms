@@ -30,12 +30,6 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SystemBackup;
-use WebBlocks\Cms\Models\SystemBackupRestore;
-use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
-use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
-use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class WebBlocksCmsServiceProvider extends ServiceProvider
@@ -720,14 +714,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const ROOT_COMPATIBILITY_WRAPPER_DOMAINS = [
-        'App\\... compatibility wrappers for moved controllers, requests, models, and support classes',
+        'minimal host-owned app shell files for auth, install, profile, User, providers, and project-layer boundaries',
+        'small operational transition app files that still serve source-maintained install or legacy asset workflows',
         'root Blade wrappers for moved admin/public views, layouts, and shared admin partials',
         'root seeder wrappers for moved package seeders',
         'root public/cms runtime copies that keep active asset URLs stable',
     ];
 
     public const STARTER_SPLIT_BLOCKERS = [
-        'install, auth, and profile runtime remain root-owned',
+        'install, auth, and profile runtime remain host-owned',
         'App\\Models\\User remains install-owned',
         'root public/cms remains the active runtime asset compatibility path',
         'root migration authority and root update/install operational flows remain authoritative',
@@ -943,12 +938,6 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     {
         $aliases = [
             'App\\Models\\BlockAsset' => BlockMedia::class,
-            'App\\Models\\Site' => Site::class,
-            'App\\Models\\SystemBackup' => SystemBackup::class,
-            'App\\Models\\SystemBackupRestore' => SystemBackupRestore::class,
-            'App\\Support\\Audit\\CurrentActorResolver' => CurrentActorResolver::class,
-            'App\\Support\\Install\\InstallationGitRemoteGuard' => InstallationGitRemoteGuard::class,
-            'App\\Support\\Locales\\LocaleResolver' => LocaleResolver::class,
             'App\\Support\\WebBlocks' => WebBlocks::class,
         ];
 

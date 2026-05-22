@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System;
 
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use Throwable;

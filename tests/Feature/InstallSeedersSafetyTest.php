@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Page;
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ShowcaseInstallSeeder;

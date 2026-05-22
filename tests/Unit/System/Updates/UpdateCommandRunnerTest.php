@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\System\Updates;
 
-use App\Support\System\Updates\UpdateCommandRunner;
+use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

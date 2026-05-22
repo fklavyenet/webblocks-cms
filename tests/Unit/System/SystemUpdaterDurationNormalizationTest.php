@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\System;
 
-use App\Models\SystemUpdateRun;
+use WebBlocks\Cms\Models\SystemUpdateRun;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

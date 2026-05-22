@@ -10,7 +10,7 @@ use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
 use App\Models\User;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;

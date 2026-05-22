@@ -2,25 +2,7 @@
 
 namespace App\Providers;
 
-use App\Support\Database\DestructiveDatabaseCommandGuard;
 use App\Support\Install\InstallState;
-use App\Support\Locales\LocaleResolver;
-use App\Support\Pages\PageLayoutManager;
-use App\Support\Pages\PageRouteResolver;
-use App\Support\PublicRendering\SiteAssetResolver;
-use App\Support\SitePromotion\SitePromotionApplier;
-use App\Support\Sites\SiteResolver;
-use App\Support\System\BackupRestoreArchiveExtractor;
-use App\Support\System\BackupRestoreArchiveInspector;
-use App\Support\System\DatabaseDumpWriter;
-use App\Support\System\DatabaseRestoreRunner;
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\SystemBackupManager;
-use App\Support\System\SystemBackupRestoreMaintenanceRunner;
-use App\Support\System\SystemBackupRestoreManager;
-use App\Support\System\SystemSettings;
-use App\Support\System\UploadedSystemBackupManager;
-use App\Support\Visitors\VisitorConsent;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Http\Request;
@@ -30,15 +12,15 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
-use WebBlocks\Cms\Support\SitePromotion\SitePromotionApplier as PackageSitePromotionApplier;
-use WebBlocks\Cms\Support\System\BackupRestoreArchiveExtractor as PackageBackupRestoreArchiveExtractor;
-use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector as PackageBackupRestoreArchiveInspector;
-use WebBlocks\Cms\Support\System\DatabaseDumpWriter as PackageDatabaseDumpWriter;
-use WebBlocks\Cms\Support\System\DatabaseRestoreRunner as PackageDatabaseRestoreRunner;
-use WebBlocks\Cms\Support\System\SystemBackupManager as PackageSystemBackupManager;
-use WebBlocks\Cms\Support\System\SystemBackupRestoreMaintenanceRunner as PackageSystemBackupRestoreMaintenanceRunner;
-use WebBlocks\Cms\Support\System\SystemBackupRestoreManager as PackageSystemBackupRestoreManager;
-use WebBlocks\Cms\Support\System\UploadedSystemBackupManager as PackageUploadedSystemBackupManager;
+use WebBlocks\Cms\Support\Database\DestructiveDatabaseCommandGuard;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
+use WebBlocks\Cms\Support\Sites\SiteResolver;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,7 +30,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerInstallRuntimeFallbacks();
-        $this->registerPackageCompatibilityAliases();
 
         $this->app->singleton(SiteResolver::class);
         $this->app->singleton(LocaleResolver::class);
@@ -128,18 +109,5 @@ class AppServiceProvider extends ServiceProvider
             Config::set('cache.default', 'file');
             Config::set('queue.default', 'sync');
         }
-    }
-
-    private function registerPackageCompatibilityAliases(): void
-    {
-        $this->app->alias(DatabaseDumpWriter::class, PackageDatabaseDumpWriter::class);
-        $this->app->alias(BackupRestoreArchiveInspector::class, PackageBackupRestoreArchiveInspector::class);
-        $this->app->alias(BackupRestoreArchiveExtractor::class, PackageBackupRestoreArchiveExtractor::class);
-        $this->app->alias(DatabaseRestoreRunner::class, PackageDatabaseRestoreRunner::class);
-        $this->app->alias(SystemBackupManager::class, PackageSystemBackupManager::class);
-        $this->app->alias(SystemBackupRestoreMaintenanceRunner::class, PackageSystemBackupRestoreMaintenanceRunner::class);
-        $this->app->alias(SystemBackupRestoreManager::class, PackageSystemBackupRestoreManager::class);
-        $this->app->alias(UploadedSystemBackupManager::class, PackageUploadedSystemBackupManager::class);
-        $this->app->alias(SitePromotionApplier::class, PackageSitePromotionApplier::class);
     }
 }

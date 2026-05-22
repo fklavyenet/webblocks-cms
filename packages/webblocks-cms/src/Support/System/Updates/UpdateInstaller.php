@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use App\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use Database\Seeders\CoreCatalogSeeder;
 use Illuminate\Support\Facades\File;
 

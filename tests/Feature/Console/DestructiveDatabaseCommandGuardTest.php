@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Console;
 
-use App\Support\Database\DestructiveDatabaseCommandGuard;
+use WebBlocks\Cms\Support\Database\DestructiveDatabaseCommandGuard;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

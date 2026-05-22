@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationRegistry;
-use App\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 

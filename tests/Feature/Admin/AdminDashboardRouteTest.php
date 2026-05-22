@@ -2,19 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Http\Controllers\Admin\ContactMessageController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\SlotTypeController;
-use App\Http\Controllers\Admin\SystemSearchController;
-use App\Http\Controllers\Admin\SystemSettingsController;
-use App\Http\Controllers\Admin\VisitorReportController;
-use App\Models\Page;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
-use App\Models\VisitorEvent;
-use App\Support\Search\PublicSearchSchema;
-use App\Support\System\InstalledVersionStore;
-use App\Support\Visitors\VisitorReportsQuery;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use App\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +24,7 @@ class AdminDashboardRouteTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function operational_admin_runtime_routes_use_package_controllers_and_views_with_root_wrappers(): void
+    public function operational_admin_runtime_routes_use_package_controllers_and_views_without_root_app_wrappers(): void
     {
         $this->assertRouteUsesPackageController('admin.dashboard', PackageDashboardController::class);
         $this->assertRouteUsesPackageController('admin.contact-messages.index', PackageContactMessageController::class);
@@ -68,14 +60,14 @@ class AdminDashboardRouteTest extends TestCase
         $this->assertStringContainsString('webblocks-cms::admin.system.search', file_get_contents(resource_path('views/admin/system/search.blade.php')));
         $this->assertStringContainsString('webblocks-cms::admin.system.settings', file_get_contents(resource_path('views/admin/system/settings.blade.php')));
 
-        $this->assertTrue(is_subclass_of(DashboardController::class, PackageDashboardController::class));
-        $this->assertTrue(is_subclass_of(ContactMessageController::class, PackageContactMessageController::class));
-        $this->assertTrue(is_subclass_of(VisitorReportController::class, PackageVisitorReportController::class));
-        $this->assertTrue(is_subclass_of(SlotTypeController::class, PackageSlotTypeController::class));
-        $this->assertTrue(is_subclass_of(SystemSearchController::class, PackageSystemSearchController::class));
-        $this->assertTrue(is_subclass_of(SystemSettingsController::class, PackageSystemSettingsController::class));
-        $this->assertTrue(is_subclass_of(VisitorReportsQuery::class, \WebBlocks\Cms\Support\Visitors\VisitorReportsQuery::class));
-        $this->assertTrue(is_subclass_of(PublicSearchSchema::class, \WebBlocks\Cms\Support\Search\PublicSearchSchema::class));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\DashboardController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\ContactMessageController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\VisitorReportController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\SlotTypeController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\SystemSearchController'));
+        $this->assertFalse(class_exists('App\\Http\\Controllers\\Admin\\SystemSettingsController'));
+        $this->assertFalse(class_exists('App\\Support\\Visitors\\VisitorReportsQuery'));
+        $this->assertFalse(class_exists('App\\Support\\Search\\PublicSearchSchema'));
     }
 
     #[Test]

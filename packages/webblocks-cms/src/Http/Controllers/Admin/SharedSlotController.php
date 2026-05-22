@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use App\Models\User;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;

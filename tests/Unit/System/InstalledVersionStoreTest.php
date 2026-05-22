@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\System;
 
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use App\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

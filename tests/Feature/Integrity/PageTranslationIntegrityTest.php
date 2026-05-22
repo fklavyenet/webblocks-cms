@@ -3,10 +3,10 @@
 namespace Tests\Feature\Integrity;
 
 use App\Models\Asset;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageTranslation;
-use App\Models\Site;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;

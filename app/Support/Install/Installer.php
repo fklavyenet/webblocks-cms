@@ -3,7 +3,6 @@
 namespace App\Support\Install;
 
 use App\Models\User;
-use App\Support\System\InstalledVersionStore;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -11,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class Installer
 {

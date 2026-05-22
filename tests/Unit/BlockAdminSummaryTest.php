@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Models\Block;
-use App\Models\BlockTextTranslation;
-use App\Support\Blocks\BlockAdminSummary;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Support\Blocks\BlockAdminSummary;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;

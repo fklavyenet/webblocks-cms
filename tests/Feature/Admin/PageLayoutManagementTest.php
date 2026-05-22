@@ -2,18 +2,18 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Page;
-use App\Models\PageLayout;
-use App\Models\PageLayoutSlot;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\Pages\PageLayoutManager;
-use App\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

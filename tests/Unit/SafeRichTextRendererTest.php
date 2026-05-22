@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Support\Formatting\SafeRichTextRenderer;
+use WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

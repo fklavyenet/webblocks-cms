@@ -2,8 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use App\Models\Site as AppSite;
-use App\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use Illuminate\Http\Request;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
@@ -35,7 +34,7 @@ class PageRouteResolver
     {
         $resolvedSite = $this->resolvedSite($request);
 
-        return $this->localeResolver->current($request, $this->compatibilitySite($resolvedSite->site));
+        return $this->localeResolver->current($request, $resolvedSite->site);
     }
 
     public function homePath(?string $localeCode = null, ?Site $site = null): ?string
@@ -156,7 +155,7 @@ class PageRouteResolver
         $site = $this->resolvedSite($request)->site;
         $localeCode = Locale::normalizeCode((string) $request->route('locale'));
         $locale = $localeCode !== null
-            ? $this->localeResolver->enabled($localeCode, $this->compatibilitySite($site))
+            ? $this->localeResolver->enabled($localeCode, $site)
             : $this->localeResolver->default();
 
         if ($localeCode !== null && (! $locale || $locale->is_default)) {
@@ -252,26 +251,13 @@ class PageRouteResolver
 
         if (is_string($locale) && Locale::normalizeCode($locale) !== null) {
             if ($site) {
-                return $this->localeResolver->enabled($locale, $this->compatibilitySite($site));
+                return $this->localeResolver->enabled($locale, $site);
             }
 
             return $this->localeResolver->enabled($locale);
         }
 
         return null;
-    }
-
-    private function compatibilitySite(?Site $site): ?AppSite
-    {
-        if ($site === null) {
-            return null;
-        }
-
-        if ($site instanceof AppSite) {
-            return $site;
-        }
-
-        return AppSite::query()->find($site->getKey());
     }
 
     private function applyLocalePrefix(string $path, Locale $locale): string

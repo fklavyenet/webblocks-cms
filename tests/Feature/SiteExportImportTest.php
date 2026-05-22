@@ -2,22 +2,22 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageSlot;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SiteExport;
-use App\Models\SiteImport;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Models\SlotType;
 use App\Models\User;
-use App\Support\Pages\PublicPagePresenter;
-use App\Support\Sites\ExportImport\SiteExportManager;
-use App\Support\Sites\ExportImport\SiteImportManager;
-use App\Support\Sites\ExportImport\SiteImportOptions;
+use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportManager;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

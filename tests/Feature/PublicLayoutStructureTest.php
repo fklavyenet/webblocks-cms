@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\NavigationItem;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageLayout;
-use App\Models\PageLayoutSlot;
-use App\Models\PageSlot;
-use App\Models\PageTranslation;
-use App\Models\Site;
-use App\Models\SlotType;
-use App\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageLayoutSlot;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use App\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;

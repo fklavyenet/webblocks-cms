@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Console;
 
-use App\Models\IconCatalogItem;
-use App\Support\Icons\WebBlocksIconManifestSyncer;
+use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;

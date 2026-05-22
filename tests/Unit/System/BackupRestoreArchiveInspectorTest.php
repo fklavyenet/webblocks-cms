@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\System;
 
-use App\Support\Sites\ExportImport\SiteTransferPackage;
-use App\Support\System\BackupRestoreArchiveInspector;
-use App\Support\System\SystemBackupArchivePackage;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferPackage;
+use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\SystemBackupArchivePackage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;

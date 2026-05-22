@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\SystemSetting;
+use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\Install\InstallationGitRemoteGuard;
+use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use App\Support\Install\InstallState;
-use App\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;

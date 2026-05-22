@@ -2,9 +2,9 @@
 
 namespace Database\Seeders\Concerns;
 
-use App\Models\Block;
-use App\Models\NavigationItem;
-use App\Models\Page;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 

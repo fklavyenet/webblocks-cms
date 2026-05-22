@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Block;
-use App\Models\Locale;
-use App\Models\Page;
-use App\Models\PageAsset;
-use App\Models\PageSlot;
-use App\Models\SharedSlot;
-use App\Models\Site;
-use App\Models\SlotType;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageAsset;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use App\Models\User;
 use Database\Seeders\BlockTypeSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;

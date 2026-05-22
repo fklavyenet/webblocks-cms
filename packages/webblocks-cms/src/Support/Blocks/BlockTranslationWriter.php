@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use App\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;

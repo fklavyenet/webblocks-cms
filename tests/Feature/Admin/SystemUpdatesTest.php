@@ -2,15 +2,15 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\SystemBackup;
-use App\Models\SystemUpdateRun;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemUpdateRun;
 use App\Models\User;
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\SystemBackupManager;
-use App\Support\System\Updates\UpdateCheckResult;
-use App\Support\System\Updates\UpdateCommandRunner;
-use App\Support\System\Updates\UpdateException;
-use App\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult;
+use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
+use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use App\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -8,7 +8,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotRevision;
 use App\Models\User;
-use App\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use Illuminate\Support\Arr;

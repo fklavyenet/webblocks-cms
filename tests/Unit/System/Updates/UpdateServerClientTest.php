@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\System\Updates;
 
-use App\Support\System\InstalledVersionStore;
-use App\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;

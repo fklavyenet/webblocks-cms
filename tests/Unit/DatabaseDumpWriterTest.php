@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Support\System\DatabaseDumpWriter;
-use App\Support\System\DatabaseExecutionStrategyResolver;
-use App\Support\System\SqlDumpContentValidator;
+use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
+use WebBlocks\Cms\Support\System\DatabaseExecutionStrategyResolver;
+use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Process\Process;

@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Locale;
-use App\Models\Site;
-use App\Models\SiteExport;
-use App\Models\SiteImport;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
