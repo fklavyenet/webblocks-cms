@@ -30,6 +30,36 @@ Package transition consolidation is now complete for all safely movable CMS-owne
 - Root `config/` remains the live install override layer. Package config provides CMS defaults for a subset of files, but Laravel still reads root config as the active application config surface.
 - The final remaining split blockers are install/auth/profile runtime, the app-owned `User` model, root migration authority, root update/install operational authority, and the still-active root `public/cms/...` runtime asset path.
 
+## Focused Wrapper Cleanup: Console, Mail, Models
+
+This audit pass reviewed only:
+
+- `app/Console/Commands`
+- `app/Mail`
+- `app/Models`
+
+Removed now because they were proven redundant pure wrappers with package-authoritative runtime wiring and no remaining in-repo root `App\...` dependency:
+
+- `app/Console/Commands/BlockTypeContractsAuditCommand.php`
+- `app/Console/Commands/ImportDemoMedia.php`
+- `app/Console/Commands/ResetPrimitiveBlocksCommand.php`
+- `app/Console/Commands/SiteCloneCommand.php`
+- `app/Console/Commands/SiteDeleteCommand.php`
+- `app/Console/Commands/SyncCoreBlockTypesCommand.php`
+- `app/Models/BlockButtonTranslation.php`
+- `app/Models/BlockContactFormTranslation.php`
+- `app/Models/BlockGalleryItemTranslation.php`
+- `app/Models/BlockImageTranslation.php`
+
+Intentionally kept in this pass:
+
+- `app/Models/User.php` because it is install-owned and remains the auth boundary.
+- `app/Mail/ContactMessageNotification.php` because compatibility mail entrypoint expectations still exist around contact-notification flows.
+- update, backup, restore, export, import, promotion, install, and filesystem/archive-adjacent commands or models because those areas still define active operational boundaries.
+- root-only models with no package counterpart and root models still referenced by migrations, seeders, install-state checks, or compatibility aliases.
+
+This cleanup does not change starter readiness. The repository is still not starter-ready because install/auth, `User`, root migration authority, root update or backup flows, and root runtime asset compatibility paths remain authoritative.
+
 ## Classification Legend
 
 - `compatibility_wrapper`: root file exists only to preserve old imports, view paths, route references, or downstream compatibility.
@@ -172,7 +202,8 @@ These still depend on root file layout, DDEV or system execution, archive handli
 
 #### Recommended next action
 
-- Keep all existing wrappers.
+- Keep the remaining wrappers that still protect install, auth, update, backup/restore, export/import, promotion, and root model authority boundaries.
+- Do not reintroduce the deleted pure wrappers above unless package runtime wiring changes back to `App\...` authority.
 - Treat the moved page/block/media/navigation/shared-slot/site/locale/operational admin/model batches as complete for now.
 - Choose the next implementation batch by domain, not by scattered class type.
 - Best next `app`-adjacent batch: focused model/support compatibility cleanup for already package-owned runtime slices, or an admin asset and brand strategy pass now that the admin layout is package-owned.

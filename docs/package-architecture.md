@@ -40,6 +40,32 @@ Consumer package readiness has now started, but it is intentionally partial and 
 - package-owned login, logout, install notice, admin protection, public home, views, and assets are now sufficient for the first clean consumer path
 - this is still not a separate starter repository, and it does not yet remove the app-owned `User` boundary
 
+## Current Root Wrapper Cleanup State
+
+The package transition no longer requires every historic root `App\...` wrapper to remain present.
+
+Removed as proven-safe redundant wrappers in the focused `app/Console/Commands`, `app/Mail`, and `app/Models` audit:
+
+- `app/Console/Commands/BlockTypeContractsAuditCommand.php`
+- `app/Console/Commands/ImportDemoMedia.php`
+- `app/Console/Commands/ResetPrimitiveBlocksCommand.php`
+- `app/Console/Commands/SiteCloneCommand.php`
+- `app/Console/Commands/SiteDeleteCommand.php`
+- `app/Console/Commands/SyncCoreBlockTypesCommand.php`
+- `app/Models/BlockButtonTranslation.php`
+- `app/Models/BlockContactFormTranslation.php`
+- `app/Models/BlockGalleryItemTranslation.php`
+- `app/Models/BlockImageTranslation.php`
+
+Intentionally still root-owned or deferred:
+
+- `app/Models/User.php` stays install-owned and auth-owned.
+- root update, backup, restore, export, import, promotion, install, and filesystem/archive command or model boundaries still remain app-authoritative or deferred.
+- `app/Mail/ContactMessageNotification.php` still remains as a compatibility entrypoint until the contact notification boundary is intentionally narrowed.
+- many root models still remain because migrations, seeders, install-state checks, compatibility aliases, or root-only subclasses still reference them.
+
+This cleanup improves package-authority clarity, but it does not change starter-package readiness. The remaining blockers are still install/auth, `User`, root migration authority, root update or backup authority, and root runtime asset compatibility paths.
+
 ## Target Update Architecture
 
 The long-term update flow should be Composer/package-managed and Git-agnostic.

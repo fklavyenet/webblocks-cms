@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Remove the redundant root command wrappers `app/Console/Commands/{BlockTypeContractsAuditCommand,ImportDemoMedia,ResetPrimitiveBlocksCommand,SiteCloneCommand,SiteDeleteCommand,SyncCoreBlockTypesCommand}.php` now that the package service provider already registers the package command implementations directly.
+- Remove the redundant root translation-model wrappers `app/Models/{BlockButtonTranslation,BlockContactFormTranslation,BlockGalleryItemTranslation,BlockImageTranslation}.php`, add bootstrap regression coverage that those root files stay absent, and document the remaining root-owned boundaries that still block broader app-wrapper cleanup.
+
 ## 1.32.30
 
 - Prepare v1.32.30 as an emergency package asset hotfix by strengthening the release package boundary around `public/cms/js/admin/listing-bulk-actions.js` for the exact `vendor/fklavyenet/webblocks-cms` Composer package root.
