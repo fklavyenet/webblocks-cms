@@ -2,7 +2,7 @@
 
 namespace Tests\Concerns;
 
-use App\Models\Asset;
+use WebBlocks\Cms\Models\Media as Asset;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;

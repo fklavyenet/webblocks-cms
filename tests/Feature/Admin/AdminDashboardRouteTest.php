@@ -7,7 +7,7 @@ use WebBlocks\Cms\Models\Site;
 use App\Models\User;
 use WebBlocks\Cms\Models\VisitorEvent;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

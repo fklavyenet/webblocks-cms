@@ -57,8 +57,9 @@ Intentionally still root-owned or deferred:
 
 - `app/Models/User.php`, base `Controller.php`, and service providers remain host-owned Laravel shell files.
 - auth/profile/install files, including the install redirect middleware, remain host-owned until the starter/install boundary is deliberately redesigned.
-- auth, profile, install, project-layer, and `App\Support\WebBlocks` remain host or transition boundaries.
-- legacy asset shims `Asset`, `AssetFolder`, `BlockAsset`, and `App\Support\Assets\...` remain to bridge older source-maintained workflows onto package media models; the unused root `Asset*Request` shims and block-translation concern wrapper have been removed.
+- auth, profile, install, and project-layer remain host or transition boundaries.
+- legacy asset shims `Asset`, `AssetFolder`, `BlockAsset`, and `App\Support\Assets\...` have been removed; package media models and support classes are now the authoritative runtime and test surface.
+- `App\Support\WebBlocks` has been removed; root config, views, and tests now use `WebBlocks\Cms\Support\WebBlocks` as the product identity/version source.
 - empty package-counterpart root `app/` directories are removed rather than kept as transition markers.
 - root migrations, config overrides, runtime `public/cms`, root Blade compatibility wrappers, and root seeder wrappers remain outside this cleanup.
 
@@ -163,9 +164,8 @@ The first PHP source move should follow equally conservative criteria: CMS-owned
 
 Current Search support boundary:
 
-- package-owned now: `SearchTextNormalizer`, `PublicSearchRebuildResult`
-- later, because they depend on DB/models/runtime indexing or schema: `PublicSearchIndexer`, `PublicSearchQuery`, `PublicSearchSchema`, `SearchablePageResolver`, `BlockSearchTextExtractorRegistry`, `ReindexesPublicSearch`
-- no Search support class currently needs to remain root-owned for project-specific reasons, but the remaining classes still require dependency-by-dependency review before moving
+- package-owned now: `SearchTextNormalizer`, `PublicSearchRebuildResult`, `PublicSearchIndexer`, `PublicSearchQuery`, `PublicSearchSchema`, `SearchablePageResolver`, `BlockSearchTextExtractorRegistry`, and `ReindexesPublicSearch`
+- no Search support class currently needs to remain root-owned for project-specific reasons; the root `App\Support\Search\ReindexesPublicSearch` shim has been removed
 
 Current non-Search Support audit boundary:
 
@@ -200,11 +200,11 @@ Formatting support boundary:
 
 Support source migration map:
 
-- Search: candidate after dependency isolation. Pure helper or value-object pieces are already package-owned, but indexing, schema, page resolution, and block extraction still depend on models, DB tables, and runtime indexing flow.
+- Search: package-owned for current runtime support, including the reindex trait used by package models. Root `App\Support\Search\...` shims should not be restored.
 - Formatting: candidate after dependency isolation. `InlineRichTextRenderer` is now package-owned as the low-risk formatting helper, while `SafeRichTextRenderer` remains root-owned because it defines the higher-risk sanitization behavior.
 - BlockTypes: candidate after dependency isolation. `BlockTypeContract` is a small value object, but the namespace is anchored by `BlockTypeContractRegistry`, admin routes, and a root console audit command.
 - BlockTypes: candidate after dependency isolation. `BlockTypeContract` is now package-owned as a narrow value-object move, but the namespace is still anchored by `BlockTypeContractRegistry`, admin routes, and a root console audit command.
-- Media and Assets: do not move yet. These classes are tied to `Media` model constants, media usage queries, legacy asset compatibility, controller upload flows, and file-write behavior.
+- Media and Assets: package-owned media models and support classes are authoritative for the removed legacy asset shims. Remaining media work should avoid restoring root `Asset`, `AssetFolder`, `BlockAsset`, or `App\Support\Assets\...` wrappers.
 - Pages and PublicRendering: root-owned until a dedicated migration phase. These classes control route resolution, layout selection, page assets, slot wrappers, public presenters, page duplication or import, and public rendering behavior with model and request coupling throughout.
 - Pages and PublicRendering: root-owned until a dedicated migration phase. `LayoutMarkup` was reviewed as a possible exception, but it remains root-owned because it still sits directly on page-layout requests, slot-wrapper resolution, and admin-view rendering even though its own logic is stateless.
 - Blocks: root-owned until a dedicated migration phase. This area owns block payload writes, translation persistence, block deletion, catalog sync, trusted HTML extraction, and request-scoped public registries that sit directly on block persistence and renderer contracts.
@@ -215,7 +215,7 @@ Support source migration map:
 - Navigation, Locales, Users, Visitors, Contact, and Icons: candidate after dependency isolation. Each group contains some smaller helpers or result objects, but current implementations still rely on models, auth, mail, schema inspection, HTTP fetches, or settings-backed runtime behavior.
 - Navigation, Locales, Users, Visitors, Contact, and Icons: candidate after dependency isolation. `ContactMessageNotificationResult` is now package-owned as a narrow value-object move, while the remaining groups still rely on models, auth, mail, schema inspection, HTTP fetches, or settings-backed runtime behavior.
 - Admin, Audit, and Database: candidate after dependency isolation. `AdminPagination`, `CurrentActorResolver`, and `DestructiveDatabaseCommandGuard` are small, but each still hangs off root settings, auth, or application safety hooks.
-- WebBlocks: do not move yet. It represents product identity and version constants and is explicitly excluded from this transition step.
+- WebBlocks: package-owned `WebBlocks\Cms\Support\WebBlocks` is now the product identity and version source for both package consumers and the maintenance repo root.
 
 Phase 2 source checkpoint note:
 

@@ -14,7 +14,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\PageLayoutSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

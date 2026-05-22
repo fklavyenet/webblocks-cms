@@ -11,7 +11,7 @@ use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;

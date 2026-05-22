@@ -5,7 +5,7 @@ namespace Tests\Feature\Admin;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

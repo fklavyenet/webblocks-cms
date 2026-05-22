@@ -1,6 +1,6 @@
 <?php
 
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 
 return [
 

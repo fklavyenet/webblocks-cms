@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Models\Asset;
-use App\Support\Assets\AssetKindResolver;
+use WebBlocks\Cms\Models\Media as Asset;
+use WebBlocks\Cms\Support\Media\MediaKindResolver as AssetKindResolver;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

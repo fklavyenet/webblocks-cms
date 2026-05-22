@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Sites;
 
-use App\Models\BlockAsset;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;

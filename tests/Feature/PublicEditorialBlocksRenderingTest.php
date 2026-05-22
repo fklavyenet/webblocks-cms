@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Asset;
+use WebBlocks\Cms\Models\Media as Asset;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -15,7 +15,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\View;

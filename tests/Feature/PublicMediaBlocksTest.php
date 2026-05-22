@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Asset;
+use WebBlocks\Cms\Models\Media as Asset;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\BlockType;

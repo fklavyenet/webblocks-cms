@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Support\SitePromotion;
 
-use App\Models\BlockAsset;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 @php
-    use App\Support\WebBlocks;
+    use WebBlocks\Cms\Support\WebBlocks;
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>

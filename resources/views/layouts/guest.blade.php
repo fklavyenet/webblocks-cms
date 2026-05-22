@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
-        use App\Support\WebBlocks;
+        use WebBlocks\Cms\Support\WebBlocks;
 
         $guestCssPath = public_path('cms/css/guest.css');
     @endphp

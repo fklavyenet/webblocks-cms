@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Console;
 
-use App\Models\BlockAsset;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\Response;

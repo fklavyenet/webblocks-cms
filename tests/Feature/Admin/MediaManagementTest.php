@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
+use WebBlocks\Cms\Models\Media as Asset;
+use WebBlocks\Cms\Models\MediaFolder as AssetFolder;
 use WebBlocks\Cms\Models\Block;
-use App\Models\BlockAsset;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;

@@ -7,7 +7,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
 use WebBlocks\Cms\Support\System\SystemSettings;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use DOMDocument;
 use DOMElement;
 use DOMNodeList;

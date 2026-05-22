@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
+use WebBlocks\Cms\Models\Media as Asset;
+use WebBlocks\Cms\Models\MediaFolder as AssetFolder;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use App\Models\User;

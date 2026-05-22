@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Remove the remaining unnecessary root `app/` transition shims for legacy asset models/support, the unused slot-type request, the root `WebBlocks` identity mirror, and the root public-search reindex trait now that package media, package identity, and package search runtime are authoritative.
 - Remove leftover empty root `app/` transition directories after the broad compatibility-layer cleanup, delete the now-unused root asset request shims and block-translation concern wrapper, and strengthen `PackageWrapperCleanupTest` so package-counterpart wrapper directories stay absent.
 - Aggressively reduce the maintenance repo root `app/` compatibility layer toward the real package-consumer boundary by deleting redundant package-counterpart controllers, requests, mail, models, commands, and support wrappers while keeping only the host-owned install middleware boundary.
 - Add `PackageWrapperCleanupTest` as a static/runtime guard proving the root app tree stays minimal, package admin/public routes use package controllers, package commands are registered by `WebBlocksCmsServiceProvider`, and deleted root FQCNs are not required by the current package runtime.

@@ -3,7 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use App\Support\WebBlocks;
+use WebBlocks\Cms\Support\WebBlocks;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
