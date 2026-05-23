@@ -5,6 +5,7 @@ namespace Tests\Unit\System\Updates;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -56,6 +57,73 @@ class LegacyRootManagedUpdateCompatibilityTest extends TestCase
     $this->assertFileExists($packageRoot.'/composer.json');
     $this->assertFileExists($packageRoot.'/app/Support/System/Updates/UpdatePackageExtractor.php');
     $this->assertFileExists($packageRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php');
+  }
+
+  #[Test]
+  public function generated_bridge_archive_root_wrappers_load_package_update_exception_with_stale_app_only_autoloading(): void
+  {
+    $outputDirectory = $this->makeTemporaryDirectory('generated-bridge');
+    $process = new Process([
+      'bash',
+      base_path('scripts/build-root-managed-bridge-archive.sh'),
+      '9.9.9',
+      $outputDirectory,
+      'v1.32.30',
+    ], base_path());
+    $process->mustRun();
+
+    $archivePath = $outputDirectory.'/webblocks-cms-9.9.9-root-managed-bridge.zip';
+    $destinationPath = $this->makeTemporaryDirectory('extract');
+    $packageRoot = $this->legacyExtractAndValidate($archivePath, $destinationPath);
+
+    $this->assertFileExists($packageRoot.'/app/Support/System/Updates/UpdateException.php');
+    $this->assertFileExists($packageRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
+    $this->assertFileExists($packageRoot.'/app/Support/System/Updates/PackageUpdaterBridgeBootstrap.php');
+
+    $probePath = $this->makeTemporaryDirectory('probe').'/probe.php';
+    File::put($probePath, <<<'PHP'
+<?php
+
+$root = $argv[1];
+
+spl_autoload_register(static function (string $className) use ($root): void {
+  $prefix = 'App\\';
+
+  if (! str_starts_with($className, $prefix)) {
+    return;
+  }
+
+  $relativeClass = substr($className, strlen($prefix));
+  $path = $root.'/app/'.str_replace('\\', '/', $relativeClass).'.php';
+
+  if (is_file($path)) {
+    require_once $path;
+  }
+});
+
+$rootWrapperResolved = class_exists('App\\Support\\System\\Updates\\UpdateException');
+$packageClassResolved = class_exists('WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException');
+
+echo json_encode([
+  'root_wrapper_resolved' => $rootWrapperResolved,
+  'package_class_resolved' => $packageClassResolved,
+  'is_subclass' => is_subclass_of(
+    'App\\Support\\System\\Updates\\UpdateException',
+    'WebBlocks\\Cms\\Support\\System\\Updates\\UpdateException'
+  ),
+], JSON_THROW_ON_ERROR);
+PHP);
+
+    $probe = new Process([PHP_BINARY, $probePath, $packageRoot], base_path());
+    $probe->mustRun();
+
+    $result = json_decode($probe->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+
+    $this->assertSame([
+      'root_wrapper_resolved' => true,
+      'package_class_resolved' => true,
+      'is_subclass' => true,
+    ], $result);
   }
 
   #[Test]

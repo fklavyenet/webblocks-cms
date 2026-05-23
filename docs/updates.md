@@ -9,6 +9,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - The in-app updater applies published release packages, not local working-tree changes.
 - Fresh Composer consumers should install first with `composer require fklavyenet/webblocks-cms` and `ddev artisan webblocks:install` before using the normal release-based update flow.
 - Pre-package-native installs, including `1.31.53`, cannot directly consume package-rooted release ZIPs. They must first install a root-managed bridge release whose archive root still contains `artisan` and root `composer.json`, and whose contents install the package-native updater.
+- The current bridge publication target is `1.32.33`. Do not direct `1.31.53` clients to `1.32.32`; that version was auto-published as a package-rooted update-service artifact and is not safe for old root-managed validators.
 
 ## Operational Expectations
 
@@ -44,7 +45,9 @@ The safe bridge strategy is two-step:
 - Publish package-rooted releases with `minimum_client_version` set to `1.32.18` or newer, so old clients are not offered the latest package-rooted artifact before the bridge.
 - After the bridge is applied, the installed updater can validate and apply the strict package-rooted `fklavyenet/webblocks-cms` artifact shape used by modern releases.
 
-Use `scripts/build-root-managed-bridge-archive.sh VERSION [OUTPUT_DIR] [GIT_REF]` from a bridge-capable tag to create the old-shape bridge ZIP; for example, `scripts/build-root-managed-bridge-archive.sh 1.32.32 dist v1.32.30`. The builder intentionally excludes install-owned paths such as `.env`, `storage/`, `project/`, `public/site/`, `public/storage`, and root `config/`; package-owned defaults under `packages/webblocks-cms/config` remain part of the package runtime.
+Use `scripts/build-root-managed-bridge-archive.sh VERSION [OUTPUT_DIR] [GIT_REF]` from a bridge-capable tag to create the old-shape bridge ZIP; for example, `scripts/build-root-managed-bridge-archive.sh 1.32.33 dist v1.32.30`. The builder intentionally excludes install-owned paths such as `.env`, `storage/`, `project/`, `public/site/`, `public/storage`, and root `config/`; package-owned defaults under `packages/webblocks-cms/config` remain part of the package runtime.
+
+For the current recovery release, publish the `1.32.33` root-managed bridge artifact only for old root-managed clients. Bridge-capable clients such as `1.32.18+` must receive a package-rooted release instead; if the update service cannot target artifacts by client capability, do not leave the bridge as the global current stable release. The intended old-client path is `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted`, while already bridge-capable installs such as `1.32.30` must skip the bridge and update directly to a package-rooted `1.32.34+` release.
 
 The block type sync is idempotent and keeps the database-backed `block_types` catalog aligned with the shipped core CMS catalog on existing installs:
 

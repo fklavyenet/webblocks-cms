@@ -50,6 +50,58 @@ if ! grep -q 'fklavyenet/webblocks-cms' "$staging_dir/packages/webblocks-cms/src
   exit 1
 fi
 
+cat > "$staging_dir/app/Support/System/Updates/PackageUpdaterBridgeBootstrap.php" <<'PHP'
+<?php
+
+namespace WebBlocksCmsRootManagedBridge;
+
+function require_update_class(string $class): void
+{
+  static $registered = false;
+
+  if (! $registered) {
+    spl_autoload_register(static function (string $className): void {
+      $prefix = 'WebBlocks\\Cms\\Support\\System\\Updates\\';
+
+      if (! str_starts_with($className, $prefix)) {
+        return;
+      }
+
+      $relativeClass = substr($className, strlen($prefix));
+      $path = __DIR__.'/../../../../packages/webblocks-cms/src/Support/System/Updates/'.str_replace('\\', '/', $relativeClass).'.php';
+
+      if (is_file($path)) {
+        require_once $path;
+      }
+    });
+
+    $registered = true;
+  }
+
+  $fqcn = 'WebBlocks\\Cms\\Support\\System\\Updates\\'.$class;
+
+  if (class_exists($fqcn, false)) {
+    return;
+  }
+
+  $path = __DIR__.'/../../../../packages/webblocks-cms/src/Support/System/Updates/'.$class.'.php';
+
+  if (is_file($path)) {
+    require_once $path;
+  }
+}
+PHP
+
+for wrapper in "$staging_dir"/app/Support/System/Updates/*.php; do
+  wrapper_name="$(basename "$wrapper" .php)"
+
+  if [ "$wrapper_name" = "PackageUpdaterBridgeBootstrap" ]; then
+    continue
+  fi
+
+  perl -0pi -e "s/(namespace App\\\\Support\\\\System\\\\Updates;\\n)/\$1\\nrequire_once __DIR__.'\\/PackageUpdaterBridgeBootstrap.php';\\n\\\\WebBlocksCmsRootManagedBridge\\\\require_update_class('$wrapper_name');\\n/" "$wrapper"
+done
+
 rm -rf \
   "$staging_dir/.git" \
   "$staging_dir/.github" \

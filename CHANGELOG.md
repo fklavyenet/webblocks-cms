@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.32.33
+
+- Prepare v1.32.33 as the real root-managed compatibility bridge for pre-package-native updater clients such as `1.31.53`, with the old archive root shape those clients can validate and package-native updater code they need for later package-rooted releases.
+- Add a bridge-only updater bootstrap so old `App\Support\System\Updates\*` wrappers can load package-native updater support classes even before the legacy install has regenerated Composer autoload metadata for `WebBlocks\Cms\`.
+- Use v1.32.33 as the bridge publication target because v1.32.32 was already auto-published to the update service as a package-rooted artifact and must not be offered to `1.31.53` clients.
+- Document the safe update path as `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted`.
+- Clarify that bridge-capable installs such as `1.32.30` must skip the root-managed bridge and receive a package-rooted `1.32.34+` release instead.
+
 ## 1.32.32
 
 - Prepare v1.32.32 as a root-managed compatibility bridge for pre-package-native updater clients such as `1.31.53`, so old installs can receive an old-shape artifact before moving to package-rooted releases.
