@@ -97,7 +97,7 @@
 }
 
 .wb-gallery--gap-lg {
-    --wb-gallery-gap: var(--wb-s4);
+    --wb-gallery-gap: var(--wb-s6);
 }
 
 .wb-gallery-grid {
@@ -146,6 +146,21 @@
 .wb-gallery--aspect-16-9 .wb-gallery-media,
 .wb-gallery--aspect-portrait .wb-gallery-media {
     block-size: 100%;
+}
+
+.wb-gallery--aspect-square .wb-gallery-item > a,
+.wb-gallery--aspect-4-3 .wb-gallery-item > a,
+.wb-gallery--aspect-16-9 .wb-gallery-item > a,
+.wb-gallery--aspect-portrait .wb-gallery-item > a {
+    background: color-mix(in srgb, CanvasText 88%, Canvas 12%);
+}
+
+.wb-gallery--aspect-square .wb-gallery-media,
+.wb-gallery--aspect-4-3 .wb-gallery-media,
+.wb-gallery--aspect-16-9 .wb-gallery-media,
+.wb-gallery--aspect-portrait .wb-gallery-media {
+    object-fit: contain;
+    object-position: center;
 }
 
 .wb-gallery-caption {

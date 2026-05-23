@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.39
+
+- Fix public Gallery fixed-aspect media rendering so screenshot-style images preserve the full image with centered contain fitting and intentional dark letterboxing, while keeping lightbox, captions, overlays, and existing aspect classes intact.
+- Increase the CMS Gallery large gap token mapping so `wb-gallery--gap-lg` has clearer breathing room than the medium gap.
+
 ## 1.32.38
 
 - Fix default public header slots that contain only a Navbar block by promoting the slot wrapper to the `nav.wb-navbar` root, allowing shipped WebBlocks UI sticky navbar behavior to work without site-specific sticky CSS workarounds.

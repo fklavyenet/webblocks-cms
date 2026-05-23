@@ -420,7 +420,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: ordered gallery media selection and order, columns, gap, variant, aspect ratio, captions mode, overlay mode, and lightbox toggle
 - Intended WebBlocks UI output: WebBlocks gallery pattern with the viewer mounted under `#wb-overlay-root`; shipped WebBlocks UI gallery hooks should drive interaction first.
 - Current implementation: acceptable
-- Public rendering contract: Gallery no longer emits a public intro heading or paragraph. Existing legacy stored Gallery title/description values may remain in older records but are ignored by the public renderer.
+- Public rendering contract: Gallery no longer emits a public intro heading or paragraph. Existing legacy stored Gallery title/description values may remain in older records but are ignored by the public renderer. Fixed-aspect Gallery media preserves the full image with centered contain fitting so screenshot-style images are not cropped inside fixed tiles.
 - Editorial contract: when section headings or explanatory copy are needed, use `Content Header` plus `Plain Text` or `Rich Text` before the Gallery block.
 - Notes for later renderer/admin improvements: the current renderer writes canonical ordered gallery media through `block_media`, resolves per-item locale-owned copy through `block_gallery_item_translations`, preserves legacy fallback items for older saved content, and keeps `data-wb-gallery-target` paired with one shared viewer modal under `#wb-overlay-root`.
 

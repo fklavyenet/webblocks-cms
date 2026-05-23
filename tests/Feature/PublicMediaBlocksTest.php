@@ -261,6 +261,7 @@ class PublicMediaBlocksTest extends TestCase
         ]);
 
         $response = $this->get(route('pages.show', 'about'));
+        $css = file_get_contents(public_path('cms/css/public.css'));
 
         $response->assertOk();
         $response->assertSee('class="wb-gallery wb-gallery--collage wb-gallery--cols-4 wb-gallery--gap-lg wb-gallery--aspect-16-9"', false);
@@ -272,6 +273,15 @@ class PublicMediaBlocksTest extends TestCase
         $response->assertSee('data-wb-gallery-caption="Translated caption"', false);
         $response->assertSee('data-wb-gallery-meta="Translated overlay title"', false);
         $response->assertDontSee('Fallback description');
+        $this->assertNotFalse($css);
+        $this->assertStringContainsString('.wb-gallery--gap-lg {', $css);
+        $this->assertStringContainsString('--wb-gallery-gap: var(--wb-s6);', $css);
+        $this->assertStringContainsString('.wb-gallery--aspect-4-3 .wb-gallery-media,', $css);
+        $this->assertStringContainsString('.wb-gallery--aspect-16-9 .wb-gallery-media,', $css);
+        $this->assertStringContainsString('.wb-gallery--aspect-portrait .wb-gallery-media {', $css);
+        $this->assertStringContainsString('object-fit: contain;', $css);
+        $this->assertStringContainsString('object-position: center;', $css);
+        $this->assertStringContainsString('background: color-mix(in srgb, CanvasText 88%, Canvas 12%);', $css);
     }
 
     #[Test]
