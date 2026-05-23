@@ -146,10 +146,13 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
         $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));
         $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
+        $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/brand/logo-64.png')));
         $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
         $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/public/cms/js/admin/listing-bulk-actions.js')));
+        $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/public/cms/brand/logo-64.png')));
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
         $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
+        $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/brand/logo-64.png')));
         $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
         $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
@@ -599,6 +602,7 @@ class SystemUpdatesTest extends TestCase
         $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
         $archive->addFromString('routes/admin.php', "<?php\n");
         $archive->addFromString('public/cms/admin.css', "package-css\n");
+        $archive->addFromString('public/cms/brand/logo-64.png', "brand-logo\n");
         $archive->addFromString('public/cms/js/admin/listing-bulk-actions.js', "bulk-actions-js\n");
         $archive->addFromString('stubs/starter/README.md', "package stub\n");
         $archive->close();

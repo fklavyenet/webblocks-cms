@@ -92,11 +92,24 @@ class ReleasePackageBoundaryTest extends TestCase
     }
 
     #[Test]
+    public function release_artifact_includes_cms_brand_assets_in_package_public_assets(): void
+    {
+        $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+
+        $this->assertFileExists($installedPackageRoot.'/public/cms/brand/logo-64.png');
+        $this->assertFileExists($installedPackageRoot.'/public/cms/brand/favicon-32x32.png');
+        $this->assertFileExists($installedPackageRoot.'/public/cms/brand/apple-touch-icon.png');
+        $this->assertFileDoesNotExist($installedPackageRoot.'/public/site');
+    }
+
+    #[Test]
     public function workflow_release_zip_installs_bulk_listing_admin_javascript_at_composer_vendor_package_root(): void
     {
         $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
 
         $this->assertFileExists($vendorPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+        $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-64.png');
+        $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/favicon-32x32.png');
         $this->assertFileDoesNotExist($vendorPackageRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
     }
 
@@ -107,6 +120,8 @@ class ReleasePackageBoundaryTest extends TestCase
 
         $this->assertFileExists($sourceCheckoutRoot.'/public/cms/js/admin/listing-bulk-actions.js');
         $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
+        $this->assertFileExists($sourceCheckoutRoot.'/public/cms/brand/logo-64.png');
+        $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/brand/logo-64.png');
     }
 
     #[Test]

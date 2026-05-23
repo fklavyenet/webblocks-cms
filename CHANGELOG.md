@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.32.34
+
+- Fix fresh Composer package installs and package-native System Updates so CMS-owned admin brand assets ship from `packages/webblocks-cms/public/cms/brand` and publish or sync into install-root `public/cms/brand` alongside CMS CSS and JavaScript.
+
 ## 1.32.33
 
 - Prepare v1.32.33 as the real root-managed compatibility bridge for pre-package-native updater clients such as `1.31.53`, with the old archive root shape those clients can validate and package-native updater code they need for later package-rooted releases.

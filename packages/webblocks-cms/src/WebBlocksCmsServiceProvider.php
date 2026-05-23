@@ -387,6 +387,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const PACKAGE_PUBLIC_ASSET_FILES = [
+        'cms/brand/apple-touch-icon.png',
+        'cms/brand/favicon-16x16.png',
+        'cms/brand/favicon-32x32.png',
+        'cms/brand/icon-192x192.png',
+        'cms/brand/icon-512x512.png',
+        'cms/brand/logo-180.png',
+        'cms/brand/logo-32.png',
+        'cms/brand/logo-64.png',
+        'cms/brand/og-image.png',
         'cms/css/admin.css',
         'cms/css/email.css',
         'cms/css/guest.css',
@@ -415,6 +424,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ];
 
     public const ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES = [
+        'cms/brand/apple-touch-icon.png',
+        'cms/brand/favicon-16x16.png',
+        'cms/brand/favicon-32x32.png',
+        'cms/brand/icon-192x192.png',
+        'cms/brand/icon-512x512.png',
+        'cms/brand/logo-180.png',
+        'cms/brand/logo-32.png',
+        'cms/brand/logo-64.png',
+        'cms/brand/og-image.png',
         'cms/css/admin.css',
         'cms/css/email.css',
         'cms/css/guest.css',

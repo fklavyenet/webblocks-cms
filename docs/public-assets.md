@@ -45,6 +45,8 @@ The canonical override convention requires a site handle segment. Handle-less si
 
 CMS-owned guest and email support styles now live under `public/cms/css/guest.css` and `public/cms/css/email.css`.
 
+CMS-owned product brand assets such as the admin sidebar logo and default CMS favicons ship from package `public/cms/brand/` and are installed, published, or synced into install-root `public/cms/brand/`. These are product identity assets for the CMS shell, not site-specific Media Library branding and not `public/site/...` overrides.
+
 ## Page Assets
 
 Page-scoped CSS and JS files can now be referenced relationally from `page_assets`.

@@ -191,8 +191,8 @@ class PackageStatusCommand extends Command
             $this->packagePublicLayoutUsesRootCompatibilityAssets($packageRoot)
         ).' (package public layout still references root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' assets for active runtime compatibility)');
         $this->line('Root runtime asset compatibility path: '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' (active admin and public runtime asset URLs still resolve here).');
-        $this->line('Legacy root public asset compatibility state: yes (root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS plus admin CSS and JS source files it needs).');
-        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets plus admin CSS and JS source files now exist, but current WebBlocks UI CDN pinning and root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' runtime asset flow stay unchanged).');
+        $this->line('Legacy root public asset compatibility state: yes (root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' and install-owned public/site remain the active runtime asset paths, even though the package now also carries the public layout CSS and JS plus admin CSS, JS, and CMS brand source files it needs).');
+        $this->line('Future package public asset Composer readiness: partial (package-owned public rendering assets plus admin CSS, JS, and CMS brand source files now exist, but current WebBlocks UI CDN pinning and root '.WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH.' runtime asset flow stay unchanged).');
         $this->line('Package stubs path present: '.$this->yesNo(is_dir($packageRoot.'/stubs')));
         $this->line('Package stub boundary status: '.$this->resourceBoundaryStatus($stubFiles));
         $this->line('Package stubs status: '.$this->resourceStatus($stubFiles));
