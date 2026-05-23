@@ -3450,6 +3450,86 @@ class PublicEditorialBlocksRenderingTest extends TestCase
         $response->assertDontSee('<strong>copy</strong>', false);
     }
 
+    #[Test]
+    public function link_list_item_omits_blank_description_wrapper_and_keeps_described_items(): void
+    {
+        $page = $this->pageWithMainSlot();
+        $linkListItemType = $this->blockType('link-list-item', 'Link List Item', 21);
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $this->blockType('link-list', 'Link List', 20, false, true)->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $blankDescriptionItem = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $linkListItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 0,
+            'url' => 'blank-description.html',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $blankDescriptionItem->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Blank description',
+            'subtitle' => 'Optional meta',
+            'content' => null,
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($blankDescriptionItem->fresh(['textTranslations']));
+
+        $describedItem = Block::query()->create([
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'block_type_id' => $linkListItemType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $this->mainSlotType()->id,
+            'sort_order' => 1,
+            'url' => 'described.html',
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+        $describedItem->textTranslations()->create([
+            'locale_id' => Page::defaultLocaleId(),
+            'title' => 'Described item',
+            'subtitle' => null,
+            'content' => 'Useful supporting text.',
+        ]);
+        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($describedItem->fresh(['textTranslations']));
+
+        $response = $this->get(route('pages.show', 'about'));
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $response->assertSee('href="blank-description.html"', false);
+        $response->assertSee('<span class="wb-link-list-title">Blank description</span>', false);
+        $response->assertSee('<span class="wb-link-list-meta">Optional meta</span>', false);
+        $response->assertSee('href="described.html"', false);
+        $response->assertSee('<span class="wb-link-list-title">Described item</span>', false);
+        $response->assertSee('<div class="wb-link-list-desc">Useful supporting text.</div>', false);
+
+        $this->assertNotFalse($html);
+        $blankItemStart = strpos($html, 'href="blank-description.html"');
+        $describedItemStart = strpos($html, 'href="described.html"');
+        $this->assertNotFalse($blankItemStart);
+        $this->assertNotFalse($describedItemStart);
+
+        $blankItemMarkup = substr($html, $blankItemStart, $describedItemStart - $blankItemStart);
+        $this->assertStringNotContainsString('wb-link-list-desc', $blankItemMarkup);
+    }
+
     private function pageWithMainSlot(string $title = 'About', string $slug = 'about'): Page
     {
         $this->seed(FoundationSiteLocaleSeeder::class);

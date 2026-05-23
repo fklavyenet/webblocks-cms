@@ -908,7 +908,7 @@ class BlockController extends Controller
                 continue;
             }
 
-            if (! $blockTypeId || $itemData['title'] === null || $itemData['subtitle'] === null || $itemData['content'] === null || $itemData['url'] === null) {
+            if (! $blockTypeId || $itemData['title'] === null || $itemData['url'] === null) {
                 continue;
             }
 

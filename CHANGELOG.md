@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.32.36
+
+- Fix Link List admin saves so child Link List Item meta and description can be blank without validation failure or dropped rows, while still requiring item titles and URLs and omitting empty public description wrappers.
+
 ## 1.32.35
 
 - Fix the package-native pages parent-key update migration so MySQL and MariaDB index metadata is read through stable lowercase aliases with defensive uppercase fallback, preventing live updates from failing on `Undefined property: stdClass::$column_name`.

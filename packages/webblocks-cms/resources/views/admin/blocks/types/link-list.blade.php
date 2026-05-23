@@ -39,11 +39,11 @@
         'newItemLabel' => 'New Link List Item',
         'titleLabel' => 'Link Title',
         'titlePlaceholder' => 'Getting Started',
-        'subtitleLabel' => 'Meta',
+        'subtitleLabel' => 'Optional Meta',
         'subtitlePlaceholder' => 'Includes, root attributes, first workflow',
         'showSubtitle' => true,
         'urlLabel' => 'URL',
-        'contentLabel' => 'Description',
+        'contentLabel' => 'Optional Description',
         'contentPlaceholder' => 'Use this page first if you need the shortest correct setup path for a real project.',
         'enableAdminSortable' => true,
     ])

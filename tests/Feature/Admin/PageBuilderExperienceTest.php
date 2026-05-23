@@ -1185,6 +1185,208 @@ class PageBuilderExperienceTest extends TestCase
     }
 
     #[Test]
+    public function link_list_parent_save_allows_child_items_without_meta_or_description(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('admin.blocks.update', $linkList), [
+            'page_id' => $page->id,
+            'parent_id' => null,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $linkListType->id,
+            'sort_order' => 0,
+            'title' => null,
+            'subtitle' => null,
+            'content' => null,
+            'status' => 'published',
+            'link_list_items' => [
+                [
+                    'id' => null,
+                    'block_type_id' => $linkListItemType->id,
+                    'title' => 'With meta only',
+                    'subtitle' => 'Optional meta',
+                    'content' => '',
+                    'url' => 'with-meta.html',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 0,
+                    '_delete' => 0,
+                ],
+                [
+                    'id' => null,
+                    'block_type_id' => $linkListItemType->id,
+                    'title' => 'Without meta or description',
+                    'subtitle' => '',
+                    'content' => '',
+                    'url' => 'without-meta.html',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 1,
+                    '_delete' => 0,
+                ],
+            ],
+            '_slot_block_mode' => 'edit',
+            '_slot_block_id' => $linkList->id,
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $response->assertSessionDoesntHaveErrors();
+
+        $items = Block::query()
+            ->where('parent_id', $linkList->id)
+            ->where('type', 'link-list-item')
+            ->orderBy('sort_order')
+            ->get();
+
+        $this->assertCount(2, $items);
+        $this->assertSame('with-meta.html', $items[0]->url);
+        $this->assertSame('without-meta.html', $items[1]->url);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $items[0]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'With meta only',
+            'subtitle' => 'Optional meta',
+            'content' => null,
+        ]);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $items[1]->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Without meta or description',
+            'subtitle' => null,
+            'content' => null,
+        ]);
+    }
+
+    #[Test]
+    public function link_list_parent_save_still_requires_child_item_title(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $linkList->id]))
+            ->put(route('admin.blocks.update', $linkList), [
+                'page_id' => $page->id,
+                'parent_id' => null,
+                'slot_type_id' => $main->id,
+                'block_type_id' => $linkListType->id,
+                'sort_order' => 0,
+                'title' => null,
+                'subtitle' => null,
+                'content' => null,
+                'status' => 'published',
+                'link_list_items' => [[
+                    'id' => null,
+                    'block_type_id' => $linkListItemType->id,
+                    'title' => '',
+                    'subtitle' => 'Optional meta',
+                    'content' => '',
+                    'url' => 'missing-title.html',
+                    'status' => 'published',
+                    'is_system' => 0,
+                    'sort_order' => 0,
+                    '_delete' => 0,
+                ]],
+                '_slot_block_mode' => 'edit',
+                '_slot_block_id' => $linkList->id,
+            ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot, 'edit' => $linkList->id]));
+        $response->assertSessionHasErrors('link_list_items.0.title');
+        $this->assertDatabaseMissing('blocks', [
+            'parent_id' => $linkList->id,
+            'type' => 'link-list-item',
+            'url' => 'missing-title.html',
+        ]);
+    }
+
+    #[Test]
+    public function direct_link_list_item_save_allows_blank_meta_and_description(): void
+    {
+        $this->seedFoundation();
+
+        $user = User::factory()->superAdmin()->create();
+        $main = $this->slotType('main', 'Main', 1);
+        [$page, $pageSlot] = $this->pageWithSlot($main);
+        $linkListType = BlockType::query()->where('slug', 'link-list')->firstOrFail();
+        $linkListItemType = BlockType::query()->where('slug', 'link-list-item')->firstOrFail();
+        $linkList = Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'link-list',
+            'block_type_id' => $linkListType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $main->id,
+            'sort_order' => 0,
+            'status' => 'published',
+            'is_system' => false,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('admin.blocks.store'), [
+            'page_id' => $page->id,
+            'parent_id' => $linkList->id,
+            'slot_type_id' => $main->id,
+            'block_type_id' => $linkListItemType->id,
+            'sort_order' => 0,
+            'title' => 'Direct item',
+            'subtitle' => '',
+            'content' => '',
+            'url' => 'direct.html',
+            'status' => 'published',
+            '_slot_block_mode' => 'create',
+        ]);
+
+        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $pageSlot]));
+        $response->assertSessionDoesntHaveErrors();
+
+        $item = Block::query()->where('parent_id', $linkList->id)->where('type', 'link-list-item')->firstOrFail();
+
+        $this->assertSame('direct.html', $item->url);
+        $this->assertDatabaseHas('block_text_translations', [
+            'block_id' => $item->id,
+            'locale_id' => $this->defaultLocale()->id,
+            'title' => 'Direct item',
+            'subtitle' => null,
+            'content' => null,
+        ]);
+    }
+
+    #[Test]
     public function code_block_editor_renders_without_missing_locale_flags(): void
     {
         $this->seedFoundation();

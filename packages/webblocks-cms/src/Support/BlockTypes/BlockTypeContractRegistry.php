@@ -598,8 +598,8 @@ class BlockTypeContractRegistry
                 'known_gaps' => [],
             ],
             'link-list-item' => [
-                'admin_form_fields' => ['Title', 'URL', 'Meta', 'Description'],
-                'translatable_fields' => ['title', 'subtitle', 'content'],
+                'admin_form_fields' => ['Title', 'URL', 'Optional Meta', 'Optional Description'],
+                'translatable_fields' => ['required title', 'optional subtitle', 'optional content'],
                 'shared_settings_fields' => ['url'],
                 'storage_fields' => [
                     'Translated row copy lives in block text translation rows.',
@@ -607,7 +607,7 @@ class BlockTypeContractRegistry
                 ],
                 'media_relationship_fields' => ['Parent `link-list` block is the primary relationship context.'],
                 'child_container_behavior' => ['Not a container in the current contract.'],
-                'renderer_root_contract' => 'Owns its public row-link root.',
+                'renderer_root_contract' => 'Owns its public row-link root and omits the description element when content is blank.',
                 'current_contract_status' => 'clear',
                 'known_gaps' => [],
             ],

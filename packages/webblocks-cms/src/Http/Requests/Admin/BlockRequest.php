@@ -51,6 +51,10 @@ class BlockRequest extends FormRequest
             && $translationRegistry->isTranslatable($selectedBlockType?->slug)
             && $this->filled('locale');
         $isBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item', 'link-list-item'], true);
+        $isTextRequiredBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item'], true);
+        $isTranslatedTextRequiredBuilderChild = in_array($selectedBlockType?->slug, ['column_item', 'feature-item'], true)
+            && $translationRegistry->isTranslatable($selectedBlockType?->slug)
+            && $this->filled('locale');
         $isColumns = $selectedBlockType?->slug === 'columns';
         $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
         $isLinkList = $selectedBlockType?->slug === 'link-list';
@@ -112,7 +116,7 @@ class BlockRequest extends FormRequest
             'title' => [($isContentHeader || $isStatCard || $isDownload || $isSidebarNavItem || $isSidebarNavGroup || $isSearchForm) ? 'required' : (($isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild)) ? 'required' : 'nullable'), 'string', 'max:255'],
             'eyebrow' => ['prohibited', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'content' => [($isAlert || $isBuilderChild || ($isLocaleRequest && $isTranslatedBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
+            'content' => [($isAlert || $isTextRequiredBuilderChild || ($isLocaleRequest && $isTranslatedTextRequiredBuilderChild) || $isSearchForm) ? 'required' : 'nullable', 'string'],
             'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
             'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
             'anchor' => [$isHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
@@ -466,14 +470,6 @@ class BlockRequest extends FormRequest
 
                     if (blank($item['title'] ?? null)) {
                         $validator->errors()->add("link_list_items.{$index}.title", 'Link list item title is required.');
-                    }
-
-                    if (blank($item['subtitle'] ?? null)) {
-                        $validator->errors()->add("link_list_items.{$index}.subtitle", 'Link list item meta is required.');
-                    }
-
-                    if (blank($item['content'] ?? null)) {
-                        $validator->errors()->add("link_list_items.{$index}.content", 'Link list item description is required.');
                     }
 
                     if (blank($item['url'] ?? null)) {
