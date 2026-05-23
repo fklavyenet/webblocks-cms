@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.32.35
+
+- Fix the package-native pages parent-key update migration so MySQL and MariaDB index metadata is read through stable lowercase aliases with defensive uppercase fallback, preventing live updates from failing on `Undefined property: stdClass::$column_name`.
+
 ## 1.32.34
 
 - Fix fresh Composer package installs and package-native System Updates so CMS-owned admin brand assets ship from `packages/webblocks-cms/public/cms/brand` and publish or sync into install-root `public/cms/brand` alongside CMS CSS and JavaScript.

@@ -50,6 +50,7 @@ return new class extends Migration
 
         return match ($driver) {
             'mysql', 'mariadb' => DB::table('information_schema.statistics')
+                ->selectRaw('INDEX_NAME as index_name')
                 ->where('table_schema', DB::raw('database()'))
                 ->where('table_name', 'pages')
                 ->where('index_name', $index)
@@ -66,18 +67,20 @@ return new class extends Migration
     private function mysqlIndexColumns(): array
     {
         return DB::table('information_schema.statistics')
+            ->selectRaw('COLUMN_NAME as column_name, SEQ_IN_INDEX as seq_in_index')
             ->where('table_schema', DB::raw('database()'))
             ->where('table_name', 'pages')
             ->where('index_name', self::INDEX_NAME)
             ->orderBy('seq_in_index')
-            ->pluck('column_name')
-            ->map(fn (mixed $column): string => (string) $column)
+            ->get()
+            ->map(fn (object $row): string => $this->metadataValue($row, 'column_name', 'COLUMN_NAME'))
             ->all();
     }
 
     private function mysqlIndexIsUnique(): bool
     {
         return DB::table('information_schema.statistics')
+            ->selectRaw('INDEX_NAME as index_name, NON_UNIQUE as non_unique')
             ->where('table_schema', DB::raw('database()'))
             ->where('table_name', 'pages')
             ->where('index_name', self::INDEX_NAME)
@@ -106,5 +109,10 @@ return new class extends Migration
     {
         return collect(DB::select("pragma index_list('pages')"))
             ->contains(fn (object $row): bool => ($row->name ?? null) === self::INDEX_NAME && (int) ($row->unique ?? 0) === 1);
+    }
+
+    private function metadataValue(object $row, string $lowercaseKey, string $uppercaseKey): string
+    {
+        return (string) ($row->{$lowercaseKey} ?? $row->{$uppercaseKey} ?? '');
     }
 };

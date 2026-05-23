@@ -58,6 +58,21 @@ class PageTranslationParentKeyUpdateMigrationTest extends TestCase
         }
     }
 
+    #[Test]
+    public function package_update_migration_reads_uppercase_mysql_metadata_rows(): void
+    {
+        $migration = require base_path('packages/webblocks-cms/database/migrations/updates/2026_05_21_213000_ensure_pages_site_parent_key.php');
+        $reader = new \ReflectionMethod($migration, 'metadataValue');
+        $reader->setAccessible(true);
+
+        $this->assertSame('site_id', $reader->invoke(
+            $migration,
+            (object) ['COLUMN_NAME' => 'site_id'],
+            'column_name',
+            'COLUMN_NAME'
+        ));
+    }
+
     protected function tearDown(): void
     {
         if ($this->sqlitePath !== null) {
