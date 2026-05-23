@@ -149,8 +149,11 @@ Before merge:
 
 Before tagging a release:
 
-- run the full suite exactly once with `ddev artisan test`
-- if the full suite fails, rerun the specific failing test once to distinguish a real regression from a flaky or unrelated failure, then report the result clearly before proceeding
+- start with the risk-based composer scripts documented in `docs/testing-strategy.md`
+- use `ddev composer test:release-fast` as the default gate for small package-native hotfixes
+- use `ddev composer test:package`, `ddev composer test:update`, `ddev composer test:install`, `ddev composer test:artifacts`, or `ddev composer test:admin-smoke` when the changed surface matches that risk area
+- run `ddev composer test:full` before major releases, broad content/admin changes, schema-wide changes, or whenever focused failures indicate broader risk
+- if a broad run fails, rerun the specific failing test once to distinguish a real regression from a flaky or unrelated failure, then report the result clearly before proceeding
 
 Documentation-only changes:
 
@@ -161,10 +164,13 @@ Documentation-only changes:
 Example commands:
 
 ```bash
+ddev composer test:release-fast
+ddev composer test:package
+ddev composer test:update
 ddev artisan test --filter=PageBuilderExperienceTest --stop-on-failure
 ddev artisan test --filter=SharedSlotAdminManagementTest --stop-on-failure
 ddev artisan test --filter=PageIndex --stop-on-failure
-ddev artisan test
+ddev composer test:full
 ```
 
 Before creating a release:
