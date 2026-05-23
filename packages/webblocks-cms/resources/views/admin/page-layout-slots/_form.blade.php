@@ -73,8 +73,8 @@
                     <input id="page_layout_slot_html_classes" name="html_classes" class="wb-input" type="text" value="{{ old('html_classes', $pageLayoutSlot->html_classes) }}" maxlength="1000">
                     <div class="wb-text-sm wb-text-muted wb-stack wb-gap-1">
                         <div>CSS classes must be separated with spaces.</div>
-                        <div>Use classes such as <code>wb-sticky</code>, <code>wb-sidebar</code>, <code>wb-dashboard-main</code>, or <code>wb-stack</code> when they fit the selected layout.</div>
-                        <div>For sticky headers, <code>wb-sticky</code> usually also needs a site CSS offset rule such as <code>header.wb-sticky</code> with <code>top: 0</code> and an appropriate <code>z-index</code>.</div>
+                        <div>Use classes such as <code>wb-sidebar</code>, <code>wb-dashboard-main</code>, or <code>wb-stack</code> when they fit the selected layout.</div>
+                        <div>For sticky public headers, prefer a Navbar block so the shipped <code>wb-navbar</code> primitive owns positioning without site-specific CSS.</div>
                     </div>
                 </div>
             </div>

@@ -300,9 +300,8 @@ class PageLayoutManagementTest extends TestCase
             ->assertSee('After Slot HTML renders after the slot wrapper.')
             ->assertSee('Scripts and unsafe JavaScript are not allowed.')
             ->assertSee('CSS classes must be separated with spaces.')
-            ->assertSee('header.wb-sticky')
-            ->assertSee('top: 0')
-            ->assertSee('wb-sticky')
+            ->assertSee('prefer a Navbar block')
+            ->assertSee('wb-navbar')
             ->assertSee('wb-sidebar')
             ->assertSee('wb-dashboard-main')
             ->assertSee('wb-stack');

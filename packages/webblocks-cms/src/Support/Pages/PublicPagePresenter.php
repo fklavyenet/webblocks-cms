@@ -109,6 +109,11 @@ class PublicPagePresenter
         $blocks = $this->applyRenderContext($this->resolveSlotBlocks($slot, $topLevelBlocks), $page, $slug);
         $wrapper = $this->slotWrapperResolver->resolve($page, $slot);
 
+        if ($promotedNavbar = $this->promotedHeaderNavbar($slug, $blocks, $wrapper)) {
+            $blocks = $promotedNavbar->children;
+            $wrapper = $this->promoteWrapperToNavbar($wrapper, $promotedNavbar);
+        }
+
         return [
             'slug' => $slug,
             'name' => $slot->slotType?->name ?? str($slug)->headline()->toString(),
@@ -123,6 +128,38 @@ class PublicPagePresenter
             ],
             'blocks' => $blocks,
         ];
+    }
+
+    private function promotedHeaderNavbar(string $slug, Collection $blocks, array $wrapper): ?Block
+    {
+        if ($slug !== 'header' || ($wrapper['preset'] ?? null) !== 'default' || $blocks->count() !== 1) {
+            return null;
+        }
+
+        $block = $blocks->first();
+
+        return $block instanceof Block && $block->typeSlug() === 'sticky-navbar' ? $block : null;
+    }
+
+    private function promoteWrapperToNavbar(array $wrapper, Block $navbar): array
+    {
+        $attributes = $wrapper['attributes'] ?? [];
+        $existingClasses = trim((string) ($attributes['class'] ?? ''));
+        $navbarClasses = collect(['wb-navbar', $navbar->navbarPositionClass()])->filter()->implode(' ');
+        $classes = collect(explode(' ', $existingClasses.' '.$navbarClasses))
+            ->map(fn (string $class) => trim($class))
+            ->filter()
+            ->unique()
+            ->implode(' ');
+
+        $attributes['class'] = $classes;
+        $attributes['data-wb-public-block-type'] = $navbar->publicBlockTypeAttribute();
+
+        return array_merge($wrapper, [
+            'preset' => 'navbar',
+            'element' => 'nav',
+            'attributes' => $attributes,
+        ]);
     }
 
     private function orderSlotsForLayout(Page $page, Collection $slots): Collection

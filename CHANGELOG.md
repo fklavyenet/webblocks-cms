@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.32.38
+
+- Fix default public header slots that contain only a Navbar block by promoting the slot wrapper to the `nav.wb-navbar` root, allowing shipped WebBlocks UI sticky navbar behavior to work without site-specific sticky CSS workarounds.
+
 ## 1.32.37
 
 - Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.7`, keeping public and admin layouts on the released grid/card CSS behavior without CMS-owned card-grid overrides.

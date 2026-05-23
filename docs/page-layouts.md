@@ -48,9 +48,9 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - System layouts keep their system slot mapping stable: system Page Layout Slots do not allow changing the underlying slot name or Slot Type
 - Non-system and non-required Page Layout Slots can be removed
 - `CSS Classes` expects space-separated class tokens
-- Wrapper classes may include layout hints such as `wb-sticky`, `wb-sidebar`, `wb-dashboard-main`, or `wb-stack` when those classes fit the selected layout
-- `wb-sticky` only provides the sticky positioning class; sticky offsets and stacking context should be set in site CSS when needed
-- A typical site-level rule is `header.wb-sticky { top: 0; z-index: 100; }` in `public/site/{site_handle}/css/site.css`
+- Wrapper classes may include layout hints such as `wb-sidebar`, `wb-dashboard-main`, or `wb-stack` when those classes fit the selected layout
+- Public Navbar sticky behavior should come from the shipped `wb-navbar` primitive rather than site-level header sticky rules
+- When a default public header slot contains only a Navbar block, CMS promotes the slot wrapper to the `nav.wb-navbar` root so the Navbar sticks without site-specific CSS
 - `Before Slot HTML` renders before the slot wrapper
 - `Slot Start HTML` renders inside the wrapper before blocks
 - `Slot End HTML` renders inside the wrapper after blocks
@@ -101,7 +101,7 @@ Page Layout Slots are the managed region records attached to one Page Layout.
 - Built-in seeded values are currently `layout-default` and `layout-docs`
 - Public rendering keeps the base `wb-public-body` class and appends the Page Layout body classes when available
 - Layout-specific CSS can target combinations such as `body.layout-docs` plus slot ids and classes defined by Page Layout Slots
-- Sticky wrapper classes such as `wb-sticky` can be assigned at the Page Layout Slot level, but site CSS should provide offset and stacking rules when that layout needs them
+- Prefer a Navbar block for sticky public headers; CMS promotes single-Navbar default header slots to the `nav.wb-navbar` root so WebBlocks UI owns the sticky offset and stacking behavior
 
 ## Ownership Boundaries
 
