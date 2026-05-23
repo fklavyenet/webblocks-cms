@@ -15,7 +15,7 @@ jobs:
       PRODUCT_KEY: webblocks-cms
       DEFAULT_CHANNEL: stable
       SOURCE_TYPE: github
-      MINIMUM_CLIENT_VERSION: 0.1.8
+      MINIMUM_CLIENT_VERSION: 1.32.18
 
     steps:
       - name: Check out source

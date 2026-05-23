@@ -141,6 +141,7 @@ class SystemUpdatesTest extends TestCase
         $this->assertSame("<?php\n\nreturn ['source' => 'runtime-auth'];\n", File::get($targetRoot.'/app/Models/User.php'));
         $this->assertSame('runtime-config-override', trim((string) File::get($targetRoot.'/config/app.php')));
         $this->assertSame('runtime-root-migration', trim((string) File::get($targetRoot.'/database/migrations/2026_01_01_000000_runtime.php')));
+        $this->assertSame('site-override', trim((string) File::get($targetRoot.'/public/site/default/site.css')));
         $this->assertFileExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php');
         $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
         $this->assertFalse(File::exists($targetRoot.'/packages/webblocks-cms/src/Legacy/StaleFile.php'));

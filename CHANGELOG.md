@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.32.32
+
+- Prepare v1.32.32 as a root-managed compatibility bridge for pre-package-native updater clients such as `1.31.53`, so old installs can receive an old-shape artifact before moving to package-rooted releases.
+- Fix the package-transition update compatibility gap by raising package-rooted release metadata to require a bridge-capable updater (`1.32.18+`) and documenting an explicit root-managed bridge artifact path for older installs such as `1.31.53`.
+- Add regression coverage proving the `1.31.53`-style validator rejects package-rooted artifacts with the live `composer.json and artisan were not found at the archive root` failure, while accepting only an explicit root-managed bridge archive, and keep package-rooted validation strict for modern updates.
+- Add a root-managed bridge archive builder that excludes install-owned paths including `.env`, `storage/`, `project/`, `public/site/`, `public/storage`, and root `config/` overrides while requiring both legacy updater wrappers and package-native updater code in the bridge source.
 
 ## 1.32.31
 
