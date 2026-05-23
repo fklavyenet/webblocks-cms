@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.32.37
+
+- Pin CMS-owned WebBlocks UI runtime assets and the default icon manifest sync source to `v2.7.7`, keeping public and admin layouts on the released grid/card CSS behavior without CMS-owned card-grid overrides.
+
 ## 1.32.36
 
 - Fix Link List admin saves so child Link List Item meta and description can be blank without validation failure or dropped rows, while still requiring item titles and URLs and omitting empty public description wrappers.
