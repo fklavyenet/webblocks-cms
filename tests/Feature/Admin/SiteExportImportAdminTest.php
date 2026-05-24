@@ -2,18 +2,20 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SiteExport;
-use WebBlocks\Cms\Models\SiteImport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 
 class SiteExportImportAdminTest extends TestCase
 {
@@ -23,7 +25,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function admin_export_action_creates_downloadable_package(): void
     {
-        Storage::fake('site-exports');
+        Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
@@ -39,7 +41,8 @@ class SiteExportImportAdminTest extends TestCase
         $response->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
         $this->assertSame('completed', $siteExport->status);
         $this->assertStringNotContainsString('/', (string) $siteExport->archive_path);
-        Storage::disk('site-exports')->assertExists($siteExport->archive_path);
+        $this->assertSame(SiteTransferDisk::DISK, $siteExport->archive_disk);
+        Storage::disk(SiteTransferDisk::DISK)->assertExists($siteExport->archive_path);
 
         $download = $this->actingAs($user)->get(route('admin.site-transfers.exports.download', $siteExport));
         $download->assertOk();
@@ -147,7 +150,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function sites_index_export_creates_package_and_redirects_back_with_status(): void
     {
-        Storage::fake('site-exports');
+        Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
@@ -185,7 +188,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function admin_export_action_uses_clean_filename_without_random_prefix(): void
     {
-        Storage::fake('site-exports');
+        Storage::fake(SiteTransferDisk::DISK);
         [$site] = $this->seedCloneableSite();
         $user = User::factory()->superAdmin()->create();
 
@@ -206,8 +209,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function admin_import_upload_validates_and_completes(): void
     {
-        Storage::fake('site-exports');
-        Storage::fake('site-transfers');
+        Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
@@ -219,7 +221,7 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->firstOrFail();
         $uploadResponse = $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
-            'archive' => new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+            'archive' => new UploadedFile(Storage::disk(SiteTransferDisk::DISK)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
         ]);
 
         $siteImport = SiteImport::query()->latest()->firstOrFail();
@@ -233,6 +235,74 @@ class SiteExportImportAdminTest extends TestCase
 
         $runResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
         $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+    }
+
+    #[Test]
+    public function export_and_import_bootstrap_site_transfer_disk_when_consumer_config_is_missing(): void
+    {
+        $originalDisks = config('filesystems.disks');
+        $user = User::factory()->superAdmin()->create();
+        [$site] = $this->seedCloneableSite();
+
+        config()->set('filesystems.disks', collect($originalDisks)->except(SiteTransferDisk::DISK)->all());
+        Storage::forgetDisk(SiteTransferDisk::DISK);
+
+        $exportResponse = $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
+            'site_id' => $site->id,
+        ]);
+
+        $siteExport = SiteExport::query()->latest()->firstOrFail();
+
+        $exportResponse->assertRedirect(route('admin.site-transfers.exports.show', $siteExport));
+        $this->assertSame(SiteTransferDisk::DISK, $siteExport->archive_disk);
+        $this->assertSame(storage_path('app/site-transfers'), config('filesystems.disks.'.SiteTransferDisk::DISK.'.root'));
+        $exportArchivePath = Storage::disk(SiteTransferDisk::DISK)->path($siteExport->archive_path);
+        $this->assertFileExists($exportArchivePath);
+
+        config()->set('filesystems.disks', collect($originalDisks)->except(SiteTransferDisk::DISK)->all());
+        Storage::forgetDisk(SiteTransferDisk::DISK);
+
+        $importResponse = $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
+            'archive' => new UploadedFile($exportArchivePath, $siteExport->archive_name, 'application/zip', null, true),
+        ]);
+
+        $siteImport = SiteImport::query()->latest()->firstOrFail();
+
+        $importResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
+        $this->assertSame(SiteTransferDisk::DISK, $siteImport->archive_disk);
+        Storage::disk(SiteTransferDisk::DISK)->delete($siteExport->archive_path);
+        Storage::disk(SiteTransferDisk::DISK)->delete($siteImport->archive_path);
+        config()->set('filesystems.disks', $originalDisks);
+        Storage::forgetDisk(SiteTransferDisk::DISK);
+    }
+
+    #[Test]
+    public function import_upload_reports_controlled_error_when_site_transfer_storage_is_not_writable(): void
+    {
+        $rootCollision = storage_path('framework/testing/site-transfer-root-collision-'.Str::uuid());
+        $user = User::factory()->superAdmin()->create();
+
+        File::ensureDirectoryExists(dirname($rootCollision));
+        File::put($rootCollision, 'not a directory');
+        config()->set('filesystems.disks.'.SiteTransferDisk::DISK, [
+            'driver' => 'local',
+            'root' => $rootCollision,
+            'throw' => false,
+        ]);
+
+        try {
+            $response = $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
+                'archive' => UploadedFile::fake()->create('package.zip', 1, 'application/zip'),
+            ]);
+
+            $response->assertRedirect(route('admin.site-transfers.imports.create'));
+            $response->assertSessionHasErrors([
+                'site_import' => 'Site transfer storage is not ready. Check the site-transfers filesystem disk and make sure storage/app/site-transfers is writable.',
+            ]);
+            $this->assertStringNotContainsString('configured driver', (string) session('errors')->first('site_import'));
+        } finally {
+            File::delete($rootCollision);
+        }
     }
 
     #[Test]
@@ -257,7 +327,7 @@ class SiteExportImportAdminTest extends TestCase
             'user_id' => $user->id,
             'status' => SiteExport::STATUS_COMPLETED,
             'includes_media' => true,
-            'archive_disk' => 'site-exports',
+            'archive_disk' => SiteTransferDisk::DISK,
             'archive_path' => 'example-export.zip',
             'archive_name' => 'example-export.zip',
             'archive_size_bytes' => 2048,
@@ -267,7 +337,7 @@ class SiteExportImportAdminTest extends TestCase
             'user_id' => $user->id,
             'status' => SiteImport::STATUS_COMPLETED,
             'source_archive_name' => 'example-import.zip',
-            'archive_disk' => 'site-transfers',
+            'archive_disk' => SiteTransferDisk::DISK,
             'archive_path' => 'example-import.zip',
             'target_site_id' => $importTarget->id,
             'imported_site_handle' => $importTarget->handle,
@@ -306,8 +376,7 @@ class SiteExportImportAdminTest extends TestCase
     #[Test]
     public function imported_site_can_be_saved_after_import_when_only_domain_changes(): void
     {
-        Storage::fake('site-exports');
-        Storage::fake('site-transfers');
+        Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
         [$site] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
@@ -319,7 +388,7 @@ class SiteExportImportAdminTest extends TestCase
 
         $siteExport = SiteExport::query()->latest()->firstOrFail();
         $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
-            'archive' => new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+            'archive' => new UploadedFile(Storage::disk(SiteTransferDisk::DISK)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
         ]);
 
         $siteImport = SiteImport::query()->latest()->firstOrFail();

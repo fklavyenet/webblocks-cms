@@ -2,51 +2,6 @@
 
 namespace Tests\Feature;
 
-use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
-use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
-use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
-use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
-use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest;
-use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\ContactMessage;
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\PageTranslation;
-use WebBlocks\Cms\Models\PublicSearchIndex;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SiteDomain;
-use WebBlocks\Cms\Models\SystemSetting;
-use WebBlocks\Cms\Models\VisitorEvent;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
-use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
-use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
-use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
-use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
-use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState;
-use WebBlocks\Cms\Support\Icons\IconCatalog;
-use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
-use WebBlocks\Cms\Support\Media\MediaIndexState;
-use WebBlocks\Cms\Support\Media\MediaKindResolver;
-use WebBlocks\Cms\Support\Media\MediaUsageFilter;
-use WebBlocks\Cms\Support\Media\MediaUsageResolver;
-use WebBlocks\Cms\Support\Navigation\NavigationTree;
-use WebBlocks\Cms\Support\Pages\PageDuplicateValidator;
-use WebBlocks\Cms\Support\Pages\PageDuplicator;
-use WebBlocks\Cms\Support\Pages\PageIndexState;
-use WebBlocks\Cms\Support\Pages\PageJsonImporter;
-use WebBlocks\Cms\Support\Pages\PageLayoutManager;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
-use WebBlocks\Cms\Support\Pages\PageRevisionManager;
-use WebBlocks\Cms\Support\Pages\PageSiteMover;
-use WebBlocks\Cms\Support\Pages\PageSiteMoveValidator;
-use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
-use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
-use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
-use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
-use WebBlocks\Cms\Support\WebBlocks;
 use Database\Seeders\CoreCatalogSeeder;
 use Database\Seeders\FoundationSiteLocaleSeeder;
 use Database\Seeders\IconCatalogSeeder;
@@ -119,6 +74,8 @@ use WebBlocks\Cms\Support\Pages\PageWorkflowManager as PackagePageWorkflowManage
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager as PackageSharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema as PackageSharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager as PackageSharedSlotSourcePageManager;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PackageServiceProviderBootstrapTest extends TestCase
@@ -180,6 +137,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageLayoutSlotComparison.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageLayoutSlotSyncer.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageDuplicator.php'));
+        $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Sites/ExportImport/SiteTransferDisk.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/SystemUpdater.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateCheckResult.php'));
         $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/System/Updates/UpdateCommandRunner.php'));
@@ -327,6 +285,57 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
         $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
         $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
+    }
+
+    #[Test]
+    public function package_bootstrap_registers_default_site_transfer_disk_for_fresh_consumers(): void
+    {
+        $originalDisks = config('filesystems.disks');
+
+        config()->set('filesystems.disks', collect($originalDisks)->except(SiteTransferDisk::DISK)->all());
+
+        $provider = new class($this->app) extends WebBlocksCmsServiceProvider
+        {
+            public function registerConfigForTest(): void
+            {
+                $this->registerConfig();
+            }
+        };
+
+        $provider->registerConfigForTest();
+
+        $this->assertSame([
+            'driver' => 'local',
+            'root' => storage_path('app/site-transfers'),
+            'throw' => false,
+        ], config('filesystems.disks.'.SiteTransferDisk::DISK));
+
+        config()->set('filesystems.disks', $originalDisks);
+    }
+
+    #[Test]
+    public function package_bootstrap_does_not_override_host_defined_site_transfer_disk(): void
+    {
+        $customDisk = [
+            'driver' => 'local',
+            'root' => storage_path('app/custom-site-transfers'),
+            'throw' => true,
+            'visibility' => 'private',
+        ];
+
+        config()->set('filesystems.disks.'.SiteTransferDisk::DISK, $customDisk);
+
+        $provider = new class($this->app) extends WebBlocksCmsServiceProvider
+        {
+            public function registerConfigForTest(): void
+            {
+                $this->registerConfig();
+            }
+        };
+
+        $provider->registerConfigForTest();
+
+        $this->assertSame($customDisk, config('filesystems.disks.'.SiteTransferDisk::DISK));
     }
 
     #[Test]
@@ -544,6 +553,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertTrue(class_exists(PackagePageLayoutSlotComparison::class));
         $this->assertTrue(class_exists(PackagePageLayoutSlotSyncer::class));
         $this->assertTrue(class_exists(PackagePageDuplicator::class));
+        $this->assertTrue(class_exists(SiteTransferDisk::class));
         $this->assertTrue(class_exists(PackagePageDuplicateValidator::class));
         $this->assertTrue(class_exists(PackagePageJsonImporter::class));
         $this->assertTrue(class_exists(PackagePageSiteMover::class));

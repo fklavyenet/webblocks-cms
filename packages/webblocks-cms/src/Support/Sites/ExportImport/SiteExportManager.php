@@ -12,13 +12,14 @@ use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class SiteExportManager
 {
-    public const ARCHIVE_DISK = 'site-exports';
+    public const ARCHIVE_DISK = SiteTransferDisk::DISK;
 
     public function __construct(
         private readonly SiteExportDataBuilder $dataBuilder,
         private readonly ExportArchiveBuilder $archiveBuilder,
         private readonly InstalledVersionStore $installedVersionStore,
         private readonly SiteTransferPathGuard $pathGuard,
+        private readonly SiteTransferDisk $siteTransferDisk,
     ) {}
 
     public function export(Site $site, bool $includesMedia, ?int $userId = null): SiteExport
@@ -39,7 +40,7 @@ class SiteExportManager
             $archiveName = sprintf('webblocks-cms-site-export-%s-%s.zip', $site->handle, $timestamp->format('Y-m-d-His'));
             $archivePath = $archiveName;
             $manifest = $this->manifestFor($site, $payload, $includesMedia, $timestamp);
-            $size = $this->archiveBuilder->build(Storage::disk(self::ARCHIVE_DISK)->path($archivePath), $manifest, $payload, $includesMedia, $output);
+            $size = $this->archiveBuilder->build($this->siteTransferDisk->ensureReady()->path($archivePath), $manifest, $payload, $includesMedia, $output);
 
             $export->forceFill([
                 'status' => SiteExport::STATUS_COMPLETED,
@@ -73,7 +74,9 @@ class SiteExportManager
         }
 
         $this->pathGuard->assertSafeRelativePath($siteExport->archive_path, 'Export archive path');
-        $disk = Storage::disk($siteExport->archive_disk ?: self::ARCHIVE_DISK);
+        $disk = $siteExport->archive_disk === self::ARCHIVE_DISK || ! $siteExport->archive_disk
+            ? $this->siteTransferDisk->ensureReady()
+            : Storage::disk($siteExport->archive_disk);
         $path = $disk->path($siteExport->archive_path);
 
         if (! is_file($path)) {
@@ -87,7 +90,10 @@ class SiteExportManager
     {
         if ($siteExport->archive_path) {
             $this->pathGuard->assertSafeRelativePath($siteExport->archive_path, 'Export archive path');
-            Storage::disk($siteExport->archive_disk ?: self::ARCHIVE_DISK)->delete($siteExport->archive_path);
+            $disk = $siteExport->archive_disk === self::ARCHIVE_DISK || ! $siteExport->archive_disk
+                ? $this->siteTransferDisk->ensureReady()
+                : Storage::disk($siteExport->archive_disk);
+            $disk->delete($siteExport->archive_path);
         }
 
         $siteExport->delete();

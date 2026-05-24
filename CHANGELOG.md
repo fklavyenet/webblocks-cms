@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.32.40
+
+- Prepare v1.32.40 as a focused fresh-consumer Export / Import hotfix by registering the package default `site-transfers` filesystem disk when the host app has not defined one, preserving custom host disk config, and creating `storage/app/site-transfers` during `webblocks:install`.
+- Move new site export archives onto the shared `site-transfers` disk used by imports and migration defaults, while existing stored archive disk names remain respected for download and deletion.
+- Add defensive runtime storage readiness checks and controlled admin errors so missing or unwritable transfer storage does not expose raw Laravel filesystem disk exceptions.
+
 ## 1.32.39
 
 - Fix public Gallery fixed-aspect media rendering so screenshot-style images preserve the full image with centered contain fitting and intentional dark letterboxing, while keeping lightbox, captions, overlays, and existing aspect classes intact.

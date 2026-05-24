@@ -12,12 +12,13 @@ use ZipArchive;
 
 class SiteImportManager
 {
-    public const ARCHIVE_DISK = 'site-transfers';
+    public const ARCHIVE_DISK = SiteTransferDisk::DISK;
 
     public function __construct(
         private readonly ImportArchiveInspector $archiveInspector,
         private readonly ImportDataMapper $dataMapper,
         private readonly SiteTransferPathGuard $pathGuard,
+        private readonly SiteTransferDisk $siteTransferDisk,
     ) {}
 
     public function inspectUpload(UploadedFile $file, ?int $userId = null): SiteImport
@@ -34,8 +35,9 @@ class SiteImportManager
         try {
             $originalName = trim($file->getClientOriginalName());
             $archiveName = Str::lower(Str::random(8)).'-'.($originalName !== '' ? $originalName : 'import-package.zip');
+            $disk = $this->siteTransferDisk->ensureReady();
             $archivePath = $file->storeAs(now()->format('imports/Y/m/d'), $archiveName, self::ARCHIVE_DISK);
-            $inspection = $this->archiveInspector->inspect(Storage::disk(self::ARCHIVE_DISK)->path($archivePath));
+            $inspection = $this->archiveInspector->inspect($disk->path($archivePath));
 
             $output[] = 'Import package validated successfully.';
 
@@ -68,7 +70,10 @@ class SiteImportManager
         }
 
         $this->pathGuard->assertSafeRelativePath($siteImport->archive_path, 'Import archive path');
-        $archivePath = Storage::disk($siteImport->archive_disk ?: self::ARCHIVE_DISK)->path($siteImport->archive_path);
+        $disk = $siteImport->archive_disk === self::ARCHIVE_DISK || ! $siteImport->archive_disk
+            ? $this->siteTransferDisk->ensureReady()
+            : Storage::disk($siteImport->archive_disk);
+        $archivePath = $disk->path($siteImport->archive_path);
         $inspection = $this->archiveInspector->inspect($archivePath);
         $output = array_filter(explode(PHP_EOL, (string) $siteImport->output_log));
         $archive = new ZipArchive;
@@ -111,7 +116,10 @@ class SiteImportManager
     {
         if ($siteImport->archive_path) {
             $this->pathGuard->assertSafeRelativePath($siteImport->archive_path, 'Import archive path');
-            Storage::disk($siteImport->archive_disk ?: self::ARCHIVE_DISK)->delete($siteImport->archive_path);
+            $disk = $siteImport->archive_disk === self::ARCHIVE_DISK || ! $siteImport->archive_disk
+                ? $this->siteTransferDisk->ensureReady()
+                : Storage::disk($siteImport->archive_disk);
+            $disk->delete($siteImport->archive_path);
         }
 
         $siteImport->delete();

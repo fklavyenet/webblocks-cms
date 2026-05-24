@@ -51,6 +51,7 @@ ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" -
 - safely patches `App\Models\User` with a package auth trait and creates a backup first
 - runs the package fresh-install CMS schema for clean consumers
 - creates required Laravel support tables for database-backed session and cache drivers when they are configured, without running the host application's normal migrations
+- prepares the `site-transfers` filesystem disk storage used by Export / Import packages
 - installs package CMS assets into `public/cms`
 - creates `public/storage` when safe and missing
 - seeds locales, sites, page layouts, slot types, icons, and core block types idempotently

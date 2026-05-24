@@ -30,6 +30,7 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class WebBlocksCmsServiceProvider extends ServiceProvider
@@ -781,6 +782,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         foreach ($this->configFiles() as $file) {
             $this->mergeConfigFrom($file, pathinfo($file, PATHINFO_FILENAME));
         }
+
+        SiteTransferDisk::registerDefaultConfigIfMissing();
     }
 
     protected function bootRoutes(): void

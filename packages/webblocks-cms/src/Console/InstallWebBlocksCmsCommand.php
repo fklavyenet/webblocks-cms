@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -64,6 +65,7 @@ class InstallWebBlocksCmsCommand extends Command
         $this->ensureUserModelIsCmsAware();
         $this->runPackageMigrations();
         $this->ensureLaravelSupportTables();
+        $this->ensureSiteTransferStorage();
         $this->installAssets();
         $this->ensureStorageLink();
         $this->seedCoreData();
@@ -126,6 +128,13 @@ class InstallWebBlocksCmsCommand extends Command
     private function ensureLaravelSupportTables(): void
     {
         $this->laravelSupportTableInstaller->ensureRequiredTables();
+    }
+
+    private function ensureSiteTransferStorage(): void
+    {
+        app(SiteTransferDisk::class)->ensureReady();
+
+        $this->components->info('Site transfer storage is ready.');
     }
 
     private function installAssets(): void

@@ -70,6 +70,8 @@ Export / Import is the site portability tool.
 
 Use it to move one site's content between installs.
 
+Site transfer packages are stored on the Laravel filesystem disk named `site-transfers`, which defaults to `storage/app/site-transfers`. Fresh Composer consumer installs register this disk automatically and `webblocks:install` prepares the storage directory, so host applications do not need to edit `config/filesystems.php` unless they want to provide a custom disk.
+
 The admin workflow now has two related entry points:
 
 - `Admin -> Sites` includes a per-site `Export` row action that opens a modal for the selected site, shows the site name and handle, and can include media files before creating the package.

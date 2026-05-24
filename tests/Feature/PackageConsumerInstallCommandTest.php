@@ -2,11 +2,6 @@
 
 namespace Tests\Feature;
 
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageLayout;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -17,7 +12,13 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Install\InstallState;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -222,6 +223,8 @@ PHP;
         $this->assertFileExists(public_path('cms/css/admin.css'));
         $this->assertFileExists(public_path('cms/js/admin/core.js'));
         $this->assertFileExists(public_path('cms/js/admin/listing-bulk-actions.js'));
+        $this->assertSame(storage_path('app/site-transfers'), config('filesystems.disks.'.SiteTransferDisk::DISK.'.root'));
+        $this->assertDirectoryExists(storage_path('app/site-transfers'));
     }
 
     #[Test]
