@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 
 class ContactMessageRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class ContactMessageRequest extends FormRequest
         return [
             'block_id' => ['required', 'integer', 'exists:blocks,id'],
             'page_id' => ['nullable', 'integer', 'exists:pages,id'],
-            'source_url' => ['nullable', 'url', 'max:2048'],
+            'source_url' => ['nullable', 'string', 'max:2048'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255'],
             'subject' => ['nullable', 'string', 'max:255'],
@@ -41,5 +42,10 @@ class ContactMessageRequest extends FormRequest
             'website' => trim((string) ($data['website'] ?? '')),
             'submitted_at' => (int) $data['submitted_at'],
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return app(ContactFormRedirects::class)->target($this->input('source_url'), $this->input('block_id'), url('/'));
     }
 }

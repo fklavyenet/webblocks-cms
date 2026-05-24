@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.46
+
+- Prepare v1.32.46 as a focused Contact Form submit hotfix by registering the public contact form rate limiter from the package service provider for fresh Composer consumers.
+- Keep public Contact Form submissions and validation failures anchored to the originating page instead of leaving browsers on `/contact-messages`, while preserving stored admin Contact Messages.
+
 ## 1.32.45
 
 - Prepare v1.32.45 as a fresh-consumer portability hotfix by fixing the public Contact Form block renderer so it no longer requires host Blade components such as `x-input-label`, `x-text-input`, `x-input-error`, or `x-primary-button`.

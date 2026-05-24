@@ -41,7 +41,7 @@
             @csrf
             <input type="hidden" name="block_id" value="{{ $block->id }}">
             <input type="hidden" name="page_id" value="{{ $page->id ?? $block->renderPageId() ?? $block->page_id }}">
-            <input type="hidden" name="source_url" value="{{ request()->fullUrl() }}">
+            <input type="hidden" name="source_url" value="{{ request()->getRequestUri() }}">
             <input type="hidden" name="submitted_at" value="{{ now()->timestamp }}">
 
             <div class="wb-public-contact-honeypot" aria-hidden="true">

@@ -115,7 +115,7 @@ class ContactFormModuleTest extends TestCase
         return array_merge([
             'block_id' => $block->id,
             'page_id' => $block->page_id,
-            'source_url' => route('pages.show', $block->page?->slug ?? 'contact'),
+            'source_url' => route('pages.show', $block->page?->slug ?? 'contact', false),
             'submitted_at' => now()->subSeconds(5)->timestamp,
             'name' => 'Taylor Editor',
             'email' => 'taylor@example.com',
@@ -134,12 +134,55 @@ class ContactFormModuleTest extends TestCase
         $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
         $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false).'#contact-form-'.$block->id);
+        $response->assertSessionHas('contact_form_success_block_id', $block->id);
         $this->assertDatabaseHas('contact_messages', [
             'block_id' => $block->id,
             'page_id' => $block->page_id,
             'email' => 'taylor@example.com',
             'status' => 'new',
         ]);
+    }
+
+    #[Test]
+    public function contact_form_success_flash_renders_after_submission_redirect(): void
+    {
+        Mail::fake();
+        [$page, $block] = $this->createContactFormPage();
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect(route('pages.show', $page->slug, false).'#contact-form-'.$block->id);
+
+        $this->withSession(['contact_form_success_block_id' => $block->id])
+            ->get(route('pages.show', $page->slug, false))
+            ->assertOk()
+            ->assertSee('Message sent')
+            ->assertSee('Thanks for your message. We will get back to you soon.');
+    }
+
+    #[Test]
+    public function contact_form_validation_errors_redirect_back_to_form_anchor(): void
+    {
+        [, $block] = $this->createContactFormPage();
+
+        $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+            'name' => '',
+            'message' => '',
+        ]));
+
+        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $response->assertSessionHasErrors(['name', 'message']);
+    }
+
+    #[Test]
+    public function contact_form_submission_does_not_leave_browser_on_post_endpoint(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+
+        $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
+
+        $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+        $this->assertNotSame('/contact-messages', parse_url((string) $response->headers->get('Location'), PHP_URL_PATH));
     }
 
     #[Test]
@@ -360,7 +403,8 @@ class ContactFormModuleTest extends TestCase
         ]));
 
         $response->assertStatus(302);
-        $this->assertSame('https://webblocks-cms.ddev.site/p/contact#contact-form-'.$block->id, $response->baseResponse->headers->get('Location'));
+        $this->assertSame('/p/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
+        $this->assertSame('contact-form-'.$block->id, parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
         $this->assertDatabaseCount('contact_messages', 0);
         Mail::assertNothingSent();
     }
@@ -786,6 +830,9 @@ class ContactFormModuleTest extends TestCase
         $response->assertSee('Subject');
         $response->assertSee('Message');
         $response->assertSee(route('contact-messages.store'), false);
+        $response->assertSee('method="POST"', false);
+        $response->assertSee('name="_token"', false);
+        $response->assertSee('name="source_url" value="/p/contact"', false);
     }
 
     #[Test]
@@ -1099,10 +1146,10 @@ class ContactFormModuleTest extends TestCase
         app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['contactFormTranslations']));
 
         $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
-            'source_url' => route('pages.show', ['slug' => $page->slug]),
+            'source_url' => route('pages.show', ['slug' => $page->slug], false),
         ]));
 
-        $response->assertRedirect(route('pages.show', ['slug' => 'contact']).'#contact-form-'.$block->id);
+        $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false).'#contact-form-'.$block->id);
         $this->assertDatabaseHas('contact_messages', [
             'block_id' => $block->id,
             'page_id' => $page->id,

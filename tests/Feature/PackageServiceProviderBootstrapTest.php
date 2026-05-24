@@ -8,6 +8,7 @@ use Database\Seeders\IconCatalogSeeder;
 use Database\Seeders\LayoutTypeSeeder;
 use Database\Seeders\PageTypeSeeder;
 use Database\Seeders\SlotTypeSeeder;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -285,6 +286,12 @@ class PackageServiceProviderBootstrapTest extends TestCase
         $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
         $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
         $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
+    }
+
+    #[Test]
+    public function package_bootstrap_registers_contact_form_rate_limiter(): void
+    {
+        $this->assertNotNull(app(RateLimiter::class)->limiter('contact-form-submissions'));
     }
 
     #[Test]

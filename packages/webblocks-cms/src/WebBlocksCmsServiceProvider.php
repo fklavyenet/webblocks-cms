@@ -3,7 +3,10 @@
 namespace WebBlocks\Cms;
 
 use FilesystemIterator;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use RecursiveDirectoryIterator;
@@ -757,11 +760,20 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     {
         $this->bootMiddlewareAliases();
         $this->bootAuthorization();
+        $this->bootRateLimiters();
         $this->bootCommands();
         $this->bootRoutes();
         $this->bootViews();
         $this->bootMigrations();
         $this->bootPublishing();
+    }
+
+    protected function bootRateLimiters(): void
+    {
+        RateLimiter::for('contact-form-submissions', function (Request $request) {
+            return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
+                ->by($request->ip().'|'.((string) $request->input('block_id')));
+        });
     }
 
     protected function bootCommands(): void

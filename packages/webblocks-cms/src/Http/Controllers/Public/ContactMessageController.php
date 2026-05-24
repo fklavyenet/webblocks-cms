@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
 
 class ContactMessageController extends Controller
@@ -30,7 +31,10 @@ class ContactMessageController extends Controller
         }
 
         $minimumSubmitSeconds = (int) config('contact.minimum_submit_seconds', 3);
-        $redirectUrl = $this->redirectUrl($payload['source_url'] ?: $block->page?->publicUrl() ?: url('/'), $block->id);
+        $redirects = app(ContactFormRedirects::class);
+        $fallbackUrl = $block->page?->publicUrl() ?: url('/');
+        $sourceUrl = $redirects->baseUrl($payload['source_url'], $fallbackUrl);
+        $redirectUrl = $redirects->target($payload['source_url'], $block->id, $fallbackUrl);
 
         if ($payload['website'] !== '' || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
             return redirect($redirectUrl)
@@ -48,7 +52,7 @@ class ContactMessageController extends Controller
             'subject' => $payload['subject'],
             'message' => $payload['message'],
             'status' => 'new',
-            'source_url' => $payload['source_url'] ?: $block->page?->publicUrl() ?: url('/'),
+            'source_url' => $sourceUrl,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'referer' => $request->headers->get('referer'),
@@ -68,14 +72,5 @@ class ContactMessageController extends Controller
 
         return redirect($redirectUrl)
             ->with('contact_form_success_block_id', $block->id);
-    }
-
-    private function redirectUrl(?string $sourceUrl, int $blockId): string
-    {
-        $baseUrl = $sourceUrl && filter_var($sourceUrl, FILTER_VALIDATE_URL)
-            ? $sourceUrl
-            : url('/');
-
-        return $baseUrl.'#contact-form-'.$blockId;
     }
 }
