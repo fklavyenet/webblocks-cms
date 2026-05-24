@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.45
+
+- Prepare v1.32.45 as a fresh-consumer portability hotfix by fixing the public Contact Form block renderer so it no longer requires host Blade components such as `x-input-label`, `x-text-input`, `x-input-error`, or `x-primary-button`.
+- Include canonical site-level public override assets at `public/site/{site_handle}/css/site.css` and `public/site/{site_handle}/js/site.js` in Site Export / Import packages when file inclusion is enabled, restoring them under the final imported site handle.
+
 ## 1.32.44
 
 - Prepare v1.32.44 as a focused fresh-consumer public routing hotfix by removing the untouched Laravel welcome `/` route during `webblocks:install` when it is safe, with a timestamped backup first.

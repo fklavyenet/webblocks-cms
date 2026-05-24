@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -74,6 +75,7 @@ class ImportDataMapper
                 $assetMap = $this->importAssets($archive, $payload, $folderMap, $copiedFiles, $output);
                 $pageMap = $this->importPages($site, $payload, $localeMap, $assetMap, $output);
                 $this->importPageAssets($archive, $payload, $pageMap, $copiedFiles, $output);
+                $this->importSitePublicAssets($site, $archive, $payload, $copiedFiles, $output);
                 ['shared_slots' => $sharedSlots, 'handle_map' => $sharedSlotHandleMap, 'source_page_map' => $sharedSlotSourcePageMap] = $this->importSharedSlots($site, $payload, $output);
                 $allPageMap = array_replace($pageMap, $sharedSlotSourcePageMap);
                 $this->importPageSlots($payload, $allPageMap, $sharedSlotHandleMap, array_keys($sharedSlotSourcePageMap), $output);
@@ -97,6 +99,12 @@ class ImportDataMapper
             return $site;
         } catch (Throwable $throwable) {
             foreach ($copiedFiles as [$disk, $path]) {
+                if ($disk === 'public-root') {
+                    File::delete(public_path($path));
+
+                    continue;
+                }
+
                 Storage::disk($disk)->delete($path);
             }
 
@@ -562,6 +570,56 @@ class ImportDataMapper
         $output[] = 'Imported '.$count.' page asset row(s).';
     }
 
+    private function importSitePublicAssets(Site $site, ZipArchive $archive, array $payload, array &$copiedFiles, array &$output): void
+    {
+        $count = 0;
+
+        foreach (($payload['site_public_assets'] ?? []) as $sitePublicAsset) {
+            $sourceRelativePath = $this->canonicalSourceSitePublicAssetPath($sitePublicAsset);
+
+            if ($sourceRelativePath === null) {
+                continue;
+            }
+
+            $targetRelativePath = $this->targetSitePublicAssetPath($site, (string) ($sitePublicAsset['type'] ?? ''));
+            $archiveEntry = 'files/public/'.$sourceRelativePath;
+
+            $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive site public asset path');
+
+            if ($archive->locateName($archiveEntry) === false) {
+                throw new RuntimeException('Import package is missing site public asset file '.$archiveEntry.'.');
+            }
+
+            $stream = $archive->getStream($archiveEntry);
+
+            if (! is_resource($stream)) {
+                throw new RuntimeException('Could not read site public asset file '.$archiveEntry.' from import package.');
+            }
+
+            $targetPath = public_path($targetRelativePath);
+            $targetDirectory = dirname($targetPath);
+
+            if (! str_starts_with($targetPath, public_path('site').DIRECTORY_SEPARATOR)) {
+                fclose($stream);
+
+                throw new RuntimeException('Site public asset file path is invalid.');
+            }
+
+            if (! is_dir($targetDirectory)) {
+                mkdir($targetDirectory, 0775, true);
+            }
+
+            file_put_contents($targetPath, stream_get_contents($stream));
+            fclose($stream);
+            $copiedFiles[] = ['public-root', $targetRelativePath];
+            $count++;
+        }
+
+        if ($count > 0) {
+            $output[] = 'Imported '.$count.' site public override asset file(s).';
+        }
+    }
+
     private function restorePageAssetFile(ZipArchive $archive, string $path, array &$copiedFiles): void
     {
         $relativePath = $this->pageAssetPathValidator->relativePublicPath($path);
@@ -585,7 +643,37 @@ class ImportDataMapper
 
         file_put_contents($targetPath, stream_get_contents($stream));
         fclose($stream);
-        $copiedFiles[] = ['public', $relativePath];
+        $copiedFiles[] = ['public-root', $relativePath];
+    }
+
+    private function canonicalSourceSitePublicAssetPath(array $sitePublicAsset): ?string
+    {
+        $relativePath = ltrim((string) ($sitePublicAsset['relative_path'] ?? $sitePublicAsset['path'] ?? ''), '/');
+        $type = (string) ($sitePublicAsset['type'] ?? '');
+
+        if (! $this->pathGuard->isSafeRelativePath($relativePath)) {
+            return null;
+        }
+
+        if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/(css/site\.css|js/site\.js)$#', $relativePath)) {
+            return null;
+        }
+
+        if (($type === 'css' && str_ends_with($relativePath, '/css/site.css'))
+            || ($type === 'js' && str_ends_with($relativePath, '/js/site.js'))) {
+            return $relativePath;
+        }
+
+        return null;
+    }
+
+    private function targetSitePublicAssetPath(Site $site, string $type): string
+    {
+        return match ($type) {
+            'css' => 'site/'.$site->handle.'/css/site.css',
+            'js' => 'site/'.$site->handle.'/js/site.js',
+            default => throw new RuntimeException('Site public asset type is invalid.'),
+        };
     }
 
     private function importSharedSlots(Site $site, array $payload, array &$output): array

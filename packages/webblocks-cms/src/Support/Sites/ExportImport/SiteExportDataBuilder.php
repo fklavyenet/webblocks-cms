@@ -2,10 +2,10 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
-use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
@@ -61,6 +61,9 @@ class SiteExportDataBuilder
             ->orderBy('id')
             ->get();
         $pageAssets = PageAsset::query()->whereIn('page_id', $pageIds)->orderBy('sort_order')->orderBy('id')->get();
+        $sitePublicAssets = $includesMedia
+            ? $this->sitePublicAssetsFor($site)
+            : collect();
 
         $assetIds = $includesMedia
             ? collect()
@@ -134,6 +137,7 @@ class SiteExportDataBuilder
                 'created_at' => $siteVariable->created_at?->toDateTimeString(),
                 'updated_at' => $siteVariable->updated_at?->toDateTimeString(),
             ])->all(),
+            'site_public_assets' => $sitePublicAssets->all(),
             'pages' => $pages->map(fn (Page $page) => [
                 'id' => $page->id,
                 'site_id' => $page->site_id,
@@ -362,6 +366,7 @@ class SiteExportDataBuilder
                 'navigation_items' => $navigationItems->count(),
                 'media_folders' => $assetFolders->count(),
                 'media' => $assets->count(),
+                'site_public_assets' => $sitePublicAssets->count(),
                 'page_asset_files' => $includesMedia
                     ? $pageAssets->filter(function (PageAsset $pageAsset): bool {
                         try {
@@ -375,6 +380,22 @@ class SiteExportDataBuilder
                     : 0,
             ],
         ];
+    }
+
+    private function sitePublicAssetsFor(Site $site): Collection
+    {
+        return collect([
+            [
+                'type' => 'css',
+                'path' => '/site/'.$site->handle.'/css/site.css',
+                'relative_path' => 'site/'.$site->handle.'/css/site.css',
+            ],
+            [
+                'type' => 'js',
+                'path' => '/site/'.$site->handle.'/js/site.js',
+                'relative_path' => 'site/'.$site->handle.'/js/site.js',
+            ],
+        ])->filter(fn (array $asset): bool => is_file(public_path($asset['relative_path'])))->values();
     }
 
     private function mediaFoldersFor(Collection $assets): Collection

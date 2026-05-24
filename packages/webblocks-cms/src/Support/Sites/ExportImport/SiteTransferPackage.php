@@ -35,6 +35,7 @@ class SiteTransferPackage
     public const OPTIONAL_DATA_FILES = [
         'data/shared_slots.json',
         'data/site_domains.json',
+        'data/site_public_assets.json',
         'data/site_variables.json',
     ];
 

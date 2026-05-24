@@ -51,41 +51,49 @@
 
             <div class="wb-grid wb-grid-2">
                 <div class="wb-stack wb-gap-1">
-                    <x-input-label for="contact-name-{{ $block->id }}" value="Name" />
-                    <x-text-input id="contact-name-{{ $block->id }}" name="name" type="text" :value="old('block_id') == $block->id ? old('name') : ''" required />
+                    <label for="contact-name-{{ $block->id }}" class="wb-label">Name</label>
+                    <input id="contact-name-{{ $block->id }}" name="name" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('name') : '' }}" required>
                     @if ((int) old('block_id') === $block->id)
-                        <x-input-error :messages="$errors->get('name')" />
+                        @foreach ($errors->get('name') as $message)
+                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                        @endforeach
                     @endif
                 </div>
 
                 <div class="wb-stack wb-gap-1">
-                    <x-input-label for="contact-email-{{ $block->id }}" value="Email" />
-                    <x-text-input id="contact-email-{{ $block->id }}" name="email" type="email" :value="old('block_id') == $block->id ? old('email') : ''" required />
+                    <label for="contact-email-{{ $block->id }}" class="wb-label">Email</label>
+                    <input id="contact-email-{{ $block->id }}" name="email" type="email" class="wb-input" value="{{ old('block_id') == $block->id ? old('email') : '' }}" required>
                     @if ((int) old('block_id') === $block->id)
-                        <x-input-error :messages="$errors->get('email')" />
+                        @foreach ($errors->get('email') as $message)
+                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                        @endforeach
                     @endif
                 </div>
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <x-input-label for="contact-subject-{{ $block->id }}" value="Subject" />
-                <x-text-input id="contact-subject-{{ $block->id }}" name="subject" type="text" :value="old('block_id') == $block->id ? old('subject') : ''" />
+                <label for="contact-subject-{{ $block->id }}" class="wb-label">Subject</label>
+                <input id="contact-subject-{{ $block->id }}" name="subject" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('subject') : '' }}">
                 @if ((int) old('block_id') === $block->id)
-                    <x-input-error :messages="$errors->get('subject')" />
+                    @foreach ($errors->get('subject') as $message)
+                        <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                    @endforeach
                 @endif
             </div>
 
             <div class="wb-stack wb-gap-1">
-                <x-input-label for="contact-message-{{ $block->id }}" value="Message" />
+                <label for="contact-message-{{ $block->id }}" class="wb-label">Message</label>
                 <textarea id="contact-message-{{ $block->id }}" name="message" class="wb-textarea" rows="7" required>{{ old('block_id') == $block->id ? old('message') : '' }}</textarea>
                 @if ((int) old('block_id') === $block->id)
-                    <x-input-error :messages="$errors->get('message')" />
+                    @foreach ($errors->get('message') as $message)
+                        <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                    @endforeach
                 @endif
             </div>
 
             <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <span class="wb-text-sm wb-text-muted">Your message is stored first, then email notification is attempted.</span>
-                <x-primary-button>{{ $submitLabel }}</x-primary-button>
+                <button type="submit" class="wb-btn wb-btn-primary">{{ $submitLabel }}</button>
             </div>
         </form>
     </div>

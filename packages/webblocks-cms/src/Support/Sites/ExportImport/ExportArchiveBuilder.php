@@ -2,11 +2,11 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
-use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use ZipArchive;
 
 class ExportArchiveBuilder
@@ -72,6 +72,22 @@ class ExportArchiveBuilder
                     $archive->addFile($absolutePath, $archiveEntry);
                     $fileCount++;
                 }
+
+                foreach ($payload['site_public_assets'] ?? [] as $sitePublicAsset) {
+                    $sourcePath = $this->canonicalSitePublicAssetPath($sitePublicAsset);
+                    $absolutePath = public_path($sourcePath);
+
+                    if (! is_file($absolutePath)) {
+                        $output[] = 'Skipped missing site public asset file '.$sourcePath.'.';
+
+                        continue;
+                    }
+
+                    $archiveEntry = 'files/public/'.$sourcePath;
+                    $this->pathGuard->assertSafeRelativePath($archiveEntry, 'Archive file path');
+                    $archive->addFile($absolutePath, $archiveEntry);
+                    $fileCount++;
+                }
             }
 
             $archive->close();
@@ -89,5 +105,24 @@ class ExportArchiveBuilder
             $archive->close();
             throw $throwable;
         }
+    }
+
+    private function canonicalSitePublicAssetPath(array $sitePublicAsset): string
+    {
+        $relativePath = ltrim((string) ($sitePublicAsset['relative_path'] ?? $sitePublicAsset['path'] ?? ''), '/');
+        $type = (string) ($sitePublicAsset['type'] ?? '');
+
+        $this->pathGuard->assertSafeRelativePath($relativePath, 'Site public asset path');
+
+        if (! preg_match('#^site/[a-z0-9]+(?:-[a-z0-9]+)*/(css/site\.css|js/site\.js)$#', $relativePath)) {
+            throw new RuntimeException('Site public asset path is invalid.');
+        }
+
+        if (($type === 'css' && ! str_ends_with($relativePath, '/css/site.css'))
+            || ($type === 'js' && ! str_ends_with($relativePath, '/js/site.js'))) {
+            throw new RuntimeException('Site public asset type does not match its path.');
+        }
+
+        return $relativePath;
     }
 }

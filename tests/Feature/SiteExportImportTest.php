@@ -2,6 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\BuildsCloneableSite;
+use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
@@ -13,18 +21,10 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SlotType;
-use App\Models\User;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
-use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\Attributes\Test;
-use Tests\Concerns\BuildsCloneableSite;
-use Tests\TestCase;
 use ZipArchive;
 
 class SiteExportImportTest extends TestCase
@@ -195,6 +195,139 @@ class SiteExportImportTest extends TestCase
 
         $this->assertNotFalse($archive->locateName('files/public/media/images/hero.jpg'));
         $archive->close();
+    }
+
+    #[Test]
+    public function export_includes_site_level_public_override_assets_when_files_are_selected(): void
+    {
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/css/site.css', 'body { color: teal; }');
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/js/site.js', 'window.webblocksSiteLoaded = true;');
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
+        $sitePublicAssets = json_decode((string) $archive->getFromName('data/site_public_assets.json'), true);
+
+        $this->assertCount(2, $sitePublicAssets);
+        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/css/site.css'));
+        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/js/site.js'));
+        $this->assertSame(2, $siteExport->summary_json['site_public_assets'] ?? null);
+
+        $archive->close();
+    }
+
+    #[Test]
+    public function export_skips_missing_site_level_public_override_assets_cleanly(): void
+    {
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/css/site.css', 'body { color: teal; }');
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $archive = new ZipArchive;
+        $archive->open(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path));
+        $sitePublicAssets = json_decode((string) $archive->getFromName('data/site_public_assets.json'), true);
+
+        $this->assertCount(1, $sitePublicAssets);
+        $this->assertSame('/site/webblocks-ui/css/site.css', $sitePublicAssets[0]['path']);
+        $this->assertNotFalse($archive->locateName('files/public/site/webblocks-ui/css/site.css'));
+        $this->assertFalse($archive->locateName('files/public/site/webblocks-ui/js/site.js'));
+
+        $archive->close();
+    }
+
+    #[Test]
+    public function import_restores_site_level_public_override_assets_under_target_site_handle(): void
+    {
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/css/site.css', 'body { color: teal; }');
+        $this->putTrackedPublicSiteFile('site/webblocks-ui/js/site.js', 'window.webblocksSiteLoaded = true;');
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile(Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+        );
+
+        $siteImport = app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported With Site Assets',
+            'site_handle' => 'imported-site-assets',
+            'site_domain' => 'imported-site-assets.example.test',
+        ]));
+
+        $importedCssPath = public_path('site/imported-site-assets/css/site.css');
+        $importedJsPath = public_path('site/imported-site-assets/js/site.js');
+
+        $this->assertFileExists($importedCssPath);
+        $this->assertFileExists($importedJsPath);
+        $this->assertSame('body { color: teal; }', (string) file_get_contents($importedCssPath));
+        $this->assertSame('window.webblocksSiteLoaded = true;', (string) file_get_contents($importedJsPath));
+
+        $response = $this->get('http://imported-site-assets.example.test/p/about');
+
+        $response->assertOk();
+        $response->assertSee('/site/imported-site-assets/css/site.css', false);
+        $response->assertSee('/site/imported-site-assets/js/site.js', false);
+        $response->assertDontSee('/site/webblocks-ui/css/site.css', false);
+        $response->assertDontSee('/site/webblocks-ui/js/site.js', false);
+
+        @unlink($importedCssPath);
+        @unlink($importedJsPath);
+        @rmdir(public_path('site/imported-site-assets/css'));
+        @rmdir(public_path('site/imported-site-assets/js'));
+        @rmdir(public_path('site/imported-site-assets'));
+    }
+
+    #[Test]
+    public function import_ignores_non_canonical_site_public_asset_payload_rows(): void
+    {
+        Storage::fake('site-transfers');
+        [$site] = $this->seedCloneableSite();
+
+        $siteExport = app(SiteExportManager::class)->export($site, true);
+        $archivePath = Storage::disk($siteExport->archive_disk)->path($siteExport->archive_path);
+        $archive = new ZipArchive;
+        $archive->open($archivePath);
+
+        $rewrittenPath = Storage::disk('site-transfers')->path('site-public-asset-invalid-row.zip');
+        $rewritten = new ZipArchive;
+        $rewritten->open($rewrittenPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        for ($index = 0; $index < $archive->numFiles; $index++) {
+            $entryName = $archive->getNameIndex($index);
+            $contents = $archive->getFromIndex($index);
+
+            if ($entryName === 'data/site_public_assets.json') {
+                $contents = json_encode([[
+                    'type' => 'css',
+                    'path' => '/site/webblocks-ui/pages/about/page.css',
+                    'relative_path' => 'site/webblocks-ui/pages/about/page.css',
+                ]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            }
+
+            $rewritten->addFromString((string) $entryName, (string) $contents);
+        }
+
+        $rewritten->addFromString('files/public/site/webblocks-ui/pages/about/page.css', 'body { color: red; }');
+        $rewritten->close();
+        $archive->close();
+
+        $siteImport = app(SiteImportManager::class)->inspectUpload(
+            new UploadedFile($rewrittenPath, 'site-public-asset-invalid-row.zip', 'application/zip', null, true)
+        );
+
+        app(SiteImportManager::class)->import($siteImport, SiteImportOptions::fromArray([
+            'site_name' => 'Imported Invalid Site Asset Row',
+            'site_handle' => 'invalid-site-asset-row',
+        ]));
+
+        $this->assertFileDoesNotExist(public_path('site/invalid-site-asset-row/pages/about/page.css'));
+        $this->assertFileDoesNotExist(public_path('site/invalid-site-asset-row/css/site.css'));
     }
 
     #[Test]

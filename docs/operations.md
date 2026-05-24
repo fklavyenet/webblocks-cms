@@ -98,6 +98,7 @@ Export / Import covers site-scoped content such as:
 - block translations
 - navigation items, including optional navigation item icon slugs used by public Sidebar Navigation renderers
 - optional media files
+- canonical site-level public override files at `public/site/{site_handle}/css/site.css` and `public/site/{site_handle}/js/site.js` when `Include media files` is enabled and those files exist
 
 Page Assets travel through site portability in two layers:
 
@@ -105,6 +106,8 @@ Page Assets travel through site portability in two layers:
 - When `Include media files` is enabled, referenced `/site/...` public files are also packaged under the export archive and restored back into `public/site/...` on import.
 - When `Include media files` is disabled, page asset metadata still imports, but the referenced physical files must already exist on the target install.
 - Missing page asset files are reported during export and skipped rather than crashing the full package build in the current version.
+
+Site-level public override assets are intentionally narrower than Page Assets: only `css/site.css` and `js/site.js` under the source site handle are included, and import restores them under the final target site handle. Arbitrary `public/site/...` trees, CMS core assets, and `public/storage` are not part of this path.
 
 Shared Slots are exported and imported as first-class site content:
 

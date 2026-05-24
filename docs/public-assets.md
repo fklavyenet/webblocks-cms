@@ -39,6 +39,8 @@ When present, `public/site/{site_handle}/css/site.css` renders in the public `<h
 
 When present, `public/site/{site_handle}/js/site.js` renders in the public `<head>` with `defer` for the currently resolved public site.
 
+When Site Export / Import runs with file inclusion enabled, these two canonical site-level override files are packaged when present and restored under the final imported site handle. Missing `site.css` or `site.js` files are skipped cleanly. Export / Import does not package arbitrary `public/site/{site_handle}/...` trees through this site-level path.
+
 `public/storage` is separate from `public/site/...`. It is the Laravel public storage symlink created by `storage:link` for files under `storage/app/public`, and should not be treated as CMS asset space or site-override asset space.
 
 The canonical override convention requires a site handle segment. Handle-less site override paths are not canonical and should not be used for new runtime behavior.

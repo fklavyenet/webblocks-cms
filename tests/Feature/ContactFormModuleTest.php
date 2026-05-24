@@ -2,7 +2,14 @@
 
 namespace Tests\Feature;
 
-use WebBlocks\Cms\Mail\ContactMessageNotification;
+use App\Models\User;
+use Database\Seeders\FoundationSiteLocaleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
+use WebBlocks\Cms\Mail\ContactMessageNotification as PackageContactMessageNotification;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\ContactMessage;
@@ -12,14 +19,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
-use App\Models\User;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
-use Database\Seeders\FoundationSiteLocaleSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
-use PHPUnit\Framework\Attributes\Test;
-use Tests\TestCase;
-use WebBlocks\Cms\Mail\ContactMessageNotification as PackageContactMessageNotification;
 
 class ContactFormModuleTest extends TestCase
 {
@@ -786,6 +786,17 @@ class ContactFormModuleTest extends TestCase
         $response->assertSee('Subject');
         $response->assertSee('Message');
         $response->assertSee(route('contact-messages.store'), false);
+    }
+
+    #[Test]
+    public function public_contact_form_renderer_does_not_depend_on_host_blade_components(): void
+    {
+        $contents = File::get(base_path('packages/webblocks-cms/resources/views/pages/partials/blocks/contact_form.blade.php'));
+
+        $this->assertStringNotContainsString('<x-input-label', $contents);
+        $this->assertStringNotContainsString('<x-text-input', $contents);
+        $this->assertStringNotContainsString('<x-input-error', $contents);
+        $this->assertStringNotContainsString('<x-primary-button', $contents);
     }
 
     #[Test]
