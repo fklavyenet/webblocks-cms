@@ -2,12 +2,17 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
-use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
+use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
+use Throwable;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Layout;
@@ -23,20 +28,17 @@ use WebBlocks\Cms\Models\PageType;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\SiteDomainManager;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
-use Illuminate\Database\DatabaseManager;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use RuntimeException;
-use Throwable;
-use WebBlocks\Cms\Models\SiteImport;
 use ZipArchive;
 
 class ImportDataMapper
@@ -50,6 +52,8 @@ class ImportDataMapper
         private readonly PageAssetPathValidator $pageAssetPathValidator,
         private readonly SharedSlotSourcePageManager $sharedSlotSourcePageManager,
         private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
+        private readonly CoreBlockTypeCatalogSyncer $coreBlockTypeCatalogSyncer,
+        private readonly CoreLayoutCatalogSyncer $coreLayoutCatalogSyncer,
     ) {}
 
     public function import(SiteImport $siteImport, SiteImportOptions $options, ZipArchive $archive, array $payload, array &$output = []): Site
@@ -59,6 +63,7 @@ class ImportDataMapper
 
         try {
             $site = $this->db->transaction(function () use ($siteImport, $options, $archive, $payload, &$output, &$copiedFiles): Site {
+                $this->ensureCatalogsForPayload($payload, $output);
                 $localeMap = $this->importLocales($payload, $output);
                 $site = $this->createSite($payload['site'], $options, $output);
                 $this->importSiteDomains($site, $payload, $options, $output);
@@ -127,6 +132,99 @@ class ImportDataMapper
         }
 
         return $map;
+    }
+
+    private function ensureCatalogsForPayload(array $payload, array &$output): void
+    {
+        [$missingBlockTypes, $missingSlotTypes] = $this->missingCatalogIdentifiers($payload);
+
+        if ($missingBlockTypes === [] && $missingSlotTypes === []) {
+            return;
+        }
+
+        $this->coreLayoutCatalogSyncer->sync();
+        $this->coreBlockTypeCatalogSyncer->sync();
+
+        [$missingBlockTypes, $missingSlotTypes] = $this->missingCatalogIdentifiers($payload);
+
+        if ($missingBlockTypes !== [] || $missingSlotTypes !== []) {
+            throw new RuntimeException($this->missingCatalogMessage($missingBlockTypes, $missingSlotTypes));
+        }
+
+        $output[] = 'Synchronized core block and slot catalogs before import.';
+    }
+
+    private function missingCatalogIdentifiers(array $payload): array
+    {
+        $blockTypeSlugs = $this->requiredBlockTypeSlugs($payload);
+        $slotTypeSlugs = $this->requiredSlotTypeSlugs($payload);
+
+        $existingBlockTypeSlugs = $blockTypeSlugs === []
+            ? []
+            : BlockType::query()->whereIn('slug', $blockTypeSlugs)->pluck('slug')->all();
+        $existingSlotTypeSlugs = $slotTypeSlugs === []
+            ? []
+            : SlotType::query()->whereIn('slug', $slotTypeSlugs)->pluck('slug')->all();
+
+        return [
+            array_values(array_diff($blockTypeSlugs, $existingBlockTypeSlugs)),
+            array_values(array_diff($slotTypeSlugs, $existingSlotTypeSlugs)),
+        ];
+    }
+
+    private function requiredBlockTypeSlugs(array $payload): array
+    {
+        return $this->uniqueIdentifiers(array_map(
+            fn (array $blockData) => $blockData['block_type_slug'] ?? $blockData['type'] ?? null,
+            $payload['blocks'] ?? [],
+        ));
+    }
+
+    private function requiredSlotTypeSlugs(array $payload): array
+    {
+        $pageSlotSlugs = array_map(
+            fn (array $slotData) => $slotData['slot_type_slug'] ?? null,
+            $payload['page_slots'] ?? [],
+        );
+        $blockSlotSlugs = array_map(
+            fn (array $blockData) => $blockData['slot_type_slug'] ?? $blockData['slot'] ?? null,
+            $payload['blocks'] ?? [],
+        );
+
+        return $this->uniqueIdentifiers(array_merge($pageSlotSlugs, $blockSlotSlugs));
+    }
+
+    private function uniqueIdentifiers(array $identifiers): array
+    {
+        return collect($identifiers)
+            ->filter(fn ($identifier) => is_string($identifier) || is_numeric($identifier))
+            ->map(fn ($identifier) => trim((string) $identifier))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    private function missingCatalogMessage(array $blockTypeSlugs, array $slotTypeSlugs): string
+    {
+        $details = [];
+
+        if ($blockTypeSlugs !== []) {
+            $details[] = 'Missing block types: '.implode(', ', $blockTypeSlugs).'.';
+        }
+
+        if ($slotTypeSlugs !== []) {
+            $details[] = 'Missing slot types: '.implode(', ', $slotTypeSlugs).'.';
+        }
+
+        $message = 'Import package references missing block or slot catalog rows.';
+
+        if ($details !== []) {
+            $message .= ' '.implode(' ', $details);
+        }
+
+        return $message.' Restore the missing catalog rows on the target install, then try again.';
     }
 
     private function createSite(array $siteData, SiteImportOptions $options, array &$output): Site
@@ -564,8 +662,12 @@ class ImportDataMapper
                 ? SlotType::query()->where('slug', $slotTypeSlug)->value('id')
                 : null;
 
-            if (! $pageId || ! $slotTypeId) {
-                throw new RuntimeException('Import package references a missing slot type for page slots.');
+            if (! $slotTypeId) {
+                throw new RuntimeException($this->missingCatalogMessage([], $this->uniqueIdentifiers([$slotTypeSlug])));
+            }
+
+            if (! $pageId) {
+                throw new RuntimeException('Import package references a missing page for a page slot assignment.');
             }
 
             $sourceType = PageSlot::normalizeRuntimeSourceType($slotData['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
@@ -629,8 +731,15 @@ class ImportDataMapper
             $blockTypeId = $blockTypeSlug ? BlockType::query()->where('slug', $blockTypeSlug)->value('id') : null;
             $slotTypeId = $slotTypeSlug ? SlotType::query()->where('slug', $slotTypeSlug)->value('id') : null;
 
-            if (! $pageId || ! $blockTypeId || ! $slotTypeId) {
-                throw new RuntimeException('Import package references a missing block type or slot type.');
+            if (! $blockTypeId || ! $slotTypeId) {
+                throw new RuntimeException($this->missingCatalogMessage(
+                    ! $blockTypeId ? $this->uniqueIdentifiers([$blockTypeSlug]) : [],
+                    ! $slotTypeId ? $this->uniqueIdentifiers([$slotTypeSlug]) : [],
+                ));
+            }
+
+            if (! $pageId) {
+                throw new RuntimeException('Import package references a missing page for a block.');
             }
 
             $block = Block::query()->create([

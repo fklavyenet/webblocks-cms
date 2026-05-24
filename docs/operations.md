@@ -31,7 +31,7 @@ The update screen can report states such as:
 
 The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, synchronizes the core database-backed block type catalog, and records the update run before persisting the installed version.
 
-Core block type synchronization now happens automatically during System Updates after migrations complete. Existing installs therefore refresh shipped block type definitions such as `Header`, `Rich Text`, `TOC`, and `Quote` without requiring a separate manual seed step.
+Core catalog synchronization now happens automatically during System Updates after migrations complete. Existing installs therefore refresh shipped block type definitions such as `Header`, `Rich Text`, `TOC`, and `Quote`, along with shipped slot types and page layout slot mappings, without requiring a separate manual seed step.
 
 For manual maintenance or recovery on an existing install, admins and developers can also run:
 
@@ -71,6 +71,8 @@ Export / Import is the site portability tool.
 Use it to move one site's content between installs.
 
 Site transfer packages are stored on the Laravel filesystem disk named `site-transfers`, which defaults to `storage/app/site-transfers`. Fresh Composer consumer installs register this disk automatically and `webblocks:install` prepares the storage directory, so host applications do not need to edit `config/filesystems.php` unless they want to provide a custom disk.
+
+Site imports require the target install's database-backed block type and slot type catalogs to contain the rows referenced by the package. Fresh Composer installs seed these catalogs during `webblocks:install`, System Updates run the same package catalog repair path for existing installs, and the import runner performs a final idempotent core catalog sync before validation when a package references a missing shipped core row. If a package references an install-specific custom block or slot that is not present on the target, the admin error lists the exact missing identifiers.
 
 The admin workflow now has two related entry points:
 

@@ -7,15 +7,22 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use Illuminate\Support\Str;
+use Illuminate\Support\ViewErrorBag;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 
 class SiteExportImportAdminTest extends TestCase
@@ -297,6 +304,147 @@ class SiteExportImportAdminTest extends TestCase
     }
 
     #[Test]
+    public function import_reports_exact_missing_block_type_slugs(): void
+    {
+        Storage::fake(SiteTransferDisk::DISK);
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = Page::query()->where('site_id', $site->id)->orderBy('id')->skip(1)->firstOrFail();
+        $mainSlot = SlotType::query()->where('slug', 'main')->firstOrFail();
+        $customType = BlockType::query()->create([
+            'name' => 'Custom Widget',
+            'slug' => 'custom-widget',
+            'source_type' => 'static',
+            'status' => 'published',
+            'sort_order' => 90,
+        ]);
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'custom-widget',
+            'block_type_id' => $customType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlot->id,
+            'sort_order' => 10,
+            'status' => 'published',
+        ]);
+
+        $siteImport = $this->inspectExportedSitePackage($user, $site);
+        $customType->update(['slug' => 'custom-widget-local']);
+
+        $response = $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
+            'site_name' => 'Imported Site',
+            'site_handle' => 'imported-site',
+            'site_domain' => '',
+        ]);
+
+        $message = 'Missing block types: custom-widget.';
+        $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
+        $response->assertSessionHasErrors(['site_import']);
+        $this->assertStringContainsString($message, (string) session('errors')->first('site_import'));
+        $this->assertStringNotContainsString('missing block type or slot type', (string) session('errors')->first('site_import'));
+    }
+
+    #[Test]
+    public function import_reports_exact_missing_slot_type_handles(): void
+    {
+        Storage::fake(SiteTransferDisk::DISK);
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = Page::query()->where('site_id', $site->id)->orderBy('id')->skip(1)->firstOrFail();
+        $headerType = BlockType::query()->where('slug', 'header')->firstOrFail();
+        $promoSlot = SlotType::query()->create([
+            'name' => 'Promo',
+            'slug' => 'promo',
+            'status' => 'published',
+            'sort_order' => 80,
+        ]);
+
+        PageSlot::query()->create([
+            'page_id' => $page->id,
+            'slot_type_id' => $promoSlot->id,
+            'sort_order' => 2,
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'header',
+            'block_type_id' => $headerType->id,
+            'source_type' => 'static',
+            'slot' => 'promo',
+            'slot_type_id' => $promoSlot->id,
+            'sort_order' => 0,
+            'status' => 'published',
+        ]);
+
+        $siteImport = $this->inspectExportedSitePackage($user, $site);
+        $promoSlot->update(['slug' => 'promo-local']);
+
+        $response = $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
+            'site_name' => 'Imported Site',
+            'site_handle' => 'imported-site',
+            'site_domain' => '',
+        ]);
+
+        $message = 'Missing slot types: promo.';
+        $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
+        $response->assertSessionHasErrors(['site_import']);
+        $this->assertStringContainsString($message, (string) session('errors')->first('site_import'));
+        $this->assertStringNotContainsString('missing block type or slot type', (string) session('errors')->first('site_import'));
+    }
+
+    #[Test]
+    public function import_repairs_missing_core_catalog_rows_before_validation(): void
+    {
+        Storage::fake(SiteTransferDisk::DISK);
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+
+        $siteImport = $this->inspectExportedSitePackage($user, $site);
+
+        BlockType::query()->where('slug', 'header')->update(['slug' => 'header-local']);
+        SlotType::query()->where('slug', 'main')->update(['slug' => 'main-local']);
+
+        $response = $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
+            'site_name' => 'Imported Site',
+            'site_handle' => 'imported-site',
+            'site_domain' => '',
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
+        $response->assertSessionDoesntHaveErrors();
+        $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'header']);
+        $this->assertDatabaseHas('slot_types', ['slug' => 'main']);
+        $this->assertStringContainsString('Synchronized core block and slot catalogs before import.', (string) $siteImport->fresh()->output_log);
+    }
+
+    #[Test]
+    public function import_show_does_not_repeat_same_failure_message_in_each_status_area(): void
+    {
+        $user = User::factory()->superAdmin()->create();
+        $message = 'Import package references missing block or slot catalog rows. Missing block types: custom-widget. Restore the missing catalog rows on the target install, then try again.';
+        $siteImport = SiteImport::query()->create([
+            'user_id' => $user->id,
+            'status' => SiteImport::STATUS_FAILED,
+            'source_archive_name' => 'example.zip',
+            'failure_message' => $message,
+            'output_log' => 'Import package validated successfully.'.PHP_EOL.'Import failed: '.$message,
+        ]);
+
+        $response = $this->withSession([
+            'errors' => (new ViewErrorBag)->put('default', new MessageBag([
+                'site_import' => [$message],
+            ])),
+        ])->actingAs($user)->get(route('admin.site-transfers.imports.show', $siteImport));
+
+        $response->assertOk();
+        $this->assertGreaterThanOrEqual(1, substr_count($response->getContent(), $message));
+        $this->assertLessThanOrEqual(2, substr_count($response->getContent(), $message));
+        $this->assertStringNotContainsString('Import failed: '.$message, $response->getContent());
+    }
+
+    #[Test]
     public function import_upload_reports_controlled_error_when_site_transfer_storage_is_not_writable(): void
     {
         $rootCollision = storage_path('framework/testing/site-transfer-root-collision-'.Str::uuid());
@@ -439,5 +587,21 @@ class SiteExportImportAdminTest extends TestCase
         $response = $this->get(route('admin.site-transfers.exports.index'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    private function inspectExportedSitePackage(User $user, Site $site): SiteImport
+    {
+        $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
+            'site_id' => $site->id,
+            'includes_media' => '0',
+        ]);
+
+        $siteExport = SiteExport::query()->latest()->firstOrFail();
+
+        $this->actingAs($user)->post(route('admin.site-transfers.imports.inspect'), [
+            'archive' => new UploadedFile(Storage::disk(SiteTransferDisk::DISK)->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true),
+        ]);
+
+        return SiteImport::query()->latest()->firstOrFail();
     }
 }

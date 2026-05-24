@@ -1,6 +1,21 @@
 @extends('webblocks-cms::layouts.admin', ['title' => 'Import Details', 'heading' => 'Import Details'])
 
 @section('content')
+    @php
+        $outputLog = (string) ($siteImport->output_log ?? '');
+
+        if ($siteImport->failure_message) {
+            $duplicateFailureLines = [
+                'Import failed: '.$siteImport->failure_message,
+                'Import validation failed: '.$siteImport->failure_message,
+            ];
+
+            $outputLog = collect(explode(PHP_EOL, $outputLog))
+                ->reject(fn ($line) => in_array(trim((string) $line), $duplicateFailureLines, true))
+                ->implode(PHP_EOL);
+        }
+    @endphp
+
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $siteImport->source_archive_name ?? 'Site Import #'.$siteImport->id,
         'description' => 'Review the package manifest, preview the import summary, and create a new site from the validated package.',
@@ -8,10 +23,6 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
-
-    @if ($errors->has('site_import'))
-        <div class="wb-alert wb-alert-danger">{{ $errors->first('site_import') }}</div>
-    @endif
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-grid wb-grid-2">
@@ -115,8 +126,8 @@
             <div class="wb-card-header"><strong>Output Log</strong></div>
 
             <div class="wb-card-body">
-                @if ($siteImport->output_log)
-                    <pre class="wb-code-block">{{ $siteImport->output_log }}</pre>
+                @if (trim($outputLog) !== '')
+                    <pre class="wb-code-block">{{ $outputLog }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
                         <div class="wb-empty-title">No output log captured</div>

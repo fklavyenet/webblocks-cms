@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.32.42
+
+- Prepare v1.32.42 as a focused fresh-consumer import readiness hotfix by repairing shipped core block type, slot type, and page layout slot catalog rows before site import validation when an import package references missing core rows.
+- Improve site import catalog diagnostics so admins see exact missing block type slugs and slot type handles instead of the generic missing catalog failure.
+- Reduce duplicate import failure rendering on the import detail screen while keeping one top-level error, one status detail, and a concise output log.
+
 ## 1.32.41
 
 - Prepare v1.32.41 as a focused fresh-consumer media folder schema hotfix by restoring the historical nullable `media_folders.slug` column in the package fresh-install schema.

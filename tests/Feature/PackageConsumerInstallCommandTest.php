@@ -12,12 +12,16 @@ use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Install\InstallState;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
@@ -217,6 +221,8 @@ PHP;
 
         $this->assertGreaterThan(0, SlotType::query()->count());
         $this->assertGreaterThan(0, PageLayout::query()->count());
+        $this->assertEmpty(array_diff(app(CoreBlockTypeCatalogSyncer::class)->slugs(), BlockType::query()->pluck('slug')->all()));
+        $this->assertEmpty(array_diff($this->coreLayoutSlotTypeSlugs(), SlotType::query()->pluck('slug')->all()));
         $this->assertTrue(Page::query()->exists());
         $this->assertFileExists(public_path('cms/brand/logo-64.png'));
         $this->assertFileExists(public_path('cms/brand/favicon-32x32.png'));
@@ -252,6 +258,35 @@ PHP;
         $this->assertDatabaseMissing('users', ['email' => 'second-admin@example.com']);
         $this->assertSame(WebBlocks::version(), SystemSetting::query()->where('key', InstalledVersionStore::VERSION_KEY)->value('value'));
         $this->assertSame(1, Site::query()->where('handle', 'default')->orWhere('handle', 'consumer-site')->count());
+    }
+
+    #[Test]
+    public function install_command_repairs_missing_core_catalog_rows_idempotently(): void
+    {
+        $this->artisan('webblocks:install', [
+            '--name' => 'Repair Admin',
+            '--email' => 'repair-admin@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        BlockType::query()->where('slug', 'header-actions')->delete();
+        PageLayoutSlot::query()->where('slot_name', 'footer')->delete();
+        SlotType::query()->where('slug', 'footer')->delete();
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Repair Admin Two',
+            '--email' => 'repair-admin-two@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $this->assertDatabaseHas('block_types', ['slug' => 'header-actions']);
+        $this->assertDatabaseHas('slot_types', ['slug' => 'footer']);
+        $this->assertDatabaseHas('page_layout_slots', ['slot_name' => 'footer']);
+        $this->assertSame(1, BlockType::query()->where('slug', 'header-actions')->count());
+        $this->assertSame(1, SlotType::query()->where('slug', 'footer')->count());
     }
 
     #[Test]
@@ -318,5 +353,15 @@ PHP;
         $this->assertTrue(Schema::hasTable('cache'));
         $this->assertTrue(Schema::hasTable('cache_locks'));
         $this->assertSame(1, User::query()->where('role', 'super_admin')->count());
+    }
+
+    private function coreLayoutSlotTypeSlugs(): array
+    {
+        return collect(PageLayoutCatalog::definitions())
+            ->flatMap(fn (array $definition) => collect($definition['managed_slots'] ?? [])->pluck('slot_type_slug'))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }
