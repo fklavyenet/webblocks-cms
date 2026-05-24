@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\BuildsCloneableSite;
 use Tests\TestCase;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
@@ -27,8 +28,14 @@ class SiteExportImportAdminTest extends TestCase
     {
         Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
-        [$site] = $this->seedCloneableSite(withFile: true);
+        [$site, $heroAsset] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
+        $folder = MediaFolder::query()->create([
+            'name' => 'Branding',
+            'slug' => 'branding',
+        ]);
+
+        $heroAsset->update(['folder_id' => $folder->id]);
 
         $response = $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
             'site_id' => $site->id,
@@ -152,8 +159,14 @@ class SiteExportImportAdminTest extends TestCase
     {
         Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
-        [$site] = $this->seedCloneableSite(withFile: true);
+        [$site, $heroAsset] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
+        $folder = MediaFolder::query()->create([
+            'name' => 'Branding',
+            'slug' => 'branding',
+        ]);
+
+        $heroAsset->update(['folder_id' => $folder->id]);
 
         $response = $this->actingAs($user)
             ->from(route('admin.sites.index', ['modal' => 'export-site', 'export_site' => $site->id]))
@@ -211,8 +224,14 @@ class SiteExportImportAdminTest extends TestCase
     {
         Storage::fake(SiteTransferDisk::DISK);
         Storage::fake('public');
-        [$site] = $this->seedCloneableSite(withFile: true);
+        [$site, $heroAsset] = $this->seedCloneableSite(withFile: true);
         $user = User::factory()->superAdmin()->create();
+        $folder = MediaFolder::query()->create([
+            'name' => 'Branding',
+            'slug' => 'branding',
+        ]);
+
+        $heroAsset->update(['folder_id' => $folder->id]);
 
         $this->actingAs($user)->post(route('admin.site-transfers.exports.store'), [
             'site_id' => $site->id,
@@ -235,6 +254,7 @@ class SiteExportImportAdminTest extends TestCase
 
         $runResponse->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
         $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+        $this->assertGreaterThanOrEqual(2, MediaFolder::query()->where('slug', 'branding')->count());
     }
 
     #[Test]

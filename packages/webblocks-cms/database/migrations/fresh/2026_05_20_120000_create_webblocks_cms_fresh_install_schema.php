@@ -401,6 +401,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('parent_id')->nullable()->constrained('media_folders')->nullOnDelete();
             $table->string('name');
+            $table->string('slug')->nullable();
             $table->timestamps();
         });
 

@@ -233,6 +233,31 @@ class PackageFreshInstallMigrationTest extends TestCase
     }
 
     #[Test]
+    public function fresh_media_folders_schema_declares_the_historical_slug_column(): void
+    {
+        $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
+        $historicalMigration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/2026_04_11_120000_create_asset_folders_table.php'));
+
+        $this->assertTrue(Schema::hasTable('media_folders'));
+        $this->assertTrue(Schema::hasColumn('media_folders', 'slug'));
+        $this->assertStringContainsString('$table->string(\'slug\')->nullable();', $historicalMigration);
+        $this->assertStringContainsString('$table->string(\'slug\')->nullable();', $migration);
+
+        DB::table('media_folders')->insert([
+            'parent_id' => null,
+            'name' => 'Branding',
+            'slug' => 'branding',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->assertDatabaseHas('media_folders', [
+            'name' => 'Branding',
+            'slug' => 'branding',
+        ]);
+    }
+
+    #[Test]
     public function fresh_page_translation_schema_matches_site_scoped_foreign_key_contract(): void
     {
         $migration = (string) file_get_contents(base_path('packages/webblocks-cms/database/migrations/fresh/2026_05_20_120000_create_webblocks_cms_fresh_install_schema.php'));
@@ -248,7 +273,7 @@ class PackageFreshInstallMigrationTest extends TestCase
             "\$table->foreign(['page_id', 'site_id'], 'page_translations_page_id_site_id_foreign')",
             "->references(['id', 'site_id'])",
             "->on('pages')",
-            "->cascadeOnDelete();",
+            '->cascadeOnDelete();',
         ] as $expectedFragment) {
             $this->assertStringContainsString($expectedFragment, $migration);
         }

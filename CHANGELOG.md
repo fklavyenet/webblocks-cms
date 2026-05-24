@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.32.41
+
+- Prepare v1.32.41 as a focused fresh-consumer media folder schema hotfix by restoring the historical nullable `media_folders.slug` column in the package fresh-install schema.
+- Add an idempotent package update repair migration that adds `media_folders.slug` to affected existing installs and backfills missing folder slugs from folder names without rewriting existing slugs.
+- Extend fresh schema, update migration, and site Export / Import coverage so packages containing media folders with slugs import cleanly on fresh consumer schemas.
+
 ## 1.32.40
 
 - Prepare v1.32.40 as a focused fresh-consumer Export / Import hotfix by registering the package default `site-transfers` filesystem disk when the host app has not defined one, preserving custom host disk config, and creating `storage/app/site-transfers` during `webblocks:install`.
