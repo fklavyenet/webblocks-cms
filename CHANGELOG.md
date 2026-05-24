@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.44
+
+- Prepare v1.32.44 as a focused fresh-consumer public routing hotfix by removing the untouched Laravel welcome `/` route during `webblocks:install` when it is safe, with a timestamped backup first.
+- Preserve custom or ambiguous `routes/web.php` files while warning installers when the welcome route cleanup is skipped, keeping CMS public routing from being shadowed on clean Composer installs.
+
 ## 1.32.43
 
 - Prepare v1.32.43 as a focused import catalog compatibility hotfix by restoring product-known transitional block type rows for `card-grid` and `navigation-auto` through the core block type sync path.

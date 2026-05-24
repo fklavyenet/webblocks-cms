@@ -22,6 +22,7 @@ use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\Install\LaravelSupportTableInstaller;
+use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -52,6 +53,7 @@ class InstallWebBlocksCmsCommand extends Command
         private readonly InstallState $installState,
         private readonly InstalledVersionStore $installedVersionStore,
         private readonly LaravelSupportTableInstaller $laravelSupportTableInstaller,
+        private readonly LaravelWelcomeRouteCleaner $laravelWelcomeRouteCleaner,
     ) {
         parent::__construct();
     }
@@ -62,6 +64,7 @@ class InstallWebBlocksCmsCommand extends Command
 
         $this->ensureCmsConfigIsResolvable();
         $this->publishPackageConfigIfMissing();
+        $this->ensurePublicRoutesCanResolveToCms();
         $this->ensureUserModelIsCmsAware();
         $this->runPackageMigrations();
         $this->ensureLaravelSupportTables();
@@ -79,6 +82,27 @@ class InstallWebBlocksCmsCommand extends Command
         $this->components->info('WebBlocks CMS is ready. Open /admin to sign in.');
 
         return self::SUCCESS;
+    }
+
+    private function ensurePublicRoutesCanResolveToCms(): void
+    {
+        $result = $this->laravelWelcomeRouteCleaner->clean(config('webblocks-cms.install.web_routes_path'));
+
+        if ($result->removedWelcomeRoute()) {
+            $message = 'Removed untouched Laravel welcome route so WebBlocks CMS can serve public routes.';
+
+            if ($result->backupPath) {
+                $message .= ' Backup created at '.$result->backupPath.'.';
+            }
+
+            $this->components->info($message);
+
+            return;
+        }
+
+        if ($result->skippedCustomRouteFile()) {
+            $this->components->warn('Skipped welcome route cleanup because routes/web.php is custom.');
+        }
     }
 
     private function ensureUserModelIsCmsAware(): void

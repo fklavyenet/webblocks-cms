@@ -12,6 +12,7 @@ return [
     ],
     'install' => [
         'load_routes' => env('WEBBLOCKS_CMS_INSTALL_LOAD_ROUTES'),
+        'web_routes_path' => env('WEBBLOCKS_CMS_WEB_ROUTES_PATH'),
     ],
     'middleware' => [
         'register_aliases' => env('WEBBLOCKS_CMS_REGISTER_MIDDLEWARE_ALIASES', true),

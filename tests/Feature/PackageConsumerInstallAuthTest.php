@@ -2,17 +2,7 @@
 
 namespace Tests\Feature;
 
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\BlockType;
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SiteExport;
-use WebBlocks\Cms\Models\SiteImport;
-use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Models\SystemBackup;
 use App\Models\User;
-use WebBlocks\Cms\Support\System\SystemBackupManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
@@ -22,6 +12,16 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController as PackageSiteExpo
 use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController as PackageSiteImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController as PackageSitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController as PackageSystemUpdateController;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Support\System\SystemBackupManager;
 
 class PackageConsumerInstallAuthTest extends TestCase
 {
@@ -86,6 +86,7 @@ class PackageConsumerInstallAuthTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Install WebBlocks CMS');
+        $response->assertDontSee('Laravel');
     }
 
     #[Test]

@@ -48,6 +48,7 @@ ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" -
 `webblocks:install` now:
 
 - publishes `config/webblocks-cms.php` when needed
+- removes the untouched fresh Laravel welcome route from `routes/web.php` when it is safe, with a timestamped backup first, so CMS public routes can serve `/`
 - safely patches `App\Models\User` with a package auth trait and creates a backup first
 - runs the package fresh-install CMS schema for clean consumers
 - creates required Laravel support tables for database-backed session and cache drivers when they are configured, without running the host application's normal migrations

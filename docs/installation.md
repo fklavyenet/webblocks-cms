@@ -59,6 +59,7 @@ Supported options:
 What `webblocks:install` does:
 
 - publishes `config/webblocks-cms.php` when the host app does not already have it
+- removes the untouched fresh Laravel welcome route from `routes/web.php` when it is safe, with a timestamped backup first, so CMS public routes can serve `/`
 - patches `app/Models/User.php` with `WebBlocks\Cms\Auth\Concerns\HasWebBlocksCmsAccess`
 - creates a timestamped backup before modifying `User.php`
 - skips patching when the trait is already present

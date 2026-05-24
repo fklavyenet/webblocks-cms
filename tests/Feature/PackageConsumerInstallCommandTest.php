@@ -34,19 +34,25 @@ class PackageConsumerInstallCommandTest extends TestCase
 
     private string $tempUserModelPath;
 
+    private string $tempRoutePath;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->tempUserModelPath = storage_path('framework/testing/user-models/User-'.Str::uuid().'.php');
+        $this->tempRoutePath = storage_path('framework/testing/routes/web-'.Str::uuid().'.php');
         File::ensureDirectoryExists(dirname($this->tempUserModelPath));
+        File::ensureDirectoryExists(dirname($this->tempRoutePath));
+        config()->set('webblocks-cms.install.web_routes_path', $this->tempRoutePath);
     }
 
     protected function tearDown(): void
     {
         $backupFiles = glob($this->tempUserModelPath.'.webblocks-cms.*.bak') ?: [];
+        $routeBackupFiles = glob($this->tempRoutePath.'.webblocks-cms.*.bak') ?: [];
 
-        foreach (array_merge([$this->tempUserModelPath], $backupFiles) as $path) {
+        foreach (array_merge([$this->tempUserModelPath, $this->tempRoutePath], $backupFiles, $routeBackupFiles) as $path) {
             if (is_file($path)) {
                 @unlink($path);
             }
@@ -145,6 +151,85 @@ PHP;
             $this->assertSame($original, (string) File::get($this->tempUserModelPath));
             $this->assertNull($patcher->lastBackupPath());
         }
+    }
+
+    #[Test]
+    public function install_command_removes_stock_laravel_welcome_route_and_creates_backup(): void
+    {
+        File::put($this->tempRoutePath, $this->stockLaravelWelcomeRouteFile());
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Route Admin',
+            '--email' => 'route-admin@example.com',
+            '--password' => 'secret-password',
+            '--site-name' => 'Route Site',
+            '--site-handle' => 'route-site',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])
+            ->expectsOutputToContain('Removed untouched Laravel welcome route so WebBlocks CMS can serve public routes.')
+            ->assertExitCode(0);
+
+        $contents = (string) File::get($this->tempRoutePath);
+        $this->assertStringNotContainsString("return view('welcome');", $contents);
+        $this->assertStringContainsString('use Illuminate\Support\Facades\Route;', $contents);
+
+        $backupFiles = glob($this->tempRoutePath.'.webblocks-cms.*.bak') ?: [];
+        $this->assertCount(1, $backupFiles);
+        $this->assertSame($this->stockLaravelWelcomeRouteFile(), (string) File::get($backupFiles[0]));
+    }
+
+    #[Test]
+    public function install_command_does_not_overwrite_custom_route_file(): void
+    {
+        $customRoutes = <<<'PHP'
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index']);
+Route::get('/status', fn () => 'ok');
+PHP;
+
+        File::put($this->tempRoutePath, $customRoutes);
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Custom Route Admin',
+            '--email' => 'custom-route-admin@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame($customRoutes, (string) File::get($this->tempRoutePath));
+        $this->assertSame([], glob($this->tempRoutePath.'.webblocks-cms.*.bak') ?: []);
+    }
+
+    #[Test]
+    public function install_command_welcome_route_cleanup_is_idempotent(): void
+    {
+        File::put($this->tempRoutePath, $this->stockLaravelWelcomeRouteFile());
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Idempotent Route Admin',
+            '--email' => 'idempotent-route-admin@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+            '--force' => true,
+        ])->assertExitCode(0);
+
+        $afterFirstRun = (string) File::get($this->tempRoutePath);
+        $firstBackupFiles = glob($this->tempRoutePath.'.webblocks-cms.*.bak') ?: [];
+
+        $this->artisan('webblocks:install', [
+            '--name' => 'Idempotent Route Admin Again',
+            '--email' => 'idempotent-route-admin-again@example.com',
+            '--password' => 'secret-password',
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame($afterFirstRun, (string) File::get($this->tempRoutePath));
+        $this->assertSame($firstBackupFiles, glob($this->tempRoutePath.'.webblocks-cms.*.bak') ?: []);
     }
 
     #[Test]
@@ -369,5 +454,18 @@ PHP;
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function stockLaravelWelcomeRouteFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+PHP;
     }
 }
