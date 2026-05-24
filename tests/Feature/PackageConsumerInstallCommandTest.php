@@ -223,6 +223,8 @@ PHP;
         $this->assertGreaterThan(0, PageLayout::query()->count());
         $this->assertEmpty(array_diff(app(CoreBlockTypeCatalogSyncer::class)->slugs(), BlockType::query()->pluck('slug')->all()));
         $this->assertEmpty(array_diff($this->coreLayoutSlotTypeSlugs(), SlotType::query()->pluck('slug')->all()));
+        $this->assertDatabaseHas('block_types', ['slug' => 'card-grid', 'status' => 'draft']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto', 'status' => 'published']);
         $this->assertTrue(Page::query()->exists());
         $this->assertFileExists(public_path('cms/brand/logo-64.png'));
         $this->assertFileExists(public_path('cms/brand/favicon-32x32.png'));
@@ -271,7 +273,7 @@ PHP;
             '--force' => true,
         ])->assertExitCode(0);
 
-        BlockType::query()->where('slug', 'header-actions')->delete();
+        BlockType::query()->whereIn('slug', ['header-actions', 'card-grid', 'navigation-auto'])->delete();
         PageLayoutSlot::query()->where('slot_name', 'footer')->delete();
         SlotType::query()->where('slug', 'footer')->delete();
 
@@ -283,9 +285,13 @@ PHP;
         ])->assertExitCode(0);
 
         $this->assertDatabaseHas('block_types', ['slug' => 'header-actions']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'card-grid']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto']);
         $this->assertDatabaseHas('slot_types', ['slug' => 'footer']);
         $this->assertDatabaseHas('page_layout_slots', ['slot_name' => 'footer']);
         $this->assertSame(1, BlockType::query()->where('slug', 'header-actions')->count());
+        $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
+        $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());
         $this->assertSame(1, SlotType::query()->where('slug', 'footer')->count());
     }
 

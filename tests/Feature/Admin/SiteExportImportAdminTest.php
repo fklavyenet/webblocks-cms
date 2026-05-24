@@ -420,6 +420,80 @@ class SiteExportImportAdminTest extends TestCase
     }
 
     #[Test]
+    public function import_repairs_legacy_core_block_types_before_validation(): void
+    {
+        Storage::fake(SiteTransferDisk::DISK);
+        [$site] = $this->seedCloneableSite();
+        $user = User::factory()->superAdmin()->create();
+        $page = Page::query()->where('site_id', $site->id)->orderBy('id')->skip(1)->firstOrFail();
+        $mainSlot = SlotType::query()->where('slug', 'main')->firstOrFail();
+        $cardGridType = BlockType::query()->updateOrCreate(
+            ['slug' => 'card-grid'],
+            [
+                'name' => 'Card Grid',
+                'category' => 'legacy',
+                'description' => 'Source package card grid.',
+                'source_type' => 'static',
+                'status' => 'draft',
+                'sort_order' => 90,
+            ],
+        );
+        $navigationAutoType = BlockType::query()->updateOrCreate(
+            ['slug' => 'navigation-auto'],
+            [
+                'name' => 'Navigation Auto',
+                'category' => 'navigation',
+                'description' => 'Source package navigation block.',
+                'source_type' => 'navigation',
+                'is_system' => true,
+                'status' => 'published',
+                'sort_order' => 91,
+            ],
+        );
+
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'card-grid',
+            'block_type_id' => $cardGridType->id,
+            'source_type' => 'static',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlot->id,
+            'sort_order' => 20,
+            'status' => 'published',
+        ]);
+        Block::query()->create([
+            'page_id' => $page->id,
+            'type' => 'navigation-auto',
+            'block_type_id' => $navigationAutoType->id,
+            'source_type' => 'navigation',
+            'slot' => 'main',
+            'slot_type_id' => $mainSlot->id,
+            'sort_order' => 21,
+            'status' => 'published',
+        ]);
+
+        $siteImport = $this->inspectExportedSitePackage($user, $site);
+
+        $cardGridType->update(['slug' => 'card-grid-local']);
+        $navigationAutoType->update(['slug' => 'navigation-auto-local']);
+
+        $response = $this->actingAs($user)->post(route('admin.site-transfers.imports.run', $siteImport), [
+            'site_name' => 'Imported Site',
+            'site_handle' => 'imported-site',
+            'site_domain' => '',
+        ]);
+
+        $response->assertRedirect(route('admin.site-transfers.imports.show', $siteImport));
+        $response->assertSessionDoesntHaveErrors();
+        $this->assertDatabaseHas('sites', ['handle' => 'imported-site']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'card-grid']);
+        $this->assertDatabaseHas('block_types', ['slug' => 'navigation-auto']);
+        $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
+        $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());
+        $this->assertStringContainsString('Synchronized core block and slot catalogs before import.', (string) $siteImport->fresh()->output_log);
+    }
+
+    #[Test]
     public function import_show_does_not_repeat_same_failure_message_in_each_status_area(): void
     {
         $user = User::factory()->superAdmin()->create();

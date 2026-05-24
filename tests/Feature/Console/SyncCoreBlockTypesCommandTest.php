@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Console;
 
-use WebBlocks\Cms\Models\BlockType;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\BlockType;
 
 class SyncCoreBlockTypesCommandTest extends TestCase
 {
@@ -76,6 +76,34 @@ class SyncCoreBlockTypesCommandTest extends TestCase
     }
 
     #[Test]
+    public function sync_command_restores_legacy_import_compatibility_block_types_without_duplicates(): void
+    {
+        $this->artisan('block-types:sync-core')->assertExitCode(0);
+
+        BlockType::query()->whereIn('slug', ['card-grid', 'navigation-auto'])->delete();
+
+        $this->artisan('block-types:sync-core')->assertExitCode(0);
+        $this->artisan('block-types:sync-core')->assertExitCode(0);
+
+        $this->assertSame(1, BlockType::query()->where('slug', 'card-grid')->count());
+        $this->assertSame(1, BlockType::query()->where('slug', 'navigation-auto')->count());
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'card-grid',
+            'name' => 'Card Grid',
+            'category' => 'legacy',
+            'status' => 'draft',
+        ]);
+        $this->assertDatabaseHas('block_types', [
+            'slug' => 'navigation-auto',
+            'name' => 'Navigation Auto',
+            'category' => 'navigation',
+            'source_type' => 'navigation',
+            'is_system' => 1,
+            'status' => 'published',
+        ]);
+    }
+
+    #[Test]
     public function custom_block_types_are_preserved_by_the_sync_command(): void
     {
         BlockType::query()->create([
@@ -112,7 +140,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
         $this->artisan('block-types:sync-core')->assertExitCode(0);
 
         $this->assertSame(1, BlockType::query()->where('slug', 'header')->count());
-        $this->assertSame(40, BlockType::query()->whereIn('slug', [
+        $this->assertSame(42, BlockType::query()->whereIn('slug', [
             'header',
             'plain_text',
             'rich-text',
@@ -135,6 +163,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'quote',
             'link-list',
             'link-list-item',
+            'navigation-auto',
             'toc',
             'alert',
             'contact_form',
@@ -153,6 +182,7 @@ class SyncCoreBlockTypesCommandTest extends TestCase
             'search-form',
             'sidebar-footer',
             'html',
+            'card-grid',
         ])->count());
     }
 

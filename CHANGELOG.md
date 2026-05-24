@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.43
+
+- Prepare v1.32.43 as a focused import catalog compatibility hotfix by restoring product-known transitional block type rows for `card-grid` and `navigation-auto` through the core block type sync path.
+- Keep import diagnostics precise for truly custom missing block types while allowing fresh and package-updated installs to repair these shipped compatibility rows before import validation.
+
 ## 1.32.42
 
 - Prepare v1.32.42 as a focused fresh-consumer import readiness hotfix by repairing shipped core block type, slot type, and page layout slot catalog rows before site import validation when an import package references missing core rows.
