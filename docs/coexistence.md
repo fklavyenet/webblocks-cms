@@ -20,15 +20,15 @@ CMS should remain package-first and avoid collisions with host application route
 
 The CMS admin prefix should be configurable.
 
-For coexistence installs, the recommended CMS admin prefix is `/cms`. The host application may own `/admin`, and CMS must not assume that `/admin` is always available or CMS-owned.
+For coexistence installs, the recommended CMS admin prefix is `/webadmin`. The host application may own `/admin`, and CMS must not assume that `/admin` is always available or CMS-owned. The `/cms` path segment is reserved for CMS static assets such as `/cms/css`, `/cms/js`, and `/cms/brand`.
 
-Standalone installs now use `/cms` as the canonical CMS admin prefix. Documentation, design, and future implementation work should keep current behavior and longer-term configurable prefix direction clearly separated.
+Standalone installs now use `/webadmin` as the canonical CMS admin prefix. Documentation, design, and future implementation work should keep current behavior and longer-term configurable prefix direction clearly separated.
 
 ## Host-Owned Login
 
 Within a shared Laravel host, login and registration are host application responsibilities. The shared `users` table is the identity and login layer.
 
-CMS should not require a separate mandatory CMS login system in co-installed apps. When a guest user requests the CMS admin area in a host-owned auth app, the request should use the host login flow, usually `/login`, while preserving the intended CMS URL for the redirect after login. In package-owned standalone auth, the CMS login route is `/cms/login`.
+CMS should not require a separate mandatory CMS login system in co-installed apps. When a guest user requests the CMS admin area in a host-owned auth app, the request should use the host login flow, usually `/login`, while preserving the intended CMS URL for the redirect after login. In package-owned standalone auth, the CMS login route is `/webadmin/login`.
 
 ## CMS-Owned Authorization
 
@@ -59,16 +59,17 @@ Common coexistence routing should be designed around clear ownership:
 
 - `/login` -> host identity and login
 - `/admin` -> host product admin, when the host product owns one
-- `/cms` -> WebBlocks CMS admin, recommended for coexistence installs
+- `/webadmin` -> WebBlocks CMS admin, recommended for coexistence installs
+- `/cms/...` -> WebBlocks CMS static assets
 - public site routes -> CMS public rendering, when CMS owns public content for the request
 
-Standalone CMS installs use `/cms` for CMS-owned admin routes, with future configurable prefix settings still a target direction.
+Standalone CMS installs use `/webadmin` for CMS-owned admin routes, with future configurable prefix settings still a target direction.
 
 ## Current Implementation Vs Target Direction
 
-Current implementation uses `/cms` as the canonical CMS admin prefix and does not intentionally expose CMS admin behavior through `/admin`.
+Current implementation uses `/webadmin` as the canonical CMS admin prefix and does not intentionally expose CMS admin behavior through `/admin` or `/cms`.
 
-The target direction remains a configurable CMS admin prefix, with `/cms` as the default so a host product can keep `/admin` for its own administration area.
+The target direction remains a configurable CMS admin prefix, with `/webadmin` as the default so a host product can keep `/admin` for its own administration area and CMS assets can remain under `/cms`.
 
 Until implementation catches up, documentation and designs should explicitly state whether they describe current behavior or target architecture.
 

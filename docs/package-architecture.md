@@ -111,7 +111,7 @@ This split keeps Laravel application ownership with the install while CMS produc
 
 Package-first CMS installs must preserve host application boundaries when CMS is installed beside another Laravel product. CMS should avoid route, config, view, and table collisions with the host app, and it must not assume that the host app's `/admin` route belongs to CMS.
 
-The canonical CMS admin prefix is `/cms`, with a configurable prefix still the target direction for future coexistence flexibility. Host-owned login and CMS-owned authorization decisions are documented in [Coexistence](coexistence.md).
+The canonical CMS admin prefix is `/webadmin`, with a configurable prefix still the target direction for future coexistence flexibility. Host-owned login and CMS-owned authorization decisions are documented in [Coexistence](coexistence.md). CMS static assets remain under `public/cms` and are served from `/cms/...`.
 
 ## Migration Phases
 
@@ -323,7 +323,7 @@ Phase 1: guarded package diagnostics runtime slice
 
 Phase 2A: first focused package admin slice
 
-- package `routes/admin.php` originally introduced one small package-owned admin runtime status slice: `admin.webblocks-cms.runtime-status`, now mounted at `/cms/_webblocks-cms/runtime-status`
+- package `routes/admin.php` originally introduced one small package-owned admin runtime status slice: `admin.webblocks-cms.runtime-status`, now mounted at `/webadmin/_webblocks-cms/runtime-status`
 - that status route uses a package-owned controller and package-owned Blade view under `packages/webblocks-cms/resources/views/admin/runtime-status.blade.php`
 - package admin route loading is now enabled by default and the active CMS admin route tree now loads from package `routes/admin.php`
 - the reserved admin status route itself stays off by default behind `webblocks-cms.admin.load_status_route`

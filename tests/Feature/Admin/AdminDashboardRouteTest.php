@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\VisitorEvent;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\WebBlocks;
+use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class AdminDashboardRouteTest extends TestCase
 {
@@ -71,13 +72,13 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function admin_dashboard_route_name_points_to_canonical_cms_path(): void
+  public function admin_dashboard_route_name_points_to_canonical_webadmin_path(): void
   {
-    $this->assertSame('/cms', route('admin.dashboard', absolute: false));
+    $this->assertSame('/webadmin', route('admin.dashboard', absolute: false));
   }
 
   #[Test]
-  public function cms_root_opens_dashboard_for_authenticated_super_admins(): void
+  public function webadmin_root_opens_dashboard_for_authenticated_super_admins(): void
   {
     $user = User::factory()->superAdmin()->create();
     $site = Site::query()->where('is_primary', true)->firstOrFail();
@@ -99,7 +100,7 @@ class AdminDashboardRouteTest extends TestCase
       'visited_at' => CarbonImmutable::today()->setTime(9, 0),
     ]);
 
-    $response = $this->actingAs($user)->get('/cms');
+    $response = $this->actingAs($user)->get('/webadmin');
 
     $response->assertOk();
     $response->assertSee('Dashboard');
@@ -124,7 +125,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function site_scoped_admin_users_are_redirected_from_cms_root_to_allowed_admin_landing_page(): void
+  public function site_scoped_admin_users_are_redirected_from_webadmin_root_to_allowed_admin_landing_page(): void
   {
     $site = Site::query()->where('is_primary', true)->firstOrFail();
     $siteAdmin = User::factory()->siteAdmin()->create();
@@ -132,8 +133,8 @@ class AdminDashboardRouteTest extends TestCase
     $siteAdmin->sites()->sync([$site->id]);
     $editor->sites()->sync([$site->id]);
 
-    $siteAdminResponse = $this->actingAs($siteAdmin)->get('/cms');
-    $editorResponse = $this->actingAs($editor)->get('/cms/');
+    $siteAdminResponse = $this->actingAs($siteAdmin)->get('/webadmin');
+    $editorResponse = $this->actingAs($editor)->get('/webadmin/');
 
     $siteAdminResponse->assertRedirect(route('admin.pages.index', absolute: false));
     $editorResponse->assertRedirect(route('admin.pages.index', absolute: false));
@@ -143,13 +144,13 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function reported_cms_root_case_does_not_forbid_a_user_who_can_open_sites(): void
+  public function reported_root_case_does_not_forbid_a_user_who_can_open_sites(): void
   {
     $user = User::factory()->superAdmin()->create();
 
-    $this->actingAs($user)->get('/cms/sites')->assertOk();
-    $this->actingAs($user)->get('/cms')->assertOk();
-    $this->actingAs($user)->get('/cms/')->assertOk();
+    $this->actingAs($user)->get('/webadmin/sites')->assertOk();
+    $this->actingAs($user)->get('/webadmin')->assertOk();
+    $this->actingAs($user)->get('/webadmin/')->assertOk();
   }
 
   #[Test]
@@ -174,21 +175,42 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function cms_dashboard_path_redirects_to_canonical_cms_path(): void
+  public function webadmin_dashboard_path_redirects_to_canonical_webadmin_path(): void
   {
     $user = User::factory()->editor()->create();
 
-    $response = $this->actingAs($user)->get('/cms/dashboard');
+    $response = $this->actingAs($user)->get('/webadmin/dashboard');
 
     $response->assertRedirect(route('admin.dashboard', absolute: false));
   }
 
   #[Test]
-  public function guests_are_redirected_to_login_from_canonical_cms_path(): void
+  public function guests_are_redirected_to_login_from_canonical_webadmin_path(): void
   {
-    $response = $this->get('/cms');
+    $response = $this->get('/webadmin');
 
     $response->assertRedirect(route('login'));
+  }
+
+  #[Test]
+  public function cms_admin_routes_are_absent_and_static_asset_prefix_remains_separate(): void
+  {
+    foreach (app('router')->getRoutes() as $route) {
+      $this->assertNotSame('cms', $route->uri());
+      $this->assertFalse(str_starts_with($route->uri(), 'cms/'), $route->uri());
+    }
+
+    $adminPrefix = strtok(ltrim(route('admin.dashboard', absolute: false), '/'), '/');
+    $assetPrefix = basename(WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
+
+    $this->assertSame('webadmin', $adminPrefix);
+    $this->assertSame('cms', $assetPrefix);
+    $this->assertNotSame($assetPrefix, $adminPrefix);
+    $this->assertFileExists(public_path('cms/css/admin.css'));
+    $this->assertFileExists(public_path('cms/js/admin/core.js'));
+    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileDoesNotExist(public_path('cms/index.php'));
+    $this->assertFileDoesNotExist(base_path('packages/webblocks-cms/public/cms/index.php'));
   }
 
   #[Test]
@@ -207,7 +229,7 @@ class AdminDashboardRouteTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($user)->get('/cms');
+    $response = $this->actingAs($user)->get('/webadmin');
 
     $response->assertOk();
     $response->assertSee('cms/js/admin/core.js', false);
@@ -225,7 +247,7 @@ class AdminDashboardRouteTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($user)->get('/cms');
+    $response = $this->actingAs($user)->get('/webadmin');
 
     $response->assertOk();
     $response->assertSee(WebBlocks::uiCssUrl(), false);
@@ -239,7 +261,7 @@ class AdminDashboardRouteTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($user)->get('/cms');
+    $response = $this->actingAs($user)->get('/webadmin');
 
     $response->assertOk();
     $response->assertSeeInOrder([
@@ -261,7 +283,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function top_level_dashboard_redirect_uses_canonical_cms_path(): void
+  public function top_level_dashboard_redirect_uses_canonical_webadmin_path(): void
   {
     $user = User::factory()->editor()->create();
 

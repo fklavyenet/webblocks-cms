@@ -59,7 +59,7 @@ class SystemSettingsTest extends TestCase
     $xpath = new DOMXPath($document);
     $form = $this->settingsForm($xpath);
 
-    $this->assertSame(1, $xpath->query('//form[contains(@action, "/cms/system/settings")]')->length);
+    $this->assertSame(1, $xpath->query('//form[contains(@action, "/webadmin/system/settings")]')->length);
     $this->assertSame(1, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $form)->length);
     $this->assertSame(1, $this->queryElements($xpath, './/a[normalize-space()="Cancel"]', $form)->length);
 
@@ -304,7 +304,7 @@ class SystemSettingsTest extends TestCase
 
   private function settingsForm(DOMXPath $xpath): DOMElement
   {
-    $form = $this->queryElements($xpath, './/form[contains(@action, "/cms/system/settings")]', $this->settingsCard($xpath))->item(0);
+    $form = $this->queryElements($xpath, './/form[contains(@action, "/webadmin/system/settings")]', $this->settingsCard($xpath))->item(0);
 
     $this->assertInstanceOf(DOMElement::class, $form);
 

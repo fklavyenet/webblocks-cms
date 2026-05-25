@@ -477,7 +477,7 @@ class MediaManagementTest extends TestCase
     $response->assertSee('cms/js/admin/asset-picker.js', false);
     $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
     $this->assertNotFalse($assetPickerJs);
-    $this->assertStringContainsString("fetch('/cms/media'", $assetPickerJs);
+    $this->assertStringContainsString("fetch('/webadmin/media'", $assetPickerJs);
     $this->assertStringNotContainsString("fetch('/admin/media'", $assetPickerJs);
     $response->assertDontSee("credentials: 'same-origin'", false);
     $response->assertDontSee('if (response.redirected)', false);
@@ -1112,7 +1112,7 @@ class MediaManagementTest extends TestCase
     ]);
 
     $response->assertRedirect();
-    $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+    $this->assertStringContainsString('/webadmin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
     $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
     $block = Block::query()->latest('id')->first();
@@ -1237,7 +1237,7 @@ class MediaManagementTest extends TestCase
     ]);
 
     $response->assertRedirect();
-    $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+    $this->assertStringContainsString('/webadmin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
     $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
     $block = Block::query()->latest('id')->first();
@@ -1320,7 +1320,7 @@ class MediaManagementTest extends TestCase
     ]);
 
     $response->assertRedirect();
-    $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+    $this->assertStringContainsString('/webadmin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
     $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
     $block = Block::query()->latest('id')->first();
@@ -1897,7 +1897,7 @@ class MediaManagementTest extends TestCase
     $safeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => $safeReturnUrl]));
     $safeEdit->assertSee('href="'.e($safeReturnUrl).'" class="wb-btn wb-btn-secondary"', false);
 
-    $unsafeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => 'https://evil.example.test/cms/media']));
+    $unsafeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => 'https://evil.example.test/webadmin/media']));
     $unsafeEdit->assertSee('href="'.route('admin.media.index').'" class="wb-btn wb-btn-secondary"', false);
     $unsafeEdit->assertDontSee('evil.example.test');
 
@@ -1917,7 +1917,7 @@ class MediaManagementTest extends TestCase
       'caption' => null,
       'description' => null,
       'folder_id' => null,
-      'return_url' => 'https://evil.example.test/cms/media',
+      'return_url' => 'https://evil.example.test/webadmin/media',
     ]);
     $unsafeUpdate->assertRedirect(route('admin.media.index'));
   }

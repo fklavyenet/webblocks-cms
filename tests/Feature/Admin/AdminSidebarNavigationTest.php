@@ -37,6 +37,8 @@ class AdminSidebarNavigationTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('>Dashboard<', false);
+    $response->assertSee('href="'.route('admin.dashboard').'"', false);
+    $response->assertDontSee('href="'.url('/cms').'"', false);
     $response->assertSee('href="'.route('admin.pages.index').'"', false);
     $response->assertSee('href="'.route('admin.shared-slots.index').'"', false);
     $response->assertSee('href="'.route('admin.navigation.index').'"', false);

@@ -2,7 +2,7 @@
 
 ## Log In To Admin
 
-Open `/cms` and sign in with an active admin account.
+Open `/webadmin` and sign in with an active admin account.
 
 - `super_admin` can access install-level and site-level areas
 - `site_admin` and `editor` can access only the site-scoped admin areas for their assigned sites

@@ -192,7 +192,7 @@ class SharedAdminPartialPackageViewTest extends TestCase
   public function listing_filters_keep_search_first_and_actions_last_through_package_view(): void
   {
     $html = view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.partials.listing-filters', [
-      'action' => '/cms/example',
+      'action' => '/webadmin/example',
       'search' => [
         'id' => 'filter-search',
         'label' => 'Search',
@@ -210,7 +210,7 @@ class SharedAdminPartialPackageViewTest extends TestCase
         ],
       ],
       'showReset' => true,
-      'resetUrl' => '/cms/example',
+      'resetUrl' => '/webadmin/example',
     ])->render();
 
     $searchPosition = strpos($html, 'data-admin-listing-filters-search');
@@ -224,7 +224,7 @@ class SharedAdminPartialPackageViewTest extends TestCase
     $this->assertLessThan($actionsPosition, $fieldsPosition);
     $this->assertStringContainsString('name="search"', $html);
     $this->assertStringContainsString('<button type="submit" class="wb-btn wb-btn-primary">Apply</button>', $html);
-    $this->assertStringContainsString('<a href="/cms/example" class="wb-btn wb-btn-secondary">Reset</a>', $html);
+    $this->assertStringContainsString('<a href="/webadmin/example" class="wb-btn wb-btn-secondary">Reset</a>', $html);
   }
 
   #[Test]
@@ -235,7 +235,7 @@ class SharedAdminPartialPackageViewTest extends TestCase
       45,
       15,
       2,
-      ['path' => '/cms/example']
+      ['path' => '/webadmin/example']
     );
 
     $paginator->appends(['search' => 'alpha', 'status' => 'draft']);

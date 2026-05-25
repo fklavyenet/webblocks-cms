@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.54
+
+- Move the canonical CMS admin and package-owned login namespace from `/cms` to `/webadmin` so admin routes no longer collide with the `public/cms` static asset directory.
+- Remove the `public/cms/index.php` front-controller handoff workaround from root and package public assets while keeping static `/cms/css`, `/cms/js`, and `/cms/brand` asset URLs unchanged.
+
 ## 1.32.53
 
 - Prepare v1.32.53 as a follow-up `/cms/` handoff hotfix by resetting PHP front-controller server variables before loading Laravel from `public/cms/index.php`, preserving the canonical `/cms/` request path instead of letting PHP-FPM treat the CMS asset directory as the application base path.

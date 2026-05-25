@@ -16,7 +16,7 @@ Route::middleware('install.complete')->prefix('install')->name('install.')->grou
 });
 
 Route::middleware(['install.required', 'auth'])->group(function () {
-  Route::redirect('/dashboard', '/cms')->name('dashboard');
+  Route::redirect('/dashboard', '/webadmin')->name('dashboard');
   Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
   Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
   Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

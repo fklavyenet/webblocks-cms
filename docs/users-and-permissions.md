@@ -24,7 +24,7 @@ This role can access:
 - export/import
 - all site content across the install
 
-Only `super_admin` users can open `/cms/users` and manage other CMS accounts.
+Only `super_admin` users can open `/webadmin/users` and manage other CMS accounts.
 
 ### `site_admin`
 
@@ -32,7 +32,7 @@ Only `super_admin` users can open `/cms/users` and manage other CMS accounts.
 
 This role can:
 
-- access `/cms`
+- access `/webadmin`
 - manage content for assigned sites
 - publish pages for assigned sites
 - move pages between workflow states for assigned sites
@@ -45,7 +45,7 @@ This role cannot access install-level system areas such as Users, settings, upda
 
 This role can:
 
-- access `/cms`
+- access `/webadmin`
 - work with content for assigned sites
 - edit pages while they are in `draft`
 - submit pages for review

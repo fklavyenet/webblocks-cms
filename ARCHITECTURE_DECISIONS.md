@@ -13,7 +13,8 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 ## CMS Admin Prefix
 
 - The CMS admin prefix must be configurable.
-- Coexistence installs should use `/cms` as the recommended CMS admin prefix.
+- Coexistence installs should use `/webadmin` as the recommended CMS admin prefix.
+- The `/cms` path segment is reserved for CMS static assets.
 - `/admin` may belong to the host application.
 - CMS must not assume that `/admin` is always CMS-owned.
 - Current implementation and target direction must be documented separately until the route prefix is fully configurable.
@@ -22,7 +23,7 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 
 - In a shared Laravel host, the `users` table is the identity and login layer.
 - Login and registration are host application responsibilities.
-- CMS must not require a separate `/cms/login` style login system.
+- CMS must not require a separate `/webadmin/login` style login system in host-owned auth applications.
 - Guest users who request the CMS admin area should be redirected to the host `/login` page.
 - Login must preserve the intended URL so users can return to the originally requested CMS admin page.
 - Being authenticated does not imply CMS authorization.

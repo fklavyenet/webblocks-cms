@@ -39,7 +39,7 @@ class PackageStatusCommandTest extends TestCase
       ->expectsOutputToContain('Package diagnostic route loaded in active runtime: no (webblocks-cms.diagnostics.package-status at /_webblocks-cms/diagnostics/package-status)')
       ->expectsOutputToContain('Expected package admin route file exists: yes (admin.php)')
       ->expectsOutputToContain('Package admin route file loading enabled: yes (webblocks-cms.admin.load_routes)')
-      ->expectsOutputToContain('Package admin slice loaded in active runtime: no (admin.webblocks-cms.runtime-status at /cms/_webblocks-cms/runtime-status)')
+      ->expectsOutputToContain('Package admin slice loaded in active runtime: no (admin.webblocks-cms.runtime-status at /webadmin/_webblocks-cms/runtime-status)')
       ->expectsOutputToContain('Package icon catalog admin routes loaded in active runtime: yes (admin.system.icons.index, admin.system.icons.update)')
       ->expectsOutputToContain('Expected package public route file exists: yes (public.php)')
       ->expectsOutputToContain('Package public route file loading enabled: yes (webblocks-cms.public.load_routes)')
@@ -136,7 +136,7 @@ class PackageStatusCommandTest extends TestCase
   {
     $this->artisan('webblocks:package-status --view-check')
       ->expectsOutputToContain('Package diagnostic route loaded in active runtime: no (webblocks-cms.diagnostics.package-status at /_webblocks-cms/diagnostics/package-status)')
-      ->expectsOutputToContain('Package admin slice loaded in active runtime: no (admin.webblocks-cms.runtime-status at /cms/_webblocks-cms/runtime-status)')
+      ->expectsOutputToContain('Package admin slice loaded in active runtime: no (admin.webblocks-cms.runtime-status at /webadmin/_webblocks-cms/runtime-status)')
       ->expectsOutputToContain('Package icon catalog admin routes loaded in active runtime: yes (admin.system.icons.index, admin.system.icons.update)')
       ->expectsOutputToContain('Package public slice loaded in active runtime: no (webblocks-cms.public.runtime-status at /_webblocks-cms/runtime-status)')
       ->expectsOutputToContain('Package public runtime routes loaded in active runtime: yes (home, localized.home, search, pages.show, contact-messages.store, public.privacy-consent.sync, admin-api.*)')

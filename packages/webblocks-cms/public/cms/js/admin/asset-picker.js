@@ -629,7 +629,7 @@
 
         var token = document.querySelector('meta[name="csrf-token"]');
 
-        fetch('/cms/media', {
+        fetch('/webadmin/media', {
             method: 'POST',
             headers: token ? { 'X-CSRF-TOKEN': token.getAttribute('content') } : {},
             body: formData,

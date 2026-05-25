@@ -55,7 +55,8 @@ class PackageConsumerInstallAuthTest extends TestCase
   #[Test]
   public function cms_dashboard_redirects_guests_to_the_login_page(): void
   {
-    $this->assertSame('/cms', route('admin.dashboard', absolute: false));
+    $this->assertSame('/webadmin', route('admin.dashboard', absolute: false));
+    $this->assertSame('/webadmin/login', route('login', absolute: false));
 
     $response = $this->get(route('admin.dashboard'));
 
@@ -67,10 +68,21 @@ class PackageConsumerInstallAuthTest extends TestCase
   {
     $routeFile = (string) file_get_contents(base_path('packages/webblocks-cms/routes/auth.php'));
 
-    $this->assertStringContainsString('/cms/login', $routeFile);
-    $this->assertStringContainsString('/cms/logout', $routeFile);
+    $this->assertStringContainsString('/webadmin/login', $routeFile);
+    $this->assertStringContainsString('/webadmin/logout', $routeFile);
+    $this->assertStringNotContainsString('/cms/login', $routeFile);
+    $this->assertStringNotContainsString('/cms/logout', $routeFile);
     $this->assertStringNotContainsString('/admin/login', $routeFile);
     $this->assertStringNotContainsString('/admin/logout', $routeFile);
+  }
+
+  #[Test]
+  public function package_routes_do_not_register_cms_admin_entry_paths(): void
+  {
+    foreach (app('router')->getRoutes() as $route) {
+      $this->assertNotSame('cms', $route->uri());
+      $this->assertFalse(str_starts_with($route->uri(), 'cms/'), $route->uri());
+    }
   }
 
   #[Test]

@@ -60,7 +60,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const DIAGNOSTIC_ROUTE_PATH = '/_webblocks-cms/diagnostics/package-status';
 
-  public const PACKAGE_ADMIN_ROUTE_PATH = '/cms/_webblocks-cms/runtime-status';
+  public const PACKAGE_ADMIN_ROUTE_PATH = '/webadmin/_webblocks-cms/runtime-status';
 
   public const PACKAGE_PUBLIC_ROUTE_PATH = '/_webblocks-cms/runtime-status';
 
