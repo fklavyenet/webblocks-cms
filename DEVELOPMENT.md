@@ -152,6 +152,7 @@ Before tagging a release:
 - start with the risk-based composer scripts documented in `docs/testing-strategy.md`
 - use `ddev composer test:release-fast` as the default gate for small package-native hotfixes
 - use `ddev composer test:package`, `ddev composer test:update`, `ddev composer test:install`, `ddev composer test:artifacts`, or `ddev composer test:admin-smoke` when the changed surface matches that risk area
+- do not include the retired root-managed bridge path in normal package-native release validation; run `ddev composer test:legacy-bridge` only for deliberate archival bridge audits or pre-package-native recovery investigation
 - run `ddev composer test:full` before major releases, broad content/admin changes, schema-wide changes, or whenever focused failures indicate broader risk
 - if a broad run fails, rerun the specific failing test once to distinguish a real regression from a flaky or unrelated failure, then report the result clearly before proceeding
 

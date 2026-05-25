@@ -19,6 +19,7 @@ ddev composer test:full
 - `ddev composer test:install`: fresh Composer consumer install coverage. Use for `webblocks:install`, first-admin setup, package admin route smoke, consumer auth, and fresh install backup behavior.
 - `ddev composer test:artifacts`: release package archive and source checkout boundary coverage. Use whenever `.gitattributes`, package public assets, package composer metadata, updater support files, or GitHub release workflow package shape changes.
 - `ddev composer test:admin-smoke`: lightweight admin route/layout smoke coverage. Use for shared admin layout, sidebar, fixed CMS brand shell, and package admin partial changes.
+- `ddev composer test:legacy-bridge`: manual archival coverage for the retired `1.31.53 -> 1.32.33` root-managed bridge path. Do not use this as a routine package-native release gate.
 - `ddev composer test:full`: the full test suite. Use before major releases, large cross-cutting changes, or when focused results point to broader risk.
 
 ## Release-Critical
@@ -82,7 +83,7 @@ Representative tests:
 - `tests/Feature/PackageWrapperCleanupTest.php`
 - `tests/Feature/Console/PackageStatusCommandTest.php`
 
-Run with `ddev composer test:artifacts` for release package content, package-rooted ZIP layout, `public/cms` asset inclusion, `project/` exclusion, GitHub workflow archive behavior, and package wrapper cleanup boundaries.
+Run with `ddev composer test:artifacts` for current package-native release package content, package-rooted ZIP layout, `public/cms` asset inclusion, `project/` exclusion, GitHub workflow archive behavior, and package wrapper cleanup boundaries. This gate intentionally does not validate the retired root-managed bridge archive shape.
 
 ## Admin-Smoke
 
@@ -111,15 +112,16 @@ Representative tests:
 
 Run focused classes or method filters for block rendering, public shell, media, rich text, shared slots, translation integrity, or page builder changes. These are important but often too broad for package/update-only hotfixes.
 
-## Legacy / Root-Managed Compatibility
+## Retired Legacy / Root-Managed Bridge
 
-Representative tests:
+Manual archival tests:
 
 - `tests/Unit/System/Updates/LegacyRootManagedUpdateCompatibilityTest.php`
-- root-managed bridge assertions inside `tests/Feature/ReleasePackageBoundaryTest.php`
 - bridge archive behavior covered by `scripts/build-root-managed-bridge-archive.sh`
 
-These protect the historical bridge path. Since there are no remaining old root-managed installs to support, keep them out of routine package-native hotfix gates unless changing bridge scripts, old root wrappers, or update compatibility documentation.
+The old root-managed bridge path exists only for historical/manual validation of the completed `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted` transition. Current project policy is that there are no remaining old root-managed installs to support in routine release validation.
+
+Routine package-native gates exclude the `legacy` PHPUnit group and do not depend on `LegacyRootManagedUpdateCompatibilityTest`. Run `ddev composer test:legacy-bridge` only when intentionally auditing the archived bridge script, changing historical update documentation, or investigating a pre-package-native recovery scenario. Do not block normal package-native releases on this retired bridge coverage.
 
 ## Slow / Full-Suite-Only Candidates
 
@@ -137,12 +139,12 @@ These classes are high value but broad, expensive, or content-heavy. Prefer focu
 
 | Test file | Why it may be obsolete or duplicated | Newer coverage for same risk | Recommended action |
 | --- | --- | --- | --- |
-| `tests/Unit/System/Updates/LegacyRootManagedUpdateCompatibilityTest.php` | Protects old `1.31.53` root-managed updater behavior. No old root-managed installs remain to support. | Package-native update coverage in `SystemUpdatesTest`, `UpdateMigrationRunnerTest`, `UpdatePackageExtractorTest`, and `ReleasePackageBoundaryTest`. | Move to legacy-only gate now; consider deleting after one more package-native release cycle if bridge support is formally retired. |
-| Bridge assertions in `tests/Feature/ReleasePackageBoundaryTest.php` | The release artifact test mixes current package-rooted boundaries with root-managed bridge script assertions. | Package-rooted release shape is covered by the same class; bridge behavior is historical. | Split into a dedicated legacy bridge test later, or move bridge assertions behind a `legacy` group if groups are introduced. |
+| `tests/Unit/System/Updates/LegacyRootManagedUpdateCompatibilityTest.php` | Protects old `1.31.53` root-managed updater behavior. No old root-managed installs remain to support. | Package-native update coverage in `SystemUpdatesTest`, `UpdateMigrationRunnerTest`, `UpdatePackageExtractorTest`, and `ReleasePackageBoundaryTest`. | Retained only in the `legacy` group and `ddev composer test:legacy-bridge`; excluded from routine package-native gates. |
+| Bridge assertions in `tests/Feature/ReleasePackageBoundaryTest.php` | The release artifact test mixed current package-rooted boundaries with root-managed bridge script assertions. | Package-rooted release shape is covered by the same class; bridge behavior is historical. | Moved into `LegacyRootManagedUpdateCompatibilityTest` so `ReleasePackageBoundaryTest` stays package-native. |
 | Broad `--filter=Package` release validation habit | Runs unrelated package-named tests and repeats expensive archive/install checks. | `ddev composer test:package` names the intended package gate explicitly. | Replace routine use with script-based gates. |
 | `tests/Feature/PackageConsumerInstallAuthTest.php` plus `PackageConsumerInstallCommandTest.php` | Both exercise fresh install state; one focuses command baseline, the other route/auth smoke. | Together they remain useful for install releases. | Keep both for now; consider shrinking route matrix if install validation becomes too slow. |
 | `tests/Feature/PackageServiceProviderBootstrapTest.php` | Broad package source-authority assertions can overlap with wrapper cleanup and package status tests. | `PackageWrapperCleanupTest` and `PackageStatusCommandTest` cover narrower slices. | Keep as release-critical while package transition is recent; revisit after package-native stabilizes. |
 
 ## PHPUnit Groups
 
-The suite does not currently use PHPUnit groups. Adding groups would require touching many test files and is not necessary for this pass because composer scripts now provide stable focused entry points. A later cleanup can add groups such as `package`, `update`, `release`, `artifact`, `admin-smoke`, `slow`, and `legacy` after the script boundaries have settled.
+The suite currently uses a narrow `legacy` PHPUnit group only for retired root-managed bridge coverage. Routine composer scripts exclude that group, while `ddev composer test:legacy-bridge` runs it deliberately. Broader groups such as `package`, `update`, `release`, `artifact`, `admin-smoke`, and `slow` can still be added later after script boundaries have settled.

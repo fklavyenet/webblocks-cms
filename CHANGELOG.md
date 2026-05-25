@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Retire legacy root-managed bridge coverage from routine package-native release validation, keeping the historical `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted` path in a manual `legacy` test group only.
+- Keep package-native release gates focused on current package-rooted artifact shape, System Updates, package extraction, package metadata, and fresh Composer consumer boundaries.
+
 ## 1.32.49
 
 - Prepare v1.32.49 as a focused Contact Form UX polish patch while preserving storage-first public success behavior and existing notification delivery behavior.

@@ -38,27 +38,6 @@ class ReleasePackageBoundaryTest extends TestCase
     }
 
     #[Test]
-    public function root_managed_bridge_builder_keeps_install_owned_paths_out_of_bridge_archives(): void
-    {
-        $script = (string) file_get_contents(base_path('scripts/build-root-managed-bridge-archive.sh'));
-
-        $this->assertStringContainsString('webblocks-cms-${version}-root-managed-bridge.zip', $script);
-        $this->assertStringContainsString('app/Support/System/Updates/UpdatePackageExtractor.php', $script);
-        $this->assertStringContainsString('packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php', $script);
-        $this->assertStringContainsString('fklavyenet/webblocks-cms', $script);
-
-        foreach ([
-            '"$staging_dir/storage"',
-            '"$staging_dir/project"',
-            '"$staging_dir/public/site"',
-            '"$staging_dir/public/storage"',
-            '"$staging_dir/config"',
-        ] as $preservedPath) {
-            $this->assertStringContainsString($preservedPath, $script);
-        }
-    }
-
-    #[Test]
     public function release_artifact_uses_the_package_composer_manifest_at_the_installed_package_root(): void
     {
         $installedPackageRoot = $this->buildInstalledPackageSnapshot();

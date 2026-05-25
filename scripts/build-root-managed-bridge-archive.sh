@@ -10,6 +10,8 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
+# Retired historical bridge helper. Keep for deliberate manual recovery audits
+# only; package-native release gates validate package-rooted artifacts instead.
 archive_path="${output_dir}/webblocks-cms-${version}-root-managed-bridge.zip"
 checksum_path="${archive_path}.sha256"
 staging_dir="$(mktemp -d)"

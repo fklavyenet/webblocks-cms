@@ -66,35 +66,39 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@php artisan test --exclude-group=legacy"
         ],
         "test:admin-smoke": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Feature/Admin/AdminDashboardRouteTest.php tests/Feature/Admin/AdminSidebarNavigationTest.php tests/Feature/Admin/SharedAdminPartialPackageViewTest.php --stop-on-failure"
+            "@php artisan test tests/Feature/Admin/AdminDashboardRouteTest.php tests/Feature/Admin/AdminSidebarNavigationTest.php tests/Feature/Admin/SharedAdminPartialPackageViewTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "test:artifacts": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Feature/ReleasePackageBoundaryTest.php --stop-on-failure"
+            "@php artisan test tests/Feature/ReleasePackageBoundaryTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "test:full": [
             "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@php artisan test --exclude-group=legacy"
         ],
         "test:install": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerInstallAuthTest.php --stop-on-failure"
+            "@php artisan test tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerInstallAuthTest.php --exclude-group=legacy --stop-on-failure"
+        ],
+        "test:legacy-bridge": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test tests/Unit/System/Updates/LegacyRootManagedUpdateCompatibilityTest.php --group=legacy --stop-on-failure"
         ],
         "test:package": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Feature/ComposerPackageMetadataTest.php tests/Feature/PackageServiceProviderBootstrapTest.php tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerInstallAuthTest.php tests/Feature/PackageRuntimeSlicesTest.php tests/Feature/PackageWrapperCleanupTest.php tests/Feature/Console/PackageStatusCommandTest.php tests/Feature/ReleasePackageBoundaryTest.php --stop-on-failure"
+            "@php artisan test tests/Feature/ComposerPackageMetadataTest.php tests/Feature/PackageServiceProviderBootstrapTest.php tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageConsumerInstallAuthTest.php tests/Feature/PackageRuntimeSlicesTest.php tests/Feature/PackageWrapperCleanupTest.php tests/Feature/Console/PackageStatusCommandTest.php tests/Feature/ReleasePackageBoundaryTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "test:release-fast": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Unit/System/Updates/UpdateMigrationRunnerTest.php tests/Unit/System/Updates/UpdatePackageExtractorTest.php tests/Feature/Admin/SystemUpdatesTest.php tests/Feature/PageTranslationParentKeyUpdateMigrationTest.php tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageServiceProviderBootstrapTest.php tests/Feature/ReleasePackageBoundaryTest.php --stop-on-failure"
+            "@php artisan test tests/Unit/System/Updates/UpdateMigrationRunnerTest.php tests/Unit/System/Updates/UpdatePackageExtractorTest.php tests/Feature/Admin/SystemUpdatesTest.php tests/Feature/PageTranslationParentKeyUpdateMigrationTest.php tests/Feature/PackageConsumerInstallCommandTest.php tests/Feature/PackageServiceProviderBootstrapTest.php tests/Feature/ReleasePackageBoundaryTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "test:update": [
             "@php artisan config:clear --ansi",
-            "@php artisan test tests/Unit/System/Updates/UpdateMigrationRunnerTest.php tests/Unit/System/Updates/UpdatePackageExtractorTest.php tests/Unit/System/Updates/UpdateServerClientTest.php tests/Unit/System/InstalledVersionStoreTest.php tests/Feature/Admin/SystemUpdatesTest.php tests/Feature/PageTranslationParentKeyUpdateMigrationTest.php tests/Feature/System/SystemBackupRestoreManagerTest.php --stop-on-failure"
+            "@php artisan test tests/Unit/System/Updates/UpdateMigrationRunnerTest.php tests/Unit/System/Updates/UpdatePackageExtractorTest.php tests/Unit/System/Updates/UpdateServerClientTest.php tests/Unit/System/InstalledVersionStoreTest.php tests/Feature/Admin/SystemUpdatesTest.php tests/Feature/PageTranslationParentKeyUpdateMigrationTest.php tests/Feature/System/SystemBackupRestoreManagerTest.php --exclude-group=legacy --stop-on-failure"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

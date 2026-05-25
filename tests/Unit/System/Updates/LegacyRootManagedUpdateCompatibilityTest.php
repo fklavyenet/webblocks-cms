@@ -4,11 +4,13 @@ namespace Tests\Unit\System\Updates;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
 use ZipArchive;
 
+#[Group('legacy')]
 class LegacyRootManagedUpdateCompatibilityTest extends TestCase
 {
   private array $temporaryDirectories = [];
@@ -124,6 +126,27 @@ PHP);
       'package_class_resolved' => true,
       'is_subclass' => true,
     ], $result);
+  }
+
+  #[Test]
+  public function root_managed_bridge_builder_keeps_install_owned_paths_out_of_bridge_archives(): void
+  {
+    $script = (string) file_get_contents(base_path('scripts/build-root-managed-bridge-archive.sh'));
+
+    $this->assertStringContainsString('webblocks-cms-${version}-root-managed-bridge.zip', $script);
+    $this->assertStringContainsString('app/Support/System/Updates/UpdatePackageExtractor.php', $script);
+    $this->assertStringContainsString('packages/webblocks-cms/src/Support/System/Updates/UpdatePackageExtractor.php', $script);
+    $this->assertStringContainsString('fklavyenet/webblocks-cms', $script);
+
+    foreach ([
+      '"$staging_dir/storage"',
+      '"$staging_dir/project"',
+      '"$staging_dir/public/site"',
+      '"$staging_dir/public/storage"',
+      '"$staging_dir/config"',
+    ] as $preservedPath) {
+      $this->assertStringContainsString($preservedPath, $script);
+    }
   }
 
   #[Test]
