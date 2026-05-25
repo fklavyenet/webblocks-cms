@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.32.50
+
+- Prepare v1.32.50 as the `/cms` coexistence namespace migration patch, making `/cms` the canonical CMS admin dashboard entry while preserving host-owned `/login` behavior for co-installed Laravel apps.
 - Restore the repository-wide `ddev composer format:test` baseline by applying Pint-safe formatting, preserving the project 2-space PHP indentation rule, and wiring the indentation guard across maintained source roots.
 - Clean up routine test-suite naming and validation guidance around the canonical `/cms` admin namespace, while keeping retired bridge coverage manual and archival.
 - Clean up the `/cms` namespace migration by moving the admin asset picker upload endpoint to `/cms/media` and ignoring generated root publish copies of package config and boundary-marker artifacts.
