@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.55
+
+- Make System Update delete the retired install-root `public/cms/index.php` handoff when the package no longer ships it, completing the `/webadmin` admin-prefix migration for already-updated installs.
+
 ## 1.32.54
 
 - Move the canonical CMS admin and package-owned login namespace from `/cms` to `/webadmin` so admin routes no longer collide with the `public/cms` static asset directory.

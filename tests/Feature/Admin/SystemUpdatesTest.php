@@ -150,6 +150,7 @@ class SystemUpdatesTest extends TestCase
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/public/cms/brand/logo-64.png')));
+    $this->assertFalse(File::exists($targetRoot.'/public/cms/index.php'));
     $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/brand/logo-64.png')));
@@ -167,6 +168,7 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringContainsString('Replaced packages/webblocks-cms with package artifact contents.', (string) $run->output);
     $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms/packages/webblocks-cms with package artifact contents.', (string) $run->output);
     $this->assertStringContainsString('Synced package public/cms assets into public/cms runtime compatibility path.', (string) $run->output);
+    $this->assertStringContainsString('Removed retired public/cms/index.php front-controller handoff.', (string) $run->output);
     $this->assertStringContainsString('composer install', (string) $run->output);
     $this->assertStringContainsString('Pre-update backup created:', (string) $run->output);
     $this->assertStringContainsString('Migration strategy: package-native update migrations.', (string) $run->output);
@@ -543,6 +545,7 @@ class SystemUpdatesTest extends TestCase
     File::ensureDirectoryExists($targetRoot.'/app/Models');
     File::ensureDirectoryExists($targetRoot.'/config');
     File::ensureDirectoryExists($targetRoot.'/database/migrations');
+    File::ensureDirectoryExists($targetRoot.'/public/cms');
     File::ensureDirectoryExists($targetRoot.'/public/site/default');
     File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Support/System/Updates');
     File::ensureDirectoryExists($targetRoot.'/packages/webblocks-cms/src/Legacy');
@@ -559,6 +562,7 @@ class SystemUpdatesTest extends TestCase
     File::put($targetRoot.'/app/Models/User.php', "<?php\n\nreturn ['source' => 'runtime-auth'];\n");
     File::put($targetRoot.'/config/app.php', "runtime-config-override\n");
     File::put($targetRoot.'/database/migrations/2026_01_01_000000_runtime.php', "runtime-root-migration\n");
+    File::put($targetRoot.'/public/cms/index.php', "retired handoff\n");
     File::put($targetRoot.'/public/site/default/site.css', "site-override\n");
     File::ensureDirectoryExists($targetRoot.'/project/config');
     File::put($targetRoot.'/project/config/sites.php', "<?php\n\nreturn ['source' => 'runtime-project'];\n");

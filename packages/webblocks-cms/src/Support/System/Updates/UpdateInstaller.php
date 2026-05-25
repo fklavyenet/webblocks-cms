@@ -122,6 +122,14 @@ class UpdateInstaller
     }
 
     $output[] = 'Synced package public/cms assets into public/cms runtime compatibility path.';
+
+    $retiredCmsIndex = $target.DIRECTORY_SEPARATOR.'index.php';
+
+    if (File::exists($retiredCmsIndex) && ! File::exists($source.DIRECTORY_SEPARATOR.'index.php')) {
+      File::delete($retiredCmsIndex);
+
+      $output[] = 'Removed retired public/cms/index.php front-controller handoff.';
+    }
   }
 
   public function installDependencies(array &$output): void
