@@ -71,6 +71,8 @@ After install, open:
 - admin: `/cms`
 - public home: `/`
 
+The package publishes a small `public/cms/index.php` front-controller handoff alongside CMS assets. This keeps `/cms/` reaching Laravel on common Nginx installs that use `try_files $uri $uri/ /index.php?$query_string`, while normal `/cms/css`, `/cms/js`, and `/cms/brand` asset URLs continue to be served from `public/cms`.
+
 For a fresh install, first get the source code locally:
 
 ```bash

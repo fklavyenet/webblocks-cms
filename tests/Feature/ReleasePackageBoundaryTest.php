@@ -68,6 +68,11 @@ class ReleasePackageBoundaryTest extends TestCase
     $installedPackageRoot = $this->buildInstalledPackageSnapshot();
 
     $this->assertFileExists($installedPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+    $this->assertFileExists($installedPackageRoot.'/public/cms/index.php');
+    $this->assertStringContainsString(
+      "require dirname(__DIR__).'/index.php';",
+      (string) file_get_contents($installedPackageRoot.'/public/cms/index.php')
+    );
   }
 
   #[Test]
@@ -87,6 +92,7 @@ class ReleasePackageBoundaryTest extends TestCase
     $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
 
     $this->assertFileExists($vendorPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+    $this->assertFileExists($vendorPackageRoot.'/public/cms/index.php');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-64.png');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/favicon-32x32.png');
     $this->assertFileDoesNotExist($vendorPackageRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
@@ -99,6 +105,8 @@ class ReleasePackageBoundaryTest extends TestCase
 
     $this->assertFileExists($sourceCheckoutRoot.'/public/cms/js/admin/listing-bulk-actions.js');
     $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js');
+    $this->assertFileExists($sourceCheckoutRoot.'/public/cms/index.php');
+    $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/index.php');
     $this->assertFileExists($sourceCheckoutRoot.'/public/cms/brand/logo-64.png');
     $this->assertFileExists($sourceCheckoutRoot.'/packages/webblocks-cms/public/cms/brand/logo-64.png');
   }

@@ -109,6 +109,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/public.css'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/public/public-search-modal.js'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/public/sidebar-navigation.js'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/index.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/package-boundary.json'));
     $this->assertFileExists(base_path('packages/webblocks-cms/stubs/README.md'));
     $this->assertFileExists(base_path('packages/webblocks-cms/stubs/starter/README.md'));
@@ -286,6 +287,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ASSETS_PUBLISH_TARGET);
     $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
     $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
+    $this->assertStringContainsString(
+      "require dirname(__DIR__).'/index.php';",
+      (string) file_get_contents(base_path('packages/webblocks-cms/public/cms/index.php'))
+    );
   }
 
   #[Test]
@@ -515,6 +520,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/favicon-32x32.png'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/admin.css'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/index.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/core.js'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js'));
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/js/admin-sortable-list.js'));

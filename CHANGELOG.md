@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.52
+
+- Prepare v1.32.52 as a live `/cms/` web-server compatibility hotfix by shipping a package `public/cms/index.php` front-controller handoff, preventing Nginx `try_files $uri $uri/ ...` installs from serving the CMS asset directory as a forbidden static directory before Laravel can resolve the canonical CMS dashboard route.
+
 ## 1.32.51
 
 - Prepare v1.32.51 as a focused `/cms` dashboard root hotfix so super admins can open the canonical dashboard normally, while site-scoped CMS admins and editors are safely redirected from `/cms` or `/cms/` to an allowed admin landing route instead of seeing a dead-end 403.
