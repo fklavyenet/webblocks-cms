@@ -25,6 +25,10 @@ ddev composer test:full
 - `ddev composer test:legacy-bridge`: manual archival coverage for the retired `1.31.53 -> 1.32.33` root-managed bridge path. Do not use this as a routine package-native release gate.
 - `ddev composer test:full`: the full package-native suite, excluding manual legacy bridge tests. Use before major releases, large cross-cutting changes, or when focused results point to broader risk.
 
+## Formatting Checks
+
+Use focused Pint and indentation checks for files touched by a feature or hotfix. The broad `ddev composer format:test` script remains the repository-wide baseline check, but it currently reports pre-existing Pint and indentation drift across unrelated legacy files. Do not mass-reformat the repository as part of focused behavior work; treat a broad formatting-baseline cleanup as a separate maintenance task. When Pint's Laravel defaults and the project-specific 2-space PHP indentation guard disagree on touched legacy files, keep the project 2-space indentation rule and report the focused Pint result honestly.
+
 ## Release-Critical
 
 Representative tests:
