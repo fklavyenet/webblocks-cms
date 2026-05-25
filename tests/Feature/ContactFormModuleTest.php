@@ -169,7 +169,10 @@ class ContactFormModuleTest extends TestCase
             ->get(route('pages.show', $page->slug, false))
             ->assertOk()
             ->assertSee('Message sent')
-            ->assertSee('Thanks for your message. We will get back to you soon.');
+            ->assertSee('Thanks for your message. We will get back to you soon.')
+            ->assertSee('data-wb-contact-success-dismiss', false)
+            ->assertSee('data-wb-contact-success-dismiss-delay="7000"', false)
+            ->assertSee('cms/js/public/contact-form.js', false);
     }
 
     #[Test]
@@ -184,6 +187,22 @@ class ContactFormModuleTest extends TestCase
 
         $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
         $response->assertSessionHasErrors(['name', 'message']);
+
+        $viewErrors = new \Illuminate\Support\ViewErrorBag;
+        $viewErrors->put('default', new \Illuminate\Support\MessageBag([
+            'name' => ['The name field is required.'],
+        ]));
+
+        session()->flashInput(['block_id' => (string) $block->id]);
+
+        $html = view('webblocks-cms::pages.partials.blocks.contact_form', [
+            'block' => $block->fresh(),
+            'page' => $block->page,
+            'errors' => $viewErrors,
+        ])->render();
+
+        $this->assertStringContainsString('Please review the form', $html);
+        $this->assertStringNotContainsString('data-wb-contact-success-dismiss', $html);
     }
 
     #[Test]
@@ -899,7 +918,20 @@ class ContactFormModuleTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
 
         $response->assertOk();
-        $response->assertSeeInOrder(['Visitor message', 'Submission details', 'Notification', 'Technical details']);
+        $response->assertSeeInOrder([
+            'Visitor message',
+            'Name:',
+            'Taylor Editor',
+            'Email:',
+            'taylor@example.com',
+            'Subject:',
+            'Context check',
+            'Message:',
+            'Detail source check.',
+            'Submission details',
+            'Notification',
+            'Technical details',
+        ]);
         $response->assertSee('Detail source check.');
         $response->assertSee('Taylor Editor');
         $response->assertSee('taylor@example.com');

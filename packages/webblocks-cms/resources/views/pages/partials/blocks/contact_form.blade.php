@@ -20,7 +20,7 @@
         @endif
 
         @if ($isSubmittedBlock)
-            <div class="wb-alert wb-alert-success">
+            <div class="wb-alert wb-alert-success" role="status" data-wb-contact-success-dismiss data-wb-contact-success-dismiss-delay="7000">
                 <div>
                     <div class="wb-alert-title">Message sent</div>
                     <div>{{ $successMessage }}</div>

@@ -27,11 +27,12 @@
     <div class="wb-card">
         <div class="wb-card-header"><strong>Visitor message</strong></div>
         <div class="wb-card-body wb-stack wb-gap-3">
+            <div><strong>Name:</strong> {{ $message->name }}</div>
+            <div><strong>Email:</strong> <a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></div>
             <div><strong>Subject:</strong> {{ $message->subject ?? '—' }}</div>
-            <div class="wb-contact-message-body">{{ $message->message }}</div>
-            <div class="wb-grid wb-grid-2">
-                <div><strong>Name:</strong> {{ $message->name }}</div>
-                <div><strong>Email:</strong> <a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></div>
+            <div class="wb-stack wb-gap-2">
+                <strong>Message:</strong>
+                <div class="wb-contact-message-body">{{ $message->message }}</div>
             </div>
         </div>
     </div>

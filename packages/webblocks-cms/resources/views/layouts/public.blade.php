@@ -8,6 +8,7 @@
 
         $cmsPublicCssPath = public_path('cms/css/public.css');
         $publicJsAssets = [
+            'contact-form' => public_path('cms/js/public/contact-form.js'),
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
         ];
@@ -75,6 +76,9 @@
 
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
+        @if (is_file($publicJsAssets['contact-form']))
+            <script src="{{ asset('cms/js/public/contact-form.js') }}?v={{ filemtime($publicJsAssets['contact-form']) }}" defer></script>
+        @endif
         @if (is_file($publicJsAssets['public-search-modal']))
             <script src="{{ asset('cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
         @endif

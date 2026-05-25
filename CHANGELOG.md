@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.49
+
+- Prepare v1.32.49 as a focused Contact Form UX polish patch while preserving storage-first public success behavior and existing notification delivery behavior.
+- Clean up the Contact Message admin detail Visitor message card so sender, subject, and message content read in one vertical flow, and add progressive enhancement for public Contact Form success alerts to auto-dismiss after a short delay while leaving validation errors persistent.
+
 ## 1.32.48
 
 - Prepare v1.32.48 as a focused Contact Form notification readability patch while preserving storage-first public success behavior and existing notification delivery behavior.
