@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.56
+
+- Publish a follow-up package so the active updater can run the retired `public/cms/index.php` cleanup added in v1.32.55 on already-updated live installs.
+
 ## 1.32.55
 
 - Make System Update delete the retired install-root `public/cms/index.php` handoff when the package no longer ships it, completing the `/webadmin` admin-prefix migration for already-updated installs.
