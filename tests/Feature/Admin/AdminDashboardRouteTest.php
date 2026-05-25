@@ -77,9 +77,9 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function cms_root_opens_dashboard_for_authenticated_users(): void
+  public function cms_root_opens_dashboard_for_authenticated_super_admins(): void
   {
-    $user = User::factory()->editor()->create();
+    $user = User::factory()->superAdmin()->create();
     $site = Site::query()->where('is_primary', true)->firstOrFail();
     app(InstalledVersionStore::class)->persist('0.1.4');
 
@@ -111,8 +111,9 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('New Page');
     $response->assertSee('href="'.route('admin.pages.index').'"', false);
     $response->assertSee('Pages');
-    $response->assertDontSee('href="'.route('admin.system.updates.index').'"', false);
-    $response->assertSee('Sites, backups, and system updates are available to super admins only.');
+    $response->assertSee('href="'.route('admin.sites.index').'"', false);
+    $response->assertSee('href="'.route('admin.system.updates.index').'"', false);
+    $response->assertDontSee('Sites, backups, and system updates are available to super admins only.');
 
     $content = $response->getContent();
 
@@ -120,6 +121,35 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertLessThan(strpos($content, 'Recent Pages'), strpos($content, 'Actions and Shortcuts'));
     $this->assertLessThan(strpos($content, 'Recent Media'), strpos($content, 'Overview'));
     $this->assertLessThan(strpos($content, 'Visitor Summary'), strpos($content, 'Recent Pages'));
+  }
+
+  #[Test]
+  public function site_scoped_admin_users_are_redirected_from_cms_root_to_allowed_admin_landing_page(): void
+  {
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+    $editor = User::factory()->editor()->create();
+    $siteAdmin->sites()->sync([$site->id]);
+    $editor->sites()->sync([$site->id]);
+
+    $siteAdminResponse = $this->actingAs($siteAdmin)->get('/cms');
+    $editorResponse = $this->actingAs($editor)->get('/cms/');
+
+    $siteAdminResponse->assertRedirect(route('admin.pages.index', absolute: false));
+    $editorResponse->assertRedirect(route('admin.pages.index', absolute: false));
+
+    $this->followingRedirects()->actingAs($siteAdmin)->get(route('admin.pages.index'))->assertOk();
+    $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'))->assertOk();
+  }
+
+  #[Test]
+  public function reported_cms_root_case_does_not_forbid_a_user_who_can_open_sites(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)->get('/cms/sites')->assertOk();
+    $this->actingAs($user)->get('/cms')->assertOk();
+    $this->actingAs($user)->get('/cms/')->assertOk();
   }
 
   #[Test]
@@ -175,7 +205,7 @@ class AdminDashboardRouteTest extends TestCase
   #[Test]
   public function admin_layout_resets_transient_overlay_and_sidebar_state_on_restore(): void
   {
-    $user = User::factory()->editor()->create();
+    $user = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($user)->get('/cms');
 
@@ -193,7 +223,7 @@ class AdminDashboardRouteTest extends TestCase
   #[Test]
   public function admin_layout_uses_pinned_webblocks_ui_v275_assets_and_not_master_urls(): void
   {
-    $user = User::factory()->editor()->create();
+    $user = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($user)->get('/cms');
 
@@ -207,7 +237,7 @@ class AdminDashboardRouteTest extends TestCase
   #[Test]
   public function admin_layout_places_sidebar_backdrop_inside_dashboard_shell_for_webblocks_ui_sidebar_close_behavior(): void
   {
-    $user = User::factory()->editor()->create();
+    $user = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($user)->get('/cms');
 

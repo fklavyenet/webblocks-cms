@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
@@ -22,8 +23,12 @@ class DashboardController extends Controller
     private readonly SystemSettings $systemSettings,
   ) {}
 
-  public function __invoke(Request $request): View
+  public function __invoke(Request $request): RedirectResponse|View
   {
+    if (! $request->user()?->isSuperAdmin()) {
+      return redirect()->route('admin.pages.index');
+    }
+
     return view('webblocks-cms::admin.dashboard', [
       'title' => 'Admin Dashboard',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),

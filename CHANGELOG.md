@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.51
+
+- Prepare v1.32.51 as a focused `/cms` dashboard root hotfix so super admins can open the canonical dashboard normally, while site-scoped CMS admins and editors are safely redirected from `/cms` or `/cms/` to an allowed admin landing route instead of seeing a dead-end 403.
+
 ## 1.32.50
 
 - Prepare v1.32.50 as the `/cms` coexistence namespace migration patch, making `/cms` the canonical CMS admin dashboard entry while preserving host-owned `/login` behavior for co-installed Laravel apps.

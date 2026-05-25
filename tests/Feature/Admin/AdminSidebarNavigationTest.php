@@ -184,11 +184,11 @@ class AdminSidebarNavigationTest extends TestCase
     $superAdminResponse->assertOk();
     $superAdminResponse->assertSee('href="'.route('admin.blocks.index').'"', false);
 
-    $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+    $siteAdminResponse = $this->followingRedirects()->actingAs($siteAdmin)->get(route('admin.pages.index'));
     $siteAdminResponse->assertOk();
     $siteAdminResponse->assertDontSee('href="'.route('admin.blocks.index').'"', false);
 
-    $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+    $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.blocks.index').'"', false);
   }
@@ -244,7 +244,7 @@ class AdminSidebarNavigationTest extends TestCase
     $adminResponse->assertSee('>System<', false);
     $this->assertSame(1, substr_count($adminResponse->getContent(), 'href="'.route('admin.users.index').'"'));
 
-    $userResponse = $this->actingAs($user)->get(route('admin.dashboard'));
+    $userResponse = $this->followingRedirects()->actingAs($user)->get(route('admin.pages.index'));
     $userResponse->assertOk();
     $userResponse->assertDontSee('href="'.route('admin.users.index').'"', false);
   }
@@ -302,12 +302,12 @@ class AdminSidebarNavigationTest extends TestCase
     $siteAdmin->sites()->sync([$site->id]);
     $editor->sites()->sync([$site->id]);
 
-    $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+    $siteAdminResponse = $this->followingRedirects()->actingAs($siteAdmin)->get(route('admin.pages.index'));
     $siteAdminResponse->assertOk();
     $siteAdminResponse->assertDontSee('href="'.route('admin.sites.index').'"', false);
     $siteAdminResponse->assertDontSee('href="'.route('admin.domains.index').'"', false);
 
-    $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+    $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.sites.index').'"', false);
     $editorResponse->assertDontSee('href="'.route('admin.domains.index').'"', false);
@@ -353,11 +353,11 @@ class AdminSidebarNavigationTest extends TestCase
     $superAdminResponse->assertOk();
     $superAdminResponse->assertSee('href="'.route('admin.system.icons.index').'"', false);
 
-    $siteAdminResponse = $this->actingAs($siteAdmin)->get(route('admin.dashboard'));
+    $siteAdminResponse = $this->followingRedirects()->actingAs($siteAdmin)->get(route('admin.pages.index'));
     $siteAdminResponse->assertOk();
     $siteAdminResponse->assertDontSee('href="'.route('admin.system.icons.index').'"', false);
 
-    $editorResponse = $this->actingAs($editor)->get(route('admin.dashboard'));
+    $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.system.icons.index').'"', false);
   }
