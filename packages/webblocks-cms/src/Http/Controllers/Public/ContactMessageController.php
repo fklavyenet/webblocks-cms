@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContactMessage;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
@@ -18,8 +19,8 @@ class ContactMessageController extends Controller
     public function store(ContactMessageRequest $request): RedirectResponse
     {
         $payload = $request->payload();
-        $block = Block::query()->with(['blockType', 'page'])->findOrFail($payload['block_id']);
-        $block->page?->loadMissing('translations');
+        $block = Block::query()->with(['blockType', 'page.site'])->findOrFail($payload['block_id']);
+        $block->page?->loadMissing(['site', 'translations']);
         $block = app(BlockTranslationResolver::class)->resolve($block, site: $block->page?->site);
 
         abort_unless($block->typeSlug() === 'contact_form', 404);
@@ -42,7 +43,7 @@ class ContactMessageController extends Controller
         }
 
         $notificationEnabled = (bool) $block->setting('send_email_notification', true);
-        $notificationRecipient = trim((string) $block->setting('recipient_email'));
+        $notificationRecipient = $this->notificationRecipient($block, $block->page?->site);
 
         $contactMessage = ContactMessage::create([
             'block_id' => $block->id,
@@ -72,5 +73,18 @@ class ContactMessageController extends Controller
 
         return redirect($redirectUrl)
             ->with('contact_form_success_block_id', $block->id);
+    }
+
+    private function notificationRecipient(Block $block, ?Site $site): ?string
+    {
+        $blockRecipient = trim((string) $block->setting('recipient_email'));
+
+        if ($blockRecipient !== '') {
+            return $blockRecipient;
+        }
+
+        $siteRecipient = trim((string) $site?->contact_recipient_email);
+
+        return $siteRecipient !== '' ? $siteRecipient : null;
     }
 }

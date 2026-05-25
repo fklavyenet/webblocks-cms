@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.32.47
 
+- Prepare v1.32.47 as a focused Contact Form notification hardening patch by adding a site-scoped default recipient and resolving notifications from block override to site default to `CONTACT_RECIPIENT_EMAIL` to safe `MAIL_FROM_ADDRESS` fallback while preserving storage-first public success behavior.
 - Document CMS coexistence, configurable admin prefix direction, host-owned login, and CMS-owned membership authorization decisions.
 
 ## 1.32.46

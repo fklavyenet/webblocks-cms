@@ -2,12 +2,6 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Media;
-use WebBlocks\Cms\Models\MediaFolder;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
-use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +10,15 @@ use RuntimeException;
 use WebBlocks\Cms\Http\Requests\Admin\SiteCloneRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteDeleteRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteRequest;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\MediaFolder;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteController extends Controller
 {
@@ -122,7 +122,7 @@ class SiteController extends Controller
         $canManageDomains = request()->user()?->isSuperAdmin() ?? false;
 
         $requestedTab = trim((string) request()->query('tab', old('_site_tab', 'site')));
-        $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'variables'], true)
+        $siteTab = in_array($requestedTab, ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables'], true)
           ? $requestedTab
           : 'site';
         $requestedModal = trim((string) request()->query('modal', old('_site_variable_modal', '')));

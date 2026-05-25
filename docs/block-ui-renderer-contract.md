@@ -441,7 +441,7 @@ Public pages now use explicit layout composition modes:
 - Translatable fields: `heading`, `intro_text`, `submit_label`, `success_message`
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
 - Intended behavior: public submission stores the message first, then attempts synchronous email notification to the resolved recipient; admin views should show compact notification state and safe failure detail when delivery fails.
-- Notes: block recipient override wins first, then `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as a last safe local fallback when no explicit contact recipient is configured.
+- Notes: block recipient override wins first, then the current public site's `contact_recipient_email`, then `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as a last safe local fallback when no explicit contact recipient is configured.
 
 ### `video`
 
@@ -548,7 +548,7 @@ Public pages now use explicit layout composition modes:
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
 - Intended WebBlocks UI output: form fields use WebBlocks UI form primitives; submit action uses `wb-btn`; success and error messages use `wb-alert`.
 - Current implementation: acceptable
-- Notes for later renderer/admin improvements: preserve structured form fields, keep operational settings out of editorial copy, and avoid making editors paste raw form markup.
+- Notes for later renderer/admin improvements: preserve structured form fields, keep operational settings out of editorial copy, keep site-level default recipients on the site record instead of arbitrary block JSON, and avoid making editors paste raw form markup.
 
 ## Public-Only Or Weak Blocks
 

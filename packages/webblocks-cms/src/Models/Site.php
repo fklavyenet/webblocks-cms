@@ -11,13 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Media;
-use WebBlocks\Cms\Models\NavigationItem;
-use WebBlocks\Cms\Models\SharedSlot;
-use WebBlocks\Cms\Models\SiteDomain;
-use WebBlocks\Cms\Models\SiteLocale;
-use WebBlocks\Cms\Models\SiteVariable;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
 
@@ -39,6 +32,7 @@ class Site extends Model
         'seo_keywords',
         'social_image_media_id',
         'social_image_asset_id',
+        'contact_recipient_email',
     ];
 
     protected function casts(): array

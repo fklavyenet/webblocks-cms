@@ -3,7 +3,7 @@
 @php
     $canManageSiteSettings = $canManageSiteSettings ?? true;
     $canManageDomains = $canManageDomains ?? false;
-    $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'variables'], true)
+    $siteTab = in_array(($siteTab ?? old('_site_tab', 'site')), ['site', 'locales', 'branding', 'seo-defaults', 'contact', 'variables'], true)
         ? ($siteTab ?? old('_site_tab', 'site'))
         : 'site';
     $isReadOnly = ! $canManageSiteSettings;
@@ -81,6 +81,7 @@
                             'locales' => 'Locales',
                             'branding' => 'Branding',
                             'seo-defaults' => 'SEO Defaults',
+                            'contact' => 'Contact',
                             'variables' => 'Variables',
                         ] as $tabKey => $tabLabel)
                             <a
@@ -252,6 +253,22 @@
                                     <div class="wb-stack-2 wb-field">
                                         <label for="site_seo_keywords">Meta keywords</label>
                                         <input id="site_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $site->seo_keywords) }}" @disabled($isReadOnly)>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wb-tabs-panel {{ $siteTab === 'contact' ? 'is-active' : '' }}">
+                            <div class="wb-card wb-card-muted">
+                                <div class="wb-card-header"><strong>Contact Forms</strong></div>
+
+                                <div class="wb-card-body wb-stack wb-gap-3">
+                                    <div class="wb-text-sm wb-text-muted">Default recipient for Contact Form blocks on this site. Individual Contact Form blocks can still override this address.</div>
+
+                                    <div class="wb-stack-2 wb-field">
+                                        <label for="site_contact_recipient_email">Default recipient email</label>
+                                        <input id="site_contact_recipient_email" name="contact_recipient_email" class="wb-input" type="email" value="{{ old('contact_recipient_email', $site->contact_recipient_email) }}" autocomplete="email" @disabled($isReadOnly)>
+                                        <div class="wb-text-sm wb-text-muted">Used when a Contact Form block has notifications enabled but no block-level recipient. If empty, CMS falls back to `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS`.</div>
                                     </div>
                                 </div>
                             </div>

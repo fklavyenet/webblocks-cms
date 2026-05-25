@@ -68,7 +68,9 @@ class ContactFormModuleTest extends TestCase
     {
         $slotType = $this->slotType();
         $blockType = $this->contactBlockType();
+        $site = $this->defaultSite();
         $page = Page::create([
+            'site_id' => $site->id,
             'title' => 'Contact',
             'slug' => 'contact',
             'status' => 'published',
@@ -108,6 +110,17 @@ class ContactFormModuleTest extends TestCase
         ]);
 
         return [$page, $block];
+    }
+
+    private function updateContactFormSettings(Block $block, array $settings): void
+    {
+        $block->update([
+            'settings' => json_encode(array_merge([
+                'recipient_email' => 'team@example.com',
+                'send_email_notification' => true,
+                'store_submissions' => true,
+            ], $settings), JSON_UNESCAPED_SLASHES),
+        ]);
     }
 
     private function submissionPayload(Block $block, ?array $overrides = []): array
@@ -292,8 +305,68 @@ class ContactFormModuleTest extends TestCase
         $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
         Mail::assertSent(PackageContactMessageNotification::class, function (PackageContactMessageNotification $mail) use ($block): bool {
-            return $mail->contactMessage->block_id === $block->id;
+            return $mail->contactMessage->block_id === $block->id
+                && $mail->hasTo('team@example.com');
         });
+    }
+
+    #[Test]
+    public function contact_form_notification_uses_block_recipient_before_site_default(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+        $block->page->site->update(['contact_recipient_email' => 'site@example.com']);
+        $this->updateContactFormSettings($block, ['recipient_email' => 'block@example.com']);
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('block@example.com', $message->notification_recipient);
+        $this->assertNotNull($message->notification_sent_at);
+        $this->assertNull($message->notification_error);
+        Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('block@example.com'));
+    }
+
+    #[Test]
+    public function contact_form_notification_uses_site_default_when_block_recipient_is_empty(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+        $block->page->site->update(['contact_recipient_email' => 'site@example.com']);
+        $this->updateContactFormSettings($block, ['recipient_email' => null]);
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('site@example.com', $message->notification_recipient);
+        $this->assertNotNull($message->notification_sent_at);
+        $this->assertNull($message->notification_error);
+        Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('site@example.com'));
+    }
+
+    #[Test]
+    public function contact_form_notification_falls_back_to_contact_recipient_config_when_site_and_block_are_empty(): void
+    {
+        config()->set('contact.recipient_email', 'config@example.com');
+        config()->set('mail.from.address', 'from@example.com');
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+        $block->page->site->update(['contact_recipient_email' => null]);
+        $this->updateContactFormSettings($block, ['recipient_email' => null]);
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block))
+            ->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+        $this->assertSame('config@example.com', $message->notification_recipient);
+        $this->assertNotNull($message->notification_sent_at);
+        $this->assertNull($message->notification_error);
+        Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('config@example.com'));
     }
 
     #[Test]
@@ -320,13 +393,8 @@ class ContactFormModuleTest extends TestCase
         config()->set('contact.recipient_email', null);
         config()->set('mail.from.address', 'hello@example.com');
         [, $block] = $this->createContactFormPage();
-        $block->update([
-            'settings' => json_encode([
-                'recipient_email' => null,
-                'send_email_notification' => true,
-                'store_submissions' => true,
-            ], JSON_UNESCAPED_SLASHES),
-        ]);
+        $block->page->site->update(['contact_recipient_email' => null]);
+        $this->updateContactFormSettings($block, ['recipient_email' => null]);
 
         Mail::fake();
 
@@ -338,7 +406,7 @@ class ContactFormModuleTest extends TestCase
         $this->assertSame('hello@example.com', $message->notification_recipient);
         $this->assertNotNull($message->notification_sent_at);
         $this->assertNull($message->notification_error);
-        Mail::assertSent(PackageContactMessageNotification::class);
+        Mail::assertSent(PackageContactMessageNotification::class, fn (PackageContactMessageNotification $mail): bool => $mail->hasTo('hello@example.com'));
     }
 
     #[Test]
@@ -347,13 +415,8 @@ class ContactFormModuleTest extends TestCase
         config()->set('contact.recipient_email', null);
         config()->set('mail.from.address', null);
         [, $block] = $this->createContactFormPage();
-        $block->update([
-            'settings' => json_encode([
-                'recipient_email' => null,
-                'send_email_notification' => true,
-                'store_submissions' => true,
-            ], JSON_UNESCAPED_SLASHES),
-        ]);
+        $block->page->site->update(['contact_recipient_email' => null]);
+        $this->updateContactFormSettings($block, ['recipient_email' => null]);
 
         Mail::fake();
 
@@ -373,12 +436,10 @@ class ContactFormModuleTest extends TestCase
     {
         Mail::fake();
         [, $block] = $this->createContactFormPage();
-        $block->update([
-            'settings' => json_encode([
-                'recipient_email' => 'team@example.com',
-                'send_email_notification' => false,
-                'store_submissions' => true,
-            ], JSON_UNESCAPED_SLASHES),
+        $block->page->site->update(['contact_recipient_email' => 'site@example.com']);
+        $this->updateContactFormSettings($block, [
+            'recipient_email' => 'team@example.com',
+            'send_email_notification' => false,
         ]);
 
         $this->post(route('contact-messages.store'), $this->submissionPayload($block))

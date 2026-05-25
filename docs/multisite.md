@@ -13,6 +13,7 @@ Each site also owns its own public identity fallback layer:
 - favicon
 - social image
 - SEO Defaults for title, description, and keywords
+- default Contact Form recipient email
 
 ## How Site Scope Works
 

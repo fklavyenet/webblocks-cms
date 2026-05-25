@@ -2,18 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Media as Asset;
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\BlockTextTranslation;
-use WebBlocks\Cms\Models\BlockType;
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\SharedSlot;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SiteVariable;
 use App\Models\User;
-use WebBlocks\Cms\Support\Locales\LocaleResolver;
-use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use Database\Seeders\BlockTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +13,17 @@ use WebBlocks\Cms\Http\Controllers\Admin\LocaleController as PackageLocaleContro
 use WebBlocks\Cms\Http\Controllers\Admin\SiteController as PackageSiteController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteDomainController as PackageSiteDomainController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController as PackageSiteVariableController;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockTextTranslation;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media as Asset;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteVariable;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class SiteLocaleManagementTest extends TestCase
 {
@@ -231,6 +231,7 @@ class SiteLocaleManagementTest extends TestCase
             'display_name' => 'Primary Public Site',
             'tagline' => 'Public facing tagline',
             'favicon_asset_id' => $favicon->id,
+            'contact_recipient_email' => 'forms@example.com',
             'seo_title' => 'Primary SEO Title',
             'seo_description' => 'Primary SEO Description',
             'seo_keywords' => 'alpha,beta',
@@ -244,6 +245,7 @@ class SiteLocaleManagementTest extends TestCase
         $this->assertSame('Primary Public Site', $site->fresh()->display_name);
         $this->assertSame('Public facing tagline', $site->fresh()->tagline);
         $this->assertSame($favicon->id, $site->fresh()->favicon_asset_id);
+        $this->assertSame('forms@example.com', $site->fresh()->contact_recipient_email);
         $this->assertSame('Primary SEO Title', $site->fresh()->seo_title);
         $this->assertSame('Primary SEO Description', $site->fresh()->seo_description);
         $this->assertSame('alpha,beta', $site->fresh()->seo_keywords);
@@ -404,10 +406,12 @@ class SiteLocaleManagementTest extends TestCase
         $response->assertSee('disabled', false);
         $response->assertSee('Branding');
         $response->assertSee('SEO Defaults');
+        $response->assertSee('Contact');
         $response->assertSee('Variables');
         $response->assertDontSee('<strong>Domains</strong>', false);
         $response->assertSee('Public display name');
         $response->assertSee('Default meta title');
+        $response->assertSee('Default recipient email');
     }
 
     #[Test]
@@ -487,6 +491,48 @@ class SiteLocaleManagementTest extends TestCase
             ->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'variables']));
 
         $this->assertDatabaseMissing('site_variables', ['id' => $siteVariable->id]);
+    }
+
+    #[Test]
+    public function site_admin_can_manage_contact_recipient_for_assigned_site(): void
+    {
+        $site = Site::query()->where('is_primary', true)->firstOrFail();
+        $defaultLocale = Locale::query()->where('is_default', true)->firstOrFail();
+        $user = User::factory()->siteAdmin()->create();
+        $user->sites()->sync([$site->id]);
+
+        $response = $this->actingAs($user)->put(route('admin.sites.update', $site), [
+            'name' => $site->name,
+            'handle' => $site->handle,
+            'domain' => $site->domain,
+            'is_primary' => 1,
+            'contact_recipient_email' => 'forms@example.com',
+            'locale_ids' => [$defaultLocale->id],
+            '_site_tab' => 'contact',
+        ]);
+
+        $response->assertRedirect(route('admin.sites.edit', ['site' => $site, 'tab' => 'contact']));
+        $this->assertSame('forms@example.com', $site->fresh()->contact_recipient_email);
+
+        $otherSite = Site::query()->create([
+            'name' => 'Blocked',
+            'handle' => 'blocked',
+            'domain' => null,
+            'is_primary' => false,
+        ]);
+        $otherSite->locales()->syncWithoutDetaching([$defaultLocale->id => ['is_enabled' => true]]);
+
+        $this->actingAs($user)->put(route('admin.sites.update', $otherSite), [
+            'name' => $otherSite->name,
+            'handle' => $otherSite->handle,
+            'domain' => $otherSite->domain,
+            'is_primary' => 0,
+            'contact_recipient_email' => 'blocked@example.com',
+            'locale_ids' => [$defaultLocale->id],
+            '_site_tab' => 'contact',
+        ])->assertForbidden();
+
+        $this->assertNull($otherSite->fresh()->contact_recipient_email);
     }
 
     #[Test]

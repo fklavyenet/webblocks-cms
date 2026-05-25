@@ -2,16 +2,16 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
-use WebBlocks\Cms\Support\Users\AdminAuthorization;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Collection;
-use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SiteRequest extends FormRequest
 {
@@ -45,6 +45,7 @@ class SiteRequest extends FormRequest
             'locale_ids' => $this->normalizedLocaleIds($submittedLocaleIds, $site, $defaultLocaleId)->all(),
             'display_name' => trim((string) $this->input('display_name')),
             'tagline' => trim((string) $this->input('tagline')),
+            'contact_recipient_email' => trim((string) $this->input('contact_recipient_email')),
             'seo_title' => trim((string) $this->input('seo_title')),
             'seo_description' => trim((string) $this->input('seo_description')),
             'seo_keywords' => trim((string) $this->input('seo_keywords')),
@@ -68,6 +69,7 @@ class SiteRequest extends FormRequest
             'display_name' => ['nullable', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],
             'favicon_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
+            'contact_recipient_email' => ['nullable', 'email:rfc', 'max:255'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:1000'],
             'seo_keywords' => ['nullable', 'string', 'max:500'],
