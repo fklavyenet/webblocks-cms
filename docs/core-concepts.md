@@ -81,7 +81,7 @@ Pages do not store free-form page-builder JSON. Content and relationships are ke
 - `Admin -> Media` keeps the main list title `Media` and the listing card title `Media Library`.
 - On the Media list, the title link and pencil icon both open `Edit Media: {title}` and carry a safe Media return URL back to the current filtered list.
 - The eye icon remains the large preview modal action from the list.
-- The legacy `/admin/media/{id}` detail route now redirects to `/admin/media/{id}/edit` so older links and bookmarks continue to work.
+- The `/cms/media/{id}` detail route redirects to `/cms/media/{id}/edit` so media detail links land on the canonical edit screen.
 - `Edit Media` merges preview, file details, metadata, organization, usage, and danger-zone management into one screen.
 - `Copy public URL` now lives in the `File Details` area of the edit screen instead of the list action column.
 - Delete follows the standard admin modal plus `Danger Zone` pattern rather than browser confirm markup.

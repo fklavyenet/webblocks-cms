@@ -2,12 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use WebBlocks\Cms\Support\System\SystemSettings;
-use WebBlocks\Cms\Support\WebBlocks;
 use DOMDocument;
 use DOMElement;
 use DOMNodeList;
@@ -15,6 +10,11 @@ use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemSettingsTest extends TestCase
 {
@@ -59,7 +59,7 @@ class SystemSettingsTest extends TestCase
         $xpath = new DOMXPath($document);
         $form = $this->settingsForm($xpath);
 
-        $this->assertSame(1, $xpath->query('//form[contains(@action, "/admin/system/settings")]')->length);
+        $this->assertSame(1, $xpath->query('//form[contains(@action, "/cms/system/settings")]')->length);
         $this->assertSame(1, $this->queryElements($xpath, './/button[normalize-space()="Save Changes"]', $form)->length);
         $this->assertSame(1, $this->queryElements($xpath, './/a[normalize-space()="Cancel"]', $form)->length);
 
@@ -304,7 +304,7 @@ class SystemSettingsTest extends TestCase
 
     private function settingsForm(DOMXPath $xpath): DOMElement
     {
-        $form = $this->queryElements($xpath, './/form[contains(@action, "/admin/system/settings")]', $this->settingsCard($xpath))->item(0);
+        $form = $this->queryElements($xpath, './/form[contains(@action, "/cms/system/settings")]', $this->settingsCard($xpath))->item(0);
 
         $this->assertInstanceOf(DOMElement::class, $form);
 

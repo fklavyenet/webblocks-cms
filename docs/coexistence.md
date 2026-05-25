@@ -22,13 +22,13 @@ The CMS admin prefix should be configurable.
 
 For coexistence installs, the recommended CMS admin prefix is `/cms`. The host application may own `/admin`, and CMS must not assume that `/admin` is always available or CMS-owned.
 
-Standalone or legacy installs may still use the current implementation behavior until the configurable prefix direction is implemented. Documentation, design, and future implementation work should keep the current implementation and target direction clearly separated.
+Standalone installs now use `/cms` as the canonical CMS admin prefix. Documentation, design, and future implementation work should keep current behavior and longer-term configurable prefix direction clearly separated.
 
 ## Host-Owned Login
 
 Within a shared Laravel host, login and registration are host application responsibilities. The shared `users` table is the identity and login layer.
 
-CMS should not require a separate mandatory CMS login system such as `/cms/login`. When a guest user requests the CMS admin area, the request should use the host login flow, usually `/login`, while preserving the intended CMS URL for the redirect after login.
+CMS should not require a separate mandatory CMS login system in co-installed apps. When a guest user requests the CMS admin area in a host-owned auth app, the request should use the host login flow, usually `/login`, while preserving the intended CMS URL for the redirect after login. In package-owned standalone auth, the CMS login route is `/cms/login`.
 
 ## CMS-Owned Authorization
 
@@ -62,13 +62,13 @@ Common coexistence routing should be designed around clear ownership:
 - `/cms` -> WebBlocks CMS admin, recommended for coexistence installs
 - public site routes -> CMS public rendering, when CMS owns public content for the request
 
-Standalone CMS installs may choose CMS-owned admin routes according to the current implementation and future configurable prefix settings.
+Standalone CMS installs use `/cms` for CMS-owned admin routes, with future configurable prefix settings still a target direction.
 
 ## Current Implementation Vs Target Direction
 
-Current implementation may still expose CMS admin behavior through legacy or standalone-oriented paths such as `/admin`.
+Current implementation uses `/cms` as the canonical CMS admin prefix and does not intentionally expose CMS admin behavior through `/admin`.
 
-The target direction is a configurable CMS admin prefix, with `/cms` recommended for coexistence installs so a host product can keep `/admin` for its own administration area.
+The target direction remains a configurable CMS admin prefix, with `/cms` as the default so a host product can keep `/admin` for its own administration area.
 
 Until implementation catches up, documentation and designs should explicitly state whether they describe current behavior or target architecture.
 

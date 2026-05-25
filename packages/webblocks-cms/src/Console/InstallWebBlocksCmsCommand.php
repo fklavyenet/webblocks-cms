@@ -79,7 +79,7 @@ class InstallWebBlocksCmsCommand extends Command
         $this->installedVersionStore->persist(WebBlocks::version());
         $this->installState->markInstalled();
 
-        $this->components->info('WebBlocks CMS is ready. Open /admin to sign in.');
+        $this->components->info('WebBlocks CMS is ready. Open /cms to sign in.');
 
         return self::SUCCESS;
     }

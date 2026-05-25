@@ -55,9 +55,31 @@ class PackageConsumerInstallAuthTest extends TestCase
     #[Test]
     public function admin_route_redirects_guests_to_the_login_page(): void
     {
+        $this->assertSame('/cms', route('admin.dashboard', absolute: false));
+
         $response = $this->get(route('admin.dashboard'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function package_owned_auth_routes_use_cms_namespace_when_the_host_has_no_login(): void
+    {
+        $routeFile = (string) file_get_contents(base_path('packages/webblocks-cms/routes/auth.php'));
+
+        $this->assertStringContainsString('/cms/login', $routeFile);
+        $this->assertStringContainsString('/cms/logout', $routeFile);
+        $this->assertStringNotContainsString('/admin/login', $routeFile);
+        $this->assertStringNotContainsString('/admin/logout', $routeFile);
+    }
+
+    #[Test]
+    public function package_routes_do_not_register_legacy_admin_entry_paths(): void
+    {
+        foreach (app('router')->getRoutes() as $route) {
+            $this->assertNotSame('admin', $route->uri());
+            $this->assertFalse(str_starts_with($route->uri(), 'admin/'), $route->uri());
+        }
     }
 
     #[Test]

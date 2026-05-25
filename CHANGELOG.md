@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Move the canonical CMS admin and package-owned login namespace from `/admin` to `/cms`, keeping host-owned `/login` behavior available for co-installed Laravel apps and removing CMS-owned `/admin` aliases from the route table.
 - Retire legacy root-managed bridge coverage from routine package-native release validation, keeping the historical `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted` path in a manual `legacy` test group only.
 - Keep package-native release gates focused on current package-rooted artifact shape, System Updates, package extraction, package metadata, and fresh Composer consumer boundaries.
 - Tighten composer test-suite organization so package, install, artifact, update, admin-smoke, release-fast, and legacy bridge scripts have clearer package-native responsibilities with less routine overlap.

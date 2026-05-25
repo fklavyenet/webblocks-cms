@@ -2,20 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Media as Asset;
-use WebBlocks\Cms\Models\MediaFolder as AssetFolder;
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
-use WebBlocks\Cms\Models\BlockType;
-use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\PageTranslation;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Models\SystemSetting;
 use App\Models\User;
-use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +10,19 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media as Asset;
+use WebBlocks\Cms\Models\MediaFolder as AssetFolder;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class MediaManagementTest extends TestCase
 {
@@ -1108,7 +1108,7 @@ class MediaManagementTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/admin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+        $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
         $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
         $block = Block::query()->latest('id')->first();
@@ -1233,7 +1233,7 @@ class MediaManagementTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/admin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+        $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
         $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
         $block = Block::query()->latest('id')->first();
@@ -1316,7 +1316,7 @@ class MediaManagementTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/admin/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
+        $this->assertStringContainsString('/cms/pages/'.$page->id.'/slots/', (string) $response->headers->get('Location'));
         $this->assertStringContainsString('/blocks', (string) $response->headers->get('Location'));
 
         $block = Block::query()->latest('id')->first();
@@ -1893,7 +1893,7 @@ class MediaManagementTest extends TestCase
         $safeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => $safeReturnUrl]));
         $safeEdit->assertSee('href="'.e($safeReturnUrl).'" class="wb-btn wb-btn-secondary"', false);
 
-        $unsafeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => 'https://evil.example.test/admin/media']));
+        $unsafeEdit = $this->actingAs($user)->get(route('admin.media.edit', ['media' => $asset, 'return_url' => 'https://evil.example.test/cms/media']));
         $unsafeEdit->assertSee('href="'.route('admin.media.index').'" class="wb-btn wb-btn-secondary"', false);
         $unsafeEdit->assertDontSee('evil.example.test');
 
@@ -1913,7 +1913,7 @@ class MediaManagementTest extends TestCase
             'caption' => null,
             'description' => null,
             'folder_id' => null,
-            'return_url' => 'https://evil.example.test/admin/media',
+            'return_url' => 'https://evil.example.test/cms/media',
         ]);
         $unsafeUpdate->assertRedirect(route('admin.media.index'));
     }

@@ -2,12 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\Site;
 use App\Models\User;
-use WebBlocks\Cms\Models\VisitorEvent;
-use WebBlocks\Cms\Support\System\InstalledVersionStore;
-use WebBlocks\Cms\Support\WebBlocks;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,6 +13,11 @@ use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeCo
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController as PackageSystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController as PackageVisitorReportController;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class AdminDashboardRouteTest extends TestCase
 {
@@ -73,11 +73,11 @@ class AdminDashboardRouteTest extends TestCase
     #[Test]
     public function admin_dashboard_route_name_points_to_canonical_admin_path(): void
     {
-        $this->assertSame('/admin', route('admin.dashboard', absolute: false));
+        $this->assertSame('/cms', route('admin.dashboard', absolute: false));
     }
 
     #[Test]
-    public function admin_root_opens_dashboard_for_authenticated_users(): void
+    public function cms_root_opens_dashboard_for_authenticated_users(): void
     {
         $user = User::factory()->editor()->create();
         $site = Site::query()->where('is_primary', true)->firstOrFail();
@@ -99,7 +99,7 @@ class AdminDashboardRouteTest extends TestCase
             'visited_at' => CarbonImmutable::today()->setTime(9, 0),
         ]);
 
-        $response = $this->actingAs($user)->get('/admin');
+        $response = $this->actingAs($user)->get('/cms');
 
         $response->assertOk();
         $response->assertSee('Dashboard');
@@ -144,11 +144,11 @@ class AdminDashboardRouteTest extends TestCase
     }
 
     #[Test]
-    public function admin_dashboard_legacy_path_redirects_to_canonical_admin_path(): void
+    public function cms_dashboard_path_redirects_to_canonical_admin_path(): void
     {
         $user = User::factory()->editor()->create();
 
-        $response = $this->actingAs($user)->get('/admin/dashboard');
+        $response = $this->actingAs($user)->get('/cms/dashboard');
 
         $response->assertRedirect(route('admin.dashboard', absolute: false));
     }
@@ -156,9 +156,20 @@ class AdminDashboardRouteTest extends TestCase
     #[Test]
     public function guests_are_redirected_to_login_from_canonical_admin_path(): void
     {
-        $response = $this->get('/admin');
+        $response = $this->get('/cms');
 
         $response->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function cms_does_not_claim_the_host_admin_namespace(): void
+    {
+        foreach (app('router')->getRoutes() as $route) {
+            $this->assertNotSame('admin', $route->uri());
+            $this->assertFalse(str_starts_with($route->uri(), 'admin/'), $route->uri());
+        }
+
+        $this->get('/admin')->assertNotFound();
     }
 
     #[Test]
@@ -166,7 +177,7 @@ class AdminDashboardRouteTest extends TestCase
     {
         $user = User::factory()->editor()->create();
 
-        $response = $this->actingAs($user)->get('/admin');
+        $response = $this->actingAs($user)->get('/cms');
 
         $response->assertOk();
         $response->assertSee('cms/js/admin/core.js', false);
@@ -184,7 +195,7 @@ class AdminDashboardRouteTest extends TestCase
     {
         $user = User::factory()->editor()->create();
 
-        $response = $this->actingAs($user)->get('/admin');
+        $response = $this->actingAs($user)->get('/cms');
 
         $response->assertOk();
         $response->assertSee(WebBlocks::uiCssUrl(), false);
@@ -198,7 +209,7 @@ class AdminDashboardRouteTest extends TestCase
     {
         $user = User::factory()->editor()->create();
 
-        $response = $this->actingAs($user)->get('/admin');
+        $response = $this->actingAs($user)->get('/cms');
 
         $response->assertOk();
         $response->assertSeeInOrder([

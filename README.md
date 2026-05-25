@@ -67,8 +67,8 @@ For the current `v1.32.x` consumer boundary, `App\Models\User` remains host-owne
 
 After install, open:
 
-- login: `/login` or `/admin/login`
-- admin: `/admin`
+- login: `/cms/login` for package-owned CMS auth, or the host `/login` when the host app owns authentication
+- admin: `/cms`
 - public home: `/`
 
 For a fresh install, first get the source code locally:
@@ -97,7 +97,7 @@ Typical local URLs:
 
 - installer: `/install`
 - public site: `/`
-- admin: `/admin`
+- admin: `/cms`
 
 ### Manual CLI Install
 
@@ -127,14 +127,14 @@ Then open:
 
 - installer: `http://127.0.0.1:8000/install`
 - public site: `http://127.0.0.1:8000/`
-- admin: `http://127.0.0.1:8000/admin`
+- admin: `http://127.0.0.1:8000/cms`
 
 See `docs/installation.md` for the complete install guide.
 
 ## Quick Start
 
 1. Install the CMS with the browser wizard or the CLI flow.
-2. Sign in to `/admin`.
+2. Sign in to `/cms`.
 3. Create or edit a site if your install uses more than one site.
 4. Create a page. New pages start as `draft`.
 5. If you already have a compatible single-page JSON payload, use `Admin -> Pages -> Import Page` to import one new page into the selected site as draft. This page-scoped workflow is separate from the site-level `Export / Import` tool.
@@ -261,7 +261,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - PHP files use 2-space indentation in this repository.
 - `ddev composer format:test` checks Pint formatting and runs `scripts/check-php-indentation.php`, while `ddev composer format` applies Pint fixes.
 - Package transition controls live in package `config/webblocks-cms.php`: diagnostics, public status routes, admin status routes, and package migration loading stay disabled by default. Package admin and public runtime route loading are enabled so package-owned CMS admin and public route files can be authoritative while their reserved package status routes remain separately guard-disabled.
-- During the current runtime-authority step, active CMS admin routes now load from package `routes/admin.php`, active CMS public routes now load from package `routes/public.php`, and root `routes/web.php` is reduced to install, auth, profile, and compatibility loading for package-owned CMS route trees.
+- During the current runtime-authority step, active CMS admin routes now load from package `routes/admin.php` under `/cms`, active CMS public routes now load from package `routes/public.php`, and root `routes/web.php` is reduced to install, auth, profile, and compatibility loading for package-owned CMS route trees.
 - The public entry slice for page rendering, search, contact form submission, and privacy-consent sync now uses package-owned controllers, requests, and package namespace entry views without root `App\Http\...` wrapper classes.
 - The public model foundation now includes `Block`, `ContactMessage`, `Locale`, `Page`, `PageSlot`, `PageTranslation`, `PublicSearchIndex`, `Site`, `SiteDomain`, `SystemSetting`, and `VisitorEvent` in package `src/Models/` without root `App\Models\...` wrappers. `User` remains app-owned and root-owned.
 - During the icon catalog package transition, active admin routes, `icons:sync-webblocks-ui`, and the icon catalog admin views now use package-owned controller, command, and Blade resources directly. Root icon catalog PHP wrappers are intentionally absent; root Blade view compatibility remains where direct view references still need it.

@@ -39,7 +39,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
-    ->prefix('admin')
+    ->prefix('cms')
     ->name('admin.')
     ->group(function () {
         $missingSharedSlot = function (): never {

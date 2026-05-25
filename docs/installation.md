@@ -74,7 +74,7 @@ What `webblocks:install` does:
 - records the installed version and install completion marker in `system_settings`
 - creates the first active `super_admin` only when one does not already exist
 
-Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/login` or `/admin/login`, then open `/admin`.
+Package auth is Laravel-native and does not require Breeze, Jetstream, Laravel UI, or Fortify. After install, sign in at `/cms/login` when CMS owns auth routes, or use the host `/login` when the host app owns authentication, then open `/cms`.
 
 For the current `v1.32.x` package-consumer boundary, the host application's `App\Models\User` remains the auth model and install-time patch target.
 
@@ -142,8 +142,8 @@ ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" -
 Then open:
 
 - public site: `https://<your-project>.ddev.site/`
-- admin login: `https://<your-project>.ddev.site/login`
-- admin: `https://<your-project>.ddev.site/admin`
+- admin login: `https://<your-project>.ddev.site/cms/login`
+- admin: `https://<your-project>.ddev.site/cms`
 
 After the source code is present locally:
 
@@ -167,7 +167,7 @@ Notes:
 Then open:
 
 - public site: `https://<your-project>.ddev.site`
-- admin: `https://<your-project>.ddev.site/admin`
+- admin: `https://<your-project>.ddev.site/cms`
 - installer on a fresh install: `https://<your-project>.ddev.site/install`
 
 Complete the fresh install in the browser wizard after those setup steps are done.
@@ -193,15 +193,15 @@ The first `super_admin` is required for a completed install.
 ## Common Setup Notes
 
 - the installer is locked after completion
-- `/admin` is the canonical admin entry point
-- package-consumer installs may sign in through `/login` or `/admin/login`
-- `/admin/dashboard` redirects to `/admin`
+- `/cms` is the canonical CMS admin entry point
+- package-consumer installs may sign in through `/cms/login`; co-installed apps may keep host-owned `/login`
+- `/cms/dashboard` redirects to `/cms`
 - new pages start in `draft`
 - if install-level features such as revisions, backups, or updates report missing tables, run `php artisan migrate`
 
 ## Post-Install Next Steps
 
-1. Sign in to `/admin`.
+1. Sign in to `/cms`.
 2. Review your site and locale configuration.
 3. Create or edit a site if needed.
 4. Create your first page.
