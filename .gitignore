@@ -45,6 +45,8 @@ Homestead.yaml
 Thumbs.db
 
 # Local runtime media
+/config/webblocks-cms.php
+/public/cms/package-boundary.json
 /storage/app/public/assets/*
 /storage/app/public/media/*
 /storage/app/public/releases/*

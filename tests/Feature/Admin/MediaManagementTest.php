@@ -475,6 +475,10 @@ class MediaManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('cms/js/admin/core.js', false);
         $response->assertSee('cms/js/admin/asset-picker.js', false);
+        $assetPickerJs = file_get_contents(public_path('cms/js/admin/asset-picker.js'));
+        $this->assertNotFalse($assetPickerJs);
+        $this->assertStringContainsString("fetch('/cms/media'", $assetPickerJs);
+        $this->assertStringNotContainsString("fetch('/admin/media'", $assetPickerJs);
         $response->assertDontSee("credentials: 'same-origin'", false);
         $response->assertDontSee('if (response.redirected)', false);
         $response->assertDontSee('response.status === 401 || response.status === 403 || response.status === 419', false);
