@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.48
+
+- Prepare v1.32.48 as a focused Contact Form notification readability patch while preserving storage-first public success behavior and existing notification delivery behavior.
+- Improve Contact Form notification email and admin detail readability by separating visitor message content, submission source details, notification delivery state, and quieter technical metadata including the already-stored IP address.
+
 ## 1.32.47
 
 - Prepare v1.32.47 as a focused Contact Form notification hardening patch by adding a site-scoped default recipient and resolving notifications from block override to site default to `CONTACT_RECIPIENT_EMAIL` to safe `MAIL_FROM_ADDRESS` fallback while preserving storage-first public success behavior.

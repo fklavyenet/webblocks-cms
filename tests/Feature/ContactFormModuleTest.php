@@ -311,6 +311,66 @@ class ContactFormModuleTest extends TestCase
     }
 
     #[Test]
+    public function notification_email_renders_visitor_source_and_technical_sections(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+        $block->page->site->update(['display_name' => 'F Klavye']);
+
+        $this->withServerVariables([
+            'HTTP_USER_AGENT' => 'FeatureTest Browser',
+            'REMOTE_ADDR' => '203.0.113.10',
+        ])->post(route('contact-messages.store'), $this->submissionPayload($block, [
+            'name' => 'Ada Visitor',
+            'email' => 'ada@example.com',
+            'subject' => 'Keyboard request',
+            'message' => 'Please send more details.',
+        ]))->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+        $html = (new PackageContactMessageNotification($message))->render();
+
+        $this->assertStringContainsString('New contact message', $html);
+        $this->assertStringContainsString('Visitor message', $html);
+        $this->assertStringContainsString('Ada Visitor', $html);
+        $this->assertStringContainsString('ada@example.com', $html);
+        $this->assertStringContainsString('Keyboard request', $html);
+        $this->assertStringContainsString('Please send more details.', $html);
+        $this->assertStringContainsString('Submission details', $html);
+        $this->assertStringContainsString('F Klavye', $html);
+        $this->assertStringContainsString('Contact', $html);
+        $this->assertStringContainsString('/p/contact', $html);
+        $this->assertStringContainsString('Technical details', $html);
+        $this->assertStringContainsString('203.0.113.10', $html);
+        $this->assertStringContainsString('FeatureTest Browser', $html);
+        $this->assertStringContainsString((string) $block->id, $html);
+    }
+
+    #[Test]
+    public function notification_email_escapes_visitor_content_and_preserves_message_line_breaks(): void
+    {
+        Mail::fake();
+        [, $block] = $this->createContactFormPage();
+
+        $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+            'name' => '<strong>Taylor</strong>',
+            'subject' => '<script>alert("subject")</script>',
+            'message' => "First <b>line</b>\nSecond line",
+        ]))->assertRedirect();
+
+        $message = ContactMessage::query()->latest('id')->firstOrFail();
+        $html = (new PackageContactMessageNotification($message))->render();
+
+        $this->assertStringContainsString('&lt;strong&gt;Taylor&lt;/strong&gt;', $html);
+        $this->assertStringContainsString('&lt;script&gt;alert(&quot;subject&quot;)&lt;/script&gt;', $html);
+        $this->assertStringContainsString('First &lt;b&gt;line&lt;/b&gt;<br', $html);
+        $this->assertStringContainsString('Second line', $html);
+        $this->assertStringNotContainsString('<strong>Taylor</strong>', $html);
+        $this->assertStringNotContainsString('<script>alert("subject")</script>', $html);
+        $this->assertStringNotContainsString('First <b>line</b>', $html);
+    }
+
+    #[Test]
     public function contact_form_notification_uses_block_recipient_before_site_default(): void
     {
         Mail::fake();
@@ -829,6 +889,9 @@ class ContactFormModuleTest extends TestCase
             'message' => 'Detail source check.',
             'status' => 'new',
             'source_url' => route('pages.show', $page->slug),
+            'referer' => 'https://example.test/origin',
+            'ip_address' => '203.0.113.25',
+            'user_agent' => 'FeatureTest Browser',
             'notification_enabled' => true,
             'notification_recipient' => 'team@example.com',
         ]);
@@ -836,12 +899,61 @@ class ContactFormModuleTest extends TestCase
         $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
 
         $response->assertOk();
+        $response->assertSeeInOrder(['Visitor message', 'Submission details', 'Notification', 'Technical details']);
+        $response->assertSee('Detail source check.');
+        $response->assertSee('Taylor Editor');
+        $response->assertSee('taylor@example.com');
+        $response->assertSee('Submission details');
         $response->assertSee('Path:');
         $response->assertSee('/p/contact');
-        $response->assertSee('Block ID:');
-        $response->assertSee('Slot:');
+        $response->assertSee('Source URL:');
+        $response->assertSee('Open source');
+        $response->assertSee(route('pages.show', $page->slug), false);
+        $response->assertSee('Referrer:');
+        $response->assertSee('https://example.test/origin');
+        $response->assertSee('Received at:');
+        $response->assertSee('Block / Slot:');
         $response->assertSee('Notification');
+        $response->assertSee('Status:');
         $response->assertSee('Recipient:');
+        $response->assertSee('Technical details');
+        $response->assertSee('Admin-only request metadata captured with the submission.');
+        $response->assertSee('IP address:');
+        $response->assertSee('203.0.113.25');
+        $response->assertSee('User agent:');
+        $response->assertSee('FeatureTest Browser');
+        $response->assertSee('Block ID:');
+        $response->assertSee('Page ID:');
+        $response->assertSee('Mark read');
+        $response->assertSee('Mark replied');
+        $response->assertSee('Back to Inbox');
+        $response->assertSee('data-wb-target="#delete-contact-message-modal"', false);
+    }
+
+    #[Test]
+    public function contact_message_detail_escapes_visitor_provided_content(): void
+    {
+        $user = User::factory()->create();
+        [$page, $block] = $this->createContactFormPage();
+        $message = ContactMessage::create([
+            'block_id' => $block->id,
+            'page_id' => $page->id,
+            'name' => '<strong>Taylor</strong>',
+            'email' => 'taylor@example.com',
+            'subject' => '<script>alert("subject")</script>',
+            'message' => '<img src=x onerror=alert(1)>',
+            'status' => 'new',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
+
+        $response->assertOk();
+        $response->assertSee('&lt;strong&gt;Taylor&lt;/strong&gt;', false);
+        $response->assertSee('&lt;script&gt;alert(&quot;subject&quot;)&lt;/script&gt;', false);
+        $response->assertSee('&lt;img src=x onerror=alert(1)&gt;', false);
+        $response->assertDontSee('<strong>Taylor</strong>', false);
+        $response->assertDontSee('<script>alert("subject")</script>', false);
+        $response->assertDontSee('<img src=x onerror=alert(1)>', false);
     }
 
     #[Test]
@@ -872,7 +984,7 @@ class ContactFormModuleTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.contact-messages.show', $message))
             ->assertOk()
-            ->assertSee('Failure Detail:', false)
+            ->assertSee('Failure detail:', false)
             ->assertSee('SMTP unavailable', false);
     }
 
