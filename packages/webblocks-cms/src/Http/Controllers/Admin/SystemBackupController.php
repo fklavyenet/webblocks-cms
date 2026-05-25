@@ -24,252 +24,252 @@ use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
 
 class SystemBackupController extends Controller
 {
-    private const FALLBACK_PER_PAGE = 15;
+  private const FALLBACK_PER_PAGE = 15;
 
-    public function __construct(
-        private readonly SystemBackupManager $systemBackupManager,
-        private readonly SystemBackupRestoreManager $systemBackupRestoreManager,
-        private readonly UploadedSystemBackupManager $uploadedSystemBackupManager,
-        private readonly BackupRestoreArchiveInspector $archiveInspector,
-        private readonly SystemBackupBulkDeleter $systemBackupBulkDeleter,
-    ) {}
+  public function __construct(
+    private readonly SystemBackupManager $systemBackupManager,
+    private readonly SystemBackupRestoreManager $systemBackupRestoreManager,
+    private readonly UploadedSystemBackupManager $uploadedSystemBackupManager,
+    private readonly BackupRestoreArchiveInspector $archiveInspector,
+    private readonly SystemBackupBulkDeleter $systemBackupBulkDeleter,
+  ) {}
 
-    public function index(): View
-    {
-        $tableExists = Schema::hasTable('system_backups');
-        $perPage = AdminPagination::perPage();
-        $search = trim((string) request()->string('search'));
-        $type = request()->string('type')->toString();
-        $status = request()->string('status')->toString();
+  public function index(): View
+  {
+    $tableExists = Schema::hasTable('system_backups');
+    $perPage = AdminPagination::perPage();
+    $search = trim((string) request()->string('search'));
+    $type = request()->string('type')->toString();
+    $status = request()->string('status')->toString();
 
-        if (! in_array($type, [
-            SystemBackup::TYPE_MANUAL,
-            SystemBackup::TYPE_UPLOADED,
-            SystemBackup::TYPE_RESTORE_SAFETY,
-            SystemBackup::TYPE_PRE_UPDATE,
-        ], true)) {
-            $type = '';
-        }
-
-        if (! in_array($status, [
-            SystemBackup::STATUS_RUNNING,
-            SystemBackup::STATUS_COMPLETED,
-            SystemBackup::STATUS_FAILED,
-        ], true)) {
-            $status = '';
-        }
-
-        if ($tableExists) {
-            $this->systemBackupManager->markStaleBackupsAsFailed();
-        }
-
-        $totalCount = $tableExists
-            ? SystemBackup::query()->count()
-            : 0;
-
-        $backups = $tableExists
-            ? SystemBackup::query()
-                ->with('triggeredBy')
-                ->when($search !== '', function ($query) use ($search): void {
-                    $query->where(function ($inner) use ($search): void {
-                        $inner->where('archive_filename', 'like', "%{$search}%")
-                            ->orWhere('label', 'like', "%{$search}%")
-                            ->orWhere('summary', 'like', "%{$search}%")
-                            ->orWhere('error_message', 'like', "%{$search}%")
-                            ->orWhere('type', 'like', "%{$search}%")
-                            ->orWhere('status', 'like', "%{$search}%");
-                    });
-                })
-                ->when($type !== '', fn ($query) => $query->where('type', $type))
-                ->when($status !== '', fn ($query) => $query->where('status', $status))
-                ->latest()
-                ->paginate($perPage)
-                ->withQueryString()
-            : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]);
-
-        return view('webblocks-cms::admin.system.backups.index', [
-            'backups' => $backups,
-            'latestBackup' => $this->systemBackupManager->latest(),
-            'freshness' => $this->systemBackupManager->freshnessSummary(),
-            'backupTableExists' => $tableExists,
-            'filters' => [
-                'search' => $search,
-                'type' => $type,
-                'status' => $status,
-            ],
-            'totalCount' => $totalCount,
-            'filteredCount' => $backups->total(),
-        ]);
+    if (! in_array($type, [
+      SystemBackup::TYPE_MANUAL,
+      SystemBackup::TYPE_UPLOADED,
+      SystemBackup::TYPE_RESTORE_SAFETY,
+      SystemBackup::TYPE_PRE_UPDATE,
+    ], true)) {
+      $type = '';
     }
 
-    public function store(Request $request): RedirectResponse
-    {
-        try {
-            $backup = $this->systemBackupManager->createManualBackup($request->user()?->id);
-
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->with('status', $backup->summary ?? 'Backup completed successfully.');
-        } catch (Throwable $throwable) {
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->withErrors(['system_backup' => $throwable->getMessage()]);
-        }
+    if (! in_array($status, [
+      SystemBackup::STATUS_RUNNING,
+      SystemBackup::STATUS_COMPLETED,
+      SystemBackup::STATUS_FAILED,
+    ], true)) {
+      $status = '';
     }
 
-    public function createUpload(): View
-    {
-        return view('webblocks-cms::admin.system.backups.upload');
+    if ($tableExists) {
+      $this->systemBackupManager->markStaleBackupsAsFailed();
     }
 
-    public function upload(SystemBackupUploadRequest $request): RedirectResponse
-    {
-        try {
-            $backup = $this->uploadedSystemBackupManager->import(
-                $request->file('archive'),
-                $request->user()?->id,
-            );
+    $totalCount = $tableExists
+      ? SystemBackup::query()->count()
+      : 0;
 
-            return redirect()
-                ->route('admin.system.backups.show', $backup)
-                ->with('status', 'Backup archive uploaded and validated successfully.');
-        } catch (Throwable $throwable) {
-            return redirect()
-                ->route('admin.system.backups.upload')
-                ->withInput()
-                ->withErrors(['system_backup' => $throwable->getMessage()]);
-        }
+    $backups = $tableExists
+      ? SystemBackup::query()
+        ->with('triggeredBy')
+        ->when($search !== '', function ($query) use ($search): void {
+          $query->where(function ($inner) use ($search): void {
+            $inner->where('archive_filename', 'like', "%{$search}%")
+              ->orWhere('label', 'like', "%{$search}%")
+              ->orWhere('summary', 'like', "%{$search}%")
+              ->orWhere('error_message', 'like', "%{$search}%")
+              ->orWhere('type', 'like', "%{$search}%")
+              ->orWhere('status', 'like', "%{$search}%");
+          });
+        })
+        ->when($type !== '', fn ($query) => $query->where('type', $type))
+        ->when($status !== '', fn ($query) => $query->where('status', $status))
+        ->latest()
+        ->paginate($perPage)
+        ->withQueryString()
+      : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [
+        'path' => request()->url(),
+        'query' => request()->query(),
+      ]);
+
+    return view('webblocks-cms::admin.system.backups.index', [
+      'backups' => $backups,
+      'latestBackup' => $this->systemBackupManager->latest(),
+      'freshness' => $this->systemBackupManager->freshnessSummary(),
+      'backupTableExists' => $tableExists,
+      'filters' => [
+        'search' => $search,
+        'type' => $type,
+        'status' => $status,
+      ],
+      'totalCount' => $totalCount,
+      'filteredCount' => $backups->total(),
+    ]);
+  }
+
+  public function store(Request $request): RedirectResponse
+  {
+    try {
+      $backup = $this->systemBackupManager->createManualBackup($request->user()?->id);
+
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->with('status', $backup->summary ?? 'Backup completed successfully.');
+    } catch (Throwable $throwable) {
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->withErrors(['system_backup' => $throwable->getMessage()]);
     }
+  }
 
-    public function show(SystemBackup $backup): View
-    {
+  public function createUpload(): View
+  {
+    return view('webblocks-cms::admin.system.backups.upload');
+  }
+
+  public function upload(SystemBackupUploadRequest $request): RedirectResponse
+  {
+    try {
+      $backup = $this->uploadedSystemBackupManager->import(
+        $request->file('archive'),
+        $request->user()?->id,
+      );
+
+      return redirect()
+        ->route('admin.system.backups.show', $backup)
+        ->with('status', 'Backup archive uploaded and validated successfully.');
+    } catch (Throwable $throwable) {
+      return redirect()
+        ->route('admin.system.backups.upload')
+        ->withInput()
+        ->withErrors(['system_backup' => $throwable->getMessage()]);
+    }
+  }
+
+  public function show(SystemBackup $backup): View
+  {
+    $inspection = null;
+
+    if ($backup->isSuccessful() && filled($backup->archive_path)) {
+      try {
+        $inspection = $this->archiveInspector->inspect(
+          $this->systemBackupManagerPath($backup)
+        );
+      } catch (Throwable) {
         $inspection = null;
-
-        if ($backup->isSuccessful() && filled($backup->archive_path)) {
-            try {
-                $inspection = $this->archiveInspector->inspect(
-                    $this->systemBackupManagerPath($backup)
-                );
-            } catch (Throwable) {
-                $inspection = null;
-            }
-        }
-
-        return view('webblocks-cms::admin.system.backups.show', [
-            'backup' => $backup->load('triggeredBy'),
-            'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
-            'inspection' => $inspection,
-        ]);
+      }
     }
 
-    public function restore(SystemBackup $backup, RunSystemBackupRestoreRequest $request): RedirectResponse
-    {
-        try {
-            $compatibilityBackup = $this->resolveCompatibilityBackup($backup);
+    return view('webblocks-cms::admin.system.backups.show', [
+      'backup' => $backup->load('triggeredBy'),
+      'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
+      'inspection' => $inspection,
+    ]);
+  }
 
-            $this->resolveCompatibilityRestoreManager()->restoreFromBackup($compatibilityBackup, $request->user()?->id);
+  public function restore(SystemBackup $backup, RunSystemBackupRestoreRequest $request): RedirectResponse
+  {
+    try {
+      $compatibilityBackup = $this->resolveCompatibilityBackup($backup);
 
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->with('status', 'System restore completed successfully.');
-        } catch (Throwable $throwable) {
-            return redirect()
-                ->route('admin.system.backups.show', $backup)
-                ->withErrors(['system_restore' => $throwable->getMessage()]);
-        }
+      $this->resolveCompatibilityRestoreManager()->restoreFromBackup($compatibilityBackup, $request->user()?->id);
+
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->with('status', 'System restore completed successfully.');
+    } catch (Throwable $throwable) {
+      return redirect()
+        ->route('admin.system.backups.show', $backup)
+        ->withErrors(['system_restore' => $throwable->getMessage()]);
+    }
+  }
+
+  public function destroy(Request $request, SystemBackup $backup): RedirectResponse
+  {
+    $forceRunning = $request->boolean('force_running');
+
+    if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $forceRunning) {
+      return back()->withErrors([
+        'system_backup' => 'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
+      ]);
     }
 
-    public function destroy(Request $request, SystemBackup $backup): RedirectResponse
-    {
-        $forceRunning = $request->boolean('force_running');
+    try {
+      $this->systemBackupManager->deleteBackupRecord($backup, $forceRunning);
 
-        if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $forceRunning) {
-            return back()->withErrors([
-                'system_backup' => 'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
-            ]);
-        }
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->with('status', $backup->isRunning() && ! $backup->isStaleRunning() && $forceRunning
+          ? 'Stuck running backup record deleted.'
+          : 'Backup deleted.');
+    } catch (Throwable $throwable) {
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->withErrors(['system_backup' => $throwable->getMessage()]);
+    }
+  }
 
-        try {
-            $this->systemBackupManager->deleteBackupRecord($backup, $forceRunning);
+  public function bulkDestroy(BulkDeleteSystemBackupsRequest $request): RedirectResponse
+  {
+    $result = $this->systemBackupBulkDeleter->deleteSelected($request->validated('backup_ids'));
 
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->with('status', $backup->isRunning() && ! $backup->isStaleRunning() && $forceRunning
-                    ? 'Stuck running backup record deleted.'
-                    : 'Backup deleted.');
-        } catch (Throwable $throwable) {
-            return redirect()
-                ->route('admin.system.backups.index')
-                ->withErrors(['system_backup' => $throwable->getMessage()]);
-        }
+    $redirect = redirect()
+      ->route('admin.system.backups.index')
+      ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+
+    if ($result->hasFailures()) {
+      $redirect->withErrors(['system_backup' => implode(' ', $result->failureMessages())]);
     }
 
-    public function bulkDestroy(BulkDeleteSystemBackupsRequest $request): RedirectResponse
-    {
-        $result = $this->systemBackupBulkDeleter->deleteSelected($request->validated('backup_ids'));
+    return $redirect;
+  }
 
-        $redirect = redirect()
-            ->route('admin.system.backups.index')
-            ->with($result->deletedCount() > 0 ? 'status' : 'bulk_status', $result->message());
+  public function download(SystemBackup $backup): BinaryFileResponse
+  {
+    return $this->systemBackupManager->downloadResponse($backup);
+  }
 
-        if ($result->hasFailures()) {
-            $redirect->withErrors(['system_backup' => implode(' ', $result->failureMessages())]);
-        }
-
-        return $redirect;
+  public function destroyRestore(SystemBackup $backup, SystemBackupRestore $restore): RedirectResponse
+  {
+    if ((int) $restore->source_backup_id !== (int) $backup->id) {
+      abort(404);
     }
 
-    public function download(SystemBackup $backup): BinaryFileResponse
-    {
-        return $this->systemBackupManager->downloadResponse($backup);
+    $restore->delete();
+
+    return redirect()
+      ->route('admin.system.backups.show', $backup)
+      ->with('status', 'Restore history entry deleted.');
+  }
+
+  private function systemBackupManagerPath(SystemBackup $backup): string
+  {
+    return $this->systemBackupManager->archiveDisk()->path($backup->archive_path);
+  }
+
+  private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup
+  {
+    $rootBackupModel = 'App\\Models\\SystemBackup';
+
+    if (! class_exists($rootBackupModel) || ! is_subclass_of($rootBackupModel, SystemBackup::class)) {
+      return $backup;
     }
 
-    public function destroyRestore(SystemBackup $backup, SystemBackupRestore $restore): RedirectResponse
-    {
-        if ((int) $restore->source_backup_id !== (int) $backup->id) {
-            abort(404);
-        }
+    $compatibilityBackup = $rootBackupModel::query()->find($backup->getKey());
 
-        $restore->delete();
+    return $compatibilityBackup instanceof SystemBackup ? $compatibilityBackup : $backup;
+  }
 
-        return redirect()
-            ->route('admin.system.backups.show', $backup)
-            ->with('status', 'Restore history entry deleted.');
+  private function resolveCompatibilityRestoreManager(): SystemBackupRestoreManager
+  {
+    $rootRestoreManager = 'App\\Support\\System\\SystemBackupRestoreManager';
+
+    if (! class_exists($rootRestoreManager) || ! is_subclass_of($rootRestoreManager, SystemBackupRestoreManager::class)) {
+      return $this->systemBackupRestoreManager;
     }
 
-    private function systemBackupManagerPath(SystemBackup $backup): string
-    {
-        return $this->systemBackupManager->archiveDisk()->path($backup->archive_path);
-    }
+    $compatibilityManager = app($rootRestoreManager);
 
-    private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup
-    {
-        $rootBackupModel = 'App\\Models\\SystemBackup';
-
-        if (! class_exists($rootBackupModel) || ! is_subclass_of($rootBackupModel, SystemBackup::class)) {
-            return $backup;
-        }
-
-        $compatibilityBackup = $rootBackupModel::query()->find($backup->getKey());
-
-        return $compatibilityBackup instanceof SystemBackup ? $compatibilityBackup : $backup;
-    }
-
-    private function resolveCompatibilityRestoreManager(): SystemBackupRestoreManager
-    {
-        $rootRestoreManager = 'App\\Support\\System\\SystemBackupRestoreManager';
-
-        if (! class_exists($rootRestoreManager) || ! is_subclass_of($rootRestoreManager, SystemBackupRestoreManager::class)) {
-            return $this->systemBackupRestoreManager;
-        }
-
-        $compatibilityManager = app($rootRestoreManager);
-
-        return $compatibilityManager instanceof SystemBackupRestoreManager
-            ? $compatibilityManager
-            : $this->systemBackupRestoreManager;
-    }
+    return $compatibilityManager instanceof SystemBackupRestoreManager
+      ? $compatibilityManager
+      : $this->systemBackupRestoreManager;
+  }
 }

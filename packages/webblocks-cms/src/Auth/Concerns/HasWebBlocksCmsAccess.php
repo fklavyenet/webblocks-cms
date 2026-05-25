@@ -6,5 +6,5 @@ use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
 
 trait HasWebBlocksCmsAccess
 {
-    use HasCmsAdminAccess;
+  use HasCmsAdminAccess;
 }

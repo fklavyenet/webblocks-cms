@@ -2,111 +2,111 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\SharedSlot;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
 
 class UpdatePageSlotSourceRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+  public function authorize(): bool
+  {
+    return true;
+  }
 
-    protected function prepareForValidation(): void
-    {
-        $sourceType = strtolower(trim((string) $this->input('source_type')));
-        $sharedSlotId = $this->input('shared_slot_id');
+  protected function prepareForValidation(): void
+  {
+    $sourceType = strtolower(trim((string) $this->input('source_type')));
+    $sharedSlotId = $this->input('shared_slot_id');
 
-        $this->merge([
-            'source_type' => $sourceType,
-            'shared_slot_id' => filled($sharedSlotId) ? (int) $sharedSlotId : null,
-        ]);
-    }
+    $this->merge([
+      'source_type' => $sourceType,
+      'shared_slot_id' => filled($sharedSlotId) ? (int) $sharedSlotId : null,
+    ]);
+  }
 
-    public function rules(): array
-    {
-        return [
-            'source_type' => ['required', Rule::in(PageSlot::sourceTypes())],
-            'shared_slot_id' => ['nullable', 'integer'],
-        ];
-    }
+  public function rules(): array
+  {
+    return [
+      'source_type' => ['required', Rule::in(PageSlot::sourceTypes())],
+      'shared_slot_id' => ['nullable', 'integer'],
+    ];
+  }
 
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            $page = $this->route('page');
-            $slot = $this->route('slot');
+  public function withValidator(Validator $validator): void
+  {
+    $validator->after(function (Validator $validator): void {
+      $page = $this->route('page');
+      $slot = $this->route('slot');
 
-            if (! $page instanceof Page || ! $slot instanceof PageSlot || (int) $slot->page_id !== (int) $page->id) {
-                return;
-            }
+      if (! $page instanceof Page || ! $slot instanceof PageSlot || (int) $slot->page_id !== (int) $page->id) {
+        return;
+      }
 
-            $sourceType = (string) $this->input('source_type');
-            $sharedSlotId = $this->input('shared_slot_id');
+      $sourceType = (string) $this->input('source_type');
+      $sharedSlotId = $this->input('shared_slot_id');
 
-            if ($sourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) {
-                return;
-            }
+      if ($sourceType !== PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+        return;
+      }
 
-            if (! $this->sharedSlotsSchemaAvailable()) {
-                $validator->errors()->add('shared_slot_id', 'Shared Slots are not available until the Shared Slots migration has been run.');
+      if (! $this->sharedSlotsSchemaAvailable()) {
+        $validator->errors()->add('shared_slot_id', 'Shared Slots are not available until the Shared Slots migration has been run.');
 
-                return;
-            }
+        return;
+      }
 
-            if (! is_int($sharedSlotId) || $sharedSlotId < 1) {
-                $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
+      if (! is_int($sharedSlotId) || $sharedSlotId < 1) {
+        $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
 
-                return;
-            }
+        return;
+      }
 
-            $sharedSlot = SharedSlot::query()->find($sharedSlotId);
+      $sharedSlot = SharedSlot::query()->find($sharedSlotId);
 
-            if (! $sharedSlot instanceof SharedSlot) {
-                $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
+      if (! $sharedSlot instanceof SharedSlot) {
+        $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
 
-                return;
-            }
+        return;
+      }
 
-            $issues = $sharedSlot->compatibilityIssuesFor($page, $slot->slotSlug());
+      $issues = $sharedSlot->compatibilityIssuesFor($page, $slot->slotSlug());
 
-            if ($issues === []) {
-                return;
-            }
+      if ($issues === []) {
+        return;
+      }
 
-            foreach ($issues as $issue) {
-                $validator->errors()->add('shared_slot_id', match ($issue) {
-                    'site' => 'Shared Slot must belong to the same site as the page.',
-                    'inactive' => 'Inactive Shared Slots cannot be assigned to page slots.',
-                    'public_shell' => 'Shared Slot Page Layout must match the page Page Layout.',
-                    'slot_name' => 'Shared Slot slot name must match the page slot name.',
-                    default => 'Select a compatible Shared Slot.',
-                });
-            }
+      foreach ($issues as $issue) {
+        $validator->errors()->add('shared_slot_id', match ($issue) {
+          'site' => 'Shared Slot must belong to the same site as the page.',
+          'inactive' => 'Inactive Shared Slots cannot be assigned to page slots.',
+          'public_shell' => 'Shared Slot Page Layout must match the page Page Layout.',
+          'slot_name' => 'Shared Slot slot name must match the page slot name.',
+          default => 'Select a compatible Shared Slot.',
         });
-    }
+      }
+    });
+  }
 
-    public function validatedData(): array
-    {
-        $data = $this->validated();
+  public function validatedData(): array
+  {
+    $data = $this->validated();
 
-        return [
-            'source_type' => PageSlot::normalizeSourceType($data['source_type']),
-            'shared_slot_id' => $data['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
-                ? (int) $data['shared_slot_id']
-                : null,
-        ];
-    }
+    return [
+      'source_type' => PageSlot::normalizeSourceType($data['source_type']),
+      'shared_slot_id' => $data['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
+        ? (int) $data['shared_slot_id']
+        : null,
+    ];
+  }
 
-    private function sharedSlotsSchemaAvailable(): bool
-    {
-        return Schema::hasTable('shared_slots')
-            && Schema::hasColumn('page_slots', 'source_type')
-            && Schema::hasColumn('page_slots', 'shared_slot_id');
-    }
+  private function sharedSlotsSchemaAvailable(): bool
+  {
+    return Schema::hasTable('shared_slots')
+      && Schema::hasColumn('page_slots', 'source_type')
+      && Schema::hasColumn('page_slots', 'shared_slot_id');
+  }
 }

@@ -7,25 +7,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('blocks', function (Blueprint $table) {
-            $table->string('status')->default('published')->after('settings');
-        });
+  public function up(): void
+  {
+    Schema::table('blocks', function (Blueprint $table) {
+      $table->string('status')->default('published')->after('settings');
+    });
 
-        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            DB::statement('ALTER TABLE blocks MODIFY settings LONGTEXT NULL');
-        }
+    if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+      DB::statement('ALTER TABLE blocks MODIFY settings LONGTEXT NULL');
+    }
+  }
+
+  public function down(): void
+  {
+    if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
+      DB::statement('ALTER TABLE blocks MODIFY settings JSON NULL');
     }
 
-    public function down(): void
-    {
-        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            DB::statement('ALTER TABLE blocks MODIFY settings JSON NULL');
-        }
-
-        Schema::table('blocks', function (Blueprint $table) {
-            $table->dropColumn('status');
-        });
-    }
+    Schema::table('blocks', function (Blueprint $table) {
+      $table->dropColumn('status');
+    });
+  }
 };

@@ -6,8 +6,8 @@ use WebBlocks\Cms\Support\System\SystemSettings;
 
 class AdminPagination
 {
-    public static function perPage(): int
-    {
-        return app(SystemSettings::class)->adminListingPerPage();
-    }
+  public static function perPage(): int
+  {
+    return app(SystemSettings::class)->adminListingPerPage();
+  }
 }

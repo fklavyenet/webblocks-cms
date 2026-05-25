@@ -6,22 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('page_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->boolean('is_system')->default(false);
-            $table->unsignedInteger('sort_order')->default(0);
-            $table->string('status')->default('published');
-            $table->timestamps();
-        });
-    }
+  public function up(): void
+  {
+    Schema::create('page_types', function (Blueprint $table) {
+      $table->id();
+      $table->string('name');
+      $table->string('slug')->unique();
+      $table->text('description')->nullable();
+      $table->boolean('is_system')->default(false);
+      $table->unsignedInteger('sort_order')->default(0);
+      $table->string('status')->default('published');
+      $table->timestamps();
+    });
+  }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('page_types');
-    }
+  public function down(): void
+  {
+    Schema::dropIfExists('page_types');
+  }
 };

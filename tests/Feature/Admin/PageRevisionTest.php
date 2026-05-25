@@ -2,10 +2,16 @@
 
 namespace Tests\Feature\Admin;
 
-use WebBlocks\Cms\Models\Media as Asset;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\Test;
+use Tests\TestCase;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\Block as PackageBlock;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media as Asset;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageRevision;
@@ -13,770 +19,764 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
-use App\Models\User;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use PHPUnit\Framework\Attributes\Test;
-use Tests\TestCase;
-use WebBlocks\Cms\Models\Block as PackageBlock;
 
 class PageRevisionTest extends TestCase
 {
-    use RefreshDatabase;
-
-    private function defaultSite(): Site
-    {
-        return Site::query()->where('is_primary', true)->firstOrFail();
-    }
-
-    private function defaultLocale(): Locale
-    {
-        return Locale::query()->where('is_default', true)->firstOrFail();
-    }
-
-    private function siteAdminFor(Site $site): User
-    {
-        $user = User::factory()->siteAdmin()->create();
-        $user->sites()->sync([$site->id]);
-
-        return $user;
-    }
-
-    private function editorFor(Site $site): User
-    {
-        $user = User::factory()->editor()->create();
-        $user->sites()->sync([$site->id]);
-
-        return $user;
-    }
-
-    private function slotType(string $slug = 'main', string $name = 'Main', int $sortOrder = 1): SlotType
-    {
-        return SlotType::query()->updateOrCreate(
-            ['slug' => $slug],
-            ['name' => $name, 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => true],
-        );
-    }
-
-    private function sectionBlockType(): BlockType
-    {
-        return BlockType::query()->firstOrCreate(
-            ['slug' => 'section'],
-            ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1],
-        );
-    }
-
-    private function plainTextBlockType(): BlockType
-    {
-        return BlockType::query()->firstOrCreate(
-            ['slug' => 'plain_text'],
-            ['name' => 'Plain Text', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1],
-        );
-    }
-
-    private function columnsBlockType(): BlockType
-    {
-        return BlockType::query()->firstOrCreate(
-            ['slug' => 'columns'],
-            ['name' => 'Columns', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2],
-        );
-    }
-
-    private function columnItemBlockType(): BlockType
-    {
-        return BlockType::query()->firstOrCreate(
-            ['slug' => 'column_item'],
-            ['name' => 'Column Item', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 3],
-        );
-    }
-
-    private function pageFor(Site $site, string $status = Page::STATUS_DRAFT, string $slug = 'about'): Page
-    {
-        return Page::create([
-            'site_id' => $site->id,
-            'title' => ucfirst($slug),
-            'slug' => $slug,
-            'status' => $status,
-        ]);
-    }
-
-    #[Test]
-    public function page_updates_create_a_revision_and_show_revision_history_link(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $main = $this->slotType();
-        $page = $this->pageFor($site);
-        $slot = PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-        ]);
-
-        $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
-            'site_id' => $site->id,
-            'title' => 'About Updated',
-            'slug' => 'about-updated',
-        ]);
-
-        $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'source' => 'admin',
-            'event' => 'page_updated',
-            'label' => 'Page updated',
-        ]);
-
-        $edit = $this->actingAs($user)->get(route('admin.pages.edit', $page));
-        $edit->assertOk();
-        $edit->assertSee('Revision History');
-        $edit->assertSee(route('admin.pages.revisions.index', $page), false);
-    }
-
-    #[Test]
-    public function slot_mutations_create_revisions(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $header = $this->slotType('header', 'Header', 1);
-        $main = $this->slotType('main', 'Main', 2);
-        $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
-        $page = $this->pageFor($site);
-
-        $this->actingAs($user)->post(route('admin.pages.slots.store', $page), [
-            'slot_type_id' => $header->id,
-        ])->assertRedirect(route('admin.pages.edit', $page));
-
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'event' => 'slot_changed',
-            'label' => 'Slot added',
-        ]);
-
-        $headerSlot = $page->fresh()->slots()->firstOrFail();
-        PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 1,
-        ]);
-        PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $sidebar->id,
-            'sort_order' => 2,
-        ]);
-
-        $this->actingAs($user)
-            ->post(route('admin.pages.slots.move-down', [$page, $headerSlot]))
-            ->assertRedirect(route('admin.pages.edit', $page));
-
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'event' => 'slot_changed',
-            'label' => 'Slot order updated',
-        ]);
-
-        $deletableSlot = $page->fresh()->slots()->where('slot_type_id', $sidebar->id)->firstOrFail();
-
-        $this->actingAs($user)
-            ->delete(route('admin.pages.slots.destroy', [$page, $deletableSlot]))
-            ->assertRedirect(route('admin.pages.edit', $page));
-
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'event' => 'slot_changed',
-            'label' => 'Slot deleted',
-        ]);
-    }
-
-    #[Test]
-    public function slot_revision_snapshot_keeps_slot_source_metadata(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $header = $this->slotType('header', 'Header', 1);
-        $page = $this->pageFor($site, Page::STATUS_DRAFT);
-        $sharedSlot = SharedSlot::query()->create([
-            'site_id' => $site->id,
-            'name' => 'Header Shared',
-            'handle' => 'header-shared',
-            'slot_name' => 'header',
-            'public_shell' => 'default',
-            'is_active' => true,
-        ]);
-        $slot = PageSlot::query()->create([
-            'page_id' => $page->id,
-            'slot_type_id' => $header->id,
-            'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
-            'shared_slot_id' => $sharedSlot->id,
-            'sort_order' => 0,
-        ]);
-
-        $this->actingAs($user)
-            ->put(route('admin.pages.slots.source.update', [$page, $slot]), [
-                'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
-            ])
-            ->assertRedirect(route('admin.pages.edit', $page));
-
-        $revision = $page->fresh()->revisions()->latest('id')->firstOrFail();
-        $slotSnapshot = collect($revision->snapshot['slots'] ?? [])->firstWhere('slot_type_id', $header->id);
-
-        $this->assertNotNull($slotSnapshot);
-        $this->assertSame(PageSlot::SOURCE_TYPE_DISABLED, $slotSnapshot['source_type'] ?? null);
-        $this->assertNull($slotSnapshot['shared_slot_id'] ?? null);
-    }
-
-    #[Test]
-    public function page_translation_updates_create_a_revision(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $turkish = Locale::query()->create([
-            'code' => 'tr',
-            'name' => 'Turkish',
-            'is_default' => false,
-            'is_enabled' => true,
-        ]);
-        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
-        $page = $this->pageFor($site, Page::STATUS_DRAFT);
-        $ogImage = Asset::query()->create([
-            'disk' => 'public',
-            'path' => 'seo/translation-og.png',
-            'filename' => 'translation-og.png',
-            'original_name' => 'translation-og.png',
-            'extension' => 'png',
-            'mime_type' => 'image/png',
-            'size' => 100,
-            'kind' => Asset::KIND_IMAGE,
-            'visibility' => 'public',
-            'uploaded_by' => $user->id,
-        ]);
-
-        $response = $this->actingAs($user)->post(route('admin.pages.translations.store', [$page, $turkish]), [
-            'name' => 'Hakkinda',
-            'slug' => 'hakkinda',
-            'seo_title' => 'TR SEO',
-            'seo_description' => 'TR SEO description',
-            'seo_keywords' => 'tr,seo',
-            'og_title' => 'TR OG',
-            'og_description' => 'TR OG description',
-            'og_image_media_id' => $ogImage->id,
-        ]);
-
-        $response->assertRedirect(route('admin.pages.edit', $page));
-        $this->assertDatabaseHas('page_translations', [
-            'page_id' => $page->id,
-            'locale_id' => $turkish->id,
-            'seo_title' => 'TR SEO',
-            'seo_description' => 'TR SEO description',
-            'seo_keywords' => 'tr,seo',
-            'og_title' => 'TR OG',
-            'og_description' => 'TR OG description',
-            'og_image_media_id' => $ogImage->id,
-        ]);
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'event' => 'page_updated',
-            'label' => 'Translation added',
-        ]);
-    }
-
-    #[Test]
-    public function block_updates_create_a_revision(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $main = $this->slotType();
-        $sectionType = $this->sectionBlockType();
-        $page = $this->pageFor($site);
-        $slot = PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-        ]);
-        $block = Block::create([
-            'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $sectionType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'title' => 'Hero',
-            'content' => 'Original content',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
-            'page_id' => $page->id,
-            'parent_id' => null,
-            'block_type_id' => $sectionType->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'title' => 'Hero updated',
-            'content' => 'Updated content',
-            'status' => 'published',
-            '_slot_block_mode' => 'edit',
-            '_slot_block_id' => $block->id,
-        ]);
-
-        $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'event' => 'block_updated',
-            'label' => 'Block updated',
-        ]);
-        $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
-    }
-
-    #[Test]
-    public function editors_can_view_revision_history_but_cannot_restore(): void
-    {
-        $site = $this->defaultSite();
-        $editor = $this->editorFor($site);
-        $siteAdmin = $this->siteAdminFor($site);
-        $page = $this->pageFor($site);
-
-        PageRevision::query()->create([
-            'page_id' => $page->id,
-            'site_id' => $site->id,
-            'created_by' => $siteAdmin->id,
-            'created_by_user_id' => $siteAdmin->id,
-            'source' => 'admin',
-            'event' => 'page_updated',
-            'label' => 'Manual seed revision',
-            'reason' => 'Seeded for access test.',
-            'snapshot' => ['schema_version' => 1],
-        ]);
-
-        $history = $this->actingAs($editor)->get(route('admin.pages.revisions.index', $page));
-        $history->assertOk();
-        $history->assertSee('Revision History');
-        $history->assertSee('View only');
-        $history->assertSee('Source: Admin');
-        $history->assertSee('Event: Page Updated');
-        $history->assertSee($siteAdmin->name);
-        $history->assertDontSee('Restore this page revision?');
-
-        $revision = $page->revisions()->firstOrFail();
-
-        $this->actingAs($editor)
-            ->post(route('admin.pages.revisions.restore', [$page, $revision]))
-            ->assertForbidden();
-    }
-
-    #[Test]
-    public function revision_history_is_denied_outside_site_scope(): void
-    {
-        $primarySite = $this->defaultSite();
-        $secondarySite = Site::query()->create([
-            'name' => 'Campaign Site',
-            'handle' => 'campaign-site',
-            'domain' => 'campaign.example.test',
-            'is_primary' => false,
-        ]);
-        $user = $this->siteAdminFor($primarySite);
-        $page = $this->pageFor($secondarySite);
-
-        $this->actingAs($user)
-            ->get(route('admin.pages.revisions.index', $page))
-            ->assertForbidden();
-    }
-
-    #[Test]
-    public function revision_history_redirects_cleanly_when_revision_table_is_missing(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $page = $this->pageFor($site);
-
-        Schema::dropIfExists('page_revisions');
-
-        $response = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
-
-        $response->assertRedirect(route('admin.pages.edit', $page));
-        $response->assertSessionHasErrors('revisions');
-    }
-
-    #[Test]
-    public function restoring_a_revision_restores_page_translations_slots_and_blocks_and_creates_safety_entries(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $turkish = Locale::query()->create([
-            'code' => 'tr',
-            'name' => 'Turkish',
-            'is_default' => false,
-            'is_enabled' => true,
-        ]);
-        $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
-        $main = $this->slotType('main', 'Main', 1);
-        $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
-        $sectionType = $this->sectionBlockType();
-        $columnsType = $this->columnsBlockType();
-        $columnItemType = $this->columnItemBlockType();
-
-        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
-        PageAsset::query()->create([
-            'page_id' => $page->id,
-            'type' => 'css',
-            'path' => '/site/default/pages/about/page.css',
-            'load_position' => 'head',
-            'is_enabled' => true,
-            'sort_order' => 0,
-        ]);
-        $page->translations()->create([
-            'locale_id' => $turkish->id,
-            'name' => 'Hakkinda',
-            'slug' => 'hakkinda',
-            'path' => '/p/hakkinda',
-            'seo_title' => 'TR SEO Original',
-            'seo_description' => 'TR SEO Original Description',
-        ]);
-        PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-        ]);
-        $columns = Block::create([
-            'page_id' => $page->id,
-            'type' => 'columns',
-            'block_type_id' => $columnsType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'title' => 'Columns block',
-            'content' => 'Original columns',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-        $child = Block::create([
-            'page_id' => $page->id,
-            'parent_id' => $columns->id,
-            'type' => 'column_item',
-            'block_type_id' => $columnItemType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'title' => 'Column child',
-            'content' => 'Child content',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-        $child->textTranslations()->create([
-            'locale_id' => $turkish->id,
-            'title' => 'Sutun cocuk',
-            'content' => 'Cocuk icerik',
-        ]);
-
-        $captured = $this->actingAs($user)->post(route('admin.pages.workflow', $page), [
-            'action' => 'archive',
-        ]);
-
-        $captured->assertRedirect(route('admin.pages.edit', $page));
-        $revisionToRestore = $page->revisions()->firstOrFail();
-
-        $page->update([
-            'title' => 'Changed page title',
-            'slug' => 'changed-page-title',
-            'status' => Page::STATUS_DRAFT,
-        ]);
-        $page->translations()->where('locale_id', $turkish->id)->update([
-            'name' => 'Degisti',
-            'slug' => 'degisti',
-            'path' => '/p/degisti',
-            'seo_title' => 'TR SEO Changed',
-            'seo_description' => 'TR SEO Changed Description',
-        ]);
-        $page->slots()->delete();
-        $page->pageAssets()->delete();
-        PageAsset::query()->create([
-            'page_id' => $page->id,
-            'type' => 'js',
-            'path' => '/site/default/pages/about/page.js',
-            'load_position' => 'body_end',
-            'is_enabled' => true,
-            'sort_order' => 1,
-        ]);
-        PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $sidebar->id,
-            'sort_order' => 0,
-        ]);
-        $page->blocks()->delete();
-        $replacement = Block::create([
-            'page_id' => $page->id,
-            'type' => 'section',
-            'block_type_id' => $sectionType->id,
-            'source_type' => 'static',
-            'slot' => 'sidebar',
-            'slot_type_id' => $sidebar->id,
-            'sort_order' => 0,
-            'title' => 'Replacement block',
-            'content' => 'Replacement content',
-            'status' => 'draft',
-            'is_system' => false,
-        ]);
-        $replacement->textTranslations()->create([
-            'locale_id' => $turkish->id,
-            'title' => 'Yedek',
-            'content' => 'Yedek icerik',
-        ]);
-
-        $restore = $this->actingAs($user)->post(route('admin.pages.revisions.restore', [$page, $revisionToRestore]));
-
-        $restore->assertRedirect(route('admin.pages.edit', $page));
-        $restore->assertSessionHas('status', 'Page revision restored successfully.');
-
-        $page = $page->fresh()->load(['translations', 'slots', 'blocks.textTranslations']);
-        $defaultTranslation = $page->defaultTranslation();
-
-        $this->assertSame('About', $defaultTranslation?->name);
-        $this->assertSame('about', $defaultTranslation?->slug);
-        $this->assertSame('About', $page->title);
-        $this->assertSame('about', $page->slug);
-        $this->assertSame(Page::STATUS_ARCHIVED, $page->status);
-        $this->assertSame('Hakkinda', $page->translations->firstWhere('locale_id', $turkish->id)?->name);
-        $this->assertSame('TR SEO Original', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_title);
-        $this->assertSame('TR SEO Original Description', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_description);
-        $this->assertSame('/site/default/pages/about/page.css', $page->pageAssets()->first()?->path);
-        $this->assertCount(1, $page->slots);
-        $this->assertSame($main->id, $page->slots->first()->slot_type_id);
-        $this->assertSame(2, $page->blocks->count());
-        $resolvedBlocks = $page->blocks
-            ->sortBy('sort_order')
-            ->map(fn (PackageBlock $block) => app(BlockTranslationResolver::class)->resolve($block, $this->defaultLocale()));
-        $this->assertSame(['Columns block', 'Column child'], $resolvedBlocks->pluck('title')->values()->all());
-        $restoredChild = $page->blocks->first(function (PackageBlock $block) use ($turkish) {
-            return $block->textTranslations->firstWhere('locale_id', $turkish->id)?->title === 'Sutun cocuk';
-        });
-        $this->assertNotNull($restoredChild);
-        $this->assertSame('Sutun cocuk', $restoredChild->textTranslations->firstWhere('locale_id', $turkish->id)?->title);
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'label' => 'Pre-restore safety snapshot',
-            'event' => 'revision_restored',
-            'source' => 'restore',
-        ]);
-        $this->assertDatabaseHas('page_revisions', [
-            'page_id' => $page->id,
-            'label' => 'Revision restored',
-            'event' => 'revision_restored',
-            'source' => 'restore',
-            'restored_from_page_revision_id' => $revisionToRestore->id,
-        ]);
-
-        $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
-        $history->assertOk();
-        $history->assertSee('Restored from revision #'.$revisionToRestore->id);
-    }
-
-    #[Test]
-    public function revision_history_renders_not_recorded_for_legacy_rows_without_actor_metadata(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'legacy-revision');
-
-        PageRevision::query()->create([
-            'page_id' => $page->id,
-            'site_id' => $site->id,
-            'created_by' => null,
-            'created_by_user_id' => null,
-            'source' => null,
-            'event' => null,
-            'label' => 'Legacy revision',
-            'reason' => 'Predates audit metadata.',
-            'snapshot' => ['schema_version' => 1],
-        ]);
-
-        $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
-
-        $history->assertOk();
-        $history->assertSee('Legacy revision');
-        $history->assertSee('Not recorded');
-    }
-
-    #[Test]
-    public function deleting_a_referenced_user_keeps_page_and_revision_history_renderable(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $viewer = User::factory()->superAdmin()->create();
-        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'audit-delete');
-        $page->forceFill([
-            'created_by_user_id' => $user->id,
-            'updated_by_user_id' => $user->id,
-            'published_by_user_id' => $user->id,
-        ])->save();
-
-        PageRevision::query()->create([
-            'page_id' => $page->id,
-            'site_id' => $site->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'source' => 'admin',
-            'event' => 'page_updated',
-            'label' => 'User-linked revision',
-            'reason' => 'Seeded for deletion safety.',
-            'snapshot' => ['schema_version' => 1],
-        ]);
-
-        $user->delete();
-
-        $this->assertDatabaseHas('pages', ['id' => $page->id]);
-        $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'label' => 'User-linked revision']);
-
-        $details = $this->actingAs($viewer)->get(route('admin.pages.index', ['details' => $page->id]));
-        $details->assertOk();
-        $details->assertSee('Not recorded');
-
-        $history = $this->actingAs($viewer)->get(route('admin.pages.revisions.index', $page));
-        $history->assertOk();
-        $history->assertSee('User-linked revision');
-        $history->assertSee('Not recorded');
-    }
-
-    #[Test]
-    public function revision_restore_keeps_translated_block_content_working_when_canonical_fields_are_null(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $main = $this->slotType('main', 'Main', 1);
-        $plainTextType = $this->plainTextBlockType();
-        $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
-
-        $slot = PageSlot::create([
-            'page_id' => $page->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-        ]);
-
-        $block = Block::create([
-            'page_id' => $page->id,
-            'type' => 'plain_text',
-            'block_type_id' => $plainTextType->id,
-            'source_type' => 'static',
-            'slot' => 'main',
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'content' => 'Original content',
-            'status' => 'published',
-            'is_system' => false,
-        ]);
-
-        $block->textTranslations()->create([
-            'locale_id' => $this->defaultLocale()->id,
-            'content' => 'Original content',
-        ]);
-
-        app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
-
-        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
-            'page_id' => $page->id,
-            'parent_id' => null,
-            'block_type_id' => $plainTextType->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'text' => 'Updated content',
-            'status' => 'published',
-            '_slot_block_mode' => 'edit',
-            '_slot_block_id' => $block->id,
-        ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
-
-        $revisionToRestore = $page->fresh()->revisions()->latest('id')->firstOrFail();
-
-        $this->actingAs($user)->put(route('admin.blocks.update', $block), [
-            'page_id' => $page->id,
-            'parent_id' => null,
-            'block_type_id' => $plainTextType->id,
-            'slot_type_id' => $main->id,
-            'sort_order' => 0,
-            'text' => 'Second content',
-            'status' => 'published',
-            '_slot_block_mode' => 'edit',
-            '_slot_block_id' => $block->id,
-        ]);
-
-        $this->actingAs($user)
-            ->post(route('admin.pages.revisions.restore', [$page, $revisionToRestore]))
-            ->assertRedirect(route('admin.pages.edit', $page));
-
-        $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
-        $resolvedBlock = app(BlockTranslationResolver::class)->resolve($restoredBlock, $this->defaultLocale());
-
-        $this->assertNull($restoredBlock->getRawOriginal('content'));
-        $this->assertSame('Updated content', $resolvedBlock->content);
-        $this->get(route('pages.show', 'about'))
-            ->assertOk()
-            ->assertSee('Updated content');
-    }
-
-    #[Test]
-    public function revision_restore_strips_legacy_slot_wrapper_settings_from_snapshot_data(): void
-    {
-        $site = $this->defaultSite();
-        $user = $this->siteAdminFor($site);
-        $main = $this->slotType('main', 'Main', 1);
-        $page = $this->pageFor($site, Page::STATUS_DRAFT, 'revision-slot-settings');
-
-        $revision = PageRevision::query()->create([
-            'page_id' => $page->id,
-            'site_id' => $site->id,
-            'created_by' => $user->id,
-            'created_by_user_id' => $user->id,
-            'source' => 'admin',
-            'event' => 'slot_changed',
-            'label' => 'Legacy slot settings snapshot',
-            'reason' => 'Seeded for restore sanitization.',
-            'snapshot' => [
-                'schema_version' => 1,
-                'page' => [
-                    'title' => 'Revision Slot Settings',
-                    'slug' => 'revision-slot-settings',
-                    'page_type' => $page->page_type,
-                    'page_type_id' => $page->page_type_id,
-                    'layout_id' => $page->layout_id,
-                    'status' => $page->status,
-                    'settings' => $page->getRawOriginal('settings'),
-                    'published_at' => null,
-                    'review_requested_at' => null,
-                ],
-                'translations' => [],
-                'slots' => [[
-                    'slot_type_id' => $main->id,
-                    'sort_order' => 0,
-                    'settings' => [
-                        'wrapper_element' => 'section',
-                        'wrapper_preset' => 'docs-main',
-                        'custom' => 'keep-me',
-                    ],
-                ]],
-                'blocks' => [],
-            ],
-        ]);
-
-        $this->actingAs($user)
-            ->post(route('admin.pages.revisions.restore', [$page, $revision]))
-            ->assertRedirect(route('admin.pages.edit', $page));
-
-        $restoredSlot = $page->fresh()->slots()->firstOrFail();
-        $this->assertSame(['custom' => 'keep-me'], $restoredSlot->settings);
-    }
+  use RefreshDatabase;
+
+  private function defaultSite(): Site
+  {
+    return Site::query()->where('is_primary', true)->firstOrFail();
+  }
+
+  private function defaultLocale(): Locale
+  {
+    return Locale::query()->where('is_default', true)->firstOrFail();
+  }
+
+  private function siteAdminFor(Site $site): User
+  {
+    $user = User::factory()->siteAdmin()->create();
+    $user->sites()->sync([$site->id]);
+
+    return $user;
+  }
+
+  private function editorFor(Site $site): User
+  {
+    $user = User::factory()->editor()->create();
+    $user->sites()->sync([$site->id]);
+
+    return $user;
+  }
+
+  private function slotType(string $slug = 'main', string $name = 'Main', int $sortOrder = 1): SlotType
+  {
+    return SlotType::query()->updateOrCreate(
+      ['slug' => $slug],
+      ['name' => $name, 'status' => 'published', 'sort_order' => $sortOrder, 'is_system' => true],
+    );
+  }
+
+  private function sectionBlockType(): BlockType
+  {
+    return BlockType::query()->firstOrCreate(
+      ['slug' => 'section'],
+      ['name' => 'Section', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1],
+    );
+  }
+
+  private function plainTextBlockType(): BlockType
+  {
+    return BlockType::query()->firstOrCreate(
+      ['slug' => 'plain_text'],
+      ['name' => 'Plain Text', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 1],
+    );
+  }
+
+  private function columnsBlockType(): BlockType
+  {
+    return BlockType::query()->firstOrCreate(
+      ['slug' => 'columns'],
+      ['name' => 'Columns', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 2],
+    );
+  }
+
+  private function columnItemBlockType(): BlockType
+  {
+    return BlockType::query()->firstOrCreate(
+      ['slug' => 'column_item'],
+      ['name' => 'Column Item', 'source_type' => 'static', 'status' => 'published', 'sort_order' => 3],
+    );
+  }
+
+  private function pageFor(Site $site, string $status = Page::STATUS_DRAFT, string $slug = 'about'): Page
+  {
+    return Page::create([
+      'site_id' => $site->id,
+      'title' => ucfirst($slug),
+      'slug' => $slug,
+      'status' => $status,
+    ]);
+  }
+
+  #[Test]
+  public function page_updates_create_a_revision_and_show_revision_history_link(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $main = $this->slotType();
+    $page = $this->pageFor($site);
+    $slot = PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+    ]);
+
+    $response = $this->actingAs($user)->put(route('admin.pages.update', $page), [
+      'site_id' => $site->id,
+      'title' => 'About Updated',
+      'slug' => 'about-updated',
+    ]);
+
+    $response->assertRedirect(route('admin.pages.edit', $page));
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'source' => 'admin',
+      'event' => 'page_updated',
+      'label' => 'Page updated',
+    ]);
+
+    $edit = $this->actingAs($user)->get(route('admin.pages.edit', $page));
+    $edit->assertOk();
+    $edit->assertSee('Revision History');
+    $edit->assertSee(route('admin.pages.revisions.index', $page), false);
+  }
+
+  #[Test]
+  public function slot_mutations_create_revisions(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $header = $this->slotType('header', 'Header', 1);
+    $main = $this->slotType('main', 'Main', 2);
+    $sidebar = $this->slotType('sidebar', 'Sidebar', 3);
+    $page = $this->pageFor($site);
+
+    $this->actingAs($user)->post(route('admin.pages.slots.store', $page), [
+      'slot_type_id' => $header->id,
+    ])->assertRedirect(route('admin.pages.edit', $page));
+
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'event' => 'slot_changed',
+      'label' => 'Slot added',
+    ]);
+
+    $headerSlot = $page->fresh()->slots()->firstOrFail();
+    PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 1,
+    ]);
+    PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $sidebar->id,
+      'sort_order' => 2,
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.slots.move-down', [$page, $headerSlot]))
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'event' => 'slot_changed',
+      'label' => 'Slot order updated',
+    ]);
+
+    $deletableSlot = $page->fresh()->slots()->where('slot_type_id', $sidebar->id)->firstOrFail();
+
+    $this->actingAs($user)
+      ->delete(route('admin.pages.slots.destroy', [$page, $deletableSlot]))
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'event' => 'slot_changed',
+      'label' => 'Slot deleted',
+    ]);
+  }
+
+  #[Test]
+  public function slot_revision_snapshot_keeps_slot_source_metadata(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $header = $this->slotType('header', 'Header', 1);
+    $page = $this->pageFor($site, Page::STATUS_DRAFT);
+    $sharedSlot = SharedSlot::query()->create([
+      'site_id' => $site->id,
+      'name' => 'Header Shared',
+      'handle' => 'header-shared',
+      'slot_name' => 'header',
+      'public_shell' => 'default',
+      'is_active' => true,
+    ]);
+    $slot = PageSlot::query()->create([
+      'page_id' => $page->id,
+      'slot_type_id' => $header->id,
+      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+      'shared_slot_id' => $sharedSlot->id,
+      'sort_order' => 0,
+    ]);
+
+    $this->actingAs($user)
+      ->put(route('admin.pages.slots.source.update', [$page, $slot]), [
+        'source_type' => PageSlot::SOURCE_TYPE_DISABLED,
+      ])
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $revision = $page->fresh()->revisions()->latest('id')->firstOrFail();
+    $slotSnapshot = collect($revision->snapshot['slots'] ?? [])->firstWhere('slot_type_id', $header->id);
+
+    $this->assertNotNull($slotSnapshot);
+    $this->assertSame(PageSlot::SOURCE_TYPE_DISABLED, $slotSnapshot['source_type'] ?? null);
+    $this->assertNull($slotSnapshot['shared_slot_id'] ?? null);
+  }
+
+  #[Test]
+  public function page_translation_updates_create_a_revision(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $turkish = Locale::query()->create([
+      'code' => 'tr',
+      'name' => 'Turkish',
+      'is_default' => false,
+      'is_enabled' => true,
+    ]);
+    $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+    $page = $this->pageFor($site, Page::STATUS_DRAFT);
+    $ogImage = Asset::query()->create([
+      'disk' => 'public',
+      'path' => 'seo/translation-og.png',
+      'filename' => 'translation-og.png',
+      'original_name' => 'translation-og.png',
+      'extension' => 'png',
+      'mime_type' => 'image/png',
+      'size' => 100,
+      'kind' => Asset::KIND_IMAGE,
+      'visibility' => 'public',
+      'uploaded_by' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.pages.translations.store', [$page, $turkish]), [
+      'name' => 'Hakkinda',
+      'slug' => 'hakkinda',
+      'seo_title' => 'TR SEO',
+      'seo_description' => 'TR SEO description',
+      'seo_keywords' => 'tr,seo',
+      'og_title' => 'TR OG',
+      'og_description' => 'TR OG description',
+      'og_image_media_id' => $ogImage->id,
+    ]);
+
+    $response->assertRedirect(route('admin.pages.edit', $page));
+    $this->assertDatabaseHas('page_translations', [
+      'page_id' => $page->id,
+      'locale_id' => $turkish->id,
+      'seo_title' => 'TR SEO',
+      'seo_description' => 'TR SEO description',
+      'seo_keywords' => 'tr,seo',
+      'og_title' => 'TR OG',
+      'og_description' => 'TR OG description',
+      'og_image_media_id' => $ogImage->id,
+    ]);
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'event' => 'page_updated',
+      'label' => 'Translation added',
+    ]);
+  }
+
+  #[Test]
+  public function block_updates_create_a_revision(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $main = $this->slotType();
+    $sectionType = $this->sectionBlockType();
+    $page = $this->pageFor($site);
+    $slot = PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+    ]);
+    $block = Block::create([
+      'page_id' => $page->id,
+      'type' => 'section',
+      'block_type_id' => $sectionType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'title' => 'Hero',
+      'content' => 'Original content',
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $response = $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+      'page_id' => $page->id,
+      'parent_id' => null,
+      'block_type_id' => $sectionType->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'title' => 'Hero updated',
+      'content' => 'Updated content',
+      'status' => 'published',
+      '_slot_block_mode' => 'edit',
+      '_slot_block_id' => $block->id,
+    ]);
+
+    $response->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'event' => 'block_updated',
+      'label' => 'Block updated',
+    ]);
+    $this->assertSame($user->id, $page->fresh()->updated_by_user_id);
+  }
+
+  #[Test]
+  public function editors_can_view_revision_history_but_cannot_restore(): void
+  {
+    $site = $this->defaultSite();
+    $editor = $this->editorFor($site);
+    $siteAdmin = $this->siteAdminFor($site);
+    $page = $this->pageFor($site);
+
+    PageRevision::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'created_by' => $siteAdmin->id,
+      'created_by_user_id' => $siteAdmin->id,
+      'source' => 'admin',
+      'event' => 'page_updated',
+      'label' => 'Manual seed revision',
+      'reason' => 'Seeded for access test.',
+      'snapshot' => ['schema_version' => 1],
+    ]);
+
+    $history = $this->actingAs($editor)->get(route('admin.pages.revisions.index', $page));
+    $history->assertOk();
+    $history->assertSee('Revision History');
+    $history->assertSee('View only');
+    $history->assertSee('Source: Admin');
+    $history->assertSee('Event: Page Updated');
+    $history->assertSee($siteAdmin->name);
+    $history->assertDontSee('Restore this page revision?');
+
+    $revision = $page->revisions()->firstOrFail();
+
+    $this->actingAs($editor)
+      ->post(route('admin.pages.revisions.restore', [$page, $revision]))
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function revision_history_is_denied_outside_site_scope(): void
+  {
+    $primarySite = $this->defaultSite();
+    $secondarySite = Site::query()->create([
+      'name' => 'Campaign Site',
+      'handle' => 'campaign-site',
+      'domain' => 'campaign.example.test',
+      'is_primary' => false,
+    ]);
+    $user = $this->siteAdminFor($primarySite);
+    $page = $this->pageFor($secondarySite);
+
+    $this->actingAs($user)
+      ->get(route('admin.pages.revisions.index', $page))
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function revision_history_redirects_cleanly_when_revision_table_is_missing(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $page = $this->pageFor($site);
+
+    Schema::dropIfExists('page_revisions');
+
+    $response = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
+
+    $response->assertRedirect(route('admin.pages.edit', $page));
+    $response->assertSessionHasErrors('revisions');
+  }
+
+  #[Test]
+  public function restoring_a_revision_restores_page_translations_slots_and_blocks_and_creates_safety_entries(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $turkish = Locale::query()->create([
+      'code' => 'tr',
+      'name' => 'Turkish',
+      'is_default' => false,
+      'is_enabled' => true,
+    ]);
+    $site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+    $main = $this->slotType('main', 'Main', 1);
+    $sidebar = $this->slotType('sidebar', 'Sidebar', 2);
+    $sectionType = $this->sectionBlockType();
+    $columnsType = $this->columnsBlockType();
+    $columnItemType = $this->columnItemBlockType();
+
+    $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
+    PageAsset::query()->create([
+      'page_id' => $page->id,
+      'type' => 'css',
+      'path' => '/site/default/pages/about/page.css',
+      'load_position' => 'head',
+      'is_enabled' => true,
+      'sort_order' => 0,
+    ]);
+    $page->translations()->create([
+      'locale_id' => $turkish->id,
+      'name' => 'Hakkinda',
+      'slug' => 'hakkinda',
+      'path' => '/p/hakkinda',
+      'seo_title' => 'TR SEO Original',
+      'seo_description' => 'TR SEO Original Description',
+    ]);
+    PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+    ]);
+    $columns = Block::create([
+      'page_id' => $page->id,
+      'type' => 'columns',
+      'block_type_id' => $columnsType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'title' => 'Columns block',
+      'content' => 'Original columns',
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+    $child = Block::create([
+      'page_id' => $page->id,
+      'parent_id' => $columns->id,
+      'type' => 'column_item',
+      'block_type_id' => $columnItemType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'title' => 'Column child',
+      'content' => 'Child content',
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+    $child->textTranslations()->create([
+      'locale_id' => $turkish->id,
+      'title' => 'Sutun cocuk',
+      'content' => 'Cocuk icerik',
+    ]);
+
+    $captured = $this->actingAs($user)->post(route('admin.pages.workflow', $page), [
+      'action' => 'archive',
+    ]);
+
+    $captured->assertRedirect(route('admin.pages.edit', $page));
+    $revisionToRestore = $page->revisions()->firstOrFail();
+
+    $page->update([
+      'title' => 'Changed page title',
+      'slug' => 'changed-page-title',
+      'status' => Page::STATUS_DRAFT,
+    ]);
+    $page->translations()->where('locale_id', $turkish->id)->update([
+      'name' => 'Degisti',
+      'slug' => 'degisti',
+      'path' => '/p/degisti',
+      'seo_title' => 'TR SEO Changed',
+      'seo_description' => 'TR SEO Changed Description',
+    ]);
+    $page->slots()->delete();
+    $page->pageAssets()->delete();
+    PageAsset::query()->create([
+      'page_id' => $page->id,
+      'type' => 'js',
+      'path' => '/site/default/pages/about/page.js',
+      'load_position' => 'body_end',
+      'is_enabled' => true,
+      'sort_order' => 1,
+    ]);
+    PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $sidebar->id,
+      'sort_order' => 0,
+    ]);
+    $page->blocks()->delete();
+    $replacement = Block::create([
+      'page_id' => $page->id,
+      'type' => 'section',
+      'block_type_id' => $sectionType->id,
+      'source_type' => 'static',
+      'slot' => 'sidebar',
+      'slot_type_id' => $sidebar->id,
+      'sort_order' => 0,
+      'title' => 'Replacement block',
+      'content' => 'Replacement content',
+      'status' => 'draft',
+      'is_system' => false,
+    ]);
+    $replacement->textTranslations()->create([
+      'locale_id' => $turkish->id,
+      'title' => 'Yedek',
+      'content' => 'Yedek icerik',
+    ]);
+
+    $restore = $this->actingAs($user)->post(route('admin.pages.revisions.restore', [$page, $revisionToRestore]));
+
+    $restore->assertRedirect(route('admin.pages.edit', $page));
+    $restore->assertSessionHas('status', 'Page revision restored successfully.');
+
+    $page = $page->fresh()->load(['translations', 'slots', 'blocks.textTranslations']);
+    $defaultTranslation = $page->defaultTranslation();
+
+    $this->assertSame('About', $defaultTranslation?->name);
+    $this->assertSame('about', $defaultTranslation?->slug);
+    $this->assertSame('About', $page->title);
+    $this->assertSame('about', $page->slug);
+    $this->assertSame(Page::STATUS_ARCHIVED, $page->status);
+    $this->assertSame('Hakkinda', $page->translations->firstWhere('locale_id', $turkish->id)?->name);
+    $this->assertSame('TR SEO Original', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_title);
+    $this->assertSame('TR SEO Original Description', $page->translations->firstWhere('locale_id', $turkish->id)?->seo_description);
+    $this->assertSame('/site/default/pages/about/page.css', $page->pageAssets()->first()?->path);
+    $this->assertCount(1, $page->slots);
+    $this->assertSame($main->id, $page->slots->first()->slot_type_id);
+    $this->assertSame(2, $page->blocks->count());
+    $resolvedBlocks = $page->blocks
+      ->sortBy('sort_order')
+      ->map(fn (PackageBlock $block) => app(BlockTranslationResolver::class)->resolve($block, $this->defaultLocale()));
+    $this->assertSame(['Columns block', 'Column child'], $resolvedBlocks->pluck('title')->values()->all());
+    $restoredChild = $page->blocks->first(function (PackageBlock $block) use ($turkish) {
+      return $block->textTranslations->firstWhere('locale_id', $turkish->id)?->title === 'Sutun cocuk';
+    });
+    $this->assertNotNull($restoredChild);
+    $this->assertSame('Sutun cocuk', $restoredChild->textTranslations->firstWhere('locale_id', $turkish->id)?->title);
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'label' => 'Pre-restore safety snapshot',
+      'event' => 'revision_restored',
+      'source' => 'restore',
+    ]);
+    $this->assertDatabaseHas('page_revisions', [
+      'page_id' => $page->id,
+      'label' => 'Revision restored',
+      'event' => 'revision_restored',
+      'source' => 'restore',
+      'restored_from_page_revision_id' => $revisionToRestore->id,
+    ]);
+
+    $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
+    $history->assertOk();
+    $history->assertSee('Restored from revision #'.$revisionToRestore->id);
+  }
+
+  #[Test]
+  public function revision_history_renders_not_recorded_for_legacy_rows_without_actor_metadata(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $page = $this->pageFor($site, Page::STATUS_DRAFT, 'legacy-revision');
+
+    PageRevision::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'created_by' => null,
+      'created_by_user_id' => null,
+      'source' => null,
+      'event' => null,
+      'label' => 'Legacy revision',
+      'reason' => 'Predates audit metadata.',
+      'snapshot' => ['schema_version' => 1],
+    ]);
+
+    $history = $this->actingAs($user)->get(route('admin.pages.revisions.index', $page));
+
+    $history->assertOk();
+    $history->assertSee('Legacy revision');
+    $history->assertSee('Not recorded');
+  }
+
+  #[Test]
+  public function deleting_a_referenced_user_keeps_page_and_revision_history_renderable(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $viewer = User::factory()->superAdmin()->create();
+    $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'audit-delete');
+    $page->forceFill([
+      'created_by_user_id' => $user->id,
+      'updated_by_user_id' => $user->id,
+      'published_by_user_id' => $user->id,
+    ])->save();
+
+    PageRevision::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'source' => 'admin',
+      'event' => 'page_updated',
+      'label' => 'User-linked revision',
+      'reason' => 'Seeded for deletion safety.',
+      'snapshot' => ['schema_version' => 1],
+    ]);
+
+    $user->delete();
+
+    $this->assertDatabaseHas('pages', ['id' => $page->id]);
+    $this->assertDatabaseHas('page_revisions', ['page_id' => $page->id, 'label' => 'User-linked revision']);
+
+    $details = $this->actingAs($viewer)->get(route('admin.pages.index', ['details' => $page->id]));
+    $details->assertOk();
+    $details->assertSee('Not recorded');
+
+    $history = $this->actingAs($viewer)->get(route('admin.pages.revisions.index', $page));
+    $history->assertOk();
+    $history->assertSee('User-linked revision');
+    $history->assertSee('Not recorded');
+  }
+
+  #[Test]
+  public function revision_restore_keeps_translated_block_content_working_when_canonical_fields_are_null(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $main = $this->slotType('main', 'Main', 1);
+    $plainTextType = $this->plainTextBlockType();
+    $page = $this->pageFor($site, Page::STATUS_PUBLISHED, 'about');
+
+    $slot = PageSlot::create([
+      'page_id' => $page->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+    ]);
+
+    $block = Block::create([
+      'page_id' => $page->id,
+      'type' => 'plain_text',
+      'block_type_id' => $plainTextType->id,
+      'source_type' => 'static',
+      'slot' => 'main',
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'content' => 'Original content',
+      'status' => 'published',
+      'is_system' => false,
+    ]);
+
+    $block->textTranslations()->create([
+      'locale_id' => $this->defaultLocale()->id,
+      'content' => 'Original content',
+    ]);
+
+    app(BlockTranslationWriter::class)->normalizeCanonicalStorage($block->fresh(['textTranslations']));
+
+    $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+      'page_id' => $page->id,
+      'parent_id' => null,
+      'block_type_id' => $plainTextType->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'text' => 'Updated content',
+      'status' => 'published',
+      '_slot_block_mode' => 'edit',
+      '_slot_block_id' => $block->id,
+    ])->assertRedirect(route('admin.pages.slots.blocks', [$page, $slot]));
+
+    $revisionToRestore = $page->fresh()->revisions()->latest('id')->firstOrFail();
+
+    $this->actingAs($user)->put(route('admin.blocks.update', $block), [
+      'page_id' => $page->id,
+      'parent_id' => null,
+      'block_type_id' => $plainTextType->id,
+      'slot_type_id' => $main->id,
+      'sort_order' => 0,
+      'text' => 'Second content',
+      'status' => 'published',
+      '_slot_block_mode' => 'edit',
+      '_slot_block_id' => $block->id,
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.revisions.restore', [$page, $revisionToRestore]))
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $restoredBlock = $page->fresh()->blocks()->with('textTranslations')->firstOrFail();
+    $resolvedBlock = app(BlockTranslationResolver::class)->resolve($restoredBlock, $this->defaultLocale());
+
+    $this->assertNull($restoredBlock->getRawOriginal('content'));
+    $this->assertSame('Updated content', $resolvedBlock->content);
+    $this->get(route('pages.show', 'about'))
+      ->assertOk()
+      ->assertSee('Updated content');
+  }
+
+  #[Test]
+  public function revision_restore_strips_legacy_slot_wrapper_settings_from_snapshot_data(): void
+  {
+    $site = $this->defaultSite();
+    $user = $this->siteAdminFor($site);
+    $main = $this->slotType('main', 'Main', 1);
+    $page = $this->pageFor($site, Page::STATUS_DRAFT, 'revision-slot-settings');
+
+    $revision = PageRevision::query()->create([
+      'page_id' => $page->id,
+      'site_id' => $site->id,
+      'created_by' => $user->id,
+      'created_by_user_id' => $user->id,
+      'source' => 'admin',
+      'event' => 'slot_changed',
+      'label' => 'Legacy slot settings snapshot',
+      'reason' => 'Seeded for restore sanitization.',
+      'snapshot' => [
+        'schema_version' => 1,
+        'page' => [
+          'title' => 'Revision Slot Settings',
+          'slug' => 'revision-slot-settings',
+          'page_type' => $page->page_type,
+          'page_type_id' => $page->page_type_id,
+          'layout_id' => $page->layout_id,
+          'status' => $page->status,
+          'settings' => $page->getRawOriginal('settings'),
+          'published_at' => null,
+          'review_requested_at' => null,
+        ],
+        'translations' => [],
+        'slots' => [[
+          'slot_type_id' => $main->id,
+          'sort_order' => 0,
+          'settings' => [
+            'wrapper_element' => 'section',
+            'wrapper_preset' => 'docs-main',
+            'custom' => 'keep-me',
+          ],
+        ]],
+        'blocks' => [],
+      ],
+    ]);
+
+    $this->actingAs($user)
+      ->post(route('admin.pages.revisions.restore', [$page, $revision]))
+      ->assertRedirect(route('admin.pages.edit', $page));
+
+    $restoredSlot = $page->fresh()->slots()->firstOrFail();
+    $this->assertSame(['custom' => 'keep-me'], $restoredSlot->settings);
+  }
 }

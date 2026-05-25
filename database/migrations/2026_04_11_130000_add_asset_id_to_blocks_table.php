@@ -6,17 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('blocks', function (Blueprint $table) {
-            $table->foreignId('asset_id')->nullable()->after('url')->constrained('assets')->nullOnDelete();
-        });
-    }
+  public function up(): void
+  {
+    Schema::table('blocks', function (Blueprint $table) {
+      $table->foreignId('asset_id')->nullable()->after('url')->constrained('assets')->nullOnDelete();
+    });
+  }
 
-    public function down(): void
-    {
-        Schema::table('blocks', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('asset_id');
-        });
-    }
+  public function down(): void
+  {
+    Schema::table('blocks', function (Blueprint $table) {
+      $table->dropConstrainedForeignId('asset_id');
+    });
+  }
 };

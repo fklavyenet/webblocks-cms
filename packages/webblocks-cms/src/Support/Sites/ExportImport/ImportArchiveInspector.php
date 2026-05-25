@@ -7,100 +7,100 @@ use ZipArchive;
 
 class ImportArchiveInspector
 {
-    public function __construct(
-        private readonly SiteTransferPathGuard $pathGuard,
-    ) {}
+  public function __construct(
+    private readonly SiteTransferPathGuard $pathGuard,
+  ) {}
 
-    public function inspect(string $archivePath): SiteImportInspection
-    {
-        $archive = new ZipArchive;
-        $result = $archive->open($archivePath);
+  public function inspect(string $archivePath): SiteImportInspection
+  {
+    $archive = new ZipArchive;
+    $result = $archive->open($archivePath);
 
-        if ($result !== true) {
-            throw new RuntimeException('Import package could not be opened.');
-        }
-
-        try {
-            for ($index = 0; $index < $archive->numFiles; $index++) {
-                $name = $archive->getNameIndex($index);
-
-                if (! is_string($name)) {
-                    continue;
-                }
-
-                $trimmed = rtrim($name, '/');
-
-                if ($trimmed === '') {
-                    continue;
-                }
-
-                $this->pathGuard->assertSafeRelativePath($trimmed, 'Archive entry path');
-            }
-
-            $manifest = $this->decodeJsonFile($archive, 'manifest.json');
-
-            if (($manifest['product'] ?? null) !== SiteTransferPackage::PRODUCT) {
-                throw new RuntimeException('Import package product is not supported.');
-            }
-
-            if (($manifest['package_type'] ?? null) !== SiteTransferPackage::PACKAGE_TYPE) {
-                throw new RuntimeException('Import package type is not supported.');
-            }
-
-            if ((int) ($manifest['format_version'] ?? 0) !== SiteTransferPackage::FORMAT_VERSION) {
-                throw new RuntimeException('Import package format version is not supported.');
-            }
-
-            foreach (SiteTransferPackage::REQUIRED_DATA_FILES as $file) {
-                $this->decodeJsonFile($archive, $file);
-            }
-
-            $includesMedia = (bool) ($manifest['includes_media'] ?? false);
-
-            return new SiteImportInspection(
-                manifest: $manifest,
-                includesMedia: $includesMedia,
-            );
-        } finally {
-            $archive->close();
-        }
+    if ($result !== true) {
+      throw new RuntimeException('Import package could not be opened.');
     }
 
-    public function decodeJsonFile(ZipArchive $archive, string $path): array
-    {
-        $resolvedPath = $this->resolveJsonPath($archive, $path);
+    try {
+      for ($index = 0; $index < $archive->numFiles; $index++) {
+        $name = $archive->getNameIndex($index);
 
-        if ($resolvedPath === null) {
-            throw new RuntimeException('Import package is missing '.$path.'.');
+        if (! is_string($name)) {
+          continue;
         }
 
-        $contents = $archive->getFromName($resolvedPath);
+        $trimmed = rtrim($name, '/');
 
-        if (! is_string($contents) || trim($contents) === '') {
-            throw new RuntimeException($resolvedPath.' is empty.');
+        if ($trimmed === '') {
+          continue;
         }
 
-        $decoded = json_decode($contents, true);
+        $this->pathGuard->assertSafeRelativePath($trimmed, 'Archive entry path');
+      }
 
-        if (! is_array($decoded)) {
-            throw new RuntimeException($resolvedPath.' is not valid JSON.');
-        }
+      $manifest = $this->decodeJsonFile($archive, 'manifest.json');
 
-        return $decoded;
+      if (($manifest['product'] ?? null) !== SiteTransferPackage::PRODUCT) {
+        throw new RuntimeException('Import package product is not supported.');
+      }
+
+      if (($manifest['package_type'] ?? null) !== SiteTransferPackage::PACKAGE_TYPE) {
+        throw new RuntimeException('Import package type is not supported.');
+      }
+
+      if ((int) ($manifest['format_version'] ?? 0) !== SiteTransferPackage::FORMAT_VERSION) {
+        throw new RuntimeException('Import package format version is not supported.');
+      }
+
+      foreach (SiteTransferPackage::REQUIRED_DATA_FILES as $file) {
+        $this->decodeJsonFile($archive, $file);
+      }
+
+      $includesMedia = (bool) ($manifest['includes_media'] ?? false);
+
+      return new SiteImportInspection(
+        manifest: $manifest,
+        includesMedia: $includesMedia,
+      );
+    } finally {
+      $archive->close();
+    }
+  }
+
+  public function decodeJsonFile(ZipArchive $archive, string $path): array
+  {
+    $resolvedPath = $this->resolveJsonPath($archive, $path);
+
+    if ($resolvedPath === null) {
+      throw new RuntimeException('Import package is missing '.$path.'.');
     }
 
-    private function resolveJsonPath(ZipArchive $archive, string $path): ?string
-    {
-        if ($archive->locateName($path) !== false) {
-            return $path;
-        }
+    $contents = $archive->getFromName($resolvedPath);
 
-        foreach (SiteTransferPackage::DATA_FILE_ALIASES[$path] ?? [] as $alias) {
-            if ($archive->locateName($alias) !== false) {
-                return $alias;
-            }
-        }
-
-        return null;
+    if (! is_string($contents) || trim($contents) === '') {
+      throw new RuntimeException($resolvedPath.' is empty.');
     }
+
+    $decoded = json_decode($contents, true);
+
+    if (! is_array($decoded)) {
+      throw new RuntimeException($resolvedPath.' is not valid JSON.');
+    }
+
+    return $decoded;
+  }
+
+  private function resolveJsonPath(ZipArchive $archive, string $path): ?string
+  {
+    if ($archive->locateName($path) !== false) {
+      return $path;
+    }
+
+    foreach (SiteTransferPackage::DATA_FILE_ALIASES[$path] ?? [] as $alias) {
+      if ($archive->locateName($alias) !== false) {
+        return $alias;
+      }
+    }
+
+    return null;
+  }
 }

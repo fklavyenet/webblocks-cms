@@ -3,164 +3,158 @@
 namespace WebBlocks\Cms\Models;
 
 use App\Models\User;
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\SharedSlotBlock;
-use WebBlocks\Cms\Models\SharedSlotRevision;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\Pages\PageLayoutManager;
-use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
-use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
 
 class SharedSlot extends Model
 {
-    use HasFactory;
-    use ReindexesPublicSearch;
+  use HasFactory;
+  use ReindexesPublicSearch;
 
-    public const COMMON_SLOT_NAMES = ['header', 'sidebar', 'main', 'footer'];
+  public const COMMON_SLOT_NAMES = ['header', 'sidebar', 'main', 'footer'];
 
-    protected static function booted(): void
-    {
-        static::saving(function (self $sharedSlot): void {
-            $sharedSlot->handle = str((string) $sharedSlot->handle)->slug()->toString();
-            $sharedSlot->slot_name = str((string) $sharedSlot->slot_name)->slug()->toString();
-        });
+  protected static function booted(): void
+  {
+    static::saving(function (self $sharedSlot): void {
+      $sharedSlot->handle = str((string) $sharedSlot->handle)->slug()->toString();
+      $sharedSlot->slot_name = str((string) $sharedSlot->slot_name)->slug()->toString();
+    });
 
-        static::saved(function (self $sharedSlot): void {
-            static::refreshSearchForSharedSlot($sharedSlot);
-        });
+    static::saved(function (self $sharedSlot): void {
+      static::refreshSearchForSharedSlot($sharedSlot);
+    });
 
-        static::deleted(function (self $sharedSlot): void {
-            static::refreshSearchForSharedSlot($sharedSlot);
-        });
-    }
+    static::deleted(function (self $sharedSlot): void {
+      static::refreshSearchForSharedSlot($sharedSlot);
+    });
+  }
 
-    protected $fillable = [
-        'site_id',
-        'name',
-        'handle',
-        'slot_name',
-        'public_shell',
-        'is_active',
-        'created_by_user_id',
-        'updated_by_user_id',
+  protected $fillable = [
+    'site_id',
+    'name',
+    'handle',
+    'slot_name',
+    'public_shell',
+    'is_active',
+    'created_by_user_id',
+    'updated_by_user_id',
+  ];
+
+  protected function casts(): array
+  {
+    return [
+      'is_active' => 'boolean',
     ];
+  }
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
+  public function site(): BelongsTo
+  {
+    return $this->belongsTo(Site::class);
+  }
+
+  public function slotBlocks(): HasMany
+  {
+    return $this->hasMany(SharedSlotBlock::class)->orderBy('sort_order')->orderBy('id');
+  }
+
+  public function blocks(): BelongsToMany
+  {
+    return $this->belongsToMany(Block::class, 'shared_slot_blocks')
+      ->withPivot(['id', 'parent_id', 'sort_order'])
+      ->withTimestamps()
+      ->orderByPivot('sort_order')
+      ->orderBy('blocks.id');
+  }
+
+  public function pageSlots(): HasMany
+  {
+    return $this->hasMany(PageSlot::class);
+  }
+
+  public function revisions(): HasMany
+  {
+    return $this->hasMany(SharedSlotRevision::class)->latest('created_at');
+  }
+
+  public function createdByUser(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'created_by_user_id');
+  }
+
+  public function updatedByUser(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'updated_by_user_id');
+  }
+
+  public function statusLabel(): string
+  {
+    return $this->is_active ? 'Active' : 'Inactive';
+  }
+
+  public function statusBadgeClass(): string
+  {
+    return $this->is_active ? 'wb-status-active' : 'wb-status-pending';
+  }
+
+  public function publicShellLabel(): string
+  {
+    if (! $this->public_shell) {
+      return 'Any';
     }
 
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(Site::class);
+    return app(PageLayoutManager::class)->labelForHandle($this->public_shell);
+  }
+
+  public function slotLabel(): string
+  {
+    return $this->slot_name ?: 'Any';
+  }
+
+  public function compatibilityIssuesFor(Page $page, string $slotName): array
+  {
+    $issues = [];
+
+    if ((int) $this->site_id !== (int) $page->site_id) {
+      $issues[] = 'site';
     }
 
-    public function slotBlocks(): HasMany
-    {
-        return $this->hasMany(SharedSlotBlock::class)->orderBy('sort_order')->orderBy('id');
+    if (! $this->is_active) {
+      $issues[] = 'inactive';
     }
 
-    public function blocks(): BelongsToMany
-    {
-        return $this->belongsToMany(Block::class, 'shared_slot_blocks')
-            ->withPivot(['id', 'parent_id', 'sort_order'])
-            ->withTimestamps()
-            ->orderByPivot('sort_order')
-            ->orderBy('blocks.id');
+    $sharedShell = trim((string) ($this->public_shell ?? ''));
+
+    if ($sharedShell !== '' && Page::normalizePublicShellHandle($sharedShell) !== $page->publicShellPreset()) {
+      $issues[] = 'public_shell';
     }
 
-    public function pageSlots(): HasMany
-    {
-        return $this->hasMany(PageSlot::class);
+    $requiredSlotName = trim((string) ($this->slot_name ?? ''));
+    $normalizedSlotName = str($slotName)->slug()->toString();
+
+    if ($requiredSlotName !== '' && $requiredSlotName !== $normalizedSlotName) {
+      $issues[] = 'slot_name';
     }
 
-    public function revisions(): HasMany
-    {
-        return $this->hasMany(SharedSlotRevision::class)->latest('created_at');
+    return $issues;
+  }
+
+  public function isCompatibleWithPageSlot(Page $page, string $slotName): bool
+  {
+    return $this->compatibilityIssuesFor($page, $slotName) === [];
+  }
+
+  public function resolveRouteBinding($value, $field = null): ?Model
+  {
+    if (! app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
+      return null;
     }
 
-    public function createdByUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by_user_id');
-    }
-
-    public function updatedByUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by_user_id');
-    }
-
-    public function statusLabel(): string
-    {
-        return $this->is_active ? 'Active' : 'Inactive';
-    }
-
-    public function statusBadgeClass(): string
-    {
-        return $this->is_active ? 'wb-status-active' : 'wb-status-pending';
-    }
-
-    public function publicShellLabel(): string
-    {
-        if (! $this->public_shell) {
-            return 'Any';
-        }
-
-        return app(PageLayoutManager::class)->labelForHandle($this->public_shell);
-    }
-
-    public function slotLabel(): string
-    {
-        return $this->slot_name ?: 'Any';
-    }
-
-    public function compatibilityIssuesFor(Page $page, string $slotName): array
-    {
-        $issues = [];
-
-        if ((int) $this->site_id !== (int) $page->site_id) {
-            $issues[] = 'site';
-        }
-
-        if (! $this->is_active) {
-            $issues[] = 'inactive';
-        }
-
-        $sharedShell = trim((string) ($this->public_shell ?? ''));
-
-        if ($sharedShell !== '' && Page::normalizePublicShellHandle($sharedShell) !== $page->publicShellPreset()) {
-            $issues[] = 'public_shell';
-        }
-
-        $requiredSlotName = trim((string) ($this->slot_name ?? ''));
-        $normalizedSlotName = str($slotName)->slug()->toString();
-
-        if ($requiredSlotName !== '' && $requiredSlotName !== $normalizedSlotName) {
-            $issues[] = 'slot_name';
-        }
-
-        return $issues;
-    }
-
-    public function isCompatibleWithPageSlot(Page $page, string $slotName): bool
-    {
-        return $this->compatibilityIssuesFor($page, $slotName) === [];
-    }
-
-    public function resolveRouteBinding($value, $field = null): ?Model
-    {
-        if (! app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
-            return null;
-        }
-
-        return parent::resolveRouteBinding($value, $field);
-    }
+    return parent::resolveRouteBinding($value, $field);
+  }
 }

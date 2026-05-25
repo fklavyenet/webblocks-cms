@@ -11,279 +11,279 @@ use Symfony\Component\Process\Process;
 
 class DatabaseRestoreRunner
 {
-    public function __construct(
-        private readonly DatabaseExecutionStrategyResolver $strategyResolver,
-        private readonly SqlDumpContentValidator $sqlDumpContentValidator,
-    ) {}
+  public function __construct(
+    private readonly DatabaseExecutionStrategyResolver $strategyResolver,
+    private readonly SqlDumpContentValidator $sqlDumpContentValidator,
+  ) {}
 
-    public function restoreFrom(string $sqlPath, array &$output = []): array
-    {
-        $this->sqlDumpContentValidator->assertValidFile($sqlPath, 'Backup database SQL file');
+  public function restoreFrom(string $sqlPath, array &$output = []): array
+  {
+    $this->sqlDumpContentValidator->assertValidFile($sqlPath, 'Backup database SQL file');
 
-        $connection = DB::connection();
-        $driver = $connection->getDriverName();
+    $connection = DB::connection();
+    $driver = $connection->getDriverName();
 
-        $output[] = 'Preparing database restore for driver '.$driver.'.';
+    $output[] = 'Preparing database restore for driver '.$driver.'.';
 
-        return match ($driver) {
-            'sqlite' => $this->restoreSqlite($connection, $sqlPath, $output),
-            'mysql', 'mariadb' => $this->restoreMysqlFamily($connection, $sqlPath, $output),
-            default => throw new RuntimeException('Database restore currently supports sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
-        };
+    return match ($driver) {
+      'sqlite' => $this->restoreSqlite($connection, $sqlPath, $output),
+      'mysql', 'mariadb' => $this->restoreMysqlFamily($connection, $sqlPath, $output),
+      default => throw new RuntimeException('Database restore currently supports sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
+    };
+  }
+
+  private function restoreSqlite(Connection $connection, string $sqlPath, array &$output): array
+  {
+    $sql = $this->normalizeSqliteRestoreSql(File::get($sqlPath));
+
+    if (trim($sql) === '') {
+      throw new RuntimeException('Backup SQL file is empty.');
     }
 
-    private function restoreSqlite(Connection $connection, string $sqlPath, array &$output): array
-    {
-        $sql = $this->normalizeSqliteRestoreSql(File::get($sqlPath));
+    $connection->unprepared($sql);
 
-        if (trim($sql) === '') {
-            throw new RuntimeException('Backup SQL file is empty.');
-        }
-
-        $connection->unprepared($sql);
-
-        if (! $this->usesInMemorySqliteDatabase($connection)) {
-            DB::purge($connection->getName());
-            DB::reconnect($connection->getName());
-        }
-
-        $output[] = 'SQLite database restored from '.basename($sqlPath).'.';
-
-        return [
-            'driver' => 'sqlite',
-            'strategy' => 'pdo_unprepared',
-            'connection' => $connection->getName(),
-        ];
+    if (! $this->usesInMemorySqliteDatabase($connection)) {
+      DB::purge($connection->getName());
+      DB::reconnect($connection->getName());
     }
 
-    private function normalizeSqliteRestoreSql(string $sql): string
-    {
-        return preg_replace(
-            '/^\s*(?:BEGIN(?:\s+[A-Z]+)?\s+TRANSACTION|COMMIT)\s*;\s*$/mi',
-            '',
-            $sql,
-        ) ?? $sql;
+    $output[] = 'SQLite database restored from '.basename($sqlPath).'.';
+
+    return [
+      'driver' => 'sqlite',
+      'strategy' => 'pdo_unprepared',
+      'connection' => $connection->getName(),
+    ];
+  }
+
+  private function normalizeSqliteRestoreSql(string $sql): string
+  {
+    return preg_replace(
+      '/^\s*(?:BEGIN(?:\s+[A-Z]+)?\s+TRANSACTION|COMMIT)\s*;\s*$/mi',
+      '',
+      $sql,
+    ) ?? $sql;
+  }
+
+  private function usesInMemorySqliteDatabase(Connection $connection): bool
+  {
+    return $connection->getDriverName() === 'sqlite'
+      && $connection->getDatabaseName() === ':memory:';
+  }
+
+  private function restoreMysqlFamily(Connection $connection, string $sqlPath, array &$output): array
+  {
+    $strategy = $this->strategyResolver->resolveMysqlStrategy();
+    $config = $connection->getConfig();
+
+    match ($strategy) {
+      'ddev' => $this->runDdevMysqlRestore($connection->getDriverName(), $sqlPath, $config),
+      default => $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config),
+    };
+
+    DB::purge($connection->getName());
+    DB::reconnect($connection->getName());
+
+    $output[] = 'Using '.$this->describeMysqlRestoreCommand($strategy, $connection->getDriverName()).' for database restore.';
+    $output[] = 'MySQL-compatible database restored from '.basename($sqlPath).'.';
+
+    return [
+      'driver' => $connection->getDriverName(),
+      'strategy' => $strategy,
+      'connection' => $connection->getName(),
+    ];
+  }
+
+  private function runDirectMysqlRestore(string $driver, string $sqlPath, array $config): void
+  {
+    $defaultsFile = $this->createMysqlDefaultsFile($sqlPath, $config);
+    $restoreInputFile = null;
+
+    try {
+      $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
+      $command = $this->buildDirectMysqlRestoreCommand($driver, $defaultsFile, $config);
+      $process = new Process($command);
+      $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
+
+      $handle = fopen($restoreInputFile, 'rb');
+
+      if ($handle === false) {
+        throw new RuntimeException('Backup SQL file could not be opened for restore.');
+      }
+
+      try {
+        $process->setInput($handle);
+        $process->run();
+      } finally {
+        fclose($handle);
+      }
+
+      if (! $process->isSuccessful()) {
+        throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
+      }
+    } finally {
+      File::delete($defaultsFile);
+
+      if ($restoreInputFile !== null) {
+        File::delete($restoreInputFile);
+      }
+    }
+  }
+
+  private function runDdevMysqlRestore(string $driver, string $sqlPath, array $config): void
+  {
+    $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
+
+    try {
+      $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
+      $process = new Process($command);
+      $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
+
+      $handle = fopen($restoreInputFile, 'rb');
+
+      if ($handle === false) {
+        throw new RuntimeException('Backup SQL file could not be opened for restore.');
+      }
+
+      try {
+        $process->setInput($handle);
+        $process->run();
+      } finally {
+        fclose($handle);
+      }
+
+      if (! $process->isSuccessful()) {
+        throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
+      }
+    } finally {
+      File::delete($restoreInputFile);
+    }
+  }
+
+  private function buildDirectMysqlRestoreCommand(string $driver, string $defaultsFile, array $config): array
+  {
+    $command = [
+      $this->findMysqlClientBinary($driver),
+      '--defaults-extra-file='.$defaultsFile,
+      '--binary-mode',
+      (string) $config['database'],
+    ];
+
+    if (! empty($config['unix_socket'])) {
+      $command[] = '--socket='.$config['unix_socket'];
+    } else {
+      $command[] = '--host='.(string) $config['host'];
+      $command[] = '--port='.(string) $config['port'];
     }
 
-    private function usesInMemorySqliteDatabase(Connection $connection): bool
-    {
-        return $connection->getDriverName() === 'sqlite'
-            && $connection->getDatabaseName() === ':memory:';
+    return $command;
+  }
+
+  private function buildDdevMysqlRestoreCommand(string $driver, array $config): array
+  {
+    $command = [
+      $this->findDdevBinary(),
+      'exec',
+      '--raw',
+      '--',
+      $driver === 'mariadb' ? 'mariadb' : 'mysql',
+      '--binary-mode',
+      (string) $config['database'],
+    ];
+
+    if (! empty($config['unix_socket'])) {
+      $command[] = '--socket='.$config['unix_socket'];
+    } else {
+      $command[] = '--host='.(string) $config['host'];
+      $command[] = '--port='.(string) $config['port'];
     }
 
-    private function restoreMysqlFamily(Connection $connection, string $sqlPath, array &$output): array
-    {
-        $strategy = $this->strategyResolver->resolveMysqlStrategy();
-        $config = $connection->getConfig();
+    return $command;
+  }
 
-        match ($strategy) {
-            'ddev' => $this->runDdevMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-            default => $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-        };
+  private function createMysqlDefaultsFile(string $sqlPath, array $config): string
+  {
+    $defaultsFile = $sqlPath.'.restore.cnf';
+    $lines = [
+      '[client]',
+      'user='.(string) ($config['username'] ?? ''),
+    ];
 
-        DB::purge($connection->getName());
-        DB::reconnect($connection->getName());
-
-        $output[] = 'Using '.$this->describeMysqlRestoreCommand($strategy, $connection->getDriverName()).' for database restore.';
-        $output[] = 'MySQL-compatible database restored from '.basename($sqlPath).'.';
-
-        return [
-            'driver' => $connection->getDriverName(),
-            'strategy' => $strategy,
-            'connection' => $connection->getName(),
-        ];
+    if (($config['password'] ?? null) !== null && $config['password'] !== '') {
+      $lines[] = 'password='.(string) $config['password'];
     }
 
-    private function runDirectMysqlRestore(string $driver, string $sqlPath, array $config): void
-    {
-        $defaultsFile = $this->createMysqlDefaultsFile($sqlPath, $config);
-        $restoreInputFile = null;
+    File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
+    @chmod($defaultsFile, 0600);
 
-        try {
-            $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
-            $command = $this->buildDirectMysqlRestoreCommand($driver, $defaultsFile, $config);
-            $process = new Process($command);
-            $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
+    return $defaultsFile;
+  }
 
-            $handle = fopen($restoreInputFile, 'rb');
+  protected function createMysqlRestoreInputFile(string $sqlPath): string
+  {
+    $restoreInputFile = $sqlPath.'.restore-input.sql';
+    $source = fopen($sqlPath, 'rb');
+    $target = fopen($restoreInputFile, 'wb');
 
-            if ($handle === false) {
-                throw new RuntimeException('Backup SQL file could not be opened for restore.');
-            }
+    if ($source === false || $target === false) {
+      if (is_resource($source)) {
+        fclose($source);
+      }
 
-            try {
-                $process->setInput($handle);
-                $process->run();
-            } finally {
-                fclose($handle);
-            }
+      if (is_resource($target)) {
+        fclose($target);
+      }
 
-            if (! $process->isSuccessful()) {
-                throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
-            }
-        } finally {
-            File::delete($defaultsFile);
+      File::delete($restoreInputFile);
 
-            if ($restoreInputFile !== null) {
-                File::delete($restoreInputFile);
-            }
-        }
+      throw new RuntimeException('Backup SQL file could not be prepared for restore.');
     }
 
-    private function runDdevMysqlRestore(string $driver, string $sqlPath, array $config): void
-    {
-        $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
-
-        try {
-            $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
-            $process = new Process($command);
-            $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
-
-            $handle = fopen($restoreInputFile, 'rb');
-
-            if ($handle === false) {
-                throw new RuntimeException('Backup SQL file could not be opened for restore.');
-            }
-
-            try {
-                $process->setInput($handle);
-                $process->run();
-            } finally {
-                fclose($handle);
-            }
-
-            if (! $process->isSuccessful()) {
-                throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database restore command failed.');
-            }
-        } finally {
-            File::delete($restoreInputFile);
-        }
+    try {
+      fwrite($target, "SET FOREIGN_KEY_CHECKS=0;\n");
+      fwrite($target, "SET UNIQUE_CHECKS=0;\n");
+      stream_copy_to_stream($source, $target);
+      fwrite($target, "\nSET UNIQUE_CHECKS=1;\n");
+      fwrite($target, "SET FOREIGN_KEY_CHECKS=1;\n");
+    } finally {
+      fclose($source);
+      fclose($target);
     }
 
-    private function buildDirectMysqlRestoreCommand(string $driver, string $defaultsFile, array $config): array
-    {
-        $command = [
-            $this->findMysqlClientBinary($driver),
-            '--defaults-extra-file='.$defaultsFile,
-            '--binary-mode',
-            (string) $config['database'],
-        ];
+    return $restoreInputFile;
+  }
 
-        if (! empty($config['unix_socket'])) {
-            $command[] = '--socket='.$config['unix_socket'];
-        } else {
-            $command[] = '--host='.(string) $config['host'];
-            $command[] = '--port='.(string) $config['port'];
-        }
+  private function findMysqlClientBinary(string $driver): string
+  {
+    $finder = new ExecutableFinder;
+    $preferredBinary = $driver === 'mariadb' ? 'mariadb' : 'mysql';
+    $fallbackBinary = $driver === 'mariadb' ? 'mysql' : 'mariadb';
+    $binary = $finder->find($preferredBinary) ?: $finder->find($fallbackBinary);
 
-        return $command;
+    if ($binary === null) {
+      throw new RuntimeException('Database restore requires mysql or mariadb for the current MySQL/MariaDB environment, but neither command is available.');
     }
 
-    private function buildDdevMysqlRestoreCommand(string $driver, array $config): array
-    {
-        $command = [
-            $this->findDdevBinary(),
-            'exec',
-            '--raw',
-            '--',
-            $driver === 'mariadb' ? 'mariadb' : 'mysql',
-            '--binary-mode',
-            (string) $config['database'],
-        ];
+    return $binary;
+  }
 
-        if (! empty($config['unix_socket'])) {
-            $command[] = '--socket='.$config['unix_socket'];
-        } else {
-            $command[] = '--host='.(string) $config['host'];
-            $command[] = '--port='.(string) $config['port'];
-        }
+  private function findDdevBinary(): string
+  {
+    $binary = (new ExecutableFinder)->find('ddev');
 
-        return $command;
+    if ($binary === null) {
+      throw new RuntimeException('Database restore requires the ddev command for ddev execution mode, but it is not available.');
     }
 
-    private function createMysqlDefaultsFile(string $sqlPath, array $config): string
-    {
-        $defaultsFile = $sqlPath.'.restore.cnf';
-        $lines = [
-            '[client]',
-            'user='.(string) ($config['username'] ?? ''),
-        ];
+    return $binary;
+  }
 
-        if (($config['password'] ?? null) !== null && $config['password'] !== '') {
-            $lines[] = 'password='.(string) $config['password'];
-        }
-
-        File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
-        @chmod($defaultsFile, 0600);
-
-        return $defaultsFile;
+  private function describeMysqlRestoreCommand(string $strategy, string $driver): string
+  {
+    if ($strategy === 'ddev') {
+      return 'ddev exec '.($driver === 'mariadb' ? 'mariadb' : 'mysql');
     }
 
-    protected function createMysqlRestoreInputFile(string $sqlPath): string
-    {
-        $restoreInputFile = $sqlPath.'.restore-input.sql';
-        $source = fopen($sqlPath, 'rb');
-        $target = fopen($restoreInputFile, 'wb');
-
-        if ($source === false || $target === false) {
-            if (is_resource($source)) {
-                fclose($source);
-            }
-
-            if (is_resource($target)) {
-                fclose($target);
-            }
-
-            File::delete($restoreInputFile);
-
-            throw new RuntimeException('Backup SQL file could not be prepared for restore.');
-        }
-
-        try {
-            fwrite($target, "SET FOREIGN_KEY_CHECKS=0;\n");
-            fwrite($target, "SET UNIQUE_CHECKS=0;\n");
-            stream_copy_to_stream($source, $target);
-            fwrite($target, "\nSET UNIQUE_CHECKS=1;\n");
-            fwrite($target, "SET FOREIGN_KEY_CHECKS=1;\n");
-        } finally {
-            fclose($source);
-            fclose($target);
-        }
-
-        return $restoreInputFile;
-    }
-
-    private function findMysqlClientBinary(string $driver): string
-    {
-        $finder = new ExecutableFinder;
-        $preferredBinary = $driver === 'mariadb' ? 'mariadb' : 'mysql';
-        $fallbackBinary = $driver === 'mariadb' ? 'mysql' : 'mariadb';
-        $binary = $finder->find($preferredBinary) ?: $finder->find($fallbackBinary);
-
-        if ($binary === null) {
-            throw new RuntimeException('Database restore requires mysql or mariadb for the current MySQL/MariaDB environment, but neither command is available.');
-        }
-
-        return $binary;
-    }
-
-    private function findDdevBinary(): string
-    {
-        $binary = (new ExecutableFinder)->find('ddev');
-
-        if ($binary === null) {
-            throw new RuntimeException('Database restore requires the ddev command for ddev execution mode, but it is not available.');
-        }
-
-        return $binary;
-    }
-
-    private function describeMysqlRestoreCommand(string $strategy, string $driver): string
-    {
-        if ($strategy === 'ddev') {
-            return 'ddev exec '.($driver === 'mariadb' ? 'mariadb' : 'mysql');
-        }
-
-        return basename($this->findMysqlClientBinary($driver));
-    }
+    return basename($this->findMysqlClientBinary($driver));
+  }
 }

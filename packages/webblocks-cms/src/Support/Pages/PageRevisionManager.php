@@ -2,6 +2,12 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
+use App\Models\User;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\Locale;
@@ -9,567 +15,561 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
-use App\Models\User;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Throwable;
 
 class PageRevisionManager
 {
-    private const SNAPSHOT_SCHEMA_VERSION = 1;
+  private const SNAPSHOT_SCHEMA_VERSION = 1;
 
-    public function __construct(
-        private readonly PageWorkflowManager $workflowManager,
-        private readonly BlockTranslationWriter $blockTranslationWriter,
-        private readonly CurrentActorResolver $currentActorResolver,
-        private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
-    ) {}
+  public function __construct(
+    private readonly PageWorkflowManager $workflowManager,
+    private readonly BlockTranslationWriter $blockTranslationWriter,
+    private readonly CurrentActorResolver $currentActorResolver,
+    private readonly LegacyAssetPayloadNormalizer $legacyAssetPayloadNormalizer,
+  ) {}
 
-    public function canView(User $user, Page $page): bool
-    {
-        return $user->canAccessAdmin()
-            && $user->hasSiteAccess($page->site_id)
-            && ($user->isSuperAdmin() || $user->isSiteAdmin() || $user->isEditor());
+  public function canView(User $user, Page $page): bool
+  {
+    return $user->canAccessAdmin()
+      && $user->hasSiteAccess($page->site_id)
+      && ($user->isSuperAdmin() || $user->isSiteAdmin() || $user->isEditor());
+  }
+
+  public function canRestore(User $user, Page $page): bool
+  {
+    return ($user->isSuperAdmin() || $user->isSiteAdmin())
+      && $user->hasSiteAccess($page->site_id);
+  }
+
+  public function revisionsTableExists(): bool
+  {
+    try {
+      return Schema::hasTable('page_revisions');
+    } catch (Throwable) {
+      return false;
+    }
+  }
+
+  public function capture(
+    Page $page,
+    ?User $actor = null,
+    ?string $label = null,
+    ?string $reason = null,
+    ?PageRevision $restoredFrom = null,
+    ?string $event = null,
+    ?string $source = null,
+  ): PageRevision {
+    if (! $this->revisionsTableExists()) {
+      throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
     }
 
-    public function canRestore(User $user, Page $page): bool
-    {
-        return ($user->isSuperAdmin() || $user->isSiteAdmin())
-            && $user->hasSiteAccess($page->site_id);
+    $page->loadMissing([
+      'site',
+      'translations.locale',
+      'slots.slotType',
+      'pageAssets',
+      'blocks' => fn ($query) => $query
+        ->with([
+          'blockAssets.galleryItemTranslations',
+          'textTranslations',
+          'buttonTranslations',
+          'imageTranslations',
+          'contactFormTranslations',
+        ])
+        ->orderBy('sort_order')
+        ->orderBy('id'),
+    ]);
+
+    $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
+
+    return PageRevision::create([
+      'page_id' => $page->id,
+      'site_id' => $page->site_id,
+      'created_by' => $resolvedActor['user_id'],
+      'created_by_user_id' => $resolvedActor['user_id'],
+      'source' => $resolvedActor['source'],
+      'event' => $event,
+      'label' => $label,
+      'reason' => $reason,
+      'snapshot' => $this->snapshot($page),
+      'restored_from_page_revision_id' => $restoredFrom?->id,
+    ]);
+  }
+
+  public function restore(Page $page, PageRevision $revision, User $actor): void
+  {
+    if (! $this->revisionsTableExists()) {
+      throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
     }
 
-    public function revisionsTableExists(): bool
-    {
-        try {
-            return Schema::hasTable('page_revisions');
-        } catch (Throwable) {
-            return false;
-        }
-    }
+    abort_unless($page->id === $revision->page_id, 404);
+    abort_unless((int) $page->site_id === (int) $revision->site_id, 404);
 
-    public function capture(
-        Page $page,
-        ?User $actor = null,
-        ?string $label = null,
-        ?string $reason = null,
-        ?PageRevision $restoredFrom = null,
-        ?string $event = null,
-        ?string $source = null,
-    ): PageRevision {
-        if (! $this->revisionsTableExists()) {
-            throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
-        }
+    DB::transaction(function () use ($page, $revision, $actor): void {
+      $this->capture(
+        $page->fresh(),
+        $actor,
+        'Pre-restore safety snapshot',
+        'Current page state was saved before restore.',
+        event: 'revision_restored',
+        source: 'restore',
+      );
 
-        $page->loadMissing([
-            'site',
-            'translations.locale',
-            'slots.slotType',
-            'pageAssets',
-            'blocks' => fn ($query) => $query
-                ->with([
-                    'blockAssets.galleryItemTranslations',
-                    'textTranslations',
-                    'buttonTranslations',
-                    'imageTranslations',
-                    'contactFormTranslations',
-                ])
-                ->orderBy('sort_order')
-                ->orderBy('id'),
-        ]);
+      $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
 
-        $resolvedActor = $this->currentActorResolver->resolve($actor, $source);
+      $this->capture(
+        $page->fresh(),
+        $actor,
+        'Revision restored',
+        'Page content was restored from revision #'.$revision->id.'.',
+        $revision,
+        'revision_restored',
+        'restore',
+      );
+    });
+  }
 
-        return PageRevision::create([
-            'page_id' => $page->id,
-            'site_id' => $page->site_id,
-            'created_by' => $resolvedActor['user_id'],
-            'created_by_user_id' => $resolvedActor['user_id'],
-            'source' => $resolvedActor['source'],
-            'event' => $event,
-            'label' => $label,
-            'reason' => $reason,
-            'snapshot' => $this->snapshot($page),
-            'restored_from_page_revision_id' => $restoredFrom?->id,
-        ]);
-    }
+  private function snapshot(Page $page): array
+  {
+    $defaultTranslation = $page->defaultTranslation();
+    $blocks = $page->blocks
+      ->sortBy(fn (Block $block) => sprintf('%04d-%04d', $block->parent_id ?? 0, $block->sort_order))
+      ->values();
 
-    public function restore(Page $page, PageRevision $revision, User $actor): void
-    {
-        if (! $this->revisionsTableExists()) {
-            throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
-        }
-
-        abort_unless($page->id === $revision->page_id, 404);
-        abort_unless((int) $page->site_id === (int) $revision->site_id, 404);
-
-        DB::transaction(function () use ($page, $revision, $actor): void {
-            $this->capture(
-                $page->fresh(),
-                $actor,
-                'Pre-restore safety snapshot',
-                'Current page state was saved before restore.',
-                event: 'revision_restored',
-                source: 'restore',
-            );
-
-            $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
-
-            $this->capture(
-                $page->fresh(),
-                $actor,
-                'Revision restored',
-                'Page content was restored from revision #'.$revision->id.'.',
-                $revision,
-                'revision_restored',
-                'restore',
-            );
-        });
-    }
-
-    private function snapshot(Page $page): array
-    {
-        $defaultTranslation = $page->defaultTranslation();
-        $blocks = $page->blocks
-            ->sortBy(fn (Block $block) => sprintf('%04d-%04d', $block->parent_id ?? 0, $block->sort_order))
-            ->values();
-
-        return [
-            'schema_version' => self::SNAPSHOT_SCHEMA_VERSION,
-            'captured_at' => now()->toIso8601String(),
-            'page' => [
-                'title' => $defaultTranslation?->name ?? $page->name,
-                'slug' => $defaultTranslation?->slug ?? $page->slug,
-                'page_type' => $page->page_type,
-                'page_type_id' => $page->page_type_id,
-                'layout_id' => $page->layout_id,
-                'status' => $page->status,
-                'settings' => $page->getRawOriginal('settings'),
-                'published_at' => $page->published_at?->toIso8601String(),
-                'review_requested_at' => $page->review_requested_at?->toIso8601String(),
-            ],
-            'translations' => $page->translations
+    return [
+      'schema_version' => self::SNAPSHOT_SCHEMA_VERSION,
+      'captured_at' => now()->toIso8601String(),
+      'page' => [
+        'title' => $defaultTranslation?->name ?? $page->name,
+        'slug' => $defaultTranslation?->slug ?? $page->slug,
+        'page_type' => $page->page_type,
+        'page_type_id' => $page->page_type_id,
+        'layout_id' => $page->layout_id,
+        'status' => $page->status,
+        'settings' => $page->getRawOriginal('settings'),
+        'published_at' => $page->published_at?->toIso8601String(),
+        'review_requested_at' => $page->review_requested_at?->toIso8601String(),
+      ],
+      'translations' => $page->translations
+        ->sortBy('locale_id')
+        ->values()
+        ->map(fn ($translation) => [
+          'locale_id' => $translation->locale_id,
+          'name' => $translation->name,
+          'slug' => $translation->slug,
+          'path' => $translation->path,
+          'seo_title' => $translation->seo_title,
+          'seo_description' => $translation->seo_description,
+          'seo_keywords' => $translation->seo_keywords,
+          'og_title' => $translation->og_title,
+          'og_description' => $translation->og_description,
+          'og_image_media_id' => $translation->og_image_media_id,
+        ])
+        ->all(),
+      'slots' => $page->slots
+        ->sortBy('sort_order')
+        ->values()
+        ->map(fn ($slot) => [
+          'slot_type_id' => $slot->slot_type_id,
+          'source_type' => Schema::hasColumn('page_slots', 'source_type')
+            ? PageSlot::normalizeRuntimeSourceType($slot->source_type)
+            : PageSlot::SOURCE_TYPE_PAGE,
+          'shared_slot_id' => Schema::hasColumn('page_slots', 'shared_slot_id')
+            ? $slot->shared_slot_id
+            : null,
+          'sort_order' => $slot->sort_order,
+          'settings' => PageSlot::sanitizeSettings($slot->settings),
+        ])
+        ->all(),
+      'page_assets' => $page->pageAssets
+        ->sortBy(fn (PageAsset $asset) => sprintf('%010d-%010d', (int) $asset->sort_order, (int) $asset->id))
+        ->values()
+        ->map(fn (PageAsset $asset) => [
+          'type' => $asset->type,
+          'path' => $asset->path,
+          'load_position' => $asset->load_position,
+          'is_defer' => $asset->is_defer,
+          'is_async' => $asset->is_async,
+          'is_module' => $asset->is_module,
+          'is_enabled' => $asset->is_enabled,
+          'sort_order' => $asset->sort_order,
+        ])
+        ->all(),
+      'blocks' => $blocks
+        ->map(fn (Block $block) => [
+          'snapshot_id' => $block->id,
+          'parent_snapshot_id' => $block->parent_id,
+          'type' => $block->type,
+          'block_type_id' => $block->block_type_id,
+          'source_type' => $block->source_type,
+          'slot' => $block->slot,
+          'slot_type_id' => $block->slot_type_id,
+          'sort_order' => $block->sort_order,
+          'title' => $block->getRawOriginal('title'),
+          'subtitle' => $block->getRawOriginal('subtitle'),
+          'content' => $block->getRawOriginal('content'),
+          'url' => $block->url,
+          'media_id' => $block->media_id,
+          'variant' => $block->variant,
+          'meta' => $block->meta,
+          'settings' => $block->getRawOriginal('settings'),
+          'status' => $block->status,
+          'is_system' => $block->is_system,
+          'block_media' => $block->blockAssets
+            ->sortBy('position')
+            ->values()
+            ->map(fn ($asset) => [
+              'media_id' => $asset->media_id,
+              'role' => $asset->role,
+              'position' => $asset->position,
+              'gallery_item_translations' => $asset->galleryItemTranslations
                 ->sortBy('locale_id')
                 ->values()
-                ->map(fn ($translation) => [
-                    'locale_id' => $translation->locale_id,
-                    'name' => $translation->name,
-                    'slug' => $translation->slug,
-                    'path' => $translation->path,
-                    'seo_title' => $translation->seo_title,
-                    'seo_description' => $translation->seo_description,
-                    'seo_keywords' => $translation->seo_keywords,
-                    'og_title' => $translation->og_title,
-                    'og_description' => $translation->og_description,
-                    'og_image_media_id' => $translation->og_image_media_id,
+                ->map(fn (BlockGalleryItemTranslation $translation) => [
+                  'locale_id' => $translation->locale_id,
+                  'alt_text' => $translation->alt_text,
+                  'caption' => $translation->caption,
+                  'overlay_title' => $translation->overlay_title,
+                  'overlay_text' => $translation->overlay_text,
                 ])
                 ->all(),
-            'slots' => $page->slots
-                ->sortBy('sort_order')
-                ->values()
-                ->map(fn ($slot) => [
-                    'slot_type_id' => $slot->slot_type_id,
-                    'source_type' => Schema::hasColumn('page_slots', 'source_type')
-                        ? PageSlot::normalizeRuntimeSourceType($slot->source_type)
-                        : PageSlot::SOURCE_TYPE_PAGE,
-                    'shared_slot_id' => Schema::hasColumn('page_slots', 'shared_slot_id')
-                        ? $slot->shared_slot_id
-                        : null,
-                    'sort_order' => $slot->sort_order,
-                    'settings' => PageSlot::sanitizeSettings($slot->settings),
-                ])
-                ->all(),
-            'page_assets' => $page->pageAssets
-                ->sortBy(fn (PageAsset $asset) => sprintf('%010d-%010d', (int) $asset->sort_order, (int) $asset->id))
-                ->values()
-                ->map(fn (PageAsset $asset) => [
-                    'type' => $asset->type,
-                    'path' => $asset->path,
-                    'load_position' => $asset->load_position,
-                    'is_defer' => $asset->is_defer,
-                    'is_async' => $asset->is_async,
-                    'is_module' => $asset->is_module,
-                    'is_enabled' => $asset->is_enabled,
-                    'sort_order' => $asset->sort_order,
-                ])
-                ->all(),
-            'blocks' => $blocks
-                ->map(fn (Block $block) => [
-                    'snapshot_id' => $block->id,
-                    'parent_snapshot_id' => $block->parent_id,
-                    'type' => $block->type,
-                    'block_type_id' => $block->block_type_id,
-                    'source_type' => $block->source_type,
-                    'slot' => $block->slot,
-                    'slot_type_id' => $block->slot_type_id,
-                    'sort_order' => $block->sort_order,
-                    'title' => $block->getRawOriginal('title'),
-                    'subtitle' => $block->getRawOriginal('subtitle'),
-                    'content' => $block->getRawOriginal('content'),
-                    'url' => $block->url,
-                    'media_id' => $block->media_id,
-                    'variant' => $block->variant,
-                    'meta' => $block->meta,
-                    'settings' => $block->getRawOriginal('settings'),
-                    'status' => $block->status,
-                    'is_system' => $block->is_system,
-                    'block_media' => $block->blockAssets
-                        ->sortBy('position')
-                        ->values()
-                        ->map(fn ($asset) => [
-                            'media_id' => $asset->media_id,
-                            'role' => $asset->role,
-                            'position' => $asset->position,
-                            'gallery_item_translations' => $asset->galleryItemTranslations
-                                ->sortBy('locale_id')
-                                ->values()
-                                ->map(fn (BlockGalleryItemTranslation $translation) => [
-                                    'locale_id' => $translation->locale_id,
-                                    'alt_text' => $translation->alt_text,
-                                    'caption' => $translation->caption,
-                                    'overlay_title' => $translation->overlay_title,
-                                    'overlay_text' => $translation->overlay_text,
-                                ])
-                                ->all(),
-                        ])
-                        ->all(),
-                    'text_translations' => $block->textTranslations
-                        ->sortBy('locale_id')
-                        ->values()
-                        ->map(fn ($translation) => [
-                            'locale_id' => $translation->locale_id,
-                            'title' => $translation->title,
-                            'eyebrow' => $translation->eyebrow,
-                            'subtitle' => $translation->subtitle,
-                            'content' => $translation->content,
-                            'meta' => $translation->meta,
-                        ])
-                        ->all(),
-                    'button_translations' => $block->buttonTranslations
-                        ->sortBy('locale_id')
-                        ->values()
-                        ->map(fn ($translation) => [
-                            'locale_id' => $translation->locale_id,
-                            'title' => $translation->title,
-                        ])
-                        ->all(),
-                    'image_translations' => $block->imageTranslations
-                        ->sortBy('locale_id')
-                        ->values()
-                        ->map(fn ($translation) => [
-                            'locale_id' => $translation->locale_id,
-                            'caption' => $translation->caption,
-                            'alt_text' => $translation->alt_text,
-                        ])
-                        ->all(),
-                    'contact_form_translations' => $block->contactFormTranslations
-                        ->sortBy('locale_id')
-                        ->values()
-                        ->map(fn ($translation) => [
-                            'locale_id' => $translation->locale_id,
-                            'title' => $translation->title,
-                            'content' => $translation->content,
-                            'submit_label' => $translation->submit_label,
-                            'success_message' => $translation->success_message,
-                        ])
-                        ->all(),
-                ])
-                ->all(),
-        ];
+            ])
+            ->all(),
+          'text_translations' => $block->textTranslations
+            ->sortBy('locale_id')
+            ->values()
+            ->map(fn ($translation) => [
+              'locale_id' => $translation->locale_id,
+              'title' => $translation->title,
+              'eyebrow' => $translation->eyebrow,
+              'subtitle' => $translation->subtitle,
+              'content' => $translation->content,
+              'meta' => $translation->meta,
+            ])
+            ->all(),
+          'button_translations' => $block->buttonTranslations
+            ->sortBy('locale_id')
+            ->values()
+            ->map(fn ($translation) => [
+              'locale_id' => $translation->locale_id,
+              'title' => $translation->title,
+            ])
+            ->all(),
+          'image_translations' => $block->imageTranslations
+            ->sortBy('locale_id')
+            ->values()
+            ->map(fn ($translation) => [
+              'locale_id' => $translation->locale_id,
+              'caption' => $translation->caption,
+              'alt_text' => $translation->alt_text,
+            ])
+            ->all(),
+          'contact_form_translations' => $block->contactFormTranslations
+            ->sortBy('locale_id')
+            ->values()
+            ->map(fn ($translation) => [
+              'locale_id' => $translation->locale_id,
+              'title' => $translation->title,
+              'content' => $translation->content,
+              'submit_label' => $translation->submit_label,
+              'success_message' => $translation->success_message,
+            ])
+            ->all(),
+        ])
+        ->all(),
+    ];
+  }
+
+  private function applySnapshot(Page $page, array $snapshot): void
+  {
+    $snapshot = $this->legacyAssetPayloadNormalizer->normalizeRevisionSnapshot($snapshot);
+    $pageData = Arr::get($snapshot, 'page', []);
+
+    $page->forceFill([
+      'page_type' => Arr::get($pageData, 'page_type', $page->page_type),
+      'page_type_id' => Arr::get($pageData, 'page_type_id', $page->page_type_id),
+      'layout_id' => Arr::get($pageData, 'layout_id', $page->layout_id),
+      'status' => Arr::get($pageData, 'status', $page->status),
+      'settings' => Arr::get($pageData, 'settings', $page->getRawOriginal('settings')),
+      'published_at' => $this->dateOrNull(Arr::get($pageData, 'published_at')),
+      'review_requested_at' => $this->dateOrNull(Arr::get($pageData, 'review_requested_at')),
+    ])->save();
+
+    $page->translations()->delete();
+
+    foreach (Arr::get($snapshot, 'translations', []) as $translation) {
+      $page->translations()->create([
+        'locale_id' => $translation['locale_id'],
+        'name' => $translation['name'],
+        'slug' => $translation['slug'],
+        'path' => $translation['path'] ?? null,
+        'seo_title' => $translation['seo_title'] ?? null,
+        'seo_description' => $translation['seo_description'] ?? null,
+        'seo_keywords' => $translation['seo_keywords'] ?? null,
+        'og_title' => $translation['og_title'] ?? null,
+        'og_description' => $translation['og_description'] ?? null,
+        'og_image_media_id' => $translation['og_image_media_id'] ?? null,
+      ]);
     }
 
-    private function applySnapshot(Page $page, array $snapshot): void
-    {
-        $snapshot = $this->legacyAssetPayloadNormalizer->normalizeRevisionSnapshot($snapshot);
-        $pageData = Arr::get($snapshot, 'page', []);
+    $page->slots()->delete();
 
-        $page->forceFill([
-            'page_type' => Arr::get($pageData, 'page_type', $page->page_type),
-            'page_type_id' => Arr::get($pageData, 'page_type_id', $page->page_type_id),
-            'layout_id' => Arr::get($pageData, 'layout_id', $page->layout_id),
-            'status' => Arr::get($pageData, 'status', $page->status),
-            'settings' => Arr::get($pageData, 'settings', $page->getRawOriginal('settings')),
-            'published_at' => $this->dateOrNull(Arr::get($pageData, 'published_at')),
-            'review_requested_at' => $this->dateOrNull(Arr::get($pageData, 'review_requested_at')),
-        ])->save();
+    foreach (Arr::get($snapshot, 'slots', []) as $slot) {
+      $attributes = [
+        'slot_type_id' => $slot['slot_type_id'],
+        'sort_order' => $slot['sort_order'],
+        'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
+      ];
 
-        $page->translations()->delete();
+      if (Schema::hasColumn('page_slots', 'source_type')) {
+        $attributes['source_type'] = PageSlot::normalizeRuntimeSourceType($slot['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
+      }
 
-        foreach (Arr::get($snapshot, 'translations', []) as $translation) {
-            $page->translations()->create([
-                'locale_id' => $translation['locale_id'],
-                'name' => $translation['name'],
-                'slug' => $translation['slug'],
-                'path' => $translation['path'] ?? null,
-                'seo_title' => $translation['seo_title'] ?? null,
-                'seo_description' => $translation['seo_description'] ?? null,
-                'seo_keywords' => $translation['seo_keywords'] ?? null,
-                'og_title' => $translation['og_title'] ?? null,
-                'og_description' => $translation['og_description'] ?? null,
-                'og_image_media_id' => $translation['og_image_media_id'] ?? null,
-            ]);
-        }
+      if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
+        $attributes['shared_slot_id'] = $attributes['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
+          ? ($slot['shared_slot_id'] ?? null)
+          : null;
+      }
 
-        $page->slots()->delete();
-
-        foreach (Arr::get($snapshot, 'slots', []) as $slot) {
-            $attributes = [
-                'slot_type_id' => $slot['slot_type_id'],
-                'sort_order' => $slot['sort_order'],
-                'settings' => PageSlot::sanitizeSettings($slot['settings'] ?? null),
-            ];
-
-            if (Schema::hasColumn('page_slots', 'source_type')) {
-                $attributes['source_type'] = PageSlot::normalizeRuntimeSourceType($slot['source_type'] ?? PageSlot::SOURCE_TYPE_PAGE);
-            }
-
-            if (Schema::hasColumn('page_slots', 'shared_slot_id')) {
-                $attributes['shared_slot_id'] = $attributes['source_type'] === PageSlot::SOURCE_TYPE_SHARED_SLOT
-                    ? ($slot['shared_slot_id'] ?? null)
-                    : null;
-            }
-
-            $page->slots()->create($attributes);
-        }
-
-        $page->pageAssets()->delete();
-
-        foreach (Arr::get($snapshot, 'page_assets', []) as $pageAsset) {
-            $page->pageAssets()->create([
-                'type' => $pageAsset['type'],
-                'path' => $pageAsset['path'],
-                'load_position' => $pageAsset['load_position'] ?? PageAsset::defaultLoadPositionFor($pageAsset['type']),
-                'is_defer' => (bool) ($pageAsset['is_defer'] ?? false),
-                'is_async' => (bool) ($pageAsset['is_async'] ?? false),
-                'is_module' => (bool) ($pageAsset['is_module'] ?? false),
-                'is_enabled' => (bool) ($pageAsset['is_enabled'] ?? true),
-                'sort_order' => (int) ($pageAsset['sort_order'] ?? 0),
-            ]);
-        }
-
-        $page->blocks()->delete();
-
-        $snapshotBlocks = collect(Arr::get($snapshot, 'blocks', []));
-        $idMap = [];
-        $remaining = $snapshotBlocks->values();
-
-        while ($remaining->isNotEmpty()) {
-            $createdThisPass = 0;
-
-            $nextRemaining = $remaining->reject(function (array $block) use ($page, &$idMap, &$createdThisPass) {
-                $parentSnapshotId = $block['parent_snapshot_id'] ?? null;
-
-                if ($parentSnapshotId !== null && ! array_key_exists($parentSnapshotId, $idMap)) {
-                    return false;
-                }
-
-                $created = $page->blocks()->create([
-                    'parent_id' => $parentSnapshotId === null ? null : $idMap[$parentSnapshotId],
-                    'type' => $block['type'],
-                    'block_type_id' => $block['block_type_id'],
-                    'source_type' => $block['source_type'],
-                    'slot' => $block['slot'],
-                    'slot_type_id' => $block['slot_type_id'],
-                    'sort_order' => $block['sort_order'],
-                    'title' => $block['title'],
-                    'subtitle' => $block['subtitle'],
-                    'content' => $block['content'],
-                    'url' => $block['url'],
-                    'media_id' => $block['media_id'] ?? null,
-                    'variant' => $block['variant'],
-                    'meta' => $block['meta'],
-                    'settings' => $block['settings'],
-                    'status' => $block['status'],
-                    'is_system' => $block['is_system'],
-                ]);
-
-                $idMap[$block['snapshot_id']] = $created->id;
-                $createdThisPass++;
-
-                return true;
-            })->values();
-
-            if ($createdThisPass === 0) {
-                throw new \RuntimeException('Page revision restore could not resolve block parent relationships.');
-            }
-
-            $remaining = $nextRemaining;
-        }
-
-        foreach ($snapshotBlocks as $block) {
-            $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
-
-            foreach ($block['block_media'] ?? [] as $asset) {
-                $restoredBlockAsset = $restoredBlock->blockAssets()->create([
-                    'media_id' => $asset['media_id'] ?? null,
-                    'role' => $asset['role'],
-                    'position' => $asset['position'],
-                ]);
-
-                foreach ($asset['gallery_item_translations'] ?? [] as $translation) {
-                    $restoredBlockAsset->galleryItemTranslations()->create($translation);
-                }
-            }
-
-            foreach ($block['text_translations'] ?? [] as $translation) {
-                $restoredBlock->textTranslations()->create($translation);
-            }
-
-            foreach ($block['button_translations'] ?? [] as $translation) {
-                $restoredBlock->buttonTranslations()->create($translation);
-            }
-
-            foreach ($block['image_translations'] ?? [] as $translation) {
-                $restoredBlock->imageTranslations()->create($translation);
-            }
-
-            foreach ($block['contact_form_translations'] ?? [] as $translation) {
-                $restoredBlock->contactFormTranslations()->create($translation);
-            }
-
-            $this->normalizeRestoredBlock($restoredBlock, $block);
-        }
+      $page->slots()->create($attributes);
     }
 
-    private function normalizeRestoredBlock(Block $block, array $snapshotBlock): void
-    {
-        $legacyFallbackUsed = $this->ensureLegacySnapshotFallbackTranslations($block, $snapshotBlock);
+    $page->pageAssets()->delete();
 
-        if ($legacyFallbackUsed || $this->blockHasTranslationRows($block)) {
-            // Older revisions may only carry canonical block copy. Restore those payloads into
-            // translation rows and immediately clear canonical fields so reconstructed content
-            // follows the same authoritative translation model as current revisions.
-            $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
-                'textTranslations',
-                'buttonTranslations',
-                'imageTranslations',
-                'contactFormTranslations',
-            ]));
-        }
+    foreach (Arr::get($snapshot, 'page_assets', []) as $pageAsset) {
+      $page->pageAssets()->create([
+        'type' => $pageAsset['type'],
+        'path' => $pageAsset['path'],
+        'load_position' => $pageAsset['load_position'] ?? PageAsset::defaultLoadPositionFor($pageAsset['type']),
+        'is_defer' => (bool) ($pageAsset['is_defer'] ?? false),
+        'is_async' => (bool) ($pageAsset['is_async'] ?? false),
+        'is_module' => (bool) ($pageAsset['is_module'] ?? false),
+        'is_enabled' => (bool) ($pageAsset['is_enabled'] ?? true),
+        'sort_order' => (int) ($pageAsset['sort_order'] ?? 0),
+      ]);
     }
 
-    private function ensureLegacySnapshotFallbackTranslations(Block $block, array $snapshotBlock): bool
-    {
-        if (
-            ($snapshotBlock['text_translations'] ?? []) !== []
-            || ($snapshotBlock['button_translations'] ?? []) !== []
-            || ($snapshotBlock['image_translations'] ?? []) !== []
-            || ($snapshotBlock['contact_form_translations'] ?? []) !== []
-        ) {
-            return false;
+    $page->blocks()->delete();
+
+    $snapshotBlocks = collect(Arr::get($snapshot, 'blocks', []));
+    $idMap = [];
+    $remaining = $snapshotBlocks->values();
+
+    while ($remaining->isNotEmpty()) {
+      $createdThisPass = 0;
+
+      $nextRemaining = $remaining->reject(function (array $block) use ($page, &$idMap, &$createdThisPass) {
+        $parentSnapshotId = $block['parent_snapshot_id'] ?? null;
+
+        if ($parentSnapshotId !== null && ! array_key_exists($parentSnapshotId, $idMap)) {
+          return false;
         }
 
-        $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+        $created = $page->blocks()->create([
+          'parent_id' => $parentSnapshotId === null ? null : $idMap[$parentSnapshotId],
+          'type' => $block['type'],
+          'block_type_id' => $block['block_type_id'],
+          'source_type' => $block['source_type'],
+          'slot' => $block['slot'],
+          'slot_type_id' => $block['slot_type_id'],
+          'sort_order' => $block['sort_order'],
+          'title' => $block['title'],
+          'subtitle' => $block['subtitle'],
+          'content' => $block['content'],
+          'url' => $block['url'],
+          'media_id' => $block['media_id'] ?? null,
+          'variant' => $block['variant'],
+          'meta' => $block['meta'],
+          'settings' => $block['settings'],
+          'status' => $block['status'],
+          'is_system' => $block['is_system'],
+        ]);
 
-        if (! $defaultLocaleId) {
-            return false;
-        }
-
-        $rawTitle = $snapshotBlock['title'] ?? null;
-        $rawSubtitle = $snapshotBlock['subtitle'] ?? null;
-        $rawContent = $snapshotBlock['content'] ?? null;
-        $rawSettings = $snapshotBlock['settings'] ?? null;
-
-        return match ($block->type) {
-            'header', 'plain_text', 'content_header', 'button_link', 'card', 'column_item', 'feature-grid', 'feature-item', 'link-list', 'link-list-item', 'section', 'cta', 'text', 'rich-text', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
-            'button' => $this->seedLegacyButtonSnapshotFallback($block, $defaultLocaleId, $rawTitle),
-            'image' => $this->seedLegacyImageSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle),
-            'contact_form' => $this->seedLegacyContactFormSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawContent, $rawSettings),
-            default => false,
-        };
-    }
-
-    private function seedLegacyTextSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle, mixed $content): bool
-    {
-        if (! is_string($title) && ! is_string($subtitle) && ! is_string($content)) {
-            return false;
-        }
-
-        $block->textTranslations()->updateOrCreate(
-            ['locale_id' => $defaultLocaleId],
-            [
-                'title' => $title,
-                'subtitle' => $subtitle,
-                'content' => $content,
-            ],
-        );
+        $idMap[$block['snapshot_id']] = $created->id;
+        $createdThisPass++;
 
         return true;
+      })->values();
+
+      if ($createdThisPass === 0) {
+        throw new \RuntimeException('Page revision restore could not resolve block parent relationships.');
+      }
+
+      $remaining = $nextRemaining;
     }
 
-    private function seedLegacyButtonSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title): bool
-    {
-        if (! is_string($title) || trim($title) === '') {
-            return false;
+    foreach ($snapshotBlocks as $block) {
+      $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
+
+      foreach ($block['block_media'] ?? [] as $asset) {
+        $restoredBlockAsset = $restoredBlock->blockAssets()->create([
+          'media_id' => $asset['media_id'] ?? null,
+          'role' => $asset['role'],
+          'position' => $asset['position'],
+        ]);
+
+        foreach ($asset['gallery_item_translations'] ?? [] as $translation) {
+          $restoredBlockAsset->galleryItemTranslations()->create($translation);
         }
+      }
 
-        $block->buttonTranslations()->updateOrCreate(
-            ['locale_id' => $defaultLocaleId],
-            ['title' => $title],
-        );
+      foreach ($block['text_translations'] ?? [] as $translation) {
+        $restoredBlock->textTranslations()->create($translation);
+      }
 
-        return true;
+      foreach ($block['button_translations'] ?? [] as $translation) {
+        $restoredBlock->buttonTranslations()->create($translation);
+      }
+
+      foreach ($block['image_translations'] ?? [] as $translation) {
+        $restoredBlock->imageTranslations()->create($translation);
+      }
+
+      foreach ($block['contact_form_translations'] ?? [] as $translation) {
+        $restoredBlock->contactFormTranslations()->create($translation);
+      }
+
+      $this->normalizeRestoredBlock($restoredBlock, $block);
+    }
+  }
+
+  private function normalizeRestoredBlock(Block $block, array $snapshotBlock): void
+  {
+    $legacyFallbackUsed = $this->ensureLegacySnapshotFallbackTranslations($block, $snapshotBlock);
+
+    if ($legacyFallbackUsed || $this->blockHasTranslationRows($block)) {
+      // Older revisions may only carry canonical block copy. Restore those payloads into
+      // translation rows and immediately clear canonical fields so reconstructed content
+      // follows the same authoritative translation model as current revisions.
+      $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
+        'textTranslations',
+        'buttonTranslations',
+        'imageTranslations',
+        'contactFormTranslations',
+      ]));
+    }
+  }
+
+  private function ensureLegacySnapshotFallbackTranslations(Block $block, array $snapshotBlock): bool
+  {
+    if (
+      ($snapshotBlock['text_translations'] ?? []) !== []
+      || ($snapshotBlock['button_translations'] ?? []) !== []
+      || ($snapshotBlock['image_translations'] ?? []) !== []
+      || ($snapshotBlock['contact_form_translations'] ?? []) !== []
+    ) {
+      return false;
     }
 
-    private function seedLegacyImageSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle): bool
-    {
-        if (! is_string($title) && ! is_string($subtitle)) {
-            return false;
-        }
+    $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
 
-        $block->imageTranslations()->updateOrCreate(
-            ['locale_id' => $defaultLocaleId],
-            [
-                'caption' => $title,
-                'alt_text' => $subtitle,
-            ],
-        );
-
-        return true;
+    if (! $defaultLocaleId) {
+      return false;
     }
 
-    private function seedLegacyContactFormSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $content, mixed $settings): bool
-    {
-        $decodedSettings = is_array($settings)
-            ? $settings
-            : (is_string($settings) && trim($settings) !== '' ? (json_decode($settings, true) ?: []) : []);
+    $rawTitle = $snapshotBlock['title'] ?? null;
+    $rawSubtitle = $snapshotBlock['subtitle'] ?? null;
+    $rawContent = $snapshotBlock['content'] ?? null;
+    $rawSettings = $snapshotBlock['settings'] ?? null;
 
-        if (! is_string($title) && ! is_string($content) && ! isset($decodedSettings['submit_label'], $decodedSettings['success_message'])) {
-            return false;
-        }
+    return match ($block->type) {
+      'header', 'plain_text', 'content_header', 'button_link', 'card', 'column_item', 'feature-grid', 'feature-item', 'link-list', 'link-list-item', 'section', 'cta', 'text', 'rich-text', 'callout', 'quote', 'faq' => $this->seedLegacyTextSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle, $rawContent),
+      'button' => $this->seedLegacyButtonSnapshotFallback($block, $defaultLocaleId, $rawTitle),
+      'image' => $this->seedLegacyImageSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawSubtitle),
+      'contact_form' => $this->seedLegacyContactFormSnapshotFallback($block, $defaultLocaleId, $rawTitle, $rawContent, $rawSettings),
+      default => false,
+    };
+  }
 
-        $block->contactFormTranslations()->updateOrCreate(
-            ['locale_id' => $defaultLocaleId],
-            [
-                'title' => $title,
-                'content' => $content,
-                'submit_label' => trim((string) ($decodedSettings['submit_label'] ?? '')) ?: 'Send message',
-                'success_message' => trim((string) ($decodedSettings['success_message'] ?? '')) ?: config('contact.success_message'),
-            ],
-        );
-
-        return true;
+  private function seedLegacyTextSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle, mixed $content): bool
+  {
+    if (! is_string($title) && ! is_string($subtitle) && ! is_string($content)) {
+      return false;
     }
 
-    private function blockHasTranslationRows(Block $block): bool
-    {
-        return $block->textTranslations()->exists()
-            || $block->buttonTranslations()->exists()
-            || $block->imageTranslations()->exists()
-            || $block->contactFormTranslations()->exists()
-            || $block->galleryItemTranslations()->exists();
+    $block->textTranslations()->updateOrCreate(
+      ['locale_id' => $defaultLocaleId],
+      [
+        'title' => $title,
+        'subtitle' => $subtitle,
+        'content' => $content,
+      ],
+    );
+
+    return true;
+  }
+
+  private function seedLegacyButtonSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title): bool
+  {
+    if (! is_string($title) || trim($title) === '') {
+      return false;
     }
 
-    private function dateOrNull(mixed $value): ?Carbon
-    {
-        if (! is_string($value) || trim($value) === '') {
-            return null;
-        }
+    $block->buttonTranslations()->updateOrCreate(
+      ['locale_id' => $defaultLocaleId],
+      ['title' => $title],
+    );
 
-        return Carbon::parse($value);
+    return true;
+  }
+
+  private function seedLegacyImageSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $subtitle): bool
+  {
+    if (! is_string($title) && ! is_string($subtitle)) {
+      return false;
     }
+
+    $block->imageTranslations()->updateOrCreate(
+      ['locale_id' => $defaultLocaleId],
+      [
+        'caption' => $title,
+        'alt_text' => $subtitle,
+      ],
+    );
+
+    return true;
+  }
+
+  private function seedLegacyContactFormSnapshotFallback(Block $block, int $defaultLocaleId, mixed $title, mixed $content, mixed $settings): bool
+  {
+    $decodedSettings = is_array($settings)
+      ? $settings
+      : (is_string($settings) && trim($settings) !== '' ? (json_decode($settings, true) ?: []) : []);
+
+    if (! is_string($title) && ! is_string($content) && ! isset($decodedSettings['submit_label'], $decodedSettings['success_message'])) {
+      return false;
+    }
+
+    $block->contactFormTranslations()->updateOrCreate(
+      ['locale_id' => $defaultLocaleId],
+      [
+        'title' => $title,
+        'content' => $content,
+        'submit_label' => trim((string) ($decodedSettings['submit_label'] ?? '')) ?: 'Send message',
+        'success_message' => trim((string) ($decodedSettings['success_message'] ?? '')) ?: config('contact.success_message'),
+      ],
+    );
+
+    return true;
+  }
+
+  private function blockHasTranslationRows(Block $block): bool
+  {
+    return $block->textTranslations()->exists()
+      || $block->buttonTranslations()->exists()
+      || $block->imageTranslations()->exists()
+      || $block->contactFormTranslations()->exists()
+      || $block->galleryItemTranslations()->exists();
+  }
+
+  private function dateOrNull(mixed $value): ?Carbon
+  {
+    if (! is_string($value) || trim($value) === '') {
+      return null;
+    }
+
+    return Carbon::parse($value);
+  }
 }

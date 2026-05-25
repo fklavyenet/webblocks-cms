@@ -24,90 +24,90 @@ use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
+  /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        $this->registerInstallRuntimeFallbacks();
+  public function register(): void
+  {
+    $this->registerInstallRuntimeFallbacks();
 
-        $this->app->singleton(SiteResolver::class);
-        $this->app->singleton(LocaleResolver::class);
-        $this->app->singleton(PageLayoutManager::class);
-        $this->app->singleton(PageRouteResolver::class);
-        $this->app->singleton(SiteAssetResolver::class);
-        $this->app->singleton(SystemSettings::class);
-        $this->app->singleton(VisitorConsent::class);
-        $this->app->singleton(DestructiveDatabaseCommandGuard::class);
-    }
+    $this->app->singleton(SiteResolver::class);
+    $this->app->singleton(LocaleResolver::class);
+    $this->app->singleton(PageLayoutManager::class);
+    $this->app->singleton(PageRouteResolver::class);
+    $this->app->singleton(SiteAssetResolver::class);
+    $this->app->singleton(SystemSettings::class);
+    $this->app->singleton(VisitorConsent::class);
+    $this->app->singleton(DestructiveDatabaseCommandGuard::class);
+  }
 
-    /**
+  /**
      * Bootstrap any application services.
      */
-    public function boot(): void
-    {
-        try {
-            $systemSettings = app(SystemSettings::class);
+  public function boot(): void
+  {
+    try {
+      $systemSettings = app(SystemSettings::class);
 
-            Config::set('app.locale', $systemSettings->defaultLocaleCode());
-            Config::set('app.fallback_locale', $systemSettings->defaultLocaleCode());
-            Config::set('app.timezone', $systemSettings->timezone());
-            date_default_timezone_set((string) config('app.timezone', 'UTC'));
-        } catch (Throwable) {
-            // Keep config fallbacks when the database is unavailable during bootstrap.
-        }
-
-        // Public navigation now renders explicitly through Navigation Auto blocks.
-
-        View::composer(['layouts.public', 'pages.show', 'search.show', 'webblocks-cms::layouts.public', 'webblocks-cms::pages.show', 'webblocks-cms::search.show'], function ($view): void {
-            $request = request();
-            $consent = app(VisitorConsent::class);
-            $resolvedPublicSite = null;
-
-            try {
-                $resolvedPublicSite = app(PageRouteResolver::class)->resolvedSite($request)->site;
-            } catch (Throwable) {
-                // Keep public fallbacks safe when no site can be resolved.
-            }
-
-            $view->with('visitorPrivacy', [
-                'banner_enabled' => $consent->bannerEnabled(),
-                'has_choice' => $consent->hasStoredChoice($request),
-                'server_choice' => $consent->storedChoice($request),
-            ]);
-            $view->with('resolvedPublicSite', $resolvedPublicSite);
-        });
-
-        View::composer('layouts.admin', function ($view): void {
-            $systemSettings = app(SystemSettings::class);
-
-            $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());
-            $view->with('adminProjectIdentity', $systemSettings->adminProjectIdentity());
-            $view->with('adminBrowserTitle', $systemSettings->adminBrowserTitle($view->getData()['title'] ?? null));
-        });
-
-        RateLimiter::for('contact-form-submissions', function (Request $request) {
-            return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
-                ->by($request->ip().'|'.((string) $request->input('block_id')));
-        });
-
-        if ($this->app->runningInConsole()) {
-            Event::listen(CommandStarting::class, function (CommandStarting $event): void {
-                app(DestructiveDatabaseCommandGuard::class)->ensureAllowed($event->command);
-            });
-        }
+      Config::set('app.locale', $systemSettings->defaultLocaleCode());
+      Config::set('app.fallback_locale', $systemSettings->defaultLocaleCode());
+      Config::set('app.timezone', $systemSettings->timezone());
+      date_default_timezone_set((string) config('app.timezone', 'UTC'));
+    } catch (Throwable) {
+      // Keep config fallbacks when the database is unavailable during bootstrap.
     }
 
-    private function registerInstallRuntimeFallbacks(): void
-    {
-        if (app()->environment('testing')) {
-            return;
-        }
+    // Public navigation now renders explicitly through Navigation Auto blocks.
 
-        if (! app()->runningInConsole() && app(InstallState::class)->shouldUseRuntimeFallbacks()) {
-            Config::set('session.driver', 'file');
-            Config::set('cache.default', 'file');
-            Config::set('queue.default', 'sync');
-        }
+    View::composer(['layouts.public', 'pages.show', 'search.show', 'webblocks-cms::layouts.public', 'webblocks-cms::pages.show', 'webblocks-cms::search.show'], function ($view): void {
+      $request = request();
+      $consent = app(VisitorConsent::class);
+      $resolvedPublicSite = null;
+
+      try {
+        $resolvedPublicSite = app(PageRouteResolver::class)->resolvedSite($request)->site;
+      } catch (Throwable) {
+        // Keep public fallbacks safe when no site can be resolved.
+      }
+
+      $view->with('visitorPrivacy', [
+        'banner_enabled' => $consent->bannerEnabled(),
+        'has_choice' => $consent->hasStoredChoice($request),
+        'server_choice' => $consent->storedChoice($request),
+      ]);
+      $view->with('resolvedPublicSite', $resolvedPublicSite);
+    });
+
+    View::composer('layouts.admin', function ($view): void {
+      $systemSettings = app(SystemSettings::class);
+
+      $view->with('installedVersionDisplay', app(InstalledVersionStore::class)->displayVersion());
+      $view->with('adminProjectIdentity', $systemSettings->adminProjectIdentity());
+      $view->with('adminBrowserTitle', $systemSettings->adminBrowserTitle($view->getData()['title'] ?? null));
+    });
+
+    RateLimiter::for('contact-form-submissions', function (Request $request) {
+      return Limit::perMinute((int) config('contact.rate_limit_per_minute', 5))
+        ->by($request->ip().'|'.((string) $request->input('block_id')));
+    });
+
+    if ($this->app->runningInConsole()) {
+      Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+        app(DestructiveDatabaseCommandGuard::class)->ensureAllowed($event->command);
+      });
     }
+  }
+
+  private function registerInstallRuntimeFallbacks(): void
+  {
+    if (app()->environment('testing')) {
+      return;
+    }
+
+    if (! app()->runningInConsole() && app(InstallState::class)->shouldUseRuntimeFallbacks()) {
+      Config::set('session.driver', 'file');
+      Config::set('cache.default', 'file');
+      Config::set('queue.default', 'sync');
+    }
+  }
 }

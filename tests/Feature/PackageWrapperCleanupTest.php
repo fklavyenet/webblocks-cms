@@ -73,7 +73,7 @@ class PackageWrapperCleanupTest extends TestCase
   }
 
   /**
-  * @return list<string>
+   * @return list<string>
   */
   private function appPhpFiles(): array
   {
@@ -92,7 +92,7 @@ class PackageWrapperCleanupTest extends TestCase
   }
 
   /**
-  * @return list<string>
+   * @return list<string>
   */
   private function allowedRootAppFiles(): array
   {
@@ -128,7 +128,7 @@ class PackageWrapperCleanupTest extends TestCase
   }
 
   /**
-  * @return list<string>
+   * @return list<string>
   */
   private function removedPackageCounterpartDirectories(): array
   {

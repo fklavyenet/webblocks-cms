@@ -6,21 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('pages', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->string('slug')->unique();
-            $table->string('page_type');
-            $table->foreignId('layout_id')->nullable()->constrained('layouts')->nullOnDelete();
-            $table->string('status');
-            $table->timestamps();
-        });
-    }
+  public function up(): void
+  {
+    Schema::create('pages', function (Blueprint $table) {
+      $table->id();
+      $table->string('title');
+      $table->string('slug')->unique();
+      $table->string('page_type');
+      $table->foreignId('layout_id')->nullable()->constrained('layouts')->nullOnDelete();
+      $table->string('status');
+      $table->timestamps();
+    });
+  }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('pages');
-    }
+  public function down(): void
+  {
+    Schema::dropIfExists('pages');
+  }
 };

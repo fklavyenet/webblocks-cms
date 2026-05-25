@@ -6,23 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('slot_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->string('axis')->nullable();
-            $table->boolean('is_system')->default(false);
-            $table->unsignedInteger('sort_order')->default(0);
-            $table->string('status')->default('published');
-            $table->timestamps();
-        });
-    }
+  public function up(): void
+  {
+    Schema::create('slot_types', function (Blueprint $table) {
+      $table->id();
+      $table->string('name');
+      $table->string('slug')->unique();
+      $table->text('description')->nullable();
+      $table->string('axis')->nullable();
+      $table->boolean('is_system')->default(false);
+      $table->unsignedInteger('sort_order')->default(0);
+      $table->string('status')->default('published');
+      $table->timestamps();
+    });
+  }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('slot_types');
-    }
+  public function down(): void
+  {
+    Schema::dropIfExists('slot_types');
+  }
 };

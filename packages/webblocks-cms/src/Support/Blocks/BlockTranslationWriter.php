@@ -2,310 +2,310 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 
 class BlockTranslationWriter
 {
-    public function __construct(
-        private readonly BlockTranslationRegistry $registry,
-        private readonly LocaleResolver $localeResolver,
-    ) {}
+  public function __construct(
+    private readonly BlockTranslationRegistry $registry,
+    private readonly LocaleResolver $localeResolver,
+  ) {}
 
-    public function canonicalPayload(array $data, ?Block $block, Page $page, ?string $localeCode, bool $isCreating = false): array
-    {
-        $blockTypeSlug = $data['type'] ?? $block?->typeSlug();
-        $family = $this->registry->familyFor($blockTypeSlug);
+  public function canonicalPayload(array $data, ?Block $block, Page $page, ?string $localeCode, bool $isCreating = false): array
+  {
+    $blockTypeSlug = $data['type'] ?? $block?->typeSlug();
+    $family = $this->registry->familyFor($blockTypeSlug);
 
-        if (! $family) {
-            return $data;
-        }
-
-        if ($family === 'contact_form') {
-            $settings = $this->decodeSettings($data['settings'] ?? null);
-
-            unset($settings['submit_label'], $settings['success_message']);
-
-            $data['settings'] = $settings === []
-                ? null
-                : json_encode($settings, JSON_UNESCAPED_SLASHES);
-        }
-
-        foreach ($this->canonicalBlockFieldsForFamily($family) as $field) {
-            $data[$field] = null;
-        }
-
-        return $data;
+    if (! $family) {
+      return $data;
     }
 
-    public function sync(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
-    {
-        $family = $this->registry->familyFor($block);
+    if ($family === 'contact_form') {
+      $settings = $this->decodeSettings($data['settings'] ?? null);
 
-        if (! $family) {
-            $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
+      unset($settings['submit_label'], $settings['success_message']);
 
-            return;
-        }
-
-        $locale = $this->resolveLocale($localeCode);
-        $defaultLocale = $this->localeResolver->default();
-        $translationSourceBlock ??= $block;
-
-        $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
-
-        if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
-            $this->writeTranslation($block, $family, $defaultLocale->id, $this->translationPayload($family, $data, $translationSourceBlock, $defaultLocale->id));
-        } else {
-            $this->ensureDefaultTranslation($block, $family, $defaultLocale->id, $translationSourceBlock);
-        }
-
-        if (! $isDefaultLocaleEdit) {
-            $this->writeTranslation($block, $family, $locale->id, $this->translationPayload($family, $data, $translationSourceBlock, $locale->id));
-        }
-
-        $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
+      $data['settings'] = $settings === []
+        ? null
+        : json_encode($settings, JSON_UNESCAPED_SLASHES);
     }
 
-    public function normalizeCanonicalStorage(Block $block): void
-    {
-        $family = $this->registry->familyFor($block);
-
-        if (! $family) {
-            return;
-        }
-
-        $defaultLocaleId = $this->localeResolver->default()->id;
-
-        $this->ensureDefaultTranslation($block, $family, $defaultLocaleId, $block);
-
-        $updates = array_fill_keys($this->canonicalBlockFieldsForFamily($family), null);
-
-        if ($family === 'contact_form') {
-            $settings = $this->decodeSettings($block->getRawOriginal('settings'));
-
-            unset($settings['submit_label'], $settings['success_message']);
-
-            $updates['settings'] = $settings === []
-                ? null
-                : json_encode($settings, JSON_UNESCAPED_SLASHES);
-        }
-
-        DB::table('blocks')->where('id', $block->id)->update($updates);
+    foreach ($this->canonicalBlockFieldsForFamily($family) as $field) {
+      $data[$field] = null;
     }
 
-    private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
-    {
-        $relation = match ($family) {
-            'text' => $block->textTranslations(),
-            'button' => $block->buttonTranslations(),
-            'image' => $block->imageTranslations(),
-            'contact_form' => $block->contactFormTranslations(),
-        };
+    return $data;
+  }
 
-        $translationSourceBlock ??= $block;
+  public function sync(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
+  {
+    $family = $this->registry->familyFor($block);
 
-        if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
-            return;
-        }
+    if (! $family) {
+      $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
 
-        $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $translationSourceBlock, $defaultLocaleId));
+      return;
     }
 
-    private function syncAdditionalTranslations(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
-    {
-        if (! $this->registry->supportsImageTranslations($block)) {
-            return;
-        }
+    $locale = $this->resolveLocale($localeCode);
+    $defaultLocale = $this->localeResolver->default();
+    $translationSourceBlock ??= $block;
 
-        $locale = $this->resolveLocale($localeCode);
-        $defaultLocale = $this->localeResolver->default();
-        $translationSourceBlock ??= $block;
-        $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
+    $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
 
-        if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
-            $this->writeTranslation($block, 'image', $defaultLocale->id, $this->translationPayload('image', $data, $translationSourceBlock, $defaultLocale->id));
-        } else {
-            $this->ensureDefaultTranslation($block, 'image', $defaultLocale->id, $translationSourceBlock);
-        }
-
-        if (! $isDefaultLocaleEdit) {
-            $this->writeTranslation($block, 'image', $locale->id, $this->translationPayload('image', $data, $translationSourceBlock, $locale->id));
-        }
+    if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
+      $this->writeTranslation($block, $family, $defaultLocale->id, $this->translationPayload($family, $data, $translationSourceBlock, $defaultLocale->id));
+    } else {
+      $this->ensureDefaultTranslation($block, $family, $defaultLocale->id, $translationSourceBlock);
     }
 
-    private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void
-    {
-        match ($family) {
-            'text' => $block->textTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
-            'button' => $block->buttonTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
-            'image' => $block->imageTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
-            'contact_form' => $block->contactFormTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
-        };
+    if (! $isDefaultLocaleEdit) {
+      $this->writeTranslation($block, $family, $locale->id, $this->translationPayload($family, $data, $translationSourceBlock, $locale->id));
     }
 
-    private function translationPayload(string $family, array $data, Block $block, int $localeId): array
-    {
-        return match ($family) {
-            'text' => [
-                'title' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'title', $block->getRawOriginal('title')),
-                'eyebrow' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'eyebrow'),
-                'subtitle' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
-                'content' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'content', $block->getRawOriginal('content')),
-                'meta' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'meta', $block->getRawOriginal('meta')),
-            ],
-            'button' => [
-                'title' => $this->submittedString($data, 'title')
-                    ?? $this->existingTranslationValue($block, 'buttonTranslations', $localeId, 'title', $block->getRawOriginal('title'))
-                    ?? 'Open link',
-            ],
-            'image' => [
-                'caption' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'caption'),
-                'alt_text' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'alt_text'),
-            ],
-            'contact_form' => [
-                'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'title', $block->getRawOriginal('title')),
-                'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
-                'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
-                'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
-            ],
-        };
+    $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
+  }
+
+  public function normalizeCanonicalStorage(Block $block): void
+  {
+    $family = $this->registry->familyFor($block);
+
+    if (! $family) {
+      return;
     }
 
-    private function resolvedContactTranslationValue(array $data, Block $block, int $localeId, string $field, string $default): string
-    {
-        $submitted = $this->submittedContactTranslationValue($data, $field);
+    $defaultLocaleId = $this->localeResolver->default()->id;
 
-        if ($submitted !== null) {
-            return $submitted;
-        }
+    $this->ensureDefaultTranslation($block, $family, $defaultLocaleId, $block);
 
-        $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
-        $submittedSettingValue = trim((string) ($submittedSettings[$field] ?? ''));
+    $updates = array_fill_keys($this->canonicalBlockFieldsForFamily($family), null);
 
-        if ($submittedSettingValue !== '') {
-            return $submittedSettingValue;
-        }
+    if ($family === 'contact_form') {
+      $settings = $this->decodeSettings($block->getRawOriginal('settings'));
 
-        $existing = trim((string) ($this->existingTranslationValue($block, 'contactFormTranslations', $localeId, $field) ?? ''));
+      unset($settings['submit_label'], $settings['success_message']);
 
-        if ($existing !== '') {
-            return $existing;
-        }
-
-        $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
-
-        return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
+      $updates['settings'] = $settings === []
+        ? null
+        : json_encode($settings, JSON_UNESCAPED_SLASHES);
     }
 
-    private function resolvedImageTranslationValue(array $data, Block $block, int $localeId, string $field): ?string
-    {
-        $sourceField = match ($block->typeSlug()) {
-            'card' => $field === 'caption' ? 'image_caption' : 'image_alt',
-            default => $field === 'caption' ? 'title' : 'subtitle',
-        };
+    DB::table('blocks')->where('id', $block->id)->update($updates);
+  }
 
-        $fallback = match ($block->typeSlug()) {
-            'card' => null,
-            default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
-        };
+  private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
+  {
+    $relation = match ($family) {
+      'text' => $block->textTranslations(),
+      'button' => $block->buttonTranslations(),
+      'image' => $block->imageTranslations(),
+      'contact_form' => $block->contactFormTranslations(),
+    };
 
-        return $this->submittedString($data, $sourceField)
-            ?? $this->existingTranslationValue($block, 'imageTranslations', $localeId, $field, $fallback);
+    $translationSourceBlock ??= $block;
+
+    if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
+      return;
     }
 
-    private function existingTranslationValue(Block $block, string $relation, int $localeId, string $field, mixed $fallback = null): mixed
-    {
-        $translations = $block->relationLoaded($relation)
-            ? $block->getRelation($relation)
-            : $block->{$relation}()->get();
+    $relation->create(['locale_id' => $defaultLocaleId] + $this->translationPayload($family, [], $translationSourceBlock, $defaultLocaleId));
+  }
 
-        $translation = $translations->firstWhere('locale_id', $localeId);
-
-        return $translation?->{$field} ?? $fallback;
+  private function syncAdditionalTranslations(Block $block, array $data, ?string $localeCode, bool $duplicateDefaultOnCreate = false, ?Block $translationSourceBlock = null): void
+  {
+    if (! $this->registry->supportsImageTranslations($block)) {
+      return;
     }
 
-    private function submittedString(array $data, string $field): ?string
-    {
-        if (! array_key_exists($field, $data)) {
-            return null;
-        }
+    $locale = $this->resolveLocale($localeCode);
+    $defaultLocale = $this->localeResolver->default();
+    $translationSourceBlock ??= $block;
+    $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
 
-        $value = trim((string) $data[$field]);
-
-        return $value !== '' ? $value : null;
+    if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
+      $this->writeTranslation($block, 'image', $defaultLocale->id, $this->translationPayload('image', $data, $translationSourceBlock, $defaultLocale->id));
+    } else {
+      $this->ensureDefaultTranslation($block, 'image', $defaultLocale->id, $translationSourceBlock);
     }
 
-    private function submittedContactTranslationValue(array $data, string $field): ?string
-    {
-        $value = trim((string) ($data[$field] ?? ''));
+    if (! $isDefaultLocaleEdit) {
+      $this->writeTranslation($block, 'image', $locale->id, $this->translationPayload('image', $data, $translationSourceBlock, $locale->id));
+    }
+  }
 
-        if ($value === '') {
-            $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
-            $value = trim((string) ($submittedSettings[$field] ?? ''));
-        }
+  private function writeTranslation(Block $block, string $family, int $localeId, array $payload): void
+  {
+    match ($family) {
+      'text' => $block->textTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
+      'button' => $block->buttonTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
+      'image' => $block->imageTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
+      'contact_form' => $block->contactFormTranslations()->updateOrCreate(['locale_id' => $localeId], $payload),
+    };
+  }
 
-        return $value !== '' ? $value : null;
+  private function translationPayload(string $family, array $data, Block $block, int $localeId): array
+  {
+    return match ($family) {
+      'text' => [
+        'title' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'title', $block->getRawOriginal('title')),
+        'eyebrow' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'eyebrow'),
+        'subtitle' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'subtitle', $block->getRawOriginal('subtitle')),
+        'content' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'content', $block->getRawOriginal('content')),
+        'meta' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'meta', $block->getRawOriginal('meta')),
+      ],
+      'button' => [
+        'title' => $this->submittedString($data, 'title')
+          ?? $this->existingTranslationValue($block, 'buttonTranslations', $localeId, 'title', $block->getRawOriginal('title'))
+          ?? 'Open link',
+      ],
+      'image' => [
+        'caption' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'caption'),
+        'alt_text' => $this->resolvedImageTranslationValue($data, $block, $localeId, 'alt_text'),
+      ],
+      'contact_form' => [
+        'title' => array_key_exists('title', $data) ? $data['title'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'title', $block->getRawOriginal('title')),
+        'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
+        'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
+        'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
+      ],
+    };
+  }
+
+  private function resolvedContactTranslationValue(array $data, Block $block, int $localeId, string $field, string $default): string
+  {
+    $submitted = $this->submittedContactTranslationValue($data, $field);
+
+    if ($submitted !== null) {
+      return $submitted;
     }
 
-    private function resolvedTextTranslationValue(array $data, Block $block, int $localeId, string $field, mixed $fallback = null): mixed
-    {
-        $value = array_key_exists($field, $data)
-            ? $data[$field]
-            : $this->existingTranslationValue($block, 'textTranslations', $localeId, $field, $fallback);
+    $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
+    $submittedSettingValue = trim((string) ($submittedSettings[$field] ?? ''));
 
-        if ($field !== 'content' || $block->typeSlug() !== 'rich-text') {
-            return $value;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $value = trim($value);
-
-        if ($value === '') {
-            return null;
-        }
-
-        return trim(strip_tags($value)) !== '' ? $value : null;
+    if ($submittedSettingValue !== '') {
+      return $submittedSettingValue;
     }
 
-    private function canonicalBlockFieldsForFamily(string $family): array
-    {
-        return match ($family) {
-            'text' => ['title', 'subtitle', 'content', 'meta'],
-            'button' => ['title'],
-            'image' => ['title', 'subtitle'],
-            'contact_form' => ['title', 'content'],
-            default => [],
-        };
+    $existing = trim((string) ($this->existingTranslationValue($block, 'contactFormTranslations', $localeId, $field) ?? ''));
+
+    if ($existing !== '') {
+      return $existing;
     }
 
-    private function resolveLocale(?string $localeCode): Locale
-    {
-        if ($localeCode) {
-            return $this->localeResolver->resolve($localeCode) ?? $this->localeResolver->default();
-        }
+    $rawSettings = $this->decodeSettings($block->getRawOriginal('settings'));
 
-        return $this->localeResolver->default();
+    return trim((string) ($rawSettings[$field] ?? '')) ?: $default;
+  }
+
+  private function resolvedImageTranslationValue(array $data, Block $block, int $localeId, string $field): ?string
+  {
+    $sourceField = match ($block->typeSlug()) {
+      'card' => $field === 'caption' ? 'image_caption' : 'image_alt',
+      default => $field === 'caption' ? 'title' : 'subtitle',
+    };
+
+    $fallback = match ($block->typeSlug()) {
+      'card' => null,
+      default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
+    };
+
+    return $this->submittedString($data, $sourceField)
+      ?? $this->existingTranslationValue($block, 'imageTranslations', $localeId, $field, $fallback);
+  }
+
+  private function existingTranslationValue(Block $block, string $relation, int $localeId, string $field, mixed $fallback = null): mixed
+  {
+    $translations = $block->relationLoaded($relation)
+      ? $block->getRelation($relation)
+      : $block->{$relation}()->get();
+
+    $translation = $translations->firstWhere('locale_id', $localeId);
+
+    return $translation?->{$field} ?? $fallback;
+  }
+
+  private function submittedString(array $data, string $field): ?string
+  {
+    if (! array_key_exists($field, $data)) {
+      return null;
     }
 
-    private function decodeSettings(mixed $settings): array
-    {
-        if (is_array($settings)) {
-            return $settings;
-        }
+    $value = trim((string) $data[$field]);
 
-        if (! is_string($settings) || trim($settings) === '') {
-            return [];
-        }
+    return $value !== '' ? $value : null;
+  }
 
-        $decoded = json_decode($settings, true);
+  private function submittedContactTranslationValue(array $data, string $field): ?string
+  {
+    $value = trim((string) ($data[$field] ?? ''));
 
-        return is_array($decoded) ? $decoded : [];
+    if ($value === '') {
+      $submittedSettings = $this->decodeSettings($data['settings'] ?? null);
+      $value = trim((string) ($submittedSettings[$field] ?? ''));
     }
+
+    return $value !== '' ? $value : null;
+  }
+
+  private function resolvedTextTranslationValue(array $data, Block $block, int $localeId, string $field, mixed $fallback = null): mixed
+  {
+    $value = array_key_exists($field, $data)
+      ? $data[$field]
+      : $this->existingTranslationValue($block, 'textTranslations', $localeId, $field, $fallback);
+
+    if ($field !== 'content' || $block->typeSlug() !== 'rich-text') {
+      return $value;
+    }
+
+    if (! is_string($value)) {
+      return null;
+    }
+
+    $value = trim($value);
+
+    if ($value === '') {
+      return null;
+    }
+
+    return trim(strip_tags($value)) !== '' ? $value : null;
+  }
+
+  private function canonicalBlockFieldsForFamily(string $family): array
+  {
+    return match ($family) {
+      'text' => ['title', 'subtitle', 'content', 'meta'],
+      'button' => ['title'],
+      'image' => ['title', 'subtitle'],
+      'contact_form' => ['title', 'content'],
+      default => [],
+    };
+  }
+
+  private function resolveLocale(?string $localeCode): Locale
+  {
+    if ($localeCode) {
+      return $this->localeResolver->resolve($localeCode) ?? $this->localeResolver->default();
+    }
+
+    return $this->localeResolver->default();
+  }
+
+  private function decodeSettings(mixed $settings): array
+  {
+    if (is_array($settings)) {
+      return $settings;
+    }
+
+    if (! is_string($settings) || trim($settings) === '') {
+      return [];
+    }
+
+    $decoded = json_decode($settings, true);
+
+    return is_array($decoded) ? $decoded : [];
+  }
 }

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore the repository-wide `ddev composer format:test` baseline by applying Pint-safe formatting, preserving the project 2-space PHP indentation rule, and wiring the indentation guard across maintained source roots.
 - Clean up routine test-suite naming and validation guidance around the canonical `/cms` admin namespace, while keeping retired bridge coverage manual and archival.
 - Clean up the `/cms` namespace migration by moving the admin asset picker upload endpoint to `/cms/media` and ignoring generated root publish copies of package config and boundary-marker artifacts.
 - Move the canonical CMS admin and package-owned login namespace from `/admin` to `/cms`, keeping host-owned `/login` behavior available for co-installed Laravel apps and removing CMS-owned `/admin` aliases from the route table.

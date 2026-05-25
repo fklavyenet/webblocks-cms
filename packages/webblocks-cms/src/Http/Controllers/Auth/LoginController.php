@@ -11,37 +11,37 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function create(): View
-    {
-        return view('webblocks-cms::auth.login');
+  public function create(): View
+  {
+    return view('webblocks-cms::auth.login');
+  }
+
+  public function store(Request $request): RedirectResponse
+  {
+    $credentials = $request->validate([
+      'email' => ['required', 'email'],
+      'password' => ['required', 'string'],
+    ]);
+
+    if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+      throw ValidationException::withMessages([
+        'email' => 'The provided credentials do not match our records.',
+      ]);
     }
 
-    public function store(Request $request): RedirectResponse
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+    $request->session()->regenerate();
+    $request->user()?->forceFill(['last_login_at' => now()])->save();
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => 'The provided credentials do not match our records.',
-            ]);
-        }
+    return redirect()->intended(route('admin.dashboard'));
+  }
 
-        $request->session()->regenerate();
-        $request->user()?->forceFill(['last_login_at' => now()])->save();
+  public function destroy(Request $request): RedirectResponse
+  {
+    Auth::guard('web')->logout();
 
-        return redirect()->intended(route('admin.dashboard'));
-    }
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
-    public function destroy(Request $request): RedirectResponse
-    {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login');
-    }
+    return redirect()->route('login');
+  }
 }

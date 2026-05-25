@@ -11,313 +11,313 @@ use Symfony\Component\Process\Process;
 
 class DatabaseDumpWriter
 {
-    public function __construct(
-        private readonly DatabaseExecutionStrategyResolver $strategyResolver,
-        private readonly SqlDumpContentValidator $sqlDumpContentValidator,
-    ) {}
+  public function __construct(
+    private readonly DatabaseExecutionStrategyResolver $strategyResolver,
+    private readonly SqlDumpContentValidator $sqlDumpContentValidator,
+  ) {}
 
-    public function dumpTo(string $destinationPath, array &$output = []): array
-    {
-        File::ensureDirectoryExists(dirname($destinationPath));
+  public function dumpTo(string $destinationPath, array &$output = []): array
+  {
+    File::ensureDirectoryExists(dirname($destinationPath));
 
-        $connection = DB::connection();
-        $driver = $connection->getDriverName();
+    $connection = DB::connection();
+    $driver = $connection->getDriverName();
 
-        $output[] = 'Preparing database dump for driver '.$driver.'.';
+    $output[] = 'Preparing database dump for driver '.$driver.'.';
 
-        return match ($driver) {
-            'sqlite' => $this->dumpSqlite($connection, $destinationPath, $output),
-            'mysql', 'mariadb' => $this->dumpMysqlFamily($connection, $destinationPath, $output),
-            default => throw new RuntimeException('Database backups currently support sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
-        };
+    return match ($driver) {
+      'sqlite' => $this->dumpSqlite($connection, $destinationPath, $output),
+      'mysql', 'mariadb' => $this->dumpMysqlFamily($connection, $destinationPath, $output),
+      default => throw new RuntimeException('Database backups currently support sqlite, mysql, and mariadb drivers. Active driver: '.$driver.'.'),
+    };
+  }
+
+  private function dumpSqlite(Connection $connection, string $destinationPath, array &$output): array
+  {
+    $pdo = $connection->getPdo();
+    $tables = $connection->select("select name, sql from sqlite_master where type = 'table' and name not like 'sqlite_%' and sql is not null order by name");
+    $secondaryObjects = $connection->select("select type, name, tbl_name, sql from sqlite_master where type in ('index', 'trigger', 'view') and name not like 'sqlite_%' and sql is not null order by case type when 'view' then 0 when 'index' then 1 else 2 end, name");
+
+    $lines = [
+      '-- WebBlocks CMS SQLite backup',
+      '-- Generated at '.now()->toIso8601String(),
+      'PRAGMA foreign_keys=OFF;',
+      'BEGIN TRANSACTION;',
+      '',
+    ];
+
+    foreach ($tables as $table) {
+      $tableName = $table->name;
+      $quotedTable = $this->quoteIdentifier($tableName);
+      $lines[] = 'DROP TABLE IF EXISTS '.$quotedTable.';';
+      $lines[] = rtrim((string) $table->sql, ';').';';
+
+      $rows = $connection->table($tableName)->get();
+      foreach ($rows as $row) {
+        $values = [];
+        $columns = [];
+
+        foreach ((array) $row as $column => $value) {
+          $columns[] = $this->quoteIdentifier((string) $column);
+          $values[] = $this->quoteSqliteValue($pdo, $value);
+        }
+
+        $lines[] = 'INSERT INTO '.$quotedTable.' ('.implode(', ', $columns).') VALUES ('.implode(', ', $values).');';
+      }
+
+      $lines[] = '';
     }
 
-    private function dumpSqlite(Connection $connection, string $destinationPath, array &$output): array
-    {
-        $pdo = $connection->getPdo();
-        $tables = $connection->select("select name, sql from sqlite_master where type = 'table' and name not like 'sqlite_%' and sql is not null order by name");
-        $secondaryObjects = $connection->select("select type, name, tbl_name, sql from sqlite_master where type in ('index', 'trigger', 'view') and name not like 'sqlite_%' and sql is not null order by case type when 'view' then 0 when 'index' then 1 else 2 end, name");
+    foreach ($secondaryObjects as $object) {
+      $dropStatement = match ($object->type) {
+        'view' => 'DROP VIEW IF EXISTS '.$this->quoteIdentifier($object->name).';',
+        'index' => 'DROP INDEX IF EXISTS '.$this->quoteIdentifier($object->name).';',
+        'trigger' => 'DROP TRIGGER IF EXISTS '.$this->quoteIdentifier($object->name).';',
+        default => null,
+      };
 
-        $lines = [
-            '-- WebBlocks CMS SQLite backup',
-            '-- Generated at '.now()->toIso8601String(),
-            'PRAGMA foreign_keys=OFF;',
-            'BEGIN TRANSACTION;',
-            '',
-        ];
+      if ($dropStatement !== null) {
+        $lines[] = $dropStatement;
+      }
 
-        foreach ($tables as $table) {
-            $tableName = $table->name;
-            $quotedTable = $this->quoteIdentifier($tableName);
-            $lines[] = 'DROP TABLE IF EXISTS '.$quotedTable.';';
-            $lines[] = rtrim((string) $table->sql, ';').';';
-
-            $rows = $connection->table($tableName)->get();
-            foreach ($rows as $row) {
-                $values = [];
-                $columns = [];
-
-                foreach ((array) $row as $column => $value) {
-                    $columns[] = $this->quoteIdentifier((string) $column);
-                    $values[] = $this->quoteSqliteValue($pdo, $value);
-                }
-
-                $lines[] = 'INSERT INTO '.$quotedTable.' ('.implode(', ', $columns).') VALUES ('.implode(', ', $values).');';
-            }
-
-            $lines[] = '';
-        }
-
-        foreach ($secondaryObjects as $object) {
-            $dropStatement = match ($object->type) {
-                'view' => 'DROP VIEW IF EXISTS '.$this->quoteIdentifier($object->name).';',
-                'index' => 'DROP INDEX IF EXISTS '.$this->quoteIdentifier($object->name).';',
-                'trigger' => 'DROP TRIGGER IF EXISTS '.$this->quoteIdentifier($object->name).';',
-                default => null,
-            };
-
-            if ($dropStatement !== null) {
-                $lines[] = $dropStatement;
-            }
-
-            $lines[] = rtrim((string) $object->sql, ';').';';
-            $lines[] = '';
-        }
-
-        $lines[] = 'COMMIT;';
-
-        File::put($destinationPath, implode(PHP_EOL, $lines));
-
-        $output[] = 'SQLite SQL dump written to '.basename($destinationPath).'.';
-
-        return [
-            'driver' => 'sqlite',
-            'strategy' => 'php_sql_export',
-            'connection' => $connection->getName(),
-        ];
+      $lines[] = rtrim((string) $object->sql, ';').';';
+      $lines[] = '';
     }
 
-    private function dumpMysqlFamily(Connection $connection, string $destinationPath, array &$output): array
-    {
-        $config = $connection->getConfig();
-        $strategy = $this->resolveMysqlDumpStrategy();
-        match ($strategy) {
-            'ddev' => $this->runDdevMysqlDump($connection->getDriverName(), $destinationPath, $config),
-            default => $this->runDirectMysqlDump($destinationPath, $config),
-        };
+    $lines[] = 'COMMIT;';
 
-        $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
-        $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
+    File::put($destinationPath, implode(PHP_EOL, $lines));
 
-        return [
-            'driver' => $connection->getDriverName(),
-            'strategy' => $strategy,
-            'connection' => $connection->getName(),
-        ];
+    $output[] = 'SQLite SQL dump written to '.basename($destinationPath).'.';
+
+    return [
+      'driver' => 'sqlite',
+      'strategy' => 'php_sql_export',
+      'connection' => $connection->getName(),
+    ];
+  }
+
+  private function dumpMysqlFamily(Connection $connection, string $destinationPath, array &$output): array
+  {
+    $config = $connection->getConfig();
+    $strategy = $this->resolveMysqlDumpStrategy();
+    match ($strategy) {
+      'ddev' => $this->runDdevMysqlDump($connection->getDriverName(), $destinationPath, $config),
+      default => $this->runDirectMysqlDump($destinationPath, $config),
+    };
+
+    $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
+    $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
+
+    return [
+      'driver' => $connection->getDriverName(),
+      'strategy' => $strategy,
+      'connection' => $connection->getName(),
+    ];
+  }
+
+  public function resolveMysqlDumpStrategy(): string
+  {
+    return $this->strategyResolver->resolveMysqlStrategy();
+  }
+
+  private function runDirectMysqlDump(string $destinationPath, array $config): void
+  {
+    $defaultsFile = $this->createMysqlDefaultsFile($destinationPath, $config);
+
+    try {
+      $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
+      $process = $this->makeDumpProcess($command);
+      $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
+      $process->run();
+
+      if (! $process->isSuccessful()) {
+        throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
+      }
+
+      $this->assertValidDumpFile($destinationPath);
+    } finally {
+      File::delete($defaultsFile);
+    }
+  }
+
+  private function buildDirectMysqlDumpCommand(string $destinationPath, string $defaultsFile, array $config): array
+  {
+    $command = [
+      $this->findMysqlDumpBinary(),
+      '--defaults-extra-file='.$defaultsFile,
+      '--single-transaction',
+      '--quick',
+      '--skip-comments',
+      '--skip-dump-date',
+      '--no-tablespaces',
+      '--result-file='.$destinationPath,
+      (string) $config['database'],
+    ];
+
+    if (! empty($config['unix_socket'])) {
+      $command[] = '--socket='.$config['unix_socket'];
+    } else {
+      $command[] = '--host='.$config['host'];
+      $command[] = '--port='.(string) $config['port'];
     }
 
-    public function resolveMysqlDumpStrategy(): string
-    {
-        return $this->strategyResolver->resolveMysqlStrategy();
+    return $command;
+  }
+
+  private function runDdevMysqlDump(string $driver, string $destinationPath, array $config): void
+  {
+    $command = $this->buildDdevMysqlDumpCommand($driver, $config);
+    $process = $this->makeDumpProcess($command);
+    $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
+
+    $directory = dirname($destinationPath);
+    File::ensureDirectoryExists($directory);
+
+    $handle = fopen($destinationPath, 'wb');
+
+    if ($handle === false) {
+      throw new RuntimeException('Database dump destination could not be opened for writing.');
     }
 
-    private function runDirectMysqlDump(string $destinationPath, array $config): void
-    {
-        $defaultsFile = $this->createMysqlDefaultsFile($destinationPath, $config);
-
-        try {
-            $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
-            $process = $this->makeDumpProcess($command);
-            $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
-            $process->run();
-
-            if (! $process->isSuccessful()) {
-                throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
-            }
-
-            $this->assertValidDumpFile($destinationPath);
-        } finally {
-            File::delete($defaultsFile);
+    try {
+      $process->run(function (string $type, string $buffer) use ($handle): void {
+        if ($type !== Process::OUT) {
+          return;
         }
+
+        fwrite($handle, $buffer);
+      });
+    } finally {
+      fclose($handle);
     }
 
-    private function buildDirectMysqlDumpCommand(string $destinationPath, string $defaultsFile, array $config): array
-    {
-        $command = [
-            $this->findMysqlDumpBinary(),
-            '--defaults-extra-file='.$defaultsFile,
-            '--single-transaction',
-            '--quick',
-            '--skip-comments',
-            '--skip-dump-date',
-            '--no-tablespaces',
-            '--result-file='.$destinationPath,
-            (string) $config['database'],
-        ];
+    if (! $process->isSuccessful()) {
+      File::delete($destinationPath);
 
-        if (! empty($config['unix_socket'])) {
-            $command[] = '--socket='.$config['unix_socket'];
-        } else {
-            $command[] = '--host='.$config['host'];
-            $command[] = '--port='.(string) $config['port'];
-        }
-
-        return $command;
+      throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
     }
 
-    private function runDdevMysqlDump(string $driver, string $destinationPath, array $config): void
-    {
-        $command = $this->buildDdevMysqlDumpCommand($driver, $config);
-        $process = $this->makeDumpProcess($command);
-        $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
+    if (! is_file($destinationPath) || filesize($destinationPath) === 0) {
+      File::delete($destinationPath);
 
-        $directory = dirname($destinationPath);
-        File::ensureDirectoryExists($directory);
-
-        $handle = fopen($destinationPath, 'wb');
-
-        if ($handle === false) {
-            throw new RuntimeException('Database dump destination could not be opened for writing.');
-        }
-
-        try {
-            $process->run(function (string $type, string $buffer) use ($handle): void {
-                if ($type !== Process::OUT) {
-                    return;
-                }
-
-                fwrite($handle, $buffer);
-            });
-        } finally {
-            fclose($handle);
-        }
-
-        if (! $process->isSuccessful()) {
-            File::delete($destinationPath);
-
-            throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
-        }
-
-        if (! is_file($destinationPath) || filesize($destinationPath) === 0) {
-            File::delete($destinationPath);
-
-            throw new RuntimeException('Database dump command completed without writing an SQL file.');
-        }
-
-        $this->assertValidDumpFile($destinationPath);
+      throw new RuntimeException('Database dump command completed without writing an SQL file.');
     }
 
-    private function buildDdevMysqlDumpCommand(string $driver, array $config): array
-    {
-        $command = [
-            $this->findDdevBinary(),
-            'exec',
-            '--raw',
-            '--',
-            $driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump',
-            '--single-transaction',
-            '--quick',
-            '--skip-comments',
-            '--skip-dump-date',
-            '--no-tablespaces',
-            (string) $config['database'],
-        ];
+    $this->assertValidDumpFile($destinationPath);
+  }
 
-        if (! empty($config['unix_socket'])) {
-            $command[] = '--socket='.$config['unix_socket'];
-        } else {
-            $command[] = '--host='.(string) $config['host'];
-            $command[] = '--port='.(string) $config['port'];
-        }
+  private function buildDdevMysqlDumpCommand(string $driver, array $config): array
+  {
+    $command = [
+      $this->findDdevBinary(),
+      'exec',
+      '--raw',
+      '--',
+      $driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump',
+      '--single-transaction',
+      '--quick',
+      '--skip-comments',
+      '--skip-dump-date',
+      '--no-tablespaces',
+      (string) $config['database'],
+    ];
 
-        return $command;
+    if (! empty($config['unix_socket'])) {
+      $command[] = '--socket='.$config['unix_socket'];
+    } else {
+      $command[] = '--host='.(string) $config['host'];
+      $command[] = '--port='.(string) $config['port'];
     }
 
-    private function createMysqlDefaultsFile(string $destinationPath, array $config): string
-    {
-        $defaultsFile = $destinationPath.'.cnf';
-        $lines = [
-            '[client]',
-            'user='.(string) ($config['username'] ?? ''),
-        ];
+    return $command;
+  }
 
-        if (($config['password'] ?? null) !== null && $config['password'] !== '') {
-            $lines[] = 'password='.(string) $config['password'];
-        }
+  private function createMysqlDefaultsFile(string $destinationPath, array $config): string
+  {
+    $defaultsFile = $destinationPath.'.cnf';
+    $lines = [
+      '[client]',
+      'user='.(string) ($config['username'] ?? ''),
+    ];
 
-        File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
-        @chmod($defaultsFile, 0600);
-
-        return $defaultsFile;
+    if (($config['password'] ?? null) !== null && $config['password'] !== '') {
+      $lines[] = 'password='.(string) $config['password'];
     }
 
-    private function findMysqlDumpBinary(): string
-    {
-        $finder = new ExecutableFinder;
-        $binary = $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
+    File::put($defaultsFile, implode(PHP_EOL, $lines).PHP_EOL, true);
+    @chmod($defaultsFile, 0600);
 
-        if ($binary === null) {
-            throw new RuntimeException('Database backup requires mysqldump or mariadb-dump for the current MySQL/MariaDB environment, but neither command is available.');
-        }
+    return $defaultsFile;
+  }
 
-        return $binary;
+  private function findMysqlDumpBinary(): string
+  {
+    $finder = new ExecutableFinder;
+    $binary = $finder->find('mysqldump') ?: $finder->find('mariadb-dump');
+
+    if ($binary === null) {
+      throw new RuntimeException('Database backup requires mysqldump or mariadb-dump for the current MySQL/MariaDB environment, but neither command is available.');
     }
 
-    private function findDdevBinary(): string
-    {
-        $binary = (new ExecutableFinder)->find('ddev');
+    return $binary;
+  }
 
-        if ($binary === null) {
-            throw new RuntimeException('Database backup requires the ddev command for ddev execution mode, but it is not available.');
-        }
+  private function findDdevBinary(): string
+  {
+    $binary = (new ExecutableFinder)->find('ddev');
 
-        return $binary;
+    if ($binary === null) {
+      throw new RuntimeException('Database backup requires the ddev command for ddev execution mode, but it is not available.');
     }
 
-    private function describeMysqlDumpCommand(string $strategy, string $driver): string
-    {
-        if ($strategy === 'ddev') {
-            return 'ddev exec '.($driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump');
-        }
+    return $binary;
+  }
 
-        return basename($this->findMysqlDumpBinary());
+  private function describeMysqlDumpCommand(string $strategy, string $driver): string
+  {
+    if ($strategy === 'ddev') {
+      return 'ddev exec '.($driver === 'mariadb' ? 'mariadb-dump' : 'mysqldump');
     }
 
-    protected function makeDumpProcess(array $command): Process
-    {
-        return new Process($command);
+    return basename($this->findMysqlDumpBinary());
+  }
+
+  protected function makeDumpProcess(array $command): Process
+  {
+    return new Process($command);
+  }
+
+  private function assertValidDumpFile(string $destinationPath): void
+  {
+    try {
+      $this->sqlDumpContentValidator->assertValidFile($destinationPath, 'Generated backup SQL dump');
+    } catch (RuntimeException $exception) {
+      File::delete($destinationPath);
+
+      throw new RuntimeException($exception->getMessage(), previous: $exception);
+    }
+  }
+
+  private function quoteIdentifier(string $value): string
+  {
+    return '"'.str_replace('"', '""', $value).'"';
+  }
+
+  private function quoteSqliteValue(\PDO $pdo, mixed $value): string
+  {
+    if ($value === null) {
+      return 'NULL';
     }
 
-    private function assertValidDumpFile(string $destinationPath): void
-    {
-        try {
-            $this->sqlDumpContentValidator->assertValidFile($destinationPath, 'Generated backup SQL dump');
-        } catch (RuntimeException $exception) {
-            File::delete($destinationPath);
-
-            throw new RuntimeException($exception->getMessage(), previous: $exception);
-        }
+    if (is_bool($value)) {
+      return $value ? '1' : '0';
     }
 
-    private function quoteIdentifier(string $value): string
-    {
-        return '"'.str_replace('"', '""', $value).'"';
+    if (is_int($value) || is_float($value)) {
+      return (string) $value;
     }
 
-    private function quoteSqliteValue(\PDO $pdo, mixed $value): string
-    {
-        if ($value === null) {
-            return 'NULL';
-        }
-
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
-        }
-
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
-        }
-
-        return $pdo->quote((string) $value);
-    }
+    return $pdo->quote((string) $value);
+  }
 }

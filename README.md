@@ -267,8 +267,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - During the icon catalog package transition, active admin routes, `icons:sync-webblocks-ui`, and the icon catalog admin views now use package-owned controller, command, and Blade resources directly. Root icon catalog PHP wrappers are intentionally absent; root Blade view compatibility remains where direct view references still need it.
 - The remaining safe operational admin route batch now also runs from the package for `Slot Types` and `System Settings`, without root controller or package-counterpart request wrappers. Root Blade compatibility wrappers remain for direct view references.
 - Package public assets and starter stubs now have real publishable package resources. Use `webblocks-cms-assets` for package assets and `webblocks-cms-stubs` for starter stubs; CMS package assets publish into the active root `public/cms` compatibility path, and System Update refreshes that path from package `public/cms` assets while package roots are replaced.
-- The indentation guard currently provides targeted enforcement until the historical PHP 4-space indentation drift is cleaned up in a dedicated baseline change.
-- Repository-wide Pint cleanup is still a separate baseline task because the current codebase has historical formatting drift.
+- The indentation guard now scans the maintained source, package, route, view, script, and test roots. Pint's indentation-specific fixers are disabled so the project-specific 2-space PHP indentation rule remains authoritative.
 - [Installation](docs/installation.md)
 - [Getting Started](docs/getting-started.md)
 - [Core Concepts](docs/core-concepts.md)

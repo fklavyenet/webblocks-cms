@@ -9,154 +9,154 @@ use RuntimeException;
 
 class ProjectLayer
 {
-    public function __construct(
-        private readonly Application $app,
-    ) {}
+  public function __construct(
+    private readonly Application $app,
+  ) {}
 
-    public function exists(): bool
-    {
-        return is_dir($this->basePath());
+  public function exists(): bool
+  {
+    return is_dir($this->basePath());
+  }
+
+  public function loadConfig(): void
+  {
+    if (! $this->exists() || ! is_dir($this->configPath())) {
+      return;
     }
 
-    public function loadConfig(): void
-    {
-        if (! $this->exists() || ! is_dir($this->configPath())) {
-            return;
+    $files = glob($this->configPath('*.php')) ?: [];
+    sort($files);
+
+    foreach ($files as $file) {
+      $key = pathinfo($file, PATHINFO_FILENAME);
+      $loaded = require $file;
+
+      if (! is_array($loaded)) {
+        $this->reportWarning(sprintf('Project config file [%s] must return an array.', $file));
+
+        continue;
+      }
+
+      $this->app['config']->set(
+        'project.'.$key,
+        array_replace_recursive((array) $this->app['config']->get('project.'.$key, []), $loaded),
+      );
+    }
+  }
+
+  public function registerConfiguredProviders(): void
+  {
+    foreach ($this->configuredProviders() as $providerClass) {
+      if (! is_string($providerClass) || trim($providerClass) === '') {
+        continue;
+      }
+
+      $this->loadProviderClassFromProjectPath($providerClass);
+
+      if (! class_exists($providerClass)) {
+        $message = sprintf('Project provider [%s] could not be loaded.', $providerClass);
+
+        if ((bool) $this->app['config']->get('app.debug')) {
+          throw new RuntimeException($message);
         }
 
-        $files = glob($this->configPath('*.php')) ?: [];
-        sort($files);
+        $this->reportWarning($message, ['provider' => $providerClass]);
 
-        foreach ($files as $file) {
-            $key = pathinfo($file, PATHINFO_FILENAME);
-            $loaded = require $file;
+        continue;
+      }
 
-            if (! is_array($loaded)) {
-                $this->reportWarning(sprintf('Project config file [%s] must return an array.', $file));
+      $this->app->register($providerClass);
+    }
+  }
 
-                continue;
-            }
+  public function loadWebRoutes(): void
+  {
+    $path = $this->routesPath('web.php');
 
-            $this->app['config']->set(
-                'project.'.$key,
-                array_replace_recursive((array) $this->app['config']->get('project.'.$key, []), $loaded),
-            );
-        }
+    if (! $this->shouldLoadRoutes($path)) {
+      return;
     }
 
-    public function registerConfiguredProviders(): void
-    {
-        foreach ($this->configuredProviders() as $providerClass) {
-            if (! is_string($providerClass) || trim($providerClass) === '') {
-                continue;
-            }
+    Route::middleware('web')->group($path);
+  }
 
-            $this->loadProviderClassFromProjectPath($providerClass);
+  public function loadApiRoutes(): void
+  {
+    $path = $this->routesPath('api.php');
 
-            if (! class_exists($providerClass)) {
-                $message = sprintf('Project provider [%s] could not be loaded.', $providerClass);
-
-                if ((bool) $this->app['config']->get('app.debug')) {
-                    throw new RuntimeException($message);
-                }
-
-                $this->reportWarning($message, ['provider' => $providerClass]);
-
-                continue;
-            }
-
-            $this->app->register($providerClass);
-        }
+    if (! $this->shouldLoadRoutes($path)) {
+      return;
     }
 
-    public function loadWebRoutes(): void
-    {
-        $path = $this->routesPath('web.php');
+    Route::middleware('api')->prefix('api')->group($path);
+  }
 
-        if (! $this->shouldLoadRoutes($path)) {
-            return;
-        }
+  public function loadConsoleRoutes(): void
+  {
+    $path = $this->routesPath('console.php');
 
-        Route::middleware('web')->group($path);
+    if (! $this->exists() || ! is_file($path) || ! $this->app->runningInConsole()) {
+      return;
     }
 
-    public function loadApiRoutes(): void
-    {
-        $path = $this->routesPath('api.php');
+    require $path;
+  }
 
-        if (! $this->shouldLoadRoutes($path)) {
-            return;
-        }
+  public function viewsPath(): string
+  {
+    return $this->basePath('resources/views');
+  }
 
-        Route::middleware('api')->prefix('api')->group($path);
+  public function hasViews(): bool
+  {
+    return $this->exists() && is_dir($this->viewsPath());
+  }
+
+  public function basePath(string $path = ''): string
+  {
+    return base_path('project'.($path !== '' ? '/'.$path : ''));
+  }
+
+  public function configPath(string $path = ''): string
+  {
+    return $this->basePath('config'.($path !== '' ? '/'.$path : ''));
+  }
+
+  public function routesPath(string $path = ''): string
+  {
+    return $this->basePath('Routes'.($path !== '' ? '/'.$path : ''));
+  }
+
+  private function configuredProviders(): array
+  {
+    $providers = $this->app['config']->get('project.providers', []);
+
+    return is_array($providers) ? $providers : [];
+  }
+
+  private function shouldLoadRoutes(string $path): bool
+  {
+    return $this->exists()
+      && is_file($path)
+      && ! $this->app->routesAreCached();
+  }
+
+  private function reportWarning(string $message, array $context = []): void
+  {
+    Log::warning($message, $context);
+  }
+
+  private function loadProviderClassFromProjectPath(string $providerClass): void
+  {
+    if (class_exists($providerClass) || ! str_starts_with($providerClass, 'Project\\')) {
+      return;
     }
 
-    public function loadConsoleRoutes(): void
-    {
-        $path = $this->routesPath('console.php');
+    $relativePath = str_replace('\\', '/', substr($providerClass, strlen('Project\\'))).'.php';
+    $path = $this->basePath($relativePath);
 
-        if (! $this->exists() || ! is_file($path) || ! $this->app->runningInConsole()) {
-            return;
-        }
-
-        require $path;
+    if (is_file($path)) {
+      require_once $path;
     }
-
-    public function viewsPath(): string
-    {
-        return $this->basePath('resources/views');
-    }
-
-    public function hasViews(): bool
-    {
-        return $this->exists() && is_dir($this->viewsPath());
-    }
-
-    public function basePath(string $path = ''): string
-    {
-        return base_path('project'.($path !== '' ? '/'.$path : ''));
-    }
-
-    public function configPath(string $path = ''): string
-    {
-        return $this->basePath('config'.($path !== '' ? '/'.$path : ''));
-    }
-
-    public function routesPath(string $path = ''): string
-    {
-        return $this->basePath('Routes'.($path !== '' ? '/'.$path : ''));
-    }
-
-    private function configuredProviders(): array
-    {
-        $providers = $this->app['config']->get('project.providers', []);
-
-        return is_array($providers) ? $providers : [];
-    }
-
-    private function shouldLoadRoutes(string $path): bool
-    {
-        return $this->exists()
-            && is_file($path)
-            && ! $this->app->routesAreCached();
-    }
-
-    private function reportWarning(string $message, array $context = []): void
-    {
-        Log::warning($message, $context);
-    }
-
-    private function loadProviderClassFromProjectPath(string $providerClass): void
-    {
-        if (class_exists($providerClass) || ! str_starts_with($providerClass, 'Project\\')) {
-            return;
-        }
-
-        $relativePath = str_replace('\\', '/', substr($providerClass, strlen('Project\\'))).'.php';
-        $path = $this->basePath($relativePath);
-
-        if (is_file($path)) {
-            require_once $path;
-        }
-    }
+  }
 }

@@ -8,14 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireAdminAccess
 {
-    public function handle(Request $request, Closure $next): Response
-    {
-        $user = $request->user();
+  public function handle(Request $request, Closure $next): Response
+  {
+    $user = $request->user();
 
-        if (! $user || ! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
-            abort(403);
-        }
-
-        return $next($request);
+    if (! $user || ! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
+      abort(403);
     }
+
+    return $next($request);
+  }
 }

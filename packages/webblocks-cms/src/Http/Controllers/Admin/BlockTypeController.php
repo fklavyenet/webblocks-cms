@@ -2,8 +2,6 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
-use WebBlocks\Cms\Models\BlockType;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,280 +9,282 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BlockTypeRequest;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class BlockTypeController extends Controller
 {
-    public function __construct(
-        private readonly BlockTypeIndexState $indexState,
-        private readonly BlockTypeContractRegistry $contracts,
-    ) {}
+  public function __construct(
+    private readonly BlockTypeIndexState $indexState,
+    private readonly BlockTypeContractRegistry $contracts,
+  ) {}
 
-    public function index(Request $request): View
-    {
-        $categories = $this->categoryOptions();
-        $statuses = $this->statusOptions();
-        $adminSupportedSlugs = $this->dedicatedAdminSupportedSlugs();
-        $renderSupportedSlugs = $this->dedicatedRenderSupportedSlugs();
+  public function index(Request $request): View
+  {
+    $categories = $this->categoryOptions();
+    $statuses = $this->statusOptions();
+    $adminSupportedSlugs = $this->dedicatedAdminSupportedSlugs();
+    $renderSupportedSlugs = $this->dedicatedRenderSupportedSlugs();
 
-        $filters = [
-            'search' => trim((string) $request->string('search')),
-            'category' => $this->normalizedFilter((string) $request->string('category'), $categories),
-            'status' => $this->normalizedFilter((string) $request->string('status'), $statuses),
-            'support' => $this->normalizedSupportFilter((string) $request->string('support')),
-            'usage' => $this->normalizedUsageFilter((string) $request->string('usage')),
-        ];
+    $filters = [
+      'search' => trim((string) $request->string('search')),
+      'category' => $this->normalizedFilter((string) $request->string('category'), $categories),
+      'status' => $this->normalizedFilter((string) $request->string('status'), $statuses),
+      'support' => $this->normalizedSupportFilter((string) $request->string('support')),
+      'usage' => $this->normalizedUsageFilter((string) $request->string('usage')),
+    ];
 
-        $supportedAdminSlugs = array_fill_keys($adminSupportedSlugs, true);
-        $supportedRenderSlugs = array_fill_keys($renderSupportedSlugs, true);
-        $totalCount = BlockType::query()->count();
+    $supportedAdminSlugs = array_fill_keys($adminSupportedSlugs, true);
+    $supportedRenderSlugs = array_fill_keys($renderSupportedSlugs, true);
+    $totalCount = BlockType::query()->count();
 
-        $blockTypes = $this->filteredBlockTypesQuery($filters, $adminSupportedSlugs, $renderSupportedSlugs)
-            ->withCount('blocks')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(AdminPagination::perPage())
-            ->withQueryString();
+    $blockTypes = $this->filteredBlockTypesQuery($filters, $adminSupportedSlugs, $renderSupportedSlugs)
+      ->withCount('blocks')
+      ->orderBy('sort_order')
+      ->orderBy('name')
+      ->paginate(AdminPagination::perPage())
+      ->withQueryString();
 
-        $requestedModal = (string) $request->query('modal', '');
-        $editBlockType = null;
-        $contractBlockType = null;
+    $requestedModal = (string) $request->query('modal', '');
+    $editBlockType = null;
+    $contractBlockType = null;
 
-        if ($requestedModal === 'edit-block-type') {
-            $requestedBlockTypeId = (int) $request->query('block_type');
-            $editBlockType = $blockTypes->getCollection()->first(
-                fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId && ! $blockType->is_system
-            );
+    if ($requestedModal === 'edit-block-type') {
+      $requestedBlockTypeId = (int) $request->query('block_type');
+      $editBlockType = $blockTypes->getCollection()->first(
+        fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId && ! $blockType->is_system
+      );
 
-            if (! $editBlockType && $requestedBlockTypeId > 0) {
-                $editBlockType = BlockType::query()
-                    ->whereKey($requestedBlockTypeId)
-                    ->where('is_system', false)
-                    ->first();
-            }
-        }
-
-        if ($requestedModal === 'block-type-contract') {
-            $requestedBlockTypeId = (int) $request->query('contract_block_type');
-            $contractBlockType = $blockTypes->getCollection()->first(
-                fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId
-            );
-
-            if (! $contractBlockType && $requestedBlockTypeId > 0) {
-                $contractBlockType = BlockType::query()->find($requestedBlockTypeId);
-            }
-        }
-
-        $closeUrl = route('admin.block-types.index', $this->indexState->normalizeQuery($request->query()));
-        $returnUrl = $this->indexState->safeReturnUrlFromRequest($request) ?? $closeUrl;
-
-        $blockTypeContracts = $blockTypes->getCollection()
-            ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => $this->contracts->resolve($blockType)]);
-
-        if ($contractBlockType && ! $blockTypeContracts->has($contractBlockType->id)) {
-            $blockTypeContracts->put($contractBlockType->id, $this->contracts->resolve($contractBlockType));
-        }
-
-        return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.index', [
-            'blockTypes' => $blockTypes,
-            'filters' => $filters,
-            'categories' => $categories,
-            'statuses' => $statuses,
-            'supportOptions' => $this->supportOptions(),
-            'requestedModal' => $requestedModal,
-            'editBlockType' => $editBlockType,
-            'contractBlockType' => $contractBlockType,
-            'blockTypesReturnUrl' => $returnUrl,
-            'closeUrl' => $closeUrl,
-            'totalCount' => $totalCount,
-            'filteredCount' => $blockTypes->total(),
-            'blockTypeContracts' => $blockTypeContracts,
-            'supportedAdminForms' => $blockTypes->getCollection()
-                ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedAdminSlugs[$blockType->slug])]),
-            'supportedPublicRenders' => $blockTypes->getCollection()
-                ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedRenderSlugs[$blockType->slug])]),
-        ]);
+      if (! $editBlockType && $requestedBlockTypeId > 0) {
+        $editBlockType = BlockType::query()
+          ->whereKey($requestedBlockTypeId)
+          ->where('is_system', false)
+          ->first();
+      }
     }
 
-    public function create(): View
-    {
-        return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.create', ['blockType' => new BlockType]);
+    if ($requestedModal === 'block-type-contract') {
+      $requestedBlockTypeId = (int) $request->query('contract_block_type');
+      $contractBlockType = $blockTypes->getCollection()->first(
+        fn (BlockType $blockType): bool => $blockType->id === $requestedBlockTypeId
+      );
+
+      if (! $contractBlockType && $requestedBlockTypeId > 0) {
+        $contractBlockType = BlockType::query()->find($requestedBlockTypeId);
+      }
     }
 
-    public function store(BlockTypeRequest $request): RedirectResponse
-    {
-        BlockType::create($request->validated() + ['is_system' => false]);
+    $closeUrl = route('admin.block-types.index', $this->indexState->normalizeQuery($request->query()));
+    $returnUrl = $this->indexState->safeReturnUrlFromRequest($request) ?? $closeUrl;
 
-        return redirect()->route('admin.block-types.index')->with('status', 'Block type created successfully.');
+    $blockTypeContracts = $blockTypes->getCollection()
+      ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => $this->contracts->resolve($blockType)]);
+
+    if ($contractBlockType && ! $blockTypeContracts->has($contractBlockType->id)) {
+      $blockTypeContracts->put($contractBlockType->id, $this->contracts->resolve($contractBlockType));
     }
 
-    public function edit(BlockType $blockType): View|RedirectResponse
-    {
-        if ($blockType->is_system) {
-            return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
-        }
+    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.index', [
+      'blockTypes' => $blockTypes,
+      'filters' => $filters,
+      'categories' => $categories,
+      'statuses' => $statuses,
+      'supportOptions' => $this->supportOptions(),
+      'requestedModal' => $requestedModal,
+      'editBlockType' => $editBlockType,
+      'contractBlockType' => $contractBlockType,
+      'blockTypesReturnUrl' => $returnUrl,
+      'closeUrl' => $closeUrl,
+      'totalCount' => $totalCount,
+      'filteredCount' => $blockTypes->total(),
+      'blockTypeContracts' => $blockTypeContracts,
+      'supportedAdminForms' => $blockTypes->getCollection()
+        ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedAdminSlugs[$blockType->slug])]),
+      'supportedPublicRenders' => $blockTypes->getCollection()
+        ->mapWithKeys(fn (BlockType $blockType) => [$blockType->id => isset($supportedRenderSlugs[$blockType->slug])]),
+    ]);
+  }
 
-        return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.edit', [
-            'blockType' => $blockType,
-            'blockTypesReturnUrl' => $this->indexState->returnUrl(request()),
-        ]);
+  public function create(): View
+  {
+    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.create', ['blockType' => new BlockType]);
+  }
+
+  public function store(BlockTypeRequest $request): RedirectResponse
+  {
+    BlockType::create($request->validated() + ['is_system' => false]);
+
+    return redirect()->route('admin.block-types.index')->with('status', 'Block type created successfully.');
+  }
+
+  public function edit(BlockType $blockType): View|RedirectResponse
+  {
+    if ($blockType->is_system) {
+      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
     }
 
-    public function update(BlockTypeRequest $request, BlockType $blockType): RedirectResponse
-    {
-        if ($blockType->is_system) {
-            return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
-        }
+    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.edit', [
+      'blockType' => $blockType,
+      'blockTypesReturnUrl' => $this->indexState->returnUrl(request()),
+    ]);
+  }
 
-        $blockType->update($request->validated() + ['is_system' => false]);
-
-        return redirect()
-            ->to($request->safeReturnUrl() ?: route('admin.block-types.index'))
-            ->with('status', 'Block type updated successfully.');
+  public function update(BlockTypeRequest $request, BlockType $blockType): RedirectResponse
+  {
+    if ($blockType->is_system) {
+      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
     }
 
-    public function destroy(BlockType $blockType): RedirectResponse
-    {
-        if ($blockType->is_system) {
-            return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and cannot be deleted from the admin.');
-        }
+    $blockType->update($request->validated() + ['is_system' => false]);
 
-        $blockType->delete();
+    return redirect()
+      ->to($request->safeReturnUrl() ?: route('admin.block-types.index'))
+      ->with('status', 'Block type updated successfully.');
+  }
 
-        return redirect()->route('admin.block-types.index')->with('status', 'Block type deleted successfully.');
+  public function destroy(BlockType $blockType): RedirectResponse
+  {
+    if ($blockType->is_system) {
+      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and cannot be deleted from the admin.');
     }
 
-    private function filteredBlockTypesQuery(array $filters, array $adminSupportedSlugs, array $renderSupportedSlugs): Builder
-    {
-        $query = BlockType::query();
+    $blockType->delete();
 
-        if ($filters['search'] !== '') {
-            $query->where(function (Builder $builder) use ($filters): void {
-                $builder
-                    ->where('name', 'like', '%'.$filters['search'].'%')
-                    ->orWhere('slug', 'like', '%'.$filters['search'].'%')
-                    ->orWhere('description', 'like', '%'.$filters['search'].'%');
-            });
-        }
+    return redirect()->route('admin.block-types.index')->with('status', 'Block type deleted successfully.');
+  }
 
-        if ($filters['category'] !== '') {
-            $query->where('category', $filters['category']);
-        }
+  private function filteredBlockTypesQuery(array $filters, array $adminSupportedSlugs, array $renderSupportedSlugs): Builder
+  {
+    $query = BlockType::query();
 
-        if ($filters['status'] !== '') {
-            $query->where('status', $filters['status']);
-        }
-
-        match ($filters['usage']) {
-            'used' => $query->has('blocks'),
-            'unused' => $query->doesntHave('blocks'),
-            default => null,
-        };
-
-        match ($filters['support']) {
-            'system' => $query->where('is_system', true),
-            'user' => $query->where('is_system', false),
-            'container' => $query->where('is_container', true),
-            'admin' => $this->applySupportedSlugFilter($query, $adminSupportedSlugs),
-            'render' => $this->applySupportedSlugFilter($query, $renderSupportedSlugs),
-            default => null,
-        };
-
-        return $query;
+    if ($filters['search'] !== '') {
+      $query->where(function (Builder $builder) use ($filters): void {
+        $builder
+          ->where('name', 'like', '%'.$filters['search'].'%')
+          ->orWhere('slug', 'like', '%'.$filters['search'].'%')
+          ->orWhere('description', 'like', '%'.$filters['search'].'%');
+      });
     }
 
-    private function applySupportedSlugFilter(Builder $query, array $slugs): void
-    {
-        if ($slugs === []) {
-            $query->whereRaw('1 = 0');
-
-            return;
-        }
-
-        $query->whereIn('slug', $slugs);
+    if ($filters['category'] !== '') {
+      $query->where('category', $filters['category']);
     }
 
-    private function categoryOptions(): array
-    {
-        return BlockType::query()
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->orderBy('category')
-            ->distinct()
-            ->pluck('category')
-            ->all();
+    if ($filters['status'] !== '') {
+      $query->where('status', $filters['status']);
     }
 
-    private function statusOptions(): array
-    {
-        return BlockType::query()
-            ->whereNotNull('status')
-            ->where('status', '!=', '')
-            ->orderBy('status')
-            ->distinct()
-            ->pluck('status')
-            ->all();
+    match ($filters['usage']) {
+      'used' => $query->has('blocks'),
+      'unused' => $query->doesntHave('blocks'),
+      default => null,
+    };
+
+    match ($filters['support']) {
+      'system' => $query->where('is_system', true),
+      'user' => $query->where('is_system', false),
+      'container' => $query->where('is_container', true),
+      'admin' => $this->applySupportedSlugFilter($query, $adminSupportedSlugs),
+      'render' => $this->applySupportedSlugFilter($query, $renderSupportedSlugs),
+      default => null,
+    };
+
+    return $query;
+  }
+
+  private function applySupportedSlugFilter(Builder $query, array $slugs): void
+  {
+    if ($slugs === []) {
+      $query->whereRaw('1 = 0');
+
+      return;
     }
 
-    private function supportOptions(): array
-    {
-        return [
-            'system' => 'System',
-            'user' => 'User / install-specific',
-            'container' => 'Container-capable',
-            'admin' => 'Has admin support',
-            'render' => 'Has render support',
-        ];
-    }
+    $query->whereIn('slug', $slugs);
+  }
 
-    private function normalizedFilter(string $value, array $allowedValues): string
-    {
-        return in_array($value, $allowedValues, true) ? $value : '';
-    }
+  private function categoryOptions(): array
+  {
+    return BlockType::query()
+      ->whereNotNull('category')
+      ->where('category', '!=', '')
+      ->orderBy('category')
+      ->distinct()
+      ->pluck('category')
+      ->all();
+  }
 
-    private function normalizedSupportFilter(string $value): string
-    {
-        return array_key_exists($value, $this->supportOptions()) ? $value : '';
-    }
+  private function statusOptions(): array
+  {
+    return BlockType::query()
+      ->whereNotNull('status')
+      ->where('status', '!=', '')
+      ->orderBy('status')
+      ->distinct()
+      ->pluck('status')
+      ->all();
+  }
 
-    private function usageOptions(): array
-    {
-        return [
-            'used' => 'Used',
-            'unused' => 'Unused',
-        ];
-    }
+  private function supportOptions(): array
+  {
+    return [
+      'system' => 'System',
+      'user' => 'User / install-specific',
+      'container' => 'Container-capable',
+      'admin' => 'Has admin support',
+      'render' => 'Has render support',
+    ];
+  }
 
-    private function normalizedUsageFilter(string $value): string
-    {
-        return array_key_exists($value, $this->usageOptions()) ? $value : '';
-    }
+  private function normalizedFilter(string $value, array $allowedValues): string
+  {
+    return in_array($value, $allowedValues, true) ? $value : '';
+  }
 
-    private function dedicatedAdminSupportedSlugs(): array
-    {
-        return BlockType::query()
-            ->orderBy('slug')
-            ->pluck('slug')
-            ->filter(fn (?string $slug): bool => $slug !== null && (
-                ViewFacade::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$slug)
-                || ViewFacade::exists('admin.blocks.types.'.$slug)
-            ))
-            ->values()
-            ->all();
-    }
+  private function normalizedSupportFilter(string $value): string
+  {
+    return array_key_exists($value, $this->supportOptions()) ? $value : '';
+  }
 
-    private function dedicatedRenderSupportedSlugs(): array
-    {
-        return BlockType::query()
-            ->orderBy('slug')
-            ->pluck('slug')
-            ->filter(fn (?string $slug): bool => $slug !== null && (
-                ViewFacade::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug)
-                || ViewFacade::exists('pages.partials.blocks.'.$slug)
-            ))
-            ->values()
-            ->all();
-    }
+  private function usageOptions(): array
+  {
+    return [
+      'used' => 'Used',
+      'unused' => 'Unused',
+    ];
+  }
+
+  private function normalizedUsageFilter(string $value): string
+  {
+    return array_key_exists($value, $this->usageOptions()) ? $value : '';
+  }
+
+  private function dedicatedAdminSupportedSlugs(): array
+  {
+    return BlockType::query()
+      ->orderBy('slug')
+      ->pluck('slug')
+      ->filter(fn (?string $slug): bool => $slug !== null && (
+        ViewFacade::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.types.'.$slug)
+        || ViewFacade::exists('admin.blocks.types.'.$slug)
+      ))
+      ->values()
+      ->all();
+  }
+
+  private function dedicatedRenderSupportedSlugs(): array
+  {
+    return BlockType::query()
+      ->orderBy('slug')
+      ->pluck('slug')
+      ->filter(fn (?string $slug): bool => $slug !== null && (
+        ViewFacade::exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::pages.partials.blocks.'.$slug)
+        || ViewFacade::exists('pages.partials.blocks.'.$slug)
+      ))
+      ->values()
+      ->all();
+  }
 }

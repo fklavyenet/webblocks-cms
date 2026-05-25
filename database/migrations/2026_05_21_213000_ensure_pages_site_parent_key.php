@@ -7,104 +7,104 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    private const INDEX_NAME = 'pages_id_site_id_unique';
+  private const INDEX_NAME = 'pages_id_site_id_unique';
 
-    public function up(): void
-    {
-        if (! Schema::hasTable('pages')) {
-            return;
-        }
-
-        if ($this->hasExpectedIndex()) {
-            return;
-        }
-
-        if ($this->hasIndexNamed(self::INDEX_NAME)) {
-            throw new RuntimeException('Cannot repair pages site parent key because pages_id_site_id_unique exists with an unexpected definition.');
-        }
-
-        Schema::table('pages', function (Blueprint $table): void {
-            $table->unique(['id', 'site_id'], self::INDEX_NAME);
-        });
+  public function up(): void
+  {
+    if (! Schema::hasTable('pages')) {
+      return;
     }
 
-    public function down(): void
-    {
-        // Repair migrations are intentionally not destructive on rollback.
+    if ($this->hasExpectedIndex()) {
+      return;
     }
 
-    private function hasExpectedIndex(): bool
-    {
-        $driver = DB::getDriverName();
-
-        return match ($driver) {
-            'mysql', 'mariadb' => $this->mysqlIndexColumns() === ['id', 'site_id'] && $this->mysqlIndexIsUnique(),
-            'sqlite' => $this->sqliteIndexColumns() === ['id', 'site_id'] && $this->sqliteIndexIsUnique(),
-            default => false,
-        };
+    if ($this->hasIndexNamed(self::INDEX_NAME)) {
+      throw new RuntimeException('Cannot repair pages site parent key because pages_id_site_id_unique exists with an unexpected definition.');
     }
 
-    private function hasIndexNamed(string $index): bool
-    {
-        $driver = DB::getDriverName();
+    Schema::table('pages', function (Blueprint $table): void {
+      $table->unique(['id', 'site_id'], self::INDEX_NAME);
+    });
+  }
 
-        return match ($driver) {
-            'mysql', 'mariadb' => DB::table('information_schema.statistics')
-                ->where('table_schema', DB::raw('database()'))
-                ->where('table_name', 'pages')
-                ->where('index_name', $index)
-                ->exists(),
-            'sqlite' => collect(DB::select("pragma index_list('pages')"))
-                ->contains(fn (object $row): bool => ($row->name ?? null) === $index),
-            default => false,
-        };
-    }
+  public function down(): void
+  {
+    // Repair migrations are intentionally not destructive on rollback.
+  }
 
-    /**
+  private function hasExpectedIndex(): bool
+  {
+    $driver = DB::getDriverName();
+
+    return match ($driver) {
+      'mysql', 'mariadb' => $this->mysqlIndexColumns() === ['id', 'site_id'] && $this->mysqlIndexIsUnique(),
+      'sqlite' => $this->sqliteIndexColumns() === ['id', 'site_id'] && $this->sqliteIndexIsUnique(),
+      default => false,
+    };
+  }
+
+  private function hasIndexNamed(string $index): bool
+  {
+    $driver = DB::getDriverName();
+
+    return match ($driver) {
+      'mysql', 'mariadb' => DB::table('information_schema.statistics')
+        ->where('table_schema', DB::raw('database()'))
+        ->where('table_name', 'pages')
+        ->where('index_name', $index)
+        ->exists(),
+      'sqlite' => collect(DB::select("pragma index_list('pages')"))
+        ->contains(fn (object $row): bool => ($row->name ?? null) === $index),
+      default => false,
+    };
+  }
+
+  /**
      * @return array<int, string>
      */
-    private function mysqlIndexColumns(): array
-    {
-        return DB::table('information_schema.statistics')
-            ->where('table_schema', DB::raw('database()'))
-            ->where('table_name', 'pages')
-            ->where('index_name', self::INDEX_NAME)
-            ->orderBy('seq_in_index')
-            ->pluck('column_name')
-            ->map(fn (mixed $column): string => (string) $column)
-            ->all();
-    }
+  private function mysqlIndexColumns(): array
+  {
+    return DB::table('information_schema.statistics')
+      ->where('table_schema', DB::raw('database()'))
+      ->where('table_name', 'pages')
+      ->where('index_name', self::INDEX_NAME)
+      ->orderBy('seq_in_index')
+      ->pluck('column_name')
+      ->map(fn (mixed $column): string => (string) $column)
+      ->all();
+  }
 
-    private function mysqlIndexIsUnique(): bool
-    {
-        return DB::table('information_schema.statistics')
-            ->where('table_schema', DB::raw('database()'))
-            ->where('table_name', 'pages')
-            ->where('index_name', self::INDEX_NAME)
-            ->where('non_unique', 0)
-            ->exists();
-    }
+  private function mysqlIndexIsUnique(): bool
+  {
+    return DB::table('information_schema.statistics')
+      ->where('table_schema', DB::raw('database()'))
+      ->where('table_name', 'pages')
+      ->where('index_name', self::INDEX_NAME)
+      ->where('non_unique', 0)
+      ->exists();
+  }
 
-    /**
+  /**
      * @return array<int, string>
      */
-    private function sqliteIndexColumns(): array
-    {
-        if (! $this->hasIndexNamed(self::INDEX_NAME)) {
-            return [];
-        }
-
-        return collect(DB::select("pragma index_info('".self::INDEX_NAME."')"))
-            ->sortBy('seqno')
-            ->pluck('name')
-            ->map(fn (mixed $column): string => (string) $column)
-            ->values()
-            ->all();
+  private function sqliteIndexColumns(): array
+  {
+    if (! $this->hasIndexNamed(self::INDEX_NAME)) {
+      return [];
     }
 
-    private function sqliteIndexIsUnique(): bool
-    {
-        return collect(DB::select("pragma index_list('pages')"))
-            ->contains(fn (object $row): bool => ($row->name ?? null) === self::INDEX_NAME && (int) ($row->unique ?? 0) === 1);
-    }
+    return collect(DB::select("pragma index_info('".self::INDEX_NAME."')"))
+      ->sortBy('seqno')
+      ->pluck('name')
+      ->map(fn (mixed $column): string => (string) $column)
+      ->values()
+      ->all();
+  }
+
+  private function sqliteIndexIsUnique(): bool
+  {
+    return collect(DB::select("pragma index_list('pages')"))
+      ->contains(fn (object $row): bool => ($row->name ?? null) === self::INDEX_NAME && (int) ($row->unique ?? 0) === 1);
+  }
 };

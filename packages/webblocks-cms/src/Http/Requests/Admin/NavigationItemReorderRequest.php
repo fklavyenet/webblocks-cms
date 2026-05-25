@@ -2,36 +2,36 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use WebBlocks\Cms\Models\NavigationItem;
-use WebBlocks\Cms\Models\Site;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Site;
 
 class NavigationItemReorderRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+  public function authorize(): bool
+  {
+    return true;
+  }
 
-    protected function prepareForValidation(): void
-    {
-        $siteId = $this->integer('site_id') ?: Site::primary()?->id;
+  protected function prepareForValidation(): void
+  {
+    $siteId = $this->integer('site_id') ?: Site::primary()?->id;
 
-        $this->merge([
-            'site_id' => $siteId,
-        ]);
-    }
+    $this->merge([
+      'site_id' => $siteId,
+    ]);
+  }
 
-    public function rules(): array
-    {
-        return [
-            'site_id' => ['required', 'integer', 'exists:sites,id'],
-            'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.id' => ['required', 'integer'],
-            'items.*.parent_id' => ['nullable', 'integer'],
-            'items.*.position' => ['required', 'integer', 'min:1'],
-        ];
-    }
+  public function rules(): array
+  {
+    return [
+      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
+      'items' => ['required', 'array', 'min:1'],
+      'items.*.id' => ['required', 'integer'],
+      'items.*.parent_id' => ['nullable', 'integer'],
+      'items.*.position' => ['required', 'integer', 'min:1'],
+    ];
+  }
 }

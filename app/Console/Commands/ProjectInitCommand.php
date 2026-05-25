@@ -7,42 +7,42 @@ use Illuminate\Support\Facades\File;
 
 class ProjectInitCommand extends Command
 {
-    protected $signature = 'project:init';
+  protected $signature = 'project:init';
 
-    protected $description = 'Create the update-safe project layer scaffold';
+  protected $description = 'Create the update-safe project layer scaffold';
 
-    public function handle(): int
-    {
-        foreach ($this->directories() as $relativePath) {
-            $this->ensureDirectory($relativePath);
-        }
-
-        foreach ($this->files() as $relativePath => $contents) {
-            $this->ensureFile($relativePath, $contents);
-        }
-
-        $this->info('Project layer scaffold ready.');
-
-        return self::SUCCESS;
+  public function handle(): int
+  {
+    foreach ($this->directories() as $relativePath) {
+      $this->ensureDirectory($relativePath);
     }
 
-    private function directories(): array
-    {
-        return [
-            'project/Providers',
-            'project/Routes',
-            'project/Console/Commands',
-            'project/Support',
-            'project/config',
-            'project/resources/views',
-            'project/tests/Feature',
-        ];
+    foreach ($this->files() as $relativePath => $contents) {
+      $this->ensureFile($relativePath, $contents);
     }
 
-    private function files(): array
-    {
-        return [
-            'project/README.md' => <<<'MARKDOWN'
+    $this->info('Project layer scaffold ready.');
+
+    return self::SUCCESS;
+  }
+
+  private function directories(): array
+  {
+    return [
+      'project/Providers',
+      'project/Routes',
+      'project/Console/Commands',
+      'project/Support',
+      'project/config',
+      'project/resources/views',
+      'project/tests/Feature',
+    ];
+  }
+
+  private function files(): array
+  {
+    return [
+      'project/README.md' => <<<'MARKDOWN'
 # Project Layer
 
 Use `project/` for site-specific code that must survive CMS core updates.
@@ -66,21 +66,21 @@ Use `project/` for site-specific code that must survive CMS core updates.
 - This layer is for one install or site instance. It is not the plugin system.
 - These files are safe to keep locally, but they are not part of WebBlocks CMS core release packages.
 MARKDOWN,
-            'project/config/providers.php' => <<<'PHP'
+      'project/config/providers.php' => <<<'PHP'
 <?php
 
 return [
-    // Project\Providers\ProjectServiceProvider::class,
+  // Project\Providers\ProjectServiceProvider::class,
 ];
 PHP,
-            'project/config/sites.php' => <<<'PHP'
+      'project/config/sites.php' => <<<'PHP'
 <?php
 
 return [
-    // Instance-specific site settings live here.
+  // Instance-specific site settings live here.
 ];
 PHP,
-            'project/Routes/web.php' => <<<'PHP'
+      'project/Routes/web.php' => <<<'PHP'
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -96,7 +96,7 @@ use Illuminate\Support\Facades\Route;
 
 // Route::get('/project-health', fn () => 'ok');
 PHP,
-            'project/Routes/console.php' => <<<'PHP'
+      'project/Routes/console.php' => <<<'PHP'
 <?php
 
 /*
@@ -110,35 +110,35 @@ PHP,
 
 // Illuminate\Support\Facades\Artisan::command('project:health', fn () => $this->info('ok'));
 PHP,
-        ];
+    ];
+  }
+
+  private function ensureDirectory(string $relativePath): void
+  {
+    $path = base_path($relativePath);
+
+    if (is_dir($path)) {
+      $this->line('Exists: '.$relativePath);
+
+      return;
     }
 
-    private function ensureDirectory(string $relativePath): void
-    {
-        $path = base_path($relativePath);
+    File::ensureDirectoryExists($path);
+    $this->info('Created: '.$relativePath);
+  }
 
-        if (is_dir($path)) {
-            $this->line('Exists: '.$relativePath);
+  private function ensureFile(string $relativePath, string $contents): void
+  {
+    $path = base_path($relativePath);
 
-            return;
-        }
+    if (is_file($path)) {
+      $this->line('Exists: '.$relativePath);
 
-        File::ensureDirectoryExists($path);
-        $this->info('Created: '.$relativePath);
+      return;
     }
 
-    private function ensureFile(string $relativePath, string $contents): void
-    {
-        $path = base_path($relativePath);
-
-        if (is_file($path)) {
-            $this->line('Exists: '.$relativePath);
-
-            return;
-        }
-
-        File::ensureDirectoryExists(dirname($path));
-        File::put($path, $contents.PHP_EOL);
-        $this->info('Created: '.$relativePath);
-    }
+    File::ensureDirectoryExists(dirname($path));
+    File::put($path, $contents.PHP_EOL);
+    $this->info('Created: '.$relativePath);
+  }
 }

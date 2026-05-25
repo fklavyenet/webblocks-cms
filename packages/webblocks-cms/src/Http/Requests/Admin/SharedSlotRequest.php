@@ -2,111 +2,111 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
-use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\SharedSlot;
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema;
+use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class SharedSlotRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
+  public function authorize(): bool
+  {
+    return true;
+  }
+
+  protected function prepareForValidation(): void
+  {
+    $name = trim((string) $this->input('name'));
+    $handle = trim((string) $this->input('handle'));
+    $slotName = trim((string) $this->input('slot_name'));
+    $publicShell = trim((string) $this->input('public_shell'));
+
+    $this->merge([
+      'site_id' => $this->input('site_id') ?: Site::primary()?->id,
+      'handle' => Str::slug($handle !== '' ? $handle : $name),
+      'slot_name' => $slotName !== '' ? Str::slug($slotName) : null,
+      'public_shell' => $publicShell !== '' ? Page::normalizePublicShellHandle($publicShell) : null,
+      'is_active' => $this->boolean('is_active', true),
+    ]);
+  }
+
+  public function rules(): array
+  {
+    $sharedSlot = $this->route('shared_slot');
+    $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
+    $siteId = (int) $this->input('site_id');
+    $allowedLayoutHandles = array_values(array_unique(array_filter([
+      ...app(PageLayoutManager::class)->activeHandles(),
+      $sharedSlot?->public_shell,
+    ])));
+
+    $handleRules = [
+      'required',
+      'string',
+      'max:100',
+      'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+    ];
+
+    if (app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
+      $handleRules[] = Rule::unique(SharedSlot::class, 'handle')
+        ->where(fn ($query) => $query->where('site_id', $siteId))
+        ->ignore($sharedSlot?->id);
     }
 
-    protected function prepareForValidation(): void
-    {
-        $name = trim((string) $this->input('name'));
-        $handle = trim((string) $this->input('handle'));
-        $slotName = trim((string) $this->input('slot_name'));
-        $publicShell = trim((string) $this->input('public_shell'));
+    return [
+      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'name' => ['required', 'string', 'max:255'],
+      'handle' => $handleRules,
+      'slot_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+      'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
+      'is_active' => ['required', 'boolean'],
+    ];
+  }
 
-        $this->merge([
-            'site_id' => $this->input('site_id') ?: Site::primary()?->id,
-            'handle' => Str::slug($handle !== '' ? $handle : $name),
-            'slot_name' => $slotName !== '' ? Str::slug($slotName) : null,
-            'public_shell' => $publicShell !== '' ? Page::normalizePublicShellHandle($publicShell) : null,
-            'is_active' => $this->boolean('is_active', true),
-        ]);
-    }
+  public function validatedData(): array
+  {
+    $data = $this->validated();
+    $data['site_id'] = (int) $data['site_id'];
+    $data['name'] = trim((string) $data['name']);
+    $data['handle'] = Str::slug((string) $data['handle']);
+    $data['slot_name'] = filled($data['slot_name'] ?? null) ? Str::slug((string) $data['slot_name']) : null;
+    $data['public_shell'] = filled($data['public_shell'] ?? null)
+      ? Page::normalizePublicShellHandle($data['public_shell'])
+      : null;
+    $data['is_active'] = (bool) $data['is_active'];
 
-    public function rules(): array
-    {
-        $sharedSlot = $this->route('shared_slot');
-        $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
-        $siteId = (int) $this->input('site_id');
-        $allowedLayoutHandles = array_values(array_unique(array_filter([
-            ...app(PageLayoutManager::class)->activeHandles(),
-            $sharedSlot?->public_shell,
-        ])));
+    return $data;
+  }
 
-        $handleRules = [
-            'required',
-            'string',
-            'max:100',
-            'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-        ];
+  public function after(): array
+  {
+    return [function (Validator $validator): void {
+      /** @var AdminAuthorization $authorization */
+      $authorization = app(AdminAuthorization::class);
+      $schema = app(SharedSlotSchema::class);
+      $sharedSlot = $this->route('shared_slot');
+      $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
+      $siteId = (int) $this->input('site_id');
 
-        if (app(SharedSlotSchema::class)->sharedSlotsTableExists()) {
-            $handleRules[] = Rule::unique(SharedSlot::class, 'handle')
-                ->where(fn ($query) => $query->where('site_id', $siteId))
-                ->ignore($sharedSlot?->id);
-        }
+      if (! $schema->sharedSlotsTableExists()) {
+        $validator->errors()->add('shared_slots', 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.');
 
-        return [
-            'site_id' => ['required', 'integer', 'exists:sites,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'handle' => $handleRules,
-            'slot_name' => ['nullable', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
-            'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
-            'is_active' => ['required', 'boolean'],
-        ];
-    }
+        return;
+      }
 
-    public function validatedData(): array
-    {
-        $data = $this->validated();
-        $data['site_id'] = (int) $data['site_id'];
-        $data['name'] = trim((string) $data['name']);
-        $data['handle'] = Str::slug((string) $data['handle']);
-        $data['slot_name'] = filled($data['slot_name'] ?? null) ? Str::slug((string) $data['slot_name']) : null;
-        $data['public_shell'] = filled($data['public_shell'] ?? null)
-            ? Page::normalizePublicShellHandle($data['public_shell'])
-            : null;
-        $data['is_active'] = (bool) $data['is_active'];
+      if ($siteId > 0 && ! $this->user()?->isSuperAdmin() && ! $authorization->scopeSitesForUser(Site::query(), $this->user())->whereKey($siteId)->exists()) {
+        $validator->errors()->add('site_id', 'Selected site is outside your allowed site scope.');
+      }
 
-        return $data;
-    }
-
-    public function after(): array
-    {
-        return [function (Validator $validator): void {
-            /** @var AdminAuthorization $authorization */
-            $authorization = app(AdminAuthorization::class);
-            $schema = app(SharedSlotSchema::class);
-            $sharedSlot = $this->route('shared_slot');
-            $sharedSlot = $sharedSlot instanceof SharedSlot ? $sharedSlot : null;
-            $siteId = (int) $this->input('site_id');
-
-            if (! $schema->sharedSlotsTableExists()) {
-                $validator->errors()->add('shared_slots', 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.');
-
-                return;
-            }
-
-            if ($siteId > 0 && ! $this->user()?->isSuperAdmin() && ! $authorization->scopeSitesForUser(Site::query(), $this->user())->whereKey($siteId)->exists()) {
-                $validator->errors()->add('site_id', 'Selected site is outside your allowed site scope.');
-            }
-
-            if ($sharedSlot && $this->user()?->isEditor() && $siteId !== (int) $sharedSlot->site_id) {
-                $validator->errors()->add('site_id', 'Editors cannot move Shared Slots to a different site.');
-            }
-        }];
-    }
+      if ($sharedSlot && $this->user()?->isEditor() && $siteId !== (int) $sharedSlot->site_id) {
+        $validator->errors()->add('site_id', 'Editors cannot move Shared Slots to a different site.');
+      }
+    }];
+  }
 }

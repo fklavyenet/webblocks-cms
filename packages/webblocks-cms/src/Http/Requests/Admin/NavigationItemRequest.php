@@ -2,141 +2,141 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class NavigationItemRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+  public function authorize(): bool
+  {
+    return true;
+  }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'icon' => app(IconCatalog::class)->normalizeSlug($this->input('icon')),
-        ]);
-    }
+  protected function prepareForValidation(): void
+  {
+    $this->merge([
+      'icon' => app(IconCatalog::class)->normalizeSlug($this->input('icon')),
+    ]);
+  }
 
-    public function rules(): array
-    {
-        $navigation = $this->route('navigation');
-        $siteId = $this->integer('site_id')
-            ?: ($navigation?->site_id ?? null)
-            ?: Page::query()->whereKey($this->integer('page_id'))->value('site_id')
-            ?: Site::primary()?->id;
+  public function rules(): array
+  {
+    $navigation = $this->route('navigation');
+    $siteId = $this->integer('site_id')
+      ?: ($navigation?->site_id ?? null)
+      ?: Page::query()->whereKey($this->integer('page_id'))->value('site_id')
+      ?: Site::primary()?->id;
 
-        $this->merge(['site_id' => $siteId]);
+    $this->merge(['site_id' => $siteId]);
 
-        return [
-            'site_id' => ['required', 'integer', 'exists:sites,id'],
-            'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
-            'parent_id' => [
-                'nullable',
-                'integer',
-                'exists:navigation_items,id',
-                Rule::notIn([$navigation?->id]),
-            ],
-            'page_id' => ['nullable', 'integer', 'exists:pages,id'],
-            'title' => ['nullable', 'string', 'max:255'],
-            'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
-            'url' => ['nullable', 'string', 'max:2048'],
-            'target' => ['nullable', 'string', Rule::in(['_self', '_blank'])],
-            'icon' => ['nullable', 'string', 'max:255'],
-            'position' => ['nullable', 'integer', 'min:1'],
-            'visibility' => ['required', 'string', Rule::in(NavigationItem::visibilities())],
-        ];
-    }
+    return [
+      'site_id' => ['required', 'integer', 'exists:sites,id'],
+      'menu_key' => ['required', 'string', Rule::in(NavigationItem::menuKeys())],
+      'parent_id' => [
+        'nullable',
+        'integer',
+        'exists:navigation_items,id',
+        Rule::notIn([$navigation?->id]),
+      ],
+      'page_id' => ['nullable', 'integer', 'exists:pages,id'],
+      'title' => ['nullable', 'string', 'max:255'],
+      'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],
+      'url' => ['nullable', 'string', 'max:2048'],
+      'target' => ['nullable', 'string', Rule::in(['_self', '_blank'])],
+      'icon' => ['nullable', 'string', 'max:255'],
+      'position' => ['nullable', 'integer', 'min:1'],
+      'visibility' => ['required', 'string', Rule::in(NavigationItem::visibilities())],
+    ];
+  }
 
-    public function after(): array
-    {
-        return [function (Validator $validator): void {
-            $navigation = $this->route('navigation');
-            $parentId = $this->integer('parent_id');
-            $pageId = $this->integer('page_id');
-            $linkType = (string) $this->input('link_type');
-            $title = trim((string) $this->input('title'));
-            $url = trim((string) $this->input('url'));
-            $menuKey = (string) $this->input('menu_key');
-            $siteId = $this->integer('site_id') ?: Site::primary()?->id;
-            $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon'));
-            $currentIcon = app(IconCatalog::class)->normalizeSlug($navigation?->icon);
+  public function after(): array
+  {
+    return [function (Validator $validator): void {
+      $navigation = $this->route('navigation');
+      $parentId = $this->integer('parent_id');
+      $pageId = $this->integer('page_id');
+      $linkType = (string) $this->input('link_type');
+      $title = trim((string) $this->input('title'));
+      $url = trim((string) $this->input('url'));
+      $menuKey = (string) $this->input('menu_key');
+      $siteId = $this->integer('site_id') ?: Site::primary()?->id;
+      $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon'));
+      $currentIcon = app(IconCatalog::class)->normalizeSlug($navigation?->icon);
 
-            if ($linkType === NavigationItem::LINK_PAGE && ! $pageId) {
-                $validator->errors()->add('page_id', 'Select a page for page links.');
-            }
+      if ($linkType === NavigationItem::LINK_PAGE && ! $pageId) {
+        $validator->errors()->add('page_id', 'Select a page for page links.');
+      }
 
-            if ($pageId && Page::query()->whereKey($pageId)->value('site_id') !== $siteId) {
-                $validator->errors()->add('page_id', 'Selected page does not belong to this site.');
-            }
+      if ($pageId && Page::query()->whereKey($pageId)->value('site_id') !== $siteId) {
+        $validator->errors()->add('page_id', 'Selected page does not belong to this site.');
+      }
 
-            if ($linkType === NavigationItem::LINK_CUSTOM_URL && $url === '') {
-                $validator->errors()->add('url', 'Enter a URL for custom links.');
-            }
+      if ($linkType === NavigationItem::LINK_CUSTOM_URL && $url === '') {
+        $validator->errors()->add('url', 'Enter a URL for custom links.');
+      }
 
-            if ($linkType === NavigationItem::LINK_GROUP && $title === '') {
-                $validator->errors()->add('title', 'A title is required for groups.');
-            }
+      if ($linkType === NavigationItem::LINK_GROUP && $title === '') {
+        $validator->errors()->add('title', 'A title is required for groups.');
+      }
 
-            if ($linkType !== NavigationItem::LINK_PAGE && $title === '') {
-                $validator->errors()->add('title', 'A title is required for this link type.');
-            }
+      if ($linkType !== NavigationItem::LINK_PAGE && $title === '') {
+        $validator->errors()->add('title', 'A title is required for this link type.');
+      }
 
-            if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
-                $validator->errors()->add('icon', 'Select an active navigation icon from the catalog.');
-            }
+      if (! app(IconCatalog::class)->isValidNavigationSelection($icon, $currentIcon)) {
+        $validator->errors()->add('icon', 'Select an active navigation icon from the catalog.');
+      }
 
-            if (! $parentId) {
-                return;
-            }
+      if (! $parentId) {
+        return;
+      }
 
-            $parent = NavigationItem::query()->with('parent')->find($parentId);
+      $parent = NavigationItem::query()->with('parent')->find($parentId);
 
-            if (! $parent || $parent->menu_key !== $menuKey || (int) $parent->site_id !== (int) $siteId) {
-                $validator->errors()->add('parent_id', 'Parent item must belong to the same menu.');
+      if (! $parent || $parent->menu_key !== $menuKey || (int) $parent->site_id !== (int) $siteId) {
+        $validator->errors()->add('parent_id', 'Parent item must belong to the same menu.');
 
-                return;
-            }
+        return;
+      }
 
-            if ($parent->link_type !== NavigationItem::LINK_GROUP) {
-                $validator->errors()->add('parent_id', 'Only navigation groups can be selected as a parent.');
+      if ($parent->link_type !== NavigationItem::LINK_GROUP) {
+        $validator->errors()->add('parent_id', 'Only navigation groups can be selected as a parent.');
 
-                return;
-            }
+        return;
+      }
 
-            $depth = 2;
-            $cursor = $parent->parent;
+      $depth = 2;
+      $cursor = $parent->parent;
 
-            while ($cursor) {
-                $depth++;
+      while ($cursor) {
+        $depth++;
 
-                if ($depth > 3) {
-                    $validator->errors()->add('parent_id', 'Navigation depth cannot exceed 3 levels.');
+        if ($depth > 3) {
+          $validator->errors()->add('parent_id', 'Navigation depth cannot exceed 3 levels.');
 
-                    return;
-                }
+          return;
+        }
 
-                if ($navigation && $cursor->id === $navigation->id) {
-                    $validator->errors()->add('parent_id', 'A navigation item cannot be moved under its own child tree.');
+        if ($navigation && $cursor->id === $navigation->id) {
+          $validator->errors()->add('parent_id', 'A navigation item cannot be moved under its own child tree.');
 
-                    return;
-                }
+          return;
+        }
 
-                $cursor = $cursor->parent;
-            }
-        }];
-    }
+        $cursor = $cursor->parent;
+      }
+    }];
+  }
 
-    public function messages(): array
-    {
-        return [
-            'url.max' => 'The URL may not be greater than 2048 characters.',
-        ];
-    }
+  public function messages(): array
+  {
+    return [
+      'url.max' => 'The URL may not be greater than 2048 characters.',
+    ];
+  }
 }

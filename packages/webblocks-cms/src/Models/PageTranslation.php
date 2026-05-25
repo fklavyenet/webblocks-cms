@@ -2,120 +2,120 @@
 
 namespace WebBlocks\Cms\Models;
 
-use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
-use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
+use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
 class PageTranslation extends Model
 {
-    use HasFactory;
-    use ReindexesPublicSearch;
+  use HasFactory;
+  use ReindexesPublicSearch;
 
-    protected $fillable = [
-        'page_id',
-        'site_id',
-        'locale_id',
-        'name',
-        'slug',
-        'path',
-        'seo_title',
-        'seo_description',
-        'seo_keywords',
-        'og_title',
-        'og_description',
-        'og_image_media_id',
-        'og_image_asset_id',
+  protected $fillable = [
+    'page_id',
+    'site_id',
+    'locale_id',
+    'name',
+    'slug',
+    'path',
+    'seo_title',
+    'seo_description',
+    'seo_keywords',
+    'og_title',
+    'og_description',
+    'og_image_media_id',
+    'og_image_asset_id',
+  ];
+
+  protected function casts(): array
+  {
+    return [
+      'og_image_media_id' => 'integer',
     ];
+  }
 
-    protected function casts(): array
-    {
-        return [
-            'og_image_media_id' => 'integer',
-        ];
-    }
+  protected function ogImageMediaId(): Attribute
+  {
+    return Attribute::make(
+      get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_asset_id'] ?? null),
+      set: fn ($value) => ['og_image_media_id' => $value],
+    );
+  }
 
-    protected function ogImageMediaId(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_asset_id'] ?? null),
-            set: fn ($value) => ['og_image_media_id' => $value],
-        );
-    }
+  protected function ogImageAssetId(): Attribute
+  {
+    return Attribute::make(
+      get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_media_id'] ?? null),
+      set: fn ($value) => ['og_image_media_id' => $value],
+    );
+  }
 
-    protected function ogImageAssetId(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value, array $attributes) => $value ?? ($attributes['og_image_media_id'] ?? null),
-            set: fn ($value) => ['og_image_media_id' => $value],
-        );
-    }
+  protected static function booted(): void
+  {
+    static::saving(function (self $translation): void {
+      $siteId = $translation->page?->site_id
+        ?? ($translation->page_id ? Page::query()->whereKey($translation->page_id)->value('site_id') : null);
 
-    protected static function booted(): void
-    {
-        static::saving(function (self $translation): void {
-            $siteId = $translation->page?->site_id
-                ?? ($translation->page_id ? Page::query()->whereKey($translation->page_id)->value('site_id') : null);
+      if (! $siteId) {
+        throw new \RuntimeException('Page translations must belong to an existing page site.');
+      }
 
-            if (! $siteId) {
-                throw new \RuntimeException('Page translations must belong to an existing page site.');
-            }
+      $localeIsEnabled = Site::query()
+        ->whereKey($siteId)
+        ->whereHas('enabledLocales', fn ($query) => $query->where('locales.id', $translation->locale_id))
+        ->exists();
 
-            $localeIsEnabled = Site::query()
-                ->whereKey($siteId)
-                ->whereHas('enabledLocales', fn ($query) => $query->where('locales.id', $translation->locale_id))
-                ->exists();
+      if (! $localeIsEnabled) {
+        throw new \RuntimeException('Page translation locale must be enabled for the page site.');
+      }
 
-            if (! $localeIsEnabled) {
-                throw new \RuntimeException('Page translation locale must be enabled for the page site.');
-            }
+      $translation->site_id = $siteId;
+      $translation->path = self::pathFromSlug((string) $translation->slug);
+    });
 
-            $translation->site_id = $siteId;
-            $translation->path = self::pathFromSlug((string) $translation->slug);
-        });
+    static::saved(function (self $translation): void {
+      static::refreshSearchForTranslation($translation->fresh(['page', 'locale']));
+    });
 
-        static::saved(function (self $translation): void {
-            static::refreshSearchForTranslation($translation->fresh(['page', 'locale']));
-        });
+    static::deleted(function (self $translation): void {
+      $page = $translation->page ?? $translation->page()->first();
 
-        static::deleted(function (self $translation): void {
-            $page = $translation->page ?? $translation->page()->first();
+      if ($page instanceof Page) {
+        app(PublicSearchIndexer::class)->refreshPage($page);
+      }
+    });
+  }
 
-            if ($page instanceof Page) {
-                app(PublicSearchIndexer::class)->refreshPage($page);
-            }
-        });
-    }
+  public static function pathFromSlug(string $slug): string
+  {
+    return $slug === 'home' ? '/' : '/p/'.$slug;
+  }
 
-    public static function pathFromSlug(string $slug): string
-    {
-        return $slug === 'home' ? '/' : '/p/'.$slug;
-    }
+  public function page(): BelongsTo
+  {
+    return $this->belongsTo(Page::class);
+  }
 
-    public function page(): BelongsTo
-    {
-        return $this->belongsTo(Page::class);
-    }
+  public function site(): BelongsTo
+  {
+    return $this->belongsTo(Site::class);
+  }
 
-    public function site(): BelongsTo
-    {
-        return $this->belongsTo(Site::class);
-    }
+  public function locale(): BelongsTo
+  {
+    return $this->belongsTo(Locale::class);
+  }
 
-    public function locale(): BelongsTo
-    {
-        return $this->belongsTo(Locale::class);
-    }
+  public function ogImageMedia(): BelongsTo
+  {
+    return $this->belongsTo(Media::class, 'og_image_media_id');
+  }
 
-    public function ogImageMedia(): BelongsTo
-    {
-        return $this->belongsTo(Media::class, 'og_image_media_id');
-    }
-
-    public function ogImage(): BelongsTo
-    {
-        return $this->ogImageMedia();
-    }
+  public function ogImage(): BelongsTo
+  {
+    return $this->ogImageMedia();
+  }
 }

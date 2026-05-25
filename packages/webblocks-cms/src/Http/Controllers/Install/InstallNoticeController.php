@@ -7,8 +7,8 @@ use Illuminate\View\View;
 
 class InstallNoticeController extends Controller
 {
-    public function __invoke(): View
-    {
-        return view('webblocks-cms::install.notice');
-    }
+  public function __invoke(): View
+  {
+    return view('webblocks-cms::install.notice');
+  }
 }

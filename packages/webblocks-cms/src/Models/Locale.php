@@ -2,127 +2,124 @@
 
 namespace WebBlocks\Cms\Models;
 
-use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Models\SiteLocale;
-use WebBlocks\Cms\Models\VisitorEvent;
-use WebBlocks\Cms\Support\System\SystemSettings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\System\SystemSettings;
 
 class Locale extends Model
 {
-    use HasFactory;
+  use HasFactory;
 
-    public const CODE_PATTERN = '[a-z]{2}(?:-[a-z]{2})?';
+  public const CODE_PATTERN = '[a-z]{2}(?:-[a-z]{2})?';
 
-    public const CODE_VALIDATION_PATTERN = '/^[a-z]{2}(?:-[a-z]{2})?$/';
+  public const CODE_VALIDATION_PATTERN = '/^[a-z]{2}(?:-[a-z]{2})?$/';
 
-    protected $fillable = [
-        'code',
-        'name',
-        'is_default',
-        'is_enabled',
+  protected $fillable = [
+    'code',
+    'name',
+    'is_default',
+    'is_enabled',
+  ];
+
+  protected function casts(): array
+  {
+    return [
+      'is_default' => 'boolean',
+      'is_enabled' => 'boolean',
     ];
+  }
 
-    protected function casts(): array
-    {
-        return [
-            'is_default' => 'boolean',
-            'is_enabled' => 'boolean',
-        ];
+  protected static function booted(): void
+  {
+    static::saving(function (self $locale): void {
+      $locale->code = self::normalizeCode($locale->code);
+    });
+
+    static::saved(function (self $locale): void {
+      self::enforceDefaultInvariant($locale);
+    });
+  }
+
+  public static function normalizeCode(?string $code): ?string
+  {
+    if (! is_string($code)) {
+      return null;
     }
 
-    protected static function booted(): void
-    {
-        static::saving(function (self $locale): void {
-            $locale->code = self::normalizeCode($locale->code);
-        });
+    $normalized = strtolower(trim($code));
 
-        static::saved(function (self $locale): void {
-            self::enforceDefaultInvariant($locale);
-        });
+    if ($normalized === '') {
+      return null;
     }
 
-    public static function normalizeCode(?string $code): ?string
-    {
-        if (! is_string($code)) {
-            return null;
-        }
+    $normalized = str_replace('_', '-', $normalized);
 
-        $normalized = strtolower(trim($code));
+    return $normalized;
+  }
 
-        if ($normalized === '') {
-            return null;
-        }
+  public static function routePattern(): string
+  {
+    return self::CODE_PATTERN;
+  }
 
-        $normalized = str_replace('_', '-', $normalized);
+  public function sites(): BelongsToMany
+  {
+    return $this->belongsToMany(Site::class, 'site_locales')
+      ->withPivot('is_enabled')
+      ->withTimestamps();
+  }
 
-        return $normalized;
+  public function siteLocales(): HasMany
+  {
+    return $this->hasMany(SiteLocale::class);
+  }
+
+  public function pageTranslations(): HasMany
+  {
+    return $this->hasMany(PageTranslation::class);
+  }
+
+  public function visitorEvents(): HasMany
+  {
+    return $this->hasMany(VisitorEvent::class);
+  }
+
+  public static function enforceDefaultInvariant(self $locale): void
+  {
+    if ($locale->is_default) {
+      static::query()->whereKeyNot($locale->id)->update(['is_default' => false]);
+      $locale->forceFill(['is_enabled' => true])->saveQuietly();
     }
 
-    public static function routePattern(): string
-    {
-        return self::CODE_PATTERN;
+    if (static::query()->where('is_default', true)->doesntExist()) {
+      $locale->forceFill(['is_default' => true, 'is_enabled' => true])->saveQuietly();
     }
 
-    public function sites(): BelongsToMany
-    {
-        return $this->belongsToMany(Site::class, 'site_locales')
-            ->withPivot('is_enabled')
-            ->withTimestamps();
+    $locale->refresh();
+
+    if (! $locale->is_default && ! $locale->is_enabled && static::query()->whereKeyNot($locale->id)->where('is_enabled', true)->doesntExist()) {
+      $locale->forceFill(['is_enabled' => true])->saveQuietly();
+      $locale->refresh();
     }
 
-    public function siteLocales(): HasMany
-    {
-        return $this->hasMany(SiteLocale::class);
+    if ($locale->is_default) {
+      Site::query()->get()->each(function (Site $site) use ($locale): void {
+        $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
+      });
     }
 
-    public function pageTranslations(): HasMany
-    {
-        return $this->hasMany(PageTranslation::class);
+    if (Schema::hasTable('system_settings')) {
+      $defaultLocale = static::query()->where('is_default', true)->orderBy('id')->first();
+
+      if ($defaultLocale) {
+        SystemSetting::query()->updateOrCreate(
+          ['key' => SystemSettings::DEFAULT_LOCALE],
+          ['value' => $defaultLocale->code],
+        );
+      }
     }
-
-    public function visitorEvents(): HasMany
-    {
-        return $this->hasMany(VisitorEvent::class);
-    }
-
-    public static function enforceDefaultInvariant(self $locale): void
-    {
-        if ($locale->is_default) {
-            static::query()->whereKeyNot($locale->id)->update(['is_default' => false]);
-            $locale->forceFill(['is_enabled' => true])->saveQuietly();
-        }
-
-        if (static::query()->where('is_default', true)->doesntExist()) {
-            $locale->forceFill(['is_default' => true, 'is_enabled' => true])->saveQuietly();
-        }
-
-        $locale->refresh();
-
-        if (! $locale->is_default && ! $locale->is_enabled && static::query()->whereKeyNot($locale->id)->where('is_enabled', true)->doesntExist()) {
-            $locale->forceFill(['is_enabled' => true])->saveQuietly();
-            $locale->refresh();
-        }
-
-        if ($locale->is_default) {
-            Site::query()->get()->each(function (Site $site) use ($locale): void {
-                $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
-            });
-        }
-
-        if (Schema::hasTable('system_settings')) {
-            $defaultLocale = static::query()->where('is_default', true)->orderBy('id')->first();
-
-            if ($defaultLocale) {
-                SystemSetting::query()->updateOrCreate(
-                    ['key' => SystemSettings::DEFAULT_LOCALE],
-                    ['value' => $defaultLocale->code],
-                );
-            }
-        }
-    }
+  }
 }

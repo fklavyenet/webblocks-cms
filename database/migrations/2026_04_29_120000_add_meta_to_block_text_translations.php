@@ -6,17 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('block_text_translations', function (Blueprint $table) {
-            $table->text('meta')->nullable()->after('content');
-        });
-    }
+  public function up(): void
+  {
+    Schema::table('block_text_translations', function (Blueprint $table) {
+      $table->text('meta')->nullable()->after('content');
+    });
+  }
 
-    public function down(): void
-    {
-        Schema::table('block_text_translations', function (Blueprint $table) {
-            $table->dropColumn('meta');
-        });
-    }
+  public function down(): void
+  {
+    Schema::table('block_text_translations', function (Blueprint $table) {
+      $table->dropColumn('meta');
+    });
+  }
 };

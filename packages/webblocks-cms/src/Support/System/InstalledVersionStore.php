@@ -10,93 +10,93 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 class InstalledVersionStore
 {
-    public const VERSION_KEY = 'system.installed_version';
+  public const VERSION_KEY = 'system.installed_version';
 
-    public function currentVersion(): string
-    {
-        return WebBlocks::version();
+  public function currentVersion(): string
+  {
+    return WebBlocks::version();
+  }
+
+  public function displayVersion(): string
+  {
+    return WebBlocks::version();
+  }
+
+  public function fallbackVersion(): string
+  {
+    return WebBlocks::version();
+  }
+
+  public function storedVersion(): ?string
+  {
+    if (! Schema::hasTable('system_settings')) {
+      return null;
     }
 
-    public function displayVersion(): string
-    {
-        return WebBlocks::version();
+    $storedVersion = SystemSetting::query()
+      ->where('key', self::VERSION_KEY)
+      ->value('value');
+
+    return is_string($storedVersion) && $storedVersion !== ''
+      ? $storedVersion
+      : null;
+  }
+
+  public function persist(string $version): void
+  {
+    if (! Schema::hasTable('system_settings')) {
+      throw new \RuntimeException('The system settings table is missing. Run the latest migrations before updating.');
     }
 
-    public function fallbackVersion(): string
-    {
-        return WebBlocks::version();
+    SystemSetting::query()->updateOrCreate(
+      ['key' => self::VERSION_KEY],
+      ['value' => $version],
+    );
+  }
+
+  public function diagnostic(): array
+  {
+    if (! Schema::hasTable('system_settings')) {
+      return $this->check('Version persistence', 'blocked', 'The system settings table is missing. Run the latest migrations before updating.', true);
     }
 
-    public function storedVersion(): ?string
-    {
-        if (! Schema::hasTable('system_settings')) {
-            return null;
-        }
+    $connection = DB::connection();
 
-        $storedVersion = SystemSetting::query()
-            ->where('key', self::VERSION_KEY)
-            ->value('value');
+    try {
+      $connection->getPdo();
 
-        return is_string($storedVersion) && $storedVersion !== ''
-            ? $storedVersion
-            : null;
-    }
-
-    public function persist(string $version): void
-    {
-        if (! Schema::hasTable('system_settings')) {
-            throw new \RuntimeException('The system settings table is missing. Run the latest migrations before updating.');
-        }
+      $probeSucceeded = $connection->transaction(function (): bool {
+        $probeKey = 'system_updates.version_probe.'.str()->uuid();
 
         SystemSetting::query()->updateOrCreate(
-            ['key' => self::VERSION_KEY],
-            ['value' => $version],
+          ['key' => $probeKey],
+          ['value' => now()->toIso8601String()],
         );
+
+        $value = SystemSetting::query()->where('key', $probeKey)->value('value');
+        SystemSetting::query()->where('key', $probeKey)->delete();
+
+        return is_string($value) && $value !== '';
+      });
+
+      if (! $probeSucceeded) {
+        return $this->check('Version persistence', 'blocked', 'System settings could not be read back after a write probe.', true);
+      }
+
+      return $this->check('Version persistence', 'pass', 'Installed version can be read and persisted in system settings.');
+    } catch (Throwable $throwable) {
+      return $this->check('Version persistence', 'blocked', 'System settings are not writable: '.$throwable->getMessage(), true);
     }
+  }
 
-    public function diagnostic(): array
-    {
-        if (! Schema::hasTable('system_settings')) {
-            return $this->check('Version persistence', 'blocked', 'The system settings table is missing. Run the latest migrations before updating.', true);
-        }
-
-        $connection = DB::connection();
-
-        try {
-            $connection->getPdo();
-
-            $probeSucceeded = $connection->transaction(function (): bool {
-                $probeKey = 'system_updates.version_probe.'.str()->uuid();
-
-                SystemSetting::query()->updateOrCreate(
-                    ['key' => $probeKey],
-                    ['value' => now()->toIso8601String()],
-                );
-
-                $value = SystemSetting::query()->where('key', $probeKey)->value('value');
-                SystemSetting::query()->where('key', $probeKey)->delete();
-
-                return is_string($value) && $value !== '';
-            });
-
-            if (! $probeSucceeded) {
-                return $this->check('Version persistence', 'blocked', 'System settings could not be read back after a write probe.', true);
-            }
-
-            return $this->check('Version persistence', 'pass', 'Installed version can be read and persisted in system settings.');
-        } catch (Throwable $throwable) {
-            return $this->check('Version persistence', 'blocked', 'System settings are not writable: '.$throwable->getMessage(), true);
-        }
-    }
-
-    private function check(string $label, string $status, string $message, bool $blocksUpdate = false): array
-    {
-        return [
-            'label' => $label,
-            'status' => $status,
-            'message' => $message,
-            'blocks_update' => $blocksUpdate,
-            'badge_class' => $status === 'pass' ? 'wb-status-active' : 'wb-status-danger',
-        ];
-    }
+  private function check(string $label, string $status, string $message, bool $blocksUpdate = false): array
+  {
+    return [
+      'label' => $label,
+      'status' => $status,
+      'message' => $message,
+      'blocks_update' => $blocksUpdate,
+      'badge_class' => $status === 'pass' ? 'wb-status-active' : 'wb-status-danger',
+    ];
+  }
 }

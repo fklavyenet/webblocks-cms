@@ -2,278 +2,278 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
-use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use Illuminate\Http\Request;
+use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
-use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Sites\ResolvedSite;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteResolver;
 
 class PageRouteResolver
 {
-    public function __construct(
-        private readonly SiteResolver $siteResolver,
-        private readonly LocaleResolver $localeResolver,
-        private readonly SiteDomainNormalizer $siteDomainNormalizer,
-    ) {}
+  public function __construct(
+    private readonly SiteResolver $siteResolver,
+    private readonly LocaleResolver $localeResolver,
+    private readonly SiteDomainNormalizer $siteDomainNormalizer,
+  ) {}
 
-    public function currentSite(?Request $request = null): Site
-    {
-        return $this->siteResolver->current($request);
+  public function currentSite(?Request $request = null): Site
+  {
+    return $this->siteResolver->current($request);
+  }
+
+  public function resolvedSite(?Request $request = null): ResolvedSite
+  {
+    return $this->siteResolver->resolve($request);
+  }
+
+  public function currentLocale(?Request $request = null): Locale
+  {
+    $resolvedSite = $this->resolvedSite($request);
+
+    return $this->localeResolver->current($request, $resolvedSite->site);
+  }
+
+  public function homePath(?string $localeCode = null, ?Site $site = null): ?string
+  {
+    $resolvedSite = $site ?? $this->siteResolver->primary();
+    $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+    if (! $locale) {
+      return null;
     }
 
-    public function resolvedSite(?Request $request = null): ResolvedSite
-    {
-        return $this->siteResolver->resolve($request);
+    return $this->applyLocalePrefix('/', $locale);
+  }
+
+  public function searchPath(?string $localeCode = null, ?Site $site = null): ?string
+  {
+    $resolvedSite = $site ?? $this->siteResolver->primary();
+    $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+    if (! $locale) {
+      return null;
     }
 
-    public function currentLocale(?Request $request = null): Locale
-    {
-        $resolvedSite = $this->resolvedSite($request);
+    return $this->applyLocalePrefix('/search', $locale);
+  }
 
-        return $this->localeResolver->current($request, $resolvedSite->site);
+  public function searchJsonPath(?string $localeCode = null, ?Site $site = null): ?string
+  {
+    $resolvedSite = $site ?? $this->siteResolver->primary();
+    $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+    if (! $locale) {
+      return null;
     }
 
-    public function homePath(?string $localeCode = null, ?Site $site = null): ?string
-    {
-        $resolvedSite = $site ?? $this->siteResolver->primary();
-        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+    return $this->applyLocalePrefix('/search.json', $locale);
+  }
 
-        if (! $locale) {
-            return null;
-        }
+  public function pathFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
+  {
+    $resolvedSite = $site ?? $page->site;
+    $resolvedLocale = $this->requestedLocale($locale, $resolvedSite);
 
-        return $this->applyLocalePrefix('/', $locale);
+    if (! $resolvedSite || ! $resolvedLocale) {
+      return null;
     }
 
-    public function searchPath(?string $localeCode = null, ?Site $site = null): ?string
-    {
-        $resolvedSite = $site ?? $this->siteResolver->primary();
-        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+    $translation = $this->translationFor($page, $resolvedLocale, $resolvedSite);
 
-        if (! $locale) {
-            return null;
-        }
-
-        return $this->applyLocalePrefix('/search', $locale);
+    if (! $translation) {
+      return null;
     }
 
-    public function searchJsonPath(?string $localeCode = null, ?Site $site = null): ?string
-    {
-        $resolvedSite = $site ?? $this->siteResolver->primary();
-        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+    return $this->applyLocalePrefix($translation->path, $resolvedLocale);
+  }
 
-        if (! $locale) {
-            return null;
-        }
+  public function urlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
+  {
+    $resolvedSite = $site ?? $page->site;
+    $path = $this->pathFor($page, $locale, $resolvedSite);
 
-        return $this->applyLocalePrefix('/search.json', $locale);
+    if (! $path) {
+      return null;
     }
 
-    public function pathFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
-    {
-        $resolvedSite = $site ?? $page->site;
-        $resolvedLocale = $this->requestedLocale($locale, $resolvedSite);
+    $domain = $this->canonicalDomainFor($resolvedSite);
 
-        if (! $resolvedSite || ! $resolvedLocale) {
-            return null;
-        }
-
-        $translation = $this->translationFor($page, $resolvedLocale, $resolvedSite);
-
-        if (! $translation) {
-            return null;
-        }
-
-        return $this->applyLocalePrefix($translation->path, $resolvedLocale);
+    if (! $domain) {
+      return url($path);
     }
 
-    public function urlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
-    {
-        $resolvedSite = $site ?? $page->site;
-        $path = $this->pathFor($page, $locale, $resolvedSite);
+    $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
 
-        if (! $path) {
-            return null;
-        }
+    return $scheme.'://'.$domain.$path;
+  }
 
-        $domain = $this->canonicalDomainFor($resolvedSite);
+  public function canonicalUrlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
+  {
+    return $this->urlFor($page, $locale, $site);
+  }
 
-        if (! $domain) {
-            return url($path);
-        }
+  public function currentHostUrlFor(Page $page, Locale|string|null $locale = null, ?Request $request = null): ?string
+  {
+    $request ??= request();
+    $resolvedSite = $page->site;
+    $path = $this->pathFor($page, $locale, $resolvedSite);
 
-        $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: request()?->getScheme() ?: 'http';
-
-        return $scheme.'://'.$domain.$path;
+    if (! $path) {
+      return null;
     }
 
-    public function canonicalUrlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
-    {
-        return $this->urlFor($page, $locale, $site);
+    $requestedHost = $this->siteDomainNormalizer->normalize($request?->getHost());
+    $host = $requestedHost && $this->siteResolver->activeSiteDomainFor($resolvedSite, $requestedHost)
+      ? $requestedHost
+      : $this->canonicalDomainFor($resolvedSite);
+
+    if (! $host) {
+      return url($path);
     }
 
-    public function currentHostUrlFor(Page $page, Locale|string|null $locale = null, ?Request $request = null): ?string
-    {
-        $request ??= request();
-        $resolvedSite = $page->site;
-        $path = $this->pathFor($page, $locale, $resolvedSite);
+    $scheme = $request?->getScheme() ?: (parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'http');
 
-        if (! $path) {
-            return null;
-        }
+    return $scheme.'://'.$host.$path;
+  }
 
-        $requestedHost = $this->siteDomainNormalizer->normalize($request?->getHost());
-        $host = $requestedHost && $this->siteResolver->activeSiteDomainFor($resolvedSite, $requestedHost)
-            ? $requestedHost
-            : $this->canonicalDomainFor($resolvedSite);
-
-        if (! $host) {
-            return url($path);
-        }
-
-        $scheme = $request?->getScheme() ?: (parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'http');
-
-        return $scheme.'://'.$host.$path;
+  public function canonicalDomainFor(?Site $site = null): ?string
+  {
+    if (! $site) {
+      return null;
     }
 
-    public function canonicalDomainFor(?Site $site = null): ?string
-    {
-        if (! $site) {
-            return null;
-        }
+    return $this->siteResolver->primaryDomainFor($site)?->domain
+      ?? $site->domain;
+  }
 
-        return $this->siteResolver->primaryDomainFor($site)?->domain
-            ?? $site->domain;
+  public function findPublishedPage(Request $request, ?string $slug = null): ?Page
+  {
+    $site = $this->resolvedSite($request)->site;
+    $localeCode = Locale::normalizeCode((string) $request->route('locale'));
+    $locale = $localeCode !== null
+      ? $this->localeResolver->enabled($localeCode, $site)
+      : $this->localeResolver->default();
+
+    if ($localeCode !== null && (! $locale || $locale->is_default)) {
+      return null;
     }
 
-    public function findPublishedPage(Request $request, ?string $slug = null): ?Page
-    {
-        $site = $this->resolvedSite($request)->site;
-        $localeCode = Locale::normalizeCode((string) $request->route('locale'));
-        $locale = $localeCode !== null
-            ? $this->localeResolver->enabled($localeCode, $site)
-            : $this->localeResolver->default();
-
-        if ($localeCode !== null && (! $locale || $locale->is_default)) {
-            return null;
-        }
-
-        if (! $locale) {
-            return null;
-        }
-
-        $path = $slug === null ? '/' : PageTranslation::pathFromSlug($slug);
-
-        $translation = PageTranslation::query()
-            ->with(['page', 'locale'])
-            ->where('site_id', $site->id)
-            ->where('locale_id', $locale->id)
-            ->where(function ($query) use ($path, $slug) {
-                $query->where('path', $path);
-
-                if ($slug !== null) {
-                    $query->orWhere('slug', $slug);
-                }
-            })
-            ->whereHas('page', fn ($query) => $query
-                ->where('site_id', $site->id)
-                ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
-                ->where('status', 'published'))
-            ->first();
-
-        if (! $translation) {
-            return null;
-        }
-
-        $page = $translation->page;
-        $page->setRelation('currentTranslation', $translation);
-        $page->setRelation('site', $page->site ?? $site);
-
-        return $page;
+    if (! $locale) {
+      return null;
     }
 
-    public function translationFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?PageTranslation
-    {
-        $resolvedSite = $site ?? $page->site;
-        $resolvedLocale = $this->requestedLocale($locale, $resolvedSite);
+    $path = $slug === null ? '/' : PageTranslation::pathFromSlug($slug);
 
-        if (! $resolvedLocale) {
-            return null;
+    $translation = PageTranslation::query()
+      ->with(['page', 'locale'])
+      ->where('site_id', $site->id)
+      ->where('locale_id', $locale->id)
+      ->where(function ($query) use ($path, $slug) {
+        $query->where('path', $path);
+
+        if ($slug !== null) {
+          $query->orWhere('slug', $slug);
         }
+      })
+      ->whereHas('page', fn ($query) => $query
+        ->where('site_id', $site->id)
+        ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+        ->where('status', 'published'))
+      ->first();
 
-        if ($resolvedSite && (int) $page->site_id !== (int) $resolvedSite->id) {
-            return null;
-        }
-
-        $translations = $page->relationLoaded('translations') ? $page->translations : null;
-
-        if ($page->relationLoaded('currentTranslation')) {
-            $currentTranslation = $page->getRelation('currentTranslation');
-
-            if ($currentTranslation?->locale_id === $resolvedLocale->id) {
-                return $currentTranslation;
-            }
-        }
-
-        $translation = $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
-            ?? $page->translations()->where('locale_id', $resolvedLocale->id)->first();
-
-        if ($translation) {
-            $page->setRelation('currentTranslation', $translation);
-        }
-
-        return $translation;
+    if (! $translation) {
+      return null;
     }
 
-    public function siteLocale(?string $localeCode = null, ?Site $site = null): Locale
-    {
-        $resolvedSite = $site ?? $this->siteResolver->primary();
-        $locale = $this->requestedLocale($localeCode, $resolvedSite);
+    $page = $translation->page;
+    $page->setRelation('currentTranslation', $translation);
+    $page->setRelation('site', $page->site ?? $site);
 
-        return $locale ?? $this->localeResolver->default();
+    return $page;
+  }
+
+  public function translationFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?PageTranslation
+  {
+    $resolvedSite = $site ?? $page->site;
+    $resolvedLocale = $this->requestedLocale($locale, $resolvedSite);
+
+    if (! $resolvedLocale) {
+      return null;
     }
 
-    private function requestedLocale(Locale|string|null $locale = null, ?Site $site = null): ?Locale
-    {
-        $defaultLocale = $this->localeResolver->default();
-
-        if ($locale === null) {
-            return $site && ! $site->hasEnabledLocale($defaultLocale) ? null : $defaultLocale;
-        }
-
-        if ($locale instanceof Locale) {
-            return $site && ! $site->hasEnabledLocale($locale) ? null : $locale;
-        }
-
-        if (is_string($locale) && Locale::normalizeCode($locale) !== null) {
-            if ($site) {
-                return $this->localeResolver->enabled($locale, $site);
-            }
-
-            return $this->localeResolver->enabled($locale);
-        }
-
-        return null;
+    if ($resolvedSite && (int) $page->site_id !== (int) $resolvedSite->id) {
+      return null;
     }
 
-    private function applyLocalePrefix(string $path, Locale $locale): string
-    {
-        $normalizedPath = '/'.ltrim($path, '/');
+    $translations = $page->relationLoaded('translations') ? $page->translations : null;
 
-        if ($normalizedPath === '//') {
-            $normalizedPath = '/';
-        }
+    if ($page->relationLoaded('currentTranslation')) {
+      $currentTranslation = $page->getRelation('currentTranslation');
 
-        if ($locale->is_default) {
-            return $normalizedPath;
-        }
-
-        return $normalizedPath === '/'
-            ? '/'.$locale->code
-            : '/'.$locale->code.$normalizedPath;
+      if ($currentTranslation?->locale_id === $resolvedLocale->id) {
+        return $currentTranslation;
+      }
     }
+
+    $translation = $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
+      ?? $page->translations()->where('locale_id', $resolvedLocale->id)->first();
+
+    if ($translation) {
+      $page->setRelation('currentTranslation', $translation);
+    }
+
+    return $translation;
+  }
+
+  public function siteLocale(?string $localeCode = null, ?Site $site = null): Locale
+  {
+    $resolvedSite = $site ?? $this->siteResolver->primary();
+    $locale = $this->requestedLocale($localeCode, $resolvedSite);
+
+    return $locale ?? $this->localeResolver->default();
+  }
+
+  private function requestedLocale(Locale|string|null $locale = null, ?Site $site = null): ?Locale
+  {
+    $defaultLocale = $this->localeResolver->default();
+
+    if ($locale === null) {
+      return $site && ! $site->hasEnabledLocale($defaultLocale) ? null : $defaultLocale;
+    }
+
+    if ($locale instanceof Locale) {
+      return $site && ! $site->hasEnabledLocale($locale) ? null : $locale;
+    }
+
+    if (is_string($locale) && Locale::normalizeCode($locale) !== null) {
+      if ($site) {
+        return $this->localeResolver->enabled($locale, $site);
+      }
+
+      return $this->localeResolver->enabled($locale);
+    }
+
+    return null;
+  }
+
+  private function applyLocalePrefix(string $path, Locale $locale): string
+  {
+    $normalizedPath = '/'.ltrim($path, '/');
+
+    if ($normalizedPath === '//') {
+      $normalizedPath = '/';
+    }
+
+    if ($locale->is_default) {
+      return $normalizedPath;
+    }
+
+    return $normalizedPath === '/'
+      ? '/'.$locale->code
+      : '/'.$locale->code.$normalizedPath;
+  }
 }

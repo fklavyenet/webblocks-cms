@@ -6,15 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SitePromotionApplyRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return (bool) $this->user()?->isSuperAdmin();
-    }
+  public function authorize(): bool
+  {
+    return (bool) $this->user()?->isSuperAdmin();
+  }
 
-    public function rules(): array
-    {
-        return [
-            'plan_token' => ['required', 'string', 'max:255'],
-        ];
-    }
+  public function rules(): array
+  {
+    return [
+      'plan_token' => ['required', 'string', 'max:255'],
+    ];
+  }
 }

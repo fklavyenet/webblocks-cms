@@ -1,18 +1,18 @@
 @php
-    $content = trim((string) $block->content);
+  $content = trim((string) $block->content);
 
-    if ($content === '') {
-        return;
-    }
+  if ($content === '') {
+    return;
+  }
 
-    $settings = is_array($block->settings)
-        ? $block->settings
-        : (json_decode((string) $block->settings, true) ?: []);
+  $settings = is_array($block->settings)
+    ? $block->settings
+    : (json_decode((string) $block->settings, true) ?: []);
 
-    $language = trim((string) ($settings['language'] ?? $settings['lang'] ?? ''));
-    $language = strtolower($language);
-    $language = preg_replace('/[^a-z0-9#+-]+/', '-', $language) ?? '';
-    $language = trim($language, '-');
+  $language = trim((string) ($settings['language'] ?? $settings['lang'] ?? ''));
+  $language = strtolower($language);
+  $language = preg_replace('/[^a-z0-9#+-]+/', '-', $language) ?? '';
+  $language = trim($language, '-');
 @endphp
 
 <pre>@if ($language !== '')<code data-language="{{ $language }}">@else<code>@endif{{ $block->content }}</code></pre>

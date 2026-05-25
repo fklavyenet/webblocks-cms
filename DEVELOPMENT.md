@@ -125,11 +125,7 @@ Standard development commands:
 
 Prefer DDEV-first commands in examples and routine workflows, and keep formatting or standards changes focused instead of mass-reformatting unrelated files.
 
-When AI or automation writes PHP files, verify the actual file contents for 2-space indentation instead of assuming a successful Pint run proves indentation compliance.
-
-The current repository still contains historical 4-space PHP indentation in existing source files. Until a dedicated repo-wide 2-space indentation baseline is applied, the custom guard is wired for targeted enforcement so routine validation stays green while new and explicitly targeted files can still be checked against the 2-space standard.
-
-Repository-wide Pint compliance is not claimed yet. The current codebase still has historical formatting drift, and cleanup should be handled separately in a dedicated baseline formatting change.
+When AI or automation writes PHP files, verify the actual file contents for 2-space indentation instead of assuming Pint alone proves indentation compliance. The repository-wide formatting baseline is `ddev composer format:test`, which runs Pint for non-indentation style and the custom indentation guard across maintained PHP and Blade roots. Pint's indentation-specific fixers are disabled so `scripts/check-php-indentation.php` remains authoritative for the 2-space PHP indentation rule.
 
 ## Risk-Based Validation
 

@@ -1,206 +1,206 @@
 @php
-    $chrome = $slot['chrome'] ?? null;
-    $wrapperPreset = $slot['wrapper']['preset'] ?? null;
+  $chrome = $slot['chrome'] ?? null;
+  $wrapperPreset = $slot['wrapper']['preset'] ?? null;
 
-    if (! is_array($chrome)) {
-        $chrome = [];
+  if (! is_array($chrome)) {
+    $chrome = [];
+  }
+
+  $branding = $chrome['branding'] ?? null;
+  $actionBlocks = $chrome['actions'] ?? collect();
+  $primaryItems = $chrome['primary_items'] ?? collect();
+  $mobileItems = $chrome['mobile_items'] ?? collect();
+
+  $branchHasCurrent = function ($item) use (&$branchHasCurrent, $page) {
+    if ($item->page_id === $page->id) {
+      return true;
     }
 
-    $branding = $chrome['branding'] ?? null;
-    $actionBlocks = $chrome['actions'] ?? collect();
-    $primaryItems = $chrome['primary_items'] ?? collect();
-    $mobileItems = $chrome['mobile_items'] ?? collect();
+    return $item->children->contains(fn ($child) => $branchHasCurrent($child));
+  };
 
-    $branchHasCurrent = function ($item) use (&$branchHasCurrent, $page) {
-        if ($item->page_id === $page->id) {
-            return true;
+  $renderHeaderItems = function ($items, bool $isMobile = false) use (&$renderHeaderItems, $branchHasCurrent) {
+    $html = '';
+
+    foreach ($items as $item) {
+      $children = $item->children->filter(fn ($child) => $child->isVisible());
+      $url = $item->resolvedUrl();
+      $label = e($item->resolvedTitle());
+      $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
+      $isCurrent = $branchHasCurrent($item);
+      $isAction = $item->link_type === \App\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
+
+      if ($isMobile) {
+        $html .= '<li class="wb-stack wb-gap-2">';
+        $html .= $url
+          ? '<a href="'.e($url).'" class="'.($isAction ? 'wb-btn wb-btn-primary' : 'wb-link').($isCurrent && ! $isAction ? ' is-active' : '').'"'.$target.'>'.$label.'</a>'
+          : '<span>'.$label.'</span>';
+
+        if ($children->isNotEmpty()) {
+          $html .= '<ul class="wb-stack wb-gap-1 wb-text-sm">'.$renderHeaderItems($children, true).'</ul>';
         }
 
-        return $item->children->contains(fn ($child) => $branchHasCurrent($child));
-    };
+        $html .= '</li>';
 
-    $renderHeaderItems = function ($items, bool $isMobile = false) use (&$renderHeaderItems, $branchHasCurrent) {
-        $html = '';
+        continue;
+      }
 
-        foreach ($items as $item) {
-            $children = $item->children->filter(fn ($child) => $child->isVisible());
-            $url = $item->resolvedUrl();
-            $label = e($item->resolvedTitle());
-            $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
-            $isCurrent = $branchHasCurrent($item);
-            $isAction = $item->link_type === \App\Models\NavigationItem::LINK_CUSTOM_URL && $children->isEmpty();
+      if ($children->isNotEmpty()) {
+        $menuId = 'public-nav-group-'.$item->id;
+        $html .= '<li class="wb-dropdown wb-public-nav-item'.($isCurrent ? ' is-active' : '').'">';
+        $html .= '<button type="button" class="wb-public-nav-link wb-public-nav-link-trigger'.($isCurrent ? ' is-active' : '').'" data-wb-toggle="dropdown" data-wb-target="#'.$menuId.'" aria-expanded="false">'.$label.' <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>';
+        $html .= '<div class="wb-dropdown-menu" id="'.$menuId.'">';
 
-            if ($isMobile) {
-                $html .= '<li class="wb-stack wb-gap-2">';
-                $html .= $url
-                    ? '<a href="'.e($url).'" class="'.($isAction ? 'wb-btn wb-btn-primary' : 'wb-link').($isCurrent && ! $isAction ? ' is-active' : '').'"'.$target.'>'.$label.'</a>'
-                    : '<span>'.$label.'</span>';
-
-                if ($children->isNotEmpty()) {
-                    $html .= '<ul class="wb-stack wb-gap-1 wb-text-sm">'.$renderHeaderItems($children, true).'</ul>';
-                }
-
-                $html .= '</li>';
-
-                continue;
-            }
-
-            if ($children->isNotEmpty()) {
-                $menuId = 'public-nav-group-'.$item->id;
-                $html .= '<li class="wb-dropdown wb-public-nav-item'.($isCurrent ? ' is-active' : '').'">';
-                $html .= '<button type="button" class="wb-public-nav-link wb-public-nav-link-trigger'.($isCurrent ? ' is-active' : '').'" data-wb-toggle="dropdown" data-wb-target="#'.$menuId.'" aria-expanded="false">'.$label.' <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>';
-                $html .= '<div class="wb-dropdown-menu" id="'.$menuId.'">';
-
-                foreach ($children as $child) {
-                    $childUrl = $child->resolvedUrl();
-                    $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
-                    $html .= $childUrl
-                        ? '<a class="wb-dropdown-item" href="'.e($childUrl).'"'.$childTarget.'>'.e($child->resolvedTitle()).'</a>'
-                        : '<span class="wb-dropdown-item">'.e($child->resolvedTitle()).'</span>';
-                }
-
-                $html .= '</div></li>';
-
-                continue;
-            }
-
-            $html .= '<li class="wb-public-nav-item'.($isCurrent ? ' is-active' : '').'">';
-            $html .= $url
-                ? '<a href="'.e($url).'" class="'.($isAction ? 'wb-btn wb-btn-primary' : 'wb-public-nav-link').($isCurrent && ! $isAction ? ' is-active' : '').'"'.($isCurrent && ! $isAction ? ' aria-current="page"' : '').$target.'>'.$label.'</a>'
-                : '<span class="wb-public-nav-link">'.$label.'</span>';
-            $html .= '</li>';
+        foreach ($children as $child) {
+          $childUrl = $child->resolvedUrl();
+          $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
+          $html .= $childUrl
+            ? '<a class="wb-dropdown-item" href="'.e($childUrl).'"'.$childTarget.'>'.e($child->resolvedTitle()).'</a>'
+            : '<span class="wb-dropdown-item">'.e($child->resolvedTitle()).'</span>';
         }
 
-        return $html;
-    };
+        $html .= '</div></li>';
 
-    $brandLabel = $branding?->title ?: ($branding?->content ?: config('app.name'));
-    $brandContext = $branding?->typeSlug() === 'header'
-        ? null
-        : ($branding?->content ?: config('app.slogan'));
-    $brandImage = $branding?->typeSlug() === 'image' ? $branding?->asset?->url() : null;
+        continue;
+      }
+
+      $html .= '<li class="wb-public-nav-item'.($isCurrent ? ' is-active' : '').'">';
+      $html .= $url
+        ? '<a href="'.e($url).'" class="'.($isAction ? 'wb-btn wb-btn-primary' : 'wb-public-nav-link').($isCurrent && ! $isAction ? ' is-active' : '').'"'.($isCurrent && ! $isAction ? ' aria-current="page"' : '').$target.'>'.$label.'</a>'
+        : '<span class="wb-public-nav-link">'.$label.'</span>';
+      $html .= '</li>';
+    }
+
+    return $html;
+  };
+
+  $brandLabel = $branding?->title ?: ($branding?->content ?: config('app.name'));
+  $brandContext = $branding?->typeSlug() === 'header'
+    ? null
+    : ($branding?->content ?: config('app.slogan'));
+  $brandImage = $branding?->typeSlug() === 'image' ? $branding?->asset?->url() : null;
 @endphp
 
 @if ($chrome === [])
-    @if ($slot['blocks']->isNotEmpty())
-        @if ($wrapperPreset === 'docs-navbar')
-            @php
-                $breadcrumbBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'breadcrumb')->values();
-                $actionBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'header-actions')->values();
-                $otherBlocks = $slot['blocks']->reject(fn ($block) => in_array($block->typeSlug(), ['breadcrumb', 'header-actions'], true))->values();
-            @endphp
+  @if ($slot['blocks']->isNotEmpty())
+    @if ($wrapperPreset === 'docs-navbar')
+      @php
+        $breadcrumbBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'breadcrumb')->values();
+        $actionBlocks = $slot['blocks']->filter(fn ($block) => $block->typeSlug() === 'header-actions')->values();
+        $otherBlocks = $slot['blocks']->reject(fn ($block) => in_array($block->typeSlug(), ['breadcrumb', 'header-actions'], true))->values();
+      @endphp
 
-            <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-items-center">
-                    <button
-                        class="wb-navbar-toggle"
-                        type="button"
-                        data-wb-toggle="sidebar"
-                        data-wb-target="#docsSidebar"
-                        aria-expanded="false"
-                        aria-controls="docsSidebar"
-                        aria-label="Toggle navigation"
-                    >
-                        <span></span><span></span><span></span>
-                    </button>
+      <div class="wb-flex wb-items-center wb-justify-between wb-gap-3 wb-w-full wb-flex-wrap">
+        <div class="wb-cluster wb-cluster-2 wb-items-center">
+          <button
+            class="wb-navbar-toggle"
+            type="button"
+            data-wb-toggle="sidebar"
+            data-wb-target="#docsSidebar"
+            aria-expanded="false"
+            aria-controls="docsSidebar"
+            aria-label="Toggle navigation"
+          >
+            <span></span><span></span><span></span>
+          </button>
 
-                    @foreach ($breadcrumbBlocks as $block)
-                        @include('pages.partials.block', ['block' => $block])
-                    @endforeach
-                </div>
-
-                <div class="wb-cluster wb-cluster-2 wb-cluster-end wb-items-center">
-                    @foreach ($actionBlocks as $block)
-                        @include('pages.partials.block', ['block' => $block])
-                    @endforeach
-                </div>
-            </div>
-
-            @foreach ($otherBlocks as $block)
-                @include('pages.partials.block', ['block' => $block])
-            @endforeach
-        @else
-            @foreach ($slot['blocks'] as $block)
-                @include('pages.partials.block', ['block' => $block])
-            @endforeach
-        @endif
-    @endif
-@else
-    <header class="wb-section wb-public-header" data-wb-public-header>
-        @if ($wrapperPreset === 'docs-navbar')
-            <button
-                class="wb-navbar-toggle"
-                type="button"
-                data-wb-toggle="sidebar"
-                data-wb-target="#docsSidebar"
-                aria-expanded="false"
-                aria-controls="docsSidebar"
-                aria-label="Toggle navigation"
-            >
-                <span></span><span></span><span></span>
-            </button>
-        @endif
-
-        <div class="wb-container wb-container-lg">
-            <div class="wb-public-header-bar">
-                <a href="{{ $homePath }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
-                    @if ($brandImage)
-                        <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" class="wb-public-header-brand-image">
-                    @endif
-                    <span>
-                        <span class="wb-public-header-brand">{{ $brandLabel }}</span>
-                        @if ($brandContext)
-                            <span class="wb-public-header-context">{{ $brandContext }}</span>
-                        @endif
-                    </span>
-                </a>
-
-                <span class="wb-public-header-spacer"></span>
-
-                @if ($primaryItems->isNotEmpty())
-                    <nav class="wb-public-header-nav" aria-label="Primary navigation">
-                        <ul class="wb-public-nav-list">{!! $renderHeaderItems($primaryItems) !!}</ul>
-                    </nav>
-                @endif
-
-                @if ($actionBlocks->isNotEmpty())
-                    <div class="wb-public-header-actions">
-                        <div class="wb-cluster wb-cluster-2">
-                            @foreach ($actionBlocks as $block)
-                                @include('pages.partials.block', ['block' => $block])
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                @if ($mobileItems->isNotEmpty())
-                    <div class="wb-dropdown wb-dropdown-end wb-public-header-mobile">
-                        <button class="wb-public-header-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#public-mobile-menu" aria-expanded="false" aria-label="Open navigation">
-                            <i class="wb-icon wb-icon-menu-2" aria-hidden="true"></i>
-                        </button>
-                        <div class="wb-dropdown-menu" id="public-mobile-menu">
-                            <div class="wb-stack wb-gap-2 wb-public-header-mobile-menu">
-                                <ul class="wb-stack wb-gap-2">{!! $renderHeaderItems($mobileItems, true) !!}</ul>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
+          @foreach ($breadcrumbBlocks as $block)
+            @include('pages.partials.block', ['block' => $block])
+          @endforeach
         </div>
 
-        <section class="wb-public-banner" aria-label="Site introduction">
-            <div class="wb-container wb-container-lg">
-                <div class="wb-public-banner-inner">
-                    <div class="wb-public-banner-copy">
-                        <h1 class="wb-public-banner-title">{{ $brandLabel }}</h1>
-                        @if ($brandContext)
-                            <p class="wb-public-banner-text">{{ $brandContext }}</p>
-                        @endif
-                    </div>
+        <div class="wb-cluster wb-cluster-2 wb-cluster-end wb-items-center">
+          @foreach ($actionBlocks as $block)
+            @include('pages.partials.block', ['block' => $block])
+          @endforeach
+        </div>
+      </div>
 
-                    <span class="wb-public-banner-accent" aria-hidden="true"></span>
-                </div>
+      @foreach ($otherBlocks as $block)
+        @include('pages.partials.block', ['block' => $block])
+      @endforeach
+    @else
+      @foreach ($slot['blocks'] as $block)
+        @include('pages.partials.block', ['block' => $block])
+      @endforeach
+    @endif
+  @endif
+@else
+  <header class="wb-section wb-public-header" data-wb-public-header>
+    @if ($wrapperPreset === 'docs-navbar')
+      <button
+        class="wb-navbar-toggle"
+        type="button"
+        data-wb-toggle="sidebar"
+        data-wb-target="#docsSidebar"
+        aria-expanded="false"
+        aria-controls="docsSidebar"
+        aria-label="Toggle navigation"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    @endif
+
+    <div class="wb-container wb-container-lg">
+      <div class="wb-public-header-bar">
+        <a href="{{ $homePath }}" class="wb-public-header-identity wb-no-decoration" aria-label="{{ $brandLabel }} home">
+          @if ($brandImage)
+            <img src="{{ $brandImage }}" alt="{{ $brandLabel }}" class="wb-public-header-brand-image">
+          @endif
+          <span>
+            <span class="wb-public-header-brand">{{ $brandLabel }}</span>
+            @if ($brandContext)
+              <span class="wb-public-header-context">{{ $brandContext }}</span>
+            @endif
+          </span>
+        </a>
+
+        <span class="wb-public-header-spacer"></span>
+
+        @if ($primaryItems->isNotEmpty())
+          <nav class="wb-public-header-nav" aria-label="Primary navigation">
+            <ul class="wb-public-nav-list">{!! $renderHeaderItems($primaryItems) !!}</ul>
+          </nav>
+        @endif
+
+        @if ($actionBlocks->isNotEmpty())
+          <div class="wb-public-header-actions">
+            <div class="wb-cluster wb-cluster-2">
+              @foreach ($actionBlocks as $block)
+                @include('pages.partials.block', ['block' => $block])
+              @endforeach
             </div>
-        </section>
-    </header>
+          </div>
+        @endif
+
+        @if ($mobileItems->isNotEmpty())
+          <div class="wb-dropdown wb-dropdown-end wb-public-header-mobile">
+            <button class="wb-public-header-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#public-mobile-menu" aria-expanded="false" aria-label="Open navigation">
+              <i class="wb-icon wb-icon-menu-2" aria-hidden="true"></i>
+            </button>
+            <div class="wb-dropdown-menu" id="public-mobile-menu">
+              <div class="wb-stack wb-gap-2 wb-public-header-mobile-menu">
+                <ul class="wb-stack wb-gap-2">{!! $renderHeaderItems($mobileItems, true) !!}</ul>
+              </div>
+            </div>
+          </div>
+        @endif
+      </div>
+    </div>
+
+    <section class="wb-public-banner" aria-label="Site introduction">
+      <div class="wb-container wb-container-lg">
+        <div class="wb-public-banner-inner">
+          <div class="wb-public-banner-copy">
+            <h1 class="wb-public-banner-title">{{ $brandLabel }}</h1>
+            @if ($brandContext)
+              <p class="wb-public-banner-text">{{ $brandContext }}</p>
+            @endif
+          </div>
+
+          <span class="wb-public-banner-accent" aria-hidden="true"></span>
+        </div>
+      </div>
+    </section>
+  </header>
 @endif

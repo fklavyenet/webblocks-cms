@@ -2,42 +2,41 @@
 
 namespace WebBlocks\Cms\Models;
 
-use WebBlocks\Cms\Models\Block;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BlockType extends Model
 {
-    use HasFactory;
+  use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'slug',
-        'description',
-        'category',
-        'source_type',
-        'is_system',
-        'is_container',
-        'sort_order',
-        'status',
+  protected $fillable = [
+    'name',
+    'slug',
+    'description',
+    'category',
+    'source_type',
+    'is_system',
+    'is_container',
+    'sort_order',
+    'status',
+  ];
+
+  protected function casts(): array
+  {
+    return [
+      'is_system' => 'boolean',
+      'is_container' => 'boolean',
     ];
+  }
 
-    protected function casts(): array
-    {
-        return [
-            'is_system' => 'boolean',
-            'is_container' => 'boolean',
-        ];
-    }
+  public function blocks(): HasMany
+  {
+    return $this->hasMany(Block::class);
+  }
 
-    public function blocks(): HasMany
-    {
-        return $this->hasMany(Block::class);
-    }
-
-    public function kindLabel(): string
-    {
-        return $this->is_system ? 'System Block' : 'Content Block';
-    }
+  public function kindLabel(): string
+  {
+    return $this->is_system ? 'System Block' : 'Content Block';
+  }
 }
