@@ -168,6 +168,9 @@ Example commands:
 ddev composer test:release-fast
 ddev composer test:package
 ddev composer test:update
+ddev composer test:install
+ddev composer test:artifacts
+ddev composer test:admin-smoke
 ddev artisan test --filter=PageBuilderExperienceTest --stop-on-failure
 ddev artisan test --filter=SharedSlotAdminManagementTest --stop-on-failure
 ddev artisan test --filter=PageIndex --stop-on-failure

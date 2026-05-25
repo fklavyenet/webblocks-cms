@@ -8,19 +8,22 @@ Use DDEV-first commands:
 ddev composer test:release-fast
 ddev composer test:package
 ddev composer test:update
+ddev composer test:install
+ddev composer test:artifacts
+ddev composer test:admin-smoke
 ddev composer test:full
 ```
 
 ## Composer Scripts
 
-- `ddev composer test:release-fast`: the default fast release gate for small package-native hotfixes. It covers package update migration routing, package extraction, System Updates, the current package update migration repair, package install command behavior, package provider bootstrap, and release artifact boundaries.
-- `ddev composer test:package`: package install and package runtime boundary coverage. Use for package provider, package asset, package route/view, wrapper cleanup, Composer metadata, or release ZIP shape changes.
-- `ddev composer test:update`: package-native updater coverage. Use for System Updates, update server client parsing, migration runner behavior, installed-version persistence, backup readiness, or package update migrations.
-- `ddev composer test:install`: fresh Composer consumer install coverage. Use for `webblocks:install`, first-admin setup, package admin route smoke, consumer auth, and fresh install backup behavior.
-- `ddev composer test:artifacts`: release package archive and source checkout boundary coverage. Use whenever `.gitattributes`, package public assets, package composer metadata, updater support files, or GitHub release workflow package shape changes.
-- `ddev composer test:admin-smoke`: lightweight admin route/layout smoke coverage. Use for shared admin layout, sidebar, fixed CMS brand shell, and package admin partial changes.
+- `ddev composer test:release-fast`: the default aggregate gate for small package-native hotfixes. It intentionally samples package update migration routing, package extraction, current System Updates behavior, package install command behavior, package provider bootstrap, and package-rooted release artifact boundaries.
+- `ddev composer test:package`: focused package runtime and source-authority boundary coverage. Use for package provider, package route/view slices, wrapper cleanup, Composer metadata, or package status diagnostics. Use `test:artifacts` instead for release ZIP shape and package public asset archive checks, and `test:install` instead for fresh consumer install behavior.
+- `ddev composer test:update`: focused package-native updater coverage. Use for System Updates, update server client parsing, migration runner behavior, installed-version persistence, backup readiness, package extraction, or package update migrations.
+- `ddev composer test:install`: focused fresh Composer consumer install coverage. Use for `webblocks:install`, fresh install schema, first-admin setup, consumer auth, and post-install admin/public route smoke.
+- `ddev composer test:artifacts`: focused release package archive and source checkout boundary coverage. Use whenever `.gitattributes`, package public assets, package composer metadata, updater support files, or GitHub release workflow package shape changes.
+- `ddev composer test:admin-smoke`: lightweight admin route/layout smoke coverage. Use for shared admin layout, sidebar, fixed CMS brand shell, and shared admin partial changes.
 - `ddev composer test:legacy-bridge`: manual archival coverage for the retired `1.31.53 -> 1.32.33` root-managed bridge path. Do not use this as a routine package-native release gate.
-- `ddev composer test:full`: the full test suite. Use before major releases, large cross-cutting changes, or when focused results point to broader risk.
+- `ddev composer test:full`: the full package-native suite, excluding manual legacy bridge tests. Use before major releases, large cross-cutting changes, or when focused results point to broader risk.
 
 ## Release-Critical
 
@@ -36,6 +39,8 @@ Representative tests:
 
 Run with `ddev composer test:release-fast` for small package-native hotfixes. Add `ddev composer test:full` when the release changes broad admin/content behavior, schema contracts, import/export portability, or public rendering.
 
+`test:release-fast` is deliberately an aggregate gate, so it overlaps lightly with `test:update`, `test:install`, and `test:artifacts`. The focused scripts below are preferred during implementation when the changed surface is narrower.
+
 ## Package-Install-Critical
 
 Representative tests:
@@ -43,9 +48,8 @@ Representative tests:
 - `tests/Feature/PackageConsumerInstallCommandTest.php`
 - `tests/Feature/PackageConsumerInstallAuthTest.php`
 - `tests/Feature/PackageFreshInstallMigrationTest.php`
-- `tests/Feature/PackageServiceProviderBootstrapTest.php`
 
-Run with `ddev composer test:install` for fresh Composer consumer install, package asset publish, package route bootstrap, and first-admin setup changes. Use `ddev composer test:package` when the change also touches package source authority or release artifact shape.
+Run with `ddev composer test:install` for fresh Composer consumer install, fresh schema, package route bootstrap, first-admin setup, and post-install auth or admin/public smoke changes. Use `ddev composer test:package` when the change also touches package source authority, or `ddev composer test:artifacts` when it touches release artifact shape.
 
 ## Package-Update-Critical
 
@@ -92,8 +96,6 @@ Representative tests:
 - `tests/Feature/Admin/AdminDashboardRouteTest.php`
 - `tests/Feature/Admin/AdminSidebarNavigationTest.php`
 - `tests/Feature/Admin/SharedAdminPartialPackageViewTest.php`
-- `tests/Feature/PackageRuntimeSlicesTest.php`
-- `tests/Feature/PackageConsumerInstallAuthTest.php`
 
 Run with `ddev composer test:admin-smoke` for layout, sidebar, shared admin partial, and package admin route bootstrap changes. Add specific admin feature tests when the changed area is deeper than route/layout smoke.
 
@@ -142,7 +144,7 @@ These classes are high value but broad, expensive, or content-heavy. Prefer focu
 | `tests/Unit/System/Updates/LegacyRootManagedUpdateCompatibilityTest.php` | Protects old `1.31.53` root-managed updater behavior. No old root-managed installs remain to support. | Package-native update coverage in `SystemUpdatesTest`, `UpdateMigrationRunnerTest`, `UpdatePackageExtractorTest`, and `ReleasePackageBoundaryTest`. | Retained only in the `legacy` group and `ddev composer test:legacy-bridge`; excluded from routine package-native gates. |
 | Bridge assertions in `tests/Feature/ReleasePackageBoundaryTest.php` | The release artifact test mixed current package-rooted boundaries with root-managed bridge script assertions. | Package-rooted release shape is covered by the same class; bridge behavior is historical. | Moved into `LegacyRootManagedUpdateCompatibilityTest` so `ReleasePackageBoundaryTest` stays package-native. |
 | Broad `--filter=Package` release validation habit | Runs unrelated package-named tests and repeats expensive archive/install checks. | `ddev composer test:package` names the intended package gate explicitly. | Replace routine use with script-based gates. |
-| `tests/Feature/PackageConsumerInstallAuthTest.php` plus `PackageConsumerInstallCommandTest.php` | Both exercise fresh install state; one focuses command baseline, the other route/auth smoke. | Together they remain useful for install releases. | Keep both for now; consider shrinking route matrix if install validation becomes too slow. |
+| `tests/Feature/PackageConsumerInstallAuthTest.php` plus `PackageConsumerInstallCommandTest.php` | Both exercise fresh install state; one focuses command baseline, the other route/auth smoke. | Together they remain useful for install releases, now under `ddev composer test:install`. | Keep both for now; consider shrinking route matrix if install validation becomes too slow. |
 | `tests/Feature/PackageServiceProviderBootstrapTest.php` | Broad package source-authority assertions can overlap with wrapper cleanup and package status tests. | `PackageWrapperCleanupTest` and `PackageStatusCommandTest` cover narrower slices. | Keep as release-critical while package transition is recent; revisit after package-native stabilizes. |
 
 ## PHPUnit Groups
