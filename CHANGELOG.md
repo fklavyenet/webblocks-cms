@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Document CMS coexistence, configurable admin prefix direction, host-owned login, and CMS-owned membership authorization decisions.
+
 ## 1.32.46
 
 - Prepare v1.32.46 as a focused Contact Form submit hotfix by registering the public contact form rate limiter from the package service provider for fresh Composer consumers.

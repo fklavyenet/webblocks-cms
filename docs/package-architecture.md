@@ -107,6 +107,12 @@ Target user-owned project-root paths:
 
 This split keeps Laravel application ownership with the install while CMS product ownership moves into the package.
 
+## Host Product Coexistence Boundary
+
+Package-first CMS installs must preserve host application boundaries when CMS is installed beside another Laravel product. CMS should avoid route, config, view, and table collisions with the host app, and it must not assume that the host app's `/admin` route belongs to CMS.
+
+The admin prefix target direction is configurable, with `/cms` recommended for coexistence installs. Host-owned login and CMS-owned authorization decisions are documented in [Coexistence](coexistence.md).
+
 ## Migration Phases
 
 ### Phase 0: Document And Scaffold

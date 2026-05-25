@@ -34,6 +34,10 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - the `Block Types` modal in the slot editor now keeps all block lists in `Name A-Z` order, limits filtering to search plus tab state, shows a header count badge for the current picker result set, only shows `Reset` after active search or tab changes, and keeps the search card visible while long result sets scroll inside the modal
 - Pages listing card headers now include `Import Page`, a first-class admin modal workflow for creating one new draft page from a documented single-page JSON payload without using project-specific commands
 
+## Architecture Note
+
+WebBlocks CMS can run as a standalone CMS, and it can also be installed beside another Laravel host product as an optional website and content management layer. Coexistence installs should keep host-owned login and host admin routes separate from CMS-owned authorization and content administration. See `docs/coexistence.md` for the current architecture direction.
+
 ## Installation
 
 ### Fresh Laravel Package Install

@@ -9,6 +9,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Installation
 
 - [Installation](installation.md)
+- [Coexistence](coexistence.md)
 
 ## Getting Started
 
@@ -55,4 +56,5 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Project Boundary
 
 - [Core Concepts](core-concepts.md#project-boundary)
+- [Coexistence](coexistence.md)
 - [Updates](updates.md)

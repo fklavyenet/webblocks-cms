@@ -32,6 +32,13 @@
 - Release packages must not include `project/`.
 - Keep WebBlocks UI source changes in the WebBlocks UI project, not inside CMS.
 - CMS may consume pinned WebBlocks UI assets, but should not edit UI package source.
+- Do not assume the `/admin` path belongs to CMS.
+- In coexistence designs, use `/cms` or a configurable CMS admin prefix.
+- Preserve the host `/login` model; do not introduce a separate mandatory CMS login system.
+- Treat CMS authorization as CMS membership/role authorization.
+- Do not automatically equate host product admin status with CMS admin status.
+- Do not design installer, register, or invite flows that create duplicate users for the same email.
+- Keep current implementation and target direction separate when documenting coexistence changes.
 
 ## Admin UI
 
