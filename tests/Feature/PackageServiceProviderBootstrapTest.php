@@ -288,6 +288,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame('stubs/vendor/webblocks-cms', WebBlocksCmsServiceProvider::STUBS_PUBLISH_TARGET);
     $this->assertSame('public/cms', WebBlocksCmsServiceProvider::ROOT_RUNTIME_ASSET_COMPATIBILITY_PATH);
     $this->assertStringContainsString(
+      "\$_SERVER['SCRIPT_NAME'] = '/index.php';",
+      (string) file_get_contents(base_path('packages/webblocks-cms/public/cms/index.php'))
+    );
+    $this->assertStringContainsString(
       "require dirname(__DIR__).'/index.php';",
       (string) file_get_contents(base_path('packages/webblocks-cms/public/cms/index.php'))
     );

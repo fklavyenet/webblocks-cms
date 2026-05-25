@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.53
+
+- Prepare v1.32.53 as a follow-up `/cms/` handoff hotfix by resetting PHP front-controller server variables before loading Laravel from `public/cms/index.php`, preserving the canonical `/cms/` request path instead of letting PHP-FPM treat the CMS asset directory as the application base path.
+
 ## 1.32.52
 
 - Prepare v1.32.52 as a live `/cms/` web-server compatibility hotfix by shipping a package `public/cms/index.php` front-controller handoff, preventing Nginx `try_files $uri $uri/ ...` installs from serving the CMS asset directory as a forbidden static directory before Laravel can resolve the canonical CMS dashboard route.

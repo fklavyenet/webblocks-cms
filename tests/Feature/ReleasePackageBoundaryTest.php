@@ -70,6 +70,10 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->assertFileExists($installedPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
     $this->assertFileExists($installedPackageRoot.'/public/cms/index.php');
     $this->assertStringContainsString(
+      "\$_SERVER['SCRIPT_NAME'] = '/index.php';",
+      (string) file_get_contents($installedPackageRoot.'/public/cms/index.php')
+    );
+    $this->assertStringContainsString(
       "require dirname(__DIR__).'/index.php';",
       (string) file_get_contents($installedPackageRoot.'/public/cms/index.php')
     );
