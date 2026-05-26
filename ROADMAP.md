@@ -20,15 +20,15 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: collect enabled plugin menu items and plugin permissions from the registry.
 - Done: add route ownership guards for plugin namespaces and canonical admin/static route boundaries.
 - Done: add tests for absent plugins, disabled plugins, route ownership, permissions, and package boundaries.
-- Later: dynamic plugin package discovery, plugin route loading, plugin migrations, plugin commands, install/enable/disable UI actions, and persistent lifecycle state.
+- Later: dynamic plugin package discovery, plugin migrations, install/enable/disable UI actions, public plugin routes, and persistent lifecycle state.
 
 ### Phase 2 - Plugin Routing, Settings, And Commands
 
-- Add admin route registration for enabled plugins.
-- Add plugin settings pages under the plugin namespace or `System -> Plugins -> Plugin detail`.
-- Add a console command registration convention.
-- Add plugin health and status checks.
-- Add plugin lifecycle statuses beyond simple enabled/disabled state.
+- Done: add admin route registration for enabled plugins under `/webadmin/plugins/{plugin-handle}/...`.
+- Done: add plugin settings page foundations under the plugin namespace and link them from `System -> Plugins -> Plugin detail`.
+- Done: add a console command registration convention for enabled plugins.
+- Done: add basic plugin health and status value objects plus System Plugins visibility.
+- Later: add persistent lifecycle statuses beyond simple enabled/disabled state.
 
 ### Phase 3 - Extension Slots And Block/Plugin Integrations
 

@@ -56,7 +56,7 @@ Reason:
 
 Consequences:
 
-- CMS core must provide plugin discovery, a plugin registry, enabled configuration, extension slot contracts, and guardrails before deep plugin runtime behavior is added.
+- CMS core provides the registry, enabled configuration, enabled-only admin route and command registration, settings scaffolding, health/status reporting, and guardrails before deeper plugin lifecycle behavior is added.
 - Plugin admin routes default under `/webadmin/plugins/{plugin-handle}/...`, while `/webadmin` remains the canonical CMS admin prefix, `/cms` remains static asset territory, and CMS-owned `/admin` routes must not return.
 - Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
 - WebBlocks UI Manager is documented as a pilot plugin, not as a core CMS feature.

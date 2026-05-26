@@ -16,6 +16,15 @@ class PluginDefinition
 
   private ?PluginSettingsDefinition $settings = null;
 
+  /** @var array<int, string|callable> */
+  private array $adminRoutes = [];
+
+  /** @var array<int, class-string> */
+  private array $commands = [];
+
+  /** @var callable|string|null */
+  private mixed $healthReporter = null;
+
   /** @var array<string, PluginMenuItem> */
   private array $menuItems = [];
 
@@ -38,6 +47,10 @@ class PluginDefinition
 
     foreach ($this->permissions as $key => $permission) {
       $this->permissions[$key] = clone $permission;
+    }
+
+    if ($this->settings !== null) {
+      $this->settings = clone $this->settings;
     }
   }
 
@@ -238,6 +251,72 @@ class PluginDefinition
     return $this->settings;
   }
 
+  public function adminRoutes(string|callable $routes): self
+  {
+    if (is_string($routes) && trim($routes) === '') {
+      throw new PluginException("Plugin [{$this->handle}] admin route file cannot be empty.");
+    }
+
+    $this->adminRoutes[] = is_string($routes) ? trim($routes) : $routes;
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, string|callable>
+   */
+  public function adminRouteDefinitions(): array
+  {
+    return $this->adminRoutes;
+  }
+
+  /**
+   * @param  array<int, class-string>  $commands
+   */
+  public function commands(array $commands): self
+  {
+    $cleanCommands = [];
+
+    foreach ($commands as $command) {
+      if (! is_string($command) || trim($command) === '') {
+        throw new PluginException("Plugin [{$this->handle}] commands must be class-string values.");
+      }
+
+      $cleanCommands[] = trim($command);
+    }
+
+    $this->commands = array_values(array_unique($cleanCommands));
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, class-string>
+   */
+  public function commandClasses(): array
+  {
+    return $this->commands;
+  }
+
+  public function health(callable|string|null $reporter): self
+  {
+    if (is_string($reporter) && trim($reporter) === '') {
+      $reporter = null;
+    }
+
+    $this->healthReporter = is_string($reporter) ? trim($reporter) : $reporter;
+
+    return $this;
+  }
+
+  /**
+   * @return callable|string|null
+   */
+  public function healthReporter(): mixed
+  {
+    return $this->healthReporter;
+  }
+
   /**
    * @return array<string, mixed>
    */
@@ -255,6 +334,9 @@ class PluginDefinition
       'enabled' => $enabled,
       'menu_items_count' => count($this->menuItems),
       'permissions_count' => count($this->permissions),
+      'admin_routes_count' => count($this->adminRoutes),
+      'commands_count' => count($this->commands),
+      'has_settings' => $this->settings !== null,
     ];
   }
 }

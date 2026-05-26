@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginException;
 use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
+use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
 
 class PluginDefinitionTest extends TestCase
 {
@@ -108,5 +109,28 @@ class PluginDefinitionTest extends TestCase
       'webblocks_ui_manager',
       PluginDefinition::routeNameSegmentForHandle('webblocks-ui-manager')
     );
+  }
+
+  #[Test]
+  public function plugin_definition_declares_phase_two_runtime_contributions(): void
+  {
+    $plugin = PluginDefinition::make('webblocks-ui-manager')
+      ->label('WebBlocks UI Manager')
+      ->adminRoutes(fn () => null)
+      ->commands(['Vendor\\WebBlocksUiManager\\Console\\SyncReleasesCommand'])
+      ->settings(
+        PluginSettingsDefinition::make()
+          ->label('Release Settings')
+          ->description('Controls release publishing defaults.')
+      )
+      ->health(fn () => 'Release API health is not configured yet.');
+
+    $this->assertCount(1, $plugin->adminRouteDefinitions());
+    $this->assertSame(['Vendor\\WebBlocksUiManager\\Console\\SyncReleasesCommand'], $plugin->commandClasses());
+    $this->assertSame('Release Settings', $plugin->settingsDefinition()?->labelText());
+    $this->assertIsCallable($plugin->healthReporter());
+    $this->assertTrue($plugin->toArray()['has_settings']);
+    $this->assertSame(1, $plugin->toArray()['admin_routes_count']);
+    $this->assertSame(1, $plugin->toArray()['commands_count']);
   }
 }

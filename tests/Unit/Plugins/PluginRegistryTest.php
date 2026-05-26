@@ -4,8 +4,11 @@ namespace Tests\Unit\Plugins;
 
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginException;
+use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginHealthResult;
 use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -128,6 +131,45 @@ class PluginRegistryTest extends TestCase
     $registry->get('webblocks-ui-manager')?->label('Changed from snapshot');
 
     $this->assertSame('WebBlocks UI Manager', $registry->summaries()[0]['label']);
+  }
+
+  #[Test]
+  public function command_registrar_returns_commands_for_enabled_plugins_only(): void
+  {
+    $registry = new PluginRegistry([
+      'webblocks-ui-manager' => true,
+      'disabled-plugin' => false,
+    ]);
+
+    $registry->register($this->samplePlugin()->commands(['Vendor\\Enabled\\SyncCommand']));
+    $registry->register(
+      PluginDefinition::make('disabled-plugin')
+        ->label('Disabled Plugin')
+        ->commands(['Vendor\\Disabled\\SyncCommand'])
+    );
+
+    $this->assertSame(
+      ['Vendor\\Enabled\\SyncCommand'],
+      (new PluginCommandRegistrar($registry))->enabledCommands()
+    );
+  }
+
+  #[Test]
+  public function health_monitor_reports_enabled_plugin_health_and_disabled_unavailable_status(): void
+  {
+    $registry = new PluginRegistry([
+      'webblocks-ui-manager' => true,
+      'disabled-plugin' => false,
+    ]);
+
+    $registry->register($this->samplePlugin()->health(fn () => PluginHealthResult::healthy('Ready.')));
+    $registry->register(PluginDefinition::make('disabled-plugin')->label('Disabled Plugin'));
+
+    $monitor = new PluginHealthMonitor($registry);
+
+    $this->assertSame('healthy', $monitor->healthFor($registry->get('webblocks-ui-manager'))->status);
+    $this->assertSame('Ready.', $monitor->healthFor($registry->get('webblocks-ui-manager'))->message);
+    $this->assertSame('unavailable', $monitor->healthFor($registry->get('disabled-plugin'))->status);
   }
 
   private function samplePlugin(): PluginDefinition

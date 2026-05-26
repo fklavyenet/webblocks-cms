@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the planned architecture for the WebBlocks CMS plugin system. It is documentation-only for now: no runtime plugin loader, route registration, migration runner, command registration, or admin menu implementation exists as part of this decision.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1 and Phase 2 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, and the `System -> Plugins` listing/detail surfaces. Deeper features such as dynamic Composer discovery, plugin migrations, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, and the WebBlocks UI Manager plugin remain future work.
 
 ## Core Decision
 
@@ -81,32 +81,36 @@ Each plugin should declare metadata through a manifest or definition object:
 
 Plugins are registry-first. They connect to CMS through explicit contracts rather than random includes, root view overrides, or install-specific route files.
 
-Pseudo API:
+Current registry API shape:
 
 ```php
-WebBlocksPlugin::make('webblocks-ui-manager')
+PluginDefinition::make('webblocks-ui-manager')
   ->label('WebBlocks UI Manager')
   ->version('1.0.0')
   ->requiresCms('^1.33')
   ->provider(WebBlocksUiManagerServiceProvider::class)
-  ->adminMenu(fn (AdminMenuRegistry $menu) => $menu->addToGroup(
-    group: 'system',
-    item: AdminMenuItem::make('webblocks-ui-releases')
+  ->menu([
+    PluginMenuItem::make('releases')
       ->label('WebBlocks UI Releases')
       ->icon('package')
-      ->route('webblocks.plugins.webblocks-ui-manager.releases.index')
-      ->permission('webblocks-ui-manager.view')
-  ))
+      ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+      ->permission('webblocks-ui-manager.view'),
+  ])
   ->permissions([
     PluginPermission::make('webblocks-ui-manager.view')->label('View releases'),
     PluginPermission::make('webblocks-ui-manager.publish')->label('Publish CDN artifacts'),
     PluginPermission::make('webblocks-ui-manager.settings')->label('Manage settings'),
   ])
-  ->routes(fn (PluginRouteRegistry $routes) => $routes->admin(__DIR__.'/../routes/admin.php'))
+  ->adminRoutes(__DIR__.'/../routes/admin.php')
   ->commands([
     PublishWebBlocksUiReleaseCommand::class,
   ])
-  ->settings(WebBlocksUiManagerSettings::class);
+  ->settings(
+    PluginSettingsDefinition::make()
+      ->label('Release Settings')
+      ->description('Controls WebBlocks UI release publishing defaults.')
+  )
+  ->health(WebBlocksUiManagerHealth::class);
 ```
 
 The exact API may change during implementation, but the contract must preserve these rules:
@@ -161,6 +165,8 @@ Plugins must not pollute:
 - the legacy `/admin` namespace
 - the `/cms` static asset namespace
 
+Disabled plugins must not register admin routes. The enabled-only registrar is intentionally conservative: if a plugin is disabled through `config/webblocks-plugins.php`, its routes are absent rather than present-but-forbidden.
+
 Public routes are opt-in. A plugin that declares public routes must declare ownership clearly enough that route ownership can be tested. Public plugin routes must avoid collisions with site pages, CMS public routes, and host product routes.
 
 ## Permission Rules
@@ -190,6 +196,20 @@ Settings rules:
 - sensitive values must never be rendered in logs, health check output, exception messages, or admin flash messages
 - settings UI must live under the plugin route namespace or inside `System -> Plugins -> Plugin detail`
 - environment variables may seed defaults, but runtime settings should remain plugin-owned and inspectable through the registry
+
+Phase 2 provides a read-only settings route foundation for enabled plugins that declare `PluginSettingsDefinition` without a custom route name. The default route is:
+
+```text
+/webadmin/plugins/{plugin-handle}/settings
+```
+
+Its default route name is:
+
+```text
+webblocks.plugins.{plugin_handle}.settings.edit
+```
+
+Editable settings storage and validation schemas are reserved for a later phase.
 
 ## Migration And Data Lifecycle Rules
 
@@ -253,17 +273,20 @@ The full lifecycle target:
 6. upgrade
 7. uninstall or decommission, in a later destructive-data design
 
-The first implementation target is intentionally smaller:
+The implemented Phase 1 and Phase 2 runtime target is intentionally smaller:
 
-- discovery
 - registry
 - enabled configuration
 - `System -> Plugins` listing
+- `System -> Plugins` detail and read-only settings surfaces
 - admin menu registration
 - permission registration
+- enabled-only admin route registration
+- enabled-only command registration
+- basic health/status reporting
 - route ownership guards
 
-That minimum gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
+That foundation gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
 
 ### Phase 1 Implementation Note
 
@@ -275,7 +298,22 @@ The initial Phase 1 runtime now includes:
 - a package-owned `System -> Plugins` listing at `/webadmin/system/plugins`
 - route guard coverage proving `/webadmin` remains canonical while CMS-owned `/admin` and Laravel `/cms` routes remain absent
 
-This phase still does not include dynamic Composer plugin discovery, plugin route loading, plugin migrations, plugin commands, install/enable/disable UI actions, public plugin routes, marketplace/catalog behavior, or WebBlocks UI Manager business logic. Config-backed enabled state is intentionally a bridge; a later lifecycle phase may move install/enable/disable state to persistent storage.
+Phase 1 does not include dynamic Composer plugin discovery, plugin migrations, install/enable/disable UI actions, public plugin routes, marketplace/catalog behavior, or WebBlocks UI Manager business logic. Config-backed enabled state is intentionally a bridge; a later lifecycle phase may move install/enable/disable state to persistent storage.
+
+### Phase 2 Implementation Note
+
+The Phase 2 runtime now includes:
+
+- enabled-only plugin admin route registration through `PluginRouteRegistrar`
+- default admin plugin URLs under `/webadmin/plugins/{plugin-handle}/...`
+- default admin plugin route names under `webblocks.plugins.{plugin_handle}.*`
+- default read-only settings pages for enabled plugins that declare `PluginSettingsDefinition`
+- enabled-only console command collection through `PluginCommandRegistrar`
+- `PluginHealthResult`, `PluginLifecycleStatus`, and `PluginHealthMonitor` for basic status reporting
+- `System -> Plugins` detail pages that expose lifecycle, health, settings, route, command, permission, and menu contribution summaries
+- route guard coverage proving enabled test plugin routes register, disabled plugin routes are absent, `/webadmin` remains canonical, `/cms` is not a Laravel admin route namespace, and CMS-owned `/admin` routes remain absent
+
+This phase intentionally keeps migrations discovery, plugin install/apply/run actions, destructive lifecycle actions, dynamic Composer discovery, public plugin routes, and WebBlocks UI Manager runtime behavior out of scope.
 
 ## Testing And Release Guardrails
 

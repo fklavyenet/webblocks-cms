@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
 
 class PluginRouteGuardTest extends TestCase
 {
@@ -40,5 +43,47 @@ class PluginRouteGuardTest extends TestCase
 
     $this->assertSame('/webadmin/plugins/webblocks-ui-manager', $plugin->adminRoutePrefix());
     $this->assertSame('webblocks.plugins.webblocks_ui_manager', $plugin->routeNamePrefix());
+  }
+
+  #[Test]
+  public function enabled_plugin_admin_routes_register_under_default_plugin_namespace(): void
+  {
+    $registry = new PluginRegistry([
+      'webblocks-ui-manager' => true,
+      'disabled-plugin' => false,
+    ]);
+
+    $registry->register(
+      PluginDefinition::make('webblocks-ui-manager')
+        ->label('WebBlocks UI Manager')
+        ->settings(PluginSettingsDefinition::make()->label('Release Settings'))
+        ->adminRoutes(function (): void {
+          Route::get('/releases', fn () => 'enabled plugin route')
+            ->name('releases.index');
+        })
+    );
+
+    $registry->register(
+      PluginDefinition::make('disabled-plugin')
+        ->label('Disabled Plugin')
+        ->settings(PluginSettingsDefinition::make())
+        ->adminRoutes(function (): void {
+          Route::get('/tools', fn () => 'disabled plugin route')
+            ->name('tools.index');
+        })
+    );
+
+    (new PluginRouteRegistrar($registry))->registerEnabledAdminRoutes();
+    Route::getRoutes()->refreshNameLookups();
+
+    $enabledRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.index');
+    $settingsRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.settings.edit');
+
+    $this->assertNotNull($enabledRoute);
+    $this->assertSame('webadmin/plugins/webblocks-ui-manager/releases', $enabledRoute?->uri());
+    $this->assertNotNull($settingsRoute);
+    $this->assertSame('webadmin/plugins/webblocks-ui-manager/settings', $settingsRoute?->uri());
+    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.tools.index'));
+    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.settings.edit'));
   }
 }

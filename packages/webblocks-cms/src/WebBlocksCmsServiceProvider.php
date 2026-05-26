@@ -33,8 +33,10 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -106,6 +108,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/system/icons/index.blade.php',
     'admin/system/icons/partials/edit-modal.blade.php',
     'admin/system/plugins/index.blade.php',
+    'admin/system/plugins/settings.blade.php',
+    'admin/system/plugins/show.blade.php',
     'components/admin/form-actions.blade.php',
     'diagnostics/package-status.blade.php',
     'layouts/admin.blade.php',
@@ -269,6 +273,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/shared-slots/revisions/show.blade.php',
     'admin/shared-slots/slot-blocks.blade.php',
     'admin/system/plugins/index.blade.php',
+    'admin/system/plugins/settings.blade.php',
+    'admin/system/plugins/show.blade.php',
     'admin/system/search.blade.php',
     'admin/system/settings.blade.php',
   ];
@@ -789,6 +795,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     $this->commands(self::PACKAGE_CONSOLE_COMMANDS);
+    $this->commands(app(PluginCommandRegistrar::class)->enabledCommands());
 
     if ($this->installCommandShouldLoad()) {
       $this->commands([InstallWebBlocksCmsCommand::class]);
@@ -809,7 +816,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
       $enabled = config('webblocks-plugins.enabled', []);
 
-      return new PluginRegistry(is_array($enabled) ? $enabled : []);
+      return new PluginRegistry(is_array($enabled) ? $enabled : [], useLiveConfig: true);
     });
 
     $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(
@@ -843,6 +850,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $this->packagePublicRoutesShouldLoad(),
       $this->publicRouteFiles()
     );
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
   }
 
   protected function diagnosticRoutesShouldLoad(): bool

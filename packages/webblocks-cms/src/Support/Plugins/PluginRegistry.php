@@ -14,6 +14,7 @@ class PluginRegistry
    */
   public function __construct(
     private readonly array $enabledConfig = [],
+    private readonly bool $useLiveConfig = false,
   ) {}
 
   public function register(PluginDefinition $plugin): self
@@ -69,6 +70,10 @@ class PluginRegistry
 
   public function isEnabled(string $handle): bool
   {
+    if ($this->useLiveConfig) {
+      return (bool) config("webblocks-plugins.enabled.{$handle}", false);
+    }
+
     return (bool) ($this->enabledConfig[$handle] ?? false);
   }
 
