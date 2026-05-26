@@ -1,8 +1,6 @@
 @php
-    $isSubmittedBlock = (int) session('contact_form_success_block_id') === $block->id;
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
     $submitLabel = $block->submit_label ?? 'Send message';
-    $successMessage = $block->success_message ?? config('contact.success_message');
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">
@@ -17,15 +15,6 @@
             </div>
         @elseif ($block->content)
             <p>{{ $block->content }}</p>
-        @endif
-
-        @if ($isSubmittedBlock)
-            <div class="wb-alert wb-alert-success" role="status" data-wb-contact-success-dismiss data-wb-contact-success-dismiss-delay="7000">
-                <div>
-                    <div class="wb-alert-title">Message sent</div>
-                    <div>{{ $successMessage }}</div>
-                </div>
-            </div>
         @endif
 
         @if ($hasTargetedErrors)

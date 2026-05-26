@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.62
+
+- Adopt the WebBlocks UI toast feedback standard for transient public Contact Form success messages, keeping successful redirects on the clean page URL while validation errors remain anchored and inline near the form.
+- Remove the duplicate Contact Form success rendering inside the block so successful submissions show one non-blocking toast from the shared public `#wb-overlay-root`.
+
 ## 1.32.61
 
 - Polish public Contact Form redirects so successful submissions return to the clean current page URL without a form fragment, while validation errors still return to the form-specific anchor and unsafe source URLs continue to fall back to the canonical page URL.

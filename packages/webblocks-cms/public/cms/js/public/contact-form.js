@@ -23,6 +23,13 @@
   ready(function () {
     document.querySelectorAll('[data-wb-contact-success-dismiss]').forEach(function (alert) {
       var delay = parseInt(alert.getAttribute('data-wb-contact-success-dismiss-delay') || '7000', 10);
+      var close = alert.querySelector('[data-wb-contact-success-close]');
+
+      if (close) {
+        close.addEventListener('click', function () {
+          dismissAlert(alert);
+        });
+      }
 
       window.setTimeout(function () {
         dismissAlert(alert);

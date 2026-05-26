@@ -546,7 +546,7 @@ Public pages now use explicit layout composition modes:
 - Admin fields: `heading`, `intro_text`, `submit_label`, `success_message`, `recipient_email`, `send_email_notification`, `store_submissions`
 - Translatable fields: `title`/heading, `content`/intro, `submit_label`, `success_message`
 - Shared fields: `recipient_email`, `send_email_notification`, `store_submissions`
-- Intended WebBlocks UI output: form fields use WebBlocks UI form primitives; submit action uses `wb-btn`; success and error messages use `wb-alert`.
+- Intended WebBlocks UI output: form fields use WebBlocks UI form primitives; submit action uses `wb-btn`; transient success feedback renders once as a WebBlocks UI toast under the shared public `#wb-overlay-root`, while validation errors and user-correctable failures stay inline near the form with `wb-alert`.
 - Current implementation: acceptable
 - Notes for later renderer/admin improvements: preserve structured form fields, keep operational settings out of editorial copy, keep site-level default recipients on the site record instead of arbitrary block JSON, and avoid making editors paste raw form markup.
 

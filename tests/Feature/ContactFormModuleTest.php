@@ -165,7 +165,7 @@ class ContactFormModuleTest extends TestCase
   }
 
   #[Test]
-  public function contact_form_success_flash_renders_after_submission_redirect(): void
+  public function contact_form_success_flash_renders_once_as_public_toast_after_submission_redirect(): void
   {
     Mail::fake();
     [$page, $block] = $this->createContactFormPage();
@@ -181,9 +181,26 @@ class ContactFormModuleTest extends TestCase
       ->assertOk()
       ->assertSee('Message sent')
       ->assertSee('Thanks for your message. We will get back to you soon.')
+      ->assertSee('class="wb-toast-container wb-toast-container-top-right"', false)
+      ->assertSee('class="wb-toast wb-toast-success"', false)
+      ->assertSee('role="status"', false)
+      ->assertSee('aria-live="polite"', false)
+      ->assertSee('class="wb-toast-body"', false)
+      ->assertSee('class="wb-toast-title"', false)
+      ->assertSee('class="wb-toast-close"', false)
       ->assertSee('data-wb-contact-success-dismiss', false)
       ->assertSee('data-wb-contact-success-dismiss-delay="7000"', false)
-      ->assertSee('cms/js/public/contact-form.js', false);
+      ->assertSee('cms/js/public/contact-form.js', false)
+      ->assertDontSee('wb-toast-region', false)
+      ->assertDontSee('wb-alert-success', false);
+
+    $html = $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Thanks for your message. We will get back to you soon.',
+    ])->get(route('pages.show', $page->slug, false))->getContent();
+
+    $this->assertSame(1, substr_count($html, 'Thanks for your message. We will get back to you soon.'));
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*class="wb-toast-container wb-toast-container-top-right"/s', $html);
   }
 
   #[Test]
@@ -213,7 +230,9 @@ class ContactFormModuleTest extends TestCase
     ])->render();
 
     $this->assertStringContainsString('Please review the form', $html);
+    $this->assertStringContainsString('wb-alert wb-alert-danger', $html);
     $this->assertStringNotContainsString('data-wb-contact-success-dismiss', $html);
+    $this->assertStringNotContainsString('wb-toast', $html);
   }
 
   #[Test]
@@ -1298,7 +1317,10 @@ class ContactFormModuleTest extends TestCase
       ->assertOk()
       ->assertSee('Send message');
 
-    $this->withSession(['contact_form_success_block_id' => $block->id])
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Thanks for your message. We will get back to you soon.',
+    ])
       ->get(route('pages.show', $page->slug))
       ->assertOk()
       ->assertSee('Thanks for your message. We will get back to you soon.');
@@ -1307,7 +1329,10 @@ class ContactFormModuleTest extends TestCase
       ->assertOk()
       ->assertSee('Mesaj gonder');
 
-    $this->withSession(['contact_form_success_block_id' => $block->id])
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Tesekkurler.',
+    ])
       ->get('/tr/p/iletisim')
       ->assertOk()
       ->assertSee('Tesekkurler.');
@@ -1324,6 +1349,14 @@ class ContactFormModuleTest extends TestCase
     $this->get(route('pages.show', $page->slug))
       ->assertOk()
       ->assertSee('Send message')
+      ->assertDontSee(config('contact.success_message'));
+
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => config('contact.success_message'),
+    ])
+      ->get(route('pages.show', $page->slug))
+      ->assertOk()
       ->assertSee(config('contact.success_message'));
   }
 
@@ -1344,7 +1377,10 @@ class ContactFormModuleTest extends TestCase
       ->assertSee('Contact us')
       ->assertSee('Send message');
 
-    $this->withSession(['contact_form_success_block_id' => $block->id])
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Thanks for your message. We will get back to you soon.',
+    ])
       ->get(route('pages.show', $page->slug))
       ->assertOk()
       ->assertSee('Thanks for your message. We will get back to you soon.');
@@ -1389,7 +1425,10 @@ class ContactFormModuleTest extends TestCase
       ->assertSee('Bize ulasin')
       ->assertSee('Mesaj gonder');
 
-    $this->withSession(['contact_form_success_block_id' => $block->id])
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Tesekkurler.',
+    ])
       ->get('http://primary.example.test/tr/p/iletisim')
       ->assertOk()
       ->assertSee('Tesekkurler.');

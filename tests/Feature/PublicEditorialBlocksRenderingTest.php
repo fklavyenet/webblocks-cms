@@ -1162,9 +1162,11 @@ class PublicEditorialBlocksRenderingTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('id="wb-overlay-root"', false);
+    $response->assertSee('class="wb-toast-container wb-toast-container-top-right"', false);
     $response->assertDontSee('id="wb-public-overlay-root"', false);
     $response->assertDontSee('id="public-overlay-root"', false);
     $response->assertDontSee('id="overlay-root"', false);
+    $response->assertDontSee('wb-toast-region', false);
     $response->assertSee('data-wb-public-search-overlay', false);
     $response->assertSee('id="wb-public-search-modal"', false);
     $response->assertSee('data-search-json-path="/search.json"', false);
@@ -1173,6 +1175,7 @@ class PublicEditorialBlocksRenderingTest extends TestCase
     $response->assertDontSee('cms/js/public/header-actions.js', false);
     $this->assertSame(1, substr_count($response->getContent(), 'class="wb-overlay-root"'));
     $this->assertSame(1, substr_count($response->getContent(), 'cms/js/public/sidebar-navigation.js'));
+    $this->assertMatchesRegularExpression('/id="wb-overlay-root" class="wb-overlay-root">.*class="wb-toast-container wb-toast-container-top-right"/s', $response->getContent());
     $response->assertSeeInOrder([
       '<head>',
       WebBlocks::uiJsUrl(),
