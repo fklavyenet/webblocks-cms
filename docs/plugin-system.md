@@ -213,7 +213,7 @@ Plugin assets must be published under their own namespace. They must not mix wit
 For WebBlocks UI Manager, versioned CDN output should use immutable paths such as:
 
 ```text
-public/cdn/webblocks-ui/v2.7.8/...
+public/cdn/webblocks-ui/v2.7.9/...
 ```
 
 Asset rules:

@@ -243,7 +243,7 @@ class AdminDashboardRouteTest extends TestCase
   }
 
   #[Test]
-  public function admin_layout_uses_pinned_webblocks_ui_v278_minified_assets_and_not_master_or_development_urls(): void
+  public function admin_layout_uses_pinned_webblocks_ui_v279_minified_assets_and_not_master_or_development_urls(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -256,7 +256,7 @@ class AdminDashboardRouteTest extends TestCase
     $response->assertSee('webblocks-ui.min.css', false);
     $response->assertSee('webblocks-icons.min.css', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.8', false);
+    $response->assertSee('webblocks-ui@v2.7.9', false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('/webblocks-ui.css', false);

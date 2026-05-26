@@ -8,7 +8,6 @@
 
         $cmsPublicCssPath = public_path('cms/css/public.css');
         $publicJsAssets = [
-            'contact-form' => public_path('cms/js/public/contact-form.js'),
             'public-search-modal' => public_path('cms/js/public/public-search-modal.js'),
             'sidebar-navigation' => public_path('cms/js/public/sidebar-navigation.js'),
         ];
@@ -76,9 +75,6 @@
 
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
-        @if (is_file($publicJsAssets['contact-form']))
-            <script src="{{ asset('cms/js/public/contact-form.js') }}?v={{ filemtime($publicJsAssets['contact-form']) }}" defer></script>
-        @endif
         @if (is_file($publicJsAssets['public-search-modal']))
             <script src="{{ asset('cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
         @endif
@@ -157,12 +153,12 @@
         <div id="wb-overlay-root" class="wb-overlay-root">
             <div class="wb-toast-container wb-toast-container-top-right">
                 @if (session('contact_form_success_message'))
-                    <div class="wb-toast wb-toast-success" role="status" aria-live="polite" data-wb-contact-success-dismiss data-wb-contact-success-dismiss-delay="7000">
+                    <div class="wb-toast wb-toast-success" role="status" aria-live="polite">
                         <div class="wb-toast-body">
                             <strong class="wb-toast-title">Message sent</strong>
                             <span>{{ session('contact_form_success_message') }}</span>
                         </div>
-                        <button type="button" class="wb-toast-close" aria-label="Dismiss message" data-wb-contact-success-close></button>
+                        <button type="button" class="wb-toast-close" aria-label="Dismiss message" data-wb-dismiss="toast"></button>
                     </div>
                 @endif
             </div>

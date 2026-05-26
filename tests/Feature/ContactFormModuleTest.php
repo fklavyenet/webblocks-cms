@@ -188,9 +188,13 @@ class ContactFormModuleTest extends TestCase
       ->assertSee('class="wb-toast-body"', false)
       ->assertSee('class="wb-toast-title"', false)
       ->assertSee('class="wb-toast-close"', false)
-      ->assertSee('data-wb-contact-success-dismiss', false)
-      ->assertSee('data-wb-contact-success-dismiss-delay="7000"', false)
-      ->assertSee('cms/js/public/contact-form.js', false)
+      ->assertSee('data-wb-dismiss="toast"', false)
+      ->assertDontSee('data-wb-contact-success-dismiss', false)
+      ->assertDontSee('data-wb-contact-success-dismiss-delay', false)
+      ->assertDontSee('data-wb-contact-success-close', false)
+      ->assertDontSee('data-wb-auto-dismiss="false"', false)
+      ->assertDontSee('data-wb-toast-timeout="0"', false)
+      ->assertDontSee('cms/js/public/contact-form.js', false)
       ->assertDontSee('wb-toast-region', false)
       ->assertDontSee('wb-alert-success', false);
 

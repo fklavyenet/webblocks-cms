@@ -5,6 +5,11 @@
 - Add the minimal CMS plugin registry foundation with plugin manifest value objects, config-backed enabled state, plugin permission/menu collection, route boundary guards, and the core `System -> Plugins` listing, without adding plugin business logic or WebBlocks UI Manager runtime code.
 - Document the planned CMS plugin host architecture, plugin boundary rules, WebBlocks UI Manager pilot scope, and phased plugin roadmap without changing runtime behavior.
 
+## 1.32.65
+
+- Update CMS-owned WebBlocks UI CDN consumption to `v2.7.9` using the canonical jsDelivr tag URL format for `webblocks-ui.min.css`, `webblocks-icons.min.css`, `webblocks-ui.min.js`, and the default icon manifest sync source.
+- Let Contact Form success toast auto-dismiss use the WebBlocks UI `v2.7.9` static toast lifecycle, keeping the shared top-right `#wb-overlay-root` toast container and manual `data-wb-dismiss="toast"` close hook without CMS-owned toast workaround JavaScript.
+
 ## 1.32.64
 
 - Prepare v1.32.64 as a browser-facing WebBlocks UI CDN hotfix by removing the `raw.githubusercontent.com` fallback introduced in v1.32.63, which Chrome can block for CSS and JavaScript through ORB or MIME handling.

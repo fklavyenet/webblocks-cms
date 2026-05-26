@@ -59,7 +59,7 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
-    $response->assertSee('webblocks-ui@v2.7.8', false);
+    $response->assertSee('webblocks-ui@v2.7.9', false);
     $response->assertSee('webblocks-ui.min.css', false);
     $response->assertSee('webblocks-icons.min.css', false);
     $response->assertSee('webblocks-ui.min.js', false);

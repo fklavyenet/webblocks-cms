@@ -10,9 +10,9 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.32.64';
+  public const VERSION = '1.32.65';
 
-  public const UI_VERSION = 'v2.7.8';
+  public const UI_VERSION = 'v2.7.9';
 
   public const UI_DIST_BASE = 'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@'.self::UI_VERSION.'/packages/webblocks/dist';
 

@@ -43,7 +43,7 @@ This roadmap captures planned architecture and implementation direction. It does
 - Add release tables and models in the plugin package or host-local plugin.
 - Add a publish command for release artifacts.
 - Generate checksums and manifests.
-- Publish first-party CDN files under versioned static paths such as `public/cdn/webblocks-ui/v2.7.8/...`.
+- Publish first-party CDN files under versioned static paths such as `public/cdn/webblocks-ui/v2.7.9/...`.
 - Add an admin releases UI.
 - Add plugin health checks.
 - Add first-party CDN smoke validation.
