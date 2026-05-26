@@ -3,6 +3,8 @@
     @php
         use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
         use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;
+        use WebBlocks\Cms\Support\Plugins\PluginPublicAsset;
+        use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
         use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
         use WebBlocks\Cms\Support\WebBlocks;
 
@@ -15,6 +17,11 @@
         $bodyEndPageAssets = collect($bodyEndPageAssets ?? collect());
         $headCssPageAssets = $headPageAssets->where('type', 'css')->values();
         $headJsPageAssets = $headPageAssets->where('type', 'js')->values();
+        $pluginPublicAssets = app(PluginPublicAssetRegistry::class);
+        $headPluginAssets = collect($pluginPublicAssets->head());
+        $bodyEndPluginAssets = collect($pluginPublicAssets->bodyEnd());
+        $headCssPluginAssets = $headPluginAssets->filter(fn ($asset) => $asset->type() === PluginPublicAsset::TYPE_CSS)->values();
+        $headJsPluginAssets = $headPluginAssets->filter(fn ($asset) => $asset->type() === PluginPublicAsset::TYPE_JS)->values();
         $deferredHeadJsPageAssets = $headJsPageAssets
             ->concat($bodyEndPageAssets->where('type', 'js')->values())
             ->values();
@@ -72,6 +79,9 @@
         @foreach ($headCssPageAssets as $pageAsset)
             <link rel="stylesheet" href="{{ $pageAsset->path }}">
         @endforeach
+        @foreach ($headCssPluginAssets as $pluginAsset)
+            <link rel="stylesheet" href="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}">
+        @endforeach
 
         {{-- Public JS assets --}}
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
@@ -86,6 +96,9 @@
         @endif
         @foreach ($deferredHeadJsPageAssets as $pageAsset)
             <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>
+        @endforeach
+        @foreach ($headJsPluginAssets as $pluginAsset)
+            <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
         @endforeach
     </head>
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}">
@@ -149,6 +162,13 @@
         @endphp
         @foreach ($publicBodyEnd as $bodyEndHtml)
             {!! $bodyEndHtml !!}
+        @endforeach
+        @foreach ($bodyEndPluginAssets as $pluginAsset)
+            @if ($pluginAsset->type() === PluginPublicAsset::TYPE_CSS)
+                <link rel="stylesheet" href="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}">
+            @else
+                <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
+            @endif
         @endforeach
         <div id="wb-overlay-root" class="wb-overlay-root">
             <div class="wb-toast-container wb-toast-container-top-right">

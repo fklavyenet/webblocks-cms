@@ -32,11 +32,13 @@ This roadmap captures planned architecture and implementation direction. It does
 
 ### Phase 3 - Extension Slots And Block/Plugin Integrations
 
-- Add dashboard widget extension slots.
-- Add system card extension slots.
-- Add block registry plugin hooks.
-- Add public asset hooks for head and body-end contributions.
-- Define typed slot contracts and value objects for plugin contributions.
+- Done: add typed admin extension slot contracts and registry value objects.
+- Done: add enabled-only dashboard widget extension slots for read-only plugin cards.
+- Done: add enabled-only system card extension slots for read-only plugin cards and links.
+- Done: add plugin-owned block type and block pack declaration hooks without core block view overrides.
+- Done: add public asset hooks separated into safe head and body-end contribution locations.
+- Done: add collision, ownership, disabled-plugin, attribution, admin rendering, asset collection, block hook, and route guard coverage.
+- Later: editable plugin widgets, public plugin routes, plugin lifecycle storage, plugin migrations, marketplace/catalog behavior, and real WebBlocks UI Manager runtime code.
 
 ### Phase 4 - WebBlocks UI Manager Pilot Plugin
 

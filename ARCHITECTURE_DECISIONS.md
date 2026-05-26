@@ -44,7 +44,7 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 
 - WebBlocks CMS core is a plugin host.
 - Product-specific or domain-specific features belong in plugins instead of CMS core.
-- Plugins use a registry-first contract to add admin menus, routes, permissions, settings, commands, migrations, blocks, assets, dashboard widgets, and extension-slot contributions.
+- Plugins use a registry-first contract to add admin menus, routes, permissions, settings, commands, migrations, blocks, assets, dashboard widgets, system cards, and extension-slot contributions.
 - Core view overrides are forbidden by default; plugins must use documented extension slots or registry contracts.
 - The first pilot plugin target is WebBlocks UI Manager for WebBlocks UI release records, artifact publish workflows, and first-party CDN management.
 
@@ -56,7 +56,9 @@ Reason:
 
 Consequences:
 
-- CMS core provides the registry, enabled configuration, enabled-only admin route and command registration, settings scaffolding, health/status reporting, and guardrails before deeper plugin lifecycle behavior is added.
+- CMS core provides the registry, enabled configuration, enabled-only admin route and command registration, settings scaffolding, health/status reporting, typed read-only admin extension slots, plugin-owned block declarations, public asset contribution hooks, and guardrails before deeper plugin lifecycle behavior is added.
 - Plugin admin routes default under `/webadmin/plugins/{plugin-handle}/...`, while `/webadmin` remains the canonical CMS admin prefix, `/cms` remains static asset territory, and CMS-owned `/admin` routes must not return.
 - Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
+- Plugin block declarations must use plugin-owned handles such as `plugin-handle::block-handle` and must not replace core block views or monkey patch core block services.
+- Disabled plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health behavior.
 - WebBlocks UI Manager is documented as a pilot plugin, not as a core CMS feature.

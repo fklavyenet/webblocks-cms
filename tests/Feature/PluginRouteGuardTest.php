@@ -85,5 +85,14 @@ class PluginRouteGuardTest extends TestCase
     $this->assertSame('webadmin/plugins/webblocks-ui-manager/settings', $settingsRoute?->uri());
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.tools.index'));
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.settings.edit'));
+
+    $pluginRoutes = collect(Route::getRoutes()->getRoutes())
+      ->filter(fn ($route): bool => str_starts_with($route->uri(), 'webadmin/plugins/'))
+      ->map(fn ($route): string => $route->uri())
+      ->values()
+      ->all();
+
+    $this->assertContains('webadmin/plugins/webblocks-ui-manager/releases', $pluginRoutes);
+    $this->assertNotContains('webadmin/plugins/disabled-plugin/tools', $pluginRoutes);
   }
 }

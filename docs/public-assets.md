@@ -68,6 +68,19 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Page Assets are stored in `page_assets`, not in `pages.settings`
 - When site Export / Import includes media files, referenced `/site/...` physical files are also packaged and restored
 
+## Plugin Public Assets
+
+Enabled plugins may declare public asset contributions through `PluginPublicAsset` registry objects. These hooks are for explicit, attributable plugin assets and are separate from CMS core assets, site override assets, and page-scoped assets.
+
+- plugin asset handles must be dot-namespaced with the plugin handle, such as `analytics-tools.public-css`
+- plugin CSS can be contributed to the public `<head>`
+- plugin JS can be contributed to the public `<head>` with `defer`, `async`, or `type="module"` where declared
+- plugin JS can be contributed to the public body end when late loading is appropriate
+- disabled plugin assets are not collected or rendered
+- plugin assets must still be published by the plugin under a plugin-owned static namespace
+
+The hook does not install plugin packages, publish files, stream assets through Laravel, or create marketplace behavior.
+
 ## Public Asset Convention
 
 - CSS stays in the public `<head>`
@@ -76,6 +89,7 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Public block renderers must not emit inline scripts
 - CMS-owned public JS belongs under `public/cms/js/`
 - CMS-owned public CSS belongs under `public/cms/css/`
+- plugin-owned public assets must use plugin-owned handles and static paths, and must be registered through the plugin asset contribution hooks instead of modifying the CMS public layout directly
 - Site-level override JS belongs under `public/site/{site_handle}/js/site.js`
 - Site-level override CSS belongs under `public/site/{site_handle}/css/site.css`
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal

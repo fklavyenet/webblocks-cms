@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 
 class PluginRegistry
@@ -99,6 +100,136 @@ class PluginRegistry
   }
 
   /**
+   * @return array<int, PluginDashboardWidget>
+   */
+  public function dashboardWidgets(?Authenticatable $user = null): array
+  {
+    $widgets = [];
+
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->dashboardWidgetDefinitions() as $widget) {
+        if (! $this->userCanView($user, $widget->permissionName())) {
+          continue;
+        }
+
+        if (isset($widgets[$widget->key()])) {
+          throw PluginException::duplicateExtensionKey($widget->key());
+        }
+
+        $widgets[$widget->key()] = $widget;
+      }
+    }
+
+    usort($widgets, fn (PluginDashboardWidget $left, PluginDashboardWidget $right): int => $left->sortOrder() <=> $right->sortOrder());
+
+    return $widgets;
+  }
+
+  /**
+   * @return array<int, PluginSystemCard>
+   */
+  public function systemCards(?Authenticatable $user = null): array
+  {
+    $cards = [];
+
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->systemCardDefinitions() as $card) {
+        if (! $this->userCanView($user, $card->permissionName())) {
+          continue;
+        }
+
+        if (isset($cards[$card->key()])) {
+          throw PluginException::duplicateExtensionKey($card->key());
+        }
+
+        $cards[$card->key()] = $card;
+      }
+    }
+
+    usort($cards, fn (PluginSystemCard $left, PluginSystemCard $right): int => $left->sortOrder() <=> $right->sortOrder());
+
+    return $cards;
+  }
+
+  /**
+   * @return array<string, PluginBlockTypeDefinition>
+   */
+  public function pluginBlockTypes(): array
+  {
+    $blockTypes = [];
+
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->blockTypeDefinitions() as $blockType) {
+        if (isset($blockTypes[$blockType->handle()])) {
+          throw PluginException::duplicateBlockHandle($blockType->handle());
+        }
+
+        $blockTypes[$blockType->handle()] = $blockType;
+      }
+
+      foreach ($plugin->blockPackDefinitions() as $blockPack) {
+        foreach ($blockPack->blockTypeDefinitions() as $blockType) {
+          if (isset($blockTypes[$blockType->handle()])) {
+            throw PluginException::duplicateBlockHandle($blockType->handle());
+          }
+
+          $blockTypes[$blockType->handle()] = $blockType;
+        }
+      }
+    }
+
+    ksort($blockTypes);
+
+    return $blockTypes;
+  }
+
+  /**
+   * @return array<string, PluginBlockPackDefinition>
+   */
+  public function pluginBlockPacks(): array
+  {
+    $blockPacks = [];
+
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->blockPackDefinitions() as $blockPack) {
+        if (isset($blockPacks[$blockPack->namespace()])) {
+          throw PluginException::invalidNamespace($blockPack->namespace());
+        }
+
+        $blockPacks[$blockPack->namespace()] = $blockPack;
+      }
+    }
+
+    ksort($blockPacks);
+
+    return $blockPacks;
+  }
+
+  /**
+   * @return array<int, PluginPublicAsset>
+   */
+  public function publicAssets(?string $location = null): array
+  {
+    $assets = [];
+
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->publicAssetDefinitions() as $asset) {
+        if ($location !== null && $asset->location() !== $location) {
+          continue;
+        }
+
+        if (isset($assets[$asset->handle()])) {
+          throw PluginException::duplicateAssetHandle($asset->handle());
+        }
+
+        $assets[$asset->handle()] = $asset;
+      }
+    }
+
+    return array_values($assets);
+  }
+
+  /**
    * @return array<string, array<string, PluginPermission>>
    */
   public function permissions(bool $enabledOnly = true): array
@@ -155,5 +286,14 @@ class PluginRegistry
   private function clonedPermissions(array $permissions): array
   {
     return array_map(fn (PluginPermission $permission): PluginPermission => clone $permission, $permissions);
+  }
+
+  private function userCanView(?Authenticatable $user, ?string $permission): bool
+  {
+    if ($permission === null) {
+      return true;
+    }
+
+    return (bool) $user?->can($permission);
   }
 }

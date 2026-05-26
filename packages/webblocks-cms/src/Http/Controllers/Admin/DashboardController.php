@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\Support\Visitors\VisitorReportsQuery;
@@ -21,6 +22,7 @@ class DashboardController extends Controller
     private readonly VisitorReportsQuery $visitorReports,
     private readonly AdminAuthorization $authorization,
     private readonly SystemSettings $systemSettings,
+    private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
   ) {}
 
   public function __invoke(Request $request): RedirectResponse|View
@@ -52,6 +54,7 @@ class DashboardController extends Controller
         ->limit(5)
         ->get(),
       'visitorSummary' => $this->visitorReports->dashboardSummary($request->user()),
+      'pluginDashboardWidgets' => $this->pluginAdminExtensions->dashboardWidgets($request->user()),
     ]);
   }
 }

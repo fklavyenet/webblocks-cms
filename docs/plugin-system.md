@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1 and Phase 2 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, and the `System -> Plugins` listing/detail surfaces. Deeper features such as dynamic Composer discovery, plugin migrations, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, and the WebBlocks UI Manager plugin remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1, Phase 2, and Phase 3 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, and safe public asset contribution hooks. Deeper features such as dynamic Composer discovery, plugin migrations, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, and the WebBlocks UI Manager plugin remain future work.
 
 ## Core Decision
 
@@ -110,6 +110,26 @@ PluginDefinition::make('webblocks-ui-manager')
       ->label('Release Settings')
       ->description('Controls WebBlocks UI release publishing defaults.')
   )
+  ->dashboardWidgets([
+    PluginDashboardWidget::make('webblocks-ui-manager.release-status')
+      ->title('WebBlocks UI Releases')
+      ->description('Read-only release publishing summary.')
+      ->permission('webblocks-ui-manager.view'),
+  ])
+  ->systemCards([
+    PluginSystemCard::make('webblocks-ui-manager.cdn-status')
+      ->title('CDN Status')
+      ->description('Read-only CDN artifact status.')
+      ->permission('webblocks-ui-manager.view'),
+  ])
+  ->blockTypes([
+    PluginBlockTypeDefinition::make('webblocks-ui-manager::release-card')
+      ->label('Release Card'),
+  ])
+  ->publicAssets([
+    PluginPublicAsset::cssHead('webblocks-ui-manager.public-css', '/cms/plugins/webblocks-ui-manager/public.css'),
+    PluginPublicAsset::jsBodyEnd('webblocks-ui-manager.public-js', '/cms/plugins/webblocks-ui-manager/public.js'),
+  ])
   ->health(WebBlocksUiManagerHealth::class);
 ```
 
@@ -245,6 +265,16 @@ Asset rules:
 - Laravel route-based asset streaming must not be the default for CDN files
 - plugin admin assets must be isolated from core CMS admin assets and publish under a plugin namespace
 
+Phase 3 adds registry-backed public asset declarations for enabled plugins. These declarations are currently limited to explicit asset URLs and are rendered as public page assets only when the owning plugin is enabled:
+
+- head CSS renders as `<link rel="stylesheet">` in the public `<head>`
+- head JS renders as deferred or async/module `<script>` tags in the public `<head>`
+- body-end JS renders near the end of the public `<body>`
+- asset handles must be dot-namespaced with the plugin handle, such as `analytics-tools.public-js`
+- disabled plugin assets are absent from collection and rendering
+
+This is an asset contribution hook foundation, not a plugin package installer or asset publisher. Plugins remain responsible for publishing their own static files under a plugin-owned namespace.
+
 ## Event, Hook, And Extension Slot Rules
 
 Plugins must not monkey patch or override core. Core extension slots must be explicit, documented, and testable.
@@ -261,6 +291,21 @@ Initial extension slot candidates:
 
 Slot contracts should be typed and value-object based. Avoid raw array contracts where possible so collisions, invalid shapes, and ownership can be validated early.
 
+Phase 3 implements these typed extension-slot objects:
+
+- `PluginDashboardWidget` for read-only dashboard cards
+- `PluginSystemCard` for read-only system cards or links
+- `PluginBlockTypeDefinition` for plugin-owned block type declarations
+- `PluginBlockPackDefinition` for grouped plugin block declarations
+- `PluginPublicAsset` for public head and body-end asset declarations
+- `PluginAdminExtensionRegistry`, `PluginBlockRegistry`, and `PluginPublicAssetRegistry` for enabled-only collection
+
+Dashboard widget and system card keys must be dot-namespaced with the plugin handle, for example `analytics-tools.overview`. Public asset handles follow the same dot namespace rule. Plugin block handles must use a plugin-owned namespace such as `analytics-tools::score-card`; unqualified core-style block handles such as `hero` are rejected. These hooks make plugin contributions discoverable and attributable without replacing core package views.
+
+Dashboard widgets render on the super-admin dashboard only when the plugin is enabled and the current user can satisfy the widget permission, if one is declared. System cards render on the `System -> Plugins` screen under the same enabled and permission checks. Both slots are intentionally read-only foundations.
+
+Block hooks are declaration-only foundations. They let enabled plugins expose plugin-owned block types and block packs through the registry, but they do not replace core block contracts, core block views, core block seeders, or block editing services.
+
 ## Plugin Lifecycle
 
 The full lifecycle target:
@@ -273,7 +318,7 @@ The full lifecycle target:
 6. upgrade
 7. uninstall or decommission, in a later destructive-data design
 
-The implemented Phase 1 and Phase 2 runtime target is intentionally smaller:
+The implemented Phase 1 through Phase 3 runtime target is intentionally smaller than the full lifecycle:
 
 - registry
 - enabled configuration
@@ -284,6 +329,9 @@ The implemented Phase 1 and Phase 2 runtime target is intentionally smaller:
 - enabled-only admin route registration
 - enabled-only command registration
 - basic health/status reporting
+- typed read-only dashboard and system card extension slots
+- plugin-owned block and block pack declaration hooks
+- public head and body-end asset contribution hooks
 - route ownership guards
 
 That foundation gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
@@ -315,6 +363,22 @@ The Phase 2 runtime now includes:
 
 This phase intentionally keeps migrations discovery, plugin install/apply/run actions, destructive lifecycle actions, dynamic Composer discovery, public plugin routes, and WebBlocks UI Manager runtime behavior out of scope.
 
+### Phase 3 Implementation Note
+
+The Phase 3 runtime now includes:
+
+- typed admin extension contracts under `Support\Plugins\Contracts`
+- `PluginDashboardWidget` and `PluginSystemCard` value objects collected through `PluginAdminExtensionRegistry`
+- enabled-only dashboard widget rendering on the super-admin dashboard
+- enabled-only system card rendering on `System -> Plugins`
+- `PluginBlockTypeDefinition`, `PluginBlockPackDefinition`, and `PluginBlockRegistry` for plugin-owned block declarations
+- `PluginPublicAsset` and `PluginPublicAssetRegistry` for safe public head and body-end asset declarations
+- validation guards for extension keys, widget keys, system card keys, block handles, block pack namespaces, asset handles, plugin ownership, and duplicate declarations
+- disabled-plugin inert behavior for dashboard widgets, system cards, block hooks, and public assets
+- route guard coverage confirming `/webadmin` and `/webadmin/plugins/...` remain valid while `/admin` and Laravel `/cms` admin routes remain absent
+
+This phase intentionally keeps real marketplace behavior, package installation, plugin migration runners, public plugin routes, editable widgets, core block override hooks, and the WebBlocks UI Manager plugin out of scope. Plugins still must not override package views or monkey patch core services.
+
 ## Testing And Release Guardrails
 
 The plugin system must be protected by route ownership, package boundary, and coexistence tests.
@@ -325,6 +389,10 @@ Required guardrails:
 - core CMS installs show no plugin menus when no plugins are enabled
 - disabled plugin menus do not render
 - disabled plugin routes and actions are unavailable or fail authorization
+- disabled plugin widgets, system cards, block declarations, and public assets are absent
+- plugin dashboard/system extension cards render only when enabled and permitted
+- plugin-owned block declarations are discoverable without overriding core block contracts
+- plugin public assets are collected by safe location and are absent when disabled
 - plugin route registration must not restore a CMS-owned `/admin` namespace
 - `/webadmin` remains the canonical CMS admin prefix
 - `/cms` remains static asset territory, not a Laravel plugin route namespace

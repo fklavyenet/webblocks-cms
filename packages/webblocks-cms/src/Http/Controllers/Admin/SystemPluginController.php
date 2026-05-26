@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
@@ -17,6 +18,7 @@ class SystemPluginController extends Controller
     private readonly PluginRegistry $plugins,
     private readonly PluginHealthMonitor $health,
     private readonly PluginRouteRegistrar $routes,
+    private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
     private readonly SystemSettings $systemSettings,
   ) {}
 
@@ -27,6 +29,7 @@ class SystemPluginController extends Controller
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
       'plugins' => $this->pluginSummaries(),
+      'pluginSystemCards' => $this->pluginAdminExtensions->systemCards(request()->user()),
     ]);
   }
 

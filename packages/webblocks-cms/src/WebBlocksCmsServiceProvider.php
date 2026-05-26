@@ -33,8 +33,11 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
@@ -820,6 +823,18 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
 
     $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(
+      $app->make(PluginRegistry::class)
+    ));
+
+    $this->app->singleton(PluginAdminExtensionRegistry::class, fn ($app): PluginAdminExtensionRegistry => new PluginAdminExtensionRegistry(
+      $app->make(PluginRegistry::class)
+    ));
+
+    $this->app->singleton(PluginBlockRegistry::class, fn ($app): PluginBlockRegistry => new PluginBlockRegistry(
+      $app->make(PluginRegistry::class)
+    ));
+
+    $this->app->singleton(PluginPublicAssetRegistry::class, fn ($app): PluginPublicAssetRegistry => new PluginPublicAssetRegistry(
       $app->make(PluginRegistry::class)
     ));
   }

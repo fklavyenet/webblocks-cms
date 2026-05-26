@@ -14,6 +14,8 @@ Phase 1 is read-only documentation only.
 
 The current Block Types admin screen remains a catalog and metadata screen. In Phase 2 it can now open a read-only Contract modal for each listed row, but it is still not a dynamic form builder or schema editor.
 
+Plugin Phase 3 adds declaration-only plugin block hooks through `PluginBlockTypeDefinition`, `PluginBlockPackDefinition`, and `PluginBlockRegistry`. Enabled plugins can expose plugin-owned handles such as `analytics-tools::score-card` for discovery, but these declarations do not replace the shipped core block contracts, core block views, core seeders, or block editing services. Unqualified core-style handles such as `hero` remain core-owned and are rejected for plugin declarations.
+
 ## Definition
 
 A Block Type Contract is the current technical agreement for how one block type behaves across CMS layers:

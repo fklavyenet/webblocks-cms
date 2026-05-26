@@ -6,6 +6,27 @@
         'description' => 'Review registered WebBlocks CMS plugins and their registry-owned menu and permission contributions.',
     ])
 
+    @if (! empty($pluginSystemCards))
+        <div class="wb-grid wb-grid-2 wb-mb-4">
+            @foreach ($pluginSystemCards as $card)
+                <div class="wb-card" data-plugin-system-card="{{ $card->key() }}" data-plugin-handle="{{ $card->pluginHandle() }}">
+                    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                        <strong>{{ $card->titleText() }}</strong>
+                        <span class="wb-text-sm wb-text-muted">{{ $card->pluginHandle() }}</span>
+                    </div>
+                    <div class="wb-card-body wb-stack wb-gap-2">
+                        @if ($card->descriptionText() !== null)
+                            <div class="wb-text-sm wb-text-muted">{{ $card->descriptionText() }}</div>
+                        @endif
+                        @if ($card->urlValue() !== null)
+                            <a href="{{ $card->urlValue() }}" class="wb-btn wb-btn-secondary">{{ $card->linkLabel() ?? 'Open' }}</a>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header">
             <strong>Registered Plugins</strong>

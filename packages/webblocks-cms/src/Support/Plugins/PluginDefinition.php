@@ -31,6 +31,21 @@ class PluginDefinition
   /** @var array<string, PluginPermission> */
   private array $permissions = [];
 
+  /** @var array<string, PluginDashboardWidget> */
+  private array $dashboardWidgets = [];
+
+  /** @var array<string, PluginSystemCard> */
+  private array $systemCards = [];
+
+  /** @var array<string, PluginBlockTypeDefinition> */
+  private array $blockTypes = [];
+
+  /** @var array<string, PluginBlockPackDefinition> */
+  private array $blockPacks = [];
+
+  /** @var array<string, PluginPublicAsset> */
+  private array $publicAssets = [];
+
   private function __construct(
     private readonly string $handle,
   ) {
@@ -51,6 +66,26 @@ class PluginDefinition
 
     if ($this->settings !== null) {
       $this->settings = clone $this->settings;
+    }
+
+    foreach ($this->dashboardWidgets as $key => $widget) {
+      $this->dashboardWidgets[$key] = clone $widget;
+    }
+
+    foreach ($this->systemCards as $key => $card) {
+      $this->systemCards[$key] = clone $card;
+    }
+
+    foreach ($this->blockTypes as $key => $blockType) {
+      $this->blockTypes[$key] = clone $blockType;
+    }
+
+    foreach ($this->blockPacks as $key => $blockPack) {
+      $this->blockPacks[$key] = clone $blockPack;
+    }
+
+    foreach ($this->publicAssets as $key => $asset) {
+      $this->publicAssets[$key] = clone $asset;
     }
   }
 
@@ -318,6 +353,196 @@ class PluginDefinition
   }
 
   /**
+   * @param  array<int, PluginDashboardWidget>  $widgets
+   */
+  public function dashboardWidgets(array $widgets): self
+  {
+    $indexed = [];
+
+    foreach ($widgets as $widget) {
+      if (! $widget instanceof PluginDashboardWidget) {
+        throw new PluginException('Plugin dashboard widgets must be PluginDashboardWidget instances.');
+      }
+
+      if (! str_starts_with($widget->key(), $this->handle.'.')) {
+        throw PluginException::invalidExtensionOwnership($this->handle, $widget->key());
+      }
+
+      if ($widget->permissionName() !== null && ! str_starts_with($widget->permissionName(), $this->handle.'.')) {
+        throw PluginException::invalidPermissionPrefix($this->handle, $widget->permissionName());
+      }
+
+      if (isset($indexed[$widget->key()])) {
+        throw PluginException::duplicateExtensionKey($widget->key());
+      }
+
+      $indexed[$widget->key()] = $widget->forPlugin($this->handle);
+    }
+
+    $this->dashboardWidgets = $indexed;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, PluginDashboardWidget>
+   */
+  public function dashboardWidgetDefinitions(): array
+  {
+    return array_map(fn (PluginDashboardWidget $widget): PluginDashboardWidget => clone $widget, $this->dashboardWidgets);
+  }
+
+  /**
+   * @param  array<int, PluginSystemCard>  $cards
+   */
+  public function systemCards(array $cards): self
+  {
+    $indexed = [];
+
+    foreach ($cards as $card) {
+      if (! $card instanceof PluginSystemCard) {
+        throw new PluginException('Plugin system cards must be PluginSystemCard instances.');
+      }
+
+      if (! str_starts_with($card->key(), $this->handle.'.')) {
+        throw PluginException::invalidExtensionOwnership($this->handle, $card->key());
+      }
+
+      if ($card->permissionName() !== null && ! str_starts_with($card->permissionName(), $this->handle.'.')) {
+        throw PluginException::invalidPermissionPrefix($this->handle, $card->permissionName());
+      }
+
+      if (isset($indexed[$card->key()])) {
+        throw PluginException::duplicateExtensionKey($card->key());
+      }
+
+      $indexed[$card->key()] = $card->forPlugin($this->handle);
+    }
+
+    $this->systemCards = $indexed;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, PluginSystemCard>
+   */
+  public function systemCardDefinitions(): array
+  {
+    return array_map(fn (PluginSystemCard $card): PluginSystemCard => clone $card, $this->systemCards);
+  }
+
+  /**
+   * @param  array<int, PluginBlockTypeDefinition>  $blockTypes
+   */
+  public function blockTypes(array $blockTypes): self
+  {
+    $indexed = [];
+
+    foreach ($blockTypes as $blockType) {
+      if (! $blockType instanceof PluginBlockTypeDefinition) {
+        throw new PluginException('Plugin block types must be PluginBlockTypeDefinition instances.');
+      }
+
+      $this->assertPluginBlockOwnership($blockType->handle());
+
+      if (isset($indexed[$blockType->handle()])) {
+        throw PluginException::duplicateBlockHandle($blockType->handle());
+      }
+
+      $indexed[$blockType->handle()] = $blockType->forPlugin($this->handle);
+    }
+
+    $this->blockTypes = $indexed;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, PluginBlockTypeDefinition>
+   */
+  public function blockTypeDefinitions(): array
+  {
+    return array_map(fn (PluginBlockTypeDefinition $blockType): PluginBlockTypeDefinition => clone $blockType, $this->blockTypes);
+  }
+
+  /**
+   * @param  array<int, PluginBlockPackDefinition>  $blockPacks
+   */
+  public function blockPacks(array $blockPacks): self
+  {
+    $indexed = [];
+
+    foreach ($blockPacks as $blockPack) {
+      if (! $blockPack instanceof PluginBlockPackDefinition) {
+        throw new PluginException('Plugin block packs must be PluginBlockPackDefinition instances.');
+      }
+
+      if ($blockPack->namespace() !== $this->handle && ! str_starts_with($blockPack->namespace(), $this->handle.'-')) {
+        throw PluginException::invalidNamespace($blockPack->namespace());
+      }
+
+      if (isset($indexed[$blockPack->namespace()])) {
+        throw PluginException::invalidNamespace($blockPack->namespace());
+      }
+
+      foreach ($blockPack->blockTypeDefinitions() as $blockType) {
+        $this->assertPluginBlockOwnership($blockType->handle());
+      }
+
+      $indexed[$blockPack->namespace()] = $blockPack->forPlugin($this->handle);
+    }
+
+    $this->blockPacks = $indexed;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, PluginBlockPackDefinition>
+   */
+  public function blockPackDefinitions(): array
+  {
+    return array_map(fn (PluginBlockPackDefinition $blockPack): PluginBlockPackDefinition => clone $blockPack, $this->blockPacks);
+  }
+
+  /**
+   * @param  array<int, PluginPublicAsset>  $assets
+   */
+  public function publicAssets(array $assets): self
+  {
+    $indexed = [];
+
+    foreach ($assets as $asset) {
+      if (! $asset instanceof PluginPublicAsset) {
+        throw new PluginException('Plugin public assets must be PluginPublicAsset instances.');
+      }
+
+      if (! str_starts_with($asset->handle(), $this->handle.'.')) {
+        throw PluginException::invalidExtensionOwnership($this->handle, $asset->handle());
+      }
+
+      if (isset($indexed[$asset->handle()])) {
+        throw PluginException::duplicateAssetHandle($asset->handle());
+      }
+
+      $indexed[$asset->handle()] = $asset->forPlugin($this->handle);
+    }
+
+    $this->publicAssets = $indexed;
+
+    return $this;
+  }
+
+  /**
+   * @return array<string, PluginPublicAsset>
+   */
+  public function publicAssetDefinitions(): array
+  {
+    return array_map(fn (PluginPublicAsset $asset): PluginPublicAsset => clone $asset, $this->publicAssets);
+  }
+
+  /**
    * @return array<string, mixed>
    */
   public function toArray(bool $enabled = false): array
@@ -336,7 +561,19 @@ class PluginDefinition
       'permissions_count' => count($this->permissions),
       'admin_routes_count' => count($this->adminRoutes),
       'commands_count' => count($this->commands),
+      'dashboard_widgets_count' => count($this->dashboardWidgets),
+      'system_cards_count' => count($this->systemCards),
+      'block_types_count' => count($this->blockTypes),
+      'block_packs_count' => count($this->blockPacks),
+      'public_assets_count' => count($this->publicAssets),
       'has_settings' => $this->settings !== null,
     ];
+  }
+
+  private function assertPluginBlockOwnership(string $blockHandle): void
+  {
+    if (! str_starts_with($blockHandle, $this->handle.'::')) {
+      throw PluginException::invalidBlockOwnership($this->handle, $blockHandle);
+    }
   }
 }

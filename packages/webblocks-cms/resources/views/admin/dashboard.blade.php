@@ -193,5 +193,29 @@
                 </div>
             </div>
         </div>
+
+        @if (! empty($pluginDashboardWidgets))
+            <div class="wb-grid wb-grid-2">
+                @foreach ($pluginDashboardWidgets as $widget)
+                    <div class="wb-card" data-plugin-dashboard-widget="{{ $widget->key() }}" data-plugin-handle="{{ $widget->pluginHandle() }}">
+                        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                            <strong>{{ $widget->titleText() }}</strong>
+                            <span class="wb-text-sm wb-text-muted">{{ $widget->pluginHandle() }}</span>
+                        </div>
+                        <div class="wb-card-body wb-stack wb-gap-2">
+                            @if ($widget->valueText() !== null)
+                                <strong>{{ $widget->valueText() }}</strong>
+                            @endif
+                            @if ($widget->descriptionText() !== null)
+                                <div class="wb-text-sm wb-text-muted">{{ $widget->descriptionText() }}</div>
+                            @endif
+                            @if ($widget->urlValue() !== null)
+                                <a href="{{ $widget->urlValue() }}" class="wb-btn wb-btn-secondary">Open</a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 @endsection
