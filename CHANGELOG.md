@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.60
+
 - Refine the Search Index Status card to use compact WebBlocks admin table patterns instead of loose settings-row sections.
 
 ## 1.32.59
