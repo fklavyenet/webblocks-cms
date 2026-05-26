@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.63
+
+- Prepare v1.32.63 as a WebBlocks UI CDN consumption patch by pinning CMS-owned runtime assets and the default icon manifest sync source to WebBlocks UI `v2.7.8`.
+- Switch production CDN asset URLs to the shipped minified WebBlocks UI dist artifacts: `webblocks-ui.min.css`, `webblocks-icons.min.css`, and `webblocks-ui.min.js`, while keeping CMS-owned `/cms` public assets and the canonical `/webadmin` admin prefix unchanged.
+
 ## 1.32.62
 
 - Adopt the WebBlocks UI toast feedback standard for transient public Contact Form success messages, keeping successful redirects on the clean page URL while validation errors remain anchored and inline near the form.

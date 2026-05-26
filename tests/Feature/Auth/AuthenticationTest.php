@@ -19,6 +19,12 @@ class AuthenticationTest extends TestCase
     $response->assertSee(WebBlocks::uiCssUrl(), false);
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
+    $response->assertSee('webblocks-ui.min.css', false);
+    $response->assertSee('webblocks-icons.min.css', false);
+    $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
+    $response->assertDontSee('/webblocks-ui.css', false);
+    $response->assertDontSee('/webblocks-icons.css', false);
+    $response->assertDontSee('/webblocks-ui.js', false);
     $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
   }
 

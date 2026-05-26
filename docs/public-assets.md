@@ -80,7 +80,7 @@ Page-scoped CSS and JS files can now be referenced relationally from `page_asset
 - Site-level override CSS belongs under `public/site/{site_handle}/css/site.css`
 - The public page shell owns the single shared `#wb-overlay-root.wb-overlay-root` mount for shipped WebBlocks UI modal-backed behaviors such as gallery viewers and the public search modal
 - Public partials and trusted HTML content must contribute overlay children to that canonical root instead of rendering competing roots such as `#wb-public-overlay-root`, `#public-overlay-root`, or `#overlay-root`
-- The shared public dialog layer must not be rendered with `hidden`; WebBlocks UI `v2.7.7` reuses that layer for modal and gallery viewer targets and only toggles visibility on the active backdrop/modal state, not on a reused layer wrapper
+- The shared public dialog layer must not be rendered with `hidden`; WebBlocks UI `v2.7.8` reuses that layer for modal and gallery viewer targets and only toggles visibility on the active backdrop/modal state, not on a reused layer wrapper
 - CMS core only ships public JS when WebBlocks UI does not already cover the behavior; `public-search-modal.js` remains CMS-owned, while Header Actions mode, preset, accent, and dropdown behavior now rely on shipped WebBlocks UI `data-wb-*` behavior without an extra CMS runtime
 
 ## Site Branding Assets
@@ -98,6 +98,6 @@ Public favicon and social sharing artwork are now selected from the shared Media
 
 WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
-CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.7` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source.
+CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.8` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the minified dist artifacts `webblocks-ui.min.css`, `webblocks-icons.min.css`, and `webblocks-ui.min.js`; the non-minified WebBlocks UI dist files remain available upstream for debug and development use.
 
 Those CDN assets are part of the UI project and must not be edited inside the CMS repository.

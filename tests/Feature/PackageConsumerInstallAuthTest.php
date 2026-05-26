@@ -58,6 +58,14 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response->assertSee(WebBlocks::uiCssUrl(), false);
     $response->assertSee(WebBlocks::iconsCssUrl(), false);
     $response->assertSee(WebBlocks::uiJsUrl(), false);
+    $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
+    $response->assertSee('webblocks-ui/v2.7.8', false);
+    $response->assertSee('webblocks-ui.min.css', false);
+    $response->assertSee('webblocks-icons.min.css', false);
+    $response->assertSee('webblocks-ui.min.js', false);
+    $response->assertDontSee('/webblocks-ui.css', false);
+    $response->assertDontSee('/webblocks-icons.css', false);
+    $response->assertDontSee('/webblocks-ui.js', false);
     $response->assertSee('cms/css/guest.css', false);
     $response->assertSee('action="'.route('login').'"', false);
     $response->assertSee('name="email"', false);

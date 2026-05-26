@@ -27,7 +27,7 @@
             @yield('content')
         </main>
 
-        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
         <script>
             document.addEventListener('click', function (event) {
                 var button = event.target.closest('[data-password-toggle]');

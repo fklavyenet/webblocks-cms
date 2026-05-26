@@ -251,7 +251,7 @@
             @stack('overlays')
         </div>
 
-        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
         @if (is_file($adminJsAssets['core']))
             <script src="{{ asset('cms/js/admin/core.js') }}?v={{ filemtime($adminJsAssets['core']) }}" defer></script>
         @endif

@@ -23,6 +23,6 @@
             </div>
         </div>
 
-        <script src="{{ WebBlocks::uiJsUrl() }}"></script>
+        <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
     </body>
 </html>
