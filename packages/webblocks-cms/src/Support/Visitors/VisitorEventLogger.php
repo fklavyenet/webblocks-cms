@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Throwable;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 
 class VisitorEventLogger
 {
@@ -25,11 +26,20 @@ class VisitorEventLogger
     $trackingMode = $this->supportsTrackingMode()
       ? $this->visitorConsent->trackingMode($request)
       : VisitorEvent::TRACKING_MODE_FULL;
+    $device = $this->deviceContext((string) $request->userAgent());
+    $referrer = $this->referrerContext($request, $page);
     $payload = [
       'site_id' => $page->site_id,
       'page_id' => $page->id,
       'locale_id' => $translation?->locale_id,
       'path' => $this->normalizePath($request->getPathInfo()),
+      'referrer' => $referrer['host'],
+      'utm_source' => $this->utmValue($request, 'utm_source'),
+      'utm_medium' => $this->utmValue($request, 'utm_medium'),
+      'utm_campaign' => $this->utmValue($request, 'utm_campaign'),
+      'device_type' => $device['device_type'],
+      'browser_family' => $device['browser_family'],
+      'os_family' => $device['os_family'],
       'visited_at' => now(),
     ];
 
@@ -37,18 +47,21 @@ class VisitorEventLogger
       $payload['tracking_mode'] = $trackingMode;
     }
 
-    if ($trackingMode === VisitorEvent::TRACKING_MODE_FULL) {
-      $device = $this->deviceContext((string) $request->userAgent());
+    if ($this->supportsColumn('referrer_host')) {
+      $payload['referrer_host'] = $referrer['host'];
+    }
 
+    if ($this->supportsColumn('referrer_type')) {
+      $payload['referrer_type'] = $referrer['type'];
+    }
+
+    if ($this->supportsColumn('is_bot')) {
+      $payload['is_bot'] = $device['device_type'] === 'bot';
+    }
+
+    if ($trackingMode === VisitorEvent::TRACKING_MODE_FULL) {
       $payload = [
         ...$payload,
-        'referrer' => $this->truncate($request->headers->get('referer'), 2048),
-        'utm_source' => $this->utmValue($request, 'utm_source'),
-        'utm_medium' => $this->utmValue($request, 'utm_medium'),
-        'utm_campaign' => $this->utmValue($request, 'utm_campaign'),
-        'device_type' => $device['device_type'],
-        'browser_family' => $device['browser_family'],
-        'os_family' => $device['os_family'],
         'session_key' => $this->sessionKey($request),
         'ip_hash' => $this->ipHash($request),
       ];
@@ -67,7 +80,7 @@ class VisitorEventLogger
       return true;
     }
 
-    return $this->isObviousBot((string) $request->userAgent());
+    return false;
   }
 
   private function normalizePath(?string $path): string
@@ -114,9 +127,9 @@ class VisitorEventLogger
     $normalized = strtolower($userAgent);
 
     return [
-      'device_type' => $this->deviceType($normalized),
-      'browser_family' => $this->browserFamily($normalized),
-      'os_family' => $this->osFamily($normalized),
+      'device_type' => $this->isBot($normalized) ? 'bot' : $this->deviceType($normalized),
+      'browser_family' => $this->isBot($normalized) ? null : $this->browserFamily($normalized),
+      'os_family' => $this->isBot($normalized) ? null : $this->osFamily($normalized),
     ];
   }
 
@@ -174,7 +187,7 @@ class VisitorEventLogger
     };
   }
 
-  private function isObviousBot(string $userAgent): bool
+  private function isBot(string $userAgent): bool
   {
     $normalized = strtolower($userAgent);
 
@@ -189,6 +202,57 @@ class VisitorEventLogger
     }
 
     return false;
+  }
+
+  private function referrerContext(Request $request, Page $page): array
+  {
+    $host = $this->normalizedHost($request->headers->get('referer'));
+
+    if ($host === null) {
+      return ['host' => null, 'type' => 'direct'];
+    }
+
+    return [
+      'host' => $host,
+      'type' => $this->isInternalReferrer($host, $request, $page) ? 'internal' : 'external',
+    ];
+  }
+
+  private function normalizedHost(mixed $value): ?string
+  {
+    $normalized = trim((string) $value);
+
+    if ($normalized === '') {
+      return null;
+    }
+
+    $host = parse_url($normalized, PHP_URL_HOST);
+    $host = is_string($host) && $host !== '' ? $host : $normalized;
+    $host = app(SiteDomainNormalizer::class)->normalize($host);
+
+    return $host !== null ? $this->truncate($host, 255) : null;
+  }
+
+  private function isInternalReferrer(string $host, Request $request, Page $page): bool
+  {
+    $requestHost = app(SiteDomainNormalizer::class)->normalize($request->getHost());
+
+    if ($requestHost !== null && $host === $requestHost) {
+      return true;
+    }
+
+    $site = $page->site;
+    $siteHost = $site ? app(SiteDomainNormalizer::class)->normalize($site->canonicalDomain()) : null;
+
+    if ($siteHost !== null && $host === $siteHost) {
+      return true;
+    }
+
+    if ($site?->relationLoaded('siteDomains')) {
+      return $site->siteDomains->contains(fn ($domain) => $domain->domain === $host);
+    }
+
+    return $site?->siteDomains()->where('domain', $host)->exists() ?? false;
   }
 
   private function truncate(mixed $value, int $limit = 255): ?string
@@ -224,6 +288,11 @@ class VisitorEventLogger
 
   private function supportsTrackingMode(): bool
   {
-    return Schema::hasTable('visitor_events') && Schema::hasColumn('visitor_events', 'tracking_mode');
+    return $this->supportsColumn('tracking_mode');
+  }
+
+  private function supportsColumn(string $column): bool
+  {
+    return Schema::hasTable('visitor_events') && Schema::hasColumn('visitor_events', $column);
   }
 }

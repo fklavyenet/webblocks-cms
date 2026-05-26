@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Make Visitor Reports privacy-safe and more honest by storing referrer hosts, referrer type, device category, bot flag, and normalized UTM aggregate values without raw referrer URLs, raw query strings, full user-agent strings, or raw IP addresses.
+- Improve Visitor Reports summaries with human and bot page-view breakdowns, All/Human/Bots traffic filtering, visible Top Referrer counts, device share percentages, and explicit `Not tracked` states when unique visitor or session metrics cannot be calculated because consent-based session identifiers were not collected.
+- Add focused coverage for anonymous page views, referrer host normalization, internal/direct grouping, device aggregation, bot filtering, UTM aggregation, site-scoped report access, and Top Pages unique visitor not-tracked display.
+
 ## 1.32.57
 
 - Restore the package-owned `/webadmin/login` WebBlocks UI auth shell with package-safe Blade views, route-aware forgot password and register links, pinned WebBlocks UI assets, `/cms/css/guest.css`, and `/cms/brand` logo assets while keeping `/admin` and `/cms` admin aliases absent.

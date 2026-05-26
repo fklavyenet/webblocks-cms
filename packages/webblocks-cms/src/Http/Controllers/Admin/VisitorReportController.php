@@ -34,8 +34,9 @@ class VisitorReportController extends Controller
       'isEnabled' => (bool) config('cms.visitor_reports.enabled', true),
       'utmEnabled' => $this->reports->utmTrackingEnabled(),
       'supportsUtmBreakdowns' => $this->reports->supportsUtmBreakdowns(),
+      'supportsBotBreakdowns' => $this->reports->supportsBotBreakdowns(),
       'visitorEventsTableExists' => $tableExists,
-      'privacyAwareReportingMessage' => 'Page views include privacy-safe anonymous views. Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.',
+      'privacyAwareReportingMessage' => 'Page views, referrer hosts, UTM values, device categories, and bot labels are stored as anonymous aggregates without raw IP addresses, full referrer URLs, query strings, or user-agent strings. Unique visitors, sessions, and average pages per session are shown only when consent-based session tracking is available.',
     ]);
   }
 }

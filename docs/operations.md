@@ -16,6 +16,20 @@ WebBlocks CMS includes install-level operational tools for updates, backups, and
 - Export / Import
 - Update
 
+## Visitor Reports
+
+Visitor Reports is a privacy-safe operational report for public page activity. Anonymous page views can be counted without consent-based identifiers. The report also stores aggregate-only referrer, campaign, device, and bot information:
+
+- referrers are normalized to host/domain plus `direct`, `internal`, or `external` type; full referrer URLs are not stored or shown
+- empty referrers are grouped as `Direct / Unknown`
+- UTM source, medium, and campaign are stored as normalized values only; the full query string is not stored
+- user-agent strings are reduced at request time to device category (`desktop`, `mobile`, `tablet`, `bot`, or `unknown`) plus coarse browser/OS families where available; full user-agent strings are not stored
+- known crawler and bot user-agent patterns are counted as bot page views and remain visible in the report instead of being silently removed
+
+Unique visitors, sessions, entry pages, and average pages per session require consent-based session tracking. When a date/site/locale/traffic filter contains page views but no usable session or visitor identifier, the UI shows `Not tracked` instead of `0`. Older rows that cannot be backfilled safely remain `Unknown`, `Direct / Unknown`, or `Not tracked` depending on which aggregate fields exist.
+
+Site-scoped authorization still applies: super admins can see all sites, while site admins and editors can see only assigned site data. The site filter is limited to the user's accessible sites.
+
 ## System Updates
 
 System Updates checks the installed CMS version against the configured update service.

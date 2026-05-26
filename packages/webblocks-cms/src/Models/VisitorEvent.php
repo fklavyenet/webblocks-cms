@@ -21,12 +21,15 @@ class VisitorEvent extends Model
     'path',
     'tracking_mode',
     'referrer',
+    'referrer_host',
+    'referrer_type',
     'utm_source',
     'utm_medium',
     'utm_campaign',
     'device_type',
     'browser_family',
     'os_family',
+    'is_bot',
     'session_key',
     'ip_hash',
     'visited_at',
@@ -35,6 +38,7 @@ class VisitorEvent extends Model
   protected function casts(): array
   {
     return [
+      'is_bot' => 'boolean',
       'visited_at' => 'datetime',
     ];
   }

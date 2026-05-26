@@ -645,12 +645,15 @@ return new class extends Migration
       $table->string('path');
       $table->string('tracking_mode')->default('basic');
       $table->text('referrer')->nullable();
+      $table->string('referrer_host')->nullable();
+      $table->string('referrer_type', 24)->nullable();
       $table->string('utm_source')->nullable();
       $table->string('utm_medium')->nullable();
       $table->string('utm_campaign')->nullable();
       $table->string('device_type')->nullable();
       $table->string('browser_family')->nullable();
       $table->string('os_family')->nullable();
+      $table->boolean('is_bot')->nullable();
       $table->string('session_key')->nullable();
       $table->string('ip_hash')->nullable();
       $table->timestamp('visited_at')->nullable();

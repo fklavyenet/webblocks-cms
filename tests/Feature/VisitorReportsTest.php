@@ -116,7 +116,7 @@ class VisitorReportsTest extends TestCase
   }
 
   #[Test]
-  public function public_page_with_no_consent_cookie_creates_a_basic_tracking_row_only(): void
+  public function public_page_with_no_consent_cookie_creates_a_basic_row_with_privacy_safe_aggregates(): void
   {
     $page = $this->createPublishedPage();
 
@@ -132,19 +132,23 @@ class VisitorReportsTest extends TestCase
     $this->assertSame($this->defaultLocale()->id, $event->locale_id);
     $this->assertSame('/p/about', $event->path);
     $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
-    $this->assertNull($event->referrer);
-    $this->assertNull($event->utm_source);
-    $this->assertNull($event->utm_medium);
-    $this->assertNull($event->utm_campaign);
-    $this->assertNull($event->device_type);
-    $this->assertNull($event->browser_family);
-    $this->assertNull($event->os_family);
+    $this->assertSame('example.test', $event->referrer);
+    $this->assertSame('example.test', $event->referrer_host);
+    $this->assertSame('external', $event->referrer_type);
+    $this->assertSame('newsletter', $event->utm_source);
+    $this->assertSame('email', $event->utm_medium);
+    $this->assertSame('spring', $event->utm_campaign);
+    $this->assertSame('mobile', $event->device_type);
+    $this->assertSame('Safari', $event->browser_family);
+    $this->assertSame('iOS', $event->os_family);
+    $this->assertFalse($event->is_bot);
     $this->assertNull($event->session_key);
     $this->assertNull($event->ip_hash);
+    $this->assertStringNotContainsString('/campaign', $event->referrer);
   }
 
   #[Test]
-  public function public_page_with_declined_consent_creates_a_basic_tracking_row_only(): void
+  public function public_page_with_declined_consent_creates_a_basic_row_with_privacy_safe_aggregates(): void
   {
     $page = $this->createPublishedPage();
 
@@ -159,11 +163,11 @@ class VisitorReportsTest extends TestCase
     $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
     $this->assertNull($event->session_key);
     $this->assertNull($event->ip_hash);
-    $this->assertNull($event->referrer);
-    $this->assertNull($event->utm_source);
-    $this->assertNull($event->device_type);
-    $this->assertNull($event->browser_family);
-    $this->assertNull($event->os_family);
+    $this->assertSame('example.test', $event->referrer);
+    $this->assertSame('newsletter', $event->utm_source);
+    $this->assertSame('desktop', $event->device_type);
+    $this->assertSame('Chrome', $event->browser_family);
+    $this->assertSame('Windows', $event->os_family);
   }
 
   #[Test]
@@ -180,7 +184,9 @@ class VisitorReportsTest extends TestCase
     $event = VisitorEvent::query()->firstOrFail();
 
     $this->assertSame(VisitorEvent::TRACKING_MODE_FULL, $event->tracking_mode);
-    $this->assertSame('https://example.test/campaign', $event->referrer);
+    $this->assertSame('example.test', $event->referrer);
+    $this->assertSame('example.test', $event->referrer_host);
+    $this->assertSame('external', $event->referrer_type);
     $this->assertSame('newsletter', $event->utm_source);
     $this->assertSame('email', $event->utm_medium);
     $this->assertSame('spring', $event->utm_campaign);
@@ -213,7 +219,7 @@ class VisitorReportsTest extends TestCase
   }
 
   #[Test]
-  public function obvious_bot_requests_are_not_tracked(): void
+  public function obvious_bot_requests_are_tracked_as_bot_aggregate_without_identifiers(): void
   {
     $page = $this->createPublishedPage();
 
@@ -221,7 +227,13 @@ class VisitorReportsTest extends TestCase
       ->get(route('pages.show', $page->slug, false))
       ->assertOk();
 
-    $this->assertDatabaseCount('visitor_events', 0);
+    $event = VisitorEvent::query()->firstOrFail();
+
+    $this->assertSame(VisitorEvent::TRACKING_MODE_BASIC, $event->tracking_mode);
+    $this->assertSame('bot', $event->device_type);
+    $this->assertTrue($event->is_bot);
+    $this->assertNull($event->session_key);
+    $this->assertNull($event->ip_hash);
   }
 
   #[Test]
@@ -235,7 +247,7 @@ class VisitorReportsTest extends TestCase
     $response->assertSee('Visitor Reports');
     $response->assertSee('Total page views');
     $response->assertSee('Top Pages');
-    $response->assertSee('Page views include privacy-safe anonymous views. Unique visitors, sessions, referrers, campaigns, and device summaries require analytics consent.');
+    $response->assertSee('Page views, referrer hosts, UTM values, device categories, and bot labels are stored as anonymous aggregates');
   }
 
   #[Test]
@@ -435,7 +447,6 @@ class VisitorReportsTest extends TestCase
     $response->assertSee('newsletter');
     $response->assertSee('email');
     $response->assertDontSee('other-campaign');
-    $response->assertDontSee('Direct / None');
   }
 
   #[Test]
@@ -463,7 +474,7 @@ class VisitorReportsTest extends TestCase
     ]));
 
     $response->assertOk();
-    $response->assertSee('Direct / None');
+    $response->assertSee('Direct / Unknown');
   }
 
   #[Test]
@@ -604,7 +615,7 @@ class VisitorReportsTest extends TestCase
   }
 
   #[Test]
-  public function campaign_source_and_medium_summaries_do_not_include_basic_rows_as_direct_none(): void
+  public function campaign_source_and_medium_summaries_include_basic_aggregate_rows_without_session_counts(): void
   {
     $page = $this->createPublishedPage();
 
@@ -634,10 +645,121 @@ class VisitorReportsTest extends TestCase
     $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
 
     $this->assertCount(1, $report['top_campaigns']);
-    $this->assertSame('Direct / None', $report['top_campaigns']->first()['label']);
-    $this->assertSame(1, $report['top_campaigns']->first()['page_views']);
-    $this->assertSame(1, $report['source_breakdown']->first()['page_views']);
-    $this->assertSame(1, $report['medium_breakdown']->first()['page_views']);
+    $this->assertSame('Direct / Unknown', $report['top_campaigns']->first()['label']);
+    $this->assertSame(2, $report['top_campaigns']->first()['page_views']);
+    $this->assertSame(2, $report['source_breakdown']->first()['page_views']);
+    $this->assertSame(2, $report['medium_breakdown']->first()['page_views']);
+    $this->assertSame(1, $report['top_campaigns']->first()['sessions']);
+  }
+
+  #[Test]
+  public function anonymous_page_views_show_unique_visitors_as_not_tracked_instead_of_zero(): void
+  {
+    $user = User::factory()->editor()->create();
+    $page = $this->createPublishedPage();
+
+    VisitorEvent::query()->create([
+      'site_id' => $page->site_id,
+      'page_id' => $page->id,
+      'locale_id' => $this->defaultLocale()->id,
+      'path' => '/p/about',
+      'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+      'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+    ]);
+
+    $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
+
+    $this->assertNull($report['summary']['unique_visitors']);
+    $this->assertSame('not_tracked', $report['metric_states']['unique_visitors']);
+    $this->assertNull($report['top_pages']->first()['unique_visitors']);
+    $this->assertSame('not_tracked', $report['top_pages']->first()['unique_visitors_state']);
+
+    $response = $this->actingAs($user)->get(route('admin.reports.visitors.index', ['date_range' => 'today']));
+
+    $response->assertOk();
+    $response->assertSee('Not tracked');
+    $response->assertDontSee('<td>0</td>', false);
+  }
+
+  #[Test]
+  public function referrer_summary_uses_hosts_and_groups_internal_and_direct_traffic(): void
+  {
+    $site = $this->defaultSite();
+    $site->forceFill(['domain' => 'example.test'])->save();
+    $page = $this->createPublishedPage($site);
+
+    VisitorEvent::query()->create([
+      'site_id' => $site->id,
+      'page_id' => $page->id,
+      'path' => '/p/about',
+      'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+      'referrer_host' => 'search.example',
+      'referrer_type' => 'external',
+      'visited_at' => CarbonImmutable::today()->setTime(8, 0),
+    ]);
+    VisitorEvent::query()->create([
+      'site_id' => $site->id,
+      'page_id' => $page->id,
+      'path' => '/p/about',
+      'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+      'referrer_host' => 'example.test',
+      'referrer_type' => 'internal',
+      'visited_at' => CarbonImmutable::today()->setTime(9, 0),
+    ]);
+    VisitorEvent::query()->create([
+      'site_id' => $site->id,
+      'page_id' => $page->id,
+      'path' => '/p/about',
+      'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+      'referrer_type' => 'direct',
+      'visited_at' => CarbonImmutable::today()->setTime(10, 0),
+    ]);
+
+    $labels = app(VisitorReportsQuery::class)->build($this->todayFilters())['top_referrers']->pluck('label')->all();
+
+    $this->assertContains('search.example', $labels);
+    $this->assertContains('Internal', $labels);
+    $this->assertContains('Direct / Unknown', $labels);
+    $this->assertNotContains('https://search.example/path?private=value', $labels);
+  }
+
+  #[Test]
+  public function device_summary_and_bot_traffic_filters_use_privacy_safe_categories(): void
+  {
+    $user = User::factory()->editor()->create();
+    $page = $this->createPublishedPage();
+
+    foreach ([
+      ['device_type' => 'desktop', 'is_bot' => false, 'path' => '/p/desktop'],
+      ['device_type' => 'mobile', 'is_bot' => false, 'path' => '/p/mobile'],
+      ['device_type' => 'bot', 'is_bot' => true, 'path' => '/p/bot'],
+    ] as $index => $event) {
+      VisitorEvent::query()->create([
+        'site_id' => $page->site_id,
+        'page_id' => $page->id,
+        'path' => $event['path'],
+        'tracking_mode' => VisitorEvent::TRACKING_MODE_BASIC,
+        'device_type' => $event['device_type'],
+        'is_bot' => $event['is_bot'],
+        'visited_at' => CarbonImmutable::today()->setTime(8 + $index, 0),
+      ]);
+    }
+
+    $report = app(VisitorReportsQuery::class)->build($this->todayFilters());
+
+    $this->assertEqualsCanonicalizing(['Desktop', 'Mobile', 'Bot'], $report['device_summary']->pluck('label')->all());
+    $this->assertSame(2, $report['summary']['human_page_views']);
+    $this->assertSame(1, $report['summary']['bot_page_views']);
+
+    $this->actingAs($user)->get(route('admin.reports.visitors.index', [
+      'date_range' => 'today',
+      'traffic' => 'bots',
+    ]))->assertOk()->assertSee('/p/bot')->assertDontSee('/p/mobile');
+
+    $this->actingAs($user)->get(route('admin.reports.visitors.index', [
+      'date_range' => 'today',
+      'traffic' => 'human',
+    ]))->assertOk()->assertSee('/p/mobile')->assertDontSee('/p/bot');
   }
 
   #[Test]

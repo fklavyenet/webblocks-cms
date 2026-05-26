@@ -3,12 +3,36 @@
 @php
     $summary = $report['summary'] ?? [
         'total_page_views' => 0,
+        'human_page_views' => 0,
+        'bot_page_views' => 0,
+        'tracked_page_views' => 0,
         'unique_visitors' => 0,
         'total_sessions' => 0,
         'average_pages_per_session' => 0,
     ];
+    $metricStates = $report['metric_states'] ?? [
+        'unique_visitors' => 'no_data',
+        'total_sessions' => 'no_data',
+        'average_pages_per_session' => 'no_data',
+    ];
     $supportsCampaignReports = ($supportsUtmBreakdowns ?? false) && ($utmEnabled ?? true);
-    $hasFilters = $filters['date_range'] !== 'last_30_days' || $filters['site'] !== 'all' || $filters['locale'] !== 'all';
+    $hasFilters = $filters['date_range'] !== 'last_30_days' || $filters['site'] !== 'all' || $filters['locale'] !== 'all' || ($filters['traffic'] ?? 'all') !== 'all';
+
+    $trackedMetric = function ($value, string $state, int $decimals = 0): string {
+        if ($state === 'not_tracked') {
+            return 'Not tracked';
+        }
+
+        if ($state === 'no_data') {
+            return 'No data';
+        }
+
+        if ($value === null) {
+            return '—';
+        }
+
+        return number_format((float) $value, $decimals);
+    };
 @endphp
 
 @section('content')
@@ -83,6 +107,15 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="wb-stack wb-gap-1">
+                            <label for="visitor_reports_traffic">Traffic</label>
+                            <select id="visitor_reports_traffic" name="traffic" class="wb-select">
+                                <option value="all" @selected(($filters['traffic'] ?? 'all') === 'all')>All traffic</option>
+                                <option value="human" @selected(($filters['traffic'] ?? 'all') === 'human')>Human only</option>
+                                <option value="bots" @selected(($filters['traffic'] ?? 'all') === 'bots')>Bots only</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="wb-cluster wb-cluster-2 wb-admin-filter-actions-end">
@@ -105,28 +138,48 @@
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
                     <div class="wb-text-sm wb-text-muted">Total page views</div>
+                    <div class="wb-text-xs wb-text-muted">Anonymous aggregate</div>
                     <strong>{{ number_format($summary['total_page_views']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
+                    <div class="wb-text-sm wb-text-muted">Human page views</div>
+                    <div class="wb-text-xs wb-text-muted">Bot flag excluded</div>
+                    <strong>{{ number_format($summary['human_page_views']) }}</strong>
+                </div>
+            </div>
+
+            <div class="wb-card">
+                <div class="wb-card-body wb-stack wb-gap-1">
+                    <div class="wb-text-sm wb-text-muted">Bot page views</div>
+                    <div class="wb-text-xs wb-text-muted">Shown separately, not hidden</div>
+                    <strong>{{ number_format($summary['bot_page_views']) }}</strong>
+                </div>
+            </div>
+
+            <div class="wb-card">
+                <div class="wb-card-body wb-stack wb-gap-1">
                     <div class="wb-text-sm wb-text-muted">Unique visitors</div>
-                    <strong>{{ number_format($summary['unique_visitors']) }}</strong>
+                    <div class="wb-text-xs wb-text-muted">Requires session consent</div>
+                    <strong>{{ $trackedMetric($summary['unique_visitors'], $metricStates['unique_visitors']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
                     <div class="wb-text-sm wb-text-muted">Total sessions</div>
-                    <strong>{{ number_format($summary['total_sessions']) }}</strong>
+                    <div class="wb-text-xs wb-text-muted">Requires session consent</div>
+                    <strong>{{ $trackedMetric($summary['total_sessions'], $metricStates['total_sessions']) }}</strong>
                 </div>
             </div>
 
             <div class="wb-card">
                 <div class="wb-card-body wb-stack wb-gap-1">
                     <div class="wb-text-sm wb-text-muted">Average pages per session</div>
-                    <strong>{{ number_format($summary['average_pages_per_session'], 1) }}</strong>
+                    <div class="wb-text-xs wb-text-muted">Tracked page views only</div>
+                    <strong>{{ $trackedMetric($summary['average_pages_per_session'], $metricStates['average_pages_per_session'], 1) }}</strong>
                 </div>
             </div>
         </div>
@@ -166,8 +219,8 @@
                                         <tr>
                                             <td>{{ $row['label'] }}</td>
                                             <td>{{ number_format($row['page_views']) }}</td>
-                                            <td>{{ number_format($row['unique_visitors']) }}</td>
-                                            <td>{{ number_format($row['sessions']) }}</td>
+                                            <td>{{ $trackedMetric($row['unique_visitors'], $row['tracking_state']) }}</td>
+                                            <td>{{ $trackedMetric($row['sessions'], $row['tracking_state']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -204,8 +257,8 @@
                                         <tr>
                                             <td>{{ $row['label'] }}</td>
                                             <td>{{ number_format($row['page_views']) }}</td>
-                                            <td>{{ number_format($row['unique_visitors']) }}</td>
-                                            <td>{{ number_format($row['sessions']) }}</td>
+                                            <td>{{ $trackedMetric($row['unique_visitors'], $row['tracking_state']) }}</td>
+                                            <td>{{ $trackedMetric($row['sessions'], $row['tracking_state']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -242,8 +295,8 @@
                                         <tr>
                                             <td>{{ $row['label'] }}</td>
                                             <td>{{ number_format($row['page_views']) }}</td>
-                                            <td>{{ number_format($row['unique_visitors']) }}</td>
-                                            <td>{{ number_format($row['sessions']) }}</td>
+                                            <td>{{ $trackedMetric($row['unique_visitors'], $row['tracking_state']) }}</td>
+                                            <td>{{ $trackedMetric($row['sessions'], $row['tracking_state']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -339,7 +392,7 @@
                                         <tr>
                                             <td>{{ $row['name'] }} <span class="wb-text-sm wb-text-muted">{{ $row['label'] }}</span></td>
                                             <td>{{ number_format($row['page_views']) }}</td>
-                                            <td>{{ number_format($row['unique_visitors']) }}</td>
+                                            <td>{{ $trackedMetric($row['unique_visitors'], $row['unique_visitors_state']) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -363,6 +416,7 @@
                                     <tr>
                                         <th>Device</th>
                                         <th>Page views</th>
+                                        <th>Share</th>
                                         <th>Sessions</th>
                                     </tr>
                                 </thead>
@@ -371,7 +425,40 @@
                                         <tr>
                                             <td>{{ $row['label'] }}</td>
                                             <td>{{ number_format($row['page_views']) }}</td>
-                                            <td>{{ number_format($row['sessions']) }}</td>
+                                            <td>{{ number_format($row['share'], 1) }}%</td>
+                                            <td>{{ $row['sessions'] === null ? 'Not tracked' : number_format($row['sessions']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="wb-card">
+                <div class="wb-card-header"><strong>Bot Visibility</strong></div>
+                <div class="wb-card-body">
+                    @if ($report['bot_summary']->isEmpty())
+                        <div class="wb-empty wb-empty-sm">
+                            <div class="wb-empty-title">No traffic data yet</div>
+                        </div>
+                    @else
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-striped wb-table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Traffic</th>
+                                        <th>Page views</th>
+                                        <th>Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($report['bot_summary'] as $row)
+                                        <tr>
+                                            <td>{{ $row['label'] }}</td>
+                                            <td>{{ number_format($row['page_views']) }}</td>
+                                            <td>{{ number_format($row['share'], 1) }}%</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -409,7 +496,7 @@
                                         <td>{{ $row['site_name'] }}</td>
                                         <td>{{ strtoupper($row['locale_code']) }}</td>
                                         <td>{{ number_format($row['page_views']) }}</td>
-                                        <td>{{ number_format($row['unique_visitors']) }}</td>
+                                        <td>{{ $trackedMetric($row['unique_visitors'], $row['unique_visitors_state']) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
