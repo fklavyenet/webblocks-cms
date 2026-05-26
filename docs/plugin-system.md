@@ -265,6 +265,18 @@ The first implementation target is intentionally smaller:
 
 That minimum gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
 
+### Phase 1 Implementation Note
+
+The initial Phase 1 runtime now includes:
+
+- `PluginDefinition`, `PluginRegistry`, `PluginMenuItem`, and `PluginPermission` value objects under the package `Support\Plugins` namespace
+- deterministic validation for kebab-case handles, duplicate handles, duplicate menu item keys, semver-like versions, and handle-prefixed plugin permissions
+- config-backed enabled state through `config/webblocks-plugins.php`
+- a package-owned `System -> Plugins` listing at `/webadmin/system/plugins`
+- route guard coverage proving `/webadmin` remains canonical while CMS-owned `/admin` and Laravel `/cms` routes remain absent
+
+This phase still does not include dynamic Composer plugin discovery, plugin route loading, plugin migrations, plugin commands, install/enable/disable UI actions, public plugin routes, marketplace/catalog behavior, or WebBlocks UI Manager business logic. Config-backed enabled state is intentionally a bridge; a later lifecycle phase may move install/enable/disable state to persistent storage.
+
 ## Testing And Release Guardrails
 
 The plugin system must be protected by route ownership, package boundary, and coexistence tests.

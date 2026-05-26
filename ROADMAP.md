@@ -14,14 +14,13 @@ This roadmap captures planned architecture and implementation direction. It does
 
 ### Phase 1 - Minimal Core Plugin Registry
 
-- Add `PluginManifest` or `PluginDefinition` contracts.
-- Add `PluginRegistry`.
-- Add an enabled/disabled configuration model.
-- Integrate plugin contributions with the admin menu registry.
-- Integrate plugin permissions with the permission registry.
-- Add a `System -> Plugins` listing.
-- Add route ownership guards for plugin namespaces.
-- Add tests for absent plugins, disabled plugins, route ownership, permissions, and package boundaries.
+- Done: add initial `PluginDefinition`, `PluginRegistry`, `PluginMenuItem`, and `PluginPermission` contracts.
+- Done: add config-backed enabled/disabled state through `config/webblocks-plugins.php`.
+- Done: expose registry summaries in `System -> Plugins`.
+- Done: collect enabled plugin menu items and plugin permissions from the registry.
+- Done: add route ownership guards for plugin namespaces and canonical admin/static route boundaries.
+- Done: add tests for absent plugins, disabled plugins, route ownership, permissions, and package boundaries.
+- Later: dynamic plugin package discovery, plugin route loading, plugin migrations, plugin commands, install/enable/disable UI actions, and persistent lifecycle state.
 
 ### Phase 2 - Plugin Routing, Settings, And Commands
 

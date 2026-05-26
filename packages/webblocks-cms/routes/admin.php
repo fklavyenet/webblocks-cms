@@ -31,6 +31,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
@@ -191,6 +192,7 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
       Route::get('system/search', [SystemSearchController::class, 'index'])->name('system.search.index');
       Route::post('system/search/rebuild', [SystemSearchController::class, 'rebuild'])->name('system.search.rebuild');
       Route::get('system/updates', [SystemUpdateController::class, 'index'])->name('system.updates.index');

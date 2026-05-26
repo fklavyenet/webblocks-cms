@@ -34,6 +34,7 @@ use WebBlocks\Cms\Database\Seeders\PageTypeSeeder as PackagePageTypeSeeder;
 use WebBlocks\Cms\Database\Seeders\SlotTypeSeeder as PackageSlotTypeSeeder;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController as PackageIconCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController as PackageSlotTypeController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController as PackageSystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController as PackageSystemSettingsController;
 use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest as PackageIconCatalogItemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest as PackageSystemSettingsRequest;
@@ -72,6 +73,10 @@ use WebBlocks\Cms\Support\Pages\PageRevisionManager as PackagePageRevisionManage
 use WebBlocks\Cms\Support\Pages\PageSiteMover as PackagePageSiteMover;
 use WebBlocks\Cms\Support\Pages\PageSiteMoveValidator as PackagePageSiteMoveValidator;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager as PackagePageWorkflowManager;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition as PackagePluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginMenuItem as PackagePluginMenuItem;
+use WebBlocks\Cms\Support\Plugins\PluginPermission as PackagePluginPermission;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry as PackagePluginRegistry;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager as PackageSharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSchema as PackageSharedSlotSchema;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager as PackageSharedSlotSourcePageManager;
@@ -93,6 +98,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $viewHints = view()->getFinder()->getHints();
 
     $this->assertFileExists(base_path('packages/webblocks-cms/config/webblocks-cms.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/config/webblocks-plugins.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE));
     $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_FILE));
     $this->assertFileExists(base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE));
@@ -120,6 +126,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Console/SyncWebBlocksUiIconsCommand.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/IconCatalogController.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SlotTypeController.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SystemPluginController.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Controllers/Admin/SystemSettingsController.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Http/Requests/Admin/SystemSettingsRequest.php'));
@@ -153,6 +160,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageDuplicateValidator.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageJsonImporter.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageSiteMover.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Plugins/PluginDefinition.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Plugins/PluginRegistry.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Plugins/PluginMenuItem.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Plugins/PluginPermission.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/Pages/PageSiteMoveValidator.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/SharedSlots/SharedSlotSchema.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/src/Support/SharedSlots/SharedSlotRevisionManager.php'));
@@ -169,6 +180,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/block-types/index.blade.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/slot-types/index.blade.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/settings.blade.php'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/plugins/index.blade.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/updates.blade.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/backups/index.blade.php'));
     $this->assertFileExists(base_path('packages/webblocks-cms/resources/views/admin/system/search.blade.php'));
@@ -189,6 +201,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertFileDoesNotExist(base_path('app/Http/Controllers/Admin/IconCatalogController.php'));
     $this->assertFileDoesNotExist(base_path('app/Http/Requests/Admin/IconCatalogItemUpdateRequest.php'));
     $this->assertFileDoesNotExist(base_path('app/Support/Pages/PageWorkflowManager.php'));
+    $this->assertFileDoesNotExist(base_path('app/Support/Plugins/PluginRegistry.php'));
     $this->assertFileExists(resource_path('views/admin/system/icons/index.blade.php'));
     $this->assertFileExists(resource_path('views/admin/system/icons/partials/edit-modal.blade.php'));
     $this->assertFileExists(resource_path('views/admin/pages/index.blade.php'));
@@ -231,6 +244,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::components.admin.form-actions'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings'));
+    $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.updates'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.backups.index'));
     $this->assertTrue(view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search'));
@@ -248,6 +262,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertTrue(view()->exists('admin.partials.audit-actor'));
     $this->assertTrue(view()->exists('admin.slot-types.index'));
     $this->assertTrue(view()->exists('admin.system.settings'));
+    $this->assertFalse(view()->exists('admin.system.plugins.index'));
     $this->assertTrue(view()->exists('admin.system.updates'));
     $this->assertTrue(view()->exists('admin.system.backups.index'));
     $this->assertTrue(view()->exists('admin.system.search'));
@@ -543,6 +558,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertTrue(class_exists(PackageSyncWebBlocksUiIconsCommand::class));
     $this->assertTrue(class_exists(PackageIconCatalogController::class));
     $this->assertTrue(class_exists(PackageSlotTypeController::class));
+    $this->assertTrue(class_exists(PackageSystemPluginController::class));
     $this->assertTrue(class_exists(PackageSystemSettingsController::class));
     $this->assertTrue(class_exists(PackageIconCatalogItemUpdateRequest::class));
     $this->assertTrue(class_exists(PackageSystemSettingsRequest::class));
@@ -550,6 +566,10 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertTrue(class_exists(PackageWebBlocksIconManifestSyncer::class));
     $this->assertTrue(class_exists(PackageMediaIndexState::class));
     $this->assertTrue(class_exists(PackagePageIndexState::class));
+    $this->assertTrue(class_exists(PackagePluginDefinition::class));
+    $this->assertTrue(class_exists(PackagePluginRegistry::class));
+    $this->assertTrue(class_exists(PackagePluginMenuItem::class));
+    $this->assertTrue(class_exists(PackagePluginPermission::class));
     $this->assertTrue(class_exists(PackageBlockDeletionManager::class));
     $this->assertTrue(class_exists(PackageBlockPayloadWriter::class));
     $this->assertTrue(class_exists(PackageBlockTranslationResolver::class));

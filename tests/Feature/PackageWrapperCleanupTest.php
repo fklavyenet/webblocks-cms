@@ -152,6 +152,7 @@ class PackageWrapperCleanupTest extends TestCase
       'app/Support/Media',
       'app/Support/Navigation',
       'app/Support/Pages',
+      'app/Support/Plugins',
       'app/Support/PublicRendering',
       'app/Support/Search',
       'app/Support/SharedSlots',

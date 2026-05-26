@@ -33,6 +33,8 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -81,6 +83,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms.php',
     'contact.php',
     'demo_media.php',
+    'webblocks-plugins.php',
     'webblocks-updates.php',
   ];
 
@@ -102,6 +105,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/partials/pagination.blade.php',
     'admin/system/icons/index.blade.php',
     'admin/system/icons/partials/edit-modal.blade.php',
+    'admin/system/plugins/index.blade.php',
     'components/admin/form-actions.blade.php',
     'diagnostics/package-status.blade.php',
     'layouts/admin.blade.php',
@@ -264,6 +268,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/shared-slots/revisions/index.blade.php',
     'admin/shared-slots/revisions/show.blade.php',
     'admin/shared-slots/slot-blocks.blade.php',
+    'admin/system/plugins/index.blade.php',
     'admin/system/search.blade.php',
     'admin/system/settings.blade.php',
   ];
@@ -756,6 +761,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->registerClassAliases();
     $this->registerConfig();
+    $this->registerPlugins();
   }
 
   public function boot(): void
@@ -798,6 +804,19 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
 
     SiteTransferDisk::registerDefaultConfigIfMissing();
+  }
+
+  protected function registerPlugins(): void
+  {
+    $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
+      $enabled = config('webblocks-plugins.enabled', []);
+
+      return new PluginRegistry(is_array($enabled) ? $enabled : []);
+    });
+
+    $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(
+      $app->make(PluginRegistry::class)
+    ));
   }
 
   protected function bootRoutes(): void

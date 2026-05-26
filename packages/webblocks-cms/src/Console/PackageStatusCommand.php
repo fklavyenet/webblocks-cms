@@ -257,7 +257,7 @@ class PackageStatusCommand extends Command
     )).' ('.WebBlocksCmsServiceProvider::ICON_ADMIN_INDEX_ROUTE_NAME.' uses the package controller directly)');
     $this->line('Core admin runtime package authority state: yes (Pages, Blocks, Media, Shared Slots, Navigation, Block Types, and Page Layouts now execute from package controllers, requests, support classes, and view trees without root App\\... wrappers).');
     $this->line('Site and Locale admin runtime package authority state: '.$this->yesNo($this->siteLocaleAdminRuntimeUsesPackageAuthority()).' (Sites, Site Domains, Site Variables, and Locales now execute from package controllers, requests, support classes, models, and view trees without root App\\... wrappers).');
-    $this->line('Operational admin runtime package authority state: '.$this->yesNo($this->operationalAdminRuntimeUsesPackageAuthority()).' (Dashboard, Contact Messages admin review, Visitor Reports, Slot Types, System Search, and System Settings now execute from package controllers, requests where applicable, support classes, and view trees without root App\\... wrappers).');
+    $this->line('Operational admin runtime package authority state: '.$this->yesNo($this->operationalAdminRuntimeUsesPackageAuthority()).' (Dashboard, Contact Messages admin review, Visitor Reports, Slot Types, System Plugins, System Search, and System Settings now execute from package controllers, requests where applicable, support classes, and view trees without root App\\... wrappers).');
     $this->line('Icon catalog sync command package authority state: '.$this->yesNo($this->syncCommandUsesPackageImplementation()).' ('.WebBlocksCmsServiceProvider::ICON_SYNC_COMMAND_NAME.' is registered by the package provider with the package command)');
     $this->line('Package diagnostic view render check: '.$this->diagnosticViewRenderStatus(
       $shouldCheckView,
@@ -390,12 +390,14 @@ class PackageStatusCommand extends Command
       && $this->routeUsesController('admin.contact-messages.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\ContactMessageController')
       && $this->routeUsesController('admin.reports.visitors.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\VisitorReportController')
       && $this->routeUsesController('admin.system.search.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SystemSearchController')
+      && $this->routeUsesController('admin.system.plugins.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SystemPluginController')
       && $this->routeUsesController('admin.slot-types.index', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SlotTypeController')
       && $this->routeUsesController('admin.system.settings.edit', 'WebBlocks\\Cms\\Http\\Controllers\\Admin\\SystemSettingsController')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.dashboard')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.contact-messages.index')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.reports.visitors.index')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.slot-types.index')
+      && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.search')
       && view()->exists(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings');
   }

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add the minimal CMS plugin registry foundation with plugin manifest value objects, config-backed enabled state, plugin permission/menu collection, route boundary guards, and the core `System -> Plugins` listing, without adding plugin business logic or WebBlocks UI Manager runtime code.
 - Document the planned CMS plugin host architecture, plugin boundary rules, WebBlocks UI Manager pilot scope, and phased plugin roadmap without changing runtime behavior.
 
 ## 1.32.64
