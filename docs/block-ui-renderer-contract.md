@@ -6,9 +6,9 @@ Phase 1 defines the intended public rendering contract between CMS layouts, slot
 
 Verified against the actual shipped assets used by CMS:
 
-- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.min.css`
-- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-icons.min.css`
-- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.min.js`
+- CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.css`
+- Icons CSS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-icons.css`
+- JS: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.9/packages/webblocks/dist/webblocks-ui.js`
 
 Confirmed primitives and patterns:
 

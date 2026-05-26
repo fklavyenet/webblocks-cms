@@ -10,17 +10,17 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.32.65';
+  public const VERSION = '1.32.66';
 
   public const UI_VERSION = 'v2.7.9';
 
   public const UI_DIST_BASE = 'https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@'.self::UI_VERSION.'/packages/webblocks/dist';
 
-  public const UI_CSS_URL = self::UI_DIST_BASE.'/webblocks-ui.min.css';
+  public const UI_CSS_URL = self::UI_DIST_BASE.'/webblocks-ui.css';
 
-  public const ICONS_CSS_URL = self::UI_DIST_BASE.'/webblocks-icons.min.css';
+  public const ICONS_CSS_URL = self::UI_DIST_BASE.'/webblocks-icons.css';
 
-  public const UI_JS_URL = self::UI_DIST_BASE.'/webblocks-ui.min.js';
+  public const UI_JS_URL = self::UI_DIST_BASE.'/webblocks-ui.js';
 
   public const ICONS_MANIFEST_URL = self::UI_DIST_BASE.'/webblocks-icons.json';
 

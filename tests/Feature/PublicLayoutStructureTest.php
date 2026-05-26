@@ -261,7 +261,7 @@ class PublicLayoutStructureTest extends TestCase
   }
 
   #[Test]
-  public function public_layout_uses_pinned_webblocks_ui_v279_minified_assets_and_not_master_or_development_urls(): void
+  public function public_layout_uses_pinned_webblocks_ui_v279_standard_dist_assets_and_not_master_or_minified_urls(): void
   {
     $this->buildHomepageWithHeaderSidebarAndFooter();
 
@@ -273,14 +273,14 @@ class PublicLayoutStructureTest extends TestCase
     $response->assertSee(WebBlocks::uiJsUrl(), false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
     $response->assertSee('webblocks-ui@v2.7.9', false);
-    $response->assertSee('webblocks-ui.min.css', false);
-    $response->assertSee('webblocks-icons.min.css', false);
-    $response->assertSee('webblocks-ui.min.js', false);
+    $response->assertSee('webblocks-ui.css', false);
+    $response->assertSee('webblocks-icons.css', false);
+    $response->assertSee('webblocks-ui.js', false);
     $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
     $response->assertDontSee('@b43f92b', false);
-    $response->assertDontSee('/webblocks-ui.css', false);
-    $response->assertDontSee('/webblocks-icons.css', false);
-    $response->assertDontSee('/webblocks-ui.js', false);
+    $response->assertDontSee('webblocks-ui.min.css', false);
+    $response->assertDontSee('webblocks-icons.min.css', false);
+    $response->assertDontSee('webblocks-ui.min.js', false);
     $response->assertDontSee('cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@master', false);
   }
 

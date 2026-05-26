@@ -5,6 +5,10 @@
 - Add the minimal CMS plugin registry foundation with plugin manifest value objects, config-backed enabled state, plugin permission/menu collection, route boundary guards, and the core `System -> Plugins` listing, without adding plugin business logic or WebBlocks UI Manager runtime code.
 - Document the planned CMS plugin host architecture, plugin boundary rules, WebBlocks UI Manager pilot scope, and phased plugin roadmap without changing runtime behavior.
 
+## 1.32.66
+
+- Revert WebBlocks UI CDN integration from minified assets to standard dist assets while minification hardening is deferred, keeping the canonical jsDelivr `v2.7.9` tag and `/webadmin` plus `/cms` path contracts unchanged.
+
 ## 1.32.65
 
 - Update CMS-owned WebBlocks UI CDN consumption to `v2.7.9` using the canonical jsDelivr tag URL format for `webblocks-ui.min.css`, `webblocks-icons.min.css`, `webblocks-ui.min.js`, and the default icon manifest sync source.
