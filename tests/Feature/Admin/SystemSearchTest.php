@@ -32,6 +32,9 @@ class SystemSearchTest extends TestCase
     $response->assertSee('Total indexed rows');
     $response->assertSee('Coverage by Site');
     $response->assertSee('Coverage by Locale');
+    $response->assertSee('<table class="wb-table wb-table-striped">', false);
+    $response->assertSee('<table class="wb-table wb-table-striped wb-table-hover">', false);
+    $this->assertStringNotContainsString('wb-settings-row', $this->searchIndexStatusCard($response->getContent()));
   }
 
   #[Test]
@@ -73,6 +76,9 @@ class SystemSearchTest extends TestCase
     $response->assertSee($site->handle);
     $response->assertSee($locale->name);
     $response->assertSee(strtoupper($locale->code));
+    $response->assertSee('<th>Site</th>', false);
+    $response->assertSee('<th class="wb-text-end">Indexed rows</th>', false);
+    $response->assertSee('<th>Locale</th>', false);
   }
 
   #[Test]
@@ -95,5 +101,18 @@ class SystemSearchTest extends TestCase
       ->assertRedirect(route('admin.system.search.index'));
 
     $this->assertSame(0, PublicSearchIndex::query()->count());
+  }
+
+  private function searchIndexStatusCard(string $content): string
+  {
+    $start = strpos($content, '<div class="wb-card-header"><strong>Search Index Status</strong></div>');
+
+    $this->assertIsInt($start);
+
+    $end = strpos($content, '</main>', $start);
+
+    $this->assertIsInt($end);
+
+    return substr($content, $start, $end - $start);
   }
 }
