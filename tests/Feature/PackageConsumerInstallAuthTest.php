@@ -22,6 +22,7 @@ use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class PackageConsumerInstallAuthTest extends TestCase
 {
@@ -48,8 +49,49 @@ class PackageConsumerInstallAuthTest extends TestCase
     $response = $this->get(route('login'));
 
     $response->assertOk();
-    $response->assertSee('login');
-    $response->assertSee('email');
+    $response->assertSee('class="wb-auth-shell wb-auth-split"', false);
+    $response->assertSee('class="wb-auth-panel"', false);
+    $response->assertSee('class="wb-auth-card"', false);
+    $response->assertSee('cms/brand/logo-64.png', false);
+    $response->assertSee(WebBlocks::name());
+    $response->assertSee(WebBlocks::slogan());
+    $response->assertSee(WebBlocks::uiCssUrl(), false);
+    $response->assertSee(WebBlocks::iconsCssUrl(), false);
+    $response->assertSee(WebBlocks::uiJsUrl(), false);
+    $response->assertSee('cms/css/guest.css', false);
+    $response->assertSee('action="'.route('login').'"', false);
+    $response->assertSee('name="email"', false);
+    $response->assertSee('name="password"', false);
+    $response->assertSee('name="remember"', false);
+    $response->assertSee('Forgot password');
+    $response->assertSee('href="'.route('password.request').'"', false);
+    $response->assertSee('Need an account?');
+    $response->assertSee('href="'.route('register').'"', false);
+    $response->assertSee('data-password-toggle', false);
+    $this->assertFileExists(public_path('cms/css/guest.css'));
+    $this->assertFileExists(public_path('cms/brand/logo-64.png'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/css/guest.css'));
+    $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
+  }
+
+  #[Test]
+  public function package_owned_cms_login_shell_uses_package_safe_views_and_assets(): void
+  {
+    $loginView = File::get(base_path('packages/webblocks-cms/resources/views/auth/login.blade.php'));
+    $guestLayout = File::get(base_path('packages/webblocks-cms/resources/views/layouts/guest.blade.php'));
+
+    $this->assertStringContainsString('webblocks-cms::layouts.guest', $loginView);
+    $this->assertStringContainsString('webblocks-cms::partials.head-meta', $guestLayout);
+    $this->assertStringContainsString('asset(\'cms/brand/logo-64.png\')', $loginView);
+    $this->assertStringContainsString('asset(\'cms/css/guest.css\')', $guestLayout);
+    $this->assertStringContainsString('WebBlocks::uiCssUrl()', $guestLayout);
+    $this->assertStringContainsString('WebBlocks::iconsCssUrl()', $guestLayout);
+    $this->assertStringContainsString('WebBlocks::uiJsUrl()', $guestLayout);
+    $this->assertStringNotContainsString('<x-guest-layout', $loginView);
+    $this->assertStringNotContainsString('<x-auth-shell', $loginView);
+    $this->assertStringNotContainsString("@extends('layouts.guest'", $loginView);
+    $this->assertStringNotContainsString('@extends("layouts.guest"', $loginView);
+    $this->assertStringNotContainsString('@include(\'partials.head-meta\'', $guestLayout);
   }
 
   #[Test]
@@ -92,6 +134,13 @@ class PackageConsumerInstallAuthTest extends TestCase
       $this->assertNotSame('admin', $route->uri());
       $this->assertFalse(str_starts_with($route->uri(), 'admin/'), $route->uri());
     }
+  }
+
+  #[Test]
+  public function cms_auth_does_not_expose_legacy_admin_or_cms_login_aliases(): void
+  {
+    $this->get('/admin/login')->assertNotFound();
+    $this->get('/cms/login')->assertNotFound();
   }
 
   #[Test]
