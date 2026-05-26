@@ -39,3 +39,24 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 - CMS super admin status is a CMS membership or role record, not a special `users` table record.
 - Installer, register, or invite flows must not create duplicate users for the same email.
 - Installer or invite flows should first find an existing host user by email, create one only when needed, then attach the CMS membership or role record.
+
+## CMS Plugin Host Architecture
+
+- WebBlocks CMS core is a plugin host.
+- Product-specific or domain-specific features belong in plugins instead of CMS core.
+- Plugins use a registry-first contract to add admin menus, routes, permissions, settings, commands, migrations, blocks, assets, dashboard widgets, and extension-slot contributions.
+- Core view overrides are forbidden by default; plugins must use documented extension slots or registry contracts.
+- The first pilot plugin target is WebBlocks UI Manager for WebBlocks UI release records, artifact publish workflows, and first-party CDN management.
+
+Reason:
+
+- WebBlocks CMS now runs as a package beside different host products, so one install must not inherit another product's admin screens, operational commands, tables, or release workflows.
+- Keeping domain features out of core protects the reusable CMS product boundary and keeps generic installs focused on content, sites, rendering, users, roles, permissions, and plugin extension infrastructure.
+- A registry-first design makes ownership, collisions, authorization, and route boundaries testable.
+
+Consequences:
+
+- CMS core must provide plugin discovery, a plugin registry, enabled configuration, extension slot contracts, and guardrails before deep plugin runtime behavior is added.
+- Plugin admin routes default under `/webadmin/plugins/{plugin-handle}/...`, while `/webadmin` remains the canonical CMS admin prefix, `/cms` remains static asset territory, and CMS-owned `/admin` routes must not return.
+- Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
+- WebBlocks UI Manager is documented as a pilot plugin, not as a core CMS feature.

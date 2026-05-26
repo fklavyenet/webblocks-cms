@@ -52,9 +52,11 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Development
 
 - [Development Workflow](../DEVELOPMENT.md)
+- [Plugin System](plugin-system.md) - planned architecture and rules, not runtime implementation yet
 
 ## Project Boundary
 
 - [Core Concepts](core-concepts.md#project-boundary)
 - [Coexistence](coexistence.md)
 - [Updates](updates.md)
+- [Plugin System](plugin-system.md)

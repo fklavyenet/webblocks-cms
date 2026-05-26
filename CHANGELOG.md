@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Document the planned CMS plugin host architecture, plugin boundary rules, WebBlocks UI Manager pilot scope, and phased plugin roadmap without changing runtime behavior.
+
 ## 1.32.64
 
 - Prepare v1.32.64 as a browser-facing WebBlocks UI CDN hotfix by removing the `raw.githubusercontent.com` fallback introduced in v1.32.63, which Chrome can block for CSS and JavaScript through ORB or MIME handling.

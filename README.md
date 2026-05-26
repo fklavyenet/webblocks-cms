@@ -38,6 +38,8 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 
 WebBlocks CMS can run as a standalone CMS, and it can also be installed beside another Laravel host product as an optional website and content management layer. Coexistence installs should keep host-owned login and host admin routes separate from CMS-owned authorization and content administration. See `docs/coexistence.md` for the current architecture direction.
 
+The planned plugin system treats CMS core as a plugin host for future product-specific capabilities such as WebBlocks UI release/CDN management, QuizTem integrations, analytics, SEO pro tools, commerce, and custom block packs. This is architecture and roadmap documentation only for now; no runtime plugin implementation is included. See `docs/plugin-system.md`.
+
 ## Installation
 
 ### Fresh Laravel Package Install
