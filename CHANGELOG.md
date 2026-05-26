@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.59
+
 - Move Visitor Reports from Maintenance to System after Settings, rename the Maintenance search sidebar item to Search Rebuild, and polish the Search Index status screen into one consolidated rebuild-focused card.
 
 ## 1.32.58
