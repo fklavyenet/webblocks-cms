@@ -7,7 +7,10 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PublicSearchIndex;
+use WebBlocks\Cms\Models\Site;
 
 class SystemSearchTest extends TestCase
 {
@@ -22,8 +25,54 @@ class SystemSearchTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.search.index'));
 
     $response->assertOk();
-    $response->assertSee('Search');
+    $response->assertSee('Search Index');
+    $response->assertSee('Rebuild Search Index');
+    $response->assertSee('Search Index Status');
+    $response->assertSee('Overview');
     $response->assertSee('Total indexed rows');
+    $response->assertSee('Coverage by Site');
+    $response->assertSee('Coverage by Locale');
+  }
+
+  #[Test]
+  public function search_status_screen_keeps_index_breakdown_data_visible(): void
+  {
+    $this->seed(FoundationSiteLocaleSeeder::class);
+    $user = User::factory()->superAdmin()->create();
+    $site = Site::query()->where('is_primary', true)->firstOrFail();
+    $locale = Locale::query()->where('is_default', true)->firstOrFail();
+    $page = Page::query()->create([
+      'site_id' => $site->id,
+      'title' => 'Searchable Page',
+      'slug' => 'searchable-page',
+      'status' => Page::STATUS_PUBLISHED,
+    ]);
+
+    $site->update(['domain' => 'example.test']);
+
+    PublicSearchIndex::query()->updateOrCreate(
+      ['page_id' => $page->id, 'locale_id' => $locale->id],
+      [
+        'site_id' => $site->id,
+        'title' => 'Searchable Page',
+        'excerpt' => 'Example excerpt',
+        'url' => '/p/searchable-page',
+        'content' => 'Example searchable body',
+        'indexed_at' => now()->subMinute(),
+      ],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.system.search.index'));
+
+    $response->assertOk();
+    $response->assertSee('Search Index Status');
+    $response->assertSee('Total indexed rows');
+    $response->assertSee('1');
+    $response->assertSee($site->name);
+    $response->assertSee($site->fresh()->domain);
+    $response->assertSee($site->handle);
+    $response->assertSee($locale->name);
+    $response->assertSee(strtoupper($locale->code));
   }
 
   #[Test]

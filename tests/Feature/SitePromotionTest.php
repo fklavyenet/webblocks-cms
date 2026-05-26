@@ -98,7 +98,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function dry_run_does_not_modify_target_content(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -140,7 +140,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function apply_creates_a_safety_backup_before_content_changes(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -168,7 +168,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function apply_preserves_gallery_item_translation_rows_when_promoting_block_media(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -224,7 +224,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function apply_blocks_if_safety_backup_creation_fails(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -255,7 +255,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function preserved_areas_are_not_imported_or_overwritten(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -313,7 +313,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function additive_update_creates_and_updates_source_content_but_does_not_remove_extra_target_pages(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -350,7 +350,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function mirror_mode_reports_extra_target_content_as_removable_and_requires_explicit_mirror_selection(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -390,7 +390,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function page_assets_are_included_in_the_plan_and_constrained_to_site_paths(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -428,7 +428,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function search_rebuild_refreshes_target_search_rows_after_apply(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -484,7 +484,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function missing_locale_compatibility_is_reported_and_will_create_missing_locales(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -510,7 +510,7 @@ class SitePromotionTest extends TestCase
   #[Test]
   public function shared_slot_backed_page_slots_are_mapped_safely(): void
   {
-    Storage::fake('site-exports');
+    Storage::fake(SiteExportManager::ARCHIVE_DISK);
     Storage::fake('site-promotions');
     Storage::fake('public');
 
@@ -543,7 +543,7 @@ class SitePromotionTest extends TestCase
   private function exportPromotionPackage(Site $site, bool $includesMedia): string
   {
     $export = app(SiteExportManager::class)->export($site, $includesMedia);
-    $archivePath = Storage::disk('site-exports')->path($export->archive_path);
+    $archivePath = Storage::disk($export->archive_disk)->path($export->archive_path);
     $inspection = app(SitePromotionPackageInspector::class)->inspectUpload(new UploadedFile($archivePath, basename($archivePath), 'application/zip', null, true));
 
     return $inspection->archivePath;

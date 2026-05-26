@@ -8,10 +8,11 @@ WebBlocks CMS includes install-level operational tools for updates, backups, and
 
 `Admin -> System -> Block Types` also serves as an install-level catalog inspection screen. Its `Support` filter is for block capability and content-source metadata, while its `Usage` filter is for actual live usage counts from the `blocks` table so admins can review used versus unused block type rows.
 
+`Admin -> System -> Visitor Reports` provides privacy-safe traffic reporting next to install-level system settings.
+
 `Maintenance` remains the operational tools group for:
 
-- Visitor Reports
-- Search
+- Search Rebuild
 - Backups
 - Export / Import
 - Update
@@ -230,8 +231,10 @@ Install-specific migration and website import workflows belong in `project/`, no
 
 Search V1 adds an install-level operational screen and command for the derived public search index.
 
-- admin screen: `Admin -> Maintenance -> Search`
+- admin screen: `Admin -> Maintenance -> Search Rebuild`
 - rebuild command: `ddev artisan search:rebuild`
+
+The Search Rebuild screen reviews derived public search index coverage for published pages by site and locale, and can safely rebuild the index when derived rows need to be refreshed.
 
 Supported rebuild scopes:
 

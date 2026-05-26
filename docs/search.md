@@ -73,14 +73,13 @@ Use the first-class `Search Form` block to place a search form in any public slo
 
 ## Admin Screen
 
-Super admins can review search status under `Admin -> Maintenance -> Search`.
+Super admins can review search status under `Admin -> Maintenance -> Search Rebuild`.
 
 The screen shows:
 
-- total indexed rows
-- rows by site
-- rows by locale
-- last indexed timestamp
+- total indexed rows and last indexed timestamp
+- coverage by site
+- coverage by locale
 - rebuild action
 
 ## Rebuild Command

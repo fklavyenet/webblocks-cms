@@ -27,9 +27,9 @@ class SystemSearchController extends Controller
       'lastIndexedAt' => $ready ? PublicSearchIndex::query()->max('indexed_at') : null,
       'rowsBySite' => $ready
         ? PublicSearchIndex::query()
-          ->select('sites.name', 'sites.handle', DB::raw('count(*) as total'))
+          ->select('sites.name', 'sites.domain', 'sites.handle', DB::raw('count(*) as total'))
           ->join('sites', 'sites.id', '=', 'public_search_index.site_id')
-          ->groupBy('sites.id', 'sites.name', 'sites.handle')
+          ->groupBy('sites.id', 'sites.name', 'sites.domain', 'sites.handle')
           ->orderBy('sites.name')
           ->get()
         : collect(),

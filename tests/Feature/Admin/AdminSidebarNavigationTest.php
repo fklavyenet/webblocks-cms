@@ -69,8 +69,7 @@ class AdminSidebarNavigationTest extends TestCase
       'href="'.route('admin.pages.index').'"',
     ], false);
     $this->assertTrue(
-      strpos($content, $reportsHref) < strpos($content, $searchHref)
-      && strpos($content, $searchHref) < strpos($content, $backupsHref)
+      strpos($content, $searchHref) < strpos($content, $backupsHref)
       && strpos($content, $backupsHref) < strpos($content, $transfersHref)
       && strpos($content, $transfersHref) < strpos($content, $updatesHref)
     );
@@ -81,10 +80,13 @@ class AdminSidebarNavigationTest extends TestCase
       && strpos($content, $pageLayoutsHref) < strpos($content, $slotTypesHref)
       && strpos($content, $slotTypesHref) < strpos($content, $blockTypesHref)
       && strpos($content, $blockTypesHref) < strpos($content, $settingsHref)
+      && strpos($content, $settingsHref) < strpos($content, $reportsHref)
     );
     $this->assertTrue(
       strpos($content, '>System<') < strpos($content, '>Maintenance<')
     );
+    $this->assertTrue(strpos($content, $reportsHref) < strpos($content, '>Maintenance<'));
+    $response->assertSeeText('Search Rebuild');
   }
 
   #[Test]
@@ -130,8 +132,26 @@ class AdminSidebarNavigationTest extends TestCase
     $response->assertOk();
     $response->assertSee('wb-nav-group-toggle is-active', false);
     $response->assertSee('>Maintenance<', false);
+    $response->assertSeeText('Search Rebuild');
     $response->assertSee('href="'.route('admin.system.search.index').'"', false);
     $response->assertSee('class="wb-nav-group-item is-active"', false);
+  }
+
+  #[Test]
+  public function visitor_reports_page_marks_system_group_and_visitor_reports_item_active(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
+    $content = $response->getContent();
+
+    $response->assertOk();
+    $response->assertSee('>System<', false);
+    $response->assertSee('>Visitor Reports<', false);
+    $response->assertSee('href="'.route('admin.reports.visitors.index').'"', false);
+    $response->assertSee('class="wb-nav-group-item is-active"', false);
+    $this->assertMatchesRegularExpression('/wb-nav-group-toggle is-active.*?>\\s*<i[^>]*><\\/i>\\s*<span class="wb-nav-group-label">System<\\/span>/s', $content);
+    $this->assertTrue(strpos($content, 'href="'.route('admin.reports.visitors.index').'"') < strpos($content, '>Maintenance<'));
   }
 
   #[Test]
@@ -222,16 +242,17 @@ class AdminSidebarNavigationTest extends TestCase
   }
 
   #[Test]
-  public function visitor_reports_page_marks_maintenance_group_and_item_active(): void
+  public function visitor_reports_page_does_not_mark_maintenance_group_active(): void
   {
     $user = User::factory()->superAdmin()->create();
 
     $response = $this->actingAs($user)->get(route('admin.reports.visitors.index'));
+    $content = $response->getContent();
 
     $response->assertOk();
     $response->assertSee('class="wb-nav-group-item is-active"', false);
     $response->assertSee('>Maintenance<', false);
-    $response->assertSee('wb-icon-file', false);
+    $this->assertDoesNotMatchRegularExpression('/class="wb-nav-group-toggle is-active"[^>]*>\\s*<i class="wb-icon wb-icon-file wb-nav-group-icon"/', $content);
   }
 
   #[Test]

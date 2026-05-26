@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Move Visitor Reports from Maintenance to System after Settings, rename the Maintenance search sidebar item to Search Rebuild, and polish the Search Index status screen into one consolidated rebuild-focused card.
+
 ## 1.32.58
 
 - Make Visitor Reports privacy-safe and more honest by storing referrer hosts, referrer type, device category, bot flag, and normalized UTM aggregate values without raw referrer URLs, raw query strings, full user-agent strings, or raw IP addresses.
