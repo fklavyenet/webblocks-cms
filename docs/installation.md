@@ -197,6 +197,7 @@ The first `super_admin` is required for a completed install.
 - package-consumer installs may sign in through `/webadmin/login`; co-installed apps may keep host-owned `/login`
 - `/webadmin/dashboard` redirects to `/webadmin`
 - CMS assets stay under `/cms`, for example `/cms/css`, `/cms/js`, and `/cms/brand`
+- package-owned `/webadmin/login` uses package Blade views, the WebBlocks UI guest auth shell, pinned WebBlocks UI assets, `/cms/css/guest.css`, and CMS product brand assets from `/cms/brand`
 - `/cms` is reserved for CMS-owned static public assets and must not be used as a CMS admin route prefix, alias, or redirect
 - `/admin` is not CMS-owned and must not be restored as a CMS admin route
 - new pages start in `draft`

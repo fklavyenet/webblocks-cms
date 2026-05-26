@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore the package-owned `/webadmin/login` WebBlocks UI auth shell with package-safe Blade views, route-aware forgot password and register links, pinned WebBlocks UI assets, `/cms/css/guest.css`, and `/cms/brand` logo assets while keeping `/admin` and `/cms` admin aliases absent.
 - Document the final `/webadmin` admin and `/cms` static asset coexistence standard, including the Nginx `try_files` collision root cause and the requirement to keep `public/cms/index.php` absent.
 
 ## 1.32.56
