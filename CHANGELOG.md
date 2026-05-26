@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.61
+
+- Polish public Contact Form redirects so successful submissions return to the clean current page URL without a form fragment, while validation errors still return to the form-specific anchor and unsafe source URLs continue to fall back to the canonical page URL.
+
 ## 1.32.60
 
 - Refine the Search Index Status card to use compact WebBlocks admin table patterns instead of loose settings-row sections.

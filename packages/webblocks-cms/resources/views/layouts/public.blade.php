@@ -93,6 +93,19 @@
         @endforeach
     </head>
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}">
+        @if (session('contact_form_success_message'))
+            <section class="wb-section" aria-label="Contact form confirmation">
+                <div class="wb-container wb-container-lg">
+                    <div class="wb-alert wb-alert-success" role="status" data-wb-contact-success-dismiss data-wb-contact-success-dismiss-delay="7000">
+                        <div>
+                            <div class="wb-alert-title">Message sent</div>
+                            <div>{{ session('contact_form_success_message') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if (! isset($page))
             @yield('content')
         @else

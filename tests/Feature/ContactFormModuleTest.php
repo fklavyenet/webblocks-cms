@@ -77,6 +77,10 @@ class ContactFormModuleTest extends TestCase
       'slug' => 'contact',
       'status' => 'published',
     ]);
+    PageTranslation::query()->updateOrCreate(
+      ['page_id' => $page->id, 'locale_id' => $this->defaultLocale()->id],
+      ['site_id' => $site->id, 'name' => 'Contact', 'slug' => 'contact', 'path' => '/p/contact'],
+    );
 
     PageSlot::create([
       'page_id' => $page->id,
@@ -148,8 +152,10 @@ class ContactFormModuleTest extends TestCase
 
     $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
-    $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false).'#contact-form-'.$block->id);
+    $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
+    $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $response->assertSessionHas('contact_form_success_block_id', $block->id);
+    $response->assertSessionHas('contact_form_success_message', 'Thanks for your message. We will get back to you soon.');
     $this->assertDatabaseHas('contact_messages', [
       'block_id' => $block->id,
       'page_id' => $block->page_id,
@@ -165,9 +171,12 @@ class ContactFormModuleTest extends TestCase
     [$page, $block] = $this->createContactFormPage();
 
     $this->post(route('contact-messages.store'), $this->submissionPayload($block))
-      ->assertRedirect(route('pages.show', $page->slug, false).'#contact-form-'.$block->id);
+      ->assertRedirect(route('pages.show', $page->slug, false));
 
-    $this->withSession(['contact_form_success_block_id' => $block->id])
+    $this->withSession([
+      'contact_form_success_block_id' => $block->id,
+      'contact_form_success_message' => 'Thanks for your message. We will get back to you soon.',
+    ])
       ->get(route('pages.show', $page->slug, false))
       ->assertOk()
       ->assertSee('Message sent')
@@ -215,8 +224,50 @@ class ContactFormModuleTest extends TestCase
 
     $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block));
 
-    $response->assertRedirect(route('pages.show', 'contact', false).'#contact-form-'.$block->id);
+    $response->assertRedirect(route('pages.show', 'contact', false));
     $this->assertNotSame('/contact-messages', parse_url((string) $response->headers->get('Location'), PHP_URL_PATH));
+  }
+
+  #[Test]
+  public function contact_form_success_redirect_preserves_canonical_page_path_without_fragment(): void
+  {
+    Mail::fake();
+    [, $block] = $this->createContactFormPage();
+
+    $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+      'source_url' => '/p/contact#contact-form-'.$block->id,
+    ]));
+
+    $location = (string) $response->baseResponse->headers->get('Location');
+
+    $response->assertRedirect('/p/contact');
+    $this->assertSame('/p/contact', parse_url($location, PHP_URL_PATH));
+    $this->assertNull(parse_url($location, PHP_URL_FRAGMENT));
+    $this->assertDatabaseHas('contact_messages', [
+      'block_id' => $block->id,
+      'page_id' => $block->page_id,
+      'email' => 'taylor@example.com',
+      'status' => 'new',
+    ]);
+    Mail::assertSent(PackageContactMessageNotification::class);
+  }
+
+  #[Test]
+  public function contact_form_success_redirect_uses_safe_canonical_fallback_for_external_source_urls(): void
+  {
+    Mail::fake();
+    [, $block] = $this->createContactFormPage();
+
+    $response = $this->post(route('contact-messages.store'), $this->submissionPayload($block, [
+      'source_url' => 'https://attacker.example.test/p/contact#contact-form-'.$block->id,
+    ]));
+
+    $location = (string) $response->baseResponse->headers->get('Location');
+
+    $response->assertRedirect();
+    $this->assertSame('/p/contact', parse_url($location, PHP_URL_PATH));
+    $this->assertNull(parse_url($location, PHP_URL_FRAGMENT));
+    $this->assertNotSame('attacker.example.test', parse_url($location, PHP_URL_HOST));
   }
 
   #[Test]
@@ -546,7 +597,7 @@ class ContactFormModuleTest extends TestCase
 
     $response->assertStatus(302);
     $this->assertSame('/p/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
-    $this->assertSame('contact-form-'.$block->id, parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
+    $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $this->assertDatabaseCount('contact_messages', 0);
     Mail::assertNothingSent();
   }
@@ -1356,7 +1407,8 @@ class ContactFormModuleTest extends TestCase
       'source_url' => route('pages.show', ['slug' => $page->slug], false),
     ]));
 
-    $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false).'#contact-form-'.$block->id);
+    $response->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
+    $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $this->assertDatabaseHas('contact_messages', [
       'block_id' => $block->id,
       'page_id' => $page->id,

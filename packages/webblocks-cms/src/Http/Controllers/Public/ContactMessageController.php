@@ -35,11 +35,12 @@ class ContactMessageController extends Controller
     $redirects = app(ContactFormRedirects::class);
     $fallbackUrl = $block->page?->publicUrl() ?: url('/');
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $fallbackUrl);
-    $redirectUrl = $redirects->target($payload['source_url'], $block->id, $fallbackUrl);
+    $successMessage = $block->success_message ?? config('contact.success_message');
 
     if ($payload['website'] !== '' || (now()->timestamp - $payload['submitted_at']) < $minimumSubmitSeconds) {
-      return redirect($redirectUrl)
-        ->with('contact_form_success_block_id', $block->id);
+      return redirect($sourceUrl)
+        ->with('contact_form_success_block_id', $block->id)
+        ->with('contact_form_success_message', $successMessage);
     }
 
     $notificationEnabled = (bool) $block->setting('send_email_notification', true);
@@ -71,8 +72,9 @@ class ContactMessageController extends Controller
       ]);
     }
 
-    return redirect($redirectUrl)
-      ->with('contact_form_success_block_id', $block->id);
+    return redirect($sourceUrl)
+      ->with('contact_form_success_block_id', $block->id)
+      ->with('contact_form_success_message', $successMessage);
   }
 
   private function notificationRecipient(Block $block, ?Site $site): ?string
