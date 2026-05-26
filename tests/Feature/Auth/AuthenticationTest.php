@@ -22,6 +22,9 @@ class AuthenticationTest extends TestCase
     $response->assertSee('webblocks-ui.min.css', false);
     $response->assertSee('webblocks-icons.min.css', false);
     $response->assertSee('<script src="'.WebBlocks::uiJsUrl().'" defer></script>', false);
+    $response->assertSee('webblocks-ui@v2.7.8', false);
+    $response->assertDontSee('raw.githubusercontent.com/fklavyenet/webblocks-ui', false);
+    $response->assertDontSee('@b43f92b', false);
     $response->assertDontSee('/webblocks-ui.css', false);
     $response->assertDontSee('/webblocks-icons.css', false);
     $response->assertDontSee('/webblocks-ui.js', false);

@@ -98,6 +98,6 @@ Public favicon and social sharing artwork are now selected from the shared Media
 
 WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
-CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.8` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the minified dist artifacts `webblocks-ui.min.css`, `webblocks-icons.min.css`, and `webblocks-ui.min.js`; the non-minified WebBlocks UI dist files remain available upstream for debug and development use.
+CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.8` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the minified dist artifacts `webblocks-ui.min.css`, `webblocks-icons.min.css`, and `webblocks-ui.min.js`; the non-minified WebBlocks UI dist files remain available upstream for debug and development use. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
 
 Those CDN assets are part of the UI project and must not be edited inside the CMS repository.

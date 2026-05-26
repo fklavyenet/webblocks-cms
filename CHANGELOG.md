@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.64
+
+- Prepare v1.32.64 as a browser-facing WebBlocks UI CDN hotfix by removing the `raw.githubusercontent.com` fallback introduced in v1.32.63, which Chrome can block for CSS and JavaScript through ORB or MIME handling.
+- Keep WebBlocks UI pinned to `v2.7.8` and continue consuming the minified production dist artifacts through the canonical jsDelivr tag URL format: `https://cdn.jsdelivr.net/gh/fklavyenet/webblocks-ui@v2.7.8/packages/webblocks/dist/`.
+
 ## 1.32.63
 
 - Prepare v1.32.63 as a WebBlocks UI CDN consumption patch by pinning CMS-owned runtime assets and the default icon manifest sync source to WebBlocks UI `v2.7.8`.
