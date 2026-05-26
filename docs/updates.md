@@ -35,6 +35,8 @@ For package-native fresh Composer consumers installed with `webblocks:install`, 
 
 During the package transition, some Composer consumers load `WebBlocks\Cms\` from `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` while the in-app updater also maintains an install-root `packages/webblocks-cms` copy. System Update now replaces both safe CMS package runtime roots when that Composer autoload shape is detected, so a successful package-native update cannot leave stale active vendor controllers behind while only refreshing the root transition copy.
 
+Modern updates preserve the `/webadmin` admin and `/cms` asset split introduced by the v1.32.56 migration. `/cms` is a static asset namespace only, not an admin prefix, because Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees a route. Updates must not restore CMS-owned `/cms` admin aliases, `/cms` redirects, `/admin` routes, or a `public/cms/index.php` handoff in either the install root or package public assets.
+
 ## Retired Bridge From 1.31 Root-Managed Updates
 
 This section is historical. The `1.31.53` updater validated the old root-managed archive contract: `artisan` and `composer.json` had to exist at the archive root, or inside a single wrapper directory. Package-rooted artifacts such as `1.32.31` intentionally did not contain root `artisan`, so those old clients failed before apply with `Package validation failed because composer.json and artisan were not found at the archive root.`

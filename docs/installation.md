@@ -197,8 +197,12 @@ The first `super_admin` is required for a completed install.
 - package-consumer installs may sign in through `/webadmin/login`; co-installed apps may keep host-owned `/login`
 - `/webadmin/dashboard` redirects to `/webadmin`
 - CMS assets stay under `/cms`, for example `/cms/css`, `/cms/js`, and `/cms/brand`
+- `/cms` is reserved for CMS-owned static public assets and must not be used as a CMS admin route prefix, alias, or redirect
+- `/admin` is not CMS-owned and must not be restored as a CMS admin route
 - new pages start in `draft`
 - if install-level features such as revisions, backups, or updates report missing tables, run `php artisan migrate`
+
+The `/webadmin` and `/cms` split avoids the Nginx `try_files` collision where `/cms/` can be resolved as the physical `public/cms/` asset directory before Laravel handles a route. Do not solve admin access by adding a `public/cms/index.php` handoff; that front-controller bridge must stay absent from root and package public assets.
 
 ## Post-Install Next Steps
 

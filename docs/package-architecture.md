@@ -113,6 +113,8 @@ Package-first CMS installs must preserve host application boundaries when CMS is
 
 The canonical CMS admin prefix is `/webadmin`, with a configurable prefix still the target direction for future coexistence flexibility. Host-owned login and CMS-owned authorization decisions are documented in [Coexistence](coexistence.md). CMS static assets remain under `public/cms` and are served from `/cms/...`.
 
+Admin route prefixes must not reuse physical public asset directory segments. The retired `/cms` admin prefix collided with the active `public/cms` asset directory because Nginx `try_files` can resolve `/cms/` as a directory before Laravel receives the route. Current package architecture therefore keeps `/webadmin/...` for CMS admin and package login routes, reserves `/cms/...` for static assets only, and forbids CMS-owned `/cms` aliases, `/cms` redirects, and restored CMS-owned `/admin` routes. The old `public/cms/index.php` handoff is not part of the package boundary and must remain absent from both root and package public assets.
+
 ## Migration Phases
 
 ### Phase 0: Document And Scaffold
@@ -396,6 +398,7 @@ Why these slices stay partially guarded
 - Asset publishing or sync should happen only when real package assets exist and the update flow clearly defines when publishing is required.
 - Current publish intent remains package-tagged and explicit. `public/cms/package-boundary.json` is the first package-owned publishable asset and can be published through `webblocks-cms-assets`.
 - Package `public/cms/` now also carries the public layout CSS and JS used by the moved package-owned public layout, but current root `public/cms/...` asset URLs still remain authoritative in active runtime for compatibility while install-owned `public/site/...` assets remain authoritative for per-site overrides.
+- Package `public/cms/` must not contain `index.php`; CMS admin entry is `/webadmin`, not a front-controller bridge from the static asset directory.
 - WebBlocks UI CDN pinning and the default icon manifest sync source remain unchanged in this phase.
 
 ### Package Stubs Strategy

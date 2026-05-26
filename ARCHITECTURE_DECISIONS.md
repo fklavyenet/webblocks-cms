@@ -15,8 +15,11 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 - The CMS admin prefix must be configurable.
 - Coexistence installs should use `/webadmin` as the recommended CMS admin prefix.
 - The `/cms` path segment is reserved for CMS static assets.
+- CMS admin prefixes must not reuse physical public asset directory segments.
+- CMS must not add `/cms` admin aliases or redirects.
 - `/admin` may belong to the host application.
 - CMS must not assume that `/admin` is always CMS-owned.
+- CMS must not restore CMS-owned `/admin` routes.
 - Current implementation and target direction must be documented separately until the route prefix is fully configurable.
 
 ## Identity And Login

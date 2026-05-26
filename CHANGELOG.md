@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Document the final `/webadmin` admin and `/cms` static asset coexistence standard, including the Nginx `try_files` collision root cause and the requirement to keep `public/cms/index.php` absent.
+
 ## 1.32.56
 
 - Publish a follow-up package so the active updater can run the retired `public/cms/index.php` cleanup added in v1.32.55 on already-updated live installs.

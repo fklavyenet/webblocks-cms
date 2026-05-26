@@ -24,6 +24,10 @@ For coexistence installs, the recommended CMS admin prefix is `/webadmin`. The h
 
 Standalone installs now use `/webadmin` as the canonical CMS admin prefix. Documentation, design, and future implementation work should keep current behavior and longer-term configurable prefix direction clearly separated.
 
+CMS admin prefixes must never reuse a physical public asset directory segment. In v1.32.56 the canonical admin prefix moved to `/webadmin` because Nginx `try_files` can resolve `/cms/` as the physical `public/cms/` directory before Laravel sees the route. `/cms` must remain asset-only: do not add CMS-owned `/cms` admin aliases or redirects, and do not restore CMS-owned `/admin` routes.
+
+The final solution avoids the route/filesystem collision entirely instead of relying on a `public/cms/index.php` handoff or front-controller bridge. `public/cms/index.php` must stay absent from both root public assets and package public assets.
+
 ## Host-Owned Login
 
 Within a shared Laravel host, login and registration are host application responsibilities. The shared `users` table is the identity and login layer.
@@ -60,6 +64,7 @@ Common coexistence routing should be designed around clear ownership:
 - `/login` -> host identity and login
 - `/admin` -> host product admin, when the host product owns one
 - `/webadmin` -> WebBlocks CMS admin, recommended for coexistence installs
+- `/webadmin/login` -> package-owned CMS login, when package CMS auth routes are active
 - `/cms/...` -> WebBlocks CMS static assets
 - public site routes -> CMS public rendering, when CMS owns public content for the request
 

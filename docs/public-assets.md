@@ -10,6 +10,10 @@ WebBlocks CMS core public assets live under:
 
 These paths are for CMS-owned runtime behavior and styling that should ship with the product itself.
 
+The `/cms/...` URL namespace is reserved for these static CMS assets. It must not be reused as a CMS admin route prefix, alias, or redirect. The canonical CMS admin namespace is `/webadmin/...`, including `/webadmin/login` when package-owned CMS auth routes are active.
+
+This separation protects common Nginx `try_files` deployments. A request to `/cms/` can match the physical `public/cms/` directory before Laravel receives the request, so CMS admin routing must not depend on `/cms`. The final admin-prefix design avoids the collision entirely and does not use a `public/cms/index.php` front-controller handoff; that file must remain absent from both install-root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
+
 ## Site Handle Convention
 
 Site handles are filesystem-safe identifiers used for site-scoped public asset folders.
