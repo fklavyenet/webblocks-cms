@@ -12,7 +12,11 @@ class RequireAdminAccess
   {
     $user = $request->user();
 
-    if (! $user || ! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
+    if (! $user) {
+      return redirect()->guest(route('login'));
+    }
+
+    if (! method_exists($user, 'canAccessAdmin') || ! $user->canAccessAdmin()) {
       abort(403);
     }
 

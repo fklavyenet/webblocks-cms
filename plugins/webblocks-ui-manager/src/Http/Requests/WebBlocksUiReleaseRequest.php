@@ -11,7 +11,7 @@ class WebBlocksUiReleaseRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    return (bool) $this->user()?->can('access-system');
+    return (bool) $this->user()?->can('webblocks-ui-manager.manage');
   }
 
   /**

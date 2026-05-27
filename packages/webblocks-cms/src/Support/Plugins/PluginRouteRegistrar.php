@@ -2,16 +2,20 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
 use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 
 class PluginRouteRegistrar
 {
+  private PluginAuthorizationRegistrar $authorization;
+
   public function __construct(
     private readonly PluginRegistry $plugins,
-  ) {}
+    ?PluginAuthorizationRegistrar $authorization = null,
+  ) {
+    $this->authorization = $authorization ?? app(PluginAuthorizationRegistrar::class);
+  }
 
   public function registerEnabledAdminRoutes(): void
   {
@@ -33,7 +37,7 @@ class PluginRouteRegistrar
 
   private function registerPluginAdminRoutes(PluginDefinition $plugin): void
   {
-    $this->definePluginPermissionGates($plugin);
+    $this->authorization->register();
 
     Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       ->middleware(GuardPluginSetup::class.':'.$plugin->handle())
@@ -48,17 +52,6 @@ class PluginRouteRegistrar
       });
   }
 
-  private function definePluginPermissionGates(PluginDefinition $plugin): void
-  {
-    foreach ($plugin->permissionsList() as $permission) {
-      if (Gate::has($permission->name())) {
-        continue;
-      }
-
-      Gate::define($permission->name(), fn ($user): bool => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
-    }
-  }
-
   private function registerDefaultSettingsRoute(PluginDefinition $plugin): void
   {
     $settings = $plugin->settingsDefinition();
@@ -69,8 +62,17 @@ class PluginRouteRegistrar
 
     Route::get('/settings', [PluginSettingsController::class, 'edit'])
       ->defaults('plugin', $plugin->handle())
-      ->middleware('can:access-system')
+      ->middleware('plugin.permission:'.$this->settingsPermission($plugin))
       ->name('settings.edit');
+  }
+
+  private function settingsPermission(PluginDefinition $plugin): string
+  {
+    $managePermission = $plugin->handle().'.manage';
+
+    return array_key_exists($managePermission, $plugin->permissionsList())
+      ? $managePermission
+      : 'access-system';
   }
 
   private function registerRouteDefinition(PluginDefinition $plugin, string|callable $routes): void

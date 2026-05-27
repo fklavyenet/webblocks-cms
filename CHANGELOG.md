@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.32.71
+
+- Fix manual plugin route authorization so enabled compatible plugin routes register declared plugin-owned permissions before route authorization runs, with CMS `super_admin` explicitly allowed for active plugin abilities.
+- Restore WebBlocks UI Manager route middleware to handle-prefixed plugin permissions: `webblocks-ui-manager.view` for release read pages, `webblocks-ui-manager.manage` for release metadata and settings, and `webblocks-ui-manager.publish` for publish actions.
+- Add regression coverage proving a manually installed and enabled WebBlocks UI Manager no longer returns 403 for `super_admin` on Releases or Settings, while non-super-admin users remain denied and setup-required guidance still appears when release tables are missing.
+
 ## 1.32.70
 
 - Fix manual plugin setup lifecycle handling so enabled plugins with missing plugin-owned tables report setup-required/migrations-pending health, expose a super-admin `Run Plugin Migrations` action scoped to the installed plugin package path, record setup results in plugin enabled state, and avoid raw database errors on plugin-owned admin routes.

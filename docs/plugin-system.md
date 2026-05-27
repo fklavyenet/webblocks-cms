@@ -74,6 +74,8 @@ Manual plugin lifecycle is:
 
 Enabled plugins with pending setup must not crash admin routes. If plugin-owned tables are missing, health and route screens should report setup-required guidance such as `Plugin migrations pending` or `Release tables are missing`.
 
+Plugin admin routes should use declared handle-prefixed permissions. CMS `super_admin` users are explicitly allowed for active enabled-plugin permissions, including permissions loaded from manually installed plugin manifests. Non-super-admin roles remain denied unless a future CMS permission assignment model grants the specific plugin-owned permission. Settings routes use `{plugin-handle}.manage` when the plugin declares it, otherwise they fall back to system access.
+
 ## Plugin Contract And Manifest
 
 Every plugin must have a handle:

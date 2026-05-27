@@ -6,12 +6,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use ZipArchive;
@@ -137,7 +137,6 @@ class AdminPluginListingTest extends TestCase
 
     $this->dropWebBlocksUiManagerTables();
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    $this->defineWebBlocksUiManagerPermissionGates();
 
     $response = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/releases');
 
@@ -146,6 +145,131 @@ class AdminPluginListingTest extends TestCase
     $response->assertSeeText('Plugin Migrations Pending');
     $response->assertSeeText('Release tables are missing');
     $response->assertSee(route('admin.system.plugins.show', 'webblocks-ui-manager'), false);
+  }
+
+  #[Test]
+  public function enabled_manual_plugin_permissions_are_registered_for_authorization(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->app->forgetInstance(PluginRegistry::class);
+    $this->app->forgetInstance(PluginPermissionRegistry::class);
+
+    $permissions = app(PluginPermissionRegistry::class)->active();
+
+    $this->assertArrayHasKey('webblocks-ui-manager', $permissions);
+    $this->assertArrayHasKey('webblocks-ui-manager.view', $permissions['webblocks-ui-manager']);
+    $this->assertArrayHasKey('webblocks-ui-manager.manage', $permissions['webblocks-ui-manager']);
+    $this->assertArrayHasKey('webblocks-ui-manager.publish', $permissions['webblocks-ui-manager']);
+    $this->assertTrue($user->can('webblocks-ui-manager.view'));
+    $this->assertTrue($user->can('webblocks-ui-manager.manage'));
+    $this->assertTrue($user->can('webblocks-ui-manager.publish'));
+  }
+
+  #[Test]
+  public function super_admin_can_access_enabled_plugin_releases_and_settings_before_setup(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases')
+      ->assertOk()
+      ->assertSeeText('Setup Required')
+      ->assertSeeText('Plugin Migrations Pending');
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/settings')
+      ->assertOk()
+      ->assertSeeText('WebBlocks UI Manager Settings');
+  }
+
+  #[Test]
+  public function super_admin_can_access_enabled_plugin_releases_and_settings_after_setup(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.setup', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases')
+      ->assertOk()
+      ->assertSeeText('Tracked Releases');
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/settings')
+      ->assertOk()
+      ->assertSeeText('WebBlocks UI Manager Settings');
+  }
+
+  #[Test]
+  public function plugin_routes_still_deny_non_super_admins_without_plugin_permission_grants(): void
+  {
+    $superAdmin = User::factory()->superAdmin()->create();
+    $siteAdmin = User::factory()->siteAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($superAdmin);
+
+    $this->actingAs($superAdmin)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $this->actingAs($siteAdmin)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases')
+      ->assertForbidden();
+
+    $this->actingAs($siteAdmin)
+      ->get('/webadmin/plugins/webblocks-ui-manager/settings')
+      ->assertForbidden();
+  }
+
+  #[Test]
+  public function guests_are_redirected_from_enabled_plugin_routes(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+    auth()->logout();
+
+    $this->get('/webadmin/plugins/webblocks-ui-manager/releases')
+      ->assertRedirect(route('login'));
+
+    $this->get('/webadmin/plugins/webblocks-ui-manager/settings')
+      ->assertRedirect(route('login'));
   }
 
   #[Test]
@@ -178,7 +302,6 @@ class AdminPluginListingTest extends TestCase
       ->assertSessionHas('status', 'Plugin migrations completed.');
 
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    $this->defineWebBlocksUiManagerPermissionGates();
 
     $this->actingAs($user)
       ->get('/webadmin/plugins/webblocks-ui-manager/releases')
@@ -403,13 +526,6 @@ class AdminPluginListingTest extends TestCase
         'plugin_zip' => $this->webBlocksUiManagerZip(),
       ])
       ->assertRedirect(route('admin.system.plugins.index'));
-  }
-
-  private function defineWebBlocksUiManagerPermissionGates(): void
-  {
-    foreach (['view', 'manage', 'publish'] as $permission) {
-      Gate::define('webblocks-ui-manager.'.$permission, fn (User $user): bool => $user->isSuperAdmin());
-    }
   }
 
   private function dropWebBlocksUiManagerTables(): void

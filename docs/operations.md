@@ -72,7 +72,7 @@ If the plugin declares migrations, enablement does not imply setup is complete. 
 
 If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, this patch does not drop them automatically. Manual plugin uninstall also preserves plugin-owned tables. Leave them in place unless an operator has confirmed the plugin is not needed and performs a separate manual database cleanup with a backup.
 
-When manually installed, enabled, and set up, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. If `webblocks_ui_manager_releases`, `webblocks_ui_manager_artifacts`, or `webblocks_ui_manager_publish_runs` is missing, the Releases screen shows setup-required guidance and links back to plugin setup instead of querying missing tables. Prepare a release with local WebBlocks UI dist files:
+When manually installed, enabled, and set up, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. CMS `super_admin` users can open enabled plugin routes through the plugin-owned permissions declared in the manifest; non-super-admin roles require explicit plugin permission grants. If `webblocks_ui_manager_releases`, `webblocks_ui_manager_artifacts`, or `webblocks_ui_manager_publish_runs` is missing, the Releases screen shows setup-required guidance and links back to plugin setup instead of querying missing tables. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
 ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js

@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -189,7 +188,6 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
     config()->set('webblocks-plugins.enabled.webblocks-ui-manager', true);
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
     $release = $this->preparedRelease();
-    $this->definePluginPermissionGates();
     $superAdmin = User::factory()->superAdmin()->create();
     $editor = User::factory()->editor()->create();
 
@@ -276,13 +274,6 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
 
     return app(WebBlocksUiReleasePreparer::class)
       ->prepare('v2.7.9', $artifacts)['release'];
-  }
-
-  private function definePluginPermissionGates(): void
-  {
-    foreach (['view', 'manage', 'publish'] as $permission) {
-      Gate::define('webblocks-ui-manager.'.$permission, fn (User $user): bool => $user->isSuperAdmin());
-    }
   }
 
   private function installWebBlocksUiManagerPluginForTest(): void

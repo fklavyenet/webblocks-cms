@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginSettingsDefinition;
@@ -56,6 +57,9 @@ class PluginRouteGuardTest extends TestCase
     $registry->register(
       PluginDefinition::make('webblocks-ui-manager')
         ->label('WebBlocks UI Manager')
+        ->permissions([
+          PluginPermission::make('webblocks-ui-manager.manage'),
+        ])
         ->settings(PluginSettingsDefinition::make()->label('Release Settings'))
         ->adminRoutes(function (): void {
           Route::get('/releases', fn () => 'enabled plugin route')
@@ -83,6 +87,7 @@ class PluginRouteGuardTest extends TestCase
     $this->assertSame('webadmin/plugins/webblocks-ui-manager/releases', $enabledRoute?->uri());
     $this->assertNotNull($settingsRoute);
     $this->assertSame('webadmin/plugins/webblocks-ui-manager/settings', $settingsRoute?->uri());
+    $this->assertContains('plugin.permission:webblocks-ui-manager.manage', $settingsRoute?->gatherMiddleware() ?? []);
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.tools.index'));
     $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.disabled_plugin.settings.edit'));
 

@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
@@ -67,7 +66,6 @@ class WebBlocksUiManagerPluginTest extends TestCase
   public function enabled_plugin_exposes_menu_permissions_commands_widgets_and_settings(): void
   {
     config()->set('webblocks-plugins.enabled.webblocks-ui-manager', true);
-    $this->definePluginPermissionGates();
 
     $registry = app(PluginRegistry::class);
     $plugin = $registry->get('webblocks-ui-manager');
@@ -155,7 +153,6 @@ class WebBlocksUiManagerPluginTest extends TestCase
   public function enabled_plugin_admin_pages_render_for_permitted_super_admins(): void
   {
     config()->set('webblocks-plugins.enabled.webblocks-ui-manager', true);
-    $this->definePluginPermissionGates();
     app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
 
     $release = WebBlocksUiRelease::query()->create([
@@ -294,13 +291,6 @@ class WebBlocksUiManagerPluginTest extends TestCase
     $this->assertFileDoesNotExist(base_path('app/Plugins/WebBlocksUiManager/WebBlocksUiManagerPlugin.php'));
     $this->assertFileDoesNotExist(base_path('app/Http/Controllers/WebBlocksUiReleaseController.php'));
     $this->assertFileDoesNotExist(resource_path('views/plugins/webblocks-ui-manager/releases/index.blade.php'));
-  }
-
-  private function definePluginPermissionGates(): void
-  {
-    foreach (['view', 'manage', 'publish'] as $permission) {
-      Gate::define('webblocks-ui-manager.'.$permission, fn (User $user): bool => $user->isSuperAdmin());
-    }
   }
 
   private function installWebBlocksUiManagerPluginForTest(): void

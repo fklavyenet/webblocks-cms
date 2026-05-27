@@ -28,6 +28,7 @@ use WebBlocks\Cms\Console\SitePromotionInspectCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
+use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
@@ -36,6 +37,7 @@ use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginAuthorizationRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -845,6 +847,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $app->make(PluginRegistry::class)
     ));
 
+    $this->app->singleton(PluginAuthorizationRegistrar::class, fn ($app): PluginAuthorizationRegistrar => new PluginAuthorizationRegistrar(
+      $app->make(PluginPermissionRegistry::class)
+    ));
+
     $this->app->singleton(PluginAdminExtensionRegistry::class, fn ($app): PluginAdminExtensionRegistry => new PluginAdminExtensionRegistry(
       $app->make(PluginRegistry::class)
     ));
@@ -1020,6 +1026,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Route::aliasMiddleware('internal-api.token', RequireInternalApiToken::class);
     Route::aliasMiddleware('install.complete', RedirectIfInstalled::class);
     Route::aliasMiddleware('install.required', RedirectIfNotInstalled::class);
+    Route::aliasMiddleware('plugin.permission', AuthorizePluginPermission::class);
   }
 
   protected function bootAuthorization(): void
@@ -1028,11 +1035,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Gate::define('manage-users', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
     Gate::define('access-system', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
 
-    foreach (app(PluginPermissionRegistry::class)->active() as $permissions) {
-      foreach ($permissions as $permission) {
-        Gate::define($permission->name(), fn ($user): bool => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
-      }
-    }
+    app(PluginAuthorizationRegistrar::class)->register();
   }
 
   protected function registerClassAliases(): void
