@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. CMS core is a generic plugin host with registry-backed plugin definitions, manual super-admin ZIP upload/install, storage-owned install paths, disabled-by-default installed plugins, explicit enablement, compatibility checks, enabled-only routes and commands, settings/detail scaffolding, health/status reporting, typed admin extension slots, plugin-owned block declarations, public asset hooks, and package convention guards. WebBlocks UI Manager is no longer bundled into CMS core runtime; it is an internal/operator plugin artifact installed manually only on operator installs such as webblocksui.com. There is no public marketplace, remote plugin store, arbitrary Composer package installer, automatic external plugin download, automatic external production WebBlocks UI CDN deployment, or generic update-server publishing.
+This document records the architecture for the WebBlocks CMS plugin system. CMS core is a generic plugin host with registry-backed plugin definitions, manual super-admin ZIP upload/install, storage-owned install paths, disabled-by-default installed plugins, explicit enable/disable management, manual-upload uninstall, compatibility checks, enabled-only routes and commands, settings/detail scaffolding, health/status reporting, typed admin extension slots, plugin-owned block declarations, public asset hooks, and package convention guards. WebBlocks UI Manager is no longer bundled into CMS core runtime; it is an internal/operator plugin artifact installed manually only on operator installs such as webblocksui.com. There is no public marketplace, remote plugin store, arbitrary Composer package installer, automatic external plugin download, automatic external production WebBlocks UI CDN deployment, or generic update-server publishing.
 
 ## Core Decision
 
@@ -56,7 +56,9 @@ Core view override is forbidden by default. Plugins extend CMS only through docu
 
 `System -> Plugins` lets super admins upload a local plugin ZIP. Uploading a ZIP is privileged executable-code installation. The installer validates the archive before writing anything under the configured plugin root, defaulting to `storage/app/webblocks/plugins/{plugin-handle}/{version}`.
 
-Validation requires `webblocks-plugin.json` or `manifest.json`, a kebab-case handle, a semver-like version, provider/class metadata, a compatible CMS version constraint, no installed handle collision, relative package paths only, no path traversal, no absolute paths, no symlink entries, and no writes to forbidden CMS/core targets such as `app`, `packages`, `project`, `storage`, `vendor`, or `public/cms`. Installed plugins remain disabled unless an explicit enable step is completed.
+Validation requires `webblocks-plugin.json` or `manifest.json`, a kebab-case handle, a semver-like version, provider/class metadata, a compatible CMS version constraint, no installed handle collision, relative package paths only, no path traversal, no absolute paths, no symlink entries, and no writes to forbidden CMS/core targets such as `app`, `packages`, `project`, `storage`, `vendor`, or `public/cms`. Installed plugins remain disabled unless an explicit enable step is completed. Disabled plugins are inert: routes, commands, menus, settings routes, health reporters, widgets, block declarations, and assets are not registered or executed, and `System -> Plugins` reports health as inactive/not checked.
+
+Manual uninstall is available only for manually uploaded plugins and requires super-admin authorization. The plugin must be disabled first. Uninstall removes the installed-plugin package directory and enabled-state file under the configured plugin root, but it does not drop plugin-owned database tables or run destructive migrations. Protected/core/non-manual plugins cannot be uninstalled through this flow.
 
 Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes`, `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files but are not auto-run by this phase; migration execution remains an explicit/manual operator action.
 
@@ -321,12 +323,13 @@ Plugin table names must carry the plugin handle prefix or a documented shortened
 
 Lifecycle states must be distinct:
 
-- Enable: plugin menu, routes, commands, scheduled jobs, widgets, blocks, and actions become available according to permissions and health.
-- Disable: plugin menu, scheduled jobs, plugin routes, and plugin actions are unavailable; data remains in place.
+- Enable: plugin menu, routes, commands, scheduled jobs, widgets, blocks, settings, health checks, and actions become available according to permissions and compatibility.
+- Disable: plugin menu, scheduled jobs, plugin routes, plugin actions, settings routes, health checks, widgets, blocks, and assets are unavailable; data remains in place.
+- Uninstall: manually uploaded disabled plugins can be removed from the storage-owned install root. Plugin-owned database tables and historical data remain in place.
 - Uninstall: reserved for a future design; by default it must not delete data.
 - Decommission or purge: future destructive data deletion flow requiring explicit destructive confirmation.
 
-The first implementation must not make uninstall destructive. Deleting plugin tables, artifacts, uploaded files, or historical records requires a separate explicit destructive confirmation design.
+Uninstall must not be database-destructive. Deleting plugin tables, artifacts, uploaded files outside the plugin package directory, or historical records requires a separate explicit destructive confirmation design.
 
 Schema upgrades should be additive and reversible where practical. A plugin release that changes schema must document:
 

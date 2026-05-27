@@ -5,6 +5,8 @@ namespace Tests\Feature\Admin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -21,6 +23,8 @@ class AdminPluginListingTest extends TestCase
     parent::setUp();
 
     config()->set('webblocks-plugins.install.root', storage_path('framework/testing/plugins/'.str()->uuid()));
+    $this->app->forgetInstance(PluginRegistry::class);
+    $this->app->forgetInstance(PluginHealthMonitor::class);
   }
 
   #[Test]
@@ -65,20 +69,47 @@ class AdminPluginListingTest extends TestCase
     $response->assertSeeText('webblocks-ui-manager');
     $response->assertSeeText('0.1.0');
     $response->assertSeeText('Disabled');
+    $response->assertSeeText('Inactive');
+    $response->assertSeeText('Not checked while disabled.');
     $response->assertSeeText('manual upload');
-    $response->assertSeeText('1');
+    $response->assertSeeText('Actions');
+    $response->assertDontSeeText('Provider');
+    $response->assertDontSeeText('Permissions');
+    $response->assertDontSeeText('Menu Items');
+    $response->assertDontSeeText('Settings Namespace');
+    $response->assertDontSeeText('Route Namespace');
+    $response->assertDontSeeText('Database Prefix');
+    $response->assertDontSeeText('Install Path');
   }
 
   #[Test]
-  public function uploaded_plugin_can_be_explicitly_enabled(): void
+  public function plugin_detail_is_available_from_name_link_and_view_action(): void
   {
     $user = User::factory()->superAdmin()->create();
 
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
+    $detailUrl = route('admin.system.plugins.show', 'webblocks-ui-manager');
+
+    $response->assertOk();
+    $this->assertGreaterThanOrEqual(2, substr_count($response->getContent(), $detailUrl));
+
     $this->actingAs($user)
-      ->post(route('admin.system.plugins.upload'), [
-        'plugin_zip' => $this->webBlocksUiManagerZip(),
-      ])
-      ->assertRedirect(route('admin.system.plugins.index'));
+      ->get($detailUrl)
+      ->assertOk()
+      ->assertSeeText('Overview')
+      ->assertSeeText('Lifecycle')
+      ->assertSeeText('This plugin is installed but disabled. Enable it to register its routes, commands, menus, settings, health checks, and contributions.')
+      ->assertSeeText('Available after enabling');
+  }
+
+  #[Test]
+  public function uploaded_plugin_can_be_explicitly_enabled_from_the_list(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
 
     $this->actingAs($user)
       ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
@@ -89,6 +120,104 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('WebBlocks UI Manager');
     $response->assertSeeText('Enabled');
+  }
+
+  #[Test]
+  public function uploaded_plugin_can_be_enabled_and_disabled_from_detail(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->get(route('admin.system.plugins.show', 'webblocks-ui-manager'))
+      ->assertOk()
+      ->assertSeeText('Enable Plugin');
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->actingAs($user)
+      ->get(route('admin.system.plugins.show', 'webblocks-ui-manager'))
+      ->assertOk()
+      ->assertSeeText('Disable Plugin');
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.disable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->actingAs($user)
+      ->get(route('admin.system.plugins.show', 'webblocks-ui-manager'))
+      ->assertOk()
+      ->assertSeeText('Disabled')
+      ->assertSeeText('Inactive');
+  }
+
+  #[Test]
+  public function disabled_manual_plugin_can_be_uninstalled_without_dropping_plugin_tables(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+    Artisan::call('migrate', [
+      '--path' => 'plugins/webblocks-ui-manager/database/migrations',
+      '--realpath' => false,
+    ]);
+
+    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.0';
+
+    $this->assertDirectoryExists($installPath);
+    $this->assertTrue(Schema::hasTable('webblocks_ui_manager_releases'));
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.plugins.uninstall', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.index'));
+
+    $this->assertDirectoryDoesNotExist($installPath);
+    $this->assertTrue(Schema::hasTable('webblocks_ui_manager_releases'));
+
+    $this->actingAs($user)
+      ->get(route('admin.system.plugins.show', 'webblocks-ui-manager'))
+      ->assertNotFound();
+  }
+
+  #[Test]
+  public function enabled_manual_plugin_must_be_disabled_before_uninstall(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.0';
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.plugins.uninstall', 'webblocks-ui-manager'))
+      ->assertSessionHasErrors('plugin');
+
+    $this->assertDirectoryExists($installPath);
+  }
+
+  #[Test]
+  public function protected_non_manual_plugins_cannot_be_uninstalled(): void
+  {
+    $registry = new PluginRegistry(['core-tools' => false]);
+    $registry->register(
+      PluginDefinition::make('core-tools')
+        ->label('Core Tools')
+        ->version('1.0.0')
+    );
+    $this->app->instance(PluginRegistry::class, $registry);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->delete(route('admin.system.plugins.uninstall', 'core-tools'))
+      ->assertNotFound();
   }
 
   #[Test]
@@ -143,11 +272,26 @@ class AdminPluginListingTest extends TestCase
       }
 
       $relative = str_replace($source.DIRECTORY_SEPARATOR, '', $file->getPathname());
+      $normalized = str_replace(DIRECTORY_SEPARATOR, '/', $relative);
+
+      if ($normalized === 'build-plugin.php' || str_starts_with($normalized, '.') || str_contains($normalized, '/.')) {
+        continue;
+      }
+
       $zip->addFile($file->getPathname(), str_replace(DIRECTORY_SEPARATOR, '/', $relative));
     }
 
     $zip->close();
 
     return new UploadedFile($zipPath, 'webblocks-ui-manager.zip', 'application/zip', null, true);
+  }
+
+  private function uploadWebBlocksUiManagerPlugin(User $user): void
+  {
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.upload'), [
+        'plugin_zip' => $this->webBlocksUiManagerZip(),
+      ])
+      ->assertRedirect(route('admin.system.plugins.index'));
   }
 }

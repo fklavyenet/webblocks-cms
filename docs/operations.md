@@ -66,9 +66,9 @@ WebBlocks UI Manager is an internal/operator plugin for product-specific release
 php plugins/webblocks-ui-manager/build-plugin.php
 ```
 
-Upload the generated ZIP through `System -> Plugins` as a super admin, review the installed plugin detail, then explicitly enable it. Disabled or incompatible installs remain inert.
+Upload the generated ZIP through `System -> Plugins` as a super admin, review the installed plugin detail, then explicitly enable it. Uploaded plugins install disabled by default. Disabled or incompatible installs remain inert, and health is not checked while disabled.
 
-If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, this patch does not drop them automatically. Leave them in place unless an operator has confirmed the plugin is not needed and performs a manual database cleanup with a backup.
+If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, this patch does not drop them automatically. Manual plugin uninstall also preserves plugin-owned tables. Leave them in place unless an operator has confirmed the plugin is not needed and performs a separate manual database cleanup with a backup.
 
 When manually installed and enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
 
@@ -92,7 +92,9 @@ ddev artisan webblocks-ui-manager:publish-release v2.7.9
 
 The publish workflow validates source paths, version-to-target path matching, expected dist files, stored checksums, manifest consistency, and idempotency before writing. Existing files with matching checksums are skipped. Existing files with different checksums block the publish. The target is local/project-owned by default through `WEBBLOCKS_UI_MANAGER_CDN_BASE_PATH=cdn/webblocks-ui`; `WEBBLOCKS_UI_MANAGER_CDN_BASE_URL` is optional display/URL metadata. The workflow does not deploy to an external production server, publish update-server metadata, or change CMS core WebBlocks UI asset URLs.
 
-`System -> Plugins` reports disabled, enabled, and incompatible states separately. A plugin configured as enabled but incompatible remains inert: no plugin routes, commands, menus, permissions, settings routes, widgets, assets, block declarations, or health reporter behavior become active.
+`System -> Plugins` reports disabled, enabled, incompatible, missing-files, and error states separately. Disabled plugins show inactive health, not failure. A plugin configured as enabled but incompatible remains inert: no plugin routes, commands, menus, permissions, settings routes, widgets, assets, block declarations, or health reporter behavior become active.
+
+Manual uninstall is available only for manually uploaded plugins after they have been disabled. It removes the storage-owned installed package directory and enabled-state file, never CMS core files, public `/cms` assets, project files, vendor files, or storage outside the configured plugin root. It does not run destructive migrations or drop plugin-owned database tables.
 
 External production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, arbitrary remote installers, Composer package installation, update-server publishing, and marketplace/catalog flows remain intentionally deferred.
 

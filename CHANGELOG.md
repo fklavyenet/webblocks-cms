@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.69
+
+- Polish `System -> Plugins` into a calmer manual plugin management screen with concise list columns, icon actions, clearer installed/disabled/enabled/incompatible/missing-files lifecycle language, inactive health messaging for disabled plugins, and readable plugin detail cards for overview, lifecycle, capabilities, settings, health, technical details, and danger-zone actions.
+- Add safe uninstall support for manually uploaded plugins: super-admin only, manual-upload only, disabled-first, storage-owned package directory removal, enabled-state cleanup, protected/core plugin guardrails, path escape protection, and preserved plugin-owned database tables with explicit operator messaging.
+
 ## 1.32.68
 
 - Prepare a post-1.32.67 product-boundary hardening patch: WebBlocks CMS core is now a generic plugin host with manual super-admin ZIP upload/install support under `System -> Plugins`, safe package validation, storage-owned plugin installation, disabled-by-default installed plugins, explicit enablement, and no marketplace, remote store, Composer installer, or automatic external plugin download.

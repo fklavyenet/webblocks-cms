@@ -20,7 +20,7 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: collect enabled plugin menu items and plugin permissions from the registry.
 - Done: add route ownership guards for plugin namespaces and canonical admin/static route boundaries.
 - Done: add tests for absent plugins, disabled plugins, route ownership, permissions, and package boundaries.
-- Later: dynamic plugin package discovery, plugin migrations, install/enable/disable UI actions, public plugin routes, and persistent lifecycle state.
+- Later: dynamic plugin package discovery beyond manual ZIP upload, plugin migrations, public plugin routes, and database-backed lifecycle state.
 
 ### Phase 2 - Plugin Routing, Settings, And Commands
 
@@ -60,4 +60,5 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add package boundary and route guard coverage proving first-party plugin code stays plugin-owned, disabled and incompatible plugins remain inert, `/webadmin` remains canonical, `/cms` remains static-only from Laravel's route perspective, and `/admin` remains absent.
 - Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, external production CDN deployment, or update-server behavior.
 - Done: add manual plugin ZIP upload/install with archive validation, storage-owned install paths, disabled-by-default installed plugins, explicit enablement, and no marketplace, remote store, arbitrary Composer install, or automatic third-party download.
-- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, automatic external production CDN deployment, and generic update-server publishing.
+- Done: polish `System -> Plugins` into a concise management UI with lifecycle actions and safe manual-upload uninstall that preserves plugin-owned tables.
+- Later: database-backed plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, automatic external production CDN deployment, and generic update-server publishing.

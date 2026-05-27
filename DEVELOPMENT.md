@@ -63,6 +63,7 @@ WebBlocks CMS core and the Project Layer have different responsibilities.
 - The Project Layer is install-local and update-safe, but it is not a reusable plugin packaging system.
 - Reusable product or domain extensions should use the plugin system conventions in `docs/plugin-system.md`: kebab-case handles, handle-prefixed permissions and commands, plugin route namespaces, plugin-owned settings namespaces, plugin-owned table prefixes, compatibility metadata, and active-only contributions.
 - WebBlocks UI Manager publish work belongs in `plugins/webblocks-ui-manager`, not CMS core runtime. Build it as a manual ZIP artifact for operator installs; keep dry-run/publish validation, filesystem writes, manifests, checksums, and run history in plugin support services rather than CMS core controllers or generic update code.
+- Manual plugin uninstall is storage-owned and disabled-first. Do not drop plugin-owned tables, delete project files, delete CMS core files, or remove storage outside the configured plugin install root as part of ordinary uninstall behavior.
 
 ## Update-Safe Customization Rule
 

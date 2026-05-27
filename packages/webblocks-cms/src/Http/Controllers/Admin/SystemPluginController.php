@@ -86,6 +86,10 @@ class SystemPluginController extends Controller
 
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
+    if (! is_dir($definition->installPathValue())) {
+      return back()->withErrors(['plugin' => 'Plugin files are missing. Reinstall the plugin package before enabling it.']);
+    }
+
     if (! $this->plugins->isCompatible($plugin)) {
       return back()->withErrors(['plugin' => $this->plugins->incompatibilityMessage($plugin) ?? 'Plugin is not compatible with this CMS version.']);
     }
@@ -100,6 +104,51 @@ class SystemPluginController extends Controller
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
       ->with('status', 'Plugin enabled. Its routes, commands, permissions, and menus will be active on the next request.');
+  }
+
+  public function disable(string $plugin): RedirectResponse
+  {
+    abort_unless(request()->user()?->isSuperAdmin(), 403);
+
+    $definition = $this->plugins->get($plugin);
+
+    abort_if($definition === null || $definition->installPathValue() === null, 404);
+
+    $this->installedPlugins->disable($plugin);
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.show', $plugin)
+      ->with('status', 'Plugin disabled. Routes, commands, menus, settings, health checks, and contributions are inactive.');
+  }
+
+  public function uninstall(string $plugin): RedirectResponse
+  {
+    abort_unless(request()->user()?->isSuperAdmin(), 403);
+
+    $definition = $this->plugins->get($plugin);
+
+    abort_if($definition === null || $definition->installPathValue() === null || $definition->sourceText() !== 'manual upload', 404);
+
+    if ($this->plugins->isConfiguredEnabled($plugin)) {
+      return back()->withErrors(['plugin' => 'Disable this plugin before uninstalling it. Plugin-owned database tables are preserved.']);
+    }
+
+    $version = $definition->versionText();
+
+    abort_if($version === null, 422);
+
+    try {
+      $this->installedPlugins->uninstall($plugin, $version);
+    } catch (RuntimeException $exception) {
+      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    }
+
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.index')
+      ->with('status', 'Plugin uninstalled. Plugin-owned database tables were preserved.');
   }
 
   /**
@@ -143,8 +192,35 @@ class SystemPluginController extends Controller
       $settingsRoute = $settings->routeName ?? $this->routes->defaultSettingsRouteName($definition);
     }
 
+    $manual = $definition->sourceText() === 'manual upload' && $definition->installPathValue() !== null;
+    $filesAvailable = $definition->installPathValue() === null || is_dir($definition->installPathValue());
+    $compatible = (bool) $summary['compatible'];
+    $enabled = (bool) $summary['enabled'];
+    $lifecycleStatus = (string) $summary['lifecycle_status'];
+    $lifecycleLabel = match (true) {
+      ! $filesAvailable => 'Missing files',
+      ! $compatible => 'Incompatible',
+      $enabled => 'Enabled',
+      $manual => 'Disabled',
+      default => ucfirst($lifecycleStatus),
+    };
+    $health = $this->health->healthArrayFor($definition);
+
+    if (! $enabled && $compatible && $filesAvailable) {
+      $health = [
+        'status' => 'inactive',
+        'message' => 'Not checked while disabled.',
+      ];
+    }
+
     return array_merge($summary, [
-      'health' => $this->health->healthArrayFor($definition),
+      'health' => $health,
+      'lifecycle_label' => $lifecycleLabel,
+      'files_available' => $filesAvailable,
+      'manual_upload' => $manual,
+      'can_enable' => $manual && ! $enabled && $compatible && $filesAvailable,
+      'can_disable' => $manual && $enabled,
+      'can_uninstall' => $manual,
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,
       'settings_url' => $settingsRoute !== null && Route::has($settingsRoute) ? route($settingsRoute) : null,

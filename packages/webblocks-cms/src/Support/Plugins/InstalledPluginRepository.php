@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Support\Facades\File;
+use RuntimeException;
 
 class InstalledPluginRepository
 {
@@ -84,6 +85,8 @@ class InstalledPluginRepository
 
   public function enable(string $handle, string $version): void
   {
+    $this->assertValidCoordinates($handle, $version);
+
     $directory = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
     File::ensureDirectoryExists($directory);
 
@@ -91,5 +94,79 @@ class InstalledPluginRepository
       'version' => $version,
       'enabled_at' => now()->toIso8601String(),
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+  }
+
+  public function disable(string $handle): void
+  {
+    if (! PluginDefinition::isValidHandle($handle)) {
+      throw PluginException::invalidHandle($handle);
+    }
+
+    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
+
+    if (is_file($path)) {
+      File::delete($path);
+    }
+  }
+
+  public function uninstall(string $handle, string $version): void
+  {
+    $this->assertValidCoordinates($handle, $version);
+
+    $root = $this->canonicalRootPath();
+    $pluginPath = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
+    $versionPath = $pluginPath.DIRECTORY_SEPARATOR.$version;
+
+    $this->assertPathInsideRoot($versionPath, $root);
+    $this->disable($handle);
+
+    if (file_exists($versionPath)) {
+      if (! is_dir($versionPath) || is_link($versionPath)) {
+        throw new RuntimeException('Plugin install path is not a removable plugin directory.');
+      }
+
+      File::deleteDirectory($versionPath);
+    }
+
+    if (is_dir($pluginPath) && count(File::allFiles($pluginPath)) === 0 && count(File::directories($pluginPath)) === 0) {
+      $this->assertPathInsideRoot($pluginPath, $root);
+      File::deleteDirectory($pluginPath);
+    }
+  }
+
+  private function assertValidCoordinates(string $handle, string $version): void
+  {
+    if (! PluginDefinition::isValidHandle($handle)) {
+      throw PluginException::invalidHandle($handle);
+    }
+
+    if (! preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version)) {
+      throw PluginException::invalidVersion($handle, $version);
+    }
+  }
+
+  private function canonicalRootPath(): string
+  {
+    File::ensureDirectoryExists($this->rootPath());
+
+    $root = realpath($this->rootPath());
+
+    if ($root === false) {
+      throw new RuntimeException('Plugin install root is not available.');
+    }
+
+    return rtrim($root, DIRECTORY_SEPARATOR);
+  }
+
+  private function assertPathInsideRoot(string $path, string $root): void
+  {
+    $real = realpath($path);
+    $candidate = $real !== false
+      ? rtrim($real, DIRECTORY_SEPARATOR)
+      : rtrim(dirname($path), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.basename($path);
+
+    if ($candidate !== $root && ! str_starts_with($candidate, $root.DIRECTORY_SEPARATOR)) {
+      throw new RuntimeException('Plugin install path is outside the configured plugin root.');
+    }
   }
 }

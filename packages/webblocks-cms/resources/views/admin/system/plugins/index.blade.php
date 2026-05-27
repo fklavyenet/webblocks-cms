@@ -3,7 +3,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Plugins',
-        'description' => 'Review installed WebBlocks CMS plugins and their registry-owned menu and permission contributions.',
+        'description' => 'Manage manually installed WebBlocks CMS plugins and review the plugin host status.',
     ])
 
     @if ($canInstallPlugins)
@@ -67,51 +67,99 @@
                         <thead>
                             <tr>
                                 <th>Plugin</th>
-                                <th>Handle</th>
                                 <th>Version</th>
+                                <th>Source</th>
                                 <th>Status</th>
                                 <th>Health</th>
-                                <th>Source</th>
-                                <th>Provider</th>
-                                <th>Description</th>
-                                <th>Permissions</th>
-                                <th>Menu Items</th>
-                                <th>Settings</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($plugins as $plugin)
+                                @php
+                                    $statusClass = match ($plugin['lifecycle_label']) {
+                                        'Enabled' => 'wb-status-active',
+                                        'Incompatible', 'Missing files', 'Error' => 'wb-status-danger',
+                                        default => 'wb-status-pending',
+                                    };
+                                    $healthClass = match ($plugin['health']['status']) {
+                                        'healthy' => 'wb-status-active',
+                                        'warning', 'error', 'incompatible' => 'wb-status-danger',
+                                        default => 'wb-status-pending',
+                                    };
+                                    $uninstallModalId = 'plugin-uninstall-'.$plugin['handle'];
+                                @endphp
                                 <tr>
                                     <td>
                                         <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}"><strong>{{ $plugin['label'] }}</strong></a>
+                                        <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
                                     </td>
-                                    <td><code>{{ $plugin['handle'] }}</code></td>
                                     <td>{{ $plugin['version'] ?? 'Not declared' }}</td>
+                                    <td>{{ $plugin['source'] }}</td>
                                     <td>
-                                        <span class="wb-status {{ $plugin['lifecycle_status'] === 'enabled' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ ucfirst($plugin['lifecycle_status']) }}
+                                        <span class="wb-status {{ $statusClass }}">
+                                            {{ $plugin['lifecycle_label'] }}
                                         </span>
                                         @if (! $plugin['compatible'])
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="wb-status {{ $plugin['health']['status'] === 'healthy' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ ucfirst($plugin['health']['status']) }}
+                                        <span class="wb-status {{ $healthClass }}">
+                                            {{ $plugin['health']['status'] === 'inactive' ? 'Inactive' : ucfirst($plugin['health']['status']) }}
                                         </span>
+                                        @if ($plugin['health']['message'] !== '')
+                                            <div class="wb-text-sm wb-text-muted">{{ $plugin['health']['message'] }}</div>
+                                        @endif
                                     </td>
-                                    <td>{{ $plugin['source'] }}</td>
-                                    <td>{{ $plugin['provider'] ?? 'Not declared' }}</td>
-                                    <td>{{ $plugin['description'] ?? 'No description provided.' }}</td>
-                                    <td>{{ $plugin['permissions_count'] }}</td>
-                                    <td>{{ $plugin['menu_items_count'] }}</td>
                                     <td>
-                                        @if ($plugin['settings_url'])
-                                            <a href="{{ $plugin['settings_url'] }}">Open</a>
-                                        @elseif ($plugin['settings'])
-                                            Declared
-                                        @else
-                                            Not declared
+                                        <div class="wb-actions" aria-label="Plugin actions for {{ $plugin['label'] }}">
+                                            <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" title="View details" aria-label="View details">
+                                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                            </a>
+
+                                            @if ($plugin['can_enable'])
+                                                <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}">
+                                                    @csrf
+                                                    <button type="submit" class="wb-action-btn" title="Enable plugin" aria-label="Enable plugin">
+                                                        <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            @if ($plugin['can_disable'])
+                                                <form method="POST" action="{{ route('admin.system.plugins.disable', $plugin['handle']) }}">
+                                                    @csrf
+                                                    <button type="submit" class="wb-action-btn" title="Disable plugin" aria-label="Disable plugin">
+                                                        <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            @if ($plugin['can_uninstall'])
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" title="Uninstall plugin" aria-label="Uninstall plugin" data-wb-toggle="modal" data-wb-target="#{{ $uninstallModalId }}">
+                                                    <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        @if ($plugin['can_uninstall'])
+                                            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                                                'id' => $uninstallModalId,
+                                                'title' => 'Uninstall '.$plugin['label'],
+                                                'description' => 'This removes the uploaded plugin package from storage. Plugin-owned database tables are preserved.',
+                                                'action' => route('admin.system.plugins.uninstall', $plugin['handle']),
+                                                'method' => 'DELETE',
+                                                'submitLabel' => 'Uninstall Plugin',
+                                                'submitAttributes' => $plugin['enabled'] ? ['disabled' => true] : [],
+                                            ])
+                                                @if ($plugin['enabled'])
+                                                    <div class="wb-alert wb-alert-danger">Disable this plugin before uninstalling it.</div>
+                                                @else
+                                                    <p>This will remove version {{ $plugin['version'] ?? 'unknown' }} from the manual plugin install directory.</p>
+                                                    <p class="wb-text-sm wb-text-muted">Database cleanup is not automatic. Plugin-owned tables are preserved unless a future explicit cleanup tool is added.</p>
+                                                @endif
+                                            @endcomponent
                                         @endif
                                     </td>
                                 </tr>
