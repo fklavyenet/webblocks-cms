@@ -30,7 +30,7 @@
                 <div class="wb-stack wb-gap-1">
                     <label for="status">Status</label>
                     <select id="status" name="status" class="wb-select">
-                        @foreach (['draft' => 'Draft', 'prepared' => 'Prepared', 'published' => 'Published'] as $value => $label)
+                        @foreach (['draft' => 'Draft', 'prepared' => 'Prepared', 'published' => 'Published', 'blocked' => 'Blocked', 'publish_failed' => 'Publish Failed'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('status', $release->status ?: 'draft') === $value)>{{ $label }}</option>
                         @endforeach
                     </select>

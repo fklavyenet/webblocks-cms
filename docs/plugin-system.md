@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and production WebBlocks UI CDN deployment remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and external production WebBlocks UI CDN deployment automation remain future work.
 
 ## Core Decision
 
@@ -158,7 +158,7 @@ Plugin package conventions are separate from CMS core conventions. CMS core owns
 - Asset contributions: public asset handles are dot-namespaced with the plugin handle, and static files must publish under a plugin-owned path.
 - Dashboard and system card contributions: keys are dot-namespaced with the plugin handle and remain read-only unless a later extension contract adds editable behavior.
 
-WebBlocks UI Manager follows these conventions as the first-party pilot: handle `webblocks-ui-manager`, settings namespace `webblocks_ui_manager`, database prefix `webblocks_ui_manager_`, command `webblocks-ui-manager:prepare-release`, routes under `/webadmin/plugins/webblocks-ui-manager`, and route names under `webblocks.plugins.webblocks_ui_manager.*`.
+WebBlocks UI Manager follows these conventions as the first-party pilot: handle `webblocks-ui-manager`, settings namespace `webblocks_ui_manager`, database prefix `webblocks_ui_manager_`, commands `webblocks-ui-manager:prepare-release` and `webblocks-ui-manager:publish-release`, routes under `/webadmin/plugins/webblocks-ui-manager`, and route names under `webblocks.plugins.webblocks_ui_manager.*`.
 
 ## Compatibility And Inertness
 
@@ -345,9 +345,14 @@ Asset rules:
 - versioned artifact directories are immutable
 - old versioned directories must not be deleted as part of normal publish
 - `latest` must not be used for first-party CDN consumption
+- dry-run publish must report writes, skips, and blocked operations without writing files
+- apply publish must validate expected dist files, source paths, release version, target paths, checksums, and manifest consistency before writing
+- existing files with matching checksums are skipped; existing files with different checksums block the run
 - CDN or static hosting should be served by Nginx or another static service when possible
 - Laravel route-based asset streaming must not be the default for CDN files
 - plugin admin assets must be isolated from core CMS admin assets and publish under a plugin namespace
+
+The WebBlocks UI Manager local publish workflow writes only into the configured project-owned static target, defaulting to `public/cdn/webblocks-ui/{version}/...`. It does not deploy to external production infrastructure, publish update-server metadata, change CMS core WebBlocks UI consumption URLs, or install remote packages.
 
 Phase 3 adds registry-backed public asset declarations for enabled plugins. These declarations are currently limited to explicit asset URLs and are rendered as public page assets only when the owning plugin is enabled:
 
@@ -481,11 +486,12 @@ When enabled, the pilot contributes:
 - plugin health checks for release metadata readiness and configured CDN base path readiness
 - plugin-owned tables and models: `webblocks_ui_manager_releases` and `webblocks_ui_manager_artifacts`
 - a safe local `webblocks-ui-manager:prepare-release` command that records release metadata, computes artifact SHA-256 checksums, and can optionally write a local `manifest.json`
+- a controlled `webblocks-ui-manager:publish-release {version} --dry-run` and `webblocks-ui-manager:publish-release {version}` workflow that records publish runs and writes only after validation passes
 - first-party CDN target conventions under `public/cdn/webblocks-ui/{version}/...`
 
 Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection.
 
-Phase 4 intentionally does not add real production CDN publish/deploy actions, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, or changes to CMS core WebBlocks UI consumption URLs.
+Phase 4 intentionally does not add external production CDN deployment automation, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, update-server publishing, or changes to CMS core WebBlocks UI consumption URLs.
 
 ### Phase 5 Implementation Note
 
@@ -501,7 +507,7 @@ The Phase 5 runtime now includes packaging and ecosystem readiness foundations:
 - focused tests for compatibility metadata, incompatible behavior, command and prefix collisions, disabled/incompatible inertness, WebBlocks UI Manager regression, package boundaries, and route ownership
 - documentation for package conventions, local discovery, minimal plugin creation, schema upgrade strategy, and release compatibility policy
 
-Phase 5 intentionally does not add marketplace/catalog UI, arbitrary remote package installation, dynamic remote Composer discovery, generic third-party plugin migration runners, production CDN publishing, update-server publishing, public plugin routes, or a version bump.
+Phase 5 intentionally does not add marketplace/catalog UI, arbitrary remote package installation, dynamic remote Composer discovery, generic third-party plugin migration runners, external production CDN deployment automation, update-server publishing, public plugin routes, or a version bump.
 
 ## Testing And Release Guardrails
 
@@ -539,10 +545,12 @@ The plugin's responsibility:
 - WebBlocks UI release artifact records
 - source dist validation
 - safe local publish preparation
+- controlled local static publish dry-runs and apply runs
+- publish run history
 - manifest and checksum generation
 - CDN health checks
 
-The WebBlocks UI build stays in the WebBlocks UI repository. The plugin does not build WebBlocks UI. It receives or validates release artifacts and records local metadata for first-party CDN paths. Real production CDN deployment is intentionally deferred and must remain explicit.
+The WebBlocks UI build stays in the WebBlocks UI repository. The plugin does not build WebBlocks UI. It receives or validates release artifacts, records local metadata for first-party CDN paths, and can publish validated files into the configured local/project-owned static target. External production CDN deployment is intentionally deferred and must remain explicit.
 
 Our own products may consume `cdn.webblocksui.com` for pinned first-party assets. External user documentation should continue to recommend GitHub or jsDelivr CDN consumption unless that policy changes separately.
 
@@ -552,4 +560,49 @@ CDN rules for the pilot:
 - do not use `latest`
 - never mutate an existing versioned artifact directory
 - do not delete old versioned CDN directories during normal publish
+- run dry-run before apply when operating manually
+- block checksum mismatches instead of replacing files silently
 - prefer static serving over Laravel route streaming
+
+## WebBlocks UI Manager Publish Flow
+
+Prepare release metadata and checksums:
+
+```bash
+ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
+```
+
+Dry-run the publish:
+
+```bash
+ddev artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
+```
+
+Apply the local publish:
+
+```bash
+ddev artisan webblocks-ui-manager:publish-release v2.7.9
+```
+
+The admin release detail screen exposes the same dry-run and publish actions when the plugin is enabled, compatible, and the user has `webblocks-ui-manager.publish`. The real publish action uses a confirmation modal. Dry-run is non-destructive.
+
+Required settings:
+
+- `WEBBLOCKS_UI_MANAGER_ENABLED=true` enables the plugin.
+- `WEBBLOCKS_UI_MANAGER_CDN_BASE_PATH=cdn/webblocks-ui` controls the local/project-owned static root under `public/`.
+- `WEBBLOCKS_UI_MANAGER_CDN_BASE_URL` is optional display metadata for generated public URLs.
+- `webblocks-plugins.webblocks_ui_manager.expected_dist_files` lists required dist filenames.
+
+Publish validation checks:
+
+- release metadata exists and is not draft
+- release version is semver-like
+- release CDN path equals the configured root plus the release version
+- expected dist files are present
+- source files exist inside the project root and are not symlink escapes
+- artifact target paths stay inside the configured CDN root
+- stored artifact checksums match current source files and manifest metadata
+- existing published files either match checksums and are skipped or block the run
+- existing manifest content must match prepared manifest content
+
+Publish runs are stored in `webblocks_ui_manager_publish_runs` with mode, status, target paths, operation details, and secret-free failure messages.

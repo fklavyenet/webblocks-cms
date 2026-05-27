@@ -10,4 +10,6 @@ Route::middleware('can:webblocks-ui-manager.view')->group(function (): void {
   Route::get('/releases/{release}', [WebBlocksUiReleaseController::class, 'show'])->name('releases.show');
   Route::get('/releases/{release}/edit', [WebBlocksUiReleaseController::class, 'edit'])->middleware('can:webblocks-ui-manager.manage')->name('releases.edit');
   Route::put('/releases/{release}', [WebBlocksUiReleaseController::class, 'update'])->middleware('can:webblocks-ui-manager.manage')->name('releases.update');
+  Route::post('/releases/{release}/publish-dry-run', [WebBlocksUiReleaseController::class, 'dryRun'])->middleware('can:webblocks-ui-manager.publish')->name('releases.publish.dry-run');
+  Route::post('/releases/{release}/publish', [WebBlocksUiReleaseController::class, 'publish'])->middleware('can:webblocks-ui-manager.publish')->name('releases.publish');
 });

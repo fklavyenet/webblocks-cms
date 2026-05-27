@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Plugins\WebBlocksUiManager;
 
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Console\PrepareWebBlocksUiReleaseCommand;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Console\PublishWebBlocksUiReleaseCommand;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiManagerHealth;
 use WebBlocks\Cms\Support\Plugins\PluginDashboardWidget;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -48,6 +49,7 @@ class WebBlocksUiManagerPlugin
       ->adminRoutes(__DIR__.'/../../../routes/plugins/webblocks-ui-manager.php')
       ->commands([
         PrepareWebBlocksUiReleaseCommand::class,
+        PublishWebBlocksUiReleaseCommand::class,
       ])
       ->settings(
         PluginSettingsDefinition::make()

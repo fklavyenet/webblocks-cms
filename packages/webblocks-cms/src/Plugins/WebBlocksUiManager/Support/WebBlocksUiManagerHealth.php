@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Plugins\WebBlocksUiManager\Support;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -16,7 +15,7 @@ class WebBlocksUiManagerHealth
 
   public function health(PluginDefinition $plugin): PluginHealthResult
   {
-    if (! Schema::hasTable('webblocks_ui_manager_releases') || ! Schema::hasTable('webblocks_ui_manager_artifacts')) {
+    if (! Schema::hasTable('webblocks_ui_manager_releases') || ! Schema::hasTable('webblocks_ui_manager_artifacts') || ! Schema::hasTable('webblocks_ui_manager_publish_runs')) {
       return PluginHealthResult::warning('Plugin release tables are not available. Run the latest migrations before using WebBlocks UI Manager.');
     }
 
@@ -26,28 +25,41 @@ class WebBlocksUiManagerHealth
       return PluginHealthResult::warning('The WebBlocks UI Manager CDN base path is not configured.');
     }
 
-    $preparedCount = WebBlocksUiRelease::query()
-      ->where('status', WebBlocksUiRelease::STATUS_PREPARED)
+    $trackedCount = WebBlocksUiRelease::query()
+      ->whereIn('status', [WebBlocksUiRelease::STATUS_PREPARED, WebBlocksUiRelease::STATUS_PUBLISHED])
       ->count();
 
-    if ($preparedCount === 0) {
+    if ($trackedCount === 0) {
       return PluginHealthResult::unknown('No prepared WebBlocks UI release metadata has been recorded yet.');
     }
 
-    if (! File::isDirectory(public_path($basePath))) {
-      return PluginHealthResult::warning('Prepared WebBlocks UI release metadata exists, but the configured local CDN base path is not present yet.');
+    if (! is_dir(public_path($basePath)) && ! is_writable(public_path())) {
+      return PluginHealthResult::warning('Configured local CDN base path is not present and public path is not writable.');
     }
 
-    $missingManifest = WebBlocksUiRelease::query()
-      ->where('status', WebBlocksUiRelease::STATUS_PREPARED)
+    if (is_dir(public_path($basePath)) && ! is_writable(public_path($basePath))) {
+      return PluginHealthResult::warning('Configured local CDN base path is not writable.');
+    }
+
+    $missingPublishedManifest = WebBlocksUiRelease::query()
+      ->where('status', WebBlocksUiRelease::STATUS_PUBLISHED)
       ->whereNotNull('manifest_path')
       ->get()
-      ->contains(fn (WebBlocksUiRelease $release): bool => ! File::exists(public_path($release->manifest_path)));
+      ->contains(fn (WebBlocksUiRelease $release): bool => ! is_file(public_path($release->manifest_path)));
 
-    if ($missingManifest) {
-      return PluginHealthResult::warning('One or more prepared WebBlocks UI release records reference a missing local manifest file.');
+    if ($missingPublishedManifest) {
+      return PluginHealthResult::warning('One or more published WebBlocks UI release records reference a missing local manifest file.');
     }
 
-    return PluginHealthResult::healthy($preparedCount.' prepared WebBlocks UI release record(s) are available.');
+    $latestPublished = WebBlocksUiRelease::query()
+      ->where('status', WebBlocksUiRelease::STATUS_PUBLISHED)
+      ->latest('published_at')
+      ->first();
+
+    if ($latestPublished instanceof WebBlocksUiRelease) {
+      return PluginHealthResult::healthy('Latest published WebBlocks UI release: '.$latestPublished->version.'.');
+    }
+
+    return PluginHealthResult::healthy($trackedCount.' prepared WebBlocks UI release record(s) are ready for dry-run or publish.');
   }
 }

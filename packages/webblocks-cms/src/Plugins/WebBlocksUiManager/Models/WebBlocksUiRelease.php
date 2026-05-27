@@ -13,6 +13,10 @@ class WebBlocksUiRelease extends Model
 
   public const STATUS_PUBLISHED = 'published';
 
+  public const STATUS_PUBLISH_FAILED = 'publish_failed';
+
+  public const STATUS_BLOCKED = 'blocked';
+
   protected $table = 'webblocks_ui_manager_releases';
 
   protected $fillable = [
@@ -39,6 +43,11 @@ class WebBlocksUiRelease extends Model
     return $this->hasMany(WebBlocksUiArtifact::class, 'release_id')->orderBy('handle');
   }
 
+  public function publishRuns(): HasMany
+  {
+    return $this->hasMany(WebBlocksUiPublishRun::class, 'release_id')->latest('id');
+  }
+
   public function statusLabel(): string
   {
     return str_replace('_', ' ', $this->status ?: self::STATUS_DRAFT);
@@ -49,6 +58,8 @@ class WebBlocksUiRelease extends Model
     return match ($this->status) {
       self::STATUS_PREPARED => 'wb-status-info',
       self::STATUS_PUBLISHED => 'wb-status-active',
+      self::STATUS_PUBLISH_FAILED => 'wb-status-danger',
+      self::STATUS_BLOCKED => 'wb-status-warning',
       default => 'wb-status-pending',
     };
   }

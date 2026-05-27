@@ -85,8 +85,10 @@ The first-party WebBlocks UI Manager pilot plugin uses a separate CDN artifact c
 
 - release artifact targets are versioned under `public/cdn/webblocks-ui/{version}/...`
 - release manifests are local metadata for prepared artifacts and include SHA-256 checksums
-- the safe preparation command does not deploy to a production CDN or change CMS core WebBlocks UI consumption URLs
-- production first-party CDN publishing remains an explicit future operation
+- dry-run publish validates source paths, expected dist files, checksums, manifest consistency, target path safety, and idempotency without writing files
+- apply publish writes only to the configured local/project-owned static target after validation passes
+- existing files with matching checksums are skipped, while checksum mismatches block the publish
+- the workflow does not deploy to an external production CDN or change CMS core WebBlocks UI consumption URLs
 
 ## Public Asset Convention
 

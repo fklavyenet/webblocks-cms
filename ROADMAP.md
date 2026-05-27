@@ -48,7 +48,8 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add a safe local `webblocks-ui-manager:prepare-release` command foundation that records release metadata, checksums, and manifest data without production CDN deployment.
 - Done: define first-party CDN target conventions such as `public/cdn/webblocks-ui/{version}/...`.
 - Done: add plugin health checks, settings defaults, dashboard widgets, system cards, menu entries, permissions, route guards, and package boundary coverage.
-- Later: real production CDN publish/deploy actions, CDN smoke validation against hosted targets, generic third-party plugin install/update flows, marketplace/catalog behavior, and CMS core WebBlocks UI consumption URL changes.
+- Done: add a controlled plugin-owned local CDN publish workflow with dry-run/apply command modes, admin actions, publish run records, checksum/manifest/path validation, and idempotent writes into the configured first-party static target.
+- Later: external production CDN deployment automation, hosted CDN smoke validation against remote targets, generic third-party plugin install/update flows, marketplace/catalog behavior, update-server publishing, and CMS core WebBlocks UI consumption URL changes.
 
 ### Phase 5 - Packaging And Ecosystem Readiness
 
@@ -56,5 +57,5 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add compatibility foundations for plugin versions, required CMS version constraints, active-vs-configured enabled state, incompatible health/status reporting, and clear `System -> Plugins` messaging.
 - Done: harden collision guards for plugin database prefixes and resolvable command names while preserving existing guards for handles, permissions, extension slots, widgets, blocks, assets, and table/prefix conventions.
 - Done: add package boundary and route guard coverage proving first-party plugin code stays plugin-owned, disabled and incompatible plugins remain inert, `/webadmin` remains canonical, `/cms` remains static-only from Laravel's route perspective, and `/admin` remains absent.
-- Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, production CDN publishing, or update-server behavior.
-- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, and production CDN deployment.
+- Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, external production CDN deployment, or update-server behavior.
+- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, and external production CDN deployment automation.

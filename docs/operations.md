@@ -62,17 +62,31 @@ Published release packages are core product packages. They ship reusable CMS sou
 
 WebBlocks UI Manager is the first first-party pilot plugin for product-specific release operations. It is disabled by default and becomes active only when `webblocks-plugins.enabled.webblocks-ui-manager` is true and the installed CMS version satisfies the plugin's required CMS constraint.
 
-When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata and a safe local preparation command:
+When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
 ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-ui.js
 ```
 
-The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. `--write-manifest` writes a local manifest file under that target path, but it does not deploy to a production CDN, publish external files, or change CMS core WebBlocks UI asset URLs.
+The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. The expected dist files are configured by `webblocks-plugins.webblocks_ui_manager.expected_dist_files` and default to `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js`.
+
+Validate the publish plan without writing files:
+
+```bash
+ddev artisan webblocks-ui-manager:publish-release v2.7.9 --dry-run
+```
+
+Apply the local publish after dry-run validation passes:
+
+```bash
+ddev artisan webblocks-ui-manager:publish-release v2.7.9
+```
+
+The publish workflow validates source paths, version-to-target path matching, expected dist files, stored checksums, manifest consistency, and idempotency before writing. Existing files with matching checksums are skipped. Existing files with different checksums block the publish. The target is local/project-owned by default through `WEBBLOCKS_UI_MANAGER_CDN_BASE_PATH=cdn/webblocks-ui`; `WEBBLOCKS_UI_MANAGER_CDN_BASE_URL` is optional display/URL metadata. The workflow does not deploy to an external production server, publish update-server metadata, or change CMS core WebBlocks UI asset URLs.
 
 `System -> Plugins` reports disabled, enabled, and incompatible states separately. A plugin configured as enabled but incompatible remains inert: no plugin routes, commands, menus, permissions, settings routes, widgets, assets, block declarations, or health reporter behavior become active.
 
-Real production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, arbitrary remote installers, and marketplace/catalog flows remain intentionally deferred.
+External production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, arbitrary remote installers, Composer package installation, update-server publishing, and marketplace/catalog flows remain intentionally deferred.
 
 ## Backup / Restore
 

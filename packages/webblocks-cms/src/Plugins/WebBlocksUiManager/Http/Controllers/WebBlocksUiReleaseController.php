@@ -6,8 +6,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Http\Requests\WebBlocksUiReleaseRequest;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiPublishRun;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiManagerPaths;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiReleasePublisher;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -16,6 +18,7 @@ class WebBlocksUiReleaseController extends Controller
   public function __construct(
     private readonly SystemSettings $systemSettings,
     private readonly WebBlocksUiManagerPaths $paths,
+    private readonly WebBlocksUiReleasePublisher $publisher,
   ) {}
 
   public function index(): View
@@ -52,10 +55,12 @@ class WebBlocksUiReleaseController extends Controller
 
   public function show(WebBlocksUiRelease $release): View
   {
-    $release->load('artifacts');
+    $release->load(['artifacts', 'publishRuns']);
 
     return view($this->view('show'), $this->viewData($release->label ?: $release->version, [
       'release' => $release,
+      'latestPublishRun' => $release->publishRuns->first(),
+      'showPublishModal' => request('modal') === 'publish',
     ]));
   }
 
@@ -75,6 +80,32 @@ class WebBlocksUiReleaseController extends Controller
     return redirect()
       ->route('webblocks.plugins.webblocks_ui_manager.releases.show', $release)
       ->with('status', 'WebBlocks UI release metadata updated.');
+  }
+
+  public function dryRun(WebBlocksUiRelease $release): RedirectResponse
+  {
+    $run = $this->publisher->dryRun($release->version);
+
+    $redirect = redirect()->route('webblocks.plugins.webblocks_ui_manager.releases.show', $release);
+
+    if ($run->status !== WebBlocksUiPublishRun::STATUS_SUCCEEDED) {
+      return $redirect->withErrors(['publish' => $run->message]);
+    }
+
+    return $redirect->with('status', $run->message);
+  }
+
+  public function publish(WebBlocksUiRelease $release): RedirectResponse
+  {
+    $run = $this->publisher->publish($release->version);
+
+    $redirect = redirect()->route('webblocks.plugins.webblocks_ui_manager.releases.show', $release);
+
+    if ($run->status !== WebBlocksUiPublishRun::STATUS_SUCCEEDED) {
+      return $redirect->withErrors(['publish' => $run->message]);
+    }
+
+    return $redirect->with('status', 'WebBlocks UI release published.');
   }
 
   /**

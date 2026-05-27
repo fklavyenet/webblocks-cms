@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use Tests\TestCase;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Console\PrepareWebBlocksUiReleaseCommand;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Console\PublishWebBlocksUiReleaseCommand;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiArtifactManifestBuilder;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiReleasePreparer;
@@ -59,7 +60,10 @@ class WebBlocksUiManagerPluginTest extends TestCase
     $this->assertArrayHasKey('webblocks-ui-manager.view', $plugin->permissionsList());
     $this->assertSame('webblocks.plugins.webblocks_ui_manager', $plugin->routeNamePrefix());
     $this->assertSame('/webadmin/plugins/webblocks-ui-manager', $plugin->adminRoutePrefix());
-    $this->assertSame([PrepareWebBlocksUiReleaseCommand::class], (new PluginCommandRegistrar($registry))->enabledCommands());
+    $this->assertSame([
+      PrepareWebBlocksUiReleaseCommand::class,
+      PublishWebBlocksUiReleaseCommand::class,
+    ], (new PluginCommandRegistrar($registry))->enabledCommands());
     $this->assertSame('webblocks-ui-manager', $registry->dashboardWidgets($user)[0]->pluginHandle());
     $this->assertSame('webblocks-ui-manager', $registry->systemCards($user)[0]->pluginHandle());
     $this->assertNotNull($plugin->settingsDefinition());
@@ -70,6 +74,7 @@ class WebBlocksUiManagerPluginTest extends TestCase
   {
     $this->assertTrue(Schema::hasTable('webblocks_ui_manager_releases'));
     $this->assertTrue(Schema::hasTable('webblocks_ui_manager_artifacts'));
+    $this->assertTrue(Schema::hasTable('webblocks_ui_manager_publish_runs'));
     $this->assertTrue(Schema::hasColumns('webblocks_ui_manager_releases', [
       'version',
       'cdn_base_path',
@@ -82,6 +87,14 @@ class WebBlocksUiManagerPluginTest extends TestCase
       'target_path',
       'checksum_sha256',
       'metadata',
+    ]));
+    $this->assertTrue(Schema::hasColumns('webblocks_ui_manager_publish_runs', [
+      'release_id',
+      'mode',
+      'status',
+      'target_root',
+      'target_release_path',
+      'operations',
     ]));
   }
 
@@ -254,6 +267,7 @@ class WebBlocksUiManagerPluginTest extends TestCase
   {
     $this->assertTrue(class_exists(WebBlocksUiRelease::class));
     $this->assertTrue(class_exists(PrepareWebBlocksUiReleaseCommand::class));
+    $this->assertTrue(class_exists(PublishWebBlocksUiReleaseCommand::class));
     $this->assertTrue(view()->exists('webblocks-cms::plugins.webblocks-ui-manager.releases.index'));
     $this->assertFileDoesNotExist(base_path('app/Plugins/WebBlocksUiManager/WebBlocksUiManagerPlugin.php'));
     $this->assertFileDoesNotExist(base_path('app/Http/Controllers/WebBlocksUiReleaseController.php'));

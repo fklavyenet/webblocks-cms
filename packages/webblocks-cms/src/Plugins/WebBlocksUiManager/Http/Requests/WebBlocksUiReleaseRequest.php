@@ -34,6 +34,8 @@ class WebBlocksUiReleaseRequest extends FormRequest
         WebBlocksUiRelease::STATUS_DRAFT,
         WebBlocksUiRelease::STATUS_PREPARED,
         WebBlocksUiRelease::STATUS_PUBLISHED,
+        WebBlocksUiRelease::STATUS_PUBLISH_FAILED,
+        WebBlocksUiRelease::STATUS_BLOCKED,
       ])],
       'notes' => ['nullable', 'string'],
       'cdn_base_path' => ['nullable', 'string', 'max:255'],
