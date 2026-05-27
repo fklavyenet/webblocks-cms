@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
-use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
@@ -25,7 +24,6 @@ class SystemPluginController extends Controller
     private readonly PluginRegistry $plugins,
     private readonly PluginHealthMonitor $health,
     private readonly PluginRouteRegistrar $routes,
-    private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
     private readonly SystemSettings $systemSettings,
     private readonly PluginZipInstaller $installer,
     private readonly InstalledPluginRepository $installedPlugins,
@@ -39,7 +37,6 @@ class SystemPluginController extends Controller
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
       'plugins' => $this->pluginSummaries(),
-      'pluginSystemCards' => $this->pluginAdminExtensions->systemCards(request()->user()),
       'canInstallPlugins' => (bool) request()->user()?->isSuperAdmin(),
     ]);
   }

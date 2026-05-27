@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.32.72
+
+- Fix enabled manual plugin sidebar navigation so WebBlocks UI Manager menu links render the concrete `/webadmin/plugins/webblocks-ui-manager/releases` href and open the setup-required or releases page instead of returning operators to `/webadmin`.
+- Keep plugin dashboard/system contribution cards out of the `System -> Plugins` management screen unless a contribution is explicitly designed for plugin management.
+- Polish the manual plugin install card so `Upload Plugin ZIP` uses the standard primary admin button pattern in the card action row.
+
 ## 1.32.71
 
 - Fix manual plugin route authorization so enabled compatible plugin routes register declared plugin-owned permissions before route authorization runs, with CMS `super_admin` explicitly allowed for active plugin abilities.

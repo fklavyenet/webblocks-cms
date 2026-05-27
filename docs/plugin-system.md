@@ -416,7 +416,7 @@ Phase 3 implements these typed extension-slot objects:
 
 Dashboard widget and system card keys must be dot-namespaced with the plugin handle, for example `analytics-tools.overview`. Public asset handles follow the same dot namespace rule. Plugin block handles must use a plugin-owned namespace such as `analytics-tools::score-card`; unqualified core-style block handles such as `hero` are rejected. These hooks make plugin contributions discoverable and attributable without replacing core package views.
 
-Dashboard widgets render on the super-admin dashboard only when the plugin is enabled and the current user can satisfy the widget permission, if one is declared. System cards render on the `System -> Plugins` screen under the same enabled and permission checks. Both slots are intentionally read-only foundations.
+Dashboard widgets render on the super-admin dashboard only when the plugin is enabled and the current user can satisfy the widget permission, if one is declared. System cards render only on their intended system overview surfaces under the same enabled and permission checks. The `System -> Plugins` management page does not render generic plugin contribution cards; it stays focused on manual plugin install, lifecycle, health, setup, settings, and uninstall actions unless a future extension slot is explicitly designed for plugin management. Both slots are intentionally read-only foundations.
 
 Block hooks are declaration-only foundations. They let enabled plugins expose plugin-owned block types and block packs through the registry, but they do not replace core block contracts, core block views, core block seeders, or block editing services.
 
@@ -488,7 +488,7 @@ The Phase 3 runtime now includes:
 - typed admin extension contracts under `Support\Plugins\Contracts`
 - `PluginDashboardWidget` and `PluginSystemCard` value objects collected through `PluginAdminExtensionRegistry`
 - enabled-only dashboard widget rendering on the super-admin dashboard
-- enabled-only system card rendering on `System -> Plugins`
+- enabled-only system card collection for intended system overview surfaces, kept separate from the `System -> Plugins` lifecycle management page
 - `PluginBlockTypeDefinition`, `PluginBlockPackDefinition`, and `PluginBlockRegistry` for plugin-owned block declarations
 - `PluginPublicAsset` and `PluginPublicAssetRegistry` for safe public head and body-end asset declarations
 - validation guards for extension keys, widget keys, system card keys, block handles, block pack namespaces, asset handles, plugin ownership, and duplicate declarations

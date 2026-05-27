@@ -128,6 +128,7 @@
                 $sidebarGroups[$groupIndex]['items'][] = [
                     'label' => $item->labelText(),
                     'route' => $item->routeName(),
+                    'url' => route($item->routeName(), [], false),
                     'active' => [$pluginMenuItem['plugin']->routeNamePrefix().'.*'],
                     'icon' => $item->iconClass(),
                 ];
@@ -178,7 +179,7 @@
                             <div class="wb-nav-group-items">
                                 @foreach ($group['items'] as $item)
                                     <a
-                                        href="{{ route($item['route']) }}"
+                                        href="{{ $item['url'] ?? route($item['route']) }}"
                                         class="wb-nav-group-item {{ $matchesActiveRoute($item) ? 'is-active' : '' }}"
                                         @if ($matchesActiveRoute($item)) aria-current="page" @endif
                                     >

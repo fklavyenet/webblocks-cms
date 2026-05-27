@@ -11,8 +11,8 @@
             <div class="wb-card-header">
                 <strong>Manual Plugin Install</strong>
             </div>
-            <div class="wb-card-body">
-                <form method="POST" action="{{ route('admin.system.plugins.upload') }}" enctype="multipart/form-data" class="wb-stack wb-gap-3">
+            <form method="POST" action="{{ route('admin.system.plugins.upload') }}" enctype="multipart/form-data">
+                <div class="wb-card-body">
                     @csrf
                     <div>
                         <label for="plugin_zip">Plugin ZIP</label>
@@ -21,32 +21,12 @@
                             <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div>
-                        <button type="submit" class="wb-button wb-button-primary">Upload Plugin ZIP</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
-
-    @if (! empty($pluginSystemCards))
-        <div class="wb-grid wb-grid-2 wb-mb-4">
-            @foreach ($pluginSystemCards as $card)
-                <div class="wb-card" data-plugin-system-card="{{ $card->key() }}" data-plugin-handle="{{ $card->pluginHandle() }}">
-                    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-                        <strong>{{ $card->titleText() }}</strong>
-                        <span class="wb-text-sm wb-text-muted">{{ $card->pluginHandle() }}</span>
-                    </div>
-                    <div class="wb-card-body wb-stack wb-gap-2">
-                        @if ($card->descriptionText() !== null)
-                            <div class="wb-text-sm wb-text-muted">{{ $card->descriptionText() }}</div>
-                        @endif
-                        @if ($card->urlValue() !== null)
-                            <a href="{{ $card->urlValue() }}" class="wb-btn wb-btn-secondary">{{ $card->linkLabel() ?? 'Open' }}</a>
-                        @endif
-                    </div>
                 </div>
-            @endforeach
+                <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2">
+                    <span class="wb-text-sm wb-text-muted">Manual plugins are installed disabled for review before enablement.</span>
+                    <button type="submit" class="wb-btn wb-btn-primary">Upload Plugin ZIP</button>
+                </div>
+            </form>
         </div>
     @endif
 

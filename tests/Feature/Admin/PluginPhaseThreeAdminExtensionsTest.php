@@ -99,7 +99,7 @@ class PluginPhaseThreeAdminExtensionsTest extends TestCase
   }
 
   #[Test]
-  public function enabled_permitted_plugin_system_cards_render_with_plugin_attribution(): void
+  public function enabled_permitted_plugin_system_cards_do_not_render_on_plugin_management_page(): void
   {
     Gate::define('analytics-tools.view', fn (User $user): bool => $user->isSuperAdmin());
 
@@ -121,10 +121,10 @@ class PluginPhaseThreeAdminExtensionsTest extends TestCase
       ->get(route('admin.system.plugins.index'));
 
     $response->assertOk();
-    $response->assertSee('Analytics System Status');
-    $response->assertSee('Read-only plugin system card.');
-    $response->assertSee('data-plugin-system-card="analytics-tools.status"', false);
-    $response->assertSee('data-plugin-handle="analytics-tools"', false);
+    $response->assertSeeText('Manual Plugin Install');
+    $response->assertDontSee('Analytics System Status');
+    $response->assertDontSee('Read-only plugin system card.');
+    $response->assertDontSee('data-plugin-system-card="analytics-tools.status"', false);
   }
 
   #[Test]

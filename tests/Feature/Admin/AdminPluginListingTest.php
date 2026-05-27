@@ -39,6 +39,8 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('Plugins');
     $response->assertSeeText('Manual Plugin Install');
+    $response->assertSee('class="wb-btn wb-btn-primary"', false);
+    $response->assertSeeText('Upload Plugin ZIP');
     $response->assertSeeText('No plugins registered yet.');
     $response->assertDontSeeText('WebBlocks UI Manager');
   }
@@ -122,6 +124,34 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('WebBlocks UI Manager');
     $response->assertSeeText('Enabled');
+  }
+
+  #[Test]
+  public function enabled_plugin_sidebar_link_opens_plugin_route_without_dashboard_redirect(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $dashboard = $this->actingAs($user)->get(route('admin.dashboard'));
+
+    $dashboard->assertOk();
+    $dashboard->assertSeeText('WebBlocks UI Releases');
+    $dashboard->assertSee('href="/webadmin/plugins/webblocks-ui-manager/releases"', false);
+
+    $response = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/releases');
+
+    $response->assertOk();
+    $response->assertSeeText('Setup Required');
+    $response->assertSeeText('Plugin Migrations Pending');
+    $response->assertSeeText('Release tables are missing');
   }
 
   #[Test]
@@ -371,6 +401,10 @@ class AdminPluginListingTest extends TestCase
     $list = $this->actingAs($user)->get(route('admin.system.plugins.index'));
 
     $list->assertOk();
+    $list->assertDontSeeText('WebBlocks UI CDN Foundation');
+    $list->assertDontSee('data-plugin-system-card=', false);
+    $list->assertSee('class="wb-btn wb-btn-primary"', false);
+    $list->assertSeeText('Upload Plugin ZIP');
     $list->assertSee('td class="wb-table-actions wb-whitespace-nowrap"', false);
     $list->assertSee('class="wb-action-group wb-whitespace-nowrap"', false);
 
