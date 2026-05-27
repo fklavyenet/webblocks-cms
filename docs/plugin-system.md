@@ -514,7 +514,7 @@ When enabled, the pilot contributes:
 - a controlled `webblocks-ui-manager:publish-release {version} --dry-run` and `webblocks-ui-manager:publish-release {version}` workflow that records publish runs and writes only after validation passes
 - first-party CDN target conventions under `public/cdn/webblocks-ui/{version}/...`
 
-Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection. Enabled-but-not-set-up state remains safe: the menu may be visible, but the Releases route checks schema readiness before querying and renders setup-required guidance when release tables are missing.
+Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection. Enabled-but-not-set-up state remains safe: the menu may be visible, but the Releases route checks schema readiness before querying and renders setup-required guidance when release tables are missing. Enabled compatible manual plugin admin URLs must not dashboard-fallback when dynamic route hydration is stale or route caching is in play; the plugin route fallback keeps known plugin admin pages on their `/webadmin/plugins/{plugin-handle}/...` URL and rehydrates plugin-owned routes/source before rendering controlled setup or operational screens.
 
 Phase 4 intentionally does not add external production CDN deployment automation, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, update-server publishing, or changes to CMS core WebBlocks UI consumption URLs.
 

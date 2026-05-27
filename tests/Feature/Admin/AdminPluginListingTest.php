@@ -155,6 +155,75 @@ class AdminPluginListingTest extends TestCase
   }
 
   #[Test]
+  public function enabled_plugin_releases_route_uses_same_url_setup_state_when_dynamic_routes_are_not_hydrated(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $response = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/releases');
+
+    $response->assertOk();
+    $response->assertHeaderMissing('Location');
+    $response->assertSeeText('WebBlocks UI Releases');
+    $response->assertSeeText('Plugin Migrations Pending');
+    $response->assertSeeText('Release tables are missing');
+    $response->assertSeeText('Run Plugin Migrations');
+    $response->assertSee(route('admin.system.plugins.show', 'webblocks-ui-manager'), false);
+  }
+
+  #[Test]
+  public function enabled_plugin_releases_route_renders_after_setup_without_dashboard_redirect(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.setup', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $response = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/releases');
+
+    $response->assertOk();
+    $response->assertHeaderMissing('Location');
+    $response->assertSeeText('WebBlocks UI Releases');
+    $response->assertSeeText('No WebBlocks UI releases recorded yet.');
+  }
+
+  #[Test]
+  public function enabled_plugin_settings_route_uses_same_url_fallback_for_super_admin(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $response = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/settings');
+
+    $response->assertOk();
+    $response->assertHeaderMissing('Location');
+    $response->assertSeeText('WebBlocks UI Manager Settings');
+  }
+
+  #[Test]
   public function enabled_plugin_with_missing_tables_shows_setup_required_release_screen_instead_of_500(): void
   {
     $user = User::factory()->superAdmin()->create();

@@ -176,9 +176,10 @@ class WebBlocksUiReleaseController extends Controller
 
   private function setupRequiredView(): View
   {
-    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.setup-required', $this->viewData('WebBlocks UI Manager Setup Required', [
+    return view($this->view('setup-required'), $this->viewData('WebBlocks UI Releases', [
       'message' => $this->schema->message(),
       'pluginDetailUrl' => route('admin.system.plugins.show', 'webblocks-ui-manager'),
+      'pluginSetupUrl' => route('admin.system.plugins.setup', 'webblocks-ui-manager'),
     ]));
   }
 

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.73
+
+- Add a cached-safe enabled plugin admin route fallback so WebBlocks UI Manager Releases and Settings URLs stay on `/webadmin/plugins/webblocks-ui-manager/...` instead of falling through to the dashboard when dynamic manual plugin routes have not been hydrated for the request.
+- Render the WebBlocks UI Manager setup-required state on the Releases URL with the `WebBlocks UI Releases` page title, plugin detail action, and super-admin `Run Plugin Migrations` action.
+
 ## 1.32.72
 
 - Fix enabled manual plugin sidebar navigation so WebBlocks UI Manager menu links render the concrete `/webadmin/plugins/webblocks-ui-manager/releases` href and open the setup-required or releases page instead of returning operators to `/webadmin`.

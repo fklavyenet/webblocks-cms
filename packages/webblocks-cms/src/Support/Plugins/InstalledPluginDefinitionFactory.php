@@ -96,7 +96,7 @@ class InstalledPluginDefinitionFactory
     $views = $path.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR.'views';
 
     if (is_dir($views)) {
-      app('view')->addNamespace(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $views);
+      $this->registerPluginViews($views);
     }
 
     $source = $path.DIRECTORY_SEPARATOR.'src';
@@ -114,5 +114,49 @@ class InstalledPluginDefinitionFactory
         require_once $file->getPathname();
       }
     }
+  }
+
+  private function registerPluginViews(string $views): void
+  {
+    $finder = app('view')->getFinder();
+
+    if (! method_exists($finder, 'getHints') || ! method_exists($finder, 'replaceNamespace')) {
+      app('view')->addNamespace(WebBlocksCmsServiceProvider::VIEW_NAMESPACE, $views);
+
+      return;
+    }
+
+    $namespace = WebBlocksCmsServiceProvider::VIEW_NAMESPACE;
+    $hints = $finder->getHints()[$namespace] ?? [];
+    $pluginRoot = rtrim(app(InstalledPluginRepository::class)->rootPath(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+    $corePaths = [];
+    $pluginPaths = [];
+
+    foreach ($hints as $hint) {
+      if ($hint === $views) {
+        continue;
+      }
+
+      if ($this->isPluginViewPath($hint, $pluginRoot)) {
+        $pluginPaths[] = $hint;
+
+        continue;
+      }
+
+      $corePaths[] = $hint;
+    }
+
+    $finder->replaceNamespace($namespace, array_values(array_unique([
+      ...$corePaths,
+      $views,
+      ...$pluginPaths,
+    ])));
+  }
+
+  private function isPluginViewPath(string $path, string $pluginRoot): bool
+  {
+    return str_starts_with($path, $pluginRoot)
+      || str_contains($path, DIRECTORY_SEPARATOR.'webblocks'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR)
+      || str_contains($path, DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'testing'.DIRECTORY_SEPARATOR.'plugins'.DIRECTORY_SEPARATOR);
   }
 }

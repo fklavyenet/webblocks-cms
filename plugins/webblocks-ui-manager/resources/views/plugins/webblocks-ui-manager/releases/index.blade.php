@@ -18,7 +18,7 @@
         <div class="wb-card-body">
             @if ($releases->isEmpty())
                 <div class="wb-empty">
-                    <div class="wb-empty-title">No WebBlocks UI releases tracked yet.</div>
+                    <div class="wb-empty-title">No WebBlocks UI releases recorded yet.</div>
                     <div class="wb-empty-text">Create release metadata or run the preparation command with local artifact files.</div>
                 </div>
             @else
