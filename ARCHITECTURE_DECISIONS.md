@@ -46,7 +46,7 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 - Product-specific or domain-specific features belong in plugins instead of CMS core.
 - Plugins use a registry-first contract to add admin menus, routes, permissions, settings, commands, migrations, blocks, assets, dashboard widgets, system cards, and extension-slot contributions.
 - Core view overrides are forbidden by default; plugins must use documented extension slots or registry contracts.
-- The first pilot plugin target is WebBlocks UI Manager for WebBlocks UI release records, artifact publish workflows, and first-party CDN management.
+- The first pilot plugin is WebBlocks UI Manager for WebBlocks UI release records, safe local artifact metadata preparation, checksum/manifest generation, and first-party CDN management foundations.
 
 Reason:
 
@@ -61,4 +61,4 @@ Consequences:
 - Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
 - Plugin block declarations must use plugin-owned handles such as `plugin-handle::block-handle` and must not replace core block views or monkey patch core block services.
 - Disabled plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health behavior.
-- WebBlocks UI Manager is documented as a pilot plugin, not as a core CMS feature.
+- WebBlocks UI Manager is implemented as a disabled-by-default pilot plugin, not as a core CMS feature. Its current runtime records release metadata and can prepare local manifests; real production CDN deployment and CMS core asset-consumption URL changes remain separate decisions.

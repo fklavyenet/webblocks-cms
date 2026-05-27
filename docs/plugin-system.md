@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1, Phase 2, and Phase 3 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, and safe public asset contribution hooks. Deeper features such as dynamic Composer discovery, plugin migrations, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, and the WebBlocks UI Manager plugin remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 4 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as dynamic Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and production WebBlocks UI CDN deployment remain future work.
 
 ## Core Decision
 
@@ -98,12 +98,12 @@ PluginDefinition::make('webblocks-ui-manager')
   ])
   ->permissions([
     PluginPermission::make('webblocks-ui-manager.view')->label('View releases'),
-    PluginPermission::make('webblocks-ui-manager.publish')->label('Publish CDN artifacts'),
-    PluginPermission::make('webblocks-ui-manager.settings')->label('Manage settings'),
+    PluginPermission::make('webblocks-ui-manager.manage')->label('Manage release metadata'),
+    PluginPermission::make('webblocks-ui-manager.publish')->label('Prepare CDN artifacts'),
   ])
   ->adminRoutes(__DIR__.'/../routes/admin.php')
   ->commands([
-    PublishWebBlocksUiReleaseCommand::class,
+    PrepareWebBlocksUiReleaseCommand::class,
   ])
   ->settings(
     PluginSettingsDefinition::make()
@@ -318,7 +318,7 @@ The full lifecycle target:
 6. upgrade
 7. uninstall or decommission, in a later destructive-data design
 
-The implemented Phase 1 through Phase 3 runtime target is intentionally smaller than the full lifecycle:
+The implemented Phase 1 through Phase 4 runtime target is intentionally smaller than the full lifecycle:
 
 - registry
 - enabled configuration
@@ -332,6 +332,7 @@ The implemented Phase 1 through Phase 3 runtime target is intentionally smaller 
 - typed read-only dashboard and system card extension slots
 - plugin-owned block and block pack declaration hooks
 - public head and body-end asset contribution hooks
+- first-party WebBlocks UI Manager pilot plugin with release metadata and safe local manifest preparation
 - route ownership guards
 
 That foundation gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
@@ -379,6 +380,26 @@ The Phase 3 runtime now includes:
 
 This phase intentionally keeps real marketplace behavior, package installation, plugin migration runners, public plugin routes, editable widgets, core block override hooks, and the WebBlocks UI Manager plugin out of scope. Plugins still must not override package views or monkey patch core services.
 
+### Phase 4 Implementation Note
+
+The Phase 4 runtime now includes the first-party `webblocks-ui-manager` pilot plugin. The plugin is registered by the package registry but disabled by default through `config/webblocks-plugins.php`.
+
+When enabled, the pilot contributes:
+
+- handle-prefixed permissions: `webblocks-ui-manager.view`, `webblocks-ui-manager.manage`, and `webblocks-ui-manager.publish`
+- a plugin admin route namespace under `/webadmin/plugins/webblocks-ui-manager/...` with route names under `webblocks.plugins.webblocks_ui_manager.*`
+- a plugin menu item for WebBlocks UI release records
+- read-only dashboard and system cards through the Phase 3 extension slots
+- read-only settings/detail visibility through the Phase 2 settings foundation
+- plugin health checks for release metadata readiness and configured CDN base path readiness
+- plugin-owned tables and models: `webblocks_ui_manager_releases` and `webblocks_ui_manager_artifacts`
+- a safe local `webblocks-ui-manager:prepare-release` command that records release metadata, computes artifact SHA-256 checksums, and can optionally write a local `manifest.json`
+- first-party CDN target conventions under `public/cdn/webblocks-ui/{version}/...`
+
+Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection.
+
+Phase 4 intentionally does not add real production CDN publish/deploy actions, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, or changes to CMS core WebBlocks UI consumption URLs.
+
 ## Testing And Release Guardrails
 
 The plugin system must be protected by route ownership, package boundary, and coexistence tests.
@@ -400,28 +421,23 @@ Required guardrails:
 - package boundary tests expand to cover plugin-owned routes, views, assets, migrations, and commands
 - coexistence tests should cover CMS + QuizTem + plugin scenarios in the roadmap
 
-Plugin tests should include both absent-plugin and disabled-plugin cases so core CMS remains clean in generic installs.
+Plugin tests should include both absent-plugin and disabled-plugin cases so core CMS remains clean in generic installs. The WebBlocks UI Manager pilot also carries migration/schema, command, manifest/checksum, enabled-only, disabled-inert, admin rendering, route guard, and package boundary tests.
 
 ## WebBlocks UI Manager Pilot Plugin Decisions
 
-WebBlocks UI Manager will not be embedded in CMS core.
+WebBlocks UI Manager is not embedded in CMS core behavior. It currently starts as a first-party package-owned pilot plugin under the CMS package namespace so the plugin host can prove a real product-specific operational surface without moving WebBlocks UI release/CDN management into generic CMS core.
 
-It may start as either:
-
-- a separate package under `packages/webblocks-ui-manager`
-- a host-local plugin for the webblocksui.com install
-
-The preferred long-term model is a separate Composer package or separate repository.
+The preferred long-term model may still become a separate Composer package or separate repository after plugin lifecycle and packaging conventions mature.
 
 The plugin's responsibility:
 
 - WebBlocks UI release artifact records
 - source dist validation
-- first-party CDN publish
+- safe local publish preparation
 - manifest and checksum generation
 - CDN health checks
 
-The WebBlocks UI build stays in the WebBlocks UI repository. The plugin does not build WebBlocks UI. It receives or validates release artifacts and publishes them to the first-party CDN path.
+The WebBlocks UI build stays in the WebBlocks UI repository. The plugin does not build WebBlocks UI. It receives or validates release artifacts and records local metadata for first-party CDN paths. Real production CDN deployment is intentionally deferred and must remain explicit.
 
 Our own products may consume `cdn.webblocksui.com` for pinned first-party assets. External user documentation should continue to recommend GitHub or jsDelivr CDN consumption unless that policy changes separately.
 

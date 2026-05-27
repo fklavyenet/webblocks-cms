@@ -33,6 +33,7 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\WebBlocksUiManagerPlugin;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
@@ -819,7 +820,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
       $enabled = config('webblocks-plugins.enabled', []);
 
-      return new PluginRegistry(is_array($enabled) ? $enabled : [], useLiveConfig: true);
+      return (new PluginRegistry(is_array($enabled) ? $enabled : [], useLiveConfig: true))
+        ->register(WebBlocksUiManagerPlugin::definition());
     });
 
     $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(
@@ -1008,6 +1010,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
     Gate::define('manage-users', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
     Gate::define('access-system', fn ($user) => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+
+    foreach (app(PluginPermissionRegistry::class)->active() as $permissions) {
+      foreach ($permissions as $permission) {
+        Gate::define($permission->name(), fn ($user): bool => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+      }
+    }
   }
 
   protected function registerClassAliases(): void

@@ -727,6 +727,7 @@ Requests, commands, assets, migrations, and update-flow blockers:
 - package-used update, backup, import, export, promotion, and installer commands should remain explicitly bounded because they still depend on environment, filesystem, archive, Composer, migration, and install-state behavior
 - root `public/cms/*` assets remain the active authoritative runtime paths even though package `public/cms/` now carries the moved public layout CSS and JS too and can publish them through `webblocks-cms-assets`
 - root migrations remain authoritative for source-maintained checkouts with maintenance-repository root Composer autoload authority; package-native fresh consumers installed with `webblocks:install` must not run host Laravel application migrations during System Update
+- the WebBlocks UI Manager Phase 4 pilot now ships one package-owned plugin migration pair for `webblocks_ui_manager_*` metadata tables, while the matching root migration keeps source-maintained checkouts on the established root migration path
 - package consumer System Updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when present, and otherwise skip migration execution without marking arbitrary host migrations as run
 - System Update remains a separate phase because its blockers are environment mutation, filesystem writes, Composer execution, backups, migrations, installed-version persistence, and root operational state, not route or controller ownership
 

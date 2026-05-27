@@ -81,6 +81,13 @@ Enabled plugins may declare public asset contributions through `PluginPublicAsse
 
 The hook does not install plugin packages, publish files, stream assets through Laravel, or create marketplace behavior.
 
+The first-party WebBlocks UI Manager pilot plugin uses a separate CDN artifact convention rather than the public page asset hook:
+
+- release artifact targets are versioned under `public/cdn/webblocks-ui/{version}/...`
+- release manifests are local metadata for prepared artifacts and include SHA-256 checksums
+- the safe preparation command does not deploy to a production CDN or change CMS core WebBlocks UI consumption URLs
+- production first-party CDN publishing remains an explicit future operation
+
 ## Public Asset Convention
 
 - CSS stays in the public `<head>`
@@ -114,4 +121,4 @@ WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
 CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.9` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
 
-Those CDN assets are part of the UI project and must not be edited inside the CMS repository.
+Those CDN assets are part of the UI project and must not be edited inside the CMS repository. WebBlocks UI Manager now records release and artifact metadata as a plugin-owned pilot foundation, but CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.

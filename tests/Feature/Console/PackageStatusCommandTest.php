@@ -32,7 +32,7 @@ class PackageStatusCommandTest extends TestCase
       ->expectsOutputToContain('- webblocks-plugins.php: package default=yes, root override=yes')
       ->expectsOutputToContain('- webblocks-updates.php: package default=yes, root override=yes')
       ->expectsOutputToContain('Package routes path present: yes')
-      ->expectsOutputToContain('Package route files status: package files present (admin.php, auth.php, diagnostics.php, install.php, public.php)')
+      ->expectsOutputToContain('Package route files status: package files present (admin.php, auth.php, diagnostics.php, install.php, plugins/webblocks-ui-manager.php, public.php)')
       ->expectsOutputToContain('Package route Composer readiness: yes (provider discovery plus guarded route files)')
       ->expectsOutputToContain('Package source authority domains: CMS admin and public route trees; package-owned admin controllers, requests, support, and views for safely movable CMS runtime slices; package-owned public layout, page/search shells, and shipped public block renderers; package-owned CMS model foundation except the install-owned User model; package-owned shared admin partials and admin layout with root Blade wrappers preserved; package-owned seeder, stub, and movable public asset source files.')
       ->expectsOutputToContain('Expected package diagnostic route file exists: yes (diagnostics.php)')

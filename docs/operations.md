@@ -58,6 +58,20 @@ That command safely upserts core CMS block types, leaves install-specific custom
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 
+## WebBlocks UI Manager Pilot
+
+WebBlocks UI Manager is the first first-party pilot plugin for product-specific release operations. It is disabled by default and becomes active only when `webblocks-plugins.enabled.webblocks-ui-manager` is true.
+
+When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata and a safe local preparation command:
+
+```bash
+ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-ui.js
+```
+
+The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. `--write-manifest` writes a local manifest file under that target path, but it does not deploy to a production CDN, publish external files, or change CMS core WebBlocks UI asset URLs.
+
+Real production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, and marketplace/catalog flows remain intentionally deferred.
+
 ## Backup / Restore
 
 Backup / Restore is the environment-level recovery tool.

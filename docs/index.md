@@ -52,7 +52,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Development
 
 - [Development Workflow](../DEVELOPMENT.md)
-- [Plugin System](plugin-system.md) - implemented Phase 1-3 runtime foundations plus future lifecycle rules
+- [Plugin System](plugin-system.md) - implemented Phase 1-4 runtime foundations, including the WebBlocks UI Manager pilot plugin, plus future lifecycle rules
 
 ## Project Boundary
 

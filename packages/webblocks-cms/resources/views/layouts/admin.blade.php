@@ -102,6 +102,37 @@
                 ];
             }
 
+            foreach (app(\WebBlocks\Cms\Support\Plugins\PluginRegistry::class)->menuItems() as $pluginMenuItem) {
+                $item = $pluginMenuItem['item'];
+
+                if ($item->permissionName() !== null && ! $user?->can($item->permissionName())) {
+                    continue;
+                }
+
+                if ($item->routeName() === null || ! Route::has($item->routeName())) {
+                    continue;
+                }
+
+                $groupName = $item->groupName() ?: 'System';
+                $groupIndex = collect($sidebarGroups)->search(fn ($group) => $group['label'] === $groupName);
+
+                if ($groupIndex === false) {
+                    $sidebarGroups[] = [
+                        'label' => $groupName,
+                        'icon' => 'wb-icon-plug',
+                        'items' => [],
+                    ];
+                    $groupIndex = array_key_last($sidebarGroups);
+                }
+
+                $sidebarGroups[$groupIndex]['items'][] = [
+                    'label' => $item->labelText(),
+                    'route' => $item->routeName(),
+                    'active' => [$pluginMenuItem['plugin']->routeNamePrefix().'.*'],
+                    'icon' => $item->iconClass(),
+                ];
+            }
+
             $matchesActiveRoute = static fn (array $item): bool => collect($item['active'] ?? [])->contains(
                 fn (string $pattern) => request()->routeIs($pattern)
             );

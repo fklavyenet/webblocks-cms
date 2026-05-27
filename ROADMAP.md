@@ -38,17 +38,17 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add plugin-owned block type and block pack declaration hooks without core block view overrides.
 - Done: add public asset hooks separated into safe head and body-end contribution locations.
 - Done: add collision, ownership, disabled-plugin, attribution, admin rendering, asset collection, block hook, and route guard coverage.
-- Later: editable plugin widgets, public plugin routes, plugin lifecycle storage, plugin migrations, marketplace/catalog behavior, and real WebBlocks UI Manager runtime code.
+- Later: editable plugin widgets, public plugin routes, plugin lifecycle storage, marketplace/catalog behavior, and generic plugin migration runners.
 
 ### Phase 4 - WebBlocks UI Manager Pilot Plugin
 
-- Add release tables and models in the plugin package or host-local plugin.
-- Add a publish command for release artifacts.
-- Generate checksums and manifests.
-- Publish first-party CDN files under versioned static paths such as `public/cdn/webblocks-ui/v2.7.9/...`.
-- Add an admin releases UI.
-- Add plugin health checks.
-- Add first-party CDN smoke validation.
+- Done: add the first-party `webblocks-ui-manager` pilot plugin as package-owned runtime code, disabled by config by default.
+- Done: add plugin-owned release and artifact tables/models using the `webblocks_ui_manager_` namespace.
+- Done: add a plugin admin releases UI under `/webadmin/plugins/webblocks-ui-manager/...`.
+- Done: add a safe local `webblocks-ui-manager:prepare-release` command foundation that records release metadata, checksums, and manifest data without production CDN deployment.
+- Done: define first-party CDN target conventions such as `public/cdn/webblocks-ui/{version}/...`.
+- Done: add plugin health checks, settings defaults, dashboard widgets, system cards, menu entries, permissions, route guards, and package boundary coverage.
+- Later: real production CDN publish/deploy actions, CDN smoke validation against hosted targets, generic third-party plugin install/update flows, marketplace/catalog behavior, and CMS core WebBlocks UI consumption URL changes.
 
 ### Phase 5 - Packaging And Ecosystem Readiness
 
