@@ -22,7 +22,9 @@ class WebBlocksUiManagerPlugin
       ->version('0.1.0')
       ->provider(self::class)
       ->description('Tracks WebBlocks UI release artifacts and first-party CDN preparation metadata.')
-      ->requiresCms('^1.33')
+      ->requiresCms('^1.32')
+      ->settingsNamespace('webblocks_ui_manager')
+      ->databasePrefix('webblocks_ui_manager_')
       ->permissions([
         PluginPermission::make('webblocks-ui-manager.view')
           ->label('View WebBlocks UI releases')

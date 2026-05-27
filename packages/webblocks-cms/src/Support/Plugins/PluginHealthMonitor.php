@@ -12,7 +12,11 @@ class PluginHealthMonitor
 
   public function healthFor(PluginDefinition $plugin): PluginHealthResult
   {
-    if (! $this->plugins->isEnabled($plugin->handle())) {
+    if (! $this->plugins->isCompatible($plugin->handle())) {
+      return PluginHealthResult::incompatible($this->plugins->incompatibilityMessage($plugin->handle()) ?? 'Plugin is not compatible with this CMS version.');
+    }
+
+    if (! $this->plugins->isConfiguredEnabled($plugin->handle())) {
       return PluginHealthResult::unavailable();
     }
 

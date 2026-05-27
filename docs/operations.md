@@ -60,7 +60,7 @@ Published release packages are core product packages. They ship reusable CMS sou
 
 ## WebBlocks UI Manager Pilot
 
-WebBlocks UI Manager is the first first-party pilot plugin for product-specific release operations. It is disabled by default and becomes active only when `webblocks-plugins.enabled.webblocks-ui-manager` is true.
+WebBlocks UI Manager is the first first-party pilot plugin for product-specific release operations. It is disabled by default and becomes active only when `webblocks-plugins.enabled.webblocks-ui-manager` is true and the installed CMS version satisfies the plugin's required CMS constraint.
 
 When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata and a safe local preparation command:
 
@@ -70,7 +70,9 @@ ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/web
 
 The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. `--write-manifest` writes a local manifest file under that target path, but it does not deploy to a production CDN, publish external files, or change CMS core WebBlocks UI asset URLs.
 
-Real production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, and marketplace/catalog flows remain intentionally deferred.
+`System -> Plugins` reports disabled, enabled, and incompatible states separately. A plugin configured as enabled but incompatible remains inert: no plugin routes, commands, menus, permissions, settings routes, widgets, assets, block declarations, or health reporter behavior become active.
+
+Real production CDN deployment, hosted CDN smoke checks, generic third-party plugin install/update behavior, arbitrary remote installers, and marketplace/catalog flows remain intentionally deferred.
 
 ## Backup / Restore
 

@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 4 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as dynamic Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and production WebBlocks UI CDN deployment remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and production WebBlocks UI CDN deployment remain future work.
 
 ## Core Decision
 
@@ -69,6 +69,8 @@ Each plugin should declare metadata through a manifest or definition object:
 - provider class
 - optional description
 - required CMS version or version constraint
+- settings namespace
+- database/table prefix
 - permissions
 - admin menu entries
 - admin and public routes
@@ -87,8 +89,10 @@ Current registry API shape:
 PluginDefinition::make('webblocks-ui-manager')
   ->label('WebBlocks UI Manager')
   ->version('1.0.0')
-  ->requiresCms('^1.33')
+  ->requiresCms('^1.32')
   ->provider(WebBlocksUiManagerServiceProvider::class)
+  ->settingsNamespace('webblocks_ui_manager')
+  ->databasePrefix('webblocks_ui_manager_')
   ->menu([
     PluginMenuItem::make('releases')
       ->label('WebBlocks UI Releases')
@@ -139,6 +143,76 @@ The exact API may change during implementation, but the contract must preserve t
 - menu, route, permission, command, migration, block, asset, and setting ownership is attributable to a plugin handle
 - conflicts fail during build, test, boot diagnostics, or plugin enablement before users see mixed ownership
 
+## Package Convention Rules
+
+Plugin package conventions are separate from CMS core conventions. CMS core owns host contracts; plugins own their domain behavior.
+
+- Handle naming: use stable kebab-case such as `analytics-tools`; never rename a handle after release because it anchors routes, permissions, settings, tables, assets, and upgrade history.
+- Service provider registration: a plugin package should expose one Laravel service provider and register its `PluginDefinition` there or through the CMS registry integration point. First-party in-package pilots may register directly from the CMS package provider until split into their own Composer packages.
+- Definition or manifest structure: declare `handle`, `label`, `version`, `provider`, `description`, `requiresCms`, settings namespace, database prefix, permissions, routes, commands, extension slots, assets, blocks, and health reporter explicitly.
+- Route namespace: admin routes live under `/webadmin/plugins/{plugin-handle}/...` with names under `webblocks.plugins.{plugin_handle}.*`.
+- Permission naming: every plugin permission starts with `{plugin-handle}.`, for example `analytics-tools.view`.
+- Settings conventions: settings namespaces are snake_case and default to the handle with dashes converted to underscores.
+- Command naming: resolvable Artisan command names must start with `{plugin-handle}:`, for example `analytics-tools:sync`.
+- Migration and table naming: tables use a registry-reserved snake_case prefix ending in `_`, defaulting to the handle converted to snake_case plus `_`.
+- Asset contributions: public asset handles are dot-namespaced with the plugin handle, and static files must publish under a plugin-owned path.
+- Dashboard and system card contributions: keys are dot-namespaced with the plugin handle and remain read-only unless a later extension contract adds editable behavior.
+
+WebBlocks UI Manager follows these conventions as the first-party pilot: handle `webblocks-ui-manager`, settings namespace `webblocks_ui_manager`, database prefix `webblocks_ui_manager_`, command `webblocks-ui-manager:prepare-release`, routes under `/webadmin/plugins/webblocks-ui-manager`, and route names under `webblocks.plugins.webblocks_ui_manager.*`.
+
+## Compatibility And Inertness
+
+Plugin versions are semver-like metadata. `requiresCms()` declares the CMS version constraint needed by the plugin. The current foundation supports exact/comparator constraints such as `>=1.32.0` and caret constraints such as `^1.32`.
+
+The registry distinguishes configured enabled state from active state:
+
+- Configured enabled: `config/webblocks-plugins.php` says the plugin should be enabled.
+- Compatible: the installed CMS version satisfies the plugin's required CMS constraint.
+- Active: the plugin is both configured enabled and compatible.
+
+Only active plugins contribute menus, routes, commands, settings routes, dashboard widgets, system cards, block declarations, public assets, permissions, and health reporter execution. Disabled and incompatible plugins remain inert. `System -> Plugins` displays `Incompatible` with the required and installed CMS versions when a configured plugin cannot activate.
+
+## Discovery And Local Enablement
+
+Phase 5 does not add marketplace behavior or arbitrary remote installation. Safe discovery is local and explicit:
+
+- first-party package-owned plugins can be registered by the CMS package provider
+- future Composer package plugins should register a service provider through Laravel package discovery or explicit app provider configuration
+- install-local experiments can use local Composer path repositories during development, but they must still register a normal provider and definition
+- enablement remains config-backed through `webblocks-plugins.enabled.{plugin-handle}`
+
+No runtime feature downloads remote code, installs arbitrary Composer packages, publishes marketplace catalogs, or writes production CDN/update-server artifacts.
+
+## Minimal Plugin Example
+
+A minimal plugin package should expose a provider and a definition similar to:
+
+```php
+final class AnalyticsToolsPlugin
+{
+  public static function definition(): PluginDefinition
+  {
+    return PluginDefinition::make('analytics-tools')
+      ->label('Analytics Tools')
+      ->version('0.1.0')
+      ->provider(AnalyticsToolsServiceProvider::class)
+      ->requiresCms('^1.32')
+      ->settingsNamespace('analytics_tools')
+      ->databasePrefix('analytics_tools_')
+      ->permissions([
+        PluginPermission::make('analytics-tools.view')->label('View analytics tools'),
+      ])
+      ->adminRoutes(__DIR__.'/../routes/admin.php')
+      ->commands([
+        SyncAnalyticsCommand::class,
+      ])
+      ->health(AnalyticsToolsHealth::class);
+  }
+}
+```
+
+The provider should register package views, config, migrations, and the plugin definition without adding CMS-owned `/admin`, `/cms`, or root public route files. Plugin routes should be defined relative to the plugin route group; for example, `/reports` becomes `/webadmin/plugins/analytics-tools/reports`.
+
 ## Admin Menu Rules
 
 Plugins may add admin menu entries, but every plugin menu entry must be permission-gated.
@@ -185,7 +259,7 @@ Plugins must not pollute:
 - the legacy `/admin` namespace
 - the `/cms` static asset namespace
 
-Disabled plugins must not register admin routes. The enabled-only registrar is intentionally conservative: if a plugin is disabled through `config/webblocks-plugins.php`, its routes are absent rather than present-but-forbidden.
+Disabled and incompatible plugins must not register admin routes. The active-only registrar is intentionally conservative: if a plugin is disabled through `config/webblocks-plugins.php` or does not satisfy its CMS version constraint, its routes are absent rather than present-but-forbidden.
 
 Public routes are opt-in. A plugin that declares public routes must declare ownership clearly enough that route ownership can be tested. Public plugin routes must avoid collisions with site pages, CMS public routes, and host product routes.
 
@@ -229,13 +303,13 @@ Its default route name is:
 webblocks.plugins.{plugin_handle}.settings.edit
 ```
 
-Editable settings storage and validation schemas are reserved for a later phase.
+Editable settings storage and validation schemas are reserved for a later phase. Phase 5 reserves settings namespaces through `PluginDefinition::settingsNamespace()` so plugins do not collide with CMS core config or other plugins.
 
 ## Migration And Data Lifecycle Rules
 
 Plugin migrations must not collide with core migrations.
 
-Plugin table names must carry the plugin handle prefix or a documented shortened prefix reserved by the plugin registry. For `webblocks-ui-manager`, table names should use a stable prefix such as `webblocks_ui_manager_`.
+Plugin table names must carry the plugin handle prefix or a documented shortened prefix reserved by the plugin registry. For `webblocks-ui-manager`, table names use `webblocks_ui_manager_`. Phase 5 reserves database prefixes through `PluginDefinition::databasePrefix()` and rejects duplicate prefixes.
 
 Lifecycle states must be distinct:
 
@@ -245,6 +319,16 @@ Lifecycle states must be distinct:
 - Decommission or purge: future destructive data deletion flow requiring explicit destructive confirmation.
 
 The first implementation must not make uninstall destructive. Deleting plugin tables, artifacts, uploaded files, or historical records requires a separate explicit destructive confirmation design.
+
+Schema upgrades should be additive and reversible where practical. A plugin release that changes schema must document:
+
+- minimum compatible CMS version
+- plugin version introducing the schema
+- migration/table prefix used
+- whether disabled plugins can safely leave existing data in place
+- operational notes for rollback or decommission
+
+Generic plugin migration runners remain future work. Until then, first-party package-owned plugin migrations ship through the CMS package migration path, and third-party package migration strategy must be explicit in that package's provider and release notes.
 
 ## Assets And Static File Rules
 
@@ -318,7 +402,7 @@ The full lifecycle target:
 6. upgrade
 7. uninstall or decommission, in a later destructive-data design
 
-The implemented Phase 1 through Phase 4 runtime target is intentionally smaller than the full lifecycle:
+The implemented Phase 1 through Phase 5 runtime target is intentionally smaller than the full lifecycle:
 
 - registry
 - enabled configuration
@@ -333,6 +417,9 @@ The implemented Phase 1 through Phase 4 runtime target is intentionally smaller 
 - plugin-owned block and block pack declaration hooks
 - public head and body-end asset contribution hooks
 - first-party WebBlocks UI Manager pilot plugin with release metadata and safe local manifest preparation
+- plugin version and required CMS compatibility metadata
+- incompatible-plugin active-state and health reporting
+- package convention and collision guards
 - route ownership guards
 
 That foundation gives CMS a safe host boundary before plugins gain deeper lifecycle behavior.
@@ -400,6 +487,22 @@ Disabled state remains inert: routes, commands, menus, settings routes, permissi
 
 Phase 4 intentionally does not add real production CDN publish/deploy actions, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, or changes to CMS core WebBlocks UI consumption URLs.
 
+### Phase 5 Implementation Note
+
+The Phase 5 runtime now includes packaging and ecosystem readiness foundations:
+
+- plugin version and `requiresCms()` compatibility checks against the installed CMS version
+- configured enabled state separated from active state, so incompatible configured plugins stay inert
+- `System -> Plugins` lifecycle messaging for `Enabled`, `Disabled`, and `Incompatible`
+- incompatible plugin health results that do not execute plugin health reporters
+- convention metadata for settings namespaces and database/table prefixes
+- command-name guards for resolvable Artisan command classes, requiring `{plugin-handle}:...`
+- database prefix collision guards
+- focused tests for compatibility metadata, incompatible behavior, command and prefix collisions, disabled/incompatible inertness, WebBlocks UI Manager regression, package boundaries, and route ownership
+- documentation for package conventions, local discovery, minimal plugin creation, schema upgrade strategy, and release compatibility policy
+
+Phase 5 intentionally does not add marketplace/catalog UI, arbitrary remote package installation, dynamic remote Composer discovery, generic third-party plugin migration runners, production CDN publishing, update-server publishing, public plugin routes, or a version bump.
+
 ## Testing And Release Guardrails
 
 The plugin system must be protected by route ownership, package boundary, and coexistence tests.
@@ -411,6 +514,8 @@ Required guardrails:
 - disabled plugin menus do not render
 - disabled plugin routes and actions are unavailable or fail authorization
 - disabled plugin widgets, system cards, block declarations, and public assets are absent
+- incompatible plugin routes, commands, menus, permissions, widgets, system cards, block declarations, public assets, settings routes, and health reporter behavior are absent
+- command names, database prefixes, handles, extension slots, widgets, blocks, assets, and permission namespaces remain collision-guarded
 - plugin dashboard/system extension cards render only when enabled and permitted
 - plugin-owned block declarations are discoverable without overriding core block contracts
 - plugin public assets are collected by safe location and are absent when disabled

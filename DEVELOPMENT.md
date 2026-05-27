@@ -61,6 +61,7 @@ WebBlocks CMS core and the Project Layer have different responsibilities.
 - Site-specific code belongs in `project/`, database content, or instance configuration.
 - Do not place update-sensitive instance logic directly into core directories.
 - The Project Layer is install-local and update-safe, but it is not a reusable plugin packaging system.
+- Reusable product or domain extensions should use the plugin system conventions in `docs/plugin-system.md`: kebab-case handles, handle-prefixed permissions and commands, plugin route namespaces, plugin-owned settings namespaces, plugin-owned table prefixes, compatibility metadata, and active-only contributions.
 
 ## Update-Safe Customization Rule
 

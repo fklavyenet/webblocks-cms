@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Illuminate\Console\Command;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 
@@ -16,6 +17,7 @@ class PluginRegistry
   public function __construct(
     private readonly array $enabledConfig = [],
     private readonly bool $useLiveConfig = false,
+    private readonly ?PluginCompatibility $compatibility = null,
   ) {}
 
   public function register(PluginDefinition $plugin): self
@@ -23,6 +25,9 @@ class PluginRegistry
     if (isset($this->plugins[$plugin->handle()])) {
       throw PluginException::duplicateHandle($plugin->handle());
     }
+
+    $this->assertUniqueDatabasePrefix($plugin);
+    $this->assertValidCommandNames($plugin);
 
     $this->plugins[$plugin->handle()] = clone $plugin;
 
@@ -44,7 +49,7 @@ class PluginRegistry
   {
     return $this->clonedPlugins(array_filter(
       $this->plugins,
-      fn (PluginDefinition $plugin): bool => $this->isEnabled($plugin->handle())
+      fn (PluginDefinition $plugin): bool => $this->isActive($plugin->handle())
     ));
   }
 
@@ -55,7 +60,7 @@ class PluginRegistry
   {
     return $this->clonedPlugins(array_filter(
       $this->plugins,
-      fn (PluginDefinition $plugin): bool => ! $this->isEnabled($plugin->handle())
+      fn (PluginDefinition $plugin): bool => ! $this->isActive($plugin->handle())
     ));
   }
 
@@ -71,11 +76,39 @@ class PluginRegistry
 
   public function isEnabled(string $handle): bool
   {
+    return $this->isConfiguredEnabled($handle) && $this->isCompatible($handle);
+  }
+
+  public function isActive(string $handle): bool
+  {
+    return $this->isEnabled($handle);
+  }
+
+  public function isConfiguredEnabled(string $handle): bool
+  {
     if ($this->useLiveConfig) {
       return (bool) config("webblocks-plugins.enabled.{$handle}", false);
     }
 
     return (bool) ($this->enabledConfig[$handle] ?? false);
+  }
+
+  public function isCompatible(string $handle): bool
+  {
+    $plugin = $this->plugins[$handle] ?? null;
+
+    if ($plugin === null) {
+      return false;
+    }
+
+    return $this->compatibility()->isCompatible($plugin);
+  }
+
+  public function incompatibilityMessage(string $handle): ?string
+  {
+    $plugin = $this->plugins[$handle] ?? null;
+
+    return $plugin === null ? null : $this->compatibility()->incompatibilityMessage($plugin);
   }
 
   /**
@@ -264,10 +297,27 @@ class PluginRegistry
   public function summaries(): array
   {
     return Collection::make($this->plugins)
-      ->map(fn (PluginDefinition $plugin): array => $plugin->toArray($this->isEnabled($plugin->handle())))
+      ->map(fn (PluginDefinition $plugin): array => $this->summaryFor($plugin))
       ->sortBy('label')
       ->values()
       ->all();
+  }
+
+  /**
+   * @return array<string, mixed>
+   */
+  private function summaryFor(PluginDefinition $plugin): array
+  {
+    $configuredEnabled = $this->isConfiguredEnabled($plugin->handle());
+    $compatible = $this->isCompatible($plugin->handle());
+    $summary = $plugin->toArray($this->isEnabled($plugin->handle()));
+
+    return array_merge($summary, [
+      'configured_enabled' => $configuredEnabled,
+      'compatible' => $compatible,
+      'lifecycle_status' => $this->lifecycleStatus($configuredEnabled, $compatible),
+      'incompatibility_message' => $this->incompatibilityMessage($plugin->handle()),
+    ]);
   }
 
   /**
@@ -295,5 +345,70 @@ class PluginRegistry
     }
 
     return (bool) $user?->can($permission);
+  }
+
+  private function lifecycleStatus(bool $configuredEnabled, bool $compatible): string
+  {
+    if (! $compatible) {
+      return 'incompatible';
+    }
+
+    return $configuredEnabled ? 'enabled' : 'disabled';
+  }
+
+  private function compatibility(): PluginCompatibility
+  {
+    return $this->compatibility ?? new PluginCompatibility;
+  }
+
+  private function assertUniqueDatabasePrefix(PluginDefinition $plugin): void
+  {
+    foreach ($this->plugins as $registered) {
+      if ($registered->databasePrefixValue() === $plugin->databasePrefixValue()) {
+        throw PluginException::duplicateDatabasePrefix($plugin->databasePrefixValue());
+      }
+    }
+  }
+
+  private function assertValidCommandNames(PluginDefinition $plugin): void
+  {
+    $registeredNames = [];
+
+    foreach ($this->plugins as $registered) {
+      foreach ($registered->commandClasses() as $command) {
+        $name = $this->commandName($command);
+
+        if ($name !== null) {
+          $registeredNames[$name] = true;
+        }
+      }
+    }
+
+    foreach ($plugin->commandClasses() as $command) {
+      $name = $this->commandName($command);
+
+      if ($name === null) {
+        continue;
+      }
+
+      if (! str_starts_with($name, $plugin->handle().':')) {
+        throw PluginException::invalidCommandName($plugin->handle(), $name);
+      }
+
+      if (isset($registeredNames[$name])) {
+        throw PluginException::duplicateCommandName($name);
+      }
+
+      $registeredNames[$name] = true;
+    }
+  }
+
+  private function commandName(string $command): ?string
+  {
+    if (! class_exists($command) || ! is_subclass_of($command, Command::class)) {
+      return null;
+    }
+
+    return app($command)->getName();
   }
 }

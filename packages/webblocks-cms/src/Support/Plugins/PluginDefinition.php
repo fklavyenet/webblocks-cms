@@ -16,6 +16,10 @@ class PluginDefinition
 
   private ?PluginSettingsDefinition $settings = null;
 
+  private ?string $settingsNamespace = null;
+
+  private ?string $databasePrefix = null;
+
   /** @var array<int, string|callable> */
   private array $adminRoutes = [];
 
@@ -202,6 +206,50 @@ class PluginDefinition
   public function requiredCmsVersion(): ?string
   {
     return $this->requiredCmsVersion;
+  }
+
+  public function settingsNamespace(?string $namespace): self
+  {
+    $namespace = is_string($namespace) ? trim($namespace) : null;
+
+    if ($namespace === '') {
+      $namespace = null;
+    }
+
+    if ($namespace !== null && ! preg_match('/^[a-z0-9][a-z0-9_]*$/', $namespace)) {
+      throw PluginException::invalidSettingsNamespace($namespace);
+    }
+
+    $this->settingsNamespace = $namespace;
+
+    return $this;
+  }
+
+  public function settingsNamespaceValue(): string
+  {
+    return $this->settingsNamespace ?? str_replace('-', '_', $this->handle);
+  }
+
+  public function databasePrefix(?string $prefix): self
+  {
+    $prefix = is_string($prefix) ? trim($prefix) : null;
+
+    if ($prefix === '') {
+      $prefix = null;
+    }
+
+    if ($prefix !== null && ! preg_match('/^[a-z0-9][a-z0-9_]*_$/', $prefix)) {
+      throw PluginException::invalidDatabasePrefix($prefix);
+    }
+
+    $this->databasePrefix = $prefix;
+
+    return $this;
+  }
+
+  public function databasePrefixValue(): string
+  {
+    return $this->databasePrefix ?? str_replace('-', '_', $this->handle).'_';
   }
 
   /**
@@ -554,6 +602,8 @@ class PluginDefinition
       'provider' => $this->providerClass,
       'description' => $this->description,
       'required_cms_version' => $this->requiredCmsVersion,
+      'settings_namespace' => $this->settingsNamespaceValue(),
+      'database_prefix' => $this->databasePrefixValue(),
       'route_name_prefix' => $this->routeNamePrefix(),
       'admin_route_prefix' => $this->adminRoutePrefix(),
       'enabled' => $enabled,

@@ -6,6 +6,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 
 class AdminPluginListingTest extends TestCase
 {
@@ -62,6 +65,29 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('WebBlocks UI Manager');
     $response->assertSeeText('Enabled');
+  }
+
+  #[Test]
+  public function incompatible_configured_plugin_appears_with_clear_incompatible_status(): void
+  {
+    $registry = new PluginRegistry(['future-plugin' => true]);
+    $registry->register(
+      PluginDefinition::make('future-plugin')
+        ->label('Future Plugin')
+        ->version('9.0.0')
+        ->requiresCms('>=99.0.0')
+    );
+    $this->app->instance(PluginRegistry::class, $registry);
+    $this->app->forgetInstance(PluginHealthMonitor::class);
+
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
+
+    $response->assertOk();
+    $response->assertSeeText('Future Plugin');
+    $response->assertSeeText('Incompatible');
+    $response->assertSeeText('Requires WebBlocks CMS >=99.0.0');
   }
 
   #[Test]

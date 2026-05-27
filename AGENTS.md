@@ -30,10 +30,11 @@
 - Install-specific or website-specific code belongs in `project/`.
 - Do not add website-specific import/sync logic to CMS core.
 - Release packages must not include `project/`.
+- Reusable product/domain extensions belong in plugins with documented package conventions: kebab-case handles, handle-prefixed permissions and commands, `/webadmin/plugins/{plugin-handle}` admin routes, plugin-owned settings namespaces, plugin-owned table prefixes, compatibility metadata, and inert disabled/incompatible behavior.
 - Keep WebBlocks UI source changes in the WebBlocks UI project, not inside CMS.
 - CMS may consume pinned WebBlocks UI assets, but should not edit UI package source.
 - Do not assume the `/admin` path belongs to CMS.
-- In coexistence designs, use `/cms` or a configurable CMS admin prefix.
+- In coexistence designs, `/webadmin` is the canonical CMS admin prefix and `/cms` remains static assets only.
 - Preserve the host `/login` model; do not introduce a separate mandatory CMS login system.
 - Treat CMS authorization as CMS membership/role authorization.
 - Do not automatically equate host product admin status with CMS admin status.

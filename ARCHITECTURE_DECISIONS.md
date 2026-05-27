@@ -60,5 +60,7 @@ Consequences:
 - Plugin admin routes default under `/webadmin/plugins/{plugin-handle}/...`, while `/webadmin` remains the canonical CMS admin prefix, `/cms` remains static asset territory, and CMS-owned `/admin` routes must not return.
 - Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
 - Plugin block declarations must use plugin-owned handles such as `plugin-handle::block-handle` and must not replace core block views or monkey patch core block services.
-- Disabled plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health behavior.
+- Plugin package conventions are enforceable host contracts: handles are kebab-case, settings namespaces and table prefixes are plugin-owned, command names are handle-prefixed, and resolvable collisions fail before active runtime behavior is collected.
+- Disabled or incompatible plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health reporter execution.
+- `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
 - WebBlocks UI Manager is implemented as a disabled-by-default pilot plugin, not as a core CMS feature. Its current runtime records release metadata and can prepare local manifests; real production CDN deployment and CMS core asset-consumption URL changes remain separate decisions.

@@ -80,4 +80,29 @@ class PluginException extends InvalidArgumentException
   {
     return new self("Plugin-owned namespace [{$namespace}] must be kebab-case.");
   }
+
+  public static function invalidSettingsNamespace(string $namespace): self
+  {
+    return new self("Plugin settings namespace [{$namespace}] must be snake_case.");
+  }
+
+  public static function invalidDatabasePrefix(string $prefix): self
+  {
+    return new self("Plugin database prefix [{$prefix}] must be snake_case and end with an underscore.");
+  }
+
+  public static function duplicateDatabasePrefix(string $prefix): self
+  {
+    return new self("Plugin database prefix [{$prefix}] is already registered.");
+  }
+
+  public static function invalidCommandName(string $handle, string $command): self
+  {
+    return new self("Plugin command [{$command}] must start with [{$handle}:].");
+  }
+
+  public static function duplicateCommandName(string $command): self
+  {
+    return new self("Plugin command [{$command}] is already registered.");
+  }
 }

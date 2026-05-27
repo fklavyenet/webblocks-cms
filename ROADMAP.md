@@ -52,8 +52,9 @@ This roadmap captures planned architecture and implementation direction. It does
 
 ### Phase 5 - Packaging And Ecosystem Readiness
 
-- Document plugin package conventions.
-- Add plugin install documentation.
-- Define plugin update and upgrade strategy.
-- Explore plugin marketplace or catalog possibilities.
-- Define backward compatibility policy for plugin contracts, extension slots, manifests, and route ownership.
+- Done: document plugin package conventions for handles, providers, definitions, routes, permissions, settings, commands, migrations/tables, assets, dashboard/system cards, and package boundaries.
+- Done: add compatibility foundations for plugin versions, required CMS version constraints, active-vs-configured enabled state, incompatible health/status reporting, and clear `System -> Plugins` messaging.
+- Done: harden collision guards for plugin database prefixes and resolvable command names while preserving existing guards for handles, permissions, extension slots, widgets, blocks, assets, and table/prefix conventions.
+- Done: add package boundary and route guard coverage proving first-party plugin code stays plugin-owned, disabled and incompatible plugins remain inert, `/webadmin` remains canonical, `/cms` remains static-only from Laravel's route perspective, and `/admin` remains absent.
+- Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, production CDN publishing, or update-server behavior.
+- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, and production CDN deployment.

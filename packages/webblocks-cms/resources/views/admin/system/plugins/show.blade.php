@@ -22,9 +22,12 @@
                 <div>
                     <strong>Lifecycle</strong>
                     <div>
-                        <span class="wb-status {{ $plugin['enabled'] ? 'wb-status-active' : 'wb-status-pending' }}">
-                            {{ $plugin['enabled'] ? 'Enabled' : 'Disabled' }}
+                        <span class="wb-status {{ $plugin['lifecycle_status'] === 'enabled' ? 'wb-status-active' : 'wb-status-pending' }}">
+                            {{ ucfirst($plugin['lifecycle_status']) }}
                         </span>
+                        @if (! $plugin['compatible'])
+                            <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
+                        @endif
                     </div>
                 </div>
                 <div>
@@ -39,6 +42,18 @@
                 <div>
                     <strong>Version</strong>
                     <div>{{ $plugin['version'] ?? 'Not declared' }}</div>
+                </div>
+                <div>
+                    <strong>Required CMS</strong>
+                    <div>{{ $plugin['required_cms_version'] ?? 'Not declared' }}</div>
+                </div>
+                <div>
+                    <strong>Settings Namespace</strong>
+                    <div><code>{{ $plugin['settings_namespace'] }}</code></div>
+                </div>
+                <div>
+                    <strong>Database Prefix</strong>
+                    <div><code>{{ $plugin['database_prefix'] }}</code></div>
                 </div>
                 <div>
                     <strong>Provider</strong>

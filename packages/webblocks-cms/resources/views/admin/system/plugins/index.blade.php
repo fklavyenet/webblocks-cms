@@ -64,9 +64,12 @@
                                     <td><code>{{ $plugin['handle'] }}</code></td>
                                     <td>{{ $plugin['version'] ?? 'Not declared' }}</td>
                                     <td>
-                                        <span class="wb-status {{ $plugin['enabled'] ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ $plugin['enabled'] ? 'Enabled' : 'Disabled' }}
+                                        <span class="wb-status {{ $plugin['lifecycle_status'] === 'enabled' ? 'wb-status-active' : 'wb-status-pending' }}">
+                                            {{ ucfirst($plugin['lifecycle_status']) }}
                                         </span>
+                                        @if (! $plugin['compatible'])
+                                            <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="wb-status {{ $plugin['health']['status'] === 'healthy' ? 'wb-status-active' : 'wb-status-pending' }}">

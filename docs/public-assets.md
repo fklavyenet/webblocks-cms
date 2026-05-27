@@ -76,10 +76,10 @@ Enabled plugins may declare public asset contributions through `PluginPublicAsse
 - plugin CSS can be contributed to the public `<head>`
 - plugin JS can be contributed to the public `<head>` with `defer`, `async`, or `type="module"` where declared
 - plugin JS can be contributed to the public body end when late loading is appropriate
-- disabled plugin assets are not collected or rendered
+- disabled and incompatible plugin assets are not collected or rendered
 - plugin assets must still be published by the plugin under a plugin-owned static namespace
 
-The hook does not install plugin packages, publish files, stream assets through Laravel, or create marketplace behavior.
+The hook does not install plugin packages, publish files, stream assets through Laravel, create remote discovery, or create marketplace behavior.
 
 The first-party WebBlocks UI Manager pilot plugin uses a separate CDN artifact convention rather than the public page asset hook:
 

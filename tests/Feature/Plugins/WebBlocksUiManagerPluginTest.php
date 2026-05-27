@@ -34,6 +34,9 @@ class WebBlocksUiManagerPluginTest extends TestCase
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks UI Manager', $plugin->labelText());
     $this->assertSame('0.1.0', $plugin->versionText());
+    $this->assertSame('^1.32', $plugin->requiredCmsVersion());
+    $this->assertSame('webblocks_ui_manager', $plugin->settingsNamespaceValue());
+    $this->assertSame('webblocks_ui_manager_', $plugin->databasePrefixValue());
     $this->assertFalse($registry->isEnabled('webblocks-ui-manager'));
     $this->assertSame([], $registry->menuItems());
     $this->assertSame([], $registry->dashboardWidgets());
@@ -253,6 +256,8 @@ class WebBlocksUiManagerPluginTest extends TestCase
     $this->assertTrue(class_exists(PrepareWebBlocksUiReleaseCommand::class));
     $this->assertTrue(view()->exists('webblocks-cms::plugins.webblocks-ui-manager.releases.index'));
     $this->assertFileDoesNotExist(base_path('app/Plugins/WebBlocksUiManager/WebBlocksUiManagerPlugin.php'));
+    $this->assertFileDoesNotExist(base_path('app/Http/Controllers/WebBlocksUiReleaseController.php'));
+    $this->assertFileDoesNotExist(resource_path('views/plugins/webblocks-ui-manager/releases/index.blade.php'));
   }
 
   private function definePluginPermissionGates(): void

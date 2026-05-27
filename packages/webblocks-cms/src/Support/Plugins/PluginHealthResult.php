@@ -12,6 +12,8 @@ class PluginHealthResult
 
   public const UNAVAILABLE = 'unavailable';
 
+  public const INCOMPATIBLE = 'incompatible';
+
   public function __construct(
     public readonly string $status,
     public readonly string $message = '',
@@ -35,6 +37,11 @@ class PluginHealthResult
   public static function unavailable(string $message = 'Plugin is disabled.'): self
   {
     return new self(self::UNAVAILABLE, $message);
+  }
+
+  public static function incompatible(string $message): self
+  {
+    return new self(self::INCOMPATIBLE, $message);
   }
 
   /**
