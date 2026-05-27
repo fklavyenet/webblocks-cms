@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -221,6 +222,60 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertHeaderMissing('Location');
     $response->assertSeeText('WebBlocks UI Manager Settings');
+  }
+
+  #[Test]
+  public function enabled_plugin_entry_routes_are_core_bridged_without_dashboard_fallback(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
+    $releaseRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.index');
+    $settingsRoute = Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.settings.edit');
+
+    $this->assertSame('webadmin/plugins/webblocks-ui-manager/releases', $releaseRoute?->uri());
+    $this->assertSame('webadmin/plugins/webblocks-ui-manager/settings', $settingsRoute?->uri());
+    $this->assertSame(
+      'WebBlocks\\Cms\\Http\\Controllers\\Admin\\PluginRouteFallbackController',
+      $releaseRoute?->getActionName()
+    );
+    $this->assertSame(
+      'WebBlocks\\Cms\\Http\\Controllers\\Admin\\PluginRouteFallbackController',
+      $settingsRoute?->getActionName()
+    );
+  }
+
+  #[Test]
+  public function plugin_detail_open_settings_link_uses_plugin_admin_url_and_does_not_dashboard_redirect(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $detail = $this->actingAs($user)->get(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $detail->assertOk();
+    $detail->assertSeeText('Open Settings');
+    $detail->assertSee('/webadmin/plugins/webblocks-ui-manager/settings', false);
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/settings')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('WebBlocks UI Manager Settings');
   }
 
   #[Test]

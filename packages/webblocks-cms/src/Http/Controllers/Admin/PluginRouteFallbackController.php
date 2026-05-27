@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
@@ -15,7 +16,7 @@ class PluginRouteFallbackController extends Controller
     private readonly PluginRouteRegistrar $routes,
   ) {}
 
-  public function __invoke(Request $request, string $plugin, ?string $pluginPath = null): Response
+  public function __invoke(Request $request, string $plugin, ?string $pluginPath = null): Response|View
   {
     $definition = $this->plugins->get($plugin);
 
@@ -32,7 +33,7 @@ class PluginRouteFallbackController extends Controller
     abort(404);
   }
 
-  private function webBlocksUiManager(Request $request, string $path): Response
+  private function webBlocksUiManager(Request $request, string $path): Response|View
   {
     if ($request->isMethod('GET') && $path === 'releases') {
       abort_unless($request->user()?->can('webblocks-ui-manager.view'), 403);

@@ -267,8 +267,17 @@ class SystemPluginController extends Controller
       'setup_required' => $setupRequired,
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,
-      'settings_url' => $settingsRoute !== null && Route::has($settingsRoute) ? route($settingsRoute) : null,
+      'settings_url' => $settingsRoute !== null ? $this->settingsUrl($definition, $settingsRoute) : null,
     ]);
+  }
+
+  private function settingsUrl(PluginDefinition $definition, string $settingsRoute): string
+  {
+    if (Route::has($settingsRoute)) {
+      return route($settingsRoute);
+    }
+
+    return '/'.trim($definition->adminRoutePrefix(), '/').'/settings';
   }
 
   private function setupRequired(PluginDefinition $definition): bool

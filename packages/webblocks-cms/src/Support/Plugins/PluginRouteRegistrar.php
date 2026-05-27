@@ -23,6 +23,7 @@ class PluginRouteRegistrar
     if (! app()->routesAreCached()) {
       foreach ($this->plugins->enabled() as $plugin) {
         $this->registerPluginAdminRoutes($plugin);
+        $this->registerPluginAdminBridgeRoutes($plugin);
       }
     }
 
@@ -57,6 +58,42 @@ class PluginRouteRegistrar
           $this->registerRouteDefinition($plugin, $routes);
         }
       });
+  }
+
+  private function registerPluginAdminBridgeRoutes(PluginDefinition $plugin): void
+  {
+    $base = trim($plugin->adminRoutePrefix(), '/');
+
+    if ($plugin->handle() === 'webblocks-ui-manager') {
+      Route::get($base.'/releases', PluginRouteFallbackController::class)
+        ->defaults('plugin', $plugin->handle())
+        ->defaults('pluginPath', 'releases')
+        ->middleware($this->pluginBridgeMiddleware($plugin, 'webblocks-ui-manager.view'))
+        ->name($plugin->routeNamePrefix().'.releases.index');
+
+      if ($plugin->settingsDefinition()?->usesDefaultRoute()) {
+        Route::get($base.'/settings', PluginRouteFallbackController::class)
+          ->defaults('plugin', $plugin->handle())
+          ->defaults('pluginPath', 'settings')
+          ->middleware($this->pluginBridgeMiddleware($plugin, $this->settingsPermission($plugin)))
+          ->name($this->defaultSettingsRouteName($plugin));
+      }
+    }
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  private function pluginBridgeMiddleware(PluginDefinition $plugin, string $permission): array
+  {
+    return [
+      'web',
+      'install.required',
+      'auth',
+      'admin.access',
+      GuardPluginSetup::class.':'.$plugin->handle(),
+      'plugin.permission:'.$permission,
+    ];
   }
 
   private function registerPluginFallbackRoute(): void

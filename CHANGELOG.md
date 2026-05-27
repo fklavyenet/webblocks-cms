@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.74
+
+- Bridge enabled WebBlocks UI Manager Releases and Settings entry routes through CMS core before plugin-owned route files execute, preventing stale manual plugin route/source context from redirecting operators back to `/webadmin`.
+- Keep the named Releases and Settings plugin URLs resolving to `/webadmin/plugins/webblocks-ui-manager/...` while rendering setup-required guidance or settings on the same URL for super admins.
+
 ## 1.32.73
 
 - Add a cached-safe enabled plugin admin route fallback so WebBlocks UI Manager Releases and Settings URLs stay on `/webadmin/plugins/webblocks-ui-manager/...` instead of falling through to the dashboard when dynamic manual plugin routes have not been hydrated for the request.
