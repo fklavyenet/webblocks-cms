@@ -2,8 +2,10 @@
 
 namespace WebBlocks\Cms\Support\Plugins;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginSettingsController;
+use WebBlocks\Cms\Http\Middleware\GuardPluginSetup;
 
 class PluginRouteRegistrar
 {
@@ -31,7 +33,10 @@ class PluginRouteRegistrar
 
   private function registerPluginAdminRoutes(PluginDefinition $plugin): void
   {
+    $this->definePluginPermissionGates($plugin);
+
     Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
+      ->middleware(GuardPluginSetup::class.':'.$plugin->handle())
       ->prefix(ltrim($plugin->adminRoutePrefix(), '/'))
       ->name($plugin->routeNamePrefix().'.')
       ->group(function () use ($plugin) {
@@ -41,6 +46,17 @@ class PluginRouteRegistrar
           $this->registerRouteDefinition($plugin, $routes);
         }
       });
+  }
+
+  private function definePluginPermissionGates(PluginDefinition $plugin): void
+  {
+    foreach ($plugin->permissionsList() as $permission) {
+      if (Gate::has($permission->name())) {
+        continue;
+      }
+
+      Gate::define($permission->name(), fn ($user): bool => is_object($user) && method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+    }
   }
 
   private function registerDefaultSettingsRoute(PluginDefinition $plugin): void

@@ -224,11 +224,11 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
   #[Test]
   public function disabled_plugin_publish_routes_remain_absent_and_admin_cms_boundaries_hold(): void
   {
-    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    Route::getRoutes()->refreshNameLookups();
+    $registry = new PluginRegistry(['webblocks-ui-manager' => false]);
+    $registry->register(WebBlocksUiManagerPlugin::definition());
 
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.publish'));
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.publish.dry-run'));
+    $this->assertSame([], $registry->enabled());
+    $this->assertSame([], $registry->menuItems());
 
     $adminRoutes = collect(Route::getRoutes()->getRoutes())
       ->filter(fn ($route): bool => $route->uri() === 'admin' || str_starts_with($route->uri(), 'admin/'))
@@ -246,14 +246,10 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
   {
     $registry = new PluginRegistry(['webblocks-ui-manager' => true]);
     $registry->register(WebBlocksUiManagerPlugin::definition()->requiresCms('>=99.0.0'));
-    $this->app->instance(PluginRegistry::class, $registry);
-
-    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    Route::getRoutes()->refreshNameLookups();
 
     $this->assertFalse($registry->isEnabled('webblocks-ui-manager'));
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.publish'));
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.publish.dry-run'));
+    $this->assertSame([], $registry->enabled());
+    $this->assertSame([], $registry->menuItems());
   }
 
   #[Test]

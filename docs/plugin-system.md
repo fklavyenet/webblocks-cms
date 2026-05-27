@@ -60,7 +60,19 @@ Validation requires `webblocks-plugin.json` or `manifest.json`, a kebab-case han
 
 Manual uninstall is available only for manually uploaded plugins and requires super-admin authorization. The plugin must be disabled first. Uninstall removes the installed-plugin package directory and enabled-state file under the configured plugin root, but it does not drop plugin-owned database tables or run destructive migrations. Protected/core/non-manual plugins cannot be uninstalled through this flow.
 
-Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes`, `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files but are not auto-run by this phase; migration execution remains an explicit/manual operator action.
+Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes`, `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files and are never run automatically on upload or enable. Super admins can run the explicit plugin setup action from the plugin detail screen; the runner scopes execution to the installed plugin path and the manifest-declared migration directories, records setup results in enabled state, and can repair a setup-required plugin whose migration records exist but required plugin tables are missing.
+
+Manual plugin lifecycle is:
+
+1. Upload/install the ZIP. The plugin is disabled by default.
+2. Review the plugin detail screen.
+3. Enable the plugin when compatible.
+4. Run plugin setup/migrations if the detail screen reports `Setup required` or `Plugin migrations pending`.
+5. Use operational plugin routes after setup is ready.
+6. Disable the plugin to make routes, commands, menus, settings, health checks, and contributions inert.
+7. Uninstall only after disable; uninstall preserves plugin-owned tables.
+
+Enabled plugins with pending setup must not crash admin routes. If plugin-owned tables are missing, health and route screens should report setup-required guidance such as `Plugin migrations pending` or `Release tables are missing`.
 
 ## Plugin Contract And Manifest
 
@@ -339,7 +351,7 @@ Schema upgrades should be additive and reversible where practical. A plugin rele
 - whether disabled plugins can safely leave existing data in place
 - operational notes for rollback or decommission
 
-Generic plugin migration runners remain future work. Until then, first-party package-owned plugin migrations ship through the CMS package migration path, and third-party package migration strategy must be explicit in that package's provider and release notes.
+The manual plugin migration runner is intentionally scoped. It runs only migration directories declared by the installed plugin and only after resolving those directories inside the configured plugin install root. It does not run host app migrations or unrelated plugin migrations. Plugin migrations should be additive, reversible where practical, and safe to retry when setup repair is required.
 
 ## Assets And Static File Rules
 
@@ -494,13 +506,13 @@ When enabled, the pilot contributes:
 - a plugin menu item for WebBlocks UI release records
 - read-only dashboard and system cards through the Phase 3 extension slots
 - read-only settings/detail visibility through the Phase 2 settings foundation
-- plugin health checks for release metadata readiness and configured CDN base path readiness
-- plugin-owned tables and models: `webblocks_ui_manager_releases` and `webblocks_ui_manager_artifacts`
+- plugin health checks for release metadata readiness, setup-required/missing-table status, and configured CDN base path readiness
+- plugin-owned tables and models: `webblocks_ui_manager_releases`, `webblocks_ui_manager_artifacts`, and `webblocks_ui_manager_publish_runs`
 - a safe local `webblocks-ui-manager:prepare-release` command that records release metadata, computes artifact SHA-256 checksums, and can optionally write a local `manifest.json`
 - a controlled `webblocks-ui-manager:publish-release {version} --dry-run` and `webblocks-ui-manager:publish-release {version}` workflow that records publish runs and writes only after validation passes
 - first-party CDN target conventions under `public/cdn/webblocks-ui/{version}/...`
 
-Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection.
+Disabled state remains inert: routes, commands, menus, settings routes, permissions, dashboard/system cards, health behavior, and asset contributions are absent from active collection. Enabled-but-not-set-up state remains safe: the menu may be visible, but the Releases route checks schema readiness before querying and renders setup-required guidance when release tables are missing.
 
 Phase 4 intentionally does not add external production CDN deployment automation, marketplace behavior, generic third-party plugin install/update flows, generic plugin migration runners, public plugin routes, core view overrides, update-server publishing, or changes to CMS core WebBlocks UI consumption URLs.
 

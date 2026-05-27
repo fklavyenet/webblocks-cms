@@ -52,6 +52,9 @@ class WebBlocksUiManagerPlugin
         PrepareWebBlocksUiReleaseCommand::class,
         PublishWebBlocksUiReleaseCommand::class,
       ])
+      ->migrations([
+        'database/migrations',
+      ])
       ->settings(
         PluginSettingsDefinition::make()
           ->label('WebBlocks UI Manager Settings')

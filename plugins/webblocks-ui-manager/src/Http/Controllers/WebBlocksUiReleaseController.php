@@ -9,6 +9,7 @@ use WebBlocks\Cms\Plugins\WebBlocksUiManager\Http\Requests\WebBlocksUiReleaseReq
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiPublishRun;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiManagerPaths;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiManagerSchema;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiReleasePublisher;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -19,10 +20,15 @@ class WebBlocksUiReleaseController extends Controller
     private readonly SystemSettings $systemSettings,
     private readonly WebBlocksUiManagerPaths $paths,
     private readonly WebBlocksUiReleasePublisher $publisher,
+    private readonly WebBlocksUiManagerSchema $schema,
   ) {}
 
   public function index(): View
   {
+    if (! $this->schema->isReady()) {
+      return $this->setupRequiredView();
+    }
+
     return view($this->view('index'), $this->viewData('WebBlocks UI Releases', [
       'releases' => WebBlocksUiRelease::query()
         ->withCount('artifacts')
@@ -33,6 +39,10 @@ class WebBlocksUiReleaseController extends Controller
 
   public function create(): View
   {
+    if (! $this->schema->isReady()) {
+      return $this->setupRequiredView();
+    }
+
     return view($this->view('form'), $this->viewData('New WebBlocks UI Release', [
       'release' => new WebBlocksUiRelease([
         'status' => WebBlocksUiRelease::STATUS_DRAFT,
@@ -46,6 +56,12 @@ class WebBlocksUiReleaseController extends Controller
 
   public function store(WebBlocksUiReleaseRequest $request): RedirectResponse
   {
+    if (! $this->schema->isReady()) {
+      return redirect()
+        ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+        ->withErrors(['plugin' => $this->schema->message()]);
+    }
+
     $release = WebBlocksUiRelease::query()->create($request->validated());
 
     return redirect()
@@ -53,8 +69,13 @@ class WebBlocksUiReleaseController extends Controller
       ->with('status', 'WebBlocks UI release metadata created.');
   }
 
-  public function show(WebBlocksUiRelease $release): View
+  public function show(string $release): View
   {
+    if (! $this->schema->isReady()) {
+      return $this->setupRequiredView();
+    }
+
+    $release = $this->release($release);
     $release->load(['artifacts', 'publishRuns']);
 
     return view($this->view('show'), $this->viewData($release->label ?: $release->version, [
@@ -64,8 +85,14 @@ class WebBlocksUiReleaseController extends Controller
     ]));
   }
 
-  public function edit(WebBlocksUiRelease $release): View
+  public function edit(string $release): View
   {
+    if (! $this->schema->isReady()) {
+      return $this->setupRequiredView();
+    }
+
+    $release = $this->release($release);
+
     return view($this->view('form'), $this->viewData('Edit WebBlocks UI Release', [
       'release' => $release,
       'formAction' => route('webblocks.plugins.webblocks_ui_manager.releases.update', $release),
@@ -73,8 +100,15 @@ class WebBlocksUiReleaseController extends Controller
     ]));
   }
 
-  public function update(WebBlocksUiReleaseRequest $request, WebBlocksUiRelease $release): RedirectResponse
+  public function update(WebBlocksUiReleaseRequest $request, string $release): RedirectResponse
   {
+    if (! $this->schema->isReady()) {
+      return redirect()
+        ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+        ->withErrors(['plugin' => $this->schema->message()]);
+    }
+
+    $release = $this->release($release);
     $release->update($request->validated());
 
     return redirect()
@@ -82,8 +116,15 @@ class WebBlocksUiReleaseController extends Controller
       ->with('status', 'WebBlocks UI release metadata updated.');
   }
 
-  public function dryRun(WebBlocksUiRelease $release): RedirectResponse
+  public function dryRun(string $release): RedirectResponse
   {
+    if (! $this->schema->isReady()) {
+      return redirect()
+        ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+        ->withErrors(['plugin' => $this->schema->message()]);
+    }
+
+    $release = $this->release($release);
     $run = $this->publisher->dryRun($release->version);
 
     $redirect = redirect()->route('webblocks.plugins.webblocks_ui_manager.releases.show', $release);
@@ -95,8 +136,15 @@ class WebBlocksUiReleaseController extends Controller
     return $redirect->with('status', $run->message);
   }
 
-  public function publish(WebBlocksUiRelease $release): RedirectResponse
+  public function publish(string $release): RedirectResponse
   {
+    if (! $this->schema->isReady()) {
+      return redirect()
+        ->route('webblocks.plugins.webblocks_ui_manager.releases.index')
+        ->withErrors(['plugin' => $this->schema->message()]);
+    }
+
+    $release = $this->release($release);
     $run = $this->publisher->publish($release->version);
 
     $redirect = redirect()->route('webblocks.plugins.webblocks_ui_manager.releases.show', $release);
@@ -124,5 +172,18 @@ class WebBlocksUiReleaseController extends Controller
   private function view(string $name): string
   {
     return WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::plugins.webblocks-ui-manager.releases.'.$name;
+  }
+
+  private function setupRequiredView(): View
+  {
+    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.setup-required', $this->viewData('WebBlocks UI Manager Setup Required', [
+      'message' => $this->schema->message(),
+      'pluginDetailUrl' => route('admin.system.plugins.show', 'webblocks-ui-manager'),
+    ]));
+  }
+
+  private function release(string $release): WebBlocksUiRelease
+  {
+    return WebBlocksUiRelease::query()->findOrFail($release);
   }
 }

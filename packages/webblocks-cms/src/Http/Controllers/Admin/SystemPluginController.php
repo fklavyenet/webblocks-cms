@@ -10,7 +10,9 @@ use Illuminate\View\View;
 use RuntimeException;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
+use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
@@ -27,6 +29,7 @@ class SystemPluginController extends Controller
     private readonly SystemSettings $systemSettings,
     private readonly PluginZipInstaller $installer,
     private readonly InstalledPluginRepository $installedPlugins,
+    private readonly PluginMigrationRunner $migrationRunner,
   ) {}
 
   public function index(): View
@@ -122,6 +125,45 @@ class SystemPluginController extends Controller
       ->with('status', 'Plugin disabled. Routes, commands, menus, settings, health checks, and contributions are inactive.');
   }
 
+  public function setup(string $plugin): RedirectResponse
+  {
+    abort_unless(request()->user()?->isSuperAdmin(), 403);
+
+    $definition = $this->plugins->get($plugin);
+
+    abort_if($definition === null || $definition->installPathValue() === null, 404);
+
+    if (! $this->plugins->isConfiguredEnabled($plugin)) {
+      return back()->withErrors(['plugin' => 'Enable this plugin before running setup.']);
+    }
+
+    $version = $definition->versionText();
+
+    abort_if($version === null, 422);
+
+    try {
+      $result = $this->migrationRunner->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
+      $this->installedPlugins->recordSetupResult($plugin, $version, [
+        'status' => 'completed',
+        'message' => $result['message'],
+        'paths_count' => count($result['paths']),
+      ]);
+    } catch (RuntimeException $exception) {
+      $this->installedPlugins->recordSetupResult($plugin, $version, [
+        'status' => 'failed',
+        'message' => $exception->getMessage(),
+      ]);
+
+      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    }
+
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.show', $plugin)
+      ->with('status', $result['message']);
+  }
+
   public function uninstall(string $plugin): RedirectResponse
   {
     abort_unless(request()->user()?->isSuperAdmin(), 403);
@@ -197,13 +239,6 @@ class SystemPluginController extends Controller
     $compatible = (bool) $summary['compatible'];
     $enabled = (bool) $summary['enabled'];
     $lifecycleStatus = (string) $summary['lifecycle_status'];
-    $lifecycleLabel = match (true) {
-      ! $filesAvailable => 'Missing files',
-      ! $compatible => 'Incompatible',
-      $enabled => 'Enabled',
-      $manual => 'Disabled',
-      default => ucfirst($lifecycleStatus),
-    };
     $health = $this->health->healthArrayFor($definition);
 
     if (! $enabled && $compatible && $filesAvailable) {
@@ -213,6 +248,16 @@ class SystemPluginController extends Controller
       ];
     }
 
+    $setupRequired = $enabled && ($health['status'] ?? null) === 'warning' && str_contains((string) ($health['message'] ?? ''), 'Setup required');
+    $lifecycleLabel = match (true) {
+      ! $filesAvailable => 'Missing files',
+      ! $compatible => 'Incompatible',
+      $setupRequired => 'Setup required',
+      $enabled => 'Enabled',
+      $manual => 'Disabled',
+      default => ucfirst($lifecycleStatus),
+    };
+
     return array_merge($summary, [
       'health' => $health,
       'lifecycle_label' => $lifecycleLabel,
@@ -221,9 +266,18 @@ class SystemPluginController extends Controller
       'can_enable' => $manual && ! $enabled && $compatible && $filesAvailable,
       'can_disable' => $manual && $enabled,
       'can_uninstall' => $manual,
+      'can_setup' => $manual && $enabled && $compatible && $filesAvailable && count($definition->migrationPaths()) > 0,
+      'setup_required' => $setupRequired,
       'settings' => $settings?->toArray(),
       'settings_route' => $settingsRoute,
       'settings_url' => $settingsRoute !== null && Route::has($settingsRoute) ? route($settingsRoute) : null,
     ]);
+  }
+
+  private function setupRequired(PluginDefinition $definition): bool
+  {
+    $health = $this->health->healthArrayFor($definition);
+
+    return ($health['status'] ?? null) === 'warning' && str_contains((string) ($health['message'] ?? ''), 'Setup required');
   }
 }

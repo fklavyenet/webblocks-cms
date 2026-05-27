@@ -112,8 +112,8 @@
                                             <div class="wb-text-sm wb-text-muted">{{ $plugin['health']['message'] }}</div>
                                         @endif
                                     </td>
-                                    <td>
-                                        <div class="wb-actions" aria-label="Plugin actions for {{ $plugin['label'] }}">
+                                    <td class="wb-table-actions wb-whitespace-nowrap">
+                                        <div class="wb-action-group wb-whitespace-nowrap" aria-label="Plugin actions for {{ $plugin['label'] }}">
                                             <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" title="View details" aria-label="View details">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>

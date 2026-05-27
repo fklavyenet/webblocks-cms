@@ -38,6 +38,7 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginPublicAssetRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -115,6 +116,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/system/plugins/index.blade.php',
     'admin/system/plugins/settings.blade.php',
     'admin/system/plugins/show.blade.php',
+    'admin/system/plugins/setup-required.blade.php',
     'components/admin/form-actions.blade.php',
     'diagnostics/package-status.blade.php',
     'layouts/admin.blade.php',
@@ -280,6 +282,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/system/plugins/index.blade.php',
     'admin/system/plugins/settings.blade.php',
     'admin/system/plugins/show.blade.php',
+    'admin/system/plugins/setup-required.blade.php',
     'admin/system/search.blade.php',
     'admin/system/settings.blade.php',
   ];
@@ -820,6 +823,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->app->singleton(InstalledPluginRepository::class, fn (): InstalledPluginRepository => new InstalledPluginRepository);
     $this->app->singleton(InstalledPluginDefinitionFactory::class, fn (): InstalledPluginDefinitionFactory => new InstalledPluginDefinitionFactory);
+    $this->app->singleton(PluginMigrationRunner::class, fn (): PluginMigrationRunner => new PluginMigrationRunner);
 
     $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
       $enabled = config('webblocks-plugins.enabled', []);

@@ -90,10 +90,33 @@ class InstalledPluginRepository
     $directory = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
     File::ensureDirectoryExists($directory);
 
-    file_put_contents($directory.DIRECTORY_SEPARATOR.'enabled.json', json_encode([
+    $path = $directory.DIRECTORY_SEPARATOR.'enabled.json';
+    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+    $state = is_array($state) ? $state : [];
+
+    file_put_contents($path, json_encode(array_merge($state, [
       'version' => $version,
-      'enabled_at' => now()->toIso8601String(),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+      'enabled_at' => $state['enabled_at'] ?? now()->toIso8601String(),
+    ]), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+  }
+
+  /**
+   * @param  array<string, mixed>  $result
+   */
+  public function recordSetupResult(string $handle, string $version, array $result): void
+  {
+    $this->assertValidCoordinates($handle, $version);
+
+    $path = $this->rootPath().DIRECTORY_SEPARATOR.$handle.DIRECTORY_SEPARATOR.'enabled.json';
+    $state = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+    $state = is_array($state) ? $state : [];
+
+    file_put_contents($path, json_encode(array_merge($state, [
+      'version' => $version,
+      'setup' => array_merge($result, [
+        'ran_at' => now()->toIso8601String(),
+      ]),
+    ]), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
   }
 
   public function disable(string $handle): void

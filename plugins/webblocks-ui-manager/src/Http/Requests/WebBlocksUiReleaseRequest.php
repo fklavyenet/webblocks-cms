@@ -5,12 +5,13 @@ namespace WebBlocks\Cms\Plugins\WebBlocksUiManager\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Support\WebBlocksUiManagerSchema;
 
 class WebBlocksUiReleaseRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    return (bool) $this->user()?->can('webblocks-ui-manager.manage');
+    return (bool) $this->user()?->can('access-system');
   }
 
   /**
@@ -19,16 +20,20 @@ class WebBlocksUiReleaseRequest extends FormRequest
   public function rules(): array
   {
     $release = $this->route('release');
-    $releaseId = $release instanceof WebBlocksUiRelease ? $release->id : null;
+    $releaseId = $release instanceof WebBlocksUiRelease ? $release->id : (is_numeric($release) ? (int) $release : null);
+    $versionRules = [
+      'required',
+      'string',
+      'max:50',
+      'regex:/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/',
+    ];
+
+    if (app(WebBlocksUiManagerSchema::class)->isReady()) {
+      $versionRules[] = Rule::unique('webblocks_ui_manager_releases', 'version')->ignore($releaseId);
+    }
 
     return [
-      'version' => [
-        'required',
-        'string',
-        'max:50',
-        'regex:/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/',
-        Rule::unique('webblocks_ui_manager_releases', 'version')->ignore($releaseId),
-      ],
+      'version' => $versionRules,
       'label' => ['nullable', 'string', 'max:255'],
       'status' => ['required', Rule::in([
         WebBlocksUiRelease::STATUS_DRAFT,

@@ -68,9 +68,11 @@ php plugins/webblocks-ui-manager/build-plugin.php
 
 Upload the generated ZIP through `System -> Plugins` as a super admin, review the installed plugin detail, then explicitly enable it. Uploaded plugins install disabled by default. Disabled or incompatible installs remain inert, and health is not checked while disabled.
 
+If the plugin declares migrations, enablement does not imply setup is complete. The plugin detail screen shows `Setup required` / `Plugin migrations pending` when plugin-owned tables are missing. Use the super-admin `Run Plugin Migrations` action from the plugin detail screen to run only migrations declared by that installed plugin and only from the plugin install path. The action is idempotent, records a setup result in the plugin enabled-state file, and reports secret-free errors. Enabled plugin routes that are visible before setup must render controlled setup guidance instead of raw database errors.
+
 If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, this patch does not drop them automatically. Manual plugin uninstall also preserves plugin-owned tables. Leave them in place unless an operator has confirmed the plugin is not needed and performs a separate manual database cleanup with a backup.
 
-When manually installed and enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
+When manually installed, enabled, and set up, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. If `webblocks_ui_manager_releases`, `webblocks_ui_manager_artifacts`, or `webblocks_ui_manager_publish_runs` is missing, the Releases screen shows setup-required guidance and links back to plugin setup instead of querying missing tables. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
 ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js

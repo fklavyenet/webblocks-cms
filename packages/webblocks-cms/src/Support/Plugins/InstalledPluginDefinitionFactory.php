@@ -24,7 +24,8 @@ class InstalledPluginDefinitionFactory
 
       return $definition
         ->source('manual upload')
-        ->installPath($path);
+        ->installPath($path)
+        ->migrations($this->migrationPaths($manifest));
     }
 
     $definition = PluginDefinition::make((string) $manifest['handle'])
@@ -59,6 +60,7 @@ class InstalledPluginDefinitionFactory
     }
 
     $definition->permissions($permissions);
+    $definition->migrations($this->migrationPaths($manifest));
 
     if ($enabled) {
       $routes = $manifest['routes']['admin'] ?? null;
@@ -78,6 +80,15 @@ class InstalledPluginDefinitionFactory
     }
 
     return $definition;
+  }
+
+  /**
+   * @param  array<string, mixed>  $manifest
+   * @return array<int, string>
+   */
+  private function migrationPaths(array $manifest): array
+  {
+    return array_values(array_filter($manifest['migrations'] ?? [], fn (mixed $path): bool => is_string($path) && trim($path) !== ''));
   }
 
   private function loadPluginSource(string $path, string $provider): void

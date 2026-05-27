@@ -30,6 +30,9 @@ class PluginDefinition
   /** @var array<int, class-string> */
   private array $commands = [];
 
+  /** @var array<int, string> */
+  private array $migrations = [];
+
   /** @var callable|string|null */
   private mixed $healthReporter = null;
 
@@ -411,6 +414,27 @@ class PluginDefinition
     return $this->commands;
   }
 
+  /**
+   * @param  array<int, string>  $paths
+   */
+  public function migrations(array $paths): self
+  {
+    $this->migrations = array_values(array_filter(array_map(
+      fn (string $path): string => trim($path),
+      $paths
+    )));
+
+    return $this;
+  }
+
+  /**
+   * @return array<int, string>
+   */
+  public function migrationPaths(): array
+  {
+    return $this->migrations;
+  }
+
   public function health(callable|string|null $reporter): self
   {
     if (is_string($reporter) && trim($reporter) === '') {
@@ -643,6 +667,7 @@ class PluginDefinition
       'permissions_count' => count($this->permissions),
       'admin_routes_count' => count($this->adminRoutes),
       'commands_count' => count($this->commands),
+      'migrations_count' => count($this->migrations),
       'dashboard_widgets_count' => count($this->dashboardWidgets),
       'system_cards_count' => count($this->systemCards),
       'block_types_count' => count($this->blockTypes),

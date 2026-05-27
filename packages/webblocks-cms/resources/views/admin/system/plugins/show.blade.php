@@ -57,6 +57,8 @@
                     <span class="wb-status {{ $statusClass }}">{{ $plugin['lifecycle_label'] }}</span>
                     @if (! $plugin['compatible'])
                         <div class="wb-text-sm wb-text-muted">{{ $plugin['incompatibility_message'] }}</div>
+                    @elseif ($plugin['setup_required'])
+                        <div class="wb-text-sm wb-text-muted">Setup required. Plugin migrations pending before operational routes are fully usable.</div>
                     @elseif (! $plugin['enabled'])
                         <div class="wb-text-sm wb-text-muted">This plugin is installed but disabled. Enable it to register its routes, commands, menus, settings, health checks, and contributions.</div>
                     @endif
@@ -79,6 +81,16 @@
                             <button type="submit" class="wb-btn wb-btn-secondary">
                                 <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
                                 Disable Plugin
+                            </button>
+                        </form>
+                    @endif
+
+                    @if ($plugin['can_setup'])
+                        <form method="POST" action="{{ route('admin.system.plugins.setup', $plugin['handle']) }}">
+                            @csrf
+                            <button type="submit" class="wb-btn {{ $plugin['setup_required'] ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                                <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
+                                Run Plugin Migrations
                             </button>
                         </form>
                     @endif
@@ -173,9 +185,6 @@
         <div class="wb-card">
             <div class="wb-card-header">
                 <strong>Settings</strong>
-                @if ($plugin['settings_url'])
-                    <a class="wb-button wb-button-secondary wb-button-small" href="{{ $plugin['settings_url'] }}">Open Settings</a>
-                @endif
             </div>
 
             <div class="wb-card-body">
@@ -189,6 +198,14 @@
                     </div>
                 @endif
             </div>
+            @if ($plugin['settings_url'])
+                <div class="wb-card-footer">
+                    <a class="wb-btn wb-btn-secondary" href="{{ $plugin['settings_url'] }}">
+                        <i class="wb-icon wb-icon-settings" aria-hidden="true"></i>
+                        Open Settings
+                    </a>
+                </div>
+            @endif
         </div>
 
         <div class="wb-card">
@@ -215,6 +232,8 @@
                 <div class="wb-alert wb-alert-danger">
                     Database cleanup is not automatic. Plugin-owned tables are preserved unless a future explicit cleanup tool is added.
                 </div>
+            </div>
+            <div class="wb-card-footer">
                 <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#{{ $uninstallModalId }}">
                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                     Uninstall Plugin

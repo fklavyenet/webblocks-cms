@@ -33,6 +33,7 @@
 - Reusable product/domain extensions belong in plugins with documented package conventions: kebab-case handles, handle-prefixed permissions and commands, `/webadmin/plugins/{plugin-handle}` admin routes, plugin-owned settings namespaces, plugin-owned table prefixes, compatibility metadata, and inert disabled/incompatible behavior.
 - WebBlocks UI Manager CDN publish behavior is first-party plugin-owned. Do not move release/CDN validation, manifest writing, artifact publishing, or publish run history into generic CMS core.
 - WebBlocks UI Manager must not be bundled or registered as a default CMS runtime plugin. Keep it in `plugins/webblocks-ui-manager` as a manually installed operator plugin artifact.
+- Manual plugin setup/migrations are explicit after enable. Enabled plugin-owned routes must guard schema readiness and show controlled setup-required guidance instead of raw database errors when plugin-owned tables are missing.
 - Manual plugin uninstall must be disabled-first, limited to manually uploaded plugins, restricted to the configured plugin install root, and must preserve plugin-owned database tables unless a future explicit cleanup tool is intentionally added.
 - Keep WebBlocks UI source changes in the WebBlocks UI project, not inside CMS.
 - CMS may consume pinned WebBlocks UI assets, but should not edit UI package source.

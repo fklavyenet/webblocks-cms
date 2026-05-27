@@ -585,6 +585,15 @@
     margin: 0;
 }
 
+.wb-table-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.wb-table-actions .wb-action-group {
+    justify-content: flex-end;
+}
+
 .wb-media-preview-box {
     width: 88px;
     height: 64px;

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.32.70
+
+- Fix manual plugin setup lifecycle handling so enabled plugins with missing plugin-owned tables report setup-required/migrations-pending health, expose a super-admin `Run Plugin Migrations` action scoped to the installed plugin package path, record setup results in plugin enabled state, and avoid raw database errors on plugin-owned admin routes.
+- Harden WebBlocks UI Manager release screens with schema readiness checks and a controlled setup-required page when `webblocks_ui_manager_*` tables are missing, while normal release listing/detail/publish behavior resumes after plugin setup completes.
+- Polish `System -> Plugins` action layouts with horizontal table action groups, a normal-width Danger Zone uninstall action, and a clearer Settings card `Open Settings` button.
+
 ## 1.32.69
 
 - Polish `System -> Plugins` into a calmer manual plugin management screen with concise list columns, icon actions, clearer installed/disabled/enabled/incompatible/missing-files lifecycle language, inactive health messaging for disabled plugins, and readable plugin detail cards for overview, lifecycle, capabilities, settings, health, technical details, and danger-zone actions.

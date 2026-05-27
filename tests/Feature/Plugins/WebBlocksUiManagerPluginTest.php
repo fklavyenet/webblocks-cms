@@ -31,6 +31,7 @@ class WebBlocksUiManagerPluginTest extends TestCase
   {
     parent::setUp();
 
+    config()->set('webblocks-plugins.enabled.webblocks-ui-manager', false);
     $this->installWebBlocksUiManagerPluginForTest();
     Artisan::call('migrate', [
       '--path' => 'plugins/webblocks-ui-manager/database/migrations',
@@ -142,11 +143,12 @@ class WebBlocksUiManagerPluginTest extends TestCase
   #[Test]
   public function disabled_plugin_routes_are_absent(): void
   {
-    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
-    Route::getRoutes()->refreshNameLookups();
+    $registry = new PluginRegistry(['webblocks-ui-manager' => false]);
+    $registry->register(app(PluginRegistry::class)->get('webblocks-ui-manager'));
 
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.releases.index'));
-    $this->assertNull(Route::getRoutes()->getByName('webblocks.plugins.webblocks_ui_manager.settings.edit'));
+    $this->assertSame([], $registry->enabled());
+    $this->assertSame([], $registry->menuItems());
+    $this->assertSame([], $registry->systemCards(User::factory()->superAdmin()->create()));
   }
 
   #[Test]

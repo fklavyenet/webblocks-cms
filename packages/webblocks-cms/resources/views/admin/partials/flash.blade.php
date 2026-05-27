@@ -1,3 +1,5 @@
+@php($flashErrors = $errors ?? new \Illuminate\Support\ViewErrorBag)
+
 @if (session('status'))
     <div class="wb-alert wb-alert-success">
         <div>
@@ -14,65 +16,65 @@
     </div>
 @endif
 
-@if ($errors->has('system_update'))
+@if ($flashErrors->has('system_update'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Update Failed</div>
-            <div>{{ $errors->first('system_update') }}</div>
+            <div>{{ $flashErrors->first('system_update') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->has('system_backup'))
+@if ($flashErrors->has('system_backup'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Backup Failed</div>
-            <div>{{ $errors->first('system_backup') }}</div>
+            <div>{{ $flashErrors->first('system_backup') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->has('site_delete'))
+@if ($flashErrors->has('site_delete'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Delete Failed</div>
-            <div>{{ $errors->first('site_delete') }}</div>
+            <div>{{ $flashErrors->first('site_delete') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->has('locale_lifecycle'))
+@if ($flashErrors->has('locale_lifecycle'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Locale Action Blocked</div>
-            <div>{{ $errors->first('locale_lifecycle') }}</div>
+            <div>{{ $flashErrors->first('locale_lifecycle') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->has('user_lifecycle'))
+@if ($flashErrors->has('user_lifecycle'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">User Action Blocked</div>
-            <div>{{ $errors->first('user_lifecycle') }}</div>
+            <div>{{ $flashErrors->first('user_lifecycle') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->has('system_restore'))
+@if ($flashErrors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Restore Failed</div>
-            <div>{{ $errors->first('system_restore') }}</div>
+            <div>{{ $flashErrors->first('system_restore') }}</div>
         </div>
     </div>
 @endif
 
-@if ($errors->any() && ! $errors->has('system_update') && ! $errors->has('system_backup') && ! $errors->has('site_delete') && ! $errors->has('locale_lifecycle') && ! $errors->has('user_lifecycle') && ! $errors->has('system_restore'))
+@if ($flashErrors->any() && ! $flashErrors->has('system_update') && ! $flashErrors->has('system_backup') && ! $flashErrors->has('site_delete') && ! $flashErrors->has('locale_lifecycle') && ! $flashErrors->has('user_lifecycle') && ! $flashErrors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">Validation Error</div>
-            <div>{{ $errors->getBag('default')->first() }}</div>
+            <div>{{ $flashErrors->getBag('default')->first() }}</div>
         </div>
     </div>
 @endif

@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Plugins\WebBlocksUiManager\Support;
 
-use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthResult;
@@ -11,12 +10,13 @@ class WebBlocksUiManagerHealth
 {
   public function __construct(
     private readonly WebBlocksUiManagerPaths $paths,
+    private readonly WebBlocksUiManagerSchema $schema,
   ) {}
 
   public function health(PluginDefinition $plugin): PluginHealthResult
   {
-    if (! Schema::hasTable('webblocks_ui_manager_releases') || ! Schema::hasTable('webblocks_ui_manager_artifacts') || ! Schema::hasTable('webblocks_ui_manager_publish_runs')) {
-      return PluginHealthResult::warning('Plugin release tables are not available. Run the latest migrations before using WebBlocks UI Manager.');
+    if (! $this->schema->isReady()) {
+      return PluginHealthResult::warning($this->schema->message());
     }
 
     $basePath = $this->paths->defaultCdnBasePath();
