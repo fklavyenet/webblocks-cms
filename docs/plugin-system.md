@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, and external production WebBlocks UI CDN deployment automation remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin with safe local CDN dry-run/apply publishing. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, automatic external production WebBlocks UI CDN deployment, and generic update-server publishing remain future work.
 
 ## Core Decision
 
@@ -421,7 +421,7 @@ The implemented Phase 1 through Phase 5 runtime target is intentionally smaller 
 - typed read-only dashboard and system card extension slots
 - plugin-owned block and block pack declaration hooks
 - public head and body-end asset contribution hooks
-- first-party WebBlocks UI Manager pilot plugin with release metadata and safe local manifest preparation
+- first-party WebBlocks UI Manager pilot plugin with release metadata, safe local manifest preparation, and controlled local CDN dry-run/apply publishing
 - plugin version and required CMS compatibility metadata
 - incompatible-plugin active-state and health reporting
 - package convention and collision guards
@@ -507,7 +507,7 @@ The Phase 5 runtime now includes packaging and ecosystem readiness foundations:
 - focused tests for compatibility metadata, incompatible behavior, command and prefix collisions, disabled/incompatible inertness, WebBlocks UI Manager regression, package boundaries, and route ownership
 - documentation for package conventions, local discovery, minimal plugin creation, schema upgrade strategy, and release compatibility policy
 
-Phase 5 intentionally does not add marketplace/catalog UI, arbitrary remote package installation, dynamic remote Composer discovery, generic third-party plugin migration runners, external production CDN deployment automation, update-server publishing, public plugin routes, or a version bump.
+Phase 5 intentionally does not add marketplace/catalog UI, arbitrary remote package installation, dynamic remote Composer discovery, generic third-party plugin migration runners, automatic external production CDN deployment, generic update-server publishing, or public plugin routes.
 
 ## Testing And Release Guardrails
 

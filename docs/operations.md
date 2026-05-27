@@ -65,7 +65,7 @@ WebBlocks UI Manager is the first first-party pilot plugin for product-specific 
 When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
-ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-ui.js
+ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js
 ```
 
 The command records release metadata, computes SHA-256 checksums, and prepares manifest metadata for the first-party static convention `public/cdn/webblocks-ui/{version}/...`. The expected dist files are configured by `webblocks-plugins.webblocks_ui_manager.expected_dist_files` and default to `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js`.

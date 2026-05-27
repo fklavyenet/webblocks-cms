@@ -101,10 +101,10 @@ Recommended sequence:
 3. update `README.md` for any meaningful behavior, setup, route, usage, admin, command, or release-note change
 4. update `CHANGELOG.md`
 5. update `App\Support\WebBlocks::VERSION`
-7. create and push the real git tag
-8. allow GitHub Actions to generate release notes, build the release package, and publish the release after the tag is pushed
-9. verify the published release is visible to the update infrastructure
-10. only after the release is real, synchronize the dev environment installed version if needed
+6. create and push the real git tag
+7. allow GitHub Actions to generate release notes, build the release package, and publish the release after the tag is pushed
+8. verify the published release is visible to the update infrastructure when update-server publishing is configured and available
+9. only after the release is real, synchronize the dev environment installed version if needed
 
 GitHub Actions owns release note generation and release package creation. There are no local release helper scripts.
 

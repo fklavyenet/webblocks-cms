@@ -9,7 +9,7 @@ This roadmap captures planned architecture and implementation direction. It does
 - Add `docs/plugin-system.md` as the canonical plugin architecture document.
 - Record the `CMS Plugin Host Architecture` decision in `ARCHITECTURE_DECISIONS.md`.
 - Define plugin boundary rules for core vs plugin ownership.
-- Document the WebBlocks UI Manager pilot plugin scope without adding runtime code.
+- Document the WebBlocks UI Manager pilot plugin scope before runtime rollout.
 - Mark the plugin system as planned architecture in documentation indexes.
 
 ### Phase 1 - Minimal Core Plugin Registry
@@ -58,4 +58,4 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: harden collision guards for plugin database prefixes and resolvable command names while preserving existing guards for handles, permissions, extension slots, widgets, blocks, assets, and table/prefix conventions.
 - Done: add package boundary and route guard coverage proving first-party plugin code stays plugin-owned, disabled and incompatible plugins remain inert, `/webadmin` remains canonical, `/cms` remains static-only from Laravel's route perspective, and `/admin` remains absent.
 - Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, external production CDN deployment, or update-server behavior.
-- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, and external production CDN deployment automation.
+- Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, automatic external production CDN deployment, and generic update-server publishing.
