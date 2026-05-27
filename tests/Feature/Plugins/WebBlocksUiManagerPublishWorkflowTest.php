@@ -4,6 +4,7 @@ namespace Tests\Feature\Plugins;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,21 @@ use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 class WebBlocksUiManagerPublishWorkflowTest extends TestCase
 {
   use RefreshDatabase;
+
+  protected function setUp(): void
+  {
+    parent::setUp();
+
+    $this->installWebBlocksUiManagerPluginForTest();
+    Artisan::call('migrate', [
+      '--path' => 'plugins/webblocks-ui-manager/database/migrations',
+      '--realpath' => false,
+    ]);
+    Artisan::call('migrate', [
+      '--path' => 'plugins/webblocks-ui-manager/database/migrations/updates',
+      '--realpath' => false,
+    ]);
+  }
 
   protected function tearDown(): void
   {
@@ -243,6 +259,10 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
   #[Test]
   public function package_boundary_uses_package_publish_classes_and_views(): void
   {
+    config()->set('webblocks-plugins.enabled.webblocks-ui-manager', true);
+    $this->app->forgetInstance(PluginRegistry::class);
+    app(PluginRegistry::class);
+
     $this->assertTrue(class_exists(PublishWebBlocksUiReleaseCommand::class));
     $this->assertTrue(class_exists(WebBlocksUiReleasePublisher::class));
     $this->assertTrue(view()->exists('webblocks-cms::plugins.webblocks-ui-manager.releases.show'));
@@ -267,5 +287,16 @@ class WebBlocksUiManagerPublishWorkflowTest extends TestCase
     foreach (['view', 'manage', 'publish'] as $permission) {
       Gate::define('webblocks-ui-manager.'.$permission, fn (User $user): bool => $user->isSuperAdmin());
     }
+  }
+
+  private function installWebBlocksUiManagerPluginForTest(): void
+  {
+    $root = storage_path('framework/testing/plugins/'.str()->uuid());
+    config()->set('webblocks-plugins.install.root', $root);
+
+    File::ensureDirectoryExists($root.'/webblocks-ui-manager/0.1.0');
+    File::copyDirectory(base_path('plugins/webblocks-ui-manager'), $root.'/webblocks-ui-manager/0.1.0');
+
+    $this->app->forgetInstance(PluginRegistry::class);
   }
 }

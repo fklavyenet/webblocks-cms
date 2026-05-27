@@ -14,6 +14,10 @@ class PluginDefinition
 
   private ?string $requiredCmsVersion = null;
 
+  private string $source = 'core';
+
+  private ?string $installPath = null;
+
   private ?PluginSettingsDefinition $settings = null;
 
   private ?string $settingsNamespace = null;
@@ -206,6 +210,32 @@ class PluginDefinition
   public function requiredCmsVersion(): ?string
   {
     return $this->requiredCmsVersion;
+  }
+
+  public function source(string $source): self
+  {
+    $source = trim($source);
+    $this->source = $source !== '' ? $source : 'core';
+
+    return $this;
+  }
+
+  public function sourceText(): string
+  {
+    return $this->source;
+  }
+
+  public function installPath(?string $path): self
+  {
+    $path = is_string($path) ? trim($path) : null;
+    $this->installPath = $path !== '' ? $path : null;
+
+    return $this;
+  }
+
+  public function installPathValue(): ?string
+  {
+    return $this->installPath;
   }
 
   public function settingsNamespace(?string $namespace): self
@@ -602,6 +632,8 @@ class PluginDefinition
       'provider' => $this->providerClass,
       'description' => $this->description,
       'required_cms_version' => $this->requiredCmsVersion,
+      'source' => $this->source,
+      'install_path' => $this->installPath,
       'settings_namespace' => $this->settingsNamespaceValue(),
       'database_prefix' => $this->databasePrefixValue(),
       'route_name_prefix' => $this->routeNamePrefix(),

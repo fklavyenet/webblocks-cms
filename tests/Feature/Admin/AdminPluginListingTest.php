@@ -4,18 +4,27 @@ namespace Tests\Feature\Admin;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use ZipArchive;
 
 class AdminPluginListingTest extends TestCase
 {
   use RefreshDatabase;
 
+  protected function setUp(): void
+  {
+    parent::setUp();
+
+    config()->set('webblocks-plugins.install.root', storage_path('framework/testing/plugins/'.str()->uuid()));
+  }
+
   #[Test]
-  public function super_admin_can_view_discoverable_pilot_plugin_listing(): void
+  public function super_admin_can_view_empty_plugin_host_listing_and_upload_action(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -23,8 +32,9 @@ class AdminPluginListingTest extends TestCase
 
     $response->assertOk();
     $response->assertSeeText('Plugins');
-    $response->assertSeeText('WebBlocks UI Manager');
-    $response->assertSeeText('Disabled');
+    $response->assertSeeText('Manual Plugin Install');
+    $response->assertSeeText('No plugins registered yet.');
+    $response->assertDontSeeText('WebBlocks UI Manager');
   }
 
   #[Test]
@@ -38,9 +48,15 @@ class AdminPluginListingTest extends TestCase
   }
 
   #[Test]
-  public function registered_disabled_plugin_appears_with_disabled_status(): void
+  public function uploaded_plugin_appears_disabled_with_manual_source(): void
   {
     $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.upload'), [
+        'plugin_zip' => $this->webBlocksUiManagerZip(),
+      ])
+      ->assertRedirect(route('admin.system.plugins.index'));
 
     $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
 
@@ -49,16 +65,24 @@ class AdminPluginListingTest extends TestCase
     $response->assertSeeText('webblocks-ui-manager');
     $response->assertSeeText('0.1.0');
     $response->assertSeeText('Disabled');
-    $response->assertSeeText('2');
+    $response->assertSeeText('manual upload');
     $response->assertSeeText('1');
   }
 
   #[Test]
-  public function registered_enabled_plugin_appears_with_enabled_status(): void
+  public function uploaded_plugin_can_be_explicitly_enabled(): void
   {
-    config()->set('webblocks-plugins.enabled.webblocks-ui-manager', true);
-
     $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.upload'), [
+        'plugin_zip' => $this->webBlocksUiManagerZip(),
+      ])
+      ->assertRedirect(route('admin.system.plugins.index'));
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
 
     $response = $this->actingAs($user)->get(route('admin.system.plugins.index'));
 
@@ -103,5 +127,27 @@ class AdminPluginListingTest extends TestCase
     $editorResponse = $this->followingRedirects()->actingAs($editor)->get(route('admin.pages.index'));
     $editorResponse->assertOk();
     $editorResponse->assertDontSee('href="'.route('admin.system.plugins.index').'"', false);
+  }
+
+  private function webBlocksUiManagerZip(): UploadedFile
+  {
+    $zipPath = storage_path('framework/testing/webblocks-ui-manager-'.str()->uuid().'.zip');
+    $zip = new ZipArchive;
+    $source = base_path('plugins/webblocks-ui-manager');
+
+    $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+    foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS)) as $file) {
+      if (! $file->isFile()) {
+        continue;
+      }
+
+      $relative = str_replace($source.DIRECTORY_SEPARATOR, '', $file->getPathname());
+      $zip->addFile($file->getPathname(), str_replace(DIRECTORY_SEPARATOR, '/', $relative));
+    }
+
+    $zip->close();
+
+    return new UploadedFile($zipPath, 'webblocks-ui-manager.zip', 'application/zip', null, true);
   }
 }

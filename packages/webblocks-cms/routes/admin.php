@@ -193,6 +193,8 @@ Route::middleware(['web', 'install.required', 'auth', 'admin.access'])
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
       Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
+      Route::post('system/plugins/upload', [SystemPluginController::class, 'upload'])->name('system.plugins.upload');
+      Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');
       Route::get('system/plugins/{plugin}', [SystemPluginController::class, 'show'])->name('system.plugins.show');
       Route::get('system/search', [SystemSearchController::class, 'index'])->name('system.search.index');
       Route::post('system/search/rebuild', [SystemSearchController::class, 'rebuild'])->name('system.search.rebuild');

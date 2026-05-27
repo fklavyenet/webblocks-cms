@@ -2,13 +2,18 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
+use RuntimeException;
+use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -20,6 +25,8 @@ class SystemPluginController extends Controller
     private readonly PluginRouteRegistrar $routes,
     private readonly PluginAdminExtensionRegistry $pluginAdminExtensions,
     private readonly SystemSettings $systemSettings,
+    private readonly PluginZipInstaller $installer,
+    private readonly InstalledPluginRepository $installedPlugins,
   ) {}
 
   public function index(): View
@@ -30,6 +37,7 @@ class SystemPluginController extends Controller
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
       'plugins' => $this->pluginSummaries(),
       'pluginSystemCards' => $this->pluginAdminExtensions->systemCards(request()->user()),
+      'canInstallPlugins' => (bool) request()->user()?->isSuperAdmin(),
     ]);
   }
 
@@ -45,6 +53,53 @@ class SystemPluginController extends Controller
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle($definition->labelText()),
       'plugin' => $this->pluginSummary($definition->handle()),
     ]);
+  }
+
+  public function upload(Request $request): RedirectResponse
+  {
+    abort_unless($request->user()?->isSuperAdmin(), 403);
+
+    $request->validate([
+      'plugin_zip' => ['required', 'file', 'mimes:zip', 'max:20480'],
+    ]);
+
+    try {
+      $installed = $this->installer->install($request->file('plugin_zip')->getRealPath());
+    } catch (RuntimeException $exception) {
+      return back()
+        ->withErrors(['plugin_zip' => $exception->getMessage()])
+        ->withInput();
+    }
+
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.index')
+      ->with('status', 'Plugin '.$installed['handle'].' '.$installed['version'].' was installed disabled. Review it before enabling.');
+  }
+
+  public function enable(string $plugin): RedirectResponse
+  {
+    abort_unless(request()->user()?->isSuperAdmin(), 403);
+
+    $definition = $this->plugins->get($plugin);
+
+    abort_if($definition === null || $definition->installPathValue() === null, 404);
+
+    if (! $this->plugins->isCompatible($plugin)) {
+      return back()->withErrors(['plugin' => $this->plugins->incompatibilityMessage($plugin) ?? 'Plugin is not compatible with this CMS version.']);
+    }
+
+    $version = $definition->versionText();
+
+    abort_if($version === null, 422);
+
+    $this->installedPlugins->enable($plugin, $version);
+    app()->forgetInstance(PluginRegistry::class);
+
+    return redirect()
+      ->route('admin.system.plugins.show', $plugin)
+      ->with('status', 'Plugin enabled. Its routes, commands, permissions, and menus will be active on the next request.');
   }
 
   /**

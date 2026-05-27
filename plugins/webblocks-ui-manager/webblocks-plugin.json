@@ -1,0 +1,42 @@
+{
+  "handle": "webblocks-ui-manager",
+  "label": "WebBlocks UI Manager",
+  "description": "Internal operator plugin for WebBlocks UI release metadata and first-party CDN preparation workflows.",
+  "version": "0.1.0",
+  "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\WebBlocksUiManagerPlugin",
+  "required_cms_version": "^1.32",
+  "permissions": [
+    {
+      "name": "webblocks-ui-manager.view",
+      "label": "View WebBlocks UI releases",
+      "description": "View release metadata, artifact manifests, and plugin status."
+    },
+    {
+      "name": "webblocks-ui-manager.manage",
+      "label": "Manage WebBlocks UI release metadata",
+      "description": "Create and edit release metadata before artifact preparation."
+    },
+    {
+      "name": "webblocks-ui-manager.publish",
+      "label": "Prepare WebBlocks UI release artifacts",
+      "description": "Run safe local preparation for release artifacts and manifests."
+    }
+  ],
+  "commands": [
+    "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\Console\\PrepareWebBlocksUiReleaseCommand",
+    "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\Console\\PublishWebBlocksUiReleaseCommand"
+  ],
+  "routes": {
+    "admin": "routes/webblocks-ui-manager.php"
+  },
+  "settings": {
+    "namespace": "webblocks_ui_manager",
+    "label": "WebBlocks UI Manager Settings",
+    "description": "Default CDN path: public/cdn/webblocks-ui/{version}. Configure local artifact paths through the plugin release metadata and dry-run command options."
+  },
+  "migrations": [
+    "database/migrations"
+  ],
+  "assets": [],
+  "health": "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\Support\\WebBlocksUiManagerHealth"
+}

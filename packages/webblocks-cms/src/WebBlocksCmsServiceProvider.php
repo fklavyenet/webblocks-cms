@@ -33,7 +33,8 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
-use WebBlocks\Cms\Plugins\WebBlocksUiManager\WebBlocksUiManagerPlugin;
+use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
+use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginBlockRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginCommandRegistrar;
@@ -817,11 +818,23 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function registerPlugins(): void
   {
+    $this->app->singleton(InstalledPluginRepository::class, fn (): InstalledPluginRepository => new InstalledPluginRepository);
+    $this->app->singleton(InstalledPluginDefinitionFactory::class, fn (): InstalledPluginDefinitionFactory => new InstalledPluginDefinitionFactory);
+
     $this->app->singleton(PluginRegistry::class, function (): PluginRegistry {
       $enabled = config('webblocks-plugins.enabled', []);
+      $registry = new PluginRegistry(is_array($enabled) ? $enabled : [], useLiveConfig: true);
+      $repository = app(InstalledPluginRepository::class);
+      $factory = app(InstalledPluginDefinitionFactory::class);
 
-      return (new PluginRegistry(is_array($enabled) ? $enabled : [], useLiveConfig: true))
-        ->register(WebBlocksUiManagerPlugin::definition());
+      foreach ($repository->installed() as $installed) {
+        $handle = (string) ($installed['manifest']['handle'] ?? '');
+        $enabledByConfig = $handle !== '' && (bool) config("webblocks-plugins.enabled.{$handle}", false);
+
+        $registry->register($factory->make($installed['manifest'], $installed['path'], $installed['enabled'] || $enabledByConfig));
+      }
+
+      return $registry;
     });
 
     $this->app->singleton(PluginPermissionRegistry::class, fn ($app): PluginPermissionRegistry => new PluginPermissionRegistry(

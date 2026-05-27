@@ -46,7 +46,7 @@ This file records binding architecture decisions for WebBlocks CMS. Longer imple
 - Product-specific or domain-specific features belong in plugins instead of CMS core.
 - Plugins use a registry-first contract to add admin menus, routes, permissions, settings, commands, migrations, blocks, assets, dashboard widgets, system cards, and extension-slot contributions.
 - Core view overrides are forbidden by default; plugins must use documented extension slots or registry contracts.
-- The first pilot plugin is WebBlocks UI Manager for WebBlocks UI release records, safe local artifact metadata preparation, checksum/manifest generation, and first-party CDN management foundations.
+- WebBlocks UI Manager is an internal/operator plugin for WebBlocks UI release records, safe local artifact metadata preparation, checksum/manifest generation, and first-party CDN management foundations. It must not be bundled into ordinary CMS runtime packages.
 
 Reason:
 
@@ -56,11 +56,11 @@ Reason:
 
 Consequences:
 
-- CMS core provides the registry, enabled configuration, enabled-only admin route and command registration, settings scaffolding, health/status reporting, typed read-only admin extension slots, plugin-owned block declarations, public asset contribution hooks, and guardrails before deeper plugin lifecycle behavior is added.
+- CMS core provides the registry, manual ZIP upload/install, enabled state, enabled-only admin route and command registration, settings scaffolding, health/status reporting, typed read-only admin extension slots, plugin-owned block declarations, public asset contribution hooks, and guardrails before deeper plugin lifecycle behavior is added.
 - Plugin admin routes default under `/webadmin/plugins/{plugin-handle}/...`, while `/webadmin` remains the canonical CMS admin prefix, `/cms` remains static asset territory, and CMS-owned `/admin` routes must not return.
 - Plugin permissions must be handle-prefixed and visible through CMS role management only as plugin-owned capabilities.
 - Plugin block declarations must use plugin-owned handles such as `plugin-handle::block-handle` and must not replace core block views or monkey patch core block services.
 - Plugin package conventions are enforceable host contracts: handles are kebab-case, settings namespaces and table prefixes are plugin-owned, command names are handle-prefixed, and resolvable collisions fail before active runtime behavior is collected.
 - Disabled or incompatible plugins contribute no active runtime behavior, including dashboard widgets, system cards, block hooks, public assets, menus, permissions, routes, commands, settings routes, or health reporter execution.
 - `System -> Plugins` reports configured enabled state separately from active compatibility. A plugin can be configured enabled yet remain inactive when its required CMS version constraint is not satisfied.
-- WebBlocks UI Manager is implemented as a disabled-by-default pilot plugin, not as a core CMS feature. Its current runtime records release metadata, prepares checksummed manifests, supports safe local dry-run/apply CDN publishing into the configured project-owned static target, and records publish runs. Automatic external production CDN deployment, update-server publishing, marketplace behavior, remote plugin installation, and CMS core asset-consumption URL changes remain separate decisions.
+- WebBlocks UI Manager is not registered, routed, migrated, menu-visible, command-registered, or health-visible in normal CMS installs. It becomes available only when an operator manually uploads its plugin ZIP and explicitly enables it. Existing tables created by v1.32.67 are not dropped automatically.

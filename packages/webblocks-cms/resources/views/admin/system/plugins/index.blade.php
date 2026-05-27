@@ -3,8 +3,31 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Plugins',
-        'description' => 'Review registered WebBlocks CMS plugins and their registry-owned menu and permission contributions.',
+        'description' => 'Review installed WebBlocks CMS plugins and their registry-owned menu and permission contributions.',
     ])
+
+    @if ($canInstallPlugins)
+        <div class="wb-card wb-mb-4">
+            <div class="wb-card-header">
+                <strong>Manual Plugin Install</strong>
+            </div>
+            <div class="wb-card-body">
+                <form method="POST" action="{{ route('admin.system.plugins.upload') }}" enctype="multipart/form-data" class="wb-stack wb-gap-3">
+                    @csrf
+                    <div>
+                        <label for="plugin_zip">Plugin ZIP</label>
+                        <input id="plugin_zip" type="file" name="plugin_zip" accept=".zip,application/zip" required>
+                        @error('plugin_zip')
+                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div>
+                        <button type="submit" class="wb-button wb-button-primary">Upload Plugin ZIP</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 
     @if (! empty($pluginSystemCards))
         <div class="wb-grid wb-grid-2 wb-mb-4">
@@ -48,6 +71,7 @@
                                 <th>Version</th>
                                 <th>Status</th>
                                 <th>Health</th>
+                                <th>Source</th>
                                 <th>Provider</th>
                                 <th>Description</th>
                                 <th>Permissions</th>
@@ -76,6 +100,7 @@
                                             {{ ucfirst($plugin['health']['status']) }}
                                         </span>
                                     </td>
+                                    <td>{{ $plugin['source'] }}</td>
                                     <td>{{ $plugin['provider'] ?? 'Not declared' }}</td>
                                     <td>{{ $plugin['description'] ?? 'No description provided.' }}</td>
                                     <td>{{ $plugin['permissions_count'] }}</td>

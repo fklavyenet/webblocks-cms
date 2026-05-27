@@ -32,6 +32,7 @@
 - Release packages must not include `project/`.
 - Reusable product/domain extensions belong in plugins with documented package conventions: kebab-case handles, handle-prefixed permissions and commands, `/webadmin/plugins/{plugin-handle}` admin routes, plugin-owned settings namespaces, plugin-owned table prefixes, compatibility metadata, and inert disabled/incompatible behavior.
 - WebBlocks UI Manager CDN publish behavior is first-party plugin-owned. Do not move release/CDN validation, manifest writing, artifact publishing, or publish run history into generic CMS core.
+- WebBlocks UI Manager must not be bundled or registered as a default CMS runtime plugin. Keep it in `plugins/webblocks-ui-manager` as a manually installed operator plugin artifact.
 - Keep WebBlocks UI source changes in the WebBlocks UI project, not inside CMS.
 - CMS may consume pinned WebBlocks UI assets, but should not edit UI package source.
 - Do not assume the `/admin` path belongs to CMS.

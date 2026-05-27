@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.68
+
+- Prepare a post-1.32.67 product-boundary hardening patch: WebBlocks CMS core is now a generic plugin host with manual super-admin ZIP upload/install support under `System -> Plugins`, safe package validation, storage-owned plugin installation, disabled-by-default installed plugins, explicit enablement, and no marketplace, remote store, Composer installer, or automatic external plugin download.
+- Extract WebBlocks UI Manager out of the bundled CMS package/runtime into `plugins/webblocks-ui-manager` as an internal/operator plugin source with a local ZIP artifact script. Normal CMS installs no longer register its routes, commands, menus, permissions, settings, health cards, views, migrations, or tables by default; existing tables from v1.32.67 are left untouched for optional manual cleanup.
+
 ## 1.32.67
 
 - Release the completed CMS plugin system foundation: registry-backed definitions, config-backed enabled state, enabled-only routes and commands, settings/detail pages, health/status reporting, typed dashboard and system card extension slots, plugin-owned block declarations, safe public asset hooks, package conventions, compatibility metadata, incompatible-plugin messaging, active-only enforcement, collision guards, package boundary tests, and route guards proving `/webadmin` remains canonical while `/cms` stays static-only and CMS-owned `/admin` routes remain absent.

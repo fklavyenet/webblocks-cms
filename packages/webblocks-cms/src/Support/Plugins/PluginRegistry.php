@@ -87,7 +87,17 @@ class PluginRegistry
   public function isConfiguredEnabled(string $handle): bool
   {
     if ($this->useLiveConfig) {
-      return (bool) config("webblocks-plugins.enabled.{$handle}", false);
+      if ((bool) config("webblocks-plugins.enabled.{$handle}", false)) {
+        return true;
+      }
+
+      $plugin = $this->plugins[$handle] ?? null;
+
+      if ($plugin?->installPathValue() !== null && app()->bound(InstalledPluginRepository::class)) {
+        return app(InstalledPluginRepository::class)->enabledVersion($handle) === $plugin->versionText();
+      }
+
+      return false;
     }
 
     return (bool) ($this->enabledConfig[$handle] ?? false);

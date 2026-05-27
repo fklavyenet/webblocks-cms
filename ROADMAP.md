@@ -40,16 +40,17 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: add collision, ownership, disabled-plugin, attribution, admin rendering, asset collection, block hook, and route guard coverage.
 - Later: editable plugin widgets, public plugin routes, plugin lifecycle storage, marketplace/catalog behavior, and generic plugin migration runners.
 
-### Phase 4 - WebBlocks UI Manager Pilot Plugin
+### Phase 4 - WebBlocks UI Manager Operator Plugin
 
-- Done: add the first-party `webblocks-ui-manager` pilot plugin as package-owned runtime code, disabled by config by default.
+- Done: extract the first-party `webblocks-ui-manager` operator plugin out of bundled CMS runtime and into `plugins/webblocks-ui-manager`.
+- Done: make the plugin available only through manual ZIP upload/install and explicit enablement.
 - Done: add plugin-owned release and artifact tables/models using the `webblocks_ui_manager_` namespace.
 - Done: add a plugin admin releases UI under `/webadmin/plugins/webblocks-ui-manager/...`.
 - Done: add a safe local `webblocks-ui-manager:prepare-release` command foundation that records release metadata, checksums, and manifest data without production CDN deployment.
 - Done: define first-party CDN target conventions such as `public/cdn/webblocks-ui/{version}/...`.
 - Done: add plugin health checks, settings defaults, dashboard widgets, system cards, menu entries, permissions, route guards, and package boundary coverage.
 - Done: add a controlled plugin-owned local CDN publish workflow with dry-run/apply command modes, admin actions, publish run records, checksum/manifest/path validation, and idempotent writes into the configured first-party static target.
-- Later: external production CDN deployment automation, hosted CDN smoke validation against remote targets, generic third-party plugin install/update flows, marketplace/catalog behavior, update-server publishing, and CMS core WebBlocks UI consumption URL changes.
+- Later: external production CDN deployment automation, hosted CDN smoke validation against remote targets, marketplace/catalog behavior, update-server publishing, and CMS core WebBlocks UI consumption URL changes.
 
 ### Phase 5 - Packaging And Ecosystem Readiness
 
@@ -58,4 +59,5 @@ This roadmap captures planned architecture and implementation direction. It does
 - Done: harden collision guards for plugin database prefixes and resolvable command names while preserving existing guards for handles, permissions, extension slots, widgets, blocks, assets, and table/prefix conventions.
 - Done: add package boundary and route guard coverage proving first-party plugin code stays plugin-owned, disabled and incompatible plugins remain inert, `/webadmin` remains canonical, `/cms` remains static-only from Laravel's route perspective, and `/admin` remains absent.
 - Done: document safe local discovery conventions, minimal plugin creation, schema upgrade strategy, and release compatibility policy without adding marketplace, remote installer, arbitrary Composer install, external production CDN deployment, or update-server behavior.
+- Done: add manual plugin ZIP upload/install with archive validation, storage-owned install paths, disabled-by-default installed plugins, explicit enablement, and no marketplace, remote store, arbitrary Composer install, or automatic third-party download.
 - Later: persistent plugin lifecycle storage, generic migration runners, public plugin routes, editable plugin settings, marketplace/catalog UI, remote package install/update flows, automatic external production CDN deployment, and generic update-server publishing.

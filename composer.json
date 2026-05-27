@@ -27,6 +27,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\": "plugins/webblocks-ui-manager/src/",
             "WebBlocks\\Cms\\": "packages/webblocks-cms/src/",
             "WebBlocks\\Cms\\Database\\Seeders\\": "packages/webblocks-cms/database/seeders/",
             "Database\\Factories\\": "database/factories/",

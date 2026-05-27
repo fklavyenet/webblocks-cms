@@ -8,6 +8,13 @@
 
     <p><a href="{{ route('admin.system.plugins.index') }}">Back to Plugins</a></p>
 
+    @if ($plugin['source'] === 'manual upload' && ! $plugin['enabled'] && $plugin['compatible'])
+        <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}" class="wb-mb-4">
+            @csrf
+            <button type="submit" class="wb-button wb-button-primary">Enable Plugin</button>
+        </form>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header">
             <strong>Plugin Status</strong>
@@ -40,6 +47,10 @@
                     </div>
                 </div>
                 <div>
+                    <strong>Source</strong>
+                    <div>{{ $plugin['source'] }}</div>
+                </div>
+                <div>
                     <strong>Version</strong>
                     <div>{{ $plugin['version'] ?? 'Not declared' }}</div>
                 </div>
@@ -58,6 +69,10 @@
                 <div>
                     <strong>Provider</strong>
                     <div>{{ $plugin['provider'] ?? 'Not declared' }}</div>
+                </div>
+                <div>
+                    <strong>Install Path</strong>
+                    <div>{{ $plugin['install_path'] ?? 'Not installed from a manual package' }}</div>
                 </div>
                 <div>
                     <strong>Admin Routes</strong>

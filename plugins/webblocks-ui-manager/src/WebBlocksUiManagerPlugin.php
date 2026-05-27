@@ -46,7 +46,8 @@ class WebBlocksUiManagerPlugin
           ->group('System')
           ->sort(80),
       ])
-      ->adminRoutes(__DIR__.'/../../../routes/plugins/webblocks-ui-manager.php')
+      ->source('manual upload')
+      ->adminRoutes(dirname(__DIR__).'/routes/webblocks-ui-manager.php')
       ->commands([
         PrepareWebBlocksUiReleaseCommand::class,
         PublishWebBlocksUiReleaseCommand::class,

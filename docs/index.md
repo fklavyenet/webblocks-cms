@@ -52,7 +52,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Development
 
 - [Development Workflow](../DEVELOPMENT.md)
-- [Plugin System](plugin-system.md) - implemented Phase 1-5 runtime foundations, including package conventions, compatibility checks, inert disabled/incompatible behavior, and the first-party WebBlocks UI Manager pilot plugin with safe local CDN dry-run/apply publishing
+- [Plugin System](plugin-system.md) - implemented runtime foundations, including manual ZIP upload/install, package conventions, compatibility checks, inert disabled/incompatible behavior, and WebBlocks UI Manager as a separate operator plugin artifact
 
 ## Project Boundary
 

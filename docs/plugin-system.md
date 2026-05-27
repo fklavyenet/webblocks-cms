@@ -1,6 +1,6 @@
 # WebBlocks CMS Plugin System
 
-This document records the architecture for the WebBlocks CMS plugin system. Phase 1 through Phase 5 runtime foundations now exist: registry-backed plugin definitions, config-backed enabled state, compatibility metadata, required CMS version checks, enabled-only admin route and command registration, plugin settings page scaffolding, health/status reporting, incompatible-plugin messaging, the `System -> Plugins` listing/detail surfaces, typed read-only dashboard and system card extension slots, plugin-owned block declaration hooks, safe public asset contribution hooks, package convention guards, and the first-party WebBlocks UI Manager pilot plugin with safe local CDN dry-run/apply publishing. Deeper features such as remote Composer discovery, generic plugin migration runners, install/apply/run lifecycle actions, public plugin route discovery, marketplace behavior, generic third-party plugin install/update flows, automatic external production WebBlocks UI CDN deployment, and generic update-server publishing remain future work.
+This document records the architecture for the WebBlocks CMS plugin system. CMS core is a generic plugin host with registry-backed plugin definitions, manual super-admin ZIP upload/install, storage-owned install paths, disabled-by-default installed plugins, explicit enablement, compatibility checks, enabled-only routes and commands, settings/detail scaffolding, health/status reporting, typed admin extension slots, plugin-owned block declarations, public asset hooks, and package convention guards. WebBlocks UI Manager is no longer bundled into CMS core runtime; it is an internal/operator plugin artifact installed manually only on operator installs such as webblocksui.com. There is no public marketplace, remote plugin store, arbitrary Composer package installer, automatic external plugin download, automatic external production WebBlocks UI CDN deployment, or generic update-server publishing.
 
 ## Core Decision
 
@@ -51,6 +51,14 @@ Plugin capabilities:
 - plugin-owned public routes, only when explicitly declared
 
 Core view override is forbidden by default. Plugins extend CMS only through documented extension slots and registry contracts. A plugin must not replace package views, monkey patch core services, add hidden route files, or rely on arbitrary include side effects.
+
+## Manual ZIP Install
+
+`System -> Plugins` lets super admins upload a local plugin ZIP. Uploading a ZIP is privileged executable-code installation. The installer validates the archive before writing anything under the configured plugin root, defaulting to `storage/app/webblocks/plugins/{plugin-handle}/{version}`.
+
+Validation requires `webblocks-plugin.json` or `manifest.json`, a kebab-case handle, a semver-like version, provider/class metadata, a compatible CMS version constraint, no installed handle collision, relative package paths only, no path traversal, no absolute paths, no symlink entries, and no writes to forbidden CMS/core targets such as `app`, `packages`, `project`, `storage`, `vendor`, or `public/cms`. Installed plugins remain disabled unless an explicit enable step is completed.
+
+Supported manifest fields include `handle`, `label`, `description`, `version`, `provider`, `required_cms_version`, `permissions`, `commands`, `routes`, `settings`, `migrations`, `assets`, and `health`. Migrations are installed as plugin-owned files but are not auto-run by this phase; migration execution remains an explicit/manual operator action.
 
 ## Plugin Contract And Manifest
 

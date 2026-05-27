@@ -58,11 +58,19 @@ That command safely upserts core CMS block types, leaves install-specific custom
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 
-## WebBlocks UI Manager Pilot
+## WebBlocks UI Manager Operator Plugin
 
-WebBlocks UI Manager is the first first-party pilot plugin for product-specific release operations. It is disabled by default and becomes active only when `webblocks-plugins.enabled.webblocks-ui-manager` is true and the installed CMS version satisfies the plugin's required CMS constraint.
+WebBlocks UI Manager is an internal/operator plugin for product-specific release operations. It is not bundled into normal CMS runtime packages and ordinary CMS installs should not install it. Build its local artifact from the maintenance repo with:
 
-When enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
+```bash
+php plugins/webblocks-ui-manager/build-plugin.php
+```
+
+Upload the generated ZIP through `System -> Plugins` as a super admin, review the installed plugin detail, then explicitly enable it. Disabled or incompatible installs remain inert.
+
+If an install briefly ran v1.32.67 and created `webblocks_ui_manager_*` tables, this patch does not drop them automatically. Leave them in place unless an operator has confirmed the plugin is not needed and performs a manual database cleanup with a backup.
+
+When manually installed and enabled, the plugin adds `/webadmin/plugins/webblocks-ui-manager/releases` for WebBlocks UI release metadata, dry-run validation, and local static CDN publishing. Prepare a release with local WebBlocks UI dist files:
 
 ```bash
 ddev artisan webblocks-ui-manager:prepare-release v2.7.9 --artifact=/path/to/webblocks-ui.css --artifact=/path/to/webblocks-icons.css --artifact=/path/to/webblocks-ui.js

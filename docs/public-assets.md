@@ -81,7 +81,7 @@ Enabled plugins may declare public asset contributions through `PluginPublicAsse
 
 The hook does not install plugin packages, publish files, stream assets through Laravel, create remote discovery, or create marketplace behavior.
 
-The first-party WebBlocks UI Manager pilot plugin uses a separate CDN artifact convention rather than the public page asset hook:
+The internal/operator WebBlocks UI Manager plugin uses a separate CDN artifact convention rather than the public page asset hook. It is not bundled in ordinary CMS installs and is available only after manual ZIP upload and explicit enablement:
 
 - release artifact targets are versioned under `public/cdn/webblocks-ui/{version}/...`
 - release manifests are local metadata for prepared artifacts and include SHA-256 checksums
@@ -123,4 +123,4 @@ WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
 CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.9` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
 
-Those CDN assets are part of the UI project and must not be edited inside the CMS repository. WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.
+Those CDN assets are part of the UI project and must not be edited inside the CMS repository. When installed on an operator site, WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.
