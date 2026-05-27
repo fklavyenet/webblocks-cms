@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.75
+
+- Extend the WebBlocks UI Manager CMS-core bridge from the Releases and Settings entry URLs to the full release action tree, including create, store, show, edit, update, dry-run, and publish routes, so enabled compatible manual plugin admin actions stay under `/webadmin/plugins/webblocks-ui-manager/...` instead of falling back to `/webadmin`.
+- Keep setup-required handling on release action URLs when WebBlocks UI Manager tables are missing, while Settings remains available to super admins and plugin permissions continue to gate view, manage, and publish actions.
+
 ## 1.32.74
 
 - Bridge enabled WebBlocks UI Manager Releases and Settings entry routes through CMS core before plugin-owned route files execute, preventing stale manual plugin route/source context from redirecting operators back to `/webadmin`.

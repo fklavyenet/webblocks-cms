@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Plugins\WebBlocksUiManager\Models\WebBlocksUiRelease;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginPermissionRegistry;
@@ -191,6 +192,7 @@ class AdminPluginListingTest extends TestCase
       ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
 
     $this->dropWebBlocksUiManagerTables();
+    $this->assertFalse(Schema::hasTable('webblocks_ui_manager_releases'));
 
     $this->actingAs($user)
       ->post(route('admin.system.plugins.setup', 'webblocks-ui-manager'))
@@ -276,6 +278,129 @@ class AdminPluginListingTest extends TestCase
       ->assertOk()
       ->assertHeaderMissing('Location')
       ->assertSeeText('WebBlocks UI Manager Settings');
+  }
+
+  #[Test]
+  public function enabled_plugin_new_release_route_is_bridged_without_dashboard_fallback(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/create')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('Plugin Migrations Pending')
+      ->assertSeeText('Release tables are missing');
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.setup', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $index = $this->actingAs($user)->get('/webadmin/plugins/webblocks-ui-manager/releases');
+
+    $index->assertOk();
+    $index->assertSee('href="'.route('webblocks.plugins.webblocks_ui_manager.releases.create').'"', false);
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/create')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('New WebBlocks UI Release')
+      ->assertSeeText('Release Metadata');
+  }
+
+  #[Test]
+  public function enabled_plugin_release_detail_edit_and_publish_routes_are_bridged_without_dashboard_fallback(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->uploadWebBlocksUiManagerPlugin($user);
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $this->dropWebBlocksUiManagerTables();
+
+    $this->assertFalse(Schema::hasTable('webblocks_ui_manager_releases'));
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/1')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('Plugin Migrations Pending');
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/1/edit')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('Plugin Migrations Pending');
+
+    $this->actingAs($user)
+      ->post(route('admin.system.plugins.setup', 'webblocks-ui-manager'))
+      ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
+
+    $create = $this->actingAs($user)
+      ->post('/webadmin/plugins/webblocks-ui-manager/releases', [
+        'version' => 'v2.8.0',
+        'label' => 'WebBlocks UI v2.8.0',
+        'status' => 'draft',
+        'cdn_base_path' => 'public/cdn/webblocks-ui/v2.8.0',
+        'cdn_base_url' => 'https://cdn.example.test/webblocks-ui/v2.8.0',
+        'notes' => 'Bridge regression fixture.',
+      ]);
+
+    $create->assertRedirect();
+    $this->assertNotSame(route('admin.dashboard'), $create->headers->get('Location'));
+
+    $release = WebBlocksUiRelease::query()
+      ->where('version', 'v2.8.0')
+      ->firstOrFail();
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/'.$release->id)
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('WebBlocks UI v2.8.0');
+
+    $this->actingAs($user)
+      ->get('/webadmin/plugins/webblocks-ui-manager/releases/'.$release->id.'/edit')
+      ->assertOk()
+      ->assertHeaderMissing('Location')
+      ->assertSeeText('Edit WebBlocks UI Release');
+
+    $update = $this->actingAs($user)
+      ->put('/webadmin/plugins/webblocks-ui-manager/releases/'.$release->id, [
+        'version' => 'v2.8.0',
+        'label' => 'WebBlocks UI v2.8.0 Updated',
+        'status' => 'draft',
+        'cdn_base_path' => 'public/cdn/webblocks-ui/v2.8.0',
+        'cdn_base_url' => 'https://cdn.example.test/webblocks-ui/v2.8.0',
+        'notes' => 'Updated bridge regression fixture.',
+      ]);
+
+    $update->assertRedirect();
+    $this->assertNotSame(route('admin.dashboard'), $update->headers->get('Location'));
+
+    $dryRun = $this->actingAs($user)
+      ->post('/webadmin/plugins/webblocks-ui-manager/releases/'.$release->id.'/publish-dry-run');
+
+    $dryRun->assertRedirect();
+    $this->assertNotSame(route('admin.dashboard'), $dryRun->headers->get('Location'));
+
+    $publish = $this->actingAs($user)
+      ->post('/webadmin/plugins/webblocks-ui-manager/releases/'.$release->id.'/publish');
+
+    $publish->assertRedirect();
+    $this->assertNotSame(route('admin.dashboard'), $publish->headers->get('Location'));
   }
 
   #[Test]
