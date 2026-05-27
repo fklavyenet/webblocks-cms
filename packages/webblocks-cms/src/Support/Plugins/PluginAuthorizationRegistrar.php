@@ -42,7 +42,7 @@ class PluginAuthorizationRegistrar
   {
     $permissions = [];
 
-    foreach (app(PluginPermissionRegistry::class)->active() as $pluginPermissions) {
+    foreach (app(PluginRegistry::class)->permissions(enabledOnly: true) as $pluginPermissions) {
       foreach ($pluginPermissions as $permission) {
         $permissions[] = $permission->name();
       }

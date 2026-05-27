@@ -2,7 +2,7 @@
   "handle": "webblocks-ui-manager",
   "label": "WebBlocks UI Manager",
   "description": "Internal operator plugin for WebBlocks UI release metadata and first-party CDN preparation workflows.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "provider": "WebBlocks\\Cms\\Plugins\\WebBlocksUiManager\\WebBlocksUiManagerPlugin",
   "required_cms_version": "^1.32",
   "permissions": [

@@ -2,6 +2,8 @@
 
 Internal operator plugin for WebBlocks UI release metadata and first-party local CDN preparation workflows.
 
+Current artifact version: `0.1.1`.
+
 ## Manual Lifecycle
 
 1. Build the ZIP artifact with `php plugins/webblocks-ui-manager/build-plugin.php`.

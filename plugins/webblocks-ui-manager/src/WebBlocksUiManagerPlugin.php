@@ -20,7 +20,7 @@ class WebBlocksUiManagerPlugin
   {
     return PluginDefinition::make(self::HANDLE)
       ->label('WebBlocks UI Manager')
-      ->version('0.1.0')
+      ->version('0.1.1')
       ->provider(self::class)
       ->description('Tracks WebBlocks UI release artifacts and first-party CDN preparation metadata.')
       ->requiresCms('^1.32')

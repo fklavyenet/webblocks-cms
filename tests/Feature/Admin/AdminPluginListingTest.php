@@ -69,7 +69,7 @@ class AdminPluginListingTest extends TestCase
     $response->assertOk();
     $response->assertSeeText('WebBlocks UI Manager');
     $response->assertSeeText('webblocks-ui-manager');
-    $response->assertSeeText('0.1.0');
+    $response->assertSeeText('0.1.1');
     $response->assertSeeText('Disabled');
     $response->assertSeeText('Inactive');
     $response->assertSeeText('Not checked while disabled.');
@@ -378,6 +378,8 @@ class AdminPluginListingTest extends TestCase
       ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
       ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
 
+    app(PluginRouteRegistrar::class)->registerEnabledAdminRoutes();
+
     $detail = $this->actingAs($user)->get(route('admin.system.plugins.show', 'webblocks-ui-manager'));
 
     $detail->assertOk();
@@ -398,7 +400,7 @@ class AdminPluginListingTest extends TestCase
       '--realpath' => false,
     ]);
 
-    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.0';
+    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.1';
 
     $this->assertDirectoryExists($installPath);
     $this->assertTrue(Schema::hasTable('webblocks_ui_manager_releases'));
@@ -426,7 +428,7 @@ class AdminPluginListingTest extends TestCase
       ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))
       ->assertRedirect(route('admin.system.plugins.show', 'webblocks-ui-manager'));
 
-    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.0';
+    $installPath = config('webblocks-plugins.install.root').'/webblocks-ui-manager/0.1.1';
 
     $this->actingAs($user)
       ->delete(route('admin.system.plugins.uninstall', 'webblocks-ui-manager'))

@@ -50,7 +50,7 @@ class WebBlocksUiManagerPluginTest extends TestCase
 
     $this->assertNotNull($plugin);
     $this->assertSame('WebBlocks UI Manager', $plugin->labelText());
-    $this->assertSame('0.1.0', $plugin->versionText());
+    $this->assertSame('0.1.1', $plugin->versionText());
     $this->assertSame('^1.32', $plugin->requiredCmsVersion());
     $this->assertSame('webblocks_ui_manager', $plugin->settingsNamespaceValue());
     $this->assertSame('webblocks_ui_manager_', $plugin->databasePrefixValue());
@@ -298,8 +298,8 @@ class WebBlocksUiManagerPluginTest extends TestCase
     $root = storage_path('framework/testing/plugins/'.str()->uuid());
     config()->set('webblocks-plugins.install.root', $root);
 
-    File::ensureDirectoryExists($root.'/webblocks-ui-manager/0.1.0');
-    File::copyDirectory(base_path('plugins/webblocks-ui-manager'), $root.'/webblocks-ui-manager/0.1.0');
+    File::ensureDirectoryExists($root.'/webblocks-ui-manager/0.1.1');
+    File::copyDirectory(base_path('plugins/webblocks-ui-manager'), $root.'/webblocks-ui-manager/0.1.1');
 
     $this->app->forgetInstance(PluginRegistry::class);
   }
