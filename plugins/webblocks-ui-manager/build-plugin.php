@@ -37,7 +37,7 @@ foreach ($files as $file) {
   $relative = str_replace($source.DIRECTORY_SEPARATOR, '', $file->getPathname());
   $relative = str_replace(DIRECTORY_SEPARATOR, '/', $relative);
 
-  if ($relative === 'build-plugin.php') {
+  if ($relative === 'build-plugin.php' || str_contains($relative, '/.') || str_starts_with($relative, '.')) {
     continue;
   }
 
