@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.76
+
+- Align the admin sidebar footer version label with the WebBlocks UI utility-class contract by moving centering onto the footer text element and removing the CMS-specific sidebar footer text-align override.
+
 ## 1.32.75
 
 - Extend the WebBlocks UI Manager CMS-core bridge from the Releases and Settings entry URLs to the full release action tree, including create, store, show, edit, update, dry-run, and publish routes, so enabled compatible manual plugin admin actions stay under `/webadmin/plugins/webblocks-ui-manager/...` instead of falling back to `/webadmin`.

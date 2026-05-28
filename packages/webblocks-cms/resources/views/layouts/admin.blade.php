@@ -192,7 +192,7 @@
                 </nav>
 
                 <div class="wb-sidebar-footer">
-                    <div class="wb-text-sm wb-text-muted">{{ WebBlocks::name() }} v{{ WebBlocks::VERSION }}</div>
+                    <div class="wb-text-sm wb-text-muted wb-text-center">{{ WebBlocks::name() }} v{{ WebBlocks::VERSION }}</div>
                 </div>
             </aside>
 

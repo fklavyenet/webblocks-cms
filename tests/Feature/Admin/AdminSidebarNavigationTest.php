@@ -119,6 +119,7 @@ class AdminSidebarNavigationTest extends TestCase
     $response->assertSee('>A modern block-based CMS<', false);
     $response->assertSee('cms/brand/logo-64.png', false);
     $this->assertFileExists(base_path('packages/webblocks-cms/public/cms/brand/logo-64.png'));
+    $response->assertSee('<div class="wb-text-sm wb-text-muted wb-text-center">WebBlocks CMS v'.WebBlocks::VERSION.'</div>', false);
     $response->assertSee('WebBlocks CMS v'.WebBlocks::VERSION);
   }
 
