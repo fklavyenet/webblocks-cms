@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.80
+
 - Polish Contact Message detail pages with `Contact Message: {sender}` titles, compact visitor meta layout, and a secret-free `contact:mail-diagnose` command for inspecting Contact Form SMTP configuration and optional controlled send tests.
 
 ## 1.32.79
