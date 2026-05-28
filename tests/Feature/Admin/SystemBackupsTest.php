@@ -22,6 +22,8 @@ use WebBlocks\Cms\Support\System\BackupRestoreInspection;
 use WebBlocks\Cms\Support\System\BackupRestoreResult;
 use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
 use WebBlocks\Cms\Support\System\SystemBackupArchivePackage;
+use WebBlocks\Cms\Support\System\SystemBackupArchiveResolution;
+use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use ZipArchive;
@@ -701,6 +703,201 @@ class SystemBackupsTest extends TestCase
   }
 
   #[Test]
+  public function admin_can_download_existing_readable_backup_archive_with_safe_filename(): void
+  {
+    $backupsRoot = $this->useRealBackupsDiskRoot('download-readable');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'download-readable.zip',
+      'archive_filename' => 'download-readable.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    File::put($backupsRoot.'/'.$backup->archive_path, 'zip bytes');
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.download', $backup));
+
+    $response->assertOk();
+    $response->assertDownload('download-readable.zip');
+    $this->assertStringContainsString('download-readable.zip', (string) $response->headers->get('content-disposition'));
+  }
+
+  #[Test]
+  public function backup_download_reports_missing_archive_without_server_error(): void
+  {
+    $this->useRealBackupsDiskRoot('download-missing');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'missing-download.zip',
+      'archive_filename' => 'missing-download.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)->from(route('admin.system.backups.index'))->get(route('admin.system.backups.download', $backup));
+
+    $response->assertRedirect(route('admin.system.backups.index'));
+    $response->assertSessionHasErrors(['system_backup' => 'Backup file not found.']);
+  }
+
+  #[Test]
+  public function backup_download_reports_unreadable_archive_without_server_error(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'unreadable.zip',
+      'archive_filename' => 'unreadable.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $this->app->instance(SystemBackupArchiveResolver::class, new class extends SystemBackupArchiveResolver
+    {
+      public function resolveForBackup(SystemBackup $backup, bool $requireReadableFile = true): SystemBackupArchiveResolution
+      {
+        return new SystemBackupArchiveResolution(
+          SystemBackupArchiveResolution::STATUS_UNREADABLE,
+          relativePath: (string) $backup->archive_path,
+          message: 'Backup file is not readable.',
+        );
+      }
+    });
+
+    $response = $this->actingAs($user)->from(route('admin.system.backups.index'))->get(route('admin.system.backups.download', $backup));
+
+    $response->assertRedirect(route('admin.system.backups.index'));
+    $response->assertSessionHasErrors(['system_backup' => 'Backup file is not readable.']);
+  }
+
+  #[Test]
+  public function backup_download_blocks_path_traversal_archive_paths(): void
+  {
+    $backupsRoot = $this->useRealBackupsDiskRoot('download-traversal');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => '../outside.zip',
+      'archive_filename' => 'outside.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    File::put(dirname($backupsRoot).'/outside.zip', 'outside');
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.download', $backup));
+
+    $response->assertForbidden();
+  }
+
+  #[Test]
+  public function backup_download_blocks_absolute_paths_outside_the_backups_root(): void
+  {
+    $backupsRoot = $this->useRealBackupsDiskRoot('download-absolute-outside');
+    $outsidePath = dirname($backupsRoot).'/outside-absolute.zip';
+    File::put($outsidePath, 'outside');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => $outsidePath,
+      'archive_filename' => 'outside-absolute.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.download', $backup));
+
+    $response->assertForbidden();
+  }
+
+  #[Test]
+  public function backup_download_supports_legacy_absolute_paths_inside_the_backups_root(): void
+  {
+    $backupsRoot = $this->useRealBackupsDiskRoot('download-absolute-inside');
+    $absolutePath = $backupsRoot.'/legacy-absolute.zip';
+    File::put($absolutePath, 'legacy');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => $absolutePath,
+      'archive_filename' => 'legacy-absolute.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.download', $backup));
+
+    $response->assertOk();
+    $response->assertDownload('legacy-absolute.zip');
+  }
+
+  #[Test]
+  public function backups_index_renders_missing_archive_state_and_disables_download_action(): void
+  {
+    $this->useRealBackupsDiskRoot('index-missing-download');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'missing-index.zip',
+      'archive_filename' => 'missing-index.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+
+    $response->assertOk();
+    $response->assertSee('File missing');
+    $response->assertSee('Backup file not found.');
+    $response->assertSee('disabled', false);
+    $response->assertDontSee('href="'.route('admin.system.backups.download', $backup).'"', false);
+  }
+
+  #[Test]
   public function backups_list_renders_view_download_and_delete_actions_for_safe_backups(): void
   {
     Storage::fake('backups');
@@ -1197,6 +1394,37 @@ class SystemBackupsTest extends TestCase
   }
 
   #[Test]
+  public function deleting_backup_with_absolute_path_outside_backups_root_preserves_record_and_file(): void
+  {
+    $backupsRoot = $this->useRealBackupsDiskRoot('delete-absolute-outside');
+    $outsidePath = dirname($backupsRoot).'/outside-delete.zip';
+    File::put($outsidePath, 'do not delete');
+
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => $outsidePath,
+      'archive_filename' => 'outside-delete.zip',
+      'started_at' => now(),
+      'finished_at' => now(),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)
+      ->from(route('admin.system.backups.index'))
+      ->delete(route('admin.system.backups.destroy', $backup));
+
+    $response->assertRedirect(route('admin.system.backups.index'));
+    $response->assertSessionHasErrors(['system_backup' => 'Backup archive path is invalid.']);
+    $this->assertDatabaseHas('system_backups', ['id' => $backup->id]);
+    $this->assertFileExists($outsidePath);
+  }
+
+  #[Test]
   public function admin_can_delete_failed_backup_record_and_archive(): void
   {
     $backupsRoot = $this->useRealBackupsDiskRoot('delete-failed');
@@ -1454,8 +1682,9 @@ class SystemBackupsTest extends TestCase
         ->once()
         ->withArgs(fn (string $message, array $context = []) => $message === 'Backup archive file could not be deleted.'
           && ($context['backup_id'] ?? null) === $backup->id
-          && ($context['archive_path'] ?? null) === 'cannot-delete.zip'
-          && ($context['disk_root'] ?? null) === $backupsRoot);
+          && ($context['archive_disk'] ?? null) === SystemBackupManager::ARCHIVE_DISK
+          && ($context['archive_status'] ?? null) === SystemBackupArchiveResolution::STATUS_AVAILABLE
+          && ! array_key_exists('disk_root', $context));
     }
   }
 

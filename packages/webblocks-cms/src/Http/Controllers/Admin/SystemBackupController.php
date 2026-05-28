@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSystemBackupsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemBackupRestoreRequest;
@@ -90,6 +91,12 @@ class SystemBackupController extends Controller
         'query' => request()->query(),
       ]);
 
+    $backupArchiveStatuses = collect($backups->items())
+      ->mapWithKeys(fn (SystemBackup $backup): array => [
+        $backup->id => $this->systemBackupManager->archiveResolution($backup),
+      ])
+      ->all();
+
     return view('webblocks-cms::admin.system.backups.index', [
       'backups' => $backups,
       'latestBackup' => $this->systemBackupManager->latest(),
@@ -102,6 +109,7 @@ class SystemBackupController extends Controller
       ],
       'totalCount' => $totalCount,
       'filteredCount' => $backups->total(),
+      'backupArchiveStatuses' => $backupArchiveStatuses,
     ]);
   }
 
@@ -147,12 +155,11 @@ class SystemBackupController extends Controller
   public function show(SystemBackup $backup): View
   {
     $inspection = null;
+    $archiveResolution = $this->systemBackupManager->archiveResolution($backup);
 
-    if ($backup->isSuccessful() && filled($backup->archive_path)) {
+    if ($archiveResolution->isAvailable()) {
       try {
-        $inspection = $this->archiveInspector->inspect(
-          $this->systemBackupManagerPath($backup)
-        );
+        $inspection = $this->archiveInspector->inspect($archiveResolution->absolutePath);
       } catch (Throwable) {
         $inspection = null;
       }
@@ -162,6 +169,7 @@ class SystemBackupController extends Controller
       'backup' => $backup->load('triggeredBy'),
       'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
       'inspection' => $inspection,
+      'archiveResolution' => $archiveResolution,
     ]);
   }
 
@@ -222,8 +230,20 @@ class SystemBackupController extends Controller
     return $redirect;
   }
 
-  public function download(SystemBackup $backup): BinaryFileResponse
+  public function download(SystemBackup $backup): BinaryFileResponse|RedirectResponse|Response
   {
+    $resolution = $this->systemBackupManager->archiveResolution($backup);
+
+    if ($resolution->isUnsafe()) {
+      abort(403, $resolution->feedbackMessage());
+    }
+
+    if (! $resolution->isAvailable()) {
+      return redirect()
+        ->route('admin.system.backups.index')
+        ->withErrors(['system_backup' => $resolution->feedbackMessage()]);
+    }
+
     return $this->systemBackupManager->downloadResponse($backup);
   }
 
@@ -238,11 +258,6 @@ class SystemBackupController extends Controller
     return redirect()
       ->route('admin.system.backups.show', $backup)
       ->with('status', 'Restore history entry deleted.');
-  }
-
-  private function systemBackupManagerPath(SystemBackup $backup): string
-  {
-    return $this->systemBackupManager->archiveDisk()->path($backup->archive_path);
   }
 
   private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup

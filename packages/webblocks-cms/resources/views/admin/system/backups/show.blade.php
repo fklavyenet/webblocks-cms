@@ -1,13 +1,18 @@
 @extends('webblocks-cms::layouts.admin', ['title' => 'Backup Details', 'heading' => 'Backup Details'])
 
 @section('content')
-    @php($canRestore = $backup->isSuccessful() && filled($backup->archive_path))
+    @php($archiveResolution = $archiveResolution ?? null)
+    @php($canDownload = $archiveResolution?->isAvailable() ?? false)
+    @php($canRestore = $canDownload)
+    @php($archivePathValue = (string) $backup->archive_path)
+    @php($isAbsoluteArchivePath = str_starts_with($archivePathValue, '/') || preg_match('/^[A-Za-z]:[\/\\\\]/', $archivePathValue) === 1)
+    @php($displayArchivePath = $isAbsoluteArchivePath ? '[absolute path hidden]' : ($backup->archive_path ?? '-'))
     @php($manifest = $inspection?->manifest ?? [])
 
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $backup->archive_filename ?? 'Backup #'.$backup->id,
         'description' => 'Review backup results, uploaded archive metadata, operational logs, and restore history for this run.',
-        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">Back to Backups</a>'.($backup->isSuccessful() && $backup->archive_path ? '<a href="'.route('admin.system.backups.download', $backup).'" class="wb-btn wb-btn-primary">Download</a>' : '').'</div>',
+        'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.backups.index').'" class="wb-btn wb-btn-secondary">Back to Backups</a>'.($canDownload ? '<a href="'.route('admin.system.backups.download', $backup).'" class="wb-btn wb-btn-primary">Download</a>' : '').'</div>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
@@ -47,7 +52,10 @@
                     <div><strong>Source filename:</strong> {{ $backup->label ?? $backup->archive_filename ?? '-' }}</div>
                     <div><strong>Archive disk:</strong> {{ $backup->archive_disk }}</div>
                     <div><strong>Archive file:</strong> {{ $backup->archive_filename ?? '-' }}</div>
-                    <div><strong>Archive path:</strong> <code>{{ $backup->archive_path ?? '-' }}</code></div>
+                    <div><strong>Archive path:</strong> <code>{{ $displayArchivePath }}</code></div>
+                    @if ($archiveResolution && ! $archiveResolution->isAvailable())
+                        <div><strong>Archive status:</strong> <span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveResolution->uiLabel() }}</span></div>
+                    @endif
                     <div><strong>Archive size:</strong> {{ $backup->humanArchiveSize() }}</div>
                     <div><strong>Manifest app:</strong> {{ $manifest['app_name'] ?? '-' }}</div>
                     <div><strong>Manifest version:</strong> {{ $manifest['app_version'] ?? '-' }}</div>
@@ -80,7 +88,7 @@
                     </div>
                 </div>
 
-                <div class="wb-text-sm wb-text-muted">Selected backup: <strong>{{ $backup->archive_filename ?? 'Backup #'.$backup->id }}</strong> at <code>{{ $backup->archive_path ?? 'archive unavailable' }}</code></div>
+                <div class="wb-text-sm wb-text-muted">Selected backup: <strong>{{ $backup->archive_filename ?? 'Backup #'.$backup->id }}</strong> at <code>{{ $displayArchivePath !== '-' ? $displayArchivePath : 'archive unavailable' }}</code></div>
 
                 @if ($canRestore)
                     <form method="POST" action="{{ route('admin.system.backups.restore', $backup) }}" class="wb-stack wb-gap-3" onsubmit="return confirm('Restore this backup? This will replace the current database and uploads.');" data-wb-restore-form>
@@ -104,7 +112,7 @@
                     <div class="wb-alert wb-alert-warning">
                         <div>
                             <div class="wb-alert-title">Restore is unavailable for this backup</div>
-                            <div>Only completed backups with a stored archive can be restored from the admin panel.</div>
+                            <div>{{ $archiveResolution?->feedbackMessage() ?? 'Only completed backups with a stored archive can be restored from the admin panel.' }}</div>
                         </div>
                     </div>
 

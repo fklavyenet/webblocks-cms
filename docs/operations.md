@@ -127,6 +127,8 @@ Backups can include:
 Restore behavior is explicit:
 
 - only completed backups with a valid archive can be restored
+- archive download, detail, restore eligibility, and delete actions resolve paths through the same `backups` disk root and block traversal, symlink escapes, and absolute paths outside that root
+- missing or unreadable archive files are shown as controlled admin feedback instead of raw filesystem exceptions
 - restore creates a fresh pre-restore safety backup first
 - restore replaces the current database
 - restore replaces `storage/app/public` when uploads are included in the archive

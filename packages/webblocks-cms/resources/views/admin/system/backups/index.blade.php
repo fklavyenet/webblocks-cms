@@ -208,6 +208,7 @@
                             </thead>
                             <tbody>
                                 @foreach ($backups as $backup)
+                                    @php($archiveResolution = $backupArchiveStatuses[$backup->id] ?? null)
                                     <tr>
                                         <td>
                                             <label class="wb-checkbox" for="backup_select_{{ $backup->id }}">
@@ -221,6 +222,11 @@
                                             @if ($backup->label)
                                                 <div class="wb-text-sm wb-text-muted">Source {{ $backup->label }}</div>
                                             @endif
+                                            @if ($archiveResolution && ! $archiveResolution->isAvailable())
+                                                <div class="wb-mt-1">
+                                                    <span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveResolution->uiLabel() }}</span>
+                                                </div>
+                                            @endif
                                         </td>
                                         <td><span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backup->statusLabel() }}</span></td>
                                         <td>{{ $backup->contentsLabel() ?: '-' }}</td>
@@ -232,10 +238,14 @@
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
-                                                @if ($backup->isSuccessful() && $backup->archive_path)
+                                                @if ($archiveResolution?->isAvailable())
                                                     <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-download" title="Download backup" aria-label="Download backup">
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </a>
+                                                @elseif ($backup->isSuccessful() && $backup->archive_path)
+                                                    <button type="button" class="wb-action-btn wb-action-btn-download" title="{{ $archiveResolution?->feedbackMessage() ?? 'Backup archive is unavailable.' }}" aria-label="{{ $archiveResolution?->feedbackMessage() ?? 'Backup archive is unavailable.' }}" disabled>
+                                                        <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
+                                                    </button>
                                                 @endif
 
                                                 <button

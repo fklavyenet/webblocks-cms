@@ -6,7 +6,6 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -21,11 +20,16 @@ class SystemBackupManager
 
   public const TYPE_RESTORE_SAFETY = 'restore_safety';
 
+  private ?SystemBackupArchiveResolver $archiveResolver = null;
+
   public function __construct(
     private readonly DatabaseDumpWriter $databaseDumpWriter,
     private readonly BackupManifestBuilder $backupManifestBuilder,
     private readonly BackupArchiveBuilder $backupArchiveBuilder,
-  ) {}
+    ?SystemBackupArchiveResolver $archiveResolver = null,
+  ) {
+    $this->archiveResolver = $archiveResolver;
+  }
 
   public function createManualBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
   {
@@ -44,9 +48,7 @@ class SystemBackupManager
 
   public function assertValidArchiveRelativePath(string $path): void
   {
-    if ($this->hasInvalidRelativePath($path)) {
-      throw new RuntimeException('Backup archive path is invalid.');
-    }
+    $this->backupArchiveResolver()->assertValidArchivePath($path);
   }
 
   private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
@@ -129,24 +131,7 @@ class SystemBackupManager
 
   public function archiveDisk(): FilesystemAdapter
   {
-    $configuredRoot = config('filesystems.disks.'.self::ARCHIVE_DISK.'.root');
-    $archiveRoot = is_string($configuredRoot) && trim($configuredRoot) !== ''
-      ? $configuredRoot
-      : storage_path('app/backups');
-
-    config()->set('filesystems.disks.'.self::ARCHIVE_DISK, array_merge(
-      [
-        'driver' => 'local',
-        'root' => $archiveRoot,
-        'throw' => false,
-        'report' => false,
-      ],
-      (array) config('filesystems.disks.'.self::ARCHIVE_DISK, [])
-    ));
-
-    File::ensureDirectoryExists($archiveRoot);
-
-    return Storage::disk(self::ARCHIVE_DISK);
+    return $this->backupArchiveResolver()->archiveDisk();
   }
 
   private function markBackupCompletedForSnapshot(
@@ -266,35 +251,20 @@ class SystemBackupManager
 
   public function downloadResponse(SystemBackup $backup): BinaryFileResponse
   {
-    if (! $backup->isSuccessful() || $backup->archive_path === null || $backup->archive_filename === null) {
-      abort(404);
+    $resolution = $this->backupArchiveResolver()->resolveForBackup($backup);
+
+    if (! $resolution->isAvailable()) {
+      abort($resolution->isUnsafe() ? 403 : 404, $resolution->feedbackMessage());
     }
 
-    if ($this->hasInvalidRelativePath($backup->archive_path)) {
-      abort(404);
-    }
-
-    $disk = Storage::disk(self::ARCHIVE_DISK);
-
-    if (! $disk->exists($backup->archive_path)) {
-      abort(404);
-    }
-
-    $path = $disk->path($backup->archive_path);
-    $root = realpath(dirname($disk->path('backup-root-probe')));
-    $resolvedPath = realpath($path);
-
-    if ($root === false || $resolvedPath === false) {
-      abort(404);
-    }
-
-    if (! str_starts_with($resolvedPath, $root.DIRECTORY_SEPARATOR) && $resolvedPath !== $root) {
-      abort(404);
-    }
-
-    return response()->download($resolvedPath, $backup->archive_filename, [
+    return response()->download($resolution->absolutePath, $backup->archive_filename, [
       'Content-Type' => 'application/zip',
     ]);
+  }
+
+  public function archiveResolution(SystemBackup $backup, bool $requireReadableFile = true): SystemBackupArchiveResolution
+  {
+    return $this->backupArchiveResolver()->resolveForBackup($backup, $requireReadableFile);
   }
 
   public function deleteBackupRecord(SystemBackup $backup, bool $allowRunning = false): void
@@ -306,44 +276,47 @@ class SystemBackupManager
     $storedArchivePath = $backup->archiveRelativePath();
 
     if ($storedArchivePath !== null) {
-      $this->assertValidArchiveRelativePath($storedArchivePath);
-      $this->deleteArchiveIfPresent($backup, self::ARCHIVE_DISK, $storedArchivePath);
+      $this->deleteArchiveIfPresent($backup, $storedArchivePath);
     }
 
     $backup->delete();
   }
 
-  private function deleteArchiveIfPresent(SystemBackup $backup, string $diskName, string $archivePath): void
+  private function deleteArchiveIfPresent(SystemBackup $backup, string $archivePath): void
   {
-    $disk = Storage::disk($diskName);
-    $diskRoot = $this->resolvedDiskRoot($diskName);
+    $resolution = $this->backupArchiveResolver()->resolvePath($archivePath, requireReadableFile: false);
 
-    if (! $disk->exists($archivePath)) {
+    if ($resolution->isUnsafe()) {
+      throw new RuntimeException($resolution->feedbackMessage());
+    }
+
+    if ($resolution->isMissing()) {
       return;
     }
 
-    if (! $disk->delete($archivePath) || $disk->exists($archivePath)) {
+    if (! $resolution->isAvailable() || $resolution->absolutePath === null || ! @unlink($resolution->absolutePath)) {
       Log::warning('Backup archive file could not be deleted.', [
         'backup_id' => $backup->id,
-        'archive_disk' => $diskName,
-        'archive_path' => $archivePath,
-        'disk_root' => $diskRoot,
+        'archive_disk' => self::ARCHIVE_DISK,
+        'archive_status' => $resolution->status,
       ]);
 
       throw new RuntimeException('Backup archive file could not be deleted.');
     }
   }
 
-  private function resolvedDiskRoot(string $diskName): ?string
-  {
-    $root = realpath(Storage::disk($diskName)->path(''));
-
-    return $root === false ? null : $root;
-  }
-
   private function hasBackupTable(): bool
   {
     return Schema::hasTable('system_backups');
+  }
+
+  private function backupArchiveResolver(): SystemBackupArchiveResolver
+  {
+    if (! $this->archiveResolver instanceof SystemBackupArchiveResolver) {
+      $this->archiveResolver = app(SystemBackupArchiveResolver::class);
+    }
+
+    return $this->archiveResolver;
   }
 
   private function sanitizeFailureDetail(string $message): string
@@ -356,12 +329,5 @@ class SystemBackupManager
     $sanitized = str_replace(base_path(), '[base_path]', $sanitized);
 
     return trim($sanitized) !== '' ? $sanitized : 'Backup failed for an unknown reason.';
-  }
-
-  private function hasInvalidRelativePath(string $path): bool
-  {
-    return str_contains($path, '..')
-      || str_starts_with($path, '/')
-      || preg_match('/^[A-Za-z]:\\\\/', $path) === 1;
   }
 }

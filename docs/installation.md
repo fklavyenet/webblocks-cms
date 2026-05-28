@@ -68,6 +68,7 @@ What `webblocks:install` does:
 - skips rerunning that fresh schema when CMS tables already exist
 - creates database-backed Laravel support tables only when the active host configuration requires them, currently covering `sessions`, `cache`, and `cache_locks`
 - does not run the host application's normal Laravel migration set as part of package install, so it avoids conflicts with the already-created CMS-compatible `users` table
+- prepares the `backups` filesystem disk root used by Backup / Restore
 - installs package-owned CMS assets into `public/cms`
 - creates `public/storage` when it is missing and the environment allows it
 - seeds locales, sites, slot types, page layouts, icons, and core block types idempotently
@@ -126,6 +127,7 @@ Notes:
 - `php artisan db:seed` installs the core CMS catalogs and records the current app version as the installed version for a fresh install
 - `php artisan storage:link` is required if public file serving should use `storage/app/public`
 - runtime directories under `storage/framework`, `storage/logs`, and `bootstrap/cache` are created automatically on first run
+- Backup / Restore stores archives on the `backups` filesystem disk, defaulting to `storage/app/backups`. The PHP runtime user should own that directory or share a deployment group with read/write access; avoid broad `777` modes.
 
 ## Optional DDEV Local Install
 

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.81
+
+- Prepare v1.32.81 as a production Backups download hotfix by routing backup archive download, detail, listing, and delete paths through one canonical backups-disk resolver, supporting legacy absolute paths inside the backups root while blocking traversal, symlink escapes, and absolute paths outside that root.
+- Show controlled missing, unreadable, and unsafe archive feedback on `System -> Backups` instead of raw filesystem exceptions or blind download links, and prepare backup storage during package install without using broad permissions.
+
 ## 1.32.80
 
 - Polish Contact Message detail pages with `Contact Message: {sender}` titles, compact visitor meta layout, and a secret-free `contact:mail-diagnose` command for inspecting Contact Form SMTP configuration and optional controlled send tests.

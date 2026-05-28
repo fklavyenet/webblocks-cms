@@ -26,6 +26,7 @@ use WebBlocks\Cms\Support\Install\LaravelWelcomeRouteCleaner;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -69,6 +70,7 @@ class InstallWebBlocksCmsCommand extends Command
     $this->runPackageMigrations();
     $this->ensureLaravelSupportTables();
     $this->ensureSiteTransferStorage();
+    $this->ensureBackupStorage();
     $this->installAssets();
     $this->ensureStorageLink();
     $this->seedCoreData();
@@ -159,6 +161,13 @@ class InstallWebBlocksCmsCommand extends Command
     app(SiteTransferDisk::class)->ensureReady();
 
     $this->components->info('Site transfer storage is ready.');
+  }
+
+  private function ensureBackupStorage(): void
+  {
+    app(SystemBackupArchiveResolver::class)->archiveDisk();
+
+    $this->components->info('Backup storage is ready.');
   }
 
   private function installAssets(): void

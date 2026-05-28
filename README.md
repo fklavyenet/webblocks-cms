@@ -62,6 +62,7 @@ ddev artisan webblocks:install --name="Admin User" --email="admin@example.com" -
 - runs the package fresh-install CMS schema for clean consumers
 - creates required Laravel support tables for database-backed session and cache drivers when they are configured, without running the host application's normal migrations
 - prepares the `site-transfers` filesystem disk storage used by Export / Import packages
+- prepares the `backups` filesystem disk storage used by Backup / Restore
 - installs package CMS assets into `public/cms`
 - creates `public/storage` when safe and missing
 - seeds locales, sites, page layouts, slot types, icons, and core block types idempotently
@@ -384,6 +385,7 @@ ddev artisan site-promotion:apply storage/app/site-promotions/example.zip --targ
 - The first-class `Search Form` block renders a semantic GET search form that targets the current site's resolved search route and stores translated label, placeholder, and button text in block translation rows.
 - Super admins can review derived search status and run a non-destructive rebuild from `Admin -> Maintenance -> Search Rebuild`.
 - `Admin -> System -> Settings` is the compact install-level settings screen for locale, timezone, privacy, version, and environment information. `Admin -> System -> Visitor Reports` reports anonymous page views across the allowed site scope while keeping richer breakdowns privacy-safe. `Maintenance` remains reserved for operational tools such as Search Rebuild, Backups, Export / Import, and Update.
+- Backup archives are resolved only through the CMS `backups` disk root, which defaults to `storage/app/backups`. Download, detail, and delete actions use the same resolver, block traversal or absolute paths outside that root, and show controlled missing or unreadable archive feedback instead of raw filesystem errors. The runtime web/PHP user must own or be in a group that can read and write that storage root; do not use `777` permissions.
 - `Admin -> System -> Visitor Reports` stores normalized referrer hosts and internal/direct/external type, normalized UTM source/medium/campaign values, device category, and bot flag only; it does not store raw referrer URLs, full query strings, full user-agent strings, or raw IP addresses. Unique visitors, sessions, and average pages per session are shown only when consent-based session identifiers exist; otherwise the report displays `Not tracked` instead of a misleading zero. The screen also includes human/bot page-view totals, All/Human/Bots traffic filtering, referrer counts, device shares, and campaign/source/medium breakdowns when aggregate data is available.
 - Rebuild the derived search index safely with `ddev artisan search:rebuild`, optionally scoped by `--site`, `--locale`, or `--page`.
 - If the search table does not exist yet on an install, run `ddev artisan migrate` before `ddev artisan search:rebuild`.

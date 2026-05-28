@@ -1233,7 +1233,7 @@ class SiteExportImportTest extends TestCase
     $siteExport = app(SiteExportManager::class)->export($site, true);
 
     $siteImport = app(SiteImportManager::class)->inspectUpload(
-      new UploadedFile(Storage::disk('site-exports')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
+      new UploadedFile(Storage::disk('site-transfers')->path($siteExport->archive_path), $siteExport->archive_name, 'application/zip', null, true)
     );
 
     $this->assertNotNull($siteImport->archive_path);
