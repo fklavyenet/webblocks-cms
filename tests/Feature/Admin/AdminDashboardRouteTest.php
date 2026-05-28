@@ -130,12 +130,18 @@ class AdminDashboardRouteTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    $response = $this->actingAs($user)->get(route('admin.sites.index'));
+    $sitesResponse = $this->actingAs($user)->get(route('admin.sites.index'));
+    $pagesResponse = $this->actingAs($user)->get(route('admin.pages.index'));
 
-    $response->assertOk();
-    $response->assertSee('<title>Sites - WebBlocks CMS</title>', false);
-    $response->assertDontSee('<title>Sites</title>', false);
-    $response->assertDontSee('<title>Sites - WebBlocks CMS - WebBlocks CMS</title>', false);
+    $sitesResponse->assertOk();
+    $sitesResponse->assertSee('<title>Sites - WebBlocks CMS</title>', false);
+    $sitesResponse->assertDontSee('<title>Sites</title>', false);
+    $sitesResponse->assertDontSee('<title>Sites - WebBlocks CMS - WebBlocks CMS</title>', false);
+
+    $pagesResponse->assertOk();
+    $pagesResponse->assertSee('<title>Pages - WebBlocks CMS</title>', false);
+    $pagesResponse->assertDontSee('<title>Pages</title>', false);
+    $pagesResponse->assertDontSee('<title>Pages - WebBlocks CMS - WebBlocks CMS</title>', false);
   }
 
   #[Test]

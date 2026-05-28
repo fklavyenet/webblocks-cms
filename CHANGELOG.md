@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 1.32.77
+
 - Standardize admin browser tab titles through the shared package admin layout as `{Page Title} - WebBlocks CMS`, while keeping Project Identity scoped to the admin topbar and avoiding duplicate product suffixes.
+- Add package artifact and package-native update coverage so the changed admin layout and title helper ship in the release ZIP and replace the active Composer package runtime during System Update.
 
 ## 1.32.76
 

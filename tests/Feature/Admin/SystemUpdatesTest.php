@@ -148,12 +148,16 @@ class SystemUpdatesTest extends TestCase
     $this->assertSame('package-css', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/admin.css')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/brand/logo-64.png')));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
+    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/packages/webblocks-cms/resources/views/layouts/admin.blade.php'));
+    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/packages/webblocks-cms/src/Support/System/SystemSettings.php'));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/public/cms/brand/logo-64.png')));
     $this->assertFalse(File::exists($targetRoot.'/public/cms/index.php'));
     $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
     $this->assertSame('bulk-actions-js', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/js/admin/listing-bulk-actions.js')));
     $this->assertSame('brand-logo', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/public/cms/brand/logo-64.png')));
+    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/resources/views/layouts/admin.blade.php'));
+    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Support/System/SystemSettings.php'));
     $this->assertStringContainsString('webblocks-cms::admin.site-transfers.exports.index', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
     $this->assertStringNotContainsString("view('admin/site-transfers/exports/index'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src/Http/Controllers/Admin/SiteExportController.php'));
     $this->assertSame('DISABLED', $this->readGitConfig($targetRoot, 'remote.origin.pushurl'));
@@ -189,6 +193,56 @@ class SystemUpdatesTest extends TestCase
     $sidebar = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $sidebar->assertSee('WebBlocks CMS v'.WebBlocks::version());
     $sidebar->assertDontSee('Download package');
+  }
+
+  #[Test]
+  public function package_native_update_replaces_active_composer_vendor_package_root_views_and_helpers(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    app(InstalledVersionStore::class)->persist('1.32.76');
+    Storage::fake('backups');
+
+    [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
+    File::deleteDirectory($targetRoot.'/vendor/fklavyenet/webblocks-cms');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/Updates');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System');
+    File::ensureDirectoryExists($targetRoot.'/vendor/fklavyenet/webblocks-cms/resources/views/layouts');
+    File::put($targetRoot.'/vendor/composer/autoload_psr4.php', "<?php\n\nreturn [\n    'WebBlocks\\\\Cms\\\\' => [__DIR__.'/../fklavyenet/webblocks-cms/src'],\n];\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/composer.json', json_encode([
+      'name' => 'fklavyenet/webblocks-cms',
+      'autoload' => [
+        'psr-4' => [
+          'WebBlocks\\Cms\\' => 'src/',
+        ],
+      ],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/Updates/UpdateException.php', "old vendor root update exception\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/SystemSettings.php', "<?php\n\nreturn 'old title helper';\n");
+    File::put($targetRoot.'/vendor/fklavyenet/webblocks-cms/resources/views/layouts/admin.blade.php', '<title>{{ $title ?? "old" }}</title>');
+
+    config()->set('webblocks-updates.installer.target_path', $targetRoot);
+    $this->bindFakeCommandRunner();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '1.32.77', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-1.32.77.zip', $checksum);
+
+    Http::fake([
+      'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
+
+    $response->assertRedirect(route('admin.system.updates.index'));
+    $response->assertSessionHas('status', 'Updated to 1.32.77 successfully.');
+
+    $this->assertSame('new package update exception', trim((string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/Updates/UpdateException.php')));
+    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/resources/views/layouts/admin.blade.php'));
+    $this->assertStringContainsString("'Admin Dashboard'", (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/SystemSettings.php'));
+    $this->assertStringNotContainsString('old title helper', (string) File::get($targetRoot.'/vendor/fklavyenet/webblocks-cms/src/Support/System/SystemSettings.php'));
+
+    $run = SystemUpdateRun::query()->latest()->firstOrFail();
+    $this->assertStringContainsString('Replaced vendor/fklavyenet/webblocks-cms with package artifact contents.', (string) $run->output);
+    $this->assertStringContainsString('php artisan view:clear', (string) $run->output);
+    $this->assertStringContainsString('php artisan config:clear', (string) $run->output);
+    $this->assertStringContainsString('php artisan cache:clear', (string) $run->output);
   }
 
   #[Test]
@@ -599,10 +653,13 @@ class SystemUpdatesTest extends TestCase
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     $archive->addFromString('src/Support/System/Updates/UpdateException.php', "new package update exception\n");
     $archive->addFromString('src/Support/System/Updates/SystemUpdater.php', "package system updater\n");
+    $archive->addFromString('src/Support/System/SystemSettings.php', "<?php\n\nif (\$screenTitle === 'Admin Dashboard') {\n  return 'Dashboard';\n}\n\nreturn \$screenTitle.' - '.\$productName;\n");
     $archive->addFromString('src/Http/Controllers/Admin/SiteExportController.php', "<?php\n\nreturn view('webblocks-cms::admin.site-transfers.exports.index');\n");
     $archive->addFromString('src/Http/Controllers/Admin/SiteImportController.php', "<?php\n\nreturn view('webblocks-cms::admin.site-transfers.imports.index');\n");
     $archive->addFromString('config/webblocks-updates.php', "<?php\n");
     $archive->addFromString('resources/views/admin/system/updates.blade.php', '<div>package updates</div>');
+    $archive->addFromString('resources/views/layouts/admin.blade.php', "{{ app(SystemSettings::class)->adminBrowserTitle(\$adminBrowserTitle ?? \$title ?? null) }}\n");
+    $archive->addFromString('resources/views/admin/dashboard.blade.php', "@extends('webblocks-cms::layouts.admin', ['title' => 'Admin Dashboard', 'heading' => 'Dashboard'])\n");
     $archive->addFromString('database/seeders/CoreCatalogSeeder.php', "<?php\n");
     $archive->addFromString('routes/admin.php', "<?php\n");
     $archive->addFromString('public/cms/admin.css', "package-css\n");

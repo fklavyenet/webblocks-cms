@@ -63,6 +63,24 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function release_artifact_includes_package_owned_admin_title_runtime_files(): void
+  {
+    $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+
+    $adminLayout = (string) file_get_contents($installedPackageRoot.'/resources/views/layouts/admin.blade.php');
+    $systemSettings = (string) file_get_contents($installedPackageRoot.'/src/Support/System/SystemSettings.php');
+    $dashboard = (string) file_get_contents($installedPackageRoot.'/resources/views/admin/dashboard.blade.php');
+
+    $this->assertStringContainsString('app(SystemSettings::class)->adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', $adminLayout);
+    $this->assertStringContainsString("'title' => \$resolvedAdminBrowserTitle", $adminLayout);
+    $this->assertStringContainsString('function adminBrowserTitle(?string $screenTitle = null): string', $systemSettings);
+    $this->assertStringContainsString("if (\$screenTitle === 'Admin Dashboard')", $systemSettings);
+    $this->assertStringContainsString("return 'Dashboard';", $systemSettings);
+    $this->assertStringContainsString("return \$screenTitle.' - '.\$productName;", $systemSettings);
+    $this->assertStringContainsString("['title' => 'Admin Dashboard', 'heading' => 'Dashboard']", $dashboard);
+  }
+
+  #[Test]
   public function release_artifact_includes_bulk_listing_admin_javascript_in_package_public_assets(): void
   {
     $installedPackageRoot = $this->buildInstalledPackageSnapshot();
@@ -88,6 +106,10 @@ class ReleasePackageBoundaryTest extends TestCase
     $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
 
     $this->assertFileExists($vendorPackageRoot.'/public/cms/js/admin/listing-bulk-actions.js');
+    $this->assertFileExists($vendorPackageRoot.'/resources/views/layouts/admin.blade.php');
+    $this->assertFileExists($vendorPackageRoot.'/src/Support/System/SystemSettings.php');
+    $this->assertStringContainsString('adminBrowserTitle($adminBrowserTitle ?? $title ?? null)', (string) file_get_contents($vendorPackageRoot.'/resources/views/layouts/admin.blade.php'));
+    $this->assertStringContainsString("'Admin Dashboard'", (string) file_get_contents($vendorPackageRoot.'/src/Support/System/SystemSettings.php'));
     $this->assertFileDoesNotExist($vendorPackageRoot.'/public/cms/index.php');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/logo-64.png');
     $this->assertFileExists($vendorPackageRoot.'/public/cms/brand/favicon-32x32.png');
