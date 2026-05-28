@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 @php
+    use WebBlocks\Cms\Support\System\SystemSettings;
     use WebBlocks\Cms\Support\WebBlocks;
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     @php
+        $resolvedAdminBrowserTitle = app(SystemSettings::class)->adminBrowserTitle($adminBrowserTitle ?? $title ?? null);
         $adminCssPath = public_path('cms/css/admin.css');
         $adminJsAssets = [
             'core' => public_path('cms/js/admin/core.js'),
@@ -27,7 +29,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('webblocks-cms::partials.head-meta', [
-            'title' => $adminBrowserTitle ?? $title ?? WebBlocks::name(),
+            'title' => $resolvedAdminBrowserTitle,
             'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
         ])
 

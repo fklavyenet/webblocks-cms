@@ -220,7 +220,7 @@ class SystemSettingsTest extends TestCase
   }
 
   #[Test]
-  public function admin_topbar_and_browser_title_use_project_identity_when_present(): void
+  public function admin_topbar_uses_project_identity_while_browser_title_uses_product_suffix(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -230,12 +230,13 @@ class SystemSettingsTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.settings.edit'));
 
     $response->assertOk();
-    $response->assertSee('<title>WebBlocks UI Docs · System Settings · WebBlocks CMS</title>', false);
+    $response->assertSee('<title>System Settings - WebBlocks CMS</title>', false);
     $response->assertSee('<span class="wb-navbar-brand">', false);
     $response->assertSee('WebBlocks UI Docs');
     $response->assertSee('Install-specific admin context');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::VERSION);
-    $response->assertDontSee('<title>WebBlocks CMS · WebBlocks CMS</title>', false);
+    $response->assertDontSee('<title>WebBlocks UI Docs · System Settings · WebBlocks CMS</title>', false);
+    $response->assertDontSee('<title>WebBlocks CMS - WebBlocks CMS</title>', false);
   }
 
   #[Test]
@@ -253,7 +254,7 @@ class SystemSettingsTest extends TestCase
     $response->assertOk();
     $response->assertSee('Primary Public Site');
     $response->assertDontSee('Public site tagline');
-    $response->assertSee('<title>Admin Dashboard · WebBlocks CMS</title>', false);
+    $response->assertSee('<title>Dashboard - WebBlocks CMS</title>', false);
   }
 
   #[Test]

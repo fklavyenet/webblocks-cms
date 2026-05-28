@@ -103,6 +103,7 @@ class AdminDashboardRouteTest extends TestCase
     $response = $this->actingAs($user)->get('/webadmin');
 
     $response->assertOk();
+    $response->assertSee('<title>Dashboard - WebBlocks CMS</title>', false);
     $response->assertSee('Dashboard');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
     $response->assertSee('Visitor Summary');
@@ -122,6 +123,35 @@ class AdminDashboardRouteTest extends TestCase
     $this->assertLessThan(strpos($content, 'Recent Pages'), strpos($content, 'Actions and Shortcuts'));
     $this->assertLessThan(strpos($content, 'Recent Media'), strpos($content, 'Overview'));
     $this->assertLessThan(strpos($content, 'Visitor Summary'), strpos($content, 'Recent Pages'));
+  }
+
+  #[Test]
+  public function admin_layout_adds_product_suffix_to_listing_browser_titles_once(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.sites.index'));
+
+    $response->assertOk();
+    $response->assertSee('<title>Sites - WebBlocks CMS</title>', false);
+    $response->assertDontSee('<title>Sites</title>', false);
+    $response->assertDontSee('<title>Sites - WebBlocks CMS - WebBlocks CMS</title>', false);
+  }
+
+  #[Test]
+  public function admin_layout_does_not_duplicate_existing_product_title_suffix(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->actingAs($user);
+
+    $html = view('webblocks-cms::layouts.admin', [
+      'title' => 'Already Suffixed - WebBlocks CMS',
+      'heading' => 'Already Suffixed',
+    ])->render();
+
+    $this->assertStringContainsString('<title>Already Suffixed - WebBlocks CMS</title>', $html);
+    $this->assertStringNotContainsString('<title>Already Suffixed - WebBlocks CMS - WebBlocks CMS</title>', $html);
   }
 
   #[Test]

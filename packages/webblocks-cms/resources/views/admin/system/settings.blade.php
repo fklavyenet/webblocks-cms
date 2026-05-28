@@ -95,7 +95,7 @@
                         <div class="wb-stack-2 wb-field">
                             <label for="settings_project_name">Project Name</label>
                             <input id="settings_project_name" name="project_name" type="text" class="wb-input" maxlength="255" value="{{ $settings['project_name'] }}">
-                            <div class="wb-text-sm wb-text-muted">Shown in the admin topbar and admin browser titles.</div>
+                            <div class="wb-text-sm wb-text-muted">Shown in the admin topbar.</div>
                         </div>
 
                         <div class="wb-stack-2 wb-field">

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Standardize admin browser tab titles through the shared package admin layout as `{Page Title} - WebBlocks CMS`, while keeping Project Identity scoped to the admin topbar and avoiding duplicate product suffixes.
+
 ## 1.32.76
 
 - Align the admin sidebar footer version label with the WebBlocks UI utility-class contract by moving centering onto the footer text element and removing the CMS-specific sidebar footer text-align override.
