@@ -3,7 +3,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $message->subject ?: 'Contact Message',
-        'description' => 'Inspect the saved submission record and manage its editorial status.',
+        'description' => 'Inspect the saved submission record, spam signals, and notification delivery without mixing editorial status with SMTP state.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><span class="wb-status-pill '.$message->statusClass().'">'.e($message->status).'</span><a href="'.route('admin.contact-messages.index').'" class="wb-btn wb-btn-secondary">Back to Inbox</a></div>',
     ])
 
@@ -51,13 +51,29 @@
         </div>
 
         <div class="wb-card">
-            <div class="wb-card-header"><strong>Notification</strong></div>
+            <div class="wb-card-header"><strong>Email notification</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
                 <div><strong>Status:</strong> <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span></div>
                 <div><strong>Recipient:</strong> {{ $message->notification_recipient ?? '-' }}</div>
                 <div><strong>Sent at:</strong> {{ $message->notification_sent_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
                 <div><strong>Failure detail:</strong> {{ $message->notification_error ?? '-' }}</div>
             </div>
+        </div>
+    </div>
+
+    <div class="wb-card">
+        <div class="wb-card-header"><strong>Message classification</strong></div>
+        <div class="wb-card-body wb-stack wb-gap-2">
+            <div><strong>Editorial status:</strong> <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span></div>
+            <div><strong>Spam score:</strong> {{ $message->spam_score ?? 0 }}</div>
+            <div><strong>Spam signals:</strong>
+                @if ($message->spamReasonLabels() === [])
+                    -
+                @else
+                    {{ implode(', ', $message->spamReasonLabels()) }}
+                @endif
+            </div>
+            <div class="wb-text-sm wb-text-muted">Mark spam stores a durable editorial status for filtering and future spam-signal workflows; it does not change notification delivery history.</div>
         </div>
     </div>
 

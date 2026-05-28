@@ -23,6 +23,8 @@ class ContactMessage extends Model
     'ip_address',
     'user_agent',
     'referer',
+    'spam_score',
+    'spam_reasons',
     'notification_enabled',
     'notification_recipient',
     'notification_sent_at',
@@ -32,6 +34,8 @@ class ContactMessage extends Model
   protected function casts(): array
   {
     return [
+      'spam_reasons' => 'array',
+      'spam_score' => 'integer',
       'notification_enabled' => 'boolean',
       'notification_sent_at' => 'datetime',
     ];
@@ -96,6 +100,13 @@ class ContactMessage extends Model
     }
 
     return 'wb-status-info';
+  }
+
+  public function spamReasonLabels(): array
+  {
+    $reasons = $this->spam_reasons;
+
+    return is_array($reasons) ? array_values(array_filter($reasons, 'is_string')) : [];
   }
 
   public function sourceLabel(): string

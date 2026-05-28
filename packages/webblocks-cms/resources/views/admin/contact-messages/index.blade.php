@@ -3,7 +3,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => 'Contact Messages',
-        'description' => 'Review saved public enquiries, check notification delivery, and update editorial status.',
+        'description' => 'Review saved public enquiries, separate editorial spam status from email notification delivery, and update message status.',
         'count' => $totalCount,
     ])
 
@@ -89,8 +89,8 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Subject</th>
-                                <th>Status</th>
-                                <th>Notification</th>
+                                <th>Editorial status</th>
+                                <th>Email notification</th>
                                 <th>Received</th>
                                 <th>Actions</th>
                             </tr>
@@ -117,6 +117,9 @@
                                     </td>
                                     <td>
                                         <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span>
+                                        @if ($message->spam_score > 0)
+                                            <div class="wb-text-sm wb-text-muted">Spam score {{ $message->spam_score }}</div>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="wb-status-pill {{ $message->notificationClass() }}">{{ $message->notificationLabel() }}</span>

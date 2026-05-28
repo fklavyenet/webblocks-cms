@@ -11,10 +11,14 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
+use WebBlocks\Cms\Support\Contact\ContactMessageSpamScorer;
 
 class ContactMessageController extends Controller
 {
-  public function __construct(private readonly ContactMessageNotifier $notifier) {}
+  public function __construct(
+    private readonly ContactMessageNotifier $notifier,
+    private readonly ContactMessageSpamScorer $spamScorer,
+  ) {}
 
   public function store(ContactMessageRequest $request): RedirectResponse
   {
@@ -45,6 +49,7 @@ class ContactMessageController extends Controller
 
     $notificationEnabled = (bool) $block->setting('send_email_notification', true);
     $notificationRecipient = $this->notificationRecipient($block, $block->page?->site);
+    $spamSignal = $this->spamScorer->score($payload, $request->ip());
 
     $contactMessage = ContactMessage::create([
       'block_id' => $block->id,
@@ -53,11 +58,13 @@ class ContactMessageController extends Controller
       'email' => $payload['email'],
       'subject' => $payload['subject'],
       'message' => $payload['message'],
-      'status' => 'new',
+      'status' => $spamSignal['is_spam'] ? 'spam' : 'new',
       'source_url' => $sourceUrl,
       'ip_address' => $request->ip(),
       'user_agent' => $request->userAgent(),
       'referer' => $request->headers->get('referer'),
+      'spam_score' => $spamSignal['score'],
+      'spam_reasons' => $spamSignal['reasons'] !== [] ? $spamSignal['reasons'] : null,
       'notification_enabled' => $notificationEnabled,
       'notification_recipient' => $notificationRecipient !== '' ? $notificationRecipient : null,
     ]);

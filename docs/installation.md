@@ -162,6 +162,8 @@ Notes:
 - local contact form email notifications should use DDEV Mailpit; the usual local SMTP values are `MAIL_MAILER=smtp`, `MAIL_HOST=127.0.0.1`, and `MAIL_PORT=1025`
 - Contact Form notification recipients resolve in this order: block-level `recipient_email`, current site's default contact recipient, `CONTACT_RECIPIENT_EMAIL`, then `MAIL_FROM_ADDRESS` as the last safe fallback
 - contact submissions are stored independently from notification delivery, so a public `Message sent` response confirms storage success even if admin later shows notification `Failed`
+- Contact Form blocks render the package-standard hidden `wb-public-contact-honeypot` wrapper with a `website` field, `tabindex="-1"`, and `autocomplete="off"`; when that field is filled, the server returns the same generic success redirect and does not store a Contact Message or attempt notification
+- submissions that pass the honeypot can still be classified as `spam` by conservative stored signals such as commercial outreach language, link density, repeated same-IP submissions, or a free-mail sales pitch with a generic subject; this status is durable admin classification and is separate from email notification state
 - when notification delivery fails, admins can inspect the saved message under `Admin -> Contact Messages` to see the compact failure state in the list and the stored failure detail on the message detail screen
 
 Then open:

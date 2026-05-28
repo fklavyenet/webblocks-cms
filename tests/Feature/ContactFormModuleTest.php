@@ -7,6 +7,7 @@ use Database\Seeders\FoundationSiteLocaleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use PHPUnit\Framework\Attributes\Test;
@@ -161,7 +162,9 @@ class ContactFormModuleTest extends TestCase
       'page_id' => $block->page_id,
       'email' => 'taylor@example.com',
       'status' => 'new',
+      'spam_score' => 0,
     ]);
+    Mail::assertSent(PackageContactMessageNotification::class);
   }
 
   #[Test]
@@ -619,10 +622,62 @@ class ContactFormModuleTest extends TestCase
     ]));
 
     $response->assertStatus(302);
+    $response->assertSessionHas('contact_form_success_block_id', $block->id);
     $this->assertSame('/p/contact', parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_PATH));
     $this->assertNull(parse_url((string) $response->baseResponse->headers->get('Location'), PHP_URL_FRAGMENT));
     $this->assertDatabaseCount('contact_messages', 0);
     Mail::assertNothingSent();
+  }
+
+  #[Test]
+  public function commercial_outreach_submission_is_persisted_as_spam_without_changing_notification_state(): void
+  {
+    Mail::fake();
+    [, $block] = $this->createContactFormPage();
+
+    $this->withServerVariables([
+      'REMOTE_ADDR' => '203.0.113.44',
+    ])->post(route('contact-messages.store'), $this->submissionPayload($block, [
+      'email' => 'pitch.sender@gmail.com',
+      'subject' => 'Partnership',
+      'message' => 'We noticed your website and can help with digital marketing, link building, and lead generation. See https://agency.example.com and https://agency.example.com/services.',
+    ]))->assertRedirect(route('pages.show', ['slug' => 'contact'], false));
+
+    $message = ContactMessage::query()->latest('id')->firstOrFail();
+
+    $this->assertSame('spam', $message->status);
+    $this->assertGreaterThanOrEqual(60, $message->spam_score);
+    $this->assertContains('Commercial outreach language', $message->spamReasonLabels());
+    $this->assertNotEmpty(array_intersect(['Multiple links', 'High link density'], $message->spamReasonLabels()));
+    $this->assertTrue($message->notification_enabled);
+    $this->assertNotNull($message->notification_sent_at);
+    $this->assertNull($message->notification_error);
+    Mail::assertSent(PackageContactMessageNotification::class);
+  }
+
+  #[Test]
+  public function contact_form_rate_limiter_still_limits_repeated_submissions(): void
+  {
+    config()->set('contact.rate_limit_per_minute', 2);
+    Mail::fake();
+    [, $block] = $this->createContactFormPage();
+    RateLimiter::clear('198.51.100.24|'.$block->id);
+
+    foreach (range(1, 2) as $index) {
+      $this->withServerVariables([
+        'REMOTE_ADDR' => '198.51.100.24',
+      ])->post(route('contact-messages.store'), $this->submissionPayload($block, [
+        'email' => 'sender-'.$index.'@example.com',
+      ]))->assertRedirect();
+    }
+
+    $this->withServerVariables([
+      'REMOTE_ADDR' => '198.51.100.24',
+    ])->post(route('contact-messages.store'), $this->submissionPayload($block, [
+      'email' => 'sender-3@example.com',
+    ]))->assertTooManyRequests();
+
+    $this->assertDatabaseCount('contact_messages', 2);
   }
 
   #[Test]
@@ -652,6 +707,33 @@ class ContactFormModuleTest extends TestCase
       ->assertRedirect();
 
     $this->assertSame('replied', $message->fresh()->status);
+  }
+
+  #[Test]
+  public function admin_mark_spam_sets_a_persistent_editorial_status(): void
+  {
+    $user = User::factory()->create();
+    [, $block] = $this->createContactFormPage();
+    $message = ContactMessage::create([
+      'block_id' => $block->id,
+      'page_id' => $block->page_id,
+      'name' => 'Taylor Editor',
+      'email' => 'taylor@example.com',
+      'subject' => 'Spam status',
+      'message' => 'Please mark this message as spam.',
+      'status' => 'new',
+      'notification_enabled' => true,
+      'notification_error' => 'SMTP unavailable',
+    ]);
+
+    $this->actingAs($user)
+      ->patch(route('admin.contact-messages.status', $message), ['status' => 'spam'])
+      ->assertRedirect();
+
+    $fresh = $message->fresh();
+
+    $this->assertSame('spam', $fresh->status);
+    $this->assertSame('SMTP unavailable', $fresh->notification_error);
   }
 
   #[Test]
@@ -725,7 +807,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('data-admin-listing-filters-fields', false);
     $response->assertSee('data-admin-listing-filters-actions', false);
     $response->assertSee('Search');
-    $response->assertSee('Notification');
+    $response->assertSee('Email notification');
     $response->assertSee('id="contact_messages_search"', false);
     $response->assertSee('id="contact_messages_status"', false);
     $response->assertSee('id="contact_messages_notification"', false);
@@ -1005,7 +1087,7 @@ class ContactFormModuleTest extends TestCase
       'Message:',
       'Detail source check.',
       'Submission details',
-      'Notification',
+      'Email notification',
       'Technical details',
     ]);
     $response->assertSee('Detail source check.');
@@ -1021,7 +1103,7 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('https://example.test/origin');
     $response->assertSee('Received at:');
     $response->assertSee('Block / Slot:');
-    $response->assertSee('Notification');
+    $response->assertSee('Email notification');
     $response->assertSee('Status:');
     $response->assertSee('Recipient:');
     $response->assertSee('Technical details');
@@ -1081,19 +1163,29 @@ class ContactFormModuleTest extends TestCase
       'notification_enabled' => true,
       'notification_recipient' => 'team@example.com',
       'notification_error' => 'SMTP unavailable',
+      'spam_score' => 75,
+      'spam_reasons' => ['Commercial outreach language'],
     ]);
 
     $this->actingAs($user)
       ->get(route('admin.contact-messages.index'))
       ->assertOk()
       ->assertSee('Failed', false)
-      ->assertSee('SMTP unavailable', false);
+      ->assertSee('SMTP unavailable', false)
+      ->assertSee('Editorial status')
+      ->assertSee('Email notification')
+      ->assertSee('Spam score 75');
 
     $this->actingAs($user)
       ->get(route('admin.contact-messages.show', $message))
       ->assertOk()
       ->assertSee('Failure detail:', false)
-      ->assertSee('SMTP unavailable', false);
+      ->assertSee('SMTP unavailable', false)
+      ->assertSee('Message classification')
+      ->assertSee('Editorial status:')
+      ->assertSee('Spam score:')
+      ->assertSee('Commercial outreach language')
+      ->assertSee('does not change notification delivery history');
   }
 
   #[Test]
@@ -1114,6 +1206,10 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('method="POST"', false);
     $response->assertSee('name="_token"', false);
     $response->assertSee('name="source_url" value="/p/contact"', false);
+    $response->assertSee('class="wb-public-contact-honeypot"', false);
+    $response->assertSee('name="website"', false);
+    $response->assertSee('tabindex="-1"', false);
+    $response->assertSee('autocomplete="off"', false);
   }
 
   #[Test]

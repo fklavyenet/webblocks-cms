@@ -21,6 +21,8 @@ return new class extends Migration
       $table->string('ip_address', 45)->nullable();
       $table->text('user_agent')->nullable();
       $table->text('referer')->nullable();
+      $table->unsignedSmallInteger('spam_score')->default(0);
+      $table->json('spam_reasons')->nullable();
       $table->boolean('notification_enabled')->default(true);
       $table->string('notification_recipient')->nullable();
       $table->timestamp('notification_sent_at')->nullable();
@@ -28,6 +30,7 @@ return new class extends Migration
       $table->timestamps();
 
       $table->index(['status', 'created_at']);
+      $table->index(['spam_score', 'created_at']);
       $table->index('block_id');
       $table->index('page_id');
     });
