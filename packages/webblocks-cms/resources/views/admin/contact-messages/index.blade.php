@@ -128,7 +128,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
-                                    <td>
+                                    <td class="wb-table-actions">
                                         <div class="wb-action-group">
                                             <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="View message detail" aria-label="View message detail">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>

@@ -129,8 +129,8 @@
                                     <td>{{ $managedUser->siteAccessSummary() }}</td>
                                     <td><span class="wb-status-pill {{ $managedUser->statusBadgeClass() }}">{{ $managedUser->statusLabel() }}</span></td>
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
-                                    <td class="wb-whitespace-nowrap">
-                                        <div class="wb-action-group wb-whitespace-nowrap">
+                                    <td class="wb-table-actions">
+                                        <div class="wb-action-group">
                                             <a href="{{ route('admin.users.edit', $managedUser) }}" class="wb-action-btn wb-action-btn-edit" title="Edit user" aria-label="Edit user">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>

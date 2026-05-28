@@ -654,8 +654,10 @@ class AdminPluginListingTest extends TestCase
     $list->assertDontSee('data-plugin-system-card=', false);
     $list->assertSee('class="wb-btn wb-btn-primary"', false);
     $list->assertSeeText('Upload Plugin ZIP');
-    $list->assertSee('td class="wb-table-actions wb-whitespace-nowrap"', false);
-    $list->assertSee('class="wb-action-group wb-whitespace-nowrap"', false);
+    $list->assertSee('td class="wb-table-actions"', false);
+    $list->assertSee('class="wb-action-group"', false);
+    $list->assertDontSee('td class="wb-table-actions wb-whitespace-nowrap"', false);
+    $list->assertDontSee('class="wb-action-group wb-whitespace-nowrap"', false);
 
     $this->actingAs($user)
       ->post(route('admin.system.plugins.enable', 'webblocks-ui-manager'))

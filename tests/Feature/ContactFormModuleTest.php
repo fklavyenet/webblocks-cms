@@ -813,8 +813,12 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('id="contact_messages_notification"', false);
     $response->assertSee('Apply', false);
     $response->assertSee(route('admin.contact-messages.index'), false);
-    $response->assertSee('wb-action-group', false);
+    $response->assertSee('<th>Actions</th>', false);
+    $response->assertSee('<td class="wb-table-actions">', false);
+    $response->assertSee('<div class="wb-action-group">', false);
     $response->assertSee('wb-icon-menu', false);
+    $response->assertDontSee('<th class="wb-text-end">Actions</th>', false);
+    $response->assertDontSee('<td class="wb-text-end">', false);
     $response->assertDontSee('<th>Source</th>', false);
   }
 

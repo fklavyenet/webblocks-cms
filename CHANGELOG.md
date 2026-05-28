@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Document the admin table action audit and standardize Contact Messages, Users, and Plugin Management row actions on `td.wb-table-actions > .wb-action-group` so icon and dropdown controls stay compact without making the generic action group utility globally nowrap.
+
 ## 1.32.78
 
 - Harden Contact Form spam handling around the existing package-standard honeypot: filled `website` submissions now have explicit backend coverage for generic success-without-storage behavior, while normal submissions remain stored and notifications are still attempted separately.
