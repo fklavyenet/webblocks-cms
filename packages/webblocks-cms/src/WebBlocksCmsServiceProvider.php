@@ -13,6 +13,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
+use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
@@ -711,6 +712,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PACKAGE_CONSOLE_COMMANDS = [
     PackageStatusCommand::class,
+    ContactMailDiagnoseCommand::class,
     SearchRebuildCommand::class,
     SyncWebBlocksUiIconsCommand::class,
     BlockTypeContractsAuditCommand::class,

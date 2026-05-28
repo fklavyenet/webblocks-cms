@@ -109,6 +109,24 @@ class ContactMessage extends Model
     return is_array($reasons) ? array_values(array_filter($reasons, 'is_string')) : [];
   }
 
+  public function detailTitleName(): string
+  {
+    foreach ([$this->name, $this->email, $this->subject] as $candidate) {
+      $value = trim((string) $candidate);
+
+      if ($value !== '') {
+        return $value;
+      }
+    }
+
+    return '#'.$this->id;
+  }
+
+  public function detailPageTitle(): string
+  {
+    return 'Contact Message: '.$this->detailTitleName();
+  }
+
   public function sourceLabel(): string
   {
     if ($this->page?->title) {

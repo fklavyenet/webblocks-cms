@@ -545,8 +545,13 @@
     line-height: 1.3;
 }
 
+.wb-contact-message-meta {
+    overflow-wrap: anywhere;
+}
+
 .wb-contact-message-body {
     min-height: 12rem;
+    overflow-wrap: anywhere;
     white-space: pre-line;
 }
 

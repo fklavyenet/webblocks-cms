@@ -58,6 +58,20 @@ That command safely upserts core CMS block types, leaves install-specific custom
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 
+## Contact Mail Diagnostics
+
+Contact Form submissions are saved before notification delivery. SMTP failures are recorded on the saved Contact Message as email notification state and do not change the editorial status or spam classification.
+
+Use the secret-free mail diagnostic command when a Contact Message shows notification failure:
+
+```bash
+ddev artisan contact:mail-diagnose
+ddev artisan contact:mail-diagnose --block=137
+ddev artisan contact:mail-diagnose --send-test=operator@example.com
+```
+
+The command reports the resolved mailer, host, port, scheme/encryption fields, username, from address, `CONTACT_RECIPIENT_EMAIL`, config-cache state, and optional Contact Form block/site recipient fallbacks. It never prints `MAIL_PASSWORD` or token values. The optional send test reports only success or a sanitized failure detail, so operators can distinguish stale config, host/port/encryption mismatch, username/from mismatch, and invalid mailbox credentials without leaking secrets into terminal logs.
+
 ## WebBlocks UI Manager Operator Plugin
 
 WebBlocks UI Manager is an internal/operator plugin for product-specific release operations. It is not bundled into normal CMS runtime packages and ordinary CMS installs should not install it. Build its local artifact from the maintenance repo with:

@@ -1,8 +1,8 @@
-@extends('webblocks-cms::layouts.admin', ['title' => 'Contact Message', 'heading' => 'Contact Message'])
+@extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $message->subject ?: 'Contact Message',
+        'title' => $pageTitle,
         'description' => 'Inspect the saved submission record, spam signals, and notification delivery without mixing editorial status with SMTP state.',
         'actions' => '<div class="wb-cluster wb-cluster-2"><span class="wb-status-pill '.$message->statusClass().'">'.e($message->status).'</span><a href="'.route('admin.contact-messages.index').'" class="wb-btn wb-btn-secondary">Back to Inbox</a></div>',
     ])
@@ -26,12 +26,23 @@
 
     <div class="wb-card">
         <div class="wb-card-header"><strong>Visitor message</strong></div>
-        <div class="wb-card-body wb-stack wb-gap-3">
-            <div><strong>Name:</strong> {{ $message->name }}</div>
-            <div><strong>Email:</strong> <a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></div>
-            <div><strong>Subject:</strong> {{ $message->subject ?? '—' }}</div>
+        <div class="wb-card-body wb-stack wb-gap-4">
+            <dl class="wb-detail-list wb-contact-message-meta">
+                <div class="wb-detail-row">
+                    <dt class="wb-detail-label">Name</dt>
+                    <dd class="wb-detail-value">{{ $message->name }}</dd>
+                </div>
+                <div class="wb-detail-row">
+                    <dt class="wb-detail-label">Email</dt>
+                    <dd class="wb-detail-value"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></dd>
+                </div>
+                <div class="wb-detail-row">
+                    <dt class="wb-detail-label">Subject</dt>
+                    <dd class="wb-detail-value">{{ $message->subject ?? '—' }}</dd>
+                </div>
+            </dl>
             <div class="wb-stack wb-gap-2">
-                <strong>Message:</strong>
+                <strong>Message</strong>
                 <div class="wb-contact-message-body">{{ $message->message }}</div>
             </div>
         </div>

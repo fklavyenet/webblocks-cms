@@ -88,6 +88,7 @@ class ContactMessageController extends Controller
 
     return view('webblocks-cms::admin.contact-messages.show', [
       'message' => $contactMessage,
+      'pageTitle' => $contactMessage->detailPageTitle(),
       'statuses' => ContactMessage::statuses(),
     ]);
   }

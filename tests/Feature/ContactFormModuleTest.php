@@ -1080,20 +1080,26 @@ class ContactFormModuleTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.contact-messages.show', $message));
 
     $response->assertOk();
+    $response->assertSee('<title>Contact Message: Taylor Editor - WebBlocks CMS</title>', false);
+    $response->assertSee('Contact Message: Taylor Editor');
     $response->assertSeeInOrder([
       'Visitor message',
-      'Name:',
+      'Name',
       'Taylor Editor',
-      'Email:',
+      'Email',
       'taylor@example.com',
-      'Subject:',
+      'Subject',
       'Context check',
-      'Message:',
+      'Message',
       'Detail source check.',
       'Submission details',
       'Email notification',
       'Technical details',
     ]);
+    $response->assertSee('class="wb-detail-list wb-contact-message-meta"', false);
+    $response->assertSee('class="wb-detail-row"', false);
+    $response->assertSee('class="wb-detail-label">Name</dt>', false);
+    $response->assertSee('class="wb-detail-value"', false);
     $response->assertSee('Detail source check.');
     $response->assertSee('Taylor Editor');
     $response->assertSee('taylor@example.com');
@@ -1122,6 +1128,42 @@ class ContactFormModuleTest extends TestCase
     $response->assertSee('Mark replied');
     $response->assertSee('Back to Inbox');
     $response->assertSee('data-wb-target="#delete-contact-message-modal"', false);
+  }
+
+  #[Test]
+  public function contact_message_detail_title_uses_sender_fallback_order(): void
+  {
+    $user = User::factory()->create();
+    [$page, $block] = $this->createContactFormPage();
+
+    $cases = [
+      ['name' => 'Sam Sender', 'email' => 'sam@example.com', 'subject' => 'Subject fallback', 'expected' => 'Sam Sender'],
+      ['name' => '', 'email' => 'email-fallback@example.com', 'subject' => 'Subject fallback', 'expected' => 'email-fallback@example.com'],
+      ['name' => '', 'email' => '', 'subject' => 'Subject fallback', 'expected' => 'Subject fallback'],
+      ['name' => '', 'email' => '', 'subject' => null, 'expected' => null],
+    ];
+
+    foreach ($cases as $case) {
+      $message = ContactMessage::create([
+        'block_id' => $block->id,
+        'page_id' => $page->id,
+        'name' => $case['name'],
+        'email' => $case['email'],
+        'subject' => $case['subject'],
+        'message' => 'Title fallback check.',
+        'status' => 'read',
+      ]);
+
+      $expected = $case['expected'] ?? '#'.$message->id;
+
+      $this->actingAs($user)
+        ->get(route('admin.contact-messages.show', $message))
+        ->assertOk()
+        ->assertSee('<title>Contact Message: '.$expected.' - WebBlocks CMS</title>', false)
+        ->assertSee('Contact Message: '.$expected)
+        ->assertSee('Subject')
+        ->assertSee($case['subject'] ?? '—');
+    }
   }
 
   #[Test]

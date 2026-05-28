@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Polish Contact Message detail pages with `Contact Message: {sender}` titles, compact visitor meta layout, and a secret-free `contact:mail-diagnose` command for inspecting Contact Form SMTP configuration and optional controlled send tests.
+
 ## 1.32.79
 
 - Document the admin table action audit and standardize Contact Messages, Users, and Plugin Management row actions on `td.wb-table-actions > .wb-action-group` so icon and dropdown controls stay compact without making the generic action group utility globally nowrap.
