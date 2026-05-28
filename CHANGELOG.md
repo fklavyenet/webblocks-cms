@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.78
+
 - Harden Contact Form spam handling around the existing package-standard honeypot: filled `website` submissions now have explicit backend coverage for generic success-without-storage behavior, while normal submissions remain stored and notifications are still attempted separately.
 - Add conservative Contact Message spam scoring for commercial outreach language, link density, repeated same-IP submissions, and free-mail sales pitches with generic subjects, storing `spam_score` and `spam_reasons` while using the durable `spam` editorial status instead of deleting messages.
 - Clarify Contact Messages admin list/detail language so editorial spam status, stored spam signals, and SMTP notification failure details are shown as separate concepts.

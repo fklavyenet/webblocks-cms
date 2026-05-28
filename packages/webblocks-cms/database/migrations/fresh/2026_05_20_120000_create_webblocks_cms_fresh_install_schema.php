@@ -630,6 +630,8 @@ return new class extends Migration
       $table->string('ip_address')->nullable();
       $table->text('user_agent')->nullable();
       $table->text('referer')->nullable();
+      $table->unsignedSmallInteger('spam_score')->default(0);
+      $table->json('spam_reasons')->nullable();
       $table->boolean('notification_enabled')->default(false);
       $table->string('notification_recipient')->nullable();
       $table->timestamp('notification_sent_at')->nullable();
