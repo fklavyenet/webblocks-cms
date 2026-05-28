@@ -35,4 +35,5 @@ Downstream consumers such as QuizTem and Herne should adopt the same table-actio
 
 - Contact Messages should be updated first to `td.wb-table-actions > .wb-action-group` so view/read/more actions stay on one line while editorial spam status and SMTP notification failure remain separate columns.
 - Users and Plugin Management should drop local nowrap workarounds and rely on the shared `wb-table-actions` pattern.
+- System Backups now follows the same table-action cell standard on the index list while keeping destructive delete controls in modal-confirmed forms.
 - Broader CMS list screens can migrate incrementally when touched; this audit does not justify a global CSS change or a redesign of every table.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.32.82
+
+- Polish the `Maintenance -> Backups` admin screen so latest-status and recommendation cards render before the compact filter toolbar, the Backups listing card follows immediately after the filters, and row actions use the shared `td.wb-table-actions > .wb-action-group` table-action standard without globally forcing generic action groups to nowrap.
+
 ## 1.32.81
 
 - Prepare v1.32.81 as a production Backups download hotfix by routing backup archive download, detail, listing, and delete paths through one canonical backups-disk resolver, supporting legacy absolute paths inside the backups root while blocking traversal, symlink escapes, and absolute paths outside that root.

@@ -24,51 +24,6 @@
             </div>
         @endif
 
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-body">
-                @include('webblocks-cms::admin.partials.listing-filters', [
-                    'action' => route('admin.system.backups.index'),
-                    'search' => [
-                        'id' => 'backups_search',
-                        'name' => 'search',
-                        'label' => 'Search',
-                        'value' => $filters['search'],
-                        'placeholder' => 'Search archive, source, summary, type, or status',
-                    ],
-                    'selects' => [
-                        [
-                            'id' => 'backups_type',
-                            'name' => 'type',
-                            'label' => 'Type',
-                            'selected' => $filters['type'],
-                            'placeholder' => 'All types',
-                            'options' => [
-                                \WebBlocks\Cms\Models\SystemBackup::TYPE_MANUAL => 'Manual',
-                                \WebBlocks\Cms\Models\SystemBackup::TYPE_UPLOADED => 'Uploaded',
-                                \WebBlocks\Cms\Models\SystemBackup::TYPE_RESTORE_SAFETY => 'Restore safety',
-                                \WebBlocks\Cms\Models\SystemBackup::TYPE_PRE_UPDATE => 'Pre update',
-                            ],
-                        ],
-                        [
-                            'id' => 'backups_status',
-                            'name' => 'status',
-                            'label' => 'Status',
-                            'selected' => $filters['status'],
-                            'placeholder' => 'All statuses',
-                            'options' => [
-                                \WebBlocks\Cms\Models\SystemBackup::STATUS_COMPLETED => 'Completed',
-                                \WebBlocks\Cms\Models\SystemBackup::STATUS_RUNNING => 'Running',
-                                \WebBlocks\Cms\Models\SystemBackup::STATUS_FAILED => 'Failed',
-                            ],
-                        ],
-                    ],
-                    'showReset' => $hasActiveFilters,
-                    'resetUrl' => route('admin.system.backups.index'),
-                    'applyLabel' => 'Apply',
-                ])
-            </div>
-        </div>
-
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
@@ -126,16 +81,52 @@
                     @endif
 
                     <div class="wb-text-sm wb-text-muted">Each backup archive includes a database dump, the current `storage/app/public` uploads snapshot, and a manifest. Uploaded backup archives are validated before they are registered. This full-system restore flow overwrites the current database and uploaded files, is different from Export / Import, and reuses the same restore path that creates a fresh safety backup first.</div>
-
-                    @if (! $freshness['has_recent_successful_backup'])
-                        <form method="POST" action="{{ route('admin.system.backups.store') }}" class="wb-stack wb-gap-3">
-                            @csrf
-                            <div class="wb-flex wb-items-center wb-gap-2 wb-flex-wrap">
-                                <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>Create backup</button>
-                            </div>
-                        </form>
-                    @endif
                 </div>
+            </div>
+        </div>
+
+        <div class="wb-card wb-card-muted">
+            <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.listing-filters', [
+                    'action' => route('admin.system.backups.index'),
+                    'search' => [
+                        'id' => 'backups_search',
+                        'name' => 'search',
+                        'label' => 'Search',
+                        'value' => $filters['search'],
+                        'placeholder' => 'Search archive, source, summary, type, or status',
+                    ],
+                    'selects' => [
+                        [
+                            'id' => 'backups_type',
+                            'name' => 'type',
+                            'label' => 'Type',
+                            'selected' => $filters['type'],
+                            'placeholder' => 'All types',
+                            'options' => [
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_MANUAL => 'Manual',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_UPLOADED => 'Uploaded',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_RESTORE_SAFETY => 'Restore safety',
+                                \WebBlocks\Cms\Models\SystemBackup::TYPE_PRE_UPDATE => 'Pre update',
+                            ],
+                        ],
+                        [
+                            'id' => 'backups_status',
+                            'name' => 'status',
+                            'label' => 'Status',
+                            'selected' => $filters['status'],
+                            'placeholder' => 'All statuses',
+                            'options' => [
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_COMPLETED => 'Completed',
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_RUNNING => 'Running',
+                                \WebBlocks\Cms\Models\SystemBackup::STATUS_FAILED => 'Failed',
+                            ],
+                        ],
+                    ],
+                    'showReset' => $hasActiveFilters,
+                    'resetUrl' => route('admin.system.backups.index'),
+                    'applyLabel' => 'Apply',
+                ])
             </div>
         </div>
 
@@ -232,7 +223,7 @@
                                         <td>{{ $backup->contentsLabel() ?: '-' }}</td>
                                         <td>{{ $backup->humanArchiveSize() }}</td>
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
-                                        <td>
+                                        <td class="wb-table-actions">
                                             <div class="wb-action-group">
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="Backup details" aria-label="Backup details">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>

@@ -68,7 +68,22 @@ class SystemBackupsTest extends TestCase
   }
 
   #[Test]
-  public function recommendation_card_only_shows_create_backup_when_a_recent_backup_is_not_available(): void
+  public function backups_index_renders_summary_filters_and_listing_in_admin_standard_order(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+    $content = $response->getContent();
+
+    $response->assertOk();
+    $this->assertStringOrder($content, 'Latest Backup Status', 'Backup Recommendation');
+    $this->assertStringOrder($content, 'Backup Recommendation', 'id="backups_search"');
+    $this->assertStringOrder($content, 'id="backups_search"', '<strong>Backups</strong>');
+    $this->assertStringOrder($content, 'id="backups_search"', 'No backup history yet');
+  }
+
+  #[Test]
+  public function recommendation_card_keeps_create_backup_action_in_listing_header(): void
   {
     $user = User::factory()->superAdmin()->create();
 
@@ -76,7 +91,7 @@ class SystemBackupsTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('Backup Recommendation');
-    $this->assertSame(2, substr_count($response->getContent(), 'Create backup'));
+    $this->assertSame(1, substr_count($response->getContent(), 'Create backup'));
     $this->assertSame(1, substr_count($response->getContent(), 'Upload backup'));
     $response->assertDontSee('>Cancel<', false);
   }
@@ -105,6 +120,53 @@ class SystemBackupsTest extends TestCase
     $response->assertSee('Recent backup available');
     $this->assertSame(1, substr_count($response->getContent(), 'Create backup'));
     $this->assertSame(1, substr_count($response->getContent(), 'Upload backup'));
+  }
+
+  #[Test]
+  public function backups_row_actions_use_table_action_cell_and_non_wrapping_group(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL,
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'includes_database' => true,
+      'includes_uploads' => true,
+      'archive_disk' => 'backups',
+      'archive_path' => 'actions.zip',
+      'archive_filename' => 'actions.zip',
+      'started_at' => now()->subMinutes(5),
+      'finished_at' => now()->subMinutes(4),
+      'summary' => 'Completed.',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('admin.system.backups.index'));
+    $content = $response->getContent();
+
+    $response->assertOk();
+    $this->assertStringOrder($content, 'id="backups_search"', '<table class="wb-table wb-table-striped wb-table-hover">');
+    $response->assertSee('<th>Actions</th>', false);
+    $response->assertSee('<td class="wb-table-actions">', false);
+    $response->assertSee('<div class="wb-action-group">', false);
+    $this->assertStringContainsString(
+      '<td class="wb-table-actions">'."\n".'                                            <div class="wb-action-group">',
+      $content
+    );
+    $this->assertStringNotContainsString('class="wb-action-group wb-stack', $content);
+    $this->assertStringNotContainsString('class="wb-action-group wb-flex-col', $content);
+    $this->assertStringNotContainsString('class="wb-action-group wb-whitespace-nowrap"', $content);
+    $this->assertStringContainsString(route('admin.system.backups.show', $backup), $content);
+    $this->assertStringContainsString('data-wb-target="#delete-backup-'.$backup->id.'-modal"', $content);
+  }
+
+  #[Test]
+  public function table_action_css_scopes_nowrap_to_table_action_cells(): void
+  {
+    $css = File::get(public_path('cms/css/admin.css'));
+
+    $this->assertMatchesRegularExpression('/\\.wb-action-group\\s*\\{[^}]*flex-wrap:\\s*wrap;/s', $css);
+    $this->assertDoesNotMatchRegularExpression('/\\.wb-action-group\\s*\\{[^}]*white-space:\\s*nowrap;/s', $css);
+    $this->assertMatchesRegularExpression('/\\.wb-table-actions\\s*\\{[^}]*text-align:\\s*left;[^}]*white-space:\\s*nowrap;/s', $css);
+    $this->assertMatchesRegularExpression('/\\.wb-table-actions \\.wb-action-group\\s*\\{[^}]*flex-wrap:\\s*nowrap;/s', $css);
   }
 
   #[Test]
@@ -973,6 +1035,7 @@ class SystemBackupsTest extends TestCase
     $response->assertSee('Delete Backup');
     $response->assertSee('This deletes the backup record and archive file when present.');
     $response->assertSee('<th>Actions</th>', false);
+    $response->assertSee('<td class="wb-table-actions">', false);
     $response->assertSee('<div class="wb-action-group">', false);
     $response->assertSee('data-wb-toggle="modal"', false);
     $response->assertDontSee('onsubmit="return confirm', false);
@@ -1997,6 +2060,16 @@ class SystemBackupsTest extends TestCase
     config()->set('filesystems.disks.backups.root', $path);
 
     return $path;
+  }
+
+  private function assertStringOrder(string $content, string $firstNeedle, string $secondNeedle): void
+  {
+    $firstPosition = strpos($content, $firstNeedle);
+    $secondPosition = strpos($content, $secondNeedle);
+
+    $this->assertNotFalse($firstPosition, "Failed asserting that [{$firstNeedle}] exists in the response.");
+    $this->assertNotFalse($secondPosition, "Failed asserting that [{$secondNeedle}] exists in the response.");
+    $this->assertLessThan($secondPosition, $firstPosition, "Failed asserting that [{$firstNeedle}] appears before [{$secondNeedle}].");
   }
 
   private function makeRestoreResult(SystemBackup $backup): BackupRestoreResult

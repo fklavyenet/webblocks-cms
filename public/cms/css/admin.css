@@ -578,7 +578,7 @@
     align-items: center;
     justify-content: flex-start;
     gap: var(--wb-s1);
-    white-space: nowrap;
+    flex-wrap: wrap;
 }
 
 .wb-action-group form {
@@ -587,12 +587,14 @@
 }
 
 .wb-table-actions {
-    text-align: right;
+    width: 1%;
+    text-align: left;
     white-space: nowrap;
 }
 
 .wb-table-actions .wb-action-group {
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
 }
 
 .wb-media-preview-box {
