@@ -77,14 +77,18 @@ jobs:
 
           tag="${{ steps.release.outputs.tag }}"
           version="${tag#v}"
-          notes="$(git tag -l --format='%(contents)' "$tag")"
+          notes=''
 
-          if [ -z "$notes" ] && [ -f CHANGELOG.md ]; then
+          if [ -f CHANGELOG.md ]; then
             notes="$(awk -v version="$version" '
               $0 ~ "^##[[:space:]]+\\[?" version "\\]?([[:space:]]|$)" {capture=1; next}
               capture && $0 ~ "^##[[:space:]]+" {exit}
               capture {print}
             ' CHANGELOG.md)"
+          fi
+
+          if [ -z "$notes" ]; then
+            notes="$(git tag -l --format='%(contents)' "$tag")"
           fi
 
           if [ -z "$notes" ]; then
@@ -235,6 +239,24 @@ jobs:
             --form "asset_notes=<release-asset-notes.txt" \
             --form "operator_notes=<release-operator-notes.txt" \
             --form "technical_notes=<release-technical-notes.txt" \
+            --form "details[title]=<release-title.txt" \
+            --form "details[summary]=<release-summary.txt" \
+            --form "details[highlights]=<release-highlights.txt" \
+            --form "details[fixes]=<release-fixes.txt" \
+            --form "details[compatibility_notes]=<release-compatibility-notes.txt" \
+            --form "details[migration_notes]=<release-migration-notes.txt" \
+            --form "details[asset_notes]=<release-asset-notes.txt" \
+            --form "details[operator_notes]=<release-operator-notes.txt" \
+            --form "details[technical_notes]=<release-technical-notes.txt" \
+            --form "release_details[title]=<release-title.txt" \
+            --form "release_details[summary]=<release-summary.txt" \
+            --form "release_details[highlights]=<release-highlights.txt" \
+            --form "release_details[fixes]=<release-fixes.txt" \
+            --form "release_details[compatibility_notes]=<release-compatibility-notes.txt" \
+            --form "release_details[migration_notes]=<release-migration-notes.txt" \
+            --form "release_details[asset_notes]=<release-asset-notes.txt" \
+            --form "release_details[operator_notes]=<release-operator-notes.txt" \
+            --form "release_details[technical_notes]=<release-technical-notes.txt" \
             --form "release_notes=<release-notes.md" \
             --form "notes=GitHub release package publish for ${TAG_NAME}" \
             --form "source_reference=${TAG_NAME}" \

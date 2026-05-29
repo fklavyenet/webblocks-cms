@@ -26,7 +26,7 @@ The System Updates screen shows human-readable release details before an admin s
 
 The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
 
-The GitHub tag release workflow publishes the structured release detail fields alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes.
+The GitHub tag release workflow publishes the structured release detail fields in top-level and nested detail payload shapes alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes. Compatible clients read structured details from top-level fields, `details`, `release_details`, and update-server `meta.release_details` or `meta.details` payloads.
 
 ## Update Apply Flow
 

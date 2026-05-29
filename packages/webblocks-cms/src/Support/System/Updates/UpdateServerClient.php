@@ -326,7 +326,7 @@ class UpdateServerClient
 
   private function releaseValue(array $release, string $key): mixed
   {
-    foreach (['release_details.'.$key, 'details.'.$key, $key] as $path) {
+    foreach (['release_details.'.$key, 'details.'.$key, 'meta.release_details.'.$key, 'meta.details.'.$key, $key] as $path) {
       if (Arr::has($release, $path)) {
         return Arr::get($release, $path);
       }

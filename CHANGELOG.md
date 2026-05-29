@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.85
+
+- Roll release metadata publishing forward so the tag workflow submits structured release detail fields in top-level and nested payload shapes, and prefers the changelog release section over terse tag text for the legacy `release_notes` fallback.
+- Extend update metadata parsing to read structured release details from update-server `meta.release_details` or `meta.details` payloads when the publisher exposes nested metadata there.
+
 ## 1.32.84
 
 - Improve `System -> Updates` so available releases can show structured operator-readable release details before installation, including title, summary, highlights, fixes, compatibility, migration, asset, operator, and technical note groups while keeping package URLs, checksums, diagnostics, and low-level server values inside collapsed technical details.

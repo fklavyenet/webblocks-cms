@@ -84,6 +84,40 @@ class UpdateServerClientTest extends TestCase
   }
 
   #[Test]
+  public function nested_meta_release_details_are_normalized_for_rendering(): void
+  {
+    Http::fake([
+      '*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => 'webblocks-cms',
+          'channel' => 'stable',
+          'version' => '0.2.0',
+          'published_at' => '2026-04-19T10:00:00Z',
+          'meta' => [
+            'release_details' => [
+              'title' => 'Nested release metadata',
+              'summary' => 'The publisher returned details under meta.',
+              'highlights' => ['Nested highlights are visible.'],
+            ],
+          ],
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $result = app(UpdateServerClient::class)->check();
+
+    $this->assertSame('Nested release metadata', $result->release['release_details']['title']);
+    $this->assertSame('The publisher returned details under meta.', $result->release['release_details']['summary']);
+    $this->assertSame(['Nested highlights are visible.'], $result->release['release_details']['groups'][0]['items']);
+  }
+
+  #[Test]
   public function up_to_date_case_is_parsed(): void
   {
     Http::fake([
