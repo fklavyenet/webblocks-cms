@@ -26,7 +26,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
 - primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`
 - install wizard for first-run setup
-- system updates, backups, site export/import tools with a direct Sites-list export shortcut, preserved navigation item icons, and package-based Site Promotion workflows
+- system updates with operator-readable release details before install, backups, site export/import tools with a direct Sites-list export shortcut, preserved navigation item icons, and package-based Site Promotion workflows
 - in-app CMS updates now consume package-rooted release ZIPs and replace the transition `packages/webblocks-cms/` runtime plus the active Composer autoload package runtime when a consumer still loads WebBlocks CMS from `vendor/fklavyenet/webblocks-cms/...`, keeping the install-owned Laravel shell and root overrides intact; the old `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted` path is retired historical compatibility and is no longer part of routine package-native release validation
 - site-level Branding and SEO Defaults with public `<head>` fallback metadata and favicon support, plus locale-aware page-level SEO overrides on page translations
 - relational site-scoped `site_variables` with controlled `{{ site.variable_key }}` public token replacement, tabbed `Edit Site` sections, and portability through site clone and site export/import

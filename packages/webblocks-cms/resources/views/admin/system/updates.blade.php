@@ -19,18 +19,32 @@
             'incompatible' => 'wb-status-danger',
             default => 'wb-status-pending',
         };
-        $releaseText = trim((string) ($release['description'] ?? ''));
+        $releaseDetails = $release['release_details'] ?? null;
 
-        if ($releaseText === '') {
-            $releaseText = trim((string) ($release['changelog'] ?? ''));
+        if (! is_array($releaseDetails)) {
+            $fallbackText = trim((string) (($release['description'] ?? '') ?: ($release['changelog'] ?? '')));
+            $fallbackNotes = collect(preg_split('/\r\n|\r|\n/', $fallbackText ?: ''))
+                ->map(fn ($line) => trim($line))
+                ->filter()
+                ->values();
+            $releaseDetails = [
+                'title' => null,
+                'summary' => $fallbackNotes->shift(),
+                'groups' => [],
+                'fallback_notes' => $fallbackNotes->all(),
+                'has_notes' => $fallbackText !== '',
+            ];
         }
 
-        $releaseNotes = collect(preg_split('/\r\n|\r|\n/', $releaseText ?: ''))
-            ->map(fn ($line) => trim($line))
-            ->filter()
+        $releaseDetailGroups = collect($releaseDetails['groups'] ?? [])
+            ->filter(fn ($group) => is_array($group) && collect($group['items'] ?? [])->filter()->isNotEmpty())
             ->values();
-        $releasePreview = $releaseNotes->take(3);
-        $hasMoreReleaseNotes = $releaseNotes->count() > $releasePreview->count();
+        $fallbackReleaseNotes = collect($releaseDetails['fallback_notes'] ?? [])->filter()->values();
+        $hasReleaseDetails = (bool) ($releaseDetails['has_notes'] ?? false)
+            || trim((string) ($releaseDetails['title'] ?? '')) !== ''
+            || trim((string) ($releaseDetails['summary'] ?? '')) !== ''
+            || $releaseDetailGroups->isNotEmpty()
+            || $fallbackReleaseNotes->isNotEmpty();
         $headerActions = '<div class="wb-stack wb-gap-2">'
             .'<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check again</a></div>'
             .'<div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div>'
@@ -99,18 +113,42 @@
                         </div>
                     </div>
 
-                    @if ($releasePreview->isNotEmpty())
-                        <div class="wb-stack wb-gap-1">
-                            <div class="wb-text-sm wb-text-muted">Release notes</div>
+                    @if ($release)
+                        <div class="wb-stack wb-gap-2">
+                            <div class="wb-text-sm wb-text-muted">What's included</div>
 
-                            <div class="wb-stack wb-gap-1">
-                                @foreach ($releasePreview as $note)
-                                    <div class="wb-text-sm wb-text-muted">{{ $note }}</div>
+                            @if ($hasReleaseDetails)
+                                @if (trim((string) ($releaseDetails['title'] ?? '')) !== '')
+                                    <strong>{{ $releaseDetails['title'] }}</strong>
+                                @endif
+
+                                @if (trim((string) ($releaseDetails['summary'] ?? '')) !== '')
+                                    <div class="wb-text-sm">{{ $releaseDetails['summary'] }}</div>
+                                @endif
+
+                                @foreach ($releaseDetailGroups as $group)
+                                    <div class="wb-stack wb-gap-1">
+                                        <strong class="wb-text-sm">{{ $group['label'] ?? 'Release details' }}</strong>
+                                        <ul class="wb-m-0 wb-text-sm wb-text-muted">
+                                            @foreach (collect($group['items'] ?? [])->filter() as $item)
+                                                <li>{{ $item }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
                                 @endforeach
-                            </div>
 
-                            @if ($hasMoreReleaseNotes)
-                                <div class="wb-text-sm wb-text-muted">Additional release notes are available in the published release details.</div>
+                                @if ($fallbackReleaseNotes->isNotEmpty())
+                                    <div class="wb-stack wb-gap-1">
+                                        <strong class="wb-text-sm">Release notes</strong>
+                                        <ul class="wb-m-0 wb-text-sm wb-text-muted">
+                                            @foreach ($fallbackReleaseNotes as $note)
+                                                <li>{{ $note }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="wb-text-sm wb-text-muted">No release notes were provided for this release.</div>
                             @endif
                         </div>
                     @endif

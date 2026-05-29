@@ -11,6 +11,16 @@ use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
 class UpdateServerClient
 {
+  private const RELEASE_DETAIL_GROUPS = [
+    'highlights' => 'Highlights',
+    'fixes' => 'Fixes',
+    'compatibility_notes' => 'Compatibility notes',
+    'migration_notes' => 'Migration notes',
+    'asset_notes' => 'Asset notes',
+    'operator_notes' => 'Operator notes',
+    'technical_notes' => 'Technical notes',
+  ];
+
   public function __construct(
     private readonly InstalledVersionStore $installedVersionStore,
   ) {}
@@ -242,14 +252,16 @@ class UpdateServerClient
     $releaseNotes = Arr::get($release, 'release_notes');
     $changelog = Arr::get($release, 'changelog');
     $minimumClientVersion = Arr::get($release, 'minimum_client_version');
+    $releaseDetails = $this->normalizeReleaseDetails($release);
 
     return [
       'version' => $version,
-      'name' => $version !== '' ? 'WebBlocks CMS '.$version : null,
+      'name' => $releaseDetails['title'] ?? ($version !== '' ? 'WebBlocks CMS '.$version : null),
       'description' => is_string($releaseNotes) && $releaseNotes !== '' ? $releaseNotes : null,
       'changelog' => is_string($changelog) && $changelog !== ''
         ? $changelog
         : (is_string($releaseNotes) && $releaseNotes !== '' ? $releaseNotes : null),
+      'release_details' => $releaseDetails,
       'download_url' => Arr::get($release, 'artifact_url') ?: Arr::get($release, 'download.url'),
       'checksum_sha256' => Arr::get($release, 'checksum_sha256') ?: Arr::get($release, 'checksum'),
       'published_at' => Arr::get($release, 'published_at'),
@@ -265,6 +277,89 @@ class UpdateServerClient
       'source_reference' => Arr::get($release, 'source_reference'),
       'release_date' => Arr::get($release, 'release_date'),
     ];
+  }
+
+  private function normalizeReleaseDetails(array $release): array
+  {
+    $title = $this->releaseTextValue($release, 'title');
+    $summary = $this->releaseTextValue($release, 'summary');
+    $fallbackNotes = $this->releaseNoteItems(Arr::get($release, 'release_notes'));
+    $groups = [];
+
+    foreach (self::RELEASE_DETAIL_GROUPS as $key => $label) {
+      $items = $this->releaseNoteItems($this->releaseValue($release, $key));
+
+      if ($items !== []) {
+        $groups[] = [
+          'key' => $key,
+          'label' => $label,
+          'items' => $items,
+        ];
+      }
+    }
+
+    if ($summary === null && $groups === [] && $fallbackNotes !== []) {
+      $summary = array_shift($fallbackNotes);
+    }
+
+    return [
+      'title' => $title,
+      'summary' => $summary,
+      'groups' => $groups,
+      'fallback_notes' => $fallbackNotes,
+      'has_notes' => $title !== null || $summary !== null || $groups !== [] || $fallbackNotes !== [],
+    ];
+  }
+
+  private function releaseTextValue(array $release, string $key): ?string
+  {
+    $value = $this->releaseValue($release, $key);
+
+    if (! is_string($value)) {
+      return null;
+    }
+
+    $value = trim($value);
+
+    return $value !== '' ? $value : null;
+  }
+
+  private function releaseValue(array $release, string $key): mixed
+  {
+    foreach (['release_details.'.$key, 'details.'.$key, $key] as $path) {
+      if (Arr::has($release, $path)) {
+        return Arr::get($release, $path);
+      }
+    }
+
+    return null;
+  }
+
+  private function releaseNoteItems(mixed $value): array
+  {
+    if (is_string($value)) {
+      return collect(preg_split('/\r\n|\r|\n/', $value) ?: [])
+        ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
+        ->filter()
+        ->values()
+        ->all();
+    }
+
+    if (! is_array($value)) {
+      return [];
+    }
+
+    return collect($value)
+      ->flatMap(fn ($item) => $this->releaseNoteItems($item))
+      ->map(fn ($line) => $this->cleanReleaseNoteLine((string) $line))
+      ->filter()
+      ->values()
+      ->all();
+  }
+
+  private function cleanReleaseNoteLine(string $line): string
+  {
+    return trim((string) preg_replace('/^\s*(?:[-*]|\d+[.)])\s+/', '', trim($line)));
   }
 
   private function determineCompatibility(string $installedVersion, array $release): array
