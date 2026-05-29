@@ -116,7 +116,7 @@ Typical local URLs:
 
 ### Native Local Development
 
-For a macOS native PHP/Nginx/MySQL/Redis setup that keeps DDEV available during the transition, use the HTTPS-only `.test` guide in [docs/native-local-development.md](docs/native-local-development.md). The canonical native local CMS URL is `https://webblocks-cms.test`; run `php artisan webblocks:doctor-native-local` to check readiness without installing services or changing local files.
+For a macOS native PHP/Nginx/MySQL/Redis setup that keeps DDEV available during the transition, use the HTTPS-only `.test` guide in [docs/native-local-development.md](docs/native-local-development.md). The canonical native local CMS URL is `https://webblocks-cms.test`; run `php artisan webblocks:doctor-native-local` to check readiness without installing services or changing local files. If DDEV's router is already bound to ports 80/443, use `ddev poweroff` before starting the native Nginx service and `ddev start` when returning to DDEV.
 
 ### Manual CLI Install
 

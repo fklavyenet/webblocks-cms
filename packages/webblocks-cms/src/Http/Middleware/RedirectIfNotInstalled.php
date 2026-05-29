@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Support\Install\InstallState;
 
@@ -23,6 +24,14 @@ class RedirectIfNotInstalled
       return $next($request);
     }
 
-    return redirect()->route('webblocks-cms.install.notice');
+    if (Route::has('webblocks-cms.install.notice')) {
+      return redirect()->route('webblocks-cms.install.notice');
+    }
+
+    if (Route::has('install.core')) {
+      return redirect()->route('install.core');
+    }
+
+    return redirect('/install');
   }
 }

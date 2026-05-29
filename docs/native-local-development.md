@@ -220,6 +220,31 @@ DB_USERNAME=webblocks_native
 DB_PASSWORD=change-this-local-password
 ```
 
+Var olan Homebrew MySQL datadir'i (`/usr/local/var/mysql`) eski MySQL metadata'si veya baska projelerin tablolarini iceriyorsa MariaDB'yi ayni datadir ile baslatmayin ve datadir'i silmeyin. Guvenli yerel alternatif, CMS icin ayri bir datadir ve port kullanmaktir:
+
+```bash
+/usr/local/opt/mariadb/bin/mariadb-install-db \
+  --user="$(whoami)" \
+  --basedir=/usr/local/opt/mariadb \
+  --datadir=/usr/local/var/mariadb-webblocks-cms \
+  --tmpdir=/tmp
+
+/usr/local/opt/mariadb/bin/mariadbd-safe \
+  --datadir=/usr/local/var/mariadb-webblocks-cms \
+  --socket=/tmp/webblocks-cms-mariadb.sock \
+  --port=3307 \
+  --pid-file=/usr/local/var/mariadb-webblocks-cms/webblocks-cms.pid
+```
+
+Bu durumda `.env` degerleri TCP uzerinden ayri instance'a bakmalidir:
+
+```dotenv
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_DATABASE=webblocks_cms_native
+DB_USERNAME=webblocks_cms_native
+```
+
 ## Redis kurulumu ve kontrolü
 
 Redis zaten kuruluysa surum ve servis durumunu kontrol edin:
@@ -272,7 +297,22 @@ brew --prefix
 nginx -T | head
 ```
 
+Intel Homebrew ornegi:
+
+```text
+/usr/local/etc/nginx/servers/webblocks-cms.test.conf
+/usr/local/etc/nginx/certs/webblocks-cms.test.pem
+/usr/local/etc/nginx/certs/webblocks-cms.test-key.pem
+```
+
 PHP-FPM upstream icin kendi kurulumunuzdaki socket veya portu dogrulayin. Homebrew PHP cogu kurulumda `127.0.0.1:9000` veya bir Unix socket kullanabilir. Nginx ornegindeki `fastcgi_pass` satirini yerel PHP-FPM config'inize gore ayarlayin.
+
+Homebrew PHP-FPM listen degerini varsaymayin; kurulumunuza gore su dosyalarda kontrol edin:
+
+```bash
+/usr/local/opt/php/sbin/php-fpm -tt
+grep -n "^listen" /usr/local/etc/php/*/php-fpm.d/www.conf
+```
 
 ## Yerelde HTTPS zorunluluğu
 
@@ -396,8 +436,9 @@ server {
 }
 
 server {
-  listen 443 ssl http2;
-  listen [::]:443 ssl http2;
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  http2 on;
   server_name webblocks-cms.test fklavye.test webblocksui.test ui.webblocksui.test cms.webblocksui.test;
 
   root /Users/osm/Sites/projects/project-web_blocks/project-webblocks-cms/webblocks-cms/public;
@@ -454,6 +495,15 @@ nginx -t
 brew services restart nginx
 brew services restart php
 ```
+
+DDEV router veya Docker 80/443 portlarini tutuyorsa Nginx baslamayabilir ya da istekler eski DDEV sertifikasina gidebilir. Native local HTTPS smoke testten once port sahibini kontrol edin:
+
+```bash
+lsof -nP -iTCP:80 -sTCP:LISTEN
+lsof -nP -iTCP:443 -sTCP:LISTEN
+```
+
+Native local denemesi icin DDEV router'i gecici durdurmak gerekiyorsa DDEV dosyalarini silmeden `ddev poweroff` kullanin; DDEV'e geri donmek icin `ddev start` yeterlidir.
 
 ## Örnek .env.native-local değerleri
 

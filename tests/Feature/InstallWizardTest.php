@@ -6,10 +6,12 @@ use App\Models\User;
 use App\Support\Install\InstallState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled as PackageRedirectIfNotInstalled;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -63,6 +65,19 @@ class InstallWizardTest extends TestCase
   public function public_routes_redirect_to_install_before_setup_is_complete(): void
   {
     $response = $this->get('/');
+
+    $response->assertRedirect(route('install.core'));
+  }
+
+  #[Test]
+  public function package_install_guard_falls_back_to_host_installer_when_package_notice_route_is_unavailable(): void
+  {
+    $this->assertFalse(Route::has('webblocks-cms.install.notice'));
+
+    Route::middleware(['web', PackageRedirectIfNotInstalled::class])
+      ->get('/package-install-required-test', fn () => 'ok');
+
+    $response = $this->get('/package-install-required-test');
 
     $response->assertRedirect(route('install.core'));
   }
