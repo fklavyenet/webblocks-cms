@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
+use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\PackageStatusCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
@@ -284,6 +285,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame([
       PackageStatusCommand::class,
       ContactMailDiagnoseCommand::class,
+      DoctorNativeLocalCommand::class,
       SearchRebuildCommand::class,
       PackageSyncWebBlocksUiIconsCommand::class,
       BlockTypeContractsAuditCommand::class,

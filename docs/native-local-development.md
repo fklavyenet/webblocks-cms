@@ -522,6 +522,8 @@ APP_URL=https://webblocks-cms.test
 | `ddev artisan test --filter=ExampleTest` | `php artisan test --filter=ExampleTest` |
 | `ddev artisan cache:clear` | `php artisan cache:clear` |
 | `ddev artisan config:clear` | `php artisan config:clear` |
+| `ddev artisan webblocks:package-status` | `php artisan webblocks:package-status` |
+| native local ortam kontrolu | `php artisan webblocks:doctor-native-local` |
 | `ddev describe` | `nginx -T`, `brew services list`, `php -v`, `mysql --version`, `redis-cli ping` |
 | `ddev logs` | Homebrew service logs under `/opt/homebrew/var/log` or `/usr/local/var/log` |
 
@@ -534,6 +536,43 @@ mysql -h127.0.0.1 -uwebblocks_native -p webblocks_cms_native < backup.sql
 
 MariaDB kullaniliyorsa `mariadb-dump` ve `mariadb` komutlarini tercih edin.
 
+## Native local doctor komutu
+
+Native HTTPS `.test` hedefi icin okuma-only kontrol komutu:
+
+```bash
+php artisan webblocks:doctor-native-local
+```
+
+Bu komut sistemde kurulum yapmaz, `brew install` calistirmaz, servis baslatmaz, dosya yazmaz ve `/etc/hosts` degistirmez. Yalnizca mevcut PHP/Laravel config, binary erisimi, database/Redis erisimi, HTTPS `.test` URL standardi, hosts kaydi, mkcert sertifika dosyasi beklentisi ve yazilabilir runtime dizinlerini raporlar.
+
+Output secret-safe olmalidir. DB password, `APP_KEY`, mail password, token veya secret degerleri yazdirilmaz.
+
+Sonuctaki durumlar:
+
+- `PASS`: native local hedefi icin kontrol basarili
+- `WARN`: gecis icin dikkat edilmesi gereken ama tek basina komutu basarisiz saymayan durum
+- `FAIL`: native local hedefini engelleyen durum
+
+Komut fail-fast yapmaz; tum kontrolleri calistirir ve sonunda su ozetle biter:
+
+```text
+Summary
+Passed: 18
+Warnings: 0
+Failed: 0
+```
+
+Kritik fail varsa komut non-zero exit code ile biter. Ornek kritik fail durumlari:
+
+- zorunlu PHP extension eksik
+- `APP_URL` `https://` ile baslamiyor
+- `APP_URL` hostu `.test` ile bitmiyor
+- database veya Redis erisilemiyor
+- native HTTPS hedefi icin Nginx veya mkcert binary bulunamiyor
+- dokumanda onerilen sertifika/key dosyalari bulunamiyor
+- `storage` veya `bootstrap/cache` yazilabilir degil
+
 ## CMS local smoke checklist
 
 Native local kurulumdan sonra:
@@ -542,6 +581,7 @@ Native local kurulumdan sonra:
 composer install
 composer dump-autoload
 php artisan config:clear
+php artisan webblocks:doctor-native-local
 php artisan route:list --path=webadmin
 php artisan test --filter=AdminDashboardRouteTest --stop-on-failure
 ```

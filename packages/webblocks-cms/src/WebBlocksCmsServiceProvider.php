@@ -14,6 +14,7 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
+use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
@@ -35,6 +36,8 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
+use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAdminExtensionRegistry;
@@ -713,6 +716,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const PACKAGE_CONSOLE_COMMANDS = [
     PackageStatusCommand::class,
     ContactMailDiagnoseCommand::class,
+    DoctorNativeLocalCommand::class,
     SearchRebuildCommand::class,
     SyncWebBlocksUiIconsCommand::class,
     BlockTypeContractsAuditCommand::class,
@@ -777,6 +781,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->registerClassAliases();
     $this->registerConfig();
+    $this->registerNativeLocalDoctor();
     $this->registerPlugins();
   }
 
@@ -864,6 +869,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(PluginPublicAssetRegistry::class, fn ($app): PluginPublicAssetRegistry => new PluginPublicAssetRegistry(
       $app->make(PluginRegistry::class)
     ));
+  }
+
+  protected function registerNativeLocalDoctor(): void
+  {
+    $this->app->singleton(NativeLocalProbe::class, fn (): NativeLocalProbe => new SystemNativeLocalProbe);
   }
 
   protected function bootRoutes(): void

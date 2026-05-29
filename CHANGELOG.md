@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add the read-only `webblocks:doctor-native-local` command for native HTTPS `.test` readiness checks covering PHP, Composer, extensions, MySQL/MariaDB, Redis, Nginx, mkcert, APP_URL, hosts, TLS certificate paths, and writable runtime directories without printing secrets or mutating the machine.
 - Document the macOS native local development path alongside the existing DDEV workflow, including trusted HTTPS-only `.test` domains, mkcert TLS setup, Homebrew PHP/Nginx/MySQL/Redis checks, native command equivalents, and a safe rollback plan without removing DDEV support.
 
 ## 1.32.83
