@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.86
+
+- Verify the structured System Updates release-details pipeline end to end by publishing this release with populated `meta.release_details` fields for title, summary, highlights, changes, compatibility notes, operator notes, and technical notes.
+- Keep the legacy `release_notes` fallback meaningful for older update clients while compatible clients can render grouped release details on the System Updates screen.
+
 ## 1.32.85
 
 - Roll release metadata publishing forward so the tag workflow submits structured release detail fields in top-level and nested payload shapes, and prefers the changelog release section over terse tag text for the legacy `release_notes` fallback.

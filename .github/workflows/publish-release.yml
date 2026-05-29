@@ -98,27 +98,27 @@ jobs:
           printf '%s\n' "$notes" > release-notes.md
 
           {
-            printf 'System Updates release details\n'
+            printf 'Structured System Updates release details\n'
           } > release-title.txt
 
           {
-            printf 'System Updates now shows richer human-readable release information before admins run an update.\n'
+            printf 'This release verifies the update-server structured release-details pipeline so compatible System Updates screens can show grouped notes before installation.\n'
           } > release-summary.txt
 
           {
-            printf 'System Updates can display structured release metadata with a title, summary, and grouped notes.\n'
-            printf 'The update screen now shows a clear What'\''s included section before the Update now action.\n'
-            printf 'Older release_notes-only payloads remain supported as a clean fallback.\n'
+            printf 'The published update metadata includes a title and concise summary for the What'\''s included section.\n'
+            printf 'Highlights, changes, compatibility, operator, and technical notes are sent as structured release detail groups.\n'
+            printf 'The release also keeps a plain release_notes fallback for older update clients.\n'
           } > release-highlights.txt
 
           {
-            printf 'Missing release notes now show an honest empty state instead of implying changes from the version number.\n'
-            printf 'Release metadata is escaped as plain text so unsafe HTML or script content is not rendered as executable markup.\n'
+            printf 'Verifies that the publisher exposes structured release details at meta.release_details for CMS clients that support them.\n'
+            printf 'Keeps existing release-based, package-based updater behavior unchanged.\n'
           } > release-fixes.txt
 
           {
-            printf 'Structured release details are backward compatible with existing package-based update behavior and release_notes fallback payloads.\n'
-            printf 'The package-rooted update metadata still requires a bridge-capable updater through the configured minimum client version.\n'
+            printf 'Compatible clients can render meta.release_details as grouped release details; older clients continue to use release_notes.\n'
+            printf 'The package-rooted update metadata still uses the configured bridge-capable minimum client version.\n'
           } > release-compatibility-notes.txt
 
           {
@@ -130,13 +130,13 @@ jobs:
           } > release-asset-notes.txt
 
           {
-            printf 'Review the What'\''s included section before running Update now.\n'
-            printf 'Pre-update backup creation and Update now behavior are unchanged.\n'
+            printf 'Review the grouped What'\''s included release details before running Update now.\n'
+            printf 'Pre-update backup creation, checksum verification, and update apply behavior are unchanged.\n'
           } > release-operator-notes.txt
 
           {
-            printf 'Checksum verification, package URLs, raw payload diagnostics, and low-level update server details stay in the collapsed Technical details area.\n'
-            printf 'The GitHub tag workflow publishes these structured fields alongside the legacy release_notes value.\n'
+            printf 'The GitHub tag workflow publishes structured fields in top-level, details, and release_details form shapes for publisher compatibility.\n'
+            printf 'Compatible CMS clients read top-level fields, details, release_details, meta.details, or meta.release_details while keeping checksums and artifact URLs in technical details.\n'
           } > release-technical-notes.txt
 
       - name: Build release archive
