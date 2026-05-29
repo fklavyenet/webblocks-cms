@@ -648,6 +648,25 @@ Tarayici kontrolleri:
 - Redis gerekiyorsa `redis-cli ping` `PONG` donuyor
 - database-backed session/cache/queue tablolarinin migration durumu temiz
 
+## Installer 504 troubleshooting
+
+Fresh native installs can hit `504 Gateway Time-out` on `POST /install/core` if the first migration/seed run takes longer than Nginx's FastCGI response timeout. Diagnose before changing timeout values:
+
+```bash
+tail -n 80 storage/logs/laravel.log
+tail -n 80 /usr/local/var/log/nginx/error.log
+tail -n 80 /usr/local/var/log/php-fpm.log
+php artisan migrate:status --no-interaction
+```
+
+If Nginx reports `upstream timed out ... request: "POST /install/core"` and migrations are marked `Ran`, the browser request likely timed out while the migration step kept running to completion. Re-open `https://webblocks-cms.test/install/core` first. If the core step still is not complete, run the installer core step through CLI once to finish the same non-destructive installer workflow without the browser timeout:
+
+```bash
+php -r 'require "vendor/autoload.php"; $app=require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); foreach ($app->make(App\Support\Install\Installer::class)->installCore() as $step) { printf("%s: %s - %s\n", $step["label"], $step["status"], $step["message"]); }'
+```
+
+After it reports `Core seed: pass`, continue in the browser at `https://webblocks-cms.test/install/admin` to create the first super admin. Do not use destructive database reset commands to recover from this state.
+
 ## Yerel site domainleri için önerilen yapı
 
 Ana CMS maintenance hostu:
