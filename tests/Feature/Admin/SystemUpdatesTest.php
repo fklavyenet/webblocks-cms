@@ -96,6 +96,142 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
+  public function updates_page_renders_structured_release_metadata(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult(
+      state: 'update_available',
+      label: 'Update available',
+      message: 'A newer published release is available from the configured update server.',
+      releaseOverrides: [
+        'release_details' => [
+          'title' => 'Operator-friendly release details',
+          'summary' => 'This release improves update review before installation.',
+          'groups' => [
+            [
+              'key' => 'highlights',
+              'label' => 'Highlights',
+              'items' => ['Richer System Updates summaries', 'Grouped release metadata'],
+            ],
+            [
+              'key' => 'fixes',
+              'label' => 'Fixes',
+              'items' => ['Keeps low-level package details collapsed'],
+            ],
+            [
+              'key' => 'operator_notes',
+              'label' => 'Operator notes',
+              'items' => ['Read the details before running Update now'],
+            ],
+          ],
+          'fallback_notes' => [],
+          'has_notes' => true,
+        ],
+      ],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('included');
+    $response->assertSee('Operator-friendly release details');
+    $response->assertSee('This release improves update review before installation.');
+    $response->assertSee('Highlights');
+    $response->assertSee('Richer System Updates summaries');
+    $response->assertSee('Fixes');
+    $response->assertSee('Keeps low-level package details collapsed');
+    $response->assertSee('Operator notes');
+    $response->assertSee('Read the details before running Update now');
+    $response->assertSee('Technical details');
+  }
+
+  #[Test]
+  public function updates_page_renders_plain_release_notes_fallback(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult(
+      state: 'update_available',
+      label: 'Update available',
+      message: 'A newer published release is available from the configured update server.',
+      releaseOverrides: [
+        'description' => "Release v1.32.83 no build-chain boundary\nNo Vite, npm, or Tailwind assumptions return.",
+        'changelog' => null,
+        'release_details' => null,
+      ],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('included');
+    $response->assertSee('Release v1.32.83 no build-chain boundary');
+    $response->assertSee('Release notes');
+    $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
+  }
+
+  #[Test]
+  public function updates_page_renders_missing_release_notes_empty_state(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult(
+      state: 'update_available',
+      label: 'Update available',
+      message: 'A newer published release is available from the configured update server.',
+      releaseOverrides: [
+        'description' => null,
+        'changelog' => null,
+        'release_details' => [
+          'title' => null,
+          'summary' => null,
+          'groups' => [],
+          'fallback_notes' => [],
+          'has_notes' => false,
+        ],
+      ],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('No release notes were provided for this release.');
+  }
+
+  #[Test]
+  public function updates_page_escapes_unsafe_release_metadata(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult(
+      state: 'update_available',
+      label: 'Update available',
+      message: 'A newer published release is available from the configured update server.',
+      releaseOverrides: [
+        'release_details' => [
+          'title' => '<script>alert("title")</script>',
+          'summary' => '<strong>Summary</strong>',
+          'groups' => [
+            [
+              'key' => 'highlights',
+              'label' => 'Highlights',
+              'items' => ['<script>alert("item")</script>'],
+            ],
+          ],
+          'fallback_notes' => [],
+          'has_notes' => true,
+        ],
+      ],
+    );
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertDontSee('<script>alert("title")</script>', false);
+    $response->assertDontSee('<script>alert("item")</script>', false);
+    $response->assertDontSee('<strong>Summary</strong>', false);
+    $response->assertSee('&lt;script&gt;alert(&quot;title&quot;)&lt;/script&gt;', false);
+    $response->assertSee('&lt;strong&gt;Summary&lt;/strong&gt;', false);
+  }
+
+  #[Test]
   public function page_can_show_update_server_unavailable_state(): void
   {
     $user = User::factory()->superAdmin()->create();
@@ -549,23 +685,12 @@ class SystemUpdatesTest extends TestCase
     ?string $errorMessage = null,
     ?string $downloadUrl = null,
     ?string $checksum = 'abcdef123456',
+    array $releaseOverrides = [],
   ): void {
-    $client = Mockery::mock(UpdateServerClient::class);
-    $client->shouldReceive('check')->andReturn(new UpdateCheckResult(
-      state: $state,
-      label: $label,
-      message: $message,
-      badgeClass: $state === 'server_unreachable' ? 'wb-status-danger' : 'wb-status-info',
-      serverReachable: $serverReachable,
-      apiVersion: '1',
-      serverUrl: 'https://updates.example.test',
-      product: 'webblocks-cms',
-      channel: 'stable',
-      installedVersion: '0.1.0',
-      latestVersion: $latestVersion,
-      updateAvailable: $state === 'update_available',
-      compatibility: $compatibility ?? ['status' => 'compatible', 'reasons' => []],
-      release: $latestVersion ? [
+    $release = null;
+
+    if ($latestVersion) {
+      $release = array_replace_recursive([
         'version' => $latestVersion,
         'name' => 'WebBlocks CMS '.$latestVersion,
         'description' => 'Stability and admin improvements.',
@@ -581,7 +706,25 @@ class SystemUpdatesTest extends TestCase
           'supported_from_version' => '0.1.0',
           'supported_until_version' => null,
         ],
-      ] : null,
+      ], $releaseOverrides);
+    }
+
+    $client = Mockery::mock(UpdateServerClient::class);
+    $client->shouldReceive('check')->andReturn(new UpdateCheckResult(
+      state: $state,
+      label: $label,
+      message: $message,
+      badgeClass: $state === 'server_unreachable' ? 'wb-status-danger' : 'wb-status-info',
+      serverReachable: $serverReachable,
+      apiVersion: '1',
+      serverUrl: 'https://updates.example.test',
+      product: 'webblocks-cms',
+      channel: 'stable',
+      installedVersion: '0.1.0',
+      latestVersion: $latestVersion,
+      updateAvailable: $state === 'update_available',
+      compatibility: $compatibility ?? ['status' => 'compatible', 'reasons' => []],
+      release: $release,
       errorCode: $errorCode,
       errorMessage: $errorMessage,
       checkedAt: CarbonImmutable::now(),

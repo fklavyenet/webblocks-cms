@@ -20,6 +20,12 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Update-time preserved paths do not change the release package boundary: `project/` stays local to the install and outside the published artifact.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.
 
+## Release Details
+
+The System Updates screen shows human-readable release details before an admin starts an update. The update service may provide structured metadata fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text with a concise summary and grouped bullets.
+
+The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
+
 ## Update Apply Flow
 
 When an in-app System Update is applied successfully, WebBlocks CMS runs the post-install flow in this order:
