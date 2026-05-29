@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Simplify the `System -> Updates` screen by moving the update action and backup-download option into the Update Summary card while keeping structured release details in the main review flow.
+
 ## 1.32.86
 
 - Verify the structured System Updates release-details pipeline end to end by publishing this release with populated `meta.release_details` fields for title, summary, highlights, changes, compatibility notes, operator notes, and technical notes.

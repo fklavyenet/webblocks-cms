@@ -355,7 +355,7 @@ class PackageConsumerInstallAuthTest extends TestCase
       ->assertOk()
       ->assertSee('System Updates')
       ->assertSee('Update Summary')
-      ->assertSee('Actions');
+      ->assertDontSee('<strong>Actions</strong>', false);
   }
 
   #[Test]

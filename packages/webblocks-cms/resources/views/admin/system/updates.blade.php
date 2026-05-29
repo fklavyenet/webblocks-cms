@@ -68,13 +68,13 @@
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-stack-4">
-        <div class="wb-grid wb-grid-2">
+        @if ($pendingUpdate && $pendingBackup)
             <div class="wb-card">
                 <div class="wb-card-header">
                     <strong>Update Summary</strong>
                 </div>
 
-                <div class="wb-card-body wb-stack wb-gap-2">
+                <div class="wb-card-body wb-stack wb-gap-3">
                     <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
                     @if (! (($updateStatus['state'] ?? null) === 'up_to_date'))
                         <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
@@ -110,6 +110,50 @@
                         <div class="wb-stack wb-gap-1">
                             <div class="wb-text-sm wb-text-muted">Published at</div>
                             <strong>{{ ($release['published_at'] ?? null) ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s') : 'N/A' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="wb-stack wb-gap-2">
+                        <div class="wb-text-sm wb-text-muted">Update options</div>
+
+                        <div class="wb-alert wb-alert-info">
+                            <div>
+                                <div class="wb-alert-title">Pre-update backup created.</div>
+                                <div>A pre-update backup was created automatically. Download it before continuing the installation.</div>
+                            </div>
+                        </div>
+
+                        <div class="wb-grid wb-grid-2">
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Backup name</div>
+                                <strong>{{ $pendingBackup->archive_filename ?? ('Backup #'.$pendingBackup->id) }}</strong>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Backup size</div>
+                                <strong>{{ $pendingBackup->humanArchiveSize() }}</strong>
+                            </div>
+
+                            @if (! $showLatestVersion || (string) ($pendingUpdate['to_version'] ?? '') !== (string) ($updateStatus['latest_version'] ?? ''))
+                                <div class="wb-stack wb-gap-1">
+                                    <div class="wb-text-sm wb-text-muted">Pending target</div>
+                                    <strong>{{ $pendingUpdate['to_version'] }}</strong>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="wb-cluster wb-cluster-2">
+                            <a href="{{ route('admin.system.backups.download', $pendingBackup) }}" class="wb-btn wb-btn-secondary">Download backup</a>
+
+                            <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
+                                @csrf
+                                <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="Continue update" data-busy-label="Updating...">Continue update</button>
+                            </form>
+
+                            <form method="POST" action="{{ route('admin.system.updates.cancel') }}">
+                                @csrf
+                                <button type="submit" class="wb-btn wb-btn-secondary">Cancel</button>
+                            </form>
                         </div>
                     </div>
 
@@ -154,90 +198,73 @@
                     @endif
                 </div>
             </div>
+        @else
+            <form method="POST" action="{{ route('admin.system.updates.store') }}" data-wb-update-form>
+                @csrf
 
-            <div class="wb-card wb-card-muted">
-                <div class="wb-card-header">
-                    <strong>Actions</strong>
-                </div>
+                <div class="wb-card">
+                    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                        <strong>Update Summary</strong>
+                        <button
+                            type="submit"
+                            class="wb-btn wb-btn-primary"
+                            data-wb-update-submit
+                            data-default-label="Update now"
+                            data-busy-label="Updating..."
+                            @disabled(! $autoUpdate['allowed'])
+                        >
+                            {{ $autoUpdate['busy'] ? 'Updating...' : 'Update now' }}
+                        </button>
+                    </div>
 
-                <div class="wb-card-body wb-stack wb-gap-2">
-                    @if ($pendingUpdate && $pendingBackup)
-                        <div class="wb-alert wb-alert-info">
-                            <div>
-                                <div class="wb-alert-title">Pre-update backup created.</div>
-                                <div>Download the backup if needed, then continue the update to install version <strong>{{ $pendingUpdate['to_version'] }}</strong>.</div>
+                    <div class="wb-card-body wb-stack wb-gap-3">
+                        <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
+                        @if (! (($updateStatus['state'] ?? null) === 'up_to_date'))
+                            <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
+                        @endif
+
+                        @if ($updateStatus['error_message'])
+                            <div class="wb-alert wb-alert-warning">
+                                <div>
+                                    <div class="wb-alert-title">Server detail</div>
+                                    <div>{{ $updateStatus['error_message'] }}</div>
+                                </div>
                             </div>
-                        </div>
+                        @endif
 
                         <div class="wb-grid wb-grid-2">
                             <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">Backup name</div>
-                                <strong>{{ $pendingBackup->archive_filename ?? ('Backup #'.$pendingBackup->id) }}</strong>
-                            </div>
-
-                            <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">Backup size</div>
-                                <strong>{{ $pendingBackup->humanArchiveSize() }}</strong>
-                            </div>
-
-                            <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">Target version</div>
-                                <strong>{{ $pendingUpdate['to_version'] }}</strong>
-                            </div>
-
-                            <div class="wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">Backup guarantee</div>
-                                <strong>A pre-update backup was created automatically.</strong>
-                            </div>
-                        </div>
-
-                        <div class="wb-cluster wb-cluster-2">
-                            <a href="{{ route('admin.system.backups.download', $pendingBackup) }}" class="wb-btn wb-btn-secondary">Download backup</a>
-
-                            <form method="POST" action="{{ route('admin.system.updates.continue') }}" data-wb-update-form>
-                                @csrf
-                                <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit data-default-label="Continue update" data-busy-label="Updating...">Continue update</button>
-                            </form>
-
-                            <form method="POST" action="{{ route('admin.system.updates.cancel') }}">
-                                @csrf
-                                <button type="submit" class="wb-btn wb-btn-secondary">Cancel</button>
-                            </form>
-                        </div>
-                    @else
-                        <form method="POST" action="{{ route('admin.system.updates.store') }}" class="wb-stack wb-gap-3" data-wb-update-form>
-                            @csrf
-
-                            <div class="wb-alert wb-alert-info">
-                                <div>
-                                    <div class="wb-alert-title">Pre-update backup protection</div>
-                                    <div>A pre-update backup will be created automatically before installation.</div>
-                                </div>
+                                <div class="wb-text-sm wb-text-muted">Installed version</div>
+                                <strong>{{ $installedVersion }}</strong>
                             </div>
 
                             @if ($showLatestVersion)
-                                <div class="wb-text-sm wb-text-muted">Target version: <strong>{{ $updateStatus['latest_version'] }}</strong></div>
+                                <div class="wb-stack wb-gap-1">
+                                    <div class="wb-text-sm wb-text-muted">Latest version</div>
+                                    <strong>{{ $updateStatus['latest_version'] }}</strong>
+                                </div>
                             @endif
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Channel</div>
+                                <strong>{{ $updateStatus['channel'] }}</strong>
+                            </div>
+
+                            <div class="wb-stack wb-gap-1">
+                                <div class="wb-text-sm wb-text-muted">Published at</div>
+                                <strong>{{ ($release['published_at'] ?? null) ? \Carbon\Carbon::parse($release['published_at'])->format('Y-m-d H:i:s') : 'N/A' }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="wb-stack wb-gap-2">
+                            <div class="wb-text-sm wb-text-muted">Update options</div>
 
                             <label class="wb-checkbox">
                                 <input type="checkbox" name="download_pre_update_backup" value="1" @checked(old('download_pre_update_backup'))>
                                 <span>Download backup before update</span>
                             </label>
 
-                            <div class="wb-text-sm wb-text-muted">A pre-update backup is always created. Enable this option if you also want to download the backup file before installation starts.</div>
-
-                            <div class="wb-cluster wb-cluster-2">
-                                <button
-                                    type="submit"
-                                    class="wb-btn wb-btn-primary"
-                                    data-wb-update-submit
-                                    data-default-label="Update now"
-                                    data-busy-label="Updating..."
-                                    @disabled(! $autoUpdate['allowed'])
-                                >
-                                    {{ $autoUpdate['busy'] ? 'Updating...' : 'Update now' }}
-                                </button>
-                            </div>
+                            <div class="wb-text-sm wb-text-muted">A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.</div>
 
                             <div class="wb-text-sm wb-text-muted">
                                 @if ($autoUpdate['allowed'])
@@ -246,11 +273,51 @@
                                     {{ $autoUpdate['blockers'][0] ?? 'Automatic updates are not available right now.' }}
                                 @endif
                             </div>
-                        </form>
-                    @endif
+                        </div>
+
+                        @if ($release)
+                            <div class="wb-stack wb-gap-2">
+                                <div class="wb-text-sm wb-text-muted">What's included</div>
+
+                                @if ($hasReleaseDetails)
+                                    @if (trim((string) ($releaseDetails['title'] ?? '')) !== '')
+                                        <strong>{{ $releaseDetails['title'] }}</strong>
+                                    @endif
+
+                                    @if (trim((string) ($releaseDetails['summary'] ?? '')) !== '')
+                                        <div class="wb-text-sm">{{ $releaseDetails['summary'] }}</div>
+                                    @endif
+
+                                    @foreach ($releaseDetailGroups as $group)
+                                        <div class="wb-stack wb-gap-1">
+                                            <strong class="wb-text-sm">{{ $group['label'] ?? 'Release details' }}</strong>
+                                            <ul class="wb-m-0 wb-text-sm wb-text-muted">
+                                                @foreach (collect($group['items'] ?? [])->filter() as $item)
+                                                    <li>{{ $item }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endforeach
+
+                                    @if ($fallbackReleaseNotes->isNotEmpty())
+                                        <div class="wb-stack wb-gap-1">
+                                            <strong class="wb-text-sm">Release notes</strong>
+                                            <ul class="wb-m-0 wb-text-sm wb-text-muted">
+                                                @foreach ($fallbackReleaseNotes as $note)
+                                                    <li>{{ $note }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="wb-text-sm wb-text-muted">No release notes were provided for this release.</div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
                 </div>
-            </div>
-        </div>
+            </form>
+        @endif
 
         @if ($latestUpdateRun)
             <div class="wb-card wb-card-muted">

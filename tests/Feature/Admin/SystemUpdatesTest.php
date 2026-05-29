@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\UpdateCheckResult;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner as PackageUpdateCommandRunner;
@@ -51,7 +52,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee(WebBlocks::version());
     $response->assertSee('<div class="wb-text-sm wb-text-muted">Latest version</div>', false);
     $response->assertSee('Update Summary');
-    $response->assertSee('Actions');
+    $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
     $response->assertSee('Technical details');
@@ -91,8 +92,34 @@ class SystemUpdatesTest extends TestCase
     $followUp->assertDontSee('Download package');
     $followUp->assertSee('Check again');
     $followUp->assertSee('Latest version');
-    $followUp->assertSee('A pre-update backup will be created automatically before installation.');
+    $followUp->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
     $followUp->assertDontSee('Automatic backup is not created before update in this version.');
+  }
+
+  #[Test]
+  public function update_now_button_renders_in_update_summary_card_when_update_is_available(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">', false);
+    $response->assertSee('Update Summary');
+    $response->assertSee('Update now');
+    $response->assertDontSee('<strong>Actions</strong>', false);
+
+    $html = $response->getContent();
+    $summaryHeaderPosition = strpos($html, '<strong>Update Summary</strong>');
+    $buttonPosition = strpos($html, 'data-default-label="Update now"');
+    $summaryBodyPosition = strpos($html, '<div class="wb-card-body wb-stack wb-gap-3">', $summaryHeaderPosition);
+
+    $this->assertIsInt($summaryHeaderPosition);
+    $this->assertIsInt($buttonPosition);
+    $this->assertIsInt($summaryBodyPosition);
+    $this->assertGreaterThan($summaryHeaderPosition, $buttonPosition);
+    $this->assertLessThan($summaryBodyPosition, $buttonPosition);
   }
 
   #[Test]
@@ -243,6 +270,41 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
     $response->assertSee('Technical details');
+    $response->assertSee('disabled', false);
+    $response->assertDontSee('<strong>Actions</strong>', false);
+  }
+
+  #[Test]
+  public function unavailable_update_states_do_not_show_enabled_update_now_button(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, '0.1.0');
+
+    $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
+    $upToDateResponse->assertOk();
+    $upToDateResponse->assertSee('Update now');
+    $upToDateResponse->assertSee('disabled', false);
+  }
+
+  #[Test]
+  public function incompatible_update_states_do_not_show_enabled_update_now_button(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->mockClientResult(
+      state: 'incompatible',
+      label: 'Incompatible update available',
+      message: 'A newer release is available but this install does not meet its requirements.',
+      compatibility: ['status' => 'incompatible', 'reasons' => ['Requires PHP 8.4 or newer.']],
+    );
+
+    $incompatibleResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
+    $incompatibleResponse->assertOk();
+    $incompatibleResponse->assertSee('Incompatible update available');
+    $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
+    $incompatibleResponse->assertSee('Update now');
+    $incompatibleResponse->assertSee('disabled', false);
   }
 
   #[Test]
@@ -514,10 +576,36 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('A pre-update backup will be created automatically before installation.');
     $response->assertSee('Download backup before update');
-    $response->assertSee('A pre-update backup is always created. Enable this option if you also want to download the backup file before installation starts.');
+    $response->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
     $response->assertDontSee('Automatic backup is not created before update in this version.');
+  }
+
+  #[Test]
+  public function download_backup_checkbox_remains_inside_the_update_form(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+
+    $html = $response->getContent();
+    $formPosition = strpos($html, 'action="'.route('admin.system.updates.store').'"');
+    $csrfPosition = strpos($html, 'name="_token"', $formPosition);
+    $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $formPosition);
+    $buttonPosition = strpos($html, 'data-default-label="Update now"', $formPosition);
+    $formEndPosition = strpos($html, '</form>', $formPosition);
+
+    $this->assertIsInt($formPosition);
+    $this->assertIsInt($csrfPosition);
+    $this->assertIsInt($checkboxPosition);
+    $this->assertIsInt($buttonPosition);
+    $this->assertIsInt($formEndPosition);
+    $this->assertLessThan($formEndPosition, $csrfPosition);
+    $this->assertLessThan($formEndPosition, $checkboxPosition);
+    $this->assertLessThan($formEndPosition, $buttonPosition);
   }
 
   #[Test]
@@ -732,6 +820,7 @@ class SystemUpdatesTest extends TestCase
 
     $this->app->instance(UpdateServerClient::class, $client);
     $this->app->instance(PackageUpdateServerClient::class, $client);
+    $this->app->forgetInstance(SystemUpdateInspector::class);
   }
 
   private function prepareSuccessfulUpdateScenario(): array
