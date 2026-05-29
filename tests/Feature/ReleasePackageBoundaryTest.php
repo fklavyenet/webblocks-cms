@@ -90,6 +90,54 @@ class ReleasePackageBoundaryTest extends TestCase
   }
 
   #[Test]
+  public function repository_and_release_artifacts_do_not_ship_vite_or_node_build_chain_files(): void
+  {
+    $repositorySourceRoot = $this->buildRepositorySourceSnapshot();
+    $installedPackageRoot = $this->buildInstalledPackageSnapshot();
+    $vendorPackageRoot = $this->buildWorkflowReleaseZipVendorPackageSnapshot();
+
+    foreach ([
+      'repository source checkout' => $repositorySourceRoot,
+      'installed package artifact' => $installedPackageRoot,
+      'workflow release ZIP package root' => $vendorPackageRoot,
+    ] as $label => $root) {
+      $this->assertBuildChainFilesAbsent($root, $label);
+    }
+  }
+
+  #[Test]
+  public function runtime_and_release_boundaries_do_not_reference_vite_or_node_build_steps(): void
+  {
+    $this->assertForbiddenBuildChainReferencesAbsent(base_path(), [
+      '.github',
+      'app',
+      'bootstrap',
+      'config',
+      'database',
+      'packages/webblocks-cms',
+      'plugins',
+      'public',
+      'resources',
+      'routes',
+      'scripts',
+      'composer.json',
+      '.gitattributes',
+      '.gitignore',
+    ]);
+
+    $this->assertForbiddenBuildChainReferencesAbsent($this->buildInstalledPackageSnapshot(), [
+      'config',
+      'database',
+      'public',
+      'resources',
+      'routes',
+      'scripts',
+      'src',
+      'composer.json',
+    ]);
+  }
+
+  #[Test]
   public function release_artifact_includes_cms_brand_assets_in_package_public_assets(): void
   {
     $installedPackageRoot = $this->buildInstalledPackageSnapshot();
@@ -275,6 +323,131 @@ class ReleasePackageBoundaryTest extends TestCase
     $this->temporaryDirectories[] = $path;
 
     return $path;
+  }
+
+  private function assertBuildChainFilesAbsent(string $root, string $label): void
+  {
+    $forbiddenNames = [
+      'package.json',
+      'package-lock.json',
+      'pnpm-lock.yaml',
+      'yarn.lock',
+      'bun.lock',
+      'bun.lockb',
+      'webpack.mix.js',
+    ];
+
+    foreach ($forbiddenNames as $forbiddenName) {
+      $this->assertFileDoesNotExist($root.'/'.$forbiddenName, $label.' must not ship '.$forbiddenName);
+    }
+
+    $forbiddenPatterns = [
+      'vite.config.*',
+      'tailwind.config.*',
+      'postcss.config.*',
+    ];
+
+    foreach ($forbiddenPatterns as $forbiddenPattern) {
+      $matches = glob($root.'/'.$forbiddenPattern) ?: [];
+
+      $this->assertSame([], $matches, $label.' must not ship '.$forbiddenPattern);
+    }
+
+    foreach ([
+      'node_modules',
+      'public/build',
+      'public/hot',
+    ] as $forbiddenPath) {
+      $this->assertFileDoesNotExist($root.'/'.$forbiddenPath, $label.' must not ship '.$forbiddenPath);
+    }
+  }
+
+  /**
+   * @param  array<int, string>  $relativePaths
+   */
+  private function assertForbiddenBuildChainReferencesAbsent(string $root, array $relativePaths): void
+  {
+    $forbiddenPatterns = [
+      '/@vite\b/',
+      '/\bVite::/',
+      '/laravel-vite-plugin/',
+      '/\bvite\.config\./',
+      '/\btailwind\.config\./',
+      '/\bpostcss\.config\./',
+      '/\bpackage-lock\.json\b/',
+      '/\bnode_modules\b/',
+      '/\bpublic\/build\b/',
+      '/\bpublic\/hot\b/',
+      '/\bnpm\s+(run|install|ci|build)\b/',
+      '/"build"\s*:/',
+      '/"dev"\s*:\s*"vite/',
+    ];
+    $violations = [];
+
+    foreach ($relativePaths as $relativePath) {
+      $path = $root.'/'.$relativePath;
+
+      if (is_file($path)) {
+        $this->collectForbiddenBuildChainReferences($path, $root, $forbiddenPatterns, $violations);
+
+        continue;
+      }
+
+      if (! is_dir($path)) {
+        continue;
+      }
+
+      foreach (File::allFiles($path) as $file) {
+        $this->collectForbiddenBuildChainReferences($file->getPathname(), $root, $forbiddenPatterns, $violations);
+      }
+    }
+
+    $this->assertSame([], $violations);
+  }
+
+  /**
+   * @param  array<int, string>  $forbiddenPatterns
+   * @param  array<int, string>  $violations
+   */
+  private function collectForbiddenBuildChainReferences(
+    string $path,
+    string $root,
+    array $forbiddenPatterns,
+    array &$violations
+  ): void {
+    if (! $this->isTextFile($path)) {
+      return;
+    }
+
+    $contents = (string) file_get_contents($path);
+    $relativePath = ltrim(str_replace($root, '', $path), DIRECTORY_SEPARATOR);
+
+    foreach ($forbiddenPatterns as $pattern) {
+      if (preg_match($pattern, $contents) === 1) {
+        $violations[] = $relativePath.' matches '.$pattern;
+      }
+    }
+  }
+
+  private function isTextFile(string $path): bool
+  {
+    $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+    return in_array($extension, [
+      '',
+      'blade.php',
+      'css',
+      'gitignore',
+      'gitattributes',
+      'json',
+      'md',
+      'php',
+      'sh',
+      'stub',
+      'txt',
+      'yml',
+      'yaml',
+    ], true);
   }
 
   /**

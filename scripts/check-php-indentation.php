@@ -19,7 +19,6 @@ $excludedPrefixes = [
   'vendor/',
   'storage/',
   'bootstrap/cache/',
-  'node_modules/',
   'public/',
   '.git/',
 ];

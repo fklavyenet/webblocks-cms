@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.32.83
+
+- Prepare v1.32.83 as a CMS runtime and release-boundary hardening patch by documenting the no-Vite/no-npm/no-Tailwind convention, removing remaining build-chain ignore/update remnants, and adding release artifact guards that fail if Vite config, Laravel Vite plugin references, `@vite`, npm build scripts, lockfiles, `node_modules`, `public/build`, hot-file assumptions, Tailwind config, or PostCSS config return to the CMS runtime boundary.
+- Keep CMS-owned assets on the established `public/cms` package/runtime asset path and keep WebBlocks UI consumed from pinned published CDN assets instead of compiling UI source inside WebBlocks CMS.
+
 ## 1.32.82
 
 - Polish the `Maintenance -> Backups` admin screen so latest-status and recommendation cards render before the compact filter toolbar, the Backups listing card follows immediately after the filters, and row actions use the shared `td.wb-table-actions > .wb-action-group` table-action standard without globally forcing generic action groups to nowrap.

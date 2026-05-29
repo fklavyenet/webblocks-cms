@@ -10,6 +10,8 @@ WebBlocks CMS core public assets live under:
 
 These paths are for CMS-owned runtime behavior and styling that should ship with the product itself.
 
+CMS core assets are static package/runtime assets. The CMS runtime and release package must not require Vite, the Laravel Vite plugin, Tailwind, npm, Node, `public/build`, `public/hot`, package lockfiles, or `@vite` Blade directives. When CMS-owned CSS or JavaScript changes, update the tracked files under `public/cms` and package `packages/webblocks-cms/public/cms` directly.
+
 The `/cms/...` URL namespace is reserved for these static CMS assets. It must not be reused as a CMS admin route prefix, alias, or redirect. The canonical CMS admin namespace is `/webadmin/...`, including `/webadmin/login` when package-owned CMS auth routes are active.
 
 This separation protects common Nginx `try_files` deployments. A request to `/cms/` can match the physical `public/cms/` directory before Laravel receives the request, so CMS admin routing must not depend on `/cms`. The final admin-prefix design avoids the collision entirely and does not use a `public/cms/index.php` front-controller handoff; that file must remain absent from both install-root `public/cms/` and package `packages/webblocks-cms/public/cms/` assets.
@@ -123,4 +125,4 @@ WebBlocks UI assets remain loaded from CDN in the CMS public layout.
 
 CMS-owned default CDN references are pinned to WebBlocks UI `v2.7.9` for the public and admin runtime CSS, icons CSS, runtime JS, and the default icon manifest sync source. Production layout output uses the canonical jsDelivr tag URL format with the standard dist artifacts `webblocks-ui.css`, `webblocks-icons.css`, and `webblocks-ui.js` while minification hardening is deferred. Browser-facing CSS and JavaScript must not use `raw.githubusercontent.com` fallbacks because Chrome can block those responses through ORB or MIME handling.
 
-Those CDN assets are part of the UI project and must not be edited inside the CMS repository. When installed on an operator site, WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.
+Those CDN assets are part of the UI project and must not be edited or compiled inside the CMS repository. When installed on an operator site, WebBlocks UI Manager records release, artifact, manifest, checksum, and publish-run metadata as plugin-owned behavior and can publish validated files into a configured local/project-owned static CDN target. CMS core still consumes the existing pinned CDN URLs until a separate explicit migration changes that behavior.

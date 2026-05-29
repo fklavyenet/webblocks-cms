@@ -19,12 +19,9 @@
 /.vscode
 /.zed
 /auth.json
-/node_modules
 /dist/
 /docs/*
 !/docs/*.md
-/public/build
-/public/hot
 /public/storage
 
 # Laravel

@@ -109,13 +109,10 @@ rm -rf \
   "$staging_dir/.github" \
   "$staging_dir/.ddev" \
   "$staging_dir/dist" \
-  "$staging_dir/node_modules" \
   "$staging_dir/storage" \
   "$staging_dir/vendor" \
   "$staging_dir/project" \
   "$staging_dir/bootstrap/cache" \
-  "$staging_dir/public/build" \
-  "$staging_dir/public/hot" \
   "$staging_dir/public/site" \
   "$staging_dir/public/storage"
 

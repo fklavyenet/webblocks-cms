@@ -18,6 +18,14 @@ That means:
 
 This is expected and correct during active development.
 
+## Static Asset Rule
+
+WebBlocks CMS does not use a Vite, Laravel Vite plugin, Tailwind, npm, or Node build chain for CMS runtime assets.
+
+CMS-owned CSS, JavaScript, and brand files are maintained as static product assets under `public/cms` and package `packages/webblocks-cms/public/cms`. WebBlocks UI assets are consumed through pinned published CDN/dist URLs from `WebBlocks\Cms\Support\WebBlocks`; do not compile WebBlocks UI source inside this repository.
+
+Do not add `vite.config.*`, `tailwind.config.*`, `postcss.config.*`, `package.json`, lockfiles such as `package-lock.json`, npm build scripts, `@vite` Blade directives, Laravel Vite plugin dependencies, `public/build`, `public/hot`, or `node_modules` assumptions to CMS runtime, release, or update paths unless a future architecture decision explicitly changes this product boundary.
+
 ## Installed Version Rule
 
 `system.installed_version` represents the last released or applied version of the CMS install.

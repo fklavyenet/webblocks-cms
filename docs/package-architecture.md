@@ -81,6 +81,12 @@ The target update architecture is:
 
 This keeps install-owned root files separate from package-owned CMS core files and prevents removed CMS core files from lingering indefinitely in downstream installs simply because they once existed in the root.
 
+## Asset Build Boundary
+
+The Composer package and maintenance repository are static-asset consumers, not frontend build-chain hosts. WebBlocks CMS must not ship or require Vite, the Laravel Vite plugin, Tailwind, npm, Node, package lockfiles, `public/build`, `public/hot`, or `@vite` runtime hooks for CMS-owned assets.
+
+CMS-owned assets belong in root `public/cms` for the maintenance runtime and package `packages/webblocks-cms/public/cms` for release artifacts. WebBlocks UI remains an upstream UI project consumed through pinned published assets, and WebBlocks UI Manager remains the first-party operator plugin for release/CDN publishing workflows. Do not move WebBlocks UI source compilation, npm build scripts, dist generation, or hot-file assumptions into CMS core or its release package.
+
 ## Ownership Boundaries
 
 Target package-owned CMS paths:

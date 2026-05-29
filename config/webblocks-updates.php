@@ -32,10 +32,8 @@ return [
             'project',
             'storage',
             'bootstrap/cache',
-            'node_modules',
             'vendor',
             'public/storage',
-            'public/build',
         ],
     ],
 ];

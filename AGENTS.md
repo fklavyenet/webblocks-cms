@@ -37,6 +37,7 @@
 - Manual plugin uninstall must be disabled-first, limited to manually uploaded plugins, restricted to the configured plugin install root, and must preserve plugin-owned database tables unless a future explicit cleanup tool is intentionally added.
 - Keep WebBlocks UI source changes in the WebBlocks UI project, not inside CMS.
 - CMS may consume pinned WebBlocks UI assets, but should not edit UI package source.
+- Keep WebBlocks CMS free of Vite, Laravel Vite plugin, Tailwind, npm, Node build-chain, package lock, `public/build`, and hot-file runtime requirements. CMS-owned assets ship as static files under `public/cms`, and WebBlocks UI is consumed from pinned published assets.
 - Do not assume the `/admin` path belongs to CMS.
 - In coexistence designs, `/webadmin` is the canonical CMS admin prefix and `/cms` remains static assets only.
 - Preserve the host `/login` model; do not introduce a separate mandatory CMS login system.

@@ -21,6 +21,7 @@ WebBlocks CMS is a Laravel-based, block-driven CMS for managing sites, pages, me
 - `ddev artisan contact:mail-diagnose` reports the resolved Contact Form mail configuration without printing passwords or tokens, can inspect a specific Contact Form block's recipient fallback chain with `--block=ID`, and can run a controlled SMTP send check with `--send-test=address@example.com`
 - admin list action columns follow the WebBlocks UI table-action standard: use an explicit left-aligned `Actions` header and `td.wb-table-actions > .wb-action-group` for row controls, while keeping editorial status and delivery/notification failure signals in separate columns
 - install-level icon catalog management under `System -> Icons`, with WebBlocks UI manifest sync, catalog metadata editing, and filtered navigation-only icon pickers in admin forms
+- static CMS runtime assets with no Vite, Laravel Vite plugin, Tailwind, npm, or Node build-chain requirement; CMS-owned CSS/JS/brand assets ship under `public/cms`, and WebBlocks UI is consumed through pinned published CDN/dist assets
 - plugin system foundations for manually installed plugin ZIP packages, including compatibility metadata, collision guards, package conventions, safe storage-owned install paths, disabled-by-default installed plugins, explicit enable/disable management, and safe manual uninstall from `System -> Plugins`
 - site-scoped primary domains and alias domains for one-install multi-domain public routing
 - primary `Sites` admin navigation near `Dashboard`, with site-domain management grouped under `System -> Domains`
@@ -78,6 +79,8 @@ After install, open:
 - public home: `/`
 
 The package-owned `/webadmin/login` screen renders the WebBlocks UI guest auth shell from package views, loads the pinned WebBlocks UI CSS/JS and `/cms/css/guest.css`, and uses CMS product brand assets from `/cms/brand`.
+
+WebBlocks CMS has no frontend build step. Do not run or add Vite, Tailwind, npm, Node, `@vite`, `public/build`, or hot-file workflows for CMS-owned assets. Product assets are tracked directly in root `public/cms` and package `packages/webblocks-cms/public/cms`, while WebBlocks UI continues to be consumed from pinned published assets.
 
 The canonical CMS admin prefix is `/webadmin`. CMS static assets remain under `public/cms`, so normal `/cms/css`, `/cms/js`, and `/cms/brand` asset URLs continue to be served as static files without colliding with the Laravel admin route tree. CMS admin prefixes must never reuse a physical public asset directory segment: `/cms` is reserved for static CMS assets only and must not be reintroduced as an admin route, alias, or redirect.
 
