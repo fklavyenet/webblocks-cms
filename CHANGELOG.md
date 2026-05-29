@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.88
+
 - Fix System Updates availability detection for source-maintained checkouts so already-present local code versions do not show a stale actionable update, and move resolved failed update runs into collapsed history instead of the main latest-run warning.
 
 ## 1.32.87

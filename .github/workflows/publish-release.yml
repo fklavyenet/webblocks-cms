@@ -98,26 +98,28 @@ jobs:
           printf '%s\n' "$notes" > release-notes.md
 
           {
-            printf 'System Updates layout and focused formatting validation\n'
+            printf 'System Updates source/dev status presentation fix\n'
           } > release-title.txt
 
           {
-            printf 'This release clarifies the System Updates screen hierarchy and adds a faster changed-file formatting check for small CMS hotfixes.\n'
+            printf 'This release prevents source-maintained checkouts from showing stale actionable updates when the local code version is already current, and keeps resolved failed update runs as history instead of primary warnings.\n'
           } > release-summary.txt
 
           {
-            printf 'System Updates now separates status metadata, update options, and release notes into full-width cards.\n'
-            printf 'The Update Options card keeps the backup-download checkbox and Update now action together.\n'
-            printf 'composer format:changed provides a faster default formatting gate for focused hotfixes.\n'
+            printf 'Update availability now depends on the latest published version being strictly newer than the effective installed CMS version.\n'
+            printf 'Source-maintained development checkouts use the newer local code version for update-status presentation without mutating the stored installed version.\n'
+            printf 'Stale failed update runs remain inspectable in collapsed historical details instead of driving the main System Updates status.\n'
           } > release-highlights.txt
 
           {
-            printf 'Keeps the separate Actions card removed without changing update routes, CSRF handling, compatibility guards, or pending-backup continuation behavior.\n'
-            printf 'Keeps grouped structured release metadata rendering intact while renaming the operator-facing section to Release Details.\n'
+            printf 'Fixes cases where an old failed update run could make an already-current source checkout look like an actionable update was still available.\n'
+            printf 'Keeps Update Options hidden unless there is a current actionable update target.\n'
+            printf 'Preserves currently relevant failed, pending, or running update-run visibility for the active target.\n'
           } > release-fixes.txt
 
           {
             printf 'Compatible clients continue to render structured release detail metadata; older clients continue to use release_notes.\n'
+            printf 'Package-consumer update behavior, compatibility checks, CSRF handling, pending backup flow, and update guards are unchanged.\n'
             printf 'The package-rooted update metadata still uses the configured bridge-capable minimum client version.\n'
           } > release-compatibility-notes.txt
 
@@ -130,15 +132,16 @@ jobs:
           } > release-asset-notes.txt
 
           {
-            printf 'Review the Update Summary, then choose backup download behavior in Update Options before running Update now.\n'
-            printf 'Use composer format:changed for small focused hotfixes; use composer format:test when a full formatting baseline is justified.\n'
-            printf 'Pre-update backup creation, checksum verification, and update apply behavior are unchanged.\n'
+            printf 'For local source-maintained development checkouts, apply source changes through the normal development workflow rather than in-app System Updates.\n'
+            printf 'When the checkout code version is already equal to or newer than the latest published release, System Updates now reports the install as current and does not show Update now.\n'
+            printf 'Resolved failed runs can still be reviewed from collapsed historical update-run details.\n'
           } > release-operator-notes.txt
 
           {
             printf 'The GitHub tag workflow publishes structured fields in top-level, details, and release_details form shapes for publisher compatibility.\n'
-            printf 'composer format:changed compares against origin/main...HEAD when available, adds staged and working-tree edits, runs Pint on changed PHP files, and runs the indentation guard on changed PHP or Blade files.\n'
-            printf 'Checksums, artifact URLs, diagnostics, and low-level update server values remain in collapsed technical details.\n'
+            printf 'Update status uses version comparison instead of update-run history as the source of current availability.\n'
+            printf 'Source-maintained checkout detection reuses the maintenance repository Composer autoload signal for WebBlocks CMS package source authority.\n'
+            printf 'Checksums, artifact URLs, raw responses, diagnostics, and low-level update server values remain in collapsed technical details.\n'
           } > release-technical-notes.txt
 
       - name: Build release archive
