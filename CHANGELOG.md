@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Simplify the `System -> Updates` screen by moving the update action and backup-download option into the Update Summary card while keeping structured release details in the main review flow.
+- Simplify the `System -> Updates` screen into stacked Update Summary, Update Options, and Release Details cards so status metadata, backup/download choices, update actions, and structured release notes have clearer hierarchy.
 
 ## 1.32.86
 

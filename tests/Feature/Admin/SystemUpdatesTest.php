@@ -97,7 +97,7 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
-  public function update_now_button_renders_in_update_summary_card_when_update_is_available(): void
+  public function update_summary_no_longer_contains_the_update_now_button(): void
   {
     $user = User::factory()->superAdmin()->create();
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
@@ -105,21 +105,51 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">', false);
     $response->assertSee('Update Summary');
     $response->assertSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
     $summaryHeaderPosition = strpos($html, '<strong>Update Summary</strong>');
+    $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
     $buttonPosition = strpos($html, 'data-default-label="Update now"');
-    $summaryBodyPosition = strpos($html, '<div class="wb-card-body wb-stack wb-gap-3">', $summaryHeaderPosition);
 
     $this->assertIsInt($summaryHeaderPosition);
+    $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
-    $this->assertIsInt($summaryBodyPosition);
-    $this->assertGreaterThan($summaryHeaderPosition, $buttonPosition);
-    $this->assertLessThan($summaryBodyPosition, $buttonPosition);
+    $this->assertGreaterThan($summaryHeaderPosition, $optionsHeaderPosition);
+    $this->assertGreaterThan($optionsHeaderPosition, $buttonPosition);
+  }
+
+  #[Test]
+  public function update_options_card_renders_update_action_after_backup_option_when_update_is_available(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.');
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('<strong>Update Options</strong>', false);
+    $response->assertSee('Download backup before update');
+    $response->assertSee('A pre-update backup is always created automatically. Enable this option to also download the backup before installation starts.');
+    $response->assertSee('Update now');
+
+    $html = $response->getContent();
+    $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
+    $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
+    $backupHelpPosition = strpos($html, 'A pre-update backup is always created automatically.', $checkboxPosition);
+    $buttonPosition = strpos($html, 'data-default-label="Update now"', $backupHelpPosition);
+    $releaseDetailsPosition = strpos($html, '<strong>Release Details</strong>');
+
+    $this->assertIsInt($optionsHeaderPosition);
+    $this->assertIsInt($checkboxPosition);
+    $this->assertIsInt($backupHelpPosition);
+    $this->assertIsInt($buttonPosition);
+    $this->assertIsInt($releaseDetailsPosition);
+    $this->assertLessThan($buttonPosition, $checkboxPosition);
+    $this->assertLessThan($buttonPosition, $backupHelpPosition);
+    $this->assertLessThan($releaseDetailsPosition, $buttonPosition);
   }
 
   #[Test]
@@ -160,7 +190,8 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('included');
+    $response->assertSee('<strong>Release Details</strong>', false);
+    $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
     $response->assertSee('Highlights');
@@ -190,7 +221,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('included');
+    $response->assertSee('<strong>Release Details</strong>', false);
     $response->assertSee('Release v1.32.83 no build-chain boundary');
     $response->assertSee('Release notes');
     $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
@@ -270,7 +301,7 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
     $response->assertSee('Technical details');
-    $response->assertSee('disabled', false);
+    $response->assertDontSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
 
@@ -283,8 +314,8 @@ class SystemUpdatesTest extends TestCase
 
     $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $upToDateResponse->assertOk();
-    $upToDateResponse->assertSee('Update now');
-    $upToDateResponse->assertSee('disabled', false);
+    $upToDateResponse->assertDontSee('Update now');
+    $upToDateResponse->assertDontSee('<strong>Update Options</strong>', false);
   }
 
   #[Test]
@@ -305,6 +336,7 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
     $incompatibleResponse->assertSee('Update now');
     $incompatibleResponse->assertSee('disabled', false);
+    $incompatibleResponse->assertSee('<strong>Update Options</strong>', false);
   }
 
   #[Test]
