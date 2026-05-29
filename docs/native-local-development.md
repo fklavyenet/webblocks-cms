@@ -1,0 +1,606 @@
+# Native Local Development
+
+## Amaç ve kapsam
+
+Bu dokuman WebBlocks CMS gelistirme ortamini macOS uzerinde Docker/DDEV disinda, native PHP, Nginx, MySQL veya MariaDB ve Redis ile calistirmaya hazirlamak icindir. Hedef, canli sunucuya daha yakin bir yerel ortam kurmak, fakat mevcut DDEV akislarini bozmadan asamali gecis yapmaktir.
+
+Yerel native ortam icin standart:
+
+- yerel domainler `.test` uzantili olmalidir
+- yerel CMS ve site URL'leri HTTPS olmalidir
+- HTTP yalnizca HTTPS'e yonlendirmek icin kullanilmalidir
+- ana CMS ornegi `https://webblocks-cms.test` uzerinden calismalidir
+
+Bu dokuman canli sunucuya baglanma, canli deploy veya canli dogrulama adimi icermez. Canli ortam bilgileri operator tarafindan guvenli sekilde alinip yerel envantere islenmelidir.
+
+## Neden DDEV hemen kaldırılmıyor
+
+DDEV bugun hala projenin desteklenen ve test edilen yerel gelistirme yoludur. Mevcut dokumantasyon, composer scriptleri, test stratejisi, database backup/restore yardimcilari ve bazi operasyonel notlar DDEV-first kalir.
+
+DDEV'i hemen kaldirmamak su riskleri azaltir:
+
+- mevcut gelistirici makinelerinde calisan kurulumlari bozmamak
+- release ve test komutlarindaki DDEV-first beklentileri ayni anda degistirmemek
+- native ortam tamamlanmadan ekip icin geri donus yolunu korumak
+- canli sunucuya daha yakin native servis davranisini kontrollu sekilde karsilastirmak
+
+Native local mode bu asamada DDEV'in yerine gecen zorunlu tek yol degil, yan yana belgelenen asamali gecis yoludur.
+
+## Mevcut kurulu servisleri tespit etme
+
+Once bilgisayarda nelerin zaten kurulu oldugunu bulun. Var olan servisleri silmeyin veya portlarini degistirmeyin.
+
+```bash
+sw_vers
+uname -m
+which brew
+brew --version
+brew services list
+which php
+php -v
+php -m
+which composer
+composer --version
+which nginx
+nginx -v
+which mysql
+mysql --version
+which mariadb
+mariadb --version
+which redis-server
+redis-server --version
+which mkcert
+mkcert -version
+```
+
+Port kullanimini kontrol edin:
+
+```bash
+lsof -nP -iTCP:80 -sTCP:LISTEN
+lsof -nP -iTCP:443 -sTCP:LISTEN
+lsof -nP -iTCP:3306 -sTCP:LISTEN
+lsof -nP -iTCP:6379 -sTCP:LISTEN
+```
+
+Mevcut `/etc/hosts` kayitlarini degistirmeden once inceleyin:
+
+```bash
+grep -n "webblocks\\|fklavye\\|\\.test" /etc/hosts
+```
+
+Bir servis zaten kuruluysa surumunu, config yolunu, servis adini ve kullandigi portu not edin. Eksik olanlari tamamlayin; calisan servisleri ezmeyin.
+
+## Sunucudan alınması gereken sürüm/env envanteri
+
+Canli sunucuya bu dokuman kapsaminda baglanmayin. Operator tarafindan guvenli sekilde alinacak envanter su bilgileri icermelidir:
+
+- PHP surumu ve PHP-FPM pool kullanimi
+- yuklu PHP extension listesi
+- Nginx surumu ve Laravel server block davranisi
+- MySQL veya MariaDB surumu
+- Redis surumu ve kullanilan database indexleri
+- Composer surumu
+- Laravel `APP_ENV`, `APP_DEBUG`, `APP_URL`, `ASSET_URL` yaklasimi
+- database charset ve collation
+- session, cache ve queue driver degerleri
+- mail driver ve localde kullanilacak guvenli esdegeri
+- dosya izin modeli, deploy user ve web server user ayrimi
+- public document root ve TLS terminasyon yapisi
+
+Yerelde canli secret degerleri kullanmayin. Env isimlerini ve driver/secenek yapisini eslestirin, secretlari local-only degerlerle doldurun.
+
+## macOS Homebrew ile eksik servisleri kurma
+
+Homebrew yoksa once Homebrew'u resmi dokumandan kurun. Var olan brew kurulumunu yeniden kurmayin.
+
+Eksik paketleri kurmak icin:
+
+```bash
+brew update
+brew install php
+brew install composer
+brew install nginx
+brew install mysql
+brew install redis
+brew install mkcert
+brew install nss
+```
+
+MariaDB tercih ediliyorsa MySQL yerine:
+
+```bash
+brew install mariadb
+```
+
+Servisleri baslatmadan once port cakismalarini kontrol edin. Baslatma ornekleri:
+
+```bash
+brew services start php
+brew services start nginx
+brew services start mysql
+brew services start redis
+```
+
+MariaDB kullaniyorsaniz:
+
+```bash
+brew services start mariadb
+```
+
+## PHP sürümü ve PHP extension kontrol listesi
+
+Canli sunucu ile ayni major/minor PHP surumunu hedefleyin. WebBlocks CMS su an PHP 8.3 veya ustunu gerektirir.
+
+```bash
+php -v
+php --ini
+php -m
+```
+
+Kontrol edilmesi gereken extension listesi:
+
+- `bcmath`
+- `ctype`
+- `curl`
+- `dom`
+- `fileinfo`
+- `filter`
+- `hash`
+- `intl`
+- `json`
+- `mbstring`
+- `openssl`
+- `pdo`
+- `pdo_mysql`
+- `redis` veya Predis/phpredis stratejisine gore proje karari
+- `session`
+- `tokenizer`
+- `xml`
+- `zip`
+
+Eksik extension varsa once canli envanterle karsilastirin. Homebrew PHP paketleri bircok extension'i varsayilan getirir; PECL extension gerekiyorsa kurulumdan once mevcut PHP surumunun dogru oldugunu dogrulayin.
+
+PHP-FPM durumunu kontrol edin:
+
+```bash
+brew services list | grep php
+php-fpm -v
+```
+
+Apple Silicon Homebrew icin yaygin PHP-FPM socket veya port ayarlari `/opt/homebrew/etc/php/*/php-fpm.d/` altindadir. Intel Homebrew icin `/usr/local/etc/php/*/php-fpm.d/` olabilir. Mevcut config'i bozmadan once dosya yolunu dogrulayin.
+
+## Composer kontrolü
+
+Composer native PHP ile ayni binary'yi kullanmalidir.
+
+```bash
+which php
+which composer
+composer --version
+composer diagnose
+composer install
+composer dump-autoload
+```
+
+DDEV disinda calisirken Composer scriptleri `@php artisan ...` kullandigi icin aktif shell'deki `php` binary'si onemlidir.
+
+## MySQL/MariaDB database/user hazırlığı
+
+Var olan MySQL veya MariaDB kurulumunu ve root erisim modelini bozmayin.
+
+```bash
+mysql --version
+mysql -uroot -p -e "SELECT VERSION();"
+```
+
+Ornek local database ve kullanici:
+
+```sql
+CREATE DATABASE webblocks_cms_native
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'webblocks_native'@'localhost'
+  IDENTIFIED BY 'change-this-local-password';
+
+GRANT ALL PRIVILEGES ON webblocks_cms_native.*
+  TO 'webblocks_native'@'localhost';
+
+FLUSH PRIVILEGES;
+```
+
+MariaDB kullaniyorsaniz ayni SQL genellikle calisir. Socket ile TCP farkini not edin. Laravel `.env.native-local` icin basit ve tasinabilir hedef TCP'dir:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=webblocks_cms_native
+DB_USERNAME=webblocks_native
+DB_PASSWORD=change-this-local-password
+```
+
+## Redis kurulumu ve kontrolü
+
+Redis zaten kuruluysa surum ve servis durumunu kontrol edin:
+
+```bash
+redis-server --version
+redis-cli ping
+brew services list | grep redis
+```
+
+Eksikse:
+
+```bash
+brew install redis
+brew services start redis
+redis-cli ping
+```
+
+Beklenen yanit `PONG` olmalidir. Laravel env degerleri:
+
+```dotenv
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+```
+
+Eger `phpredis` extension yoksa once extension stratejisini netlestirin; native ortamda canli sunucuya yakin olan tercih edilmelidir.
+
+## Nginx + PHP-FPM local site yapısı
+
+Nginx document root Laravel `public` klasoru olmalidir. Ornek proje yolu:
+
+```text
+/Users/osm/Sites/projects/project-web_blocks/project-webblocks-cms/webblocks-cms
+```
+
+Onerilen local dosya yapisi:
+
+```text
+/opt/homebrew/etc/nginx/servers/webblocks-cms.test.conf
+/opt/homebrew/etc/nginx/certs/webblocks-cms.test.pem
+/opt/homebrew/etc/nginx/certs/webblocks-cms.test-key.pem
+```
+
+Intel Homebrew kullaniliyorsa temel yol `/usr/local/etc/nginx` olabilir. Once `brew --prefix` ile kontrol edin:
+
+```bash
+brew --prefix
+nginx -T | head
+```
+
+PHP-FPM upstream icin kendi kurulumunuzdaki socket veya portu dogrulayin. Homebrew PHP cogu kurulumda `127.0.0.1:9000` veya bir Unix socket kullanabilir. Nginx ornegindeki `fastcgi_pass` satirini yerel PHP-FPM config'inize gore ayarlayin.
+
+## Yerelde HTTPS zorunluluğu
+
+Native local mode icin HTTP hedef degildir. HTTP port 80 sadece HTTPS'e yonlendirme icin kullanilir. Laravel, CMS, admin, public site ve site domain URL'leri HTTPS olmalidir.
+
+Kullanilacak ornek domainler:
+
+- `https://webblocks-cms.test`
+- `https://fklavye.test`
+- `https://webblocksui.test`
+- `https://ui.webblocksui.test`
+- `https://cms.webblocksui.test`
+
+`.local` kullanmayin. `.local` macOS mDNS/Bonjour davranislariyla cakisabilir. Bu proje icin native local domain standardi `.test`tir.
+
+`APP_URL` ve CMS icindeki site/domain kayitlari HTTPS olmalidir. HTTP URL'leri karisik icerik, cookie secure flag, redirect ve canonical URL testlerini yaniltabilir.
+
+## mkcert ile güvenilir local CA ve TLS sertifikaları
+
+mkcert local makinede guvenilir bir local CA olusturur ve tarayicilarin kabul edecegi yerel TLS sertifikalari uretir.
+
+Kurulum:
+
+```bash
+brew install mkcert
+brew install nss
+mkcert -install
+```
+
+`nss`, Firefox veya NSS store kullanan araclar icin gerekebilir. Daha once kuruluysa tekrar kurmayin; `brew list nss` ile kontrol edebilirsiniz.
+
+Sertifika dizini:
+
+```bash
+sudo mkdir -p /opt/homebrew/etc/nginx/certs
+sudo chown "$(whoami)":admin /opt/homebrew/etc/nginx/certs
+```
+
+Intel Homebrew icin `/usr/local/etc/nginx/certs` kullanilabilir.
+
+`.test` domainleri icin sertifika uretimi:
+
+```bash
+cd /opt/homebrew/etc/nginx/certs
+mkcert \
+  -cert-file webblocks-cms.test.pem \
+  -key-file webblocks-cms.test-key.pem \
+  webblocks-cms.test \
+  fklavye.test \
+  webblocksui.test \
+  ui.webblocksui.test \
+  cms.webblocksui.test
+```
+
+Nginx TLS ornegi:
+
+```nginx
+ssl_certificate     /opt/homebrew/etc/nginx/certs/webblocks-cms.test.pem;
+ssl_certificate_key /opt/homebrew/etc/nginx/certs/webblocks-cms.test-key.pem;
+```
+
+HTTP'den HTTPS'e yonlendirme:
+
+```nginx
+server {
+  listen 80;
+  listen [::]:80;
+  server_name webblocks-cms.test fklavye.test webblocksui.test ui.webblocksui.test cms.webblocksui.test;
+  return 301 https://$host$request_uri;
+}
+```
+
+`.env.native-local` icinde:
+
+```dotenv
+APP_URL=https://webblocks-cms.test
+```
+
+CMS site domainleri de `https://...` olarak dusunulmelidir; CMS domain tablolarinda host saklansa bile operator-facing URL, test linkleri ve dokumantasyon HTTPS kullanmalidir.
+
+## /etc/hosts ile .test domain yönetimi
+
+Mevcut `/etc/hosts` dosyasini once okuyun:
+
+```bash
+grep -n "\\.test\\|webblocks\\|fklavye" /etc/hosts
+```
+
+Eksik kayitlari ekleyin. Var olan satirlari silmeyin; ayni domain farkli IP'ye gidiyorsa once not alin ve nedenini anlayin.
+
+```bash
+sudo sh -c 'cat >> /etc/hosts <<EOF
+127.0.0.1 webblocks-cms.test
+127.0.0.1 fklavye.test
+127.0.0.1 webblocksui.test
+127.0.0.1 ui.webblocksui.test
+127.0.0.1 cms.webblocksui.test
+EOF'
+```
+
+Kontrol:
+
+```bash
+dscacheutil -q host -a name webblocks-cms.test
+ping -c 1 webblocks-cms.test
+```
+
+DNS cache sorunu yasarsaniz macOS DNS cache temizleme komutlarini kullanmadan once mevcut ag baglantilarini ve VPN/DNS profillerini kontrol edin.
+
+## Örnek HTTPS Nginx server block
+
+Bu ornek 80 portunu sadece HTTPS'e yonlendirir. Laravel/CMS sadece 443 SSL server block icinde calisir.
+
+```nginx
+server {
+  listen 80;
+  listen [::]:80;
+  server_name webblocks-cms.test fklavye.test webblocksui.test ui.webblocksui.test cms.webblocksui.test;
+
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name webblocks-cms.test fklavye.test webblocksui.test ui.webblocksui.test cms.webblocksui.test;
+
+  root /Users/osm/Sites/projects/project-web_blocks/project-webblocks-cms/webblocks-cms/public;
+  index index.php index.html;
+
+  ssl_certificate     /opt/homebrew/etc/nginx/certs/webblocks-cms.test.pem;
+  ssl_certificate_key /opt/homebrew/etc/nginx/certs/webblocks-cms.test-key.pem;
+
+  charset utf-8;
+  client_max_body_size 64m;
+
+  add_header X-Frame-Options "SAMEORIGIN";
+  add_header X-Content-Type-Options "nosniff";
+
+  location / {
+    try_files $uri $uri/ /index.php?$query_string;
+  }
+
+  location = /favicon.ico {
+    access_log off;
+    log_not_found off;
+  }
+
+  location = /robots.txt {
+    access_log off;
+    log_not_found off;
+  }
+
+  error_page 404 /index.php;
+
+  location ~ \.php$ {
+    fastcgi_pass 127.0.0.1:9000;
+    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+    include fastcgi_params;
+    fastcgi_hide_header X-Powered-By;
+  }
+
+  location ~ /\.(?!well-known).* {
+    deny all;
+  }
+}
+```
+
+PHP-FPM socket kullaniyorsaniz `fastcgi_pass` ornegi:
+
+```nginx
+fastcgi_pass unix:/opt/homebrew/var/run/php-fpm.sock;
+```
+
+Config testi ve reload:
+
+```bash
+nginx -t
+brew services restart nginx
+brew services restart php
+```
+
+## Örnek .env.native-local değerleri
+
+`.env.native-local` ornek dosya olarak tutulabilir; aktif kullanmak icin `.env` olarak kopyalayin ve local secretlari kendiniz doldurun.
+
+```dotenv
+APP_NAME="WebBlocks CMS"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=https://webblocks-cms.test
+
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=webblocks_cms_native
+DB_USERNAME=webblocks_native
+DB_PASSWORD=change-this-local-password
+
+SESSION_DRIVER=database
+CACHE_STORE=redis
+QUEUE_CONNECTION=database
+
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS=webblocks-cms@test.invalid
+MAIL_FROM_NAME="${APP_NAME}"
+
+FILESYSTEM_DISK=local
+WEBBLOCKS_UPDATES_ENABLED=false
+CMS_BACKUP_EXECUTION=direct
+```
+
+Kurulum sirasinda:
+
+```bash
+cp .env.native-local .env
+php artisan key:generate
+php artisan config:clear
+```
+
+`.env.native-local` icindeki `APP_URL` kesinlikle HTTPS ve `.test` olmalidir:
+
+```dotenv
+APP_URL=https://webblocks-cms.test
+```
+
+## DDEV komutlarının native karşılıkları
+
+| DDEV komutu | Native karsilik |
+| --- | --- |
+| `ddev composer install` | `composer install` |
+| `ddev composer dump-autoload` | `composer dump-autoload` |
+| `ddev composer format:test` | `composer format:test` |
+| `ddev artisan key:generate` | `php artisan key:generate` |
+| `ddev artisan migrate` | `php artisan migrate` |
+| `ddev artisan db:seed` | `php artisan db:seed` |
+| `ddev artisan storage:link` | `php artisan storage:link` |
+| `ddev artisan test --filter=ExampleTest` | `php artisan test --filter=ExampleTest` |
+| `ddev artisan cache:clear` | `php artisan cache:clear` |
+| `ddev artisan config:clear` | `php artisan config:clear` |
+| `ddev describe` | `nginx -T`, `brew services list`, `php -v`, `mysql --version`, `redis-cli ping` |
+| `ddev logs` | Homebrew service logs under `/opt/homebrew/var/log` or `/usr/local/var/log` |
+
+Database import/export icin native karsiliklar:
+
+```bash
+mysqldump -h127.0.0.1 -uwebblocks_native -p webblocks_cms_native > backup.sql
+mysql -h127.0.0.1 -uwebblocks_native -p webblocks_cms_native < backup.sql
+```
+
+MariaDB kullaniliyorsa `mariadb-dump` ve `mariadb` komutlarini tercih edin.
+
+## CMS local smoke checklist
+
+Native local kurulumdan sonra:
+
+```bash
+composer install
+composer dump-autoload
+php artisan config:clear
+php artisan route:list --path=webadmin
+php artisan test --filter=AdminDashboardRouteTest --stop-on-failure
+```
+
+Tarayici kontrolleri:
+
+- `https://webblocks-cms.test` guvenilir sertifika ile aciliyor
+- `http://webblocks-cms.test` otomatik `https://webblocks-cms.test` adresine yonleniyor
+- `https://webblocks-cms.test/webadmin/login` paket auth ekrani veya host auth modeline uygun giris akisina gidiyor
+- `/cms/css`, `/cms/js`, ve `/cms/brand` statik asset URL'leri HTTPS altinda calisiyor
+- `https://fklavye.test`, `https://webblocksui.test`, `https://ui.webblocksui.test`, ve `https://cms.webblocksui.test` hostlari Nginx'e ulasiyor
+- CMS Sites/Domains ekraninda yerel site hostlari `.test` standardina gore kaydediliyor
+- mixed-content uyarisi yok
+- Redis gerekiyorsa `redis-cli ping` `PONG` donuyor
+- database-backed session/cache/queue tablolarinin migration durumu temiz
+
+## Yerel site domainleri için önerilen yapı
+
+Ana CMS maintenance hostu:
+
+- `https://webblocks-cms.test`
+
+Yerel public site hostlari:
+
+- `https://fklavye.test`
+- `https://webblocksui.test`
+- `https://ui.webblocksui.test`
+- `https://cms.webblocksui.test`
+
+CMS icinde site domainleri host olarak saklaniyorsa host kisimlarini `.test` tutun. Operator-facing dokumanlarda ve test linklerinde tam URL'yi HTTPS olarak yazin.
+
+Onerilen yaklasim:
+
+- tek Nginx server block ayni Laravel public root'a birden fazla `.test` hostu yonlendirebilir
+- CMS multisite domain esleme gelen hosta gore dogru siteyi secer
+- local fallback davranisi gerekiyorsa sadece local env'de acik tutun
+- `.local`, `.localhost`, canli domain veya staging domainlerini native local test standardi olarak kullanmayin
+
+## Geri dönüş planı
+
+Native local kurulum sorun cikarirsa DDEV akisi korunur.
+
+Geri donmek icin:
+
+```bash
+ddev start
+ddev composer install
+ddev artisan config:clear
+```
+
+Tarayicida DDEV URL'lerini kullanmaya devam edin. Native servisleri durdurmak isterseniz once baska projelerin kullanmadigindan emin olun:
+
+```bash
+brew services list
+brew services stop nginx
+brew services stop php
+brew services stop redis
+```
+
+MySQL veya MariaDB servislerini durdurmadan once baska local projelerin kullanip kullanmadigini kontrol edin. `/etc/hosts` icindeki `.test` kayitlarini silmeden once hangi projeler tarafindan kullanildigini not edin.
+
+Bu geri donus plani DDEV dosyalarini silmez, `.ddev` yapisini degistirmez ve mevcut DDEV tabanli test/release komutlarini bozmaz.

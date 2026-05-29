@@ -52,6 +52,7 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 ## Development
 
 - [Development Workflow](../DEVELOPMENT.md)
+- [Native Local Development](native-local-development.md)
 - [Plugin System](plugin-system.md) - implemented runtime foundations, including manual ZIP upload/install, package conventions, compatibility checks, inert disabled/incompatible behavior, and WebBlocks UI Manager as a separate operator plugin artifact
 
 ## Project Boundary

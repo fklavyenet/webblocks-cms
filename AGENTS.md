@@ -7,6 +7,7 @@
 - PHP files in this repository use 2-space indentation.
 - Use DDEV commands by default.
 - Use `ddev artisan`, not `php artisan`.
+- DDEV remains supported, but native local mode is documented as a gradual transition path. Native local development targets trusted HTTPS only, and local domains must use `.test` rather than `.local`.
 - Do not include manual verification/check steps inside implementation commands.
 - After meaningful feature or behavior changes, update `README.md`, `CHANGELOG.md`, and relevant docs.
 - Keep implementation prompts and project commands in English.
