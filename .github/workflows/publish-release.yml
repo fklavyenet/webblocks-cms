@@ -93,6 +93,48 @@ jobs:
 
           printf '%s\n' "$notes" > release-notes.md
 
+          {
+            printf 'System Updates release details\n'
+          } > release-title.txt
+
+          {
+            printf 'System Updates now shows richer human-readable release information before admins run an update.\n'
+          } > release-summary.txt
+
+          {
+            printf 'System Updates can display structured release metadata with a title, summary, and grouped notes.\n'
+            printf 'The update screen now shows a clear What'\''s included section before the Update now action.\n'
+            printf 'Older release_notes-only payloads remain supported as a clean fallback.\n'
+          } > release-highlights.txt
+
+          {
+            printf 'Missing release notes now show an honest empty state instead of implying changes from the version number.\n'
+            printf 'Release metadata is escaped as plain text so unsafe HTML or script content is not rendered as executable markup.\n'
+          } > release-fixes.txt
+
+          {
+            printf 'Structured release details are backward compatible with existing package-based update behavior and release_notes fallback payloads.\n'
+            printf 'The package-rooted update metadata still requires a bridge-capable updater through the configured minimum client version.\n'
+          } > release-compatibility-notes.txt
+
+          {
+            printf 'No database migration is required for this release.\n'
+          } > release-migration-notes.txt
+
+          {
+            printf 'No frontend build chain, Vite, npm, Tailwind, or package asset compilation requirement is added.\n'
+          } > release-asset-notes.txt
+
+          {
+            printf 'Review the What'\''s included section before running Update now.\n'
+            printf 'Pre-update backup creation and Update now behavior are unchanged.\n'
+          } > release-operator-notes.txt
+
+          {
+            printf 'Checksum verification, package URLs, raw payload diagnostics, and low-level update server details stay in the collapsed Technical details area.\n'
+            printf 'The GitHub tag workflow publishes these structured fields alongside the legacy release_notes value.\n'
+          } > release-technical-notes.txt
+
       - name: Build release archive
         run: |
           set -euo pipefail
@@ -184,6 +226,15 @@ jobs:
             --form "version=${VERSION}" \
             --form "channel=${DEFAULT_CHANNEL}" \
             --form "minimum_client_version=${MINIMUM_CLIENT_VERSION}" \
+            --form "title=<release-title.txt" \
+            --form "summary=<release-summary.txt" \
+            --form "highlights=<release-highlights.txt" \
+            --form "fixes=<release-fixes.txt" \
+            --form "compatibility_notes=<release-compatibility-notes.txt" \
+            --form "migration_notes=<release-migration-notes.txt" \
+            --form "asset_notes=<release-asset-notes.txt" \
+            --form "operator_notes=<release-operator-notes.txt" \
+            --form "technical_notes=<release-technical-notes.txt" \
             --form "release_notes=<release-notes.md" \
             --form "notes=GitHub release package publish for ${TAG_NAME}" \
             --form "source_reference=${TAG_NAME}" \

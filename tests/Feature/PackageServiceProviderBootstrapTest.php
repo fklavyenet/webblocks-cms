@@ -26,6 +26,7 @@ use WebBlocks\Cms\Console\SiteImportCommand;
 use WebBlocks\Cms\Console\SitePromotionApplyCommand;
 use WebBlocks\Cms\Console\SitePromotionDryRunCommand;
 use WebBlocks\Cms\Console\SitePromotionInspectCommand;
+use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand as PackageSyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
@@ -286,6 +287,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
       PackageStatusCommand::class,
       ContactMailDiagnoseCommand::class,
       DoctorNativeLocalCommand::class,
+      SmokeNativeLocalCommand::class,
       SearchRebuildCommand::class,
       PackageSyncWebBlocksUiIconsCommand::class,
       BlockTypeContractsAuditCommand::class,
@@ -460,6 +462,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $provider->bootPackageRoutesForTest();
 
     $this->assertSame([
+      base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_INSTALL_ROUTE_FILE),
       base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::DIAGNOSTIC_ROUTE_FILE),
       base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_ADMIN_ROUTE_FILE),
       base_path('packages/webblocks-cms/routes/'.WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_FILE),

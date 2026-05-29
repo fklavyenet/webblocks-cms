@@ -26,6 +26,8 @@ The System Updates screen shows human-readable release details before an admin s
 
 The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
 
+The GitHub tag release workflow publishes the structured release detail fields alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes.
+
 ## Update Apply Flow
 
 When an in-app System Update is applied successfully, WebBlocks CMS runs the post-install flow in this order:
