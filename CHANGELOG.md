@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Composer native local daily workflow aliases, including `composer native:doctor` and a read-only `composer native:smoke` check that reuses the native doctor and verifies the HTTPS `.test` APP_URL returns 200 or 302 without printing secrets.
+- Document the daily native macOS local workflow, DDEV 80/443 port-conflict handling, Nginx/PHP-FPM/Redis checks, the separate MariaDB `3307` datadir/socket pattern, and restore-after-smoke steps.
 - Let backup restore auto mode use direct MySQL/MariaDB CLI execution for native HTTPS `.test` local environments instead of falling back to `ddev exec` merely because `.ddev` files exist, while preserving DDEV behavior for `.ddev.site` URLs or explicit `CMS_BACKUP_EXECUTION=ddev`.
 - Improve native restore diagnostics with secret-safe database connection context and document native backup restore requirements, including custom MariaDB ports such as `3307`.
 - Fix native maintenance checkouts so package install guards fall back to the host installer when the package notice route is unavailable, avoiding a fresh-install 500 on `https://webblocks-cms.test`.

@@ -623,6 +623,106 @@ Kritik fail varsa komut non-zero exit code ile biter. Ornek kritik fail durumlar
 - dokumanda onerilen sertifika/key dosyalari bulunamiyor
 - `storage` veya `bootstrap/cache` yazilabilir degil
 
+Composer kisa komutu:
+
+```bash
+composer native:doctor
+```
+
+## Daily native local workflow
+
+Gunluk native local kullanimda DDEV dosyalarini silmeyin ve DDEV akislarini degistirmeyin. Native Nginx 80/443 portlarini kullanacagi icin DDEV router calisiyorsa once port sahipligini kontrol edin ve gerekiyorsa DDEV'i gecici durdurun:
+
+```bash
+lsof -nP -iTCP:80 -iTCP:443 -sTCP:LISTEN
+ddev poweroff
+```
+
+Native Nginx durumunu ve config'i kontrol edin:
+
+```bash
+nginx -t
+lsof -nP -iTCP:80 -iTCP:443 -sTCP:LISTEN
+```
+
+Nginx Homebrew servisi olarak yonetiliyorsa yeniden yuklemek icin:
+
+```bash
+brew services restart nginx
+```
+
+PHP-FPM durumunu kontrol edin. Homebrew PHP-FPM socket veya portunu varsaymayin; mevcut config'ten okuyun:
+
+```bash
+php-fpm -v
+ps -axo pid,ppid,comm,args | rg -i '[p]hp-fpm'
+```
+
+PHP-FPM Homebrew servisi olarak yonetiliyorsa yeniden baslatmak icin:
+
+```bash
+brew services restart php
+```
+
+Redis durumunu kontrol edin:
+
+```bash
+redis-cli ping
+lsof -nP -iTCP:6379 -sTCP:LISTEN
+```
+
+MariaDB 3307 instance'ini mevcut port, datadir ve socket degerlerini bozmadan tespit edin:
+
+```bash
+lsof -nP -iTCP:3307 -sTCP:LISTEN
+ps -axo pid,ppid,comm,args | rg -i '[m]ariadbd|[m]ysqld'
+```
+
+Bu proje icin dogrulanmis native MariaDB 3307 duzeni sudur:
+
+```text
+datadir: /usr/local/var/mariadb-webblocks-cms
+socket: /tmp/webblocks-cms-mariadb.sock
+port: 3307
+pid file: /usr/local/var/mariadb-webblocks-cms/webblocks-cms.pid
+```
+
+Bu ayri datadir kullanan instance `mariadbd-safe` ile baslatilabilir. Once portun bos oldugunu ve datadir'in var oldugunu dogrulayin; var olan Homebrew MySQL/MariaDB datadir'lerini silmeyin veya yeniden kullanmayin:
+
+```bash
+/usr/local/opt/mariadb/bin/mariadbd-safe --datadir=/usr/local/var/mariadb-webblocks-cms --socket=/tmp/webblocks-cms-mariadb.sock --port=3307 --pid-file=/usr/local/var/mariadb-webblocks-cms/webblocks-cms.pid
+```
+
+Doctor ve smoke kontrollerini calistirin:
+
+```bash
+composer native:doctor
+composer native:smoke
+```
+
+`composer native:smoke` su secret-safe kontrolleri kapsar:
+
+- doctor sonucu 0 FAIL
+- `APP_URL` HTTPS `.test` hedefi
+- configured database connection reachable
+- configured Redis connection reachable
+- Nginx binary mevcut
+- APP_URL icin HTTPS curl sonucu `200` veya `302`
+
+Backup restore sonrasinda en az su kontrolleri calistirin:
+
+```bash
+composer dump-autoload
+composer native:doctor
+composer native:smoke
+```
+
+DDEV'e geri donerken native dosyalari silmeyin. DDEV icin:
+
+```bash
+ddev start
+```
+
 ## CMS local smoke checklist
 
 Native local kurulumdan sonra:
@@ -632,6 +732,7 @@ composer install
 composer dump-autoload
 php artisan config:clear
 php artisan webblocks:doctor-native-local
+php artisan webblocks:smoke-native-local
 php artisan route:list --path=webadmin
 php artisan test --filter=AdminDashboardRouteTest --stop-on-failure
 ```

@@ -58,6 +58,12 @@
         "dev": [
             "@php artisan serve"
         ],
+        "native:doctor": [
+            "@php artisan webblocks:doctor-native-local"
+        ],
+        "native:smoke": [
+            "@php artisan webblocks:smoke-native-local"
+        ],
         "format": [
             "vendor/bin/pint"
         ],

@@ -27,6 +27,7 @@ use WebBlocks\Cms\Console\SiteImportCommand;
 use WebBlocks\Cms\Console\SitePromotionApplyCommand;
 use WebBlocks\Cms\Console\SitePromotionDryRunCommand;
 use WebBlocks\Cms\Console\SitePromotionInspectCommand;
+use WebBlocks\Cms\Console\SmokeNativeLocalCommand;
 use WebBlocks\Cms\Console\SyncCoreBlockTypesCommand;
 use WebBlocks\Cms\Console\SyncWebBlocksUiIconsCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
@@ -717,6 +718,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     PackageStatusCommand::class,
     ContactMailDiagnoseCommand::class,
     DoctorNativeLocalCommand::class,
+    SmokeNativeLocalCommand::class,
     SearchRebuildCommand::class,
     SyncWebBlocksUiIconsCommand::class,
     BlockTypeContractsAuditCommand::class,

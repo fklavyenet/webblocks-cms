@@ -77,6 +77,8 @@ class ComposerPackageMetadataTest extends TestCase
       'database/factories/UserFactory.php',
       'project/',
     ], $composer['autoload']['exclude-from-classmap'] ?? []);
+    $this->assertSame(['@php artisan webblocks:doctor-native-local'], $composer['scripts']['native:doctor'] ?? null);
+    $this->assertSame(['@php artisan webblocks:smoke-native-local'], $composer['scripts']['native:smoke'] ?? null);
     $this->assertContains(WebBlocksCmsServiceProvider::class, $composer['extra']['laravel']['providers'] ?? []);
   }
 

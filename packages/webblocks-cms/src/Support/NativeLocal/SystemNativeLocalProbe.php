@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\NativeLocal;
 
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class SystemNativeLocalProbe implements NativeLocalProbe
@@ -93,5 +94,29 @@ class SystemNativeLocalProbe implements NativeLocalProbe
   public function isWritable(string $path): bool
   {
     return is_writable($path);
+  }
+
+  public function httpsStatusCode(string $url): ?int
+  {
+    $curl = $this->binaryPath('curl');
+
+    if ($curl === null) {
+      return null;
+    }
+
+    try {
+      $process = new Process([$curl, '-sS', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '10', $url]);
+      $process->run();
+
+      if (! $process->isSuccessful()) {
+        return null;
+      }
+
+      $statusCode = trim($process->getOutput());
+
+      return ctype_digit($statusCode) ? (int) $statusCode : null;
+    } catch (Throwable) {
+      return null;
+    }
   }
 }

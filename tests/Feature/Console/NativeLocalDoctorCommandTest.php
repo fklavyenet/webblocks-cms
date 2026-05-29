@@ -77,12 +77,41 @@ class NativeLocalDoctorCommandTest extends TestCase
       ->assertExitCode(0);
   }
 
+  #[Test]
+  public function native_local_smoke_reuses_doctor_checks_and_accepts_healthy_https_statuses(): void
+  {
+    $this->bindNativeLocalProbe(httpsStatusCode: 302);
+    config(['app.url' => 'https://webblocks-cms.test']);
+
+    $this->artisan('list')
+      ->expectsOutputToContain('webblocks:smoke-native-local')
+      ->assertExitCode(0);
+
+    $this->artisan('webblocks:smoke-native-local')
+      ->expectsOutputToContain('WebBlocks CMS native local smoke')
+      ->expectsOutputToContain('Doctor: 31 passed, 0 warnings, 0 failed.')
+      ->expectsOutputToContain('APP_URL: https://webblocks-cms.test')
+      ->expectsOutputToContain('[PASS] Local HTTPS curl smoke: 302 from APP_URL.')
+      ->assertExitCode(0);
+  }
+
+  #[Test]
+  public function native_local_smoke_fails_when_https_smoke_status_is_not_200_or_302(): void
+  {
+    $this->bindNativeLocalProbe(httpsStatusCode: 500);
+    config(['app.url' => 'https://webblocks-cms.test']);
+
+    $this->artisan('webblocks:smoke-native-local')
+      ->expectsOutputToContain('[FAIL] Local HTTPS curl smoke: expected 200 or 302 from APP_URL.')
+      ->assertExitCode(1);
+  }
+
   /**
    * @param  array<int, string>  $hosts
    */
-  private function bindNativeLocalProbe(array $hosts = ['webblocks-cms.test']): void
+  private function bindNativeLocalProbe(array $hosts = ['webblocks-cms.test'], ?int $httpsStatusCode = 200): void
   {
-    $this->app->instance(NativeLocalProbe::class, new FakeNativeLocalProbe($hosts));
+    $this->app->instance(NativeLocalProbe::class, new FakeNativeLocalProbe($hosts, $httpsStatusCode));
 
     config([
       'app.url' => 'https://webblocks-cms.test',
@@ -99,7 +128,7 @@ class FakeNativeLocalProbe implements NativeLocalProbe
   /**
    * @param  array<int, string>  $hosts
    */
-  public function __construct(private readonly array $hosts) {}
+  public function __construct(private readonly array $hosts, private readonly ?int $httpsStatusCode) {}
 
   public function phpVersion(): string
   {
@@ -163,5 +192,10 @@ class FakeNativeLocalProbe implements NativeLocalProbe
   public function isWritable(string $path): bool
   {
     return true;
+  }
+
+  public function httpsStatusCode(string $url): ?int
+  {
+    return $this->httpsStatusCode;
   }
 }

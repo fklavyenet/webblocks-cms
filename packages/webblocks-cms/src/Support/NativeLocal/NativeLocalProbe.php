@@ -24,4 +24,6 @@ interface NativeLocalProbe
   public function fileExists(string $path): bool;
 
   public function isWritable(string $path): bool;
+
+  public function httpsStatusCode(string $url): ?int;
 }
