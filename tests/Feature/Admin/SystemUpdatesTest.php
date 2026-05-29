@@ -310,12 +310,29 @@ class SystemUpdatesTest extends TestCase
   {
     $user = User::factory()->superAdmin()->create();
 
-    $this->mockClientResult('up_to_date', 'Already up to date', 'This install already matches the latest published release for the selected channel.', true, '0.1.0');
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
 
     $upToDateResponse = $this->actingAs($user)->get(route('admin.system.updates.index'));
     $upToDateResponse->assertOk();
+    $upToDateResponse->assertSee('Already up to date');
+    $upToDateResponse->assertSee('This install is already on the latest published release.');
     $upToDateResponse->assertDontSee('Update now');
     $upToDateResponse->assertDontSee('<strong>Update Options</strong>', false);
+  }
+
+  #[Test]
+  public function local_version_newer_than_latest_published_release_is_not_actionable(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is newer than the latest published release for the selected channel.', true, '0.1.0');
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('This install is newer than the latest published release for the selected channel.');
+    $response->assertDontSee('Update now');
+    $response->assertDontSee('<strong>Update Options</strong>', false);
   }
 
   #[Test]
@@ -334,9 +351,60 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertOk();
     $incompatibleResponse->assertSee('Incompatible update available');
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
-    $incompatibleResponse->assertSee('Update now');
-    $incompatibleResponse->assertSee('disabled', false);
-    $incompatibleResponse->assertSee('<strong>Update Options</strong>', false);
+    $incompatibleResponse->assertDontSee('Update now');
+    $incompatibleResponse->assertDontSee('<strong>Update Options</strong>', false);
+  }
+
+  #[Test]
+  public function failed_historical_run_does_not_force_update_available_or_main_latest_run_warning(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemUpdateRun::query()->create([
+      'from_version' => '1.32.80',
+      'to_version' => WebBlocks::version(),
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'Historical failed update',
+      'output' => 'Old failure output',
+      'started_at' => now()->subDays(2),
+      'finished_at' => now()->subDays(2)->addMinute(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('up_to_date', 'Already up to date', 'This install is already on the latest published release.', true, WebBlocks::version());
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('Already up to date');
+    $response->assertDontSee('Update available');
+    $response->assertDontSee('<strong>Latest Update Run</strong>', false);
+    $response->assertSee('<strong>Historical update runs</strong>', false);
+    $response->assertSee('Historical failed update');
+  }
+
+  #[Test]
+  public function failed_run_for_current_actionable_target_remains_visible_as_latest_run(): void
+  {
+    $user = User::factory()->superAdmin()->create();
+    SystemUpdateRun::query()->create([
+      'from_version' => WebBlocks::version(),
+      'to_version' => '99.0.0',
+      'status' => SystemUpdateRun::STATUS_FAILED,
+      'summary' => 'Current target failed update',
+      'output' => 'Current failure output',
+      'started_at' => now()->subHour(),
+      'finished_at' => now()->subHour()->addMinute(),
+      'duration_ms' => 1000,
+      'triggered_by_user_id' => $user->id,
+    ]);
+    $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
+
+    $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
+
+    $response->assertOk();
+    $response->assertSee('<strong>Latest Update Run</strong>', false);
+    $response->assertSee('Current target failed update');
+    $response->assertDontSee('<strong>Historical update runs</strong>', false);
   }
 
   #[Test]

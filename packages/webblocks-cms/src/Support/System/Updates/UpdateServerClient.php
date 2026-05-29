@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 
@@ -30,8 +31,7 @@ class UpdateServerClient
     $serverUrl = rtrim((string) config('webblocks-updates.server_url', ''), '/');
     $product = (string) config('webblocks-updates.product', 'webblocks-cms');
     $channel = (string) config('webblocks-updates.channel', 'stable');
-    $installedVersion = $this->installedVersionStore->storedVersion()
-      ?? $this->installedVersionStore->currentVersion();
+    $installedVersion = $this->installedVersionForUpdateCheck();
 
     if (! config('webblocks-updates.enabled', true)) {
       return $this->result(
@@ -211,7 +211,9 @@ class UpdateServerClient
 
     $state = 'up_to_date';
     $label = 'Already up to date';
-    $message = 'This install already matches the latest published release for the selected channel.';
+    $message = version_compare($installedVersion, $latestVersion, '>')
+      ? 'This install is newer than the latest published release for the selected channel.'
+      : 'This install is already on the latest published release.';
     $badgeClass = 'wb-status-active';
 
     if ($updateAvailable && $compatibility['status'] === 'incompatible') {
@@ -244,6 +246,46 @@ class UpdateServerClient
       errorCode: null,
       errorMessage: null,
     );
+  }
+
+  private function installedVersionForUpdateCheck(): string
+  {
+    $storedVersion = $this->installedVersionStore->storedVersion();
+    $currentVersion = $this->installedVersionStore->currentVersion();
+
+    if (! $this->isSourceMaintainedCheckout()) {
+      return $storedVersion ?? $currentVersion;
+    }
+
+    if (! is_string($storedVersion) || $storedVersion === '') {
+      return $currentVersion;
+    }
+
+    return version_compare($currentVersion, $storedVersion, '>')
+      ? $currentVersion
+      : $storedVersion;
+  }
+
+  private function isSourceMaintainedCheckout(): bool
+  {
+    $targetPath = rtrim((string) config('webblocks-updates.installer.target_path', base_path()), DIRECTORY_SEPARATOR);
+    $composerPath = $targetPath.DIRECTORY_SEPARATOR.'composer.json';
+
+    if (! File::isFile($composerPath)) {
+      return false;
+    }
+
+    try {
+      $composer = json_decode((string) File::get($composerPath), true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+      return false;
+    }
+
+    $autoload = $composer['autoload']['psr-4'] ?? [];
+
+    return ($composer['name'] ?? null) === 'fklavyenet/webblocks-cms'
+      && ($autoload['WebBlocks\\Cms\\'] ?? null) === 'packages/webblocks-cms/src/'
+      && ($autoload['WebBlocks\\Cms\\Database\\Seeders\\'] ?? null) === 'packages/webblocks-cms/database/seeders/';
   }
 
   private function normalizeReleasePayload(array $release): array

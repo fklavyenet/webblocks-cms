@@ -27,10 +27,15 @@ class SystemUpdateController extends Controller
     $report = $this->systemUpdateInspector->report();
     $checkedAt = session('system_updates_checked_at');
     $pendingUpdate = $this->pendingUpdate();
+    $latestUpdateRun = $this->latestUpdateRun();
+    $mainLatestUpdateRun = $this->mainLatestUpdateRun($latestUpdateRun, $report);
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
-      'latestUpdateRun' => $this->latestUpdateRun(),
+      'latestUpdateRun' => $mainLatestUpdateRun,
+      'historicalUpdateRuns' => $latestUpdateRun && $mainLatestUpdateRun === null
+        ? collect([$latestUpdateRun])
+        : collect(),
       'pendingUpdate' => $pendingUpdate,
       'pendingBackup' => $pendingUpdate ? SystemBackup::query()->find($pendingUpdate['backup_id'] ?? null) : null,
       'checkedAt' => is_string($checkedAt)
@@ -126,6 +131,33 @@ class SystemUpdateController extends Controller
     }
 
     return SystemUpdateRun::query()->with('triggeredBy')->latest()->first();
+  }
+
+  private function mainLatestUpdateRun(?SystemUpdateRun $run, array $report): ?SystemUpdateRun
+  {
+    if (! $run || $run->status !== SystemUpdateRun::STATUS_FAILED) {
+      return $run;
+    }
+
+    $installedVersion = (string) ($report['installed_version'] ?? $report['version']['installed_version'] ?? '');
+    $latestVersion = $report['version']['latest_version'] ?? null;
+    $hasCurrentActionableTarget = ($report['auto_update']['allowed'] ?? false) === true
+      && is_string($latestVersion)
+      && $latestVersion !== '';
+
+    if (is_string($run->to_version) && $run->to_version !== '' && $installedVersion !== '' && version_compare($run->to_version, $installedVersion, '<=')) {
+      return null;
+    }
+
+    if (! $hasCurrentActionableTarget) {
+      return null;
+    }
+
+    if ((string) $run->to_version !== (string) $latestVersion) {
+      return null;
+    }
+
+    return $run;
   }
 
   private function statusMessage(array $report): string

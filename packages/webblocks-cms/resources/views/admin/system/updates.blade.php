@@ -10,6 +10,7 @@
         $latestUpdateRun = $latestUpdateRun ?? null;
         $pendingUpdate = $pendingUpdate ?? null;
         $pendingBackup = $pendingBackup ?? null;
+        $historicalUpdateRuns = collect($historicalUpdateRuns ?? []);
         $autoUpdate = $report['auto_update'] ?? ['allowed' => false, 'blockers' => [], 'busy' => false];
         $compatibilityStatus = $updateStatus['compatibility']['status'] ?? 'unknown';
         $showLatestVersion = ($updateStatus['latest_version'] ?? null) !== null
@@ -46,8 +47,7 @@
             || $releaseDetailGroups->isNotEmpty()
             || $fallbackReleaseNotes->isNotEmpty();
         $showUpdateOptions = ($pendingUpdate && $pendingBackup)
-            || in_array(($updateStatus['state'] ?? null), ['update_available', 'incompatible'], true)
-            || ($updateStatus['update_available'] ?? false) === true;
+            || ($autoUpdate['allowed'] ?? false) === true;
         $headerActions = '<div class="wb-stack wb-gap-2">'
             .'<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.system.updates.check').'" class="wb-btn wb-btn-secondary">Check again</a></div>'
             .'<div class="wb-text-sm wb-text-muted">Last checked at '.$checkedAt->format('Y-m-d H:i:s').'</div>'
@@ -78,7 +78,7 @@
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <span class="wb-status-pill {{ $updateStatus['badge_class'] }}">{{ $updateStatus['label'] }}</span>
-                @if (! (($updateStatus['state'] ?? null) === 'up_to_date'))
+                @if (trim((string) ($updateStatus['message'] ?? '')) !== '')
                     <div class="wb-text-sm wb-text-muted">{{ $updateStatus['message'] }}</div>
                 @endif
 
@@ -281,6 +281,29 @@
                     @endif
                 </div>
             </div>
+        @endif
+
+        @if ($historicalUpdateRuns->isNotEmpty())
+            <details class="wb-card wb-card-muted">
+                <summary class="wb-card-header"><strong>Historical update runs</strong></summary>
+
+                <div class="wb-card-body wb-stack wb-gap-3">
+                    @foreach ($historicalUpdateRuns as $historicalUpdateRun)
+                        <div class="wb-stack wb-gap-2">
+                            <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                                <strong>{{ $historicalUpdateRun->summary ?: 'No summary recorded.' }}</strong>
+                                <span class="wb-status-pill {{ $historicalUpdateRun->statusBadgeClass() }}">{{ $historicalUpdateRun->statusLabel() }}</span>
+                            </div>
+                            <div class="wb-text-sm wb-text-muted">{{ $historicalUpdateRun->from_version }} to {{ $historicalUpdateRun->to_version }}</div>
+                            <div class="wb-text-sm wb-text-muted">Started {{ $historicalUpdateRun->started_at?->format('Y-m-d H:i:s') ?: $historicalUpdateRun->created_at?->format('Y-m-d H:i:s') }} | Finished {{ $historicalUpdateRun->finished_at?->format('Y-m-d H:i:s') ?: '-' }} | Duration {{ $historicalUpdateRun->durationLabel() }}</div>
+
+                            @if ($historicalUpdateRun->triggeredBy)
+                                <div class="wb-text-sm wb-text-muted">Triggered by {{ $historicalUpdateRun->triggeredBy->name }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </details>
         @endif
 
         <details class="wb-card wb-card-muted">

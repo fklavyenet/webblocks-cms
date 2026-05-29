@@ -16,6 +16,7 @@ Updates in WebBlocks CMS are release-based and package-based.
 - Run updates from published releases only.
 - Keep install-specific files in preserved paths such as `.env`, `storage/`, and `project/`.
 - Treat development and release workflows separately.
+- In source-maintained maintenance checkouts, local source edits are already present in the working tree. System Updates should not be used to apply those local changes, and a source checkout whose code version is already equal to or newer than the latest published release is treated as current for update availability.
 - Release packages contain reusable CMS core code only and must not ship install-specific `project/` content.
 - Update-time preserved paths do not change the release package boundary: `project/` stays local to the install and outside the published artifact.
 - Installed CMS working copies are update consumers, not upstream publishers. If an installation has a git `origin`, keep fetch access if needed but disable push with `git remote set-url --push origin DISABLED`.

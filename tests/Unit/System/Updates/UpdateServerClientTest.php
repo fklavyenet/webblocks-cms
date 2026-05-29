@@ -4,15 +4,26 @@ namespace Tests\Unit\System\Updates;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\WebBlocks;
 
 class UpdateServerClientTest extends TestCase
 {
   use RefreshDatabase;
+
+  protected function setUp(): void
+  {
+    parent::setUp();
+
+    $targetPath = storage_path('app/testing-package-update-client');
+    File::ensureDirectoryExists($targetPath);
+    config()->set('webblocks-updates.installer.target_path', $targetPath);
+  }
 
   #[Test]
   public function successful_update_available_case_is_parsed(): void
@@ -144,6 +155,37 @@ class UpdateServerClientTest extends TestCase
   }
 
   #[Test]
+  public function source_maintained_checkout_uses_current_code_version_when_it_is_newer_than_stored_version(): void
+  {
+    $this->useSourceMaintainedTarget();
+
+    Http::fake([
+      '*' => Http::response([
+        'status' => 'ok',
+        'data' => [
+          'product' => 'webblocks-cms',
+          'channel' => 'stable',
+          'version' => WebBlocks::version(),
+          'published_at' => '2026-05-29T10:00:00Z',
+          'release_notes' => 'Already present in the maintenance checkout.',
+          'artifact_url' => 'https://updates.example.test/downloads/webblocks-cms-current.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+        ],
+      ]),
+    ]);
+
+    config()->set('webblocks-updates.server_url', 'https://updates.example.test');
+    app(InstalledVersionStore::class)->persist('0.1.0');
+
+    $result = app(UpdateServerClient::class)->check();
+
+    $this->assertSame('up_to_date', $result->state);
+    $this->assertFalse($result->updateAvailable);
+    $this->assertSame(WebBlocks::version(), $result->installedVersion);
+    $this->assertSame('This install is already on the latest published release.', $result->message);
+  }
+
+  #[Test]
   public function unreachable_server_case_is_handled(): void
   {
     Http::fake(fn () => throw new ConnectionException('timeout'));
@@ -224,5 +266,31 @@ class UpdateServerClientTest extends TestCase
     $this->assertTrue($result->updateAvailable);
     $this->assertSame('compatible', $result->compatibility['status']);
     $this->assertSame('0.1.8', $result->release['requirements']['supported_from_version']);
+  }
+
+  private function useSourceMaintainedTarget(): void
+  {
+    $targetPath = storage_path('app/testing-source-update-client');
+    File::ensureDirectoryExists($targetPath.'/packages/webblocks-cms');
+    File::ensureDirectoryExists($targetPath.'/database/migrations');
+    File::put($targetPath.'/composer.json', json_encode([
+      'name' => 'fklavyenet/webblocks-cms',
+      'autoload' => [
+        'psr-4' => [
+          'WebBlocks\\Cms\\' => 'packages/webblocks-cms/src/',
+          'WebBlocks\\Cms\\Database\\Seeders\\' => 'packages/webblocks-cms/database/seeders/',
+        ],
+      ],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+    config()->set('webblocks-updates.installer.target_path', $targetPath);
+  }
+
+  protected function tearDown(): void
+  {
+    File::deleteDirectory(storage_path('app/testing-package-update-client'));
+    File::deleteDirectory(storage_path('app/testing-source-update-client'));
+
+    parent::tearDown();
   }
 }
