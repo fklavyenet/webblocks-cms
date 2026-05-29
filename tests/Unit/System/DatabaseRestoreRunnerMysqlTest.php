@@ -4,8 +4,12 @@ namespace Tests\Unit\System;
 
 use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
+use WebBlocks\Cms\Support\System\DatabaseExecutionStrategyResolver;
 use WebBlocks\Cms\Support\System\DatabaseRestoreRunner;
+use WebBlocks\Cms\Support\System\SqlDumpContentValidator;
 
 class DatabaseRestoreRunnerMysqlTest extends TestCase
 {
@@ -52,6 +56,112 @@ class DatabaseRestoreRunnerMysqlTest extends TestCase
       $this->assertStringNotContainsString('SET UNIQUE_CHECKS', File::get($sqlPath));
     } finally {
       File::delete($guardedPath);
+      File::delete($sqlPath);
+    }
+  }
+
+  #[Test]
+  public function auto_restore_strategy_uses_direct_for_native_test_url_even_when_ddev_files_exist(): void
+  {
+    config()->set('app.env', 'local');
+    config()->set('app.url', 'https://webblocks-cms.test');
+    config()->set('cms.backup.execution', 'auto');
+
+    putenv('IS_DDEV_PROJECT');
+    unset($_ENV['IS_DDEV_PROJECT'], $_SERVER['IS_DDEV_PROJECT']);
+    File::ensureDirectoryExists(base_path('.ddev'));
+
+    $runner = app(DatabaseRestoreRunner::class);
+
+    $this->assertSame('direct', $runner->resolveMysqlRestoreStrategy());
+  }
+
+  #[Test]
+  public function direct_restore_command_uses_configured_database_port_without_calling_ddev(): void
+  {
+    config()->set('cms.backup.execution', 'direct');
+    config()->set('database.default', 'mysql');
+    config()->set('database.connections.mysql', [
+      'driver' => 'mysql',
+      'host' => '127.0.0.1',
+      'port' => '3307',
+      'database' => 'webblocks_cms_native',
+      'username' => 'webblocks_cms_native',
+      'password' => 'local-secret',
+    ]);
+
+    $sqlPath = storage_path('app/testing-database-restores/native-port.sql');
+    File::ensureDirectoryExists(dirname($sqlPath));
+    File::put($sqlPath, 'CREATE TABLE native_restore_test (id int);');
+
+    $runner = new class(app(DatabaseExecutionStrategyResolver::class), app(SqlDumpContentValidator::class)) extends DatabaseRestoreRunner
+    {
+      public array $command = [];
+
+      protected function findMysqlClientBinary(string $driver): string
+      {
+        return 'mysql';
+      }
+
+      protected function makeRestoreProcess(array $command): Process
+      {
+        $this->command = $command;
+
+        return new Process(['php', '-r', 'stream_get_contents(STDIN);']);
+      }
+    };
+
+    try {
+      $runner->restoreFrom($sqlPath);
+
+      $this->assertSame('mysql', $runner->command[0]);
+      $this->assertContains('--host=127.0.0.1', $runner->command);
+      $this->assertContains('--port=3307', $runner->command);
+      $this->assertContains('webblocks_cms_native', $runner->command);
+      $this->assertNotContains('ddev', $runner->command);
+    } finally {
+      File::delete($sqlPath);
+    }
+  }
+
+  #[Test]
+  public function restore_failure_message_masks_password_and_keeps_connection_details(): void
+  {
+    config()->set('cms.backup.execution', 'direct');
+    config()->set('database.default', 'mysql');
+    config()->set('database.connections.mysql', [
+      'driver' => 'mysql',
+      'host' => '127.0.0.1',
+      'port' => '3307',
+      'database' => 'webblocks_cms_native',
+      'username' => 'webblocks_cms_native',
+      'password' => 'local-secret',
+    ]);
+
+    $sqlPath = storage_path('app/testing-database-restores/native-error.sql');
+    File::ensureDirectoryExists(dirname($sqlPath));
+    File::put($sqlPath, 'CREATE TABLE native_restore_test (id int);');
+
+    $runner = new class(app(DatabaseExecutionStrategyResolver::class), app(SqlDumpContentValidator::class)) extends DatabaseRestoreRunner
+    {
+      protected function findMysqlClientBinary(string $driver): string
+      {
+        return 'mysql';
+      }
+
+      protected function makeRestoreProcess(array $command): Process
+      {
+        return new Process(['php', '-r', 'fwrite(STDERR, "Access denied using password local-secret"); exit(1);']);
+      }
+    };
+
+    try {
+      $this->expectException(RuntimeException::class);
+      $this->expectExceptionMessage('Access denied using password [masked]');
+      $this->expectExceptionMessage('database=webblocks_cms_native, username=webblocks_cms_native, host=127.0.0.1, port=3307');
+
+      $runner->restoreFrom($sqlPath);
+    } finally {
       File::delete($sqlPath);
     }
   }

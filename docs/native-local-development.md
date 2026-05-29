@@ -667,6 +667,32 @@ php -r 'require "vendor/autoload.php"; $app=require "bootstrap/app.php"; $app->m
 
 After it reports `Core seed: pass`, continue in the browser at `https://webblocks-cms.test/install/admin` to create the first super admin. Do not use destructive database reset commands to recover from this state.
 
+## Native backup restore
+
+Backup restore supports both DDEV and native local modes. In `CMS_BACKUP_EXECUTION=auto`, native `.test` URLs such as `https://webblocks-cms.test` use direct MySQL/MariaDB CLI execution instead of `ddev exec`, even when the repository still contains `.ddev` files. DDEV remains supported for `.ddev.site` URLs or when `CMS_BACKUP_EXECUTION=ddev` is explicitly configured.
+
+For native MariaDB on a non-default port, restore reads the active Laravel database config from `.env`:
+
+```dotenv
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_DATABASE=webblocks_cms_native
+DB_USERNAME=webblocks_cms_native
+CMS_BACKUP_EXECUTION=auto
+```
+
+The native restore path requires a local `mysql` or `mariadb` client binary on `PATH`. The password, when configured, is written to a temporary MySQL defaults file for the restore process and must not be printed in logs or UI errors. If native restore fails, the error should show secret-safe connection context only: database, username, host, and port.
+
+Secret-safe checks before retrying a native restore:
+
+```bash
+php artisan webblocks:doctor-native-local
+php -r '$env=parse_ini_file(".env", false, INI_SCANNER_RAW); foreach (["DB_CONNECTION","DB_HOST","DB_PORT","DB_DATABASE","DB_USERNAME","CMS_BACKUP_EXECUTION"] as $k) { printf("%s=%s\n", $k, $env[$k] ?? "<missing>"); }'
+mysql --version
+```
+
+Do not start DDEV just to restore a backup into the native `.test` environment. If a restore error says `No running container found for service 'web'`, clear Laravel config/cache and confirm `APP_URL` is the native `.test` URL, not a `.ddev.site` URL.
+
 ## Yerel site domainleri için önerilen yapı
 
 Ana CMS maintenance hostu:

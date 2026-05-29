@@ -73,13 +73,17 @@ class DatabaseRestoreRunner
 
   private function restoreMysqlFamily(Connection $connection, string $sqlPath, array &$output): array
   {
-    $strategy = $this->strategyResolver->resolveMysqlStrategy();
+    $strategy = $this->resolveMysqlRestoreStrategy();
     $config = $connection->getConfig();
 
-    match ($strategy) {
-      'ddev' => $this->runDdevMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-      default => $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config),
-    };
+    try {
+      match ($strategy) {
+        'ddev' => $this->runDdevMysqlRestore($connection->getDriverName(), $sqlPath, $config),
+        default => $this->runDirectMysqlRestore($connection->getDriverName(), $sqlPath, $config),
+      };
+    } catch (RuntimeException $exception) {
+      throw new RuntimeException($this->maskSensitiveValues($exception->getMessage(), $config).' Connection: '.$this->describeMysqlConnection($config), previous: $exception);
+    }
 
     DB::purge($connection->getName());
     DB::reconnect($connection->getName());
@@ -94,6 +98,11 @@ class DatabaseRestoreRunner
     ];
   }
 
+  public function resolveMysqlRestoreStrategy(): string
+  {
+    return $this->strategyResolver->resolveMysqlStrategy();
+  }
+
   private function runDirectMysqlRestore(string $driver, string $sqlPath, array $config): void
   {
     $defaultsFile = $this->createMysqlDefaultsFile($sqlPath, $config);
@@ -102,7 +111,7 @@ class DatabaseRestoreRunner
     try {
       $restoreInputFile = $this->createMysqlRestoreInputFile($sqlPath);
       $command = $this->buildDirectMysqlRestoreCommand($driver, $defaultsFile, $config);
-      $process = new Process($command);
+      $process = $this->makeRestoreProcess($command);
       $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
 
       $handle = fopen($restoreInputFile, 'rb');
@@ -136,7 +145,7 @@ class DatabaseRestoreRunner
 
     try {
       $command = $this->buildDdevMysqlRestoreCommand($driver, $config);
-      $process = new Process($command);
+      $process = $this->makeRestoreProcess($command);
       $process->setTimeout((int) config('cms.backup.restore_timeout_seconds', 300));
 
       $handle = fopen($restoreInputFile, 'rb');
@@ -253,7 +262,7 @@ class DatabaseRestoreRunner
     return $restoreInputFile;
   }
 
-  private function findMysqlClientBinary(string $driver): string
+  protected function findMysqlClientBinary(string $driver): string
   {
     $finder = new ExecutableFinder;
     $preferredBinary = $driver === 'mariadb' ? 'mariadb' : 'mysql';
@@ -285,5 +294,34 @@ class DatabaseRestoreRunner
     }
 
     return basename($this->findMysqlClientBinary($driver));
+  }
+
+  protected function makeRestoreProcess(array $command): Process
+  {
+    return new Process($command);
+  }
+
+  private function describeMysqlConnection(array $config): string
+  {
+    if (! empty($config['unix_socket'])) {
+      return 'database='.(string) ($config['database'] ?? '').', username='.(string) ($config['username'] ?? '').', socket='.(string) $config['unix_socket'].'.';
+    }
+
+    return 'database='.(string) ($config['database'] ?? '')
+      .', username='.(string) ($config['username'] ?? '')
+      .', host='.(string) ($config['host'] ?? '')
+      .', port='.(string) ($config['port'] ?? '')
+      .'.';
+  }
+
+  private function maskSensitiveValues(string $message, array $config): string
+  {
+    $password = (string) ($config['password'] ?? '');
+
+    if ($password === '') {
+      return $message;
+    }
+
+    return str_replace($password, '[masked]', $message);
   }
 }

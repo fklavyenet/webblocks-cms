@@ -27,20 +27,19 @@ class DatabaseDumpWriterTest extends TestCase
     $this->assertSame('ddev', $writer->resolveMysqlDumpStrategy());
   }
 
-  public function test_auto_strategy_falls_back_to_direct_outside_ddev(): void
+  public function test_auto_strategy_falls_back_to_direct_for_native_local_even_when_ddev_files_exist(): void
   {
     config()->set('app.env', 'local');
-    config()->set('app.url', 'http://localhost');
+    config()->set('app.url', 'https://webblocks-cms.test');
     config()->set('cms.backup.execution', 'auto');
 
     putenv('IS_DDEV_PROJECT');
     unset($_ENV['IS_DDEV_PROJECT'], $_SERVER['IS_DDEV_PROJECT']);
+    File::ensureDirectoryExists(base_path('.ddev'));
 
     $writer = app(DatabaseDumpWriter::class);
 
-    $expected = file_exists(base_path('.ddev')) ? 'ddev' : 'direct';
-
-    $this->assertSame($expected, $writer->resolveMysqlDumpStrategy());
+    $this->assertSame('direct', $writer->resolveMysqlDumpStrategy());
   }
 
   public function test_auto_strategy_uses_direct_when_already_running_inside_ddev(): void

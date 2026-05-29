@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Let backup restore auto mode use direct MySQL/MariaDB CLI execution for native HTTPS `.test` local environments instead of falling back to `ddev exec` merely because `.ddev` files exist, while preserving DDEV behavior for `.ddev.site` URLs or explicit `CMS_BACKUP_EXECUTION=ddev`.
+- Improve native restore diagnostics with secret-safe database connection context and document native backup restore requirements, including custom MariaDB ports such as `3307`.
 - Fix native maintenance checkouts so package install guards fall back to the host installer when the package notice route is unavailable, avoiding a fresh-install 500 on `https://webblocks-cms.test`.
 - Clarify native local documentation with Intel Homebrew Nginx certificate/server paths, PHP-FPM listen detection, DDEV router 80/443 port conflict handling, and a safe separate MariaDB datadir/port option for machines with existing MySQL data.
 - Add the read-only `webblocks:doctor-native-local` command for native HTTPS `.test` readiness checks covering PHP, Composer, extensions, MySQL/MariaDB, Redis, Nginx, mkcert, APP_URL, hosts, TLS certificate paths, and writable runtime directories without printing secrets or mutating the machine.
