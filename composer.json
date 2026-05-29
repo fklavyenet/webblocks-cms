@@ -71,6 +71,9 @@
             "vendor/bin/pint --test",
             "@php scripts/check-php-indentation.php"
         ],
+        "format:changed": [
+            "bash scripts/format-changed.sh"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test --exclude-group=legacy"

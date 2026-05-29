@@ -27,7 +27,9 @@ ddev composer test:full
 
 ## Formatting Checks
 
-Use `ddev composer format:test` for the repository formatting baseline. It runs Laravel Pint for non-indentation PHP style and `scripts/check-php-indentation.php` for the project-specific 2-space PHP indentation rule across the maintained source, package, route, view, script, and test roots. Pint's indentation-specific fixers are disabled in `pint.json` so the custom 2-space guard remains authoritative.
+Use `ddev composer format:changed` as the default formatting gate for small focused hotfixes. It compares changed files against `origin/main...HEAD` when available, adds staged and working-tree edits, runs Pint only on changed PHP files, and runs the project indentation guard on changed PHP or Blade files. When no changed PHP or Blade files are present, it prints a clear no-op message and exits successfully.
+
+Use `ddev composer format:test` for the full repository formatting baseline when a change is broad, release-critical, or touches formatting tooling. It runs Laravel Pint for non-indentation PHP style and `scripts/check-php-indentation.php` for the project-specific 2-space PHP indentation rule across the maintained source, package, route, view, script, and test roots. Pint's indentation-specific fixers are disabled in `pint.json` so the custom 2-space guard remains authoritative.
 
 ## Release-Critical
 

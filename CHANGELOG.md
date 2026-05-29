@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 1.32.87
+
 - Simplify the `System -> Updates` screen into stacked Update Summary, Update Options, and Release Details cards so status metadata, backup/download choices, update actions, and structured release notes have clearer hierarchy.
+- Add `composer format:changed` as a faster focused formatting validation path for small hotfixes while keeping `composer format:test` as the full repository formatting baseline.
 
 ## 1.32.86
 

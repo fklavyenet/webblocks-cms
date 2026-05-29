@@ -98,26 +98,26 @@ jobs:
           printf '%s\n' "$notes" > release-notes.md
 
           {
-            printf 'Structured System Updates release details\n'
+            printf 'System Updates layout and focused formatting validation\n'
           } > release-title.txt
 
           {
-            printf 'This release verifies the update-server structured release-details pipeline so compatible System Updates screens can show grouped notes before installation.\n'
+            printf 'This release clarifies the System Updates screen hierarchy and adds a faster changed-file formatting check for small CMS hotfixes.\n'
           } > release-summary.txt
 
           {
-            printf 'The published update metadata includes a title and concise summary for the What'\''s included section.\n'
-            printf 'Highlights, changes, compatibility, operator, and technical notes are sent as structured release detail groups.\n'
-            printf 'The release also keeps a plain release_notes fallback for older update clients.\n'
+            printf 'System Updates now separates status metadata, update options, and release notes into full-width cards.\n'
+            printf 'The Update Options card keeps the backup-download checkbox and Update now action together.\n'
+            printf 'composer format:changed provides a faster default formatting gate for focused hotfixes.\n'
           } > release-highlights.txt
 
           {
-            printf 'Verifies that the publisher exposes structured release details at meta.release_details for CMS clients that support them.\n'
-            printf 'Keeps existing release-based, package-based updater behavior unchanged.\n'
+            printf 'Keeps the separate Actions card removed without changing update routes, CSRF handling, compatibility guards, or pending-backup continuation behavior.\n'
+            printf 'Keeps grouped structured release metadata rendering intact while renaming the operator-facing section to Release Details.\n'
           } > release-fixes.txt
 
           {
-            printf 'Compatible clients can render meta.release_details as grouped release details; older clients continue to use release_notes.\n'
+            printf 'Compatible clients continue to render structured release detail metadata; older clients continue to use release_notes.\n'
             printf 'The package-rooted update metadata still uses the configured bridge-capable minimum client version.\n'
           } > release-compatibility-notes.txt
 
@@ -130,13 +130,15 @@ jobs:
           } > release-asset-notes.txt
 
           {
-            printf 'Review the grouped What'\''s included release details before running Update now.\n'
+            printf 'Review the Update Summary, then choose backup download behavior in Update Options before running Update now.\n'
+            printf 'Use composer format:changed for small focused hotfixes; use composer format:test when a full formatting baseline is justified.\n'
             printf 'Pre-update backup creation, checksum verification, and update apply behavior are unchanged.\n'
           } > release-operator-notes.txt
 
           {
             printf 'The GitHub tag workflow publishes structured fields in top-level, details, and release_details form shapes for publisher compatibility.\n'
-            printf 'Compatible CMS clients read top-level fields, details, release_details, meta.details, or meta.release_details while keeping checksums and artifact URLs in technical details.\n'
+            printf 'composer format:changed compares against origin/main...HEAD when available, adds staged and working-tree edits, runs Pint on changed PHP files, and runs the indentation guard on changed PHP or Blade files.\n'
+            printf 'Checksums, artifact URLs, diagnostics, and low-level update server values remain in collapsed technical details.\n'
           } > release-technical-notes.txt
 
       - name: Build release archive
