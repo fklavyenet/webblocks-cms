@@ -45,23 +45,25 @@ The update screen can report states such as:
 - update server unavailable
 - invalid or unsupported response
 
-The in-app update flow downloads the release package, applies protected-path rules, runs maintenance and migration commands, synchronizes the core database-backed block type catalog, and records the update run before persisting the installed version.
+The in-app update flow downloads the release package, applies protected-path rules, runs required update migrations, clears caches, records the update run, and persists the installed version.
 
 Update availability is based on the latest published release version being newer than the running CMS code version. Historical failed update runs and stale stored installed-version values remain inspectable as history or technical details, but they do not make a current install actionable by themselves.
 
-The screen stacks a friendly update status hero, `Release Preview`, actionable-only `Update Options`, `Update History`, and collapsed `Technical Details`. The update options card is shown only when a compatible published package is strictly newer than the running CMS code version. Stored installed version remains an update-persistence value after successful installs and may appear in collapsed technical details, but it is not shown in the main update summary.
+The screen stacks `Update Summary`, `Install Update`, `Diagnostics`, and `Update History`. The Install Update card remains visible even when no compatible package is currently installable. Stored installed version remains an update-persistence value after successful installs and may appear in collapsed diagnostics/technical details, but it is not shown in the main update summary.
 
 The update client supports structured metadata from the update service, including title, summary, highlights, fixes, compatibility notes, migration notes, asset notes, operator notes, and technical notes. These values are rendered as escaped plain text in operator-oriented groups. Older releases that only provide `release_notes` still show those notes cleanly, and releases without notes show `No release notes were provided for this release.` Package URLs, checksums, response diagnostics, and other low-level update server values remain in the collapsed technical details area.
 
-Core catalog synchronization now happens automatically during System Updates after migrations complete. Existing installs therefore refresh shipped block type definitions such as `Header`, `Rich Text`, `TOC`, and `Quote`, along with shipped slot types and page layout slot mappings, without requiring a separate manual seed step.
+Core catalog synchronization is no longer part of the normal System Update apply chain. Release packages apply code, assets, required update migrations, cache clears, run history, and installed-version persistence; broad catalog repair is an explicit maintenance workflow.
 
 For manual maintenance or recovery on an existing install, admins and developers can also run:
 
 ```bash
+ddev artisan webblocks:catalog-repair --dry-run --all
+ddev artisan webblocks:catalog-repair --all
 ddev artisan block-types:sync-core
 ```
 
-That command safely upserts core CMS block types, leaves install-specific custom block types untouched, and can be run repeatedly without creating duplicate rows.
+`webblocks:catalog-repair` supports `--block-types`, `--slot-types`, `--page-layouts`, `--icons`, and `--all`. It reports created, updated, unchanged, and skipped rows, preserves install-specific custom catalog rows, and can be run repeatedly. `block-types:sync-core` remains as a lower-level compatibility command for the block type catalog.
 
 Published release packages are core product packages. They ship reusable CMS source, assets, migrations, views, routes, config, docs, and tests, but do not ship install-specific project-layer content from `project/`.
 
@@ -164,7 +166,7 @@ Use it to move one site's content between installs.
 
 Site transfer packages are stored on the Laravel filesystem disk named `site-transfers`, which defaults to `storage/app/site-transfers`. Fresh Composer consumer installs register this disk automatically and `webblocks:install` prepares the storage directory, so host applications do not need to edit `config/filesystems.php` unless they want to provide a custom disk.
 
-Site imports require the target install's database-backed block type and slot type catalogs to contain the rows referenced by the package. Fresh Composer installs seed these catalogs during `webblocks:install`, System Updates run the same package catalog repair path for existing installs, and the import runner performs a final idempotent core catalog sync before validation when a package references a missing shipped core row. If a package references an install-specific custom block or slot that is not present on the target, the admin error lists the exact missing identifiers.
+Site imports require the target install's database-backed block type and slot type catalogs to contain the rows referenced by the package. Fresh Composer installs seed these catalogs during `webblocks:install`, explicit catalog maintenance can repair shipped rows with `webblocks:catalog-repair`, and the import runner performs a final idempotent core catalog sync before validation when a package references a missing shipped core row. If a package references an install-specific custom block or slot that is not present on the target, the admin error lists the exact missing identifiers.
 
 The admin workflow now has two related entry points:
 

@@ -13,6 +13,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
+use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
@@ -734,6 +735,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SitePromotionDryRunCommand::class,
     SitePromotionInspectCommand::class,
     SyncCoreBlockTypesCommand::class,
+    CatalogRepairCommand::class,
     SystemBackupRestoreCommand::class,
   ];
 

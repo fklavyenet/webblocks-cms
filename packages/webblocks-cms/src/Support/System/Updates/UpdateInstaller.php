@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use Database\Seeders\CoreCatalogSeeder;
 use Illuminate\Support\Facades\File;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 
@@ -148,8 +147,6 @@ class UpdateInstaller
     $this->migrationRunner->run($this->targetPath(), $output);
 
     foreach ([
-      ['db:seed', '--class='.CoreCatalogSeeder::class, '--force'],
-      ['block-types:sync-core', '--force'],
       ['config:clear'],
       ['view:clear'],
       ['cache:clear'],

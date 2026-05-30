@@ -13,10 +13,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
+use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
 use WebBlocks\Cms\Console\SiteCloneCommand;
@@ -285,6 +287,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
     $this->assertSame('fklavyenet/webblocks-cms-starter', WebBlocksCmsServiceProvider::STARTER_PACKAGE_NAME);
     $this->assertSame([
       PackageStatusCommand::class,
+      PublishUpdateCommand::class,
       ContactMailDiagnoseCommand::class,
       DoctorNativeLocalCommand::class,
       SmokeNativeLocalCommand::class,
@@ -301,6 +304,7 @@ class PackageServiceProviderBootstrapTest extends TestCase
       SitePromotionDryRunCommand::class,
       SitePromotionInspectCommand::class,
       SyncCoreBlockTypesCommand::class,
+      CatalogRepairCommand::class,
       SystemBackupRestoreCommand::class,
     ], WebBlocksCmsServiceProvider::PACKAGE_CONSOLE_COMMANDS);
     $this->assertSame('composer require fklavyenet/webblocks-cms', WebBlocksCmsServiceProvider::TARGET_INSTALL_COMMAND);

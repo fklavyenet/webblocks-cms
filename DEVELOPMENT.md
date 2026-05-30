@@ -61,6 +61,8 @@ During local development:
 
 The updater flow must remain release-based and package-based.
 
+System Updates apply published packages and required update migrations only. Broad catalog synchronization is explicit maintenance; use `ddev artisan webblocks:catalog-repair --dry-run --all` before applying `ddev artisan webblocks:catalog-repair --all` when an install needs shipped block type, slot type, page layout, or icon catalog repair.
+
 ## Core Vs Project Layer
 
 WebBlocks CMS core and the Project Layer have different responsibilities.

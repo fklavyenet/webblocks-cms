@@ -74,9 +74,8 @@ The target update architecture is:
 - no root-wide CMS core file copying
 - CMS core installed and updated through Composer packages
 - controlled runtime upgrade steps after package update, including migrations
-- catalog synchronization where needed
-- `block-types:sync-core` execution where needed
 - cache clear where needed
+- explicit catalog repair as a separate operator maintenance workflow when needed
 - controlled asset publish or sync only when actually required
 
 This keeps install-owned root files separate from package-owned CMS core files and prevents removed CMS core files from lingering indefinitely in downstream installs simply because they once existed in the root.
@@ -445,12 +444,11 @@ Target update flow once Composer-managed package updates become authoritative:
 
 - `composer update fklavyenet/webblocks-cms`
 - run migrations
-- run catalog synchronization where needed
-- run `block-types:sync-core`
 - clear caches where needed
 - publish or sync package assets only when real package assets require it
 - run package diagnostics such as `webblocks:package-status`
 - synchronize installed-version state only when the update corresponds to a real release boundary
+- run explicit catalog repair separately when shipped catalog rows need maintenance
 
 Current compatibility rule:
 
@@ -472,7 +470,7 @@ Current compatibility rule:
 
 ### Phase 4: Package-Managed Update Flow
 
-Shift update behavior toward Composer-managed CMS package updates plus controlled post-update steps such as migrations, catalog sync, `block-types:sync-core`, cache clear, and asset publish or sync when needed.
+Shift update behavior toward Composer-managed CMS package updates plus controlled post-update steps such as migrations, cache clear, and asset publish or sync when needed. Catalog repair remains an explicit operator maintenance workflow instead of a default update step.
 
 The current readiness checkpoint now includes:
 

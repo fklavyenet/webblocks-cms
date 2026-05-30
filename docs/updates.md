@@ -23,11 +23,11 @@ Updates in WebBlocks CMS are release-based and package-based.
 
 ## Release Details
 
-The System Updates screen shows human-readable release details before an admin starts an update. The status hero explains whether an update is available, the running CMS code version is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. The visible summary compares the running CMS code version with the latest published release. Stored installed version remains an install-history/update-persistence value and can be inspected in technical details, but it is not used to make the main summary or Update Options actionable.
+The System Updates screen shows human-readable release details before an admin starts an update. The Update Summary explains whether an update is available, the running CMS code version is current, the local/source version is newer than the latest published package, the update is incompatible, or the update server response cannot be trusted. The visible summary compares the running CMS code version with the latest published release. Stored installed version remains an install-history/update-persistence value and can be inspected in diagnostics/technical details, but it is not used to make the main summary or Install Update action actionable.
 
-The `Release Preview` card renders structured metadata from fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text, with highlights first, fixes/changes compactly listed, compatibility/migration/asset notes in callouts, operator notes grouped as checklist-style items, and technical release notes visually quieter than operator notes.
+The compact `Release notes` accordion in Update Summary renders structured metadata from fields such as `title`, `summary`, `highlights`, `fixes`, `compatibility_notes`, `migration_notes`, `asset_notes`, `operator_notes`, and `technical_notes`. The CMS renders those fields as escaped plain text and keeps artifact URLs, checksums, diagnostics, stored installed version, and low-level response details in collapsed diagnostics/technical details.
 
-The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers. Artifact URLs, checksums, diagnostics, and low-level response details remain in the collapsed technical details area.
+The legacy `release_notes` string remains supported for older release payloads. If no release notes are present, the screen says `No release notes were provided for this release.` The updater does not infer changes from version numbers.
 
 Release metadata is prepared locally with `composer release:prepare` and published directly to the update server with `composer release:publish-update`. The native publisher sends structured release detail fields in top-level and nested detail payload shapes alongside the legacy `release_notes` value so the update service can serve rich notes to compatible System Updates screens while older clients continue to receive plain notes. Compatible clients read structured details from top-level fields, `details`, `release_details`, and update-server `meta.release_details` or `meta.details` payloads.
 
@@ -48,15 +48,17 @@ The publisher reads `WEBBLOCKS_UPDATE_PUBLISHER_URL`, `WEBBLOCKS_UPDATE_PUBLISHE
 When an in-app System Update is applied successfully, WebBlocks CMS runs the post-install flow in this order:
 
 - migration handling for the current install strategy
-- core catalog seeding for shipped install-level catalogs
-- core block type catalog sync with `ddev artisan block-types:sync-core`
 - cache clear steps
+- update run recording
+- installed version persistence
+
+Normal System Updates apply published release packages. They do not automatically run core catalog seeding, `block-types:sync-core`, icon sync, slot type repair, page layout slot repair, or broad catalog repair. If a release requires a schema or data transformation, it must be handled as an explicit update migration for that release.
 
 The cache clear steps include Laravel config, view, application cache, and route clears so updated package-owned Blade layouts and helpers are recompiled after file replacement. On live PHP-FPM installs with OPcache configured not to validate timestamps, reload the relevant PHP-FPM service after a successful update so PHP cannot keep serving pre-update package classes from memory.
 
 For source-maintained maintenance checkouts, migration handling keeps the historical root `database/migrations` authority and runs `artisan migrate --force`. This path is selected only when the root Composer manifest has the maintenance-repository WebBlocks CMS autoload authority, including `WebBlocks\\Cms\\ => packages/webblocks-cms/src/`.
 
-For package-native fresh Composer consumers installed with `webblocks:install`, System Update does not run the host Laravel application's root `database/migrations` directory. This remains true even though the transition updater installs package files into `packages/webblocks-cms`. Package directory presence alone is not a source-checkout signal. This prevents pending Laravel starter migrations such as `0001_01_01_000000_create_users_table.php` from colliding with CMS tables created by the package fresh-install schema. Package consumer updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when that directory contains PHP migration files; otherwise the updater records that host migrations were skipped and continues with catalog seeding, block type sync, cache clears, and installed-version persistence. Package update migrations are also the place for safe existing-install schema repairs, such as adding missing parent keys required by full database backup/restore portability.
+For package-native fresh Composer consumers installed with `webblocks:install`, System Update does not run the host Laravel application's root `database/migrations` directory. This remains true even though the transition updater installs package files into `packages/webblocks-cms`. Package directory presence alone is not a source-checkout signal. This prevents pending Laravel starter migrations such as `0001_01_01_000000_create_users_table.php` from colliding with CMS tables created by the package fresh-install schema. Package consumer updates only run dedicated package-owned update migrations from `packages/webblocks-cms/database/migrations/updates` when that directory contains PHP migration files; otherwise the updater records that host migrations were skipped and continues with cache clears and installed-version persistence. Package update migrations are also the place for safe existing-install schema repairs, such as adding missing parent keys required by full database backup/restore portability.
 
 During the package transition, some Composer consumers load `WebBlocks\Cms\` from `vendor/fklavyenet/webblocks-cms/packages/webblocks-cms/src` while the in-app updater also maintains an install-root `packages/webblocks-cms` copy. System Update now replaces both safe CMS package runtime roots when that Composer autoload shape is detected, so a successful package-native update cannot leave stale active vendor controllers behind while only refreshing the root transition copy.
 
@@ -76,14 +78,31 @@ The retired bridge strategy was two-step:
 
 The completed historical path was `1.31.53 -> 1.32.33 bridge -> 1.32.34+ package-rooted`. Already bridge-capable installs such as `1.32.30` skipped the bridge and updated directly to a package-rooted `1.32.34+` release. Current release gates protect only the package-rooted artifact and package-native updater behavior.
 
-The block type sync is idempotent and keeps the database-backed `block_types` catalog aligned with the shipped core CMS catalog on existing installs:
+## Catalog Repair
+
+Catalog repair and synchronization are explicit maintenance actions, separate from System Updates. Use:
+
+```bash
+ddev artisan webblocks:catalog-repair --dry-run --all
+ddev artisan webblocks:catalog-repair --all
+```
+
+The command supports scoped maintenance with `--block-types`, `--slot-types`, `--page-layouts`, and `--icons`. Run with `--dry-run` first to report rows that would be created, updated, left unchanged, or skipped. The command is idempotent, preserves install-specific/custom catalog rows, and does not delete custom rows.
+
+The lower-level block type sync remains available for compatibility:
+
+```bash
+ddev artisan block-types:sync-core
+```
+
+The block type repair path keeps the database-backed `block_types` catalog aligned with the shipped core CMS catalog on existing installs:
 
 - missing core block types are created
 - existing core block types are updated in place
 - custom install-specific block types are preserved
 - duplicate core rows are not created
 
-This closes the gap where a code update could add new shipped block types without guaranteeing that an older install's `block_types` table was refreshed to match.
+This maintenance workflow closes the gap where an install needs catalog rows refreshed without making every release package apply perform broad database-backed catalog repair.
 
 When the updater runs inside a git-backed installation clone that still points at the canonical CMS upstream, CMS now also disables `origin` push automatically after post-install commands so future accidental `git push` attempts fail clearly while normal fetch or pull access remains available.
 

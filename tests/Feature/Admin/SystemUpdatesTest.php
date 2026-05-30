@@ -49,14 +49,14 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('System Updates');
     $response->assertSee('Up to date');
     $response->assertSee('Current CMS Version');
-    $response->assertSee(WebBlocks::version().' · Updated at 2026-04-19 10:00:00');
+    $response->assertSee(WebBlocks::version());
     $response->assertSee(WebBlocks::version());
     $response->assertDontSee('Latest Published Version');
     $response->assertSee('Update Summary');
     $response->assertDontSee('<strong>Actions</strong>', false);
     $response->assertSee('Check again');
     $response->assertDontSee('Recent Backup');
-    $response->assertSee('Technical Details');
+    $response->assertSee('Diagnostics');
     $response->assertSee('WebBlocks CMS v'.WebBlocks::version());
 
     $summaryHtml = $this->cardHtml($response->getContent(), 'Update Summary');
@@ -105,7 +105,7 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
-  public function update_available_state_renders_status_hero_and_update_options(): void
+  public function update_available_state_renders_summary_and_install_update(): void
   {
     $user = User::factory()->superAdmin()->create();
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
@@ -117,21 +117,21 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('A new WebBlocks CMS release is ready.');
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
-    $response->assertSee(WebBlocks::version().' · Updated at N/A');
-    $response->assertSee('99.0.0 · Published at 2026-04-19 10:00:00');
+    $response->assertSee(WebBlocks::version());
+    $response->assertSee('99.0.0');
     $response->assertSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
 
     $html = $response->getContent();
     $summaryHtml = $this->cardHtml($html, 'Update Summary');
     $summaryHeaderPosition = strpos($html, '<strong>Update Summary</strong>');
-    $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
+    $optionsHeaderPosition = strpos($html, '<strong>Install Update</strong>');
     $buttonPosition = strpos($html, 'data-default-label="Update now"');
 
     $this->assertStringContainsString('Current CMS Version', $summaryHtml);
     $this->assertStringContainsString('Latest Published Version', $summaryHtml);
-    $this->assertStringContainsString('Updated at', $summaryHtml);
-    $this->assertStringContainsString('Published at', $summaryHtml);
+    $this->assertStringNotContainsString('Updated at', $summaryHtml);
+    $this->assertStringNotContainsString('Published at', $summaryHtml);
     $this->assertIsInt($summaryHeaderPosition);
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($buttonPosition);
@@ -140,7 +140,7 @@ class SystemUpdatesTest extends TestCase
   }
 
   #[Test]
-  public function update_options_card_renders_update_action_after_backup_option_when_update_is_available(): void
+  public function install_update_card_renders_update_action_after_backup_option_when_update_is_available(): void
   {
     $user = User::factory()->superAdmin()->create();
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '99.0.0');
@@ -148,27 +148,27 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Update Options</strong>', false);
-    $response->assertSee('Backup protection');
+    $response->assertSee('<strong>Install Update</strong>', false);
+    $response->assertSee('Package safety');
     $response->assertSee('Download the backup before installation starts');
     $response->assertSee('A pre-update backup will be created automatically before installation.');
     $response->assertSee('Update now');
 
     $html = $response->getContent();
-    $optionsHeaderPosition = strpos($html, '<strong>Update Options</strong>');
+    $optionsHeaderPosition = strpos($html, '<strong>Install Update</strong>');
     $checkboxPosition = strpos($html, 'name="download_pre_update_backup"', $optionsHeaderPosition);
     $backupHelpPosition = strpos($html, 'A pre-update backup will be created automatically before installation.', $optionsHeaderPosition);
     $buttonPosition = strpos($html, 'data-default-label="Update now"', $backupHelpPosition);
-    $releasePreviewPosition = strpos($html, '<strong>Release Preview</strong>');
+    $diagnosticsPosition = strpos($html, '<strong>Diagnostics</strong>');
 
     $this->assertIsInt($optionsHeaderPosition);
     $this->assertIsInt($checkboxPosition);
     $this->assertIsInt($backupHelpPosition);
     $this->assertIsInt($buttonPosition);
-    $this->assertIsInt($releasePreviewPosition);
+    $this->assertIsInt($diagnosticsPosition);
     $this->assertLessThan($buttonPosition, $checkboxPosition);
     $this->assertLessThan($buttonPosition, $backupHelpPosition);
-    $this->assertLessThan($optionsHeaderPosition, $releasePreviewPosition);
+    $this->assertLessThan($diagnosticsPosition, $optionsHeaderPosition);
     $this->assertLessThan($buttonPosition, $optionsHeaderPosition);
   }
 
@@ -230,7 +230,8 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Release Preview</strong>', false);
+    $response->assertDontSee('<strong>Release Preview</strong>', false);
+    $response->assertSee('<strong>Release notes</strong>', false);
     $response->assertDontSee('What&#039;s included', false);
     $response->assertSee('Operator-friendly release details');
     $response->assertSee('This release improves update review before installation.');
@@ -246,9 +247,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Refreshes shipped CMS static assets.');
     $response->assertSee('Operator notes');
     $response->assertSee('Read the details before running Update now');
-    $response->assertSee('Technical release notes');
+    $response->assertSee('Technical notes');
     $response->assertSee('Artifact checksum remains verified before install.');
-    $response->assertSee('Technical Details');
+    $response->assertSee('Diagnostics');
   }
 
   #[Test]
@@ -269,7 +270,7 @@ class SystemUpdatesTest extends TestCase
     $response = $this->actingAs($user)->get(route('admin.system.updates.index'));
 
     $response->assertOk();
-    $response->assertSee('<strong>Release Preview</strong>', false);
+    $response->assertDontSee('<strong>Release Preview</strong>', false);
     $response->assertSee('Release v1.32.83 no build-chain boundary');
     $response->assertSee('Release notes');
     $response->assertSee('No Vite, npm, or Tailwind assumptions return.');
@@ -348,8 +349,8 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('Update server unavailable');
     $response->assertSee('Server detail');
-    $response->assertSee('Technical Details');
-    $response->assertDontSee('Update now');
+    $response->assertSee('Diagnostics');
+    $response->assertSee('Update now');
     $response->assertDontSee('<strong>Actions</strong>', false);
   }
 
@@ -364,8 +365,9 @@ class SystemUpdatesTest extends TestCase
     $upToDateResponse->assertOk();
     $upToDateResponse->assertSee('This install is already on the latest published release.');
     $upToDateResponse->assertSee('Up to date');
-    $upToDateResponse->assertDontSee('Update now');
-    $upToDateResponse->assertDontSee('<strong>Update Options</strong>', false);
+    $upToDateResponse->assertSee('Update now');
+    $upToDateResponse->assertSee('<strong>Install Update</strong>', false);
+    $upToDateResponse->assertSee('No installable update right now');
   }
 
   #[Test]
@@ -382,8 +384,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertSee('Current CMS Version');
     $response->assertSee('Latest Published Version');
     $response->assertSee('This codebase is ahead of the latest published package on the selected channel.');
-    $response->assertDontSee('Update now');
-    $response->assertDontSee('<strong>Update Options</strong>', false);
+    $response->assertSee('Update now');
+    $response->assertSee('<strong>Install Update</strong>', false);
+    $response->assertSee('No installable update right now');
   }
 
   #[Test]
@@ -402,8 +405,9 @@ class SystemUpdatesTest extends TestCase
     $incompatibleResponse->assertOk();
     $incompatibleResponse->assertSee('Incompatible update available');
     $incompatibleResponse->assertSee('Requires PHP 8.4 or newer.');
-    $incompatibleResponse->assertDontSee('Update now');
-    $incompatibleResponse->assertDontSee('<strong>Update Options</strong>', false);
+    $incompatibleResponse->assertSee('Update now');
+    $incompatibleResponse->assertSee('<strong>Install Update</strong>', false);
+    $incompatibleResponse->assertSee('No installable update right now');
   }
 
   #[Test]
@@ -428,10 +432,9 @@ class SystemUpdatesTest extends TestCase
     $response->assertOk();
     $response->assertSee('This install is already on the latest published release.');
     $response->assertDontSee('Update available');
-    $response->assertDontSee('<strong>Current or latest run</strong>', false);
     $response->assertSee('<strong>Update History</strong>', false);
-    $response->assertSee('<strong>Historical update runs</strong>', false);
-    $response->assertSee('Historical failed update');
+    $response->assertSee('1.32.80 to '.WebBlocks::version());
+    $response->assertSee('failed');
   }
 
   #[Test]
@@ -455,9 +458,8 @@ class SystemUpdatesTest extends TestCase
 
     $response->assertOk();
     $response->assertSee('<strong>Update History</strong>', false);
-    $response->assertSee('<strong>Current or latest run</strong>', false);
-    $response->assertSee('Current target failed update');
-    $response->assertDontSee('<strong>Historical update runs</strong>', false);
+    $response->assertSee(WebBlocks::version().' to 99.0.0');
+    $response->assertSee('failed');
   }
 
   #[Test]
@@ -531,10 +533,12 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringContainsString('Disabled git push for origin while keeping fetch updates enabled.', (string) $run->output);
     $this->assertStringNotContainsString('php artisan migrate --force', (string) $run->output);
     $this->assertCommandOrder([
-      'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force',
-      'php artisan block-types:sync-core --force',
       'php artisan config:clear',
+      'php artisan view:clear',
+      'php artisan cache:clear',
     ]);
+    $this->assertStringNotContainsString('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', (string) $run->output);
+    $this->assertStringNotContainsString('php artisan block-types:sync-core --force', (string) $run->output);
 
     $backup = SystemBackup::query()->latest()->first();
     $this->assertNotNull($backup);
@@ -607,7 +611,7 @@ class SystemUpdatesTest extends TestCase
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
     $runner = $this->bindFakeCommandRunner([
-      'php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force' => 1,
+      'php artisan config:clear' => 1,
     ]);
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
 
@@ -624,7 +628,7 @@ class SystemUpdatesTest extends TestCase
     $run = SystemUpdateRun::query()->latest()->first();
     $this->assertNotNull($run);
     $this->assertSame(SystemUpdateRun::STATUS_FAILED, $run->status);
-    $this->assertStringContainsString('Command failed: php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', (string) $run->output);
+    $this->assertStringContainsString('Command failed: php artisan config:clear', (string) $run->output);
     $this->assertStringNotContainsString('php-fpm', (string) $run->output);
     $this->assertContains('php artisan up', $runner->commands);
   }
@@ -662,14 +666,14 @@ class SystemUpdatesTest extends TestCase
     $this->assertStringNotContainsString('Migration strategy: source-maintained root migrations.', $output);
     $this->assertStringNotContainsString('0001_01_01_000000_create_users_table', $output);
     $this->assertNotContains('php artisan migrate --force', $runner->commands);
-    $this->assertContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
-    $this->assertContains('php artisan block-types:sync-core --force', $runner->commands);
+    $this->assertNotContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
+    $this->assertNotContains('php artisan block-types:sync-core --force', $runner->commands);
     $this->assertContains('php artisan cache:clear', $runner->commands);
     $this->assertSame(WebBlocks::version(), app(InstalledVersionStore::class)->currentVersion());
   }
 
   #[Test]
-  public function failed_update_flow_reports_core_block_type_sync_failures_after_migrations(): void
+  public function normal_update_apply_does_not_run_catalog_repair_commands(): void
   {
     $user = User::factory()->superAdmin()->create();
     app(InstalledVersionStore::class)->persist('0.1.0');
@@ -678,25 +682,20 @@ class SystemUpdatesTest extends TestCase
     [$targetRoot, $archivePath, $checksum] = $this->prepareSuccessfulUpdateScenario();
 
     config()->set('webblocks-updates.installer.target_path', $targetRoot);
-    $runner = $this->bindFakeCommandRunner([
-      'php artisan block-types:sync-core --force' => 1,
-    ]);
+    $runner = $this->bindFakeCommandRunner();
     $this->mockClientResult('update_available', 'Update available', 'A newer published release is available from the configured update server.', true, '0.2.0', ['status' => 'compatible', 'reasons' => []], null, null, 'https://updates.example.test/downloads/webblocks-cms-0.2.0.zip', $checksum);
 
     Http::fake([
       'https://updates.example.test/downloads/*' => Http::response(File::get($archivePath), 200, ['Content-Type' => 'application/zip']),
     ]);
 
-    $response = $this->actingAs($user)->from(route('admin.system.updates.index'))->post(route('admin.system.updates.store'));
+    $response = $this->actingAs($user)->post(route('admin.system.updates.store'));
 
     $response->assertRedirect(route('admin.system.updates.index'));
-    $response->assertSessionHasErrors(['system_update']);
+    $response->assertSessionHas('status', 'Updated to 0.2.0 successfully.');
 
-    $run = SystemUpdateRun::query()->latest()->first();
-    $this->assertNotNull($run);
-    $this->assertStringContainsString('Command failed: php artisan block-types:sync-core --force', (string) $run->output);
-    $this->assertSame('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands[2] ?? null);
-    $this->assertSame('php artisan block-types:sync-core --force', $runner->commands[3] ?? null);
+    $this->assertNotContains('php artisan db:seed --class=Database\\Seeders\\CoreCatalogSeeder --force', $runner->commands);
+    $this->assertNotContains('php artisan block-types:sync-core --force', $runner->commands);
   }
 
   #[Test]
