@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.32.91
+## 1.32.92
 
 - Align `System -> Updates` with the current QuizTem interaction standard: WebBlocks UI card headers/actions, release notes and package safety accordions, compact diagnostics disclosure, disabled unavailable install action, and modal-based history details.
 - Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
