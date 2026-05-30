@@ -75,6 +75,8 @@ The terms should stay distinct:
 
 The first milestone should be a Plugin Catalog, not a full commercial Marketplace. A catalog can establish the metadata contract, compatibility matrix, artifact checksums, documentation links, and safe manual download path without adding remote install, automatic updates, paid licensing, or commercial approval workflows.
 
+For product positioning, MVP scope, candidate implementation models, public website surfaces, operator concepts, and API planning for the proposed catalog product, see [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md).
+
 ## Recommended Phases
 
 1. Phase 1: Documentation and metadata contract.

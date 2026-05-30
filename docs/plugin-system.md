@@ -217,6 +217,8 @@ This direction does not change the current CMS runtime. Manual ZIP upload/instal
 
 See [WebBlocks Plugin Ecosystem And Catalog](plugin-ecosystem-and-catalog.md) for the product-level direction and phase plan.
 
+Planning for the proposed `plugins.webblocksui.com` product surface, MVP scope, candidate implementation models, public catalog pages, operator surfaces, and possible read-only API shape lives in [Plugin Catalog Product Architecture](plugin-catalog-product-architecture.md).
+
 ## Minimal Plugin Example
 
 A minimal plugin package should expose a provider and a definition similar to:

@@ -67,6 +67,7 @@ This roadmap captures planned architecture and implementation direction. It does
 
 - Planned: keep plugin contracts reusable across WebBlocks CMS, QuizTem, Herne Panel, WebBlocks Publisher, and future WebBlocks products instead of designing them only for CMS.
 - Planned: define shared plugin identity, package/manifest, compatibility, lifecycle, release metadata, checksum/signature, and catalog metadata conventions.
+- Planned: document the proposed `plugins.webblocksui.com` product architecture, including product positioning, candidate implementation options, MVP scope, domain model, public website surface, operator concepts, and possible read-only API direction.
 - Planned: use `plugins.webblocksui.com` as the proposed future Plugin Catalog and later Plugin Store surface without implying that the service exists or is live today.
 - Planned: start with a read-only Plugin Catalog for discovery, metadata, compatibility, documentation, release information, checksums, and manual download links.
 - Planned: later add controlled Plugin Store install/update integration from trusted catalog metadata, while preserving disabled-by-default installs, compatibility-first behavior, explicit setup/migration actions, and inert disabled/incompatible plugins.

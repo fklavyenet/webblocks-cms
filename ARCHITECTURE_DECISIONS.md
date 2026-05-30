@@ -72,6 +72,7 @@ Consequences:
 - Shared plugin identity, manifest, compatibility, lifecycle, release metadata, and catalog metadata conventions should support future hosts such as QuizTem, Herne Panel, WebBlocks Publisher, and later WebBlocks products.
 - `plugins.webblocksui.com` is the proposed future Plugin Catalog and later Plugin Store domain.
 - The near-term target is a Plugin Catalog for discovery, metadata, compatibility, documentation, release information, artifact checksums, and manual download links.
+- Product architecture for the proposed catalog should remain implementation-neutral while comparing a dedicated Laravel application, WebBlocks Publisher capability, CMS-powered catalog plugin, or hybrid model.
 - Plugin Store behavior for controlled install/update integration is later work and must preserve disabled-by-default installs, compatibility-first behavior, explicit setup/migration actions, and inert disabled/incompatible plugins.
 - Commercial Marketplace behavior is deferred.
 
