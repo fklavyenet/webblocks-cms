@@ -43,6 +43,11 @@ WebBlocks CMS documentation is organized around installation, day-to-day content
 - [Search](search.md)
 - [Updates](updates.md)
 
+## Changelog Archives
+
+- [WebBlocks CMS Changelog Archive - 1.32.x](releases/changelog-1.32.md)
+- [WebBlocks CMS Changelog Archive - 1.31 and earlier](releases/changelog-1.31-and-earlier.md)
+
 ## Public Rendering
 
 - [Public Assets](public-assets.md)

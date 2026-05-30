@@ -22,6 +22,8 @@
 /dist/
 /docs/*
 !/docs/*.md
+!/docs/releases/
+!/docs/releases/*.md
 /public/storage
 
 # Laravel

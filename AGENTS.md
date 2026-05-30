@@ -84,6 +84,15 @@
 - Update relevant files under `docs/` when behavior, setup, architecture, or conventions change.
 - Do not bump the CMS version or create tags unless explicitly asked to prepare a release.
 
+## Changelog Size Policy
+
+- Keep `CHANGELOG.md` as a recent rolling changelog.
+- Add only short, user/operator-oriented release notes to `CHANGELOG.md`.
+- Do not add long root-cause explanations, validation logs, commit output, or publish output to `CHANGELOG.md`.
+- Document permanent behavior or standard changes in the relevant `docs/*.md` file.
+- When `CHANGELOG.md` exceeds the latest 10 release window, move older entries to `docs/releases/changelog-{minor}.md`.
+- Preserve archive links in `CHANGELOG.md`.
+
 ## Formatting Enforcement
 
 - Laravel Pint remains the formatter for the PHP style rules it supports.
