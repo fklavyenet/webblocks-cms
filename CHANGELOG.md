@@ -1,14 +1,17 @@
 # Changelog
 
+## 1.32.91
+
+- Align `System -> Updates` around Update Summary, Install Update, Diagnostics, and compact Update History while moving release notes and package safety into accordions.
+- Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
+- Add `webblocks:catalog-repair` with dry-run and scoped repair options for block types, slot types, page layouts, and icons while preserving custom catalog rows.
+
 ## 1.32.90
 
 - Add native/local CMS update publishing with `composer release:prepare`, `composer release:publish-update -- --dry-run`, and `composer release:publish-update`, backed by `webblocks:publish-update` and direct WebBlocks Publisher API uploads for `webblocks-cms` on the `stable` channel.
 - Remove GitHub-based release publishing and delete `.github` workflows; release artifacts, checksums, metadata validation, and update-server verification now happen locally without GitHub release asset URL assumptions.
 - Simplify the `System -> Updates` summary so the main status compares the running CMS code version with the latest published release and no longer exposes stored/effective/source checkout terminology in the visible summary.
 - Keep stored installed version as update-history persistence and a collapsed technical detail while ensuring stale stored values do not make Install Update actionable.
-- Align `System -> Updates` around Update Summary, Install Update, Diagnostics, and compact Update History while moving release notes and package safety into accordions.
-- Stop running broad catalog seeding and `block-types:sync-core` during normal System Update applies; package updates now stay focused on release package apply, required update migrations, cache clears, run recording, and installed-version persistence.
-- Add `webblocks:catalog-repair` with dry-run and scoped repair options for block types, slot types, page layouts, and icons while preserving custom catalog rows.
 
 ## 1.32.89
 
